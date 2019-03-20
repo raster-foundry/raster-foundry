@@ -25,14 +25,13 @@ import com.typesafe.scalalogging.LazyLogging
 
 import java.net.URL
 
-class WmsService[LayerReader: OgcStore](layers: LayerReader)(
+class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO])
-    extends ToOgcStoreOps with LazyLogging {
-
-  private val urlPrefix = "https://tiles.staging.rasterfoundry.com/"
+    extends ToOgcStoreOps
+    with LazyLogging {
 
   private def requestToServiceUrl(request: Request[IO]) = {
-    List(urlPrefix, request.scriptName, request.pathInfo).mkString("/")
+    List(urlPrefix, request.scriptName, request.pathInfo).mkString
   }
 
   def routes: AuthedService[User, IO] = AuthedService[User, IO] {
@@ -82,6 +81,9 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader)(
                 respIO <- (evalExtent(re.extent, re.cellSize), evalHistogram)
                   .parMapN {
                     case (Valid(mbTile), Valid(hists)) =>
+                      logger.debug("Got some valid stuff")
+                      logger.debug(
+                        s"Style: ${layer.style}, hists are: ${hists}")
                       Ok(Render(mbTile, layer.style, params.format, hists))
                     // at least one is invalid, we don't care which, and we want all the errors
                     // if both are

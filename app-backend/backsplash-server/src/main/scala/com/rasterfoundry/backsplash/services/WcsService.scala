@@ -21,12 +21,11 @@ import org.http4s.scalaxml._
 
 import com.typesafe.scalalogging.LazyLogging
 
-class WcsService[LayerReader: OgcStore](layers: LayerReader)(
+import scala.util.Properties
+
+class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO])
     extends ToOgcStoreOps with LazyLogging {
-
-  // TODO lookup from environment
-  private val urlPrefix = "https://tiles.staging.rasterfoundry.com"
 
   private def requestToServiceUrl(request: Request[IO]) = {
     List(urlPrefix, request.scriptName, request.pathInfo).mkString
