@@ -722,9 +722,6 @@ object Generators extends ArbitraryInstances {
       stars <- Gen.const(9999.9f) // good tools only :sunglasses:
       definition <- Gen.const(().asJson)
       singleSource <- arbitrary[Boolean]
-      // not super into dealing with tags or categories in testing-land right now
-      tags <- Gen.const(Seq.empty)
-      categories <- Gen.const(Seq.empty)
     } yield {
       Tool.Create(
         title,
@@ -736,9 +733,7 @@ object Generators extends ArbitraryInstances {
         owner,
         stars,
         definition,
-        singleSource,
-        tags,
-        categories
+        singleSource
       )
     }
 
