@@ -24,6 +24,7 @@ import org.http4s.scalaxml._
 import com.typesafe.scalalogging.LazyLogging
 
 import java.net.URL
+import java.util.UUID
 
 class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO])
@@ -67,39 +68,29 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
                   }
                 }
                 (evalExtent, evalHistogram) = layer match {
-                  case sl @ SimpleOgcLayer(_, _, _, _, _) =>
-                    (LayerExtent.identity(sl), LayerHistogram.identity(sl, 512))
+                  case sl @ SimpleOgcLayer(_, title, _, _, _) =>
+                    (LayerExtent.identity(sl),
+                     layers.getLayerHistogram(UUID.fromString(title)))
                   case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
-                    (LayerExtent(IO.pure(expr),
-                                 IO.pure(parameters),
-                                 Interpreter.DEFAULT),
-                     LayerHistogram(IO.pure(expr),
-                                    IO.pure(parameters),
-                                    Interpreter.DEFAULT,
-                                    512))
+                    throw MetadataException("Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
                 }
                 respIO <- (evalExtent(re.extent, re.cellSize), evalHistogram)
                   .parMapN {
-                    case (Valid(mbTile), Valid(hists)) =>
-                      logger.debug("Got some valid stuff")
+                    case (Valid(mbTile), hists) =>
                       logger.debug(
                         s"Style: ${layer.style}, hists are: ${hists}")
-                      Ok(Render(mbTile, layer.style, params.format, hists))
+                      val tileResp = layer.style map {
+                        _.renderImage(mbTile, params.format, hists)
+                      } getOrElse {
+                        Render(mbTile, layer.style, params.format, hists)
+                      }
+                      Ok(tileResp)
                     // at least one is invalid, we don't care which, and we want all the errors
                     // if both are
-                    case (a, b) =>
+                    case (Invalid(errs), _) =>
                       // map from Validated[Errs, ?] to Validated[Errs, ()] for both, since we already
                       // know that at least one is invalid
-                      (a map { _ =>
-                        ()
-                      }) combine (b map { _ =>
-                        ()
-                      }) match {
-                        case Invalid(errs) =>
-                          BadRequest(errs asJson)
-                        case _ =>
-                          BadRequest("compiler can't tell this is unreachable")
-                      }
+                      BadRequest(errs asJson)
                   }
                 resp <- respIO
               } yield resp
@@ -112,7 +103,8 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     case r @ GET -> Root / UUIDWrapper(_) / "map-token" / UUIDWrapper(_) as user =>
       logger.debug(s"Request path info to start: ${r.req.pathInfo}")
       val rewritten = OgcMapTokenRewrite(r)
-      logger.debug(s"Request path info after rewrite: ${rewritten.req.pathInfo}")
+      logger.debug(
+        s"Request path info after rewrite: ${rewritten.req.pathInfo}")
       routes(rewritten).value flatMap {
         case Some(resp) =>
           IO.pure { resp }
