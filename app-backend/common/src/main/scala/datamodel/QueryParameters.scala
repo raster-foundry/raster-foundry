@@ -322,17 +322,6 @@ object TimestampQueryParameters {
     deriveDecoder[TimestampQueryParameters]
 }
 
-final case class ToolCategoryQueryParameters(search: Option[String] = None)
-
-object ToolCategoryQueryParameters {
-  implicit def encToolCategoryQueryParameters
-    : Encoder[ToolCategoryQueryParameters] =
-    deriveEncoder[ToolCategoryQueryParameters]
-  implicit def decToolCategoryQueryParameters
-    : Decoder[ToolCategoryQueryParameters] =
-    deriveDecoder[ToolCategoryQueryParameters]
-}
-
 final case class ToolRunQueryParameters(
     createdBy: Option[String] = None,
     projectId: Option[UUID] = None,
@@ -365,21 +354,6 @@ object CombinedToolRunQueryParameters {
   implicit def decCombinedToolRunQueryParameters
     : Decoder[CombinedToolRunQueryParameters] =
     deriveDecoder[CombinedToolRunQueryParameters]
-}
-
-final case class CombinedToolCategoryQueryParams(
-    timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-    toolCategoryParams: ToolCategoryQueryParameters =
-      ToolCategoryQueryParameters()
-)
-
-object CombinedToolCategoryQueryParams {
-  implicit def encCombinedToolCategoryQueryParams
-    : Encoder[CombinedToolCategoryQueryParams] =
-    deriveEncoder[CombinedToolCategoryQueryParams]
-  implicit def decCombinedToolCategoryQueryParams
-    : Decoder[CombinedToolCategoryQueryParams] =
-    deriveDecoder[CombinedToolCategoryQueryParams]
 }
 
 final case class DatasourceQueryParameters(

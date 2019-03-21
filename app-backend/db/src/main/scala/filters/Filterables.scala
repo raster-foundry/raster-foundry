@@ -224,16 +224,6 @@ trait Filterables extends RFMeta with LazyLogging {
           Filters.mapTokenQP(mapTokenParams.mapTokenParams)
     }
 
-  implicit val combinedToolCategoryParamsFilter
-    : Filterable[Any, CombinedToolCategoryQueryParams] =
-    Filterable[Any, CombinedToolCategoryQueryParams] {
-      ctcQP: CombinedToolCategoryQueryParams =>
-        Filters.timestampQP(ctcQP.timestampParams) :+
-          ctcQP.toolCategoryParams.search.map({ search =>
-            fr"category ILIKE $search"
-          })
-    }
-
   implicit val combinedToolRunQueryParameters
     : Filterable[Any, CombinedToolRunQueryParameters] =
     Filterable[Any, CombinedToolRunQueryParameters] {
