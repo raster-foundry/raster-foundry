@@ -9,7 +9,6 @@ import com.rasterfoundry.common.datamodel.User
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
-import com.azavea.maml.eval.Interpreter
 import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.server._
@@ -72,7 +71,8 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
                     (LayerExtent.identity(sl),
                      layers.getLayerHistogram(UUID.fromString(title)))
                   case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
-                    throw MetadataException("Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
+                    throw MetadataException(
+                      "Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
                 }
                 respIO <- (evalExtent(re.extent, re.cellSize), evalHistogram)
                   .parMapN {

@@ -21,23 +21,25 @@ object OgcMapTokenRewrite extends LazyLogging {
     val req =
       authedReq.req.withPathInfo(authedReq.req.pathInfo.stripSuffix("/"))
     if (basePath.contains("map-token")) {
+      logger.info("Rewriting request to move map token to query param")
       req match {
         case _ -> prior / "map-token" / UUIDWrapper(mapTokenId) =>
-          logger.debug("Translating uri to move map token to qp")
+          logger.info("Translating uri to move map token to qp")
           val newUri = sanitize(s"$prior")
-          logger.debug(s"New uri after path replacement: $newUri")
+          logger.info(s"New uri after path replacement: $newUri")
           val withParams =
             newUri.setQueryParams(
               Map(
                 ("mapToken" -> Seq(mapTokenId.toString)) +:
                   req.multiParams.toSeq: _*))
 
-          logger.debug(s"New uri after param replacement: $withParams")
+          logger.info(s"New uri after param replacement: $withParams")
           val newRequest =
             req.withUri(withParams)
-          logger.debug(s"Path info of new request: ${req.pathInfo}")
+          logger.info(s"Path info of new request: ${req.pathInfo}")
           authedReq.copy(req = newRequest)
         case _ =>
+          logger.info("Request didn't match, not rewriting after all")
           authedReq
       }
     } else {

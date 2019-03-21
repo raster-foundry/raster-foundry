@@ -90,7 +90,7 @@ class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
             layerId) / "histogram"
             :? BandOverrideQueryParamDecoder(overrides) as user =>
         // Compile to a byte array, decode that as a string, and do something with the results
-        authedReq.req.body.compile.to[Array] flatMap { uuids =>
+        authedReq.req.body.compile.toList flatMap { uuids =>
           decode[List[UUID]](
             uuids map { _.toChar } mkString
           ) match {
