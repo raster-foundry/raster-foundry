@@ -34,82 +34,79 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     List(urlPrefix, request.scriptName, request.pathInfo).mkString
   }
 
+  private def authedReqToResponse(authedReq: AuthedRequest[IO, User],
+                                  projectId: UUID,
+                                  serviceUrl: String): IO[Response[IO]] =
+    WmsParams(authedReq.req.multiParams) match {
+      case Invalid(errors) =>
+        BadRequest(s"Error parsing parameters: ${ParamError
+          .generateErrorMessage(errors.toList)}")
+      case Valid(p) =>
+        p match {
+          case params: WmsParams.GetCapabilities =>
+            for {
+              rsm <- layers.getWmsModel(projectId)
+              metadata <- layers.getWmsServiceMetadata(projectId)
+              resp <- Ok(new CapabilitiesView(rsm, new URL(serviceUrl)).toXML)
+            } yield resp
+          case params: WmsParams.GetMap =>
+            val re =
+              RasterExtent(params.boundingBox, params.width, params.height)
+            for {
+              rsm <- layers.getWmsModel(projectId)
+              layer = rsm.getLayer(params.crs,
+                                   params.layers.headOption,
+                                   params.styles.headOption) getOrElse {
+                params.layers.headOption match {
+                  case None =>
+                    throw RequirementFailedException(
+                      "WMS Request must specify layers")
+                  case Some(l) =>
+                    throw RequirementFailedException(
+                      s"Layer ${l} not found or something else went wrong")
+                }
+              }
+              (evalExtent, evalHistogram) = layer match {
+                case sl @ SimpleOgcLayer(_, title, _, _, _) =>
+                  (LayerExtent.identity(sl),
+                   layers.getLayerHistogram(UUID.fromString(title)))
+                case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
+                  throw MetadataException(
+                    "Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
+              }
+              respIO <- (evalExtent(re.extent, re.cellSize), evalHistogram)
+                .parMapN {
+                  case (Valid(mbTile), hists) =>
+                    logger.debug(s"Style: ${layer.style}, hists are: ${hists}")
+                    val tileResp = layer.style map {
+                      _.renderImage(mbTile, params.format, hists)
+                    } getOrElse {
+                      Render(mbTile, layer.style, params.format, hists)
+                    }
+                    Ok(tileResp)
+                  // at least one is invalid, we don't care which, and we want all the errors
+                  // if both are
+                  case (Invalid(errs), _) =>
+                    // map from Validated[Errs, ?] to Validated[Errs, ()] for both, since we already
+                    // know that at least one is invalid
+                    BadRequest(errs asJson)
+                }
+              resp <- respIO
+            } yield resp
+
+          case _ =>
+            BadRequest("not yet implemented")
+        }
+    }
+
   def routes: AuthedService[User, IO] = AuthedService[User, IO] {
     case authedReq @ GET -> Root / UUIDWrapper(projectId) as user =>
       val serviceUrl = requestToServiceUrl(authedReq.req)
-      WmsParams(authedReq.req.multiParams) match {
-        case Invalid(errors) =>
-          BadRequest(s"Error parsing parameters: ${ParamError
-            .generateErrorMessage(errors.toList)}")
-        case Valid(p) =>
-          p match {
-            case params: WmsParams.GetCapabilities =>
-              for {
-                rsm <- layers.getWmsModel(projectId)
-                metadata <- layers.getWmsServiceMetadata(projectId)
-                resp <- Ok(new CapabilitiesView(rsm, new URL(serviceUrl)).toXML)
-              } yield resp
-            case params: WmsParams.GetMap =>
-              val re =
-                RasterExtent(params.boundingBox, params.width, params.height)
-              for {
-                rsm <- layers.getWmsModel(projectId)
-                layer = rsm.getLayer(params.crs,
-                                     params.layers.headOption,
-                                     params.styles.headOption) getOrElse {
-                  params.layers.headOption match {
-                    case None =>
-                      throw RequirementFailedException(
-                        "WMS Request must specify layers")
-                    case Some(l) =>
-                      throw RequirementFailedException(
-                        s"Layer ${l} not found or something else went wrong")
-                  }
-                }
-                (evalExtent, evalHistogram) = layer match {
-                  case sl @ SimpleOgcLayer(_, title, _, _, _) =>
-                    (LayerExtent.identity(sl),
-                     layers.getLayerHistogram(UUID.fromString(title)))
-                  case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
-                    throw MetadataException(
-                      "Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
-                }
-                respIO <- (evalExtent(re.extent, re.cellSize), evalHistogram)
-                  .parMapN {
-                    case (Valid(mbTile), hists) =>
-                      logger.debug(
-                        s"Style: ${layer.style}, hists are: ${hists}")
-                      val tileResp = layer.style map {
-                        _.renderImage(mbTile, params.format, hists)
-                      } getOrElse {
-                        Render(mbTile, layer.style, params.format, hists)
-                      }
-                      Ok(tileResp)
-                    // at least one is invalid, we don't care which, and we want all the errors
-                    // if both are
-                    case (Invalid(errs), _) =>
-                      // map from Validated[Errs, ?] to Validated[Errs, ()] for both, since we already
-                      // know that at least one is invalid
-                      BadRequest(errs asJson)
-                  }
-                resp <- respIO
-              } yield resp
+      authedReqToResponse(authedReq, projectId, serviceUrl)
 
-            case _ =>
-              BadRequest("not yet implemented")
-          }
-      }
-
-    case r @ GET -> Root / UUIDWrapper(_) / "map-token" / UUIDWrapper(_) as user =>
-      logger.debug(s"Request path info to start: ${r.req.pathInfo}")
-      val rewritten = OgcMapTokenRewrite(r)
-      logger.debug(
-        s"Request path info after rewrite: ${rewritten.req.pathInfo}")
-      routes(rewritten).value flatMap {
-        case Some(resp) =>
-          IO.pure { resp }
-        case _ =>
-          NotFound()
-      }
+    case authedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
+          _) as user =>
+      val serviceUrl = requestToServiceUrl(authedReq.req)
+      authedReqToResponse(authedReq, projectId, serviceUrl)
   }
 }

@@ -27,6 +27,10 @@ class Authenticators(val xa: Transactor[IO])
 
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
     {
+      case _ -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
+            mapTokenId) =>
+        userFromMapToken(MapTokenDao.checkProject(projectId), mapTokenId)
+
       case req @ _ -> UUIDWrapper(analysisId) /: _
             :? TokenQueryParamMatcher(tokenQP)
             :? MapTokenQueryParamMatcher(mapTokenQP)
@@ -44,10 +48,9 @@ class Authenticators(val xa: Transactor[IO])
       case req @ _ -> UUIDWrapper(projectId) /: _
             :? TokenQueryParamMatcher(tokenQP)
             :? MapTokenQueryParamMatcher(mapTokenQP) => {
-        val withMapToken = OgcMapTokenRewrite(AuthedRequest((), req)).req
         val authHeaderO: Option[Header] =
-          withMapToken.headers.get(CaseInsensitiveString("Authorization"))
-        val mapTokenO = mapTokenQP orElse (withMapToken.params
+          req.headers.get(CaseInsensitiveString("Authorization"))
+        val mapTokenO = mapTokenQP orElse (req.params
           .get("mapToken") map { UUID.fromString _ })
         (authHeaderO, tokenQP, mapTokenO) match {
           case (None, None, None) =>
