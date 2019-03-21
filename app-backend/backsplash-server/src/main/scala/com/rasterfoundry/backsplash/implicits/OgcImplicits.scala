@@ -14,6 +14,7 @@ import com.rasterfoundry.common.datamodel.{
   ProjectLayer
 }
 import com.rasterfoundry.database.{
+  LayerAttributeDao,
   ProjectDao,
   ProjectLayerDao,
   ProjectLayerDatasourcesDao
@@ -24,6 +25,8 @@ import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
+import geotrellis.raster.histogram.Histogram
+import geotrellis.raster.render.ColorRamps.Viridis
 import geotrellis.server.ogc.{OgcSource, SimpleSource, OgcStyle}
 import geotrellis.server.ogc.ows._
 import geotrellis.server.ogc.wcs.WcsModel
@@ -43,24 +46,26 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
 
   private def datasourcesToOgcStyles(
       datasources: List[Datasource]): List[OgcStyle] = {
-    val bands: List[List[Band]] = datasources map {
-      _.bands.as[List[Band]].toOption getOrElse Nil
+    val bands: List[List[Band.Create]] = datasources map { datasource =>
+      {
+        val decoded = datasource.bands.as[List[Band.Create]]
+        decoded getOrElse Nil
+      }
     }
     val shortest = bands.minBy(_.length)
-    // TODO Getting a NIL from this for a datasource with defined bands, so probably
-    // decoding to the wrong type
-    shortest.zipWithIndex map {
-      case (_, i) =>
-        OgcStyles.fromSingleBandOptions(
-          SingleBandOptions.Params(
-            i,
-            BandDataType.Sequential,
-            0,
-            () asJson, // TODO colorScheme -- need to construct this from Viridis somehow
-            "left"
-          ),
-          s"Single band - $i"
-        )
+    shortest map { band =>
+      OgcStyles.fromSingleBandOptions(
+        SingleBandOptions.Params(
+          band.number,
+          BandDataType.Sequential,
+          0,
+          Viridis.colors map { color =>
+            s"#${color.toHexString.take(6)}"
+          } asJson,
+          "left"
+        ),
+        s"Single band - ${band.name}"
+      )
     }
   }
 
@@ -68,12 +73,9 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
     ProjectLayerDatasourcesDao
       .listProjectLayerDatasources(projectLayerId)
       .transact(xa) map { datasources =>
-      println(s"Number of datasources: ${datasources.length}")
-      val out = (datasources flatMap { datasource =>
+      (datasources flatMap { datasource =>
         compositesToOgcStyles(datasource.composites)
       }) ++ datasourcesToOgcStyles(datasources)
-      println(s"Number of styles produces: ${out.length}")
-      out
     }
 
   private def projectLayerToSimpleSource(
@@ -143,5 +145,16 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
           )
         }
 
+      def getLayerHistogram(self: ProjectDao,
+                            id: UUID): IO[List[Histogram[Double]]] =
+        LayerAttributeDao().getProjectLayerHistogram(id, xa) map { histArrays =>
+          histArrays map { _.toList } reduce {
+            (hists1: List[Histogram[Double]],
+             hists2: List[Histogram[Double]]) =>
+              hists1 zip hists2 map {
+                case (h1, h2) => h1 merge h2
+              }
+          }
+        }
     }
 }

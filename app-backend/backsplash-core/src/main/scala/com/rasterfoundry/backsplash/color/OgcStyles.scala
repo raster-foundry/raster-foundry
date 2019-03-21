@@ -30,8 +30,10 @@ object OgcStyles {
         val rgbHists = bands map { hists(_) }
         val subset = mbtile.subsetBands(bands)
         val params =
-          ColorCorrect.paramsFromBandSpecOnly(bands(0), bands(1), bands(2))
-        val corrected = params.colorCorrect(subset, rgbHists.toSeq, None)
+          ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
+        val corrected = params.colorCorrect(subset,
+                                            rgbHists.toSeq,
+                                            getNoDataValue(subset.cellType))
         toBytes(corrected, format)
       }
     }
