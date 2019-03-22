@@ -63,7 +63,7 @@
             <div class="input-group">
                 <label
                     class="radio"
-                    ng-click="$ctrl.updateEmbedParams({ type: 'comparison' })"
+                    ng-click="$ctrl.onEmbedTypeChange('comparison')"
                     ng-class="{'active': $ctrl.embedParameters.type === 'comparison'}"
                     ng-disabled="$ctrl.embedParameters.type !== 'comparison'"
                 >
@@ -77,7 +77,7 @@
                 </label>
                 <label
                     class="radio"
-                    ng-click="$ctrl.updateEmbedParams({ type: 'single' })"
+                    ng-click="$ctrl.onEmbedTypeChange('single')"
                     ng-class="{'active': $ctrl.embedParameters.type === 'single'}"
                     ng-disabled="$ctrl.embedParameters.type !== 'single'"
                 >
@@ -94,15 +94,76 @@
         <div class="page-card-section">
             <div class="side-by-side">
                 <div class="form-group">
-                    <label for="published-link">Left pane default</label>
+                    <label for="published-link" ng-if="$ctrl.embedParameters.type === 'comparison'">
+                        Left pane default
+                        <i
+                            class="icon-warning color-warning"
+                            ng-if="!$ctrl.embedParameters.pane1"
+                        ></i>
+                    </label>
+                    <label for="published-link" ng-if="$ctrl.embedParameters.type === 'single'">
+                        Default layer or analysis
+                        <i
+                            class="icon-warning color-warning"
+                            ng-if="!$ctrl.embedParameters.pane1"
+                        ></i>
+                    </label>
                     <div class="input-group">
-                        <select class="form-control"></select>
+                        <select
+                            class="form-control"
+                            ng-model="$ctrl.embedParameters.pane1"
+                            ng-change="$ctrl.updateEmbedUrl()"
+                        >
+                            <optgroup label="Layers" ng-if="$ctrl.embedParameters.layers.size">
+                                <option
+                                    ng-repeat="layer in $ctrl.embedParameters.layers.toJS()"
+                                    value="{{ layer.id }}"
+                                >
+                                    {{ layer.name }}
+                                </option>
+                            </optgroup>
+                            <optgroup label="Analyses" ng-if="$ctrl.embedParameters.analyses.size">
+                                <option
+                                    ng-repeat="analysis in $ctrl.embedParameters.analyses.toJS()"
+                                    value="{{ analysis.id }}"
+                                >
+                                    {{ analysis.name }}
+                                </option>
+                            </optgroup>
+                        </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="published-link">Right pane default</label>
+                <div class="form-group" ng-if="$ctrl.embedParameters.type === 'comparison'">
+                    <label for="published-link">
+                        Right pane default
+                        <i
+                            class="icon-warning color-warning"
+                            ng-if="!$ctrl.embedParameters.pane2"
+                        ></i>
+                    </label>
                     <div class="input-group">
-                        <select class="form-control"></select>
+                        <select
+                            class="form-control"
+                            ng-model="$ctrl.embedParameters.pane2"
+                            ng-change="$ctrl.updateEmbedUrl()"
+                        >
+                            <optgroup label="Layers" ng-if="$ctrl.embedParameters.layers.size">
+                                <option
+                                    ng-repeat="layer in $ctrl.embedParameters.layers.toJS()"
+                                    value="{{ layer.id }}"
+                                >
+                                    {{ layer.name }}
+                                </option>
+                            </optgroup>
+                            <optgroup label="Analyses" ng-if="$ctrl.embedParameters.analyses.size">
+                                <option
+                                    ng-repeat="analysis in $ctrl.embedParameters.analyses.toJS()"
+                                    value="{{ analysis.id }}"
+                                >
+                                    {{ analysis.name }}
+                                </option>
+                            </optgroup>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -111,12 +172,16 @@
             <div class="form-group">
                 <label for="published-link">Embed code</label>
                 <div class="input-group">
-                    <textarea class="form-control" rows="4"></textarea>
+                    <textarea
+                        class="form-control"
+                        rows="4"
+                        ng-value="$ctrl.embedUrl"
+                        readonly
+                    ></textarea>
                     <button
                         class="btn btn-link btn-square btn-icon"
                         clipboard
-                        text="$ctrl.shareUrl"
-                        ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
+                        text="$ctrl.embedUrl"
                         ng-disabled="!($ctrl.embedParameters.layers.size || $ctrl.embedParameters.analyses.size)"
                     >
                         <i
@@ -161,6 +226,29 @@
                             class="btn btn-tiny btn-ghost"
                             ng-if="$ctrl.embedParameters.layers.has(layer)"
                             ng-click="$ctrl.onEmbedLayerToggle(layer)"
+                        >
+                            Remove from embed
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="page-card-list-item"
+                    ng-repeat="analysis in $ctrl.layerAnalyses[layer.id].items"
+                    ng-if="$ctrl.layerAnalyses[layer.id].items"
+                >
+                    <div class="flex-fill">{{ analysis.name }}</div>
+                    <div>
+                        <button
+                            class="btn btn-tiny btn-ghost"
+                            ng-if="!$ctrl.embedParameters.analyses.has(analysis)"
+                            ng-click="$ctrl.onEmbedAnalysisToggle(analysis)"
+                        >
+                            Add to embed
+                        </button>
+                        <button
+                            class="btn btn-tiny btn-ghost"
+                            ng-if="$ctrl.embedParameters.analyses.has(analysis)"
+                            ng-click="$ctrl.onEmbedAnalysisToggle(analysis)"
                         >
                             Remove from embed
                         </button>

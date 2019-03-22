@@ -3481,7 +3481,7 @@ rf-list-item {
     background: $white;
     border: 1px solid $gray-lightest;
     border-radius: 3px;
-    margin: 0.5em;
+    margin: 0.5em 0.5em 0;
     &[ng-click] {
         cursor: pointer;
     }
@@ -3734,13 +3734,11 @@ rf-data-viz-statistics {
 .page-card-list {
     .page-card-list-item {
         padding: 1em;
-        border-bottom: 1px solid $shade-light;
+        border-bottom: 1px solid $gray-lightest;
         display: flex;
+        align-items: center;
         &.header {
             padding-top: 0;
-        }
-        &:last-child {
-            border-bottom: none;
         }
     }
 }
