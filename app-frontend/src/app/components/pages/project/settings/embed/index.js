@@ -5,8 +5,8 @@ import _ from 'lodash';
 
 class ProjectEmbedController {
     constructor(
-        $rootScope, $state, $timeout,
-        projectService, analysisService, paginationService
+        $rootScope, $scope, $state, $timeout,
+        projectService, analysisService, paginationService, tokenService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -15,6 +15,7 @@ class ProjectEmbedController {
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
         this.initEmbedParameters();
+        this.initMapToken();
         this.embedUrl = '';
         this.selectedLayers = new Set();
         this.layerAnalyses = {};
@@ -31,6 +32,10 @@ class ProjectEmbedController {
             layers: new Set(),
             analyses: new Set()
         };
+    }
+
+    initMapToken() {
+        this.mapTokenRequest = this.tokenService.getOrCreateProjectMapToken(this.project);
     }
 
     fetchPage(page = this.$state.params.page || 1) {
@@ -191,27 +196,35 @@ class ProjectEmbedController {
     updateEmbedUrl() {
         const base = this.BUILDCONFIG.EMBED_URI;
         if (this.hasValidParameters()) {
-            const src = `${base}?${this.embedParametersToString(this.embedParameters)}`;
-            // eslint-disable-next-line max-len
-            this.embedUrl = `<iframe width="480" height="270" src="${src}" frameborder="0" allow=“full-screen;”></iframe>`;
+            this.embedParametersToString(this.embedParameters).then(p => {
+                const src = `${base}?${p}`;
+                // eslint-disable-next-line max-len
+                this.embedUrl = `<iframe width="480" height="270" src="${src}" frameborder="0" allow=“full-screen;”></iframe>`;
+                this.$scope.$evalAsync();
+            });
         } else {
             this.embedUrl = '';
         }
     }
 
     embedParametersToString(params) {
-        const p = { ...params };
-        if (p.type === 'single') {
-            p.pane2 = '';
-        }
-        const kvTransform = (k, v) => `${k}=${v}`;
-        const defaultTransform = k => kvTransform(k, p[k]);
-        const setTransform = k => kvTransform(k, p[k].toJS().map(i => i.id).join(','));
-        const setParameters = ['layers', 'analyses'];
-        const stringifiedParams = Object.keys(p).map(k => setParameters.includes(k) ?
-            setTransform(k) :
-            defaultTransform(k)).join('&');
-        return stringifiedParams;
+        const paramsP = this.project.visibility !== 'PUBLIC' ?
+            this.mapTokenRequest.then(m => ({ ...params, mapToken: m.id})) :
+            Promise.resolve({...params});
+
+        return paramsP.then(p => {
+            if (p.type === 'single') {
+                p.pane2 = '';
+            }
+            const kvTransform = (k, v) => `${k}=${v}`;
+            const defaultTransform = k => kvTransform(k, p[k]);
+            const setTransform = k => kvTransform(k, p[k].toJS().map(i => i.id).join(','));
+            const setParameters = ['layers', 'analyses'];
+            const stringifiedParams = Object.keys(p).map(k => setParameters.includes(k) ?
+                setTransform(k) :
+                defaultTransform(k)).join('&');
+            return stringifiedParams;
+        });
     }
 }
 

@@ -429,7 +429,7 @@ export default app => {
             throw new Error(
                 'ERROR: Update project.service getProjectCorners to use the ' +
                     'project extent. This function was not updated because ' +
-                    "we don't seem to use it anywhere right now."
+                    'we don\'t seem to use it anywhere right now.'
             );
             // return this.fetchProject(id).then(({project}) => {
 
@@ -622,7 +622,7 @@ export default app => {
                     Object.assign(
                         {
                             tag: new Date().getTime(),
-                            token: params.mapToken ? null : this.authService.token()
+                            token: _.get(params, 'mapToken', this.authService.token())
                         },
                         params
                     ),
