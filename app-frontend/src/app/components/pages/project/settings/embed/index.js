@@ -74,23 +74,28 @@ class ProjectEmbedController {
         return currentQuery;
     }
 
-    fetchAnalysesForLayer(layer, page = 1) {
-        this.layerAnalyses[layer.id] = {
-            isLoading: true,
-            items: [],
-            pagination: {}
-        };
+    fetchAnalysesForLayer(layer) {
+        if (!this.layerAnalyses[layer.id]) {
+            this.layerAnalyses[layer.id] = {
+                items: [],
+                pagination: {
+                    currentPage: 0
+                }
+            };
+        }
+
+        this.layerAnalyses[layer.id].isLoading = true;
 
         const currentQuery = this.analysisService.fetchAnalyses(
             {
-                pageSize: 30,
-                page: page - 1,
+                pageSize: 10,
+                page: this.layerAnalyses[layer.id].pagination.currentPage,
                 projectLayerId: layer.id
             }
         ).then((paginatedAnalyses) => {
             this.layerAnalyses[layer.id] = {
                 isLoading: false,
-                items: paginatedAnalyses.results,
+                items: [ ...this.layerAnalyses[layer.id].items, ...paginatedAnalyses.results],
                 pagination: this.paginationService.buildPagination(paginatedAnalyses)
             };
         }).catch((e) => {
@@ -102,6 +107,7 @@ class ProjectEmbedController {
         const without = this.selectedLayers.filter(i => i.id !== layer.id);
         if (without.size !== this.selectedLayers.size) {
             this.selectedLayers = without;
+            this.layerAnalyses[layer.id] = false;
             this.onEmbedLayerToggle(layer, false);
         } else {
             this.selectedLayers = this.selectedLayers.add(layer);

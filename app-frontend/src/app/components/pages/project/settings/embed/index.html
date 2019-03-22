@@ -254,6 +254,19 @@
                         </button>
                     </div>
                 </div>
+                <div
+                    class="page-card-list-item text-center"
+                    ng-if="$ctrl.layerAnalyses[layer.id].pagination.hasNext"
+                >
+                    <div class="flex-fill">
+                        <button
+                            class="btn btn-tiny btn-ghost"
+                            ng-click="$ctrl.fetchAnalysesForLayer(layer)"
+                        >
+                            Load more analyses for {{ layer.name }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
