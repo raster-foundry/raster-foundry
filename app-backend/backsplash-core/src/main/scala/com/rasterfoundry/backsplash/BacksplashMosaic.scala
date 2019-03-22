@@ -17,7 +17,7 @@ import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 object BacksplashMosaic extends ToHistogramStoreOps {
 
   def toRasterSource(bsm: BacksplashMosaic): IO[MosaicRasterSource] = {
-    filterRelevant(bsm).compile.to[List] map { backsplashImages =>
+    filterRelevant(bsm).compile.toList map { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>
           MosaicRasterSource(images map { image =>

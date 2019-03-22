@@ -29,7 +29,7 @@ object Version {
   val geotrellisServer = "0.16.7-JS-SNAPSHOT"
   val hadoop = "2.8.4"
   val hikariCP = "3.2.0"
-  val http4s = "0.20.0-M4"
+  val http4s = "0.20.0-M6"
   val json4s = "3.5.0"
   val jts = "1.13"
   val maml = "0.1.1"
