@@ -322,7 +322,7 @@ module.exports = function (_path) {
                     MAP_CENTER: JSON.stringify([-6.8, 39.2]),
                     MAP_ZOOM: 5,
                     PLATFORM_USERS: PLATFORM_USERS,
-                    EMBED_URI: JSON.stringify('testing')
+                    EMBED_URI: JSON.stringify('')
                 },
                 'HELPCONFIG': {
                     API_DOCS_URL: JSON.stringify('https://docs.rasterfoundry.com/'),
