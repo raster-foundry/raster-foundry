@@ -35,6 +35,7 @@
 - Enabled project layer splitting on frontend [\#4766](https://github.com/raster-foundry/raster-foundry/pull/4766)
 - Added the histogram part of analysis data visualization UI [\#4756](https://github.com/raster-foundry/raster-foundry/pull/4756)
 - Add v2 project share page with layers and analyses [\#4768](https://github.com/raster-foundry/raster-foundry/pull/4768)
+- Added support for listing annotations on public projects without auth or with a map token query parameter [\#4795](https://github.com/raster-foundry/raster-foundry/pull/4795)
 
 ### Changed
 
