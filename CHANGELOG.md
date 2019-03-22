@@ -58,6 +58,7 @@
 ### Fixed
 
 - No longer exclude public objects from searches for shared objects, except for scenes [\#4754](https://github.com/raster-foundry/raster-foundry/pull/4754)
+- Users that have edit permissions on an analysis can now share the analysis from within the lab interface
 
 ## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
 
