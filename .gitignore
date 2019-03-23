@@ -88,6 +88,8 @@ project/plugins/project/
 .worksheet
 .ensime/*
 .ensime
+.metals/*
+.metals
 api-server/.ensime
 api-server/.ensime_cache/*
 /deployment/ansible/raster-foundry.retry

@@ -382,6 +382,11 @@ function projectStatesV2($stateProvider) {
             url: '/publishing',
             component: 'rfProjectPublishingPage'
         })
+        .state('project.settings.embed', {
+            title: 'Project Embedding',
+            url: '/embed',
+            component: 'rfProjectEmbedPage'
+        })
         .state('project.settings.permissions', {
             title: 'Project Permissions',
             url: '/permissions',
