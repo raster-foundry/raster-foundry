@@ -21,21 +21,6 @@ class ProjectLayerSecondaryNavbarController {
             callback: () => this.openSplitLayerModal()
         };
 
-        const publishing = {
-            name: 'Publishing',
-            title: 'publishing',
-            menu: true,
-            callback: () =>
-                this.$state.go('project.settings.publishing', { projectId: this.projectId })
-        };
-
-        const layerSettings = {
-            name: 'Layer settings',
-            title: 'layer-settings',
-            menu: true,
-            callback: () => this.$state.go('project.settings', { projectId: this.projectId })
-        };
-
         const deleteLayer = {
             name: 'Delete layer',
             title: 'delete-layer',
@@ -43,7 +28,7 @@ class ProjectLayerSecondaryNavbarController {
             callback: () => this.openLayerDeleteModal()
         };
 
-        this.actions = [splitLayer, publishing, layerSettings, deleteLayer];
+        this.actions = [splitLayer, deleteLayer];
     }
 
     openSplitLayerModal() {
