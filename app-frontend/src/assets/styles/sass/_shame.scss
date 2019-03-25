@@ -3319,6 +3319,7 @@ rf-project-options-page,
 rf-project-permissions-page,
 rf-project-publishing-page,
 rf-project-analyses-visualize-page,
+rf-project-create-analysis-page,
 rf-project-embed-page {
     flex: 1;
     display: flex;
@@ -3331,7 +3332,8 @@ rf-project-embed-page {
 }
 
 rf-project-publishing-page,
-rf-project-embed-page {
+rf-project-embed-page,
+rf-project-create-analysis-page {
     flex-direction: row;
 }
 .page-content-container {
@@ -3380,6 +3382,9 @@ rf-project-embed-page {
     &.slim {
         padding: 1.25rem 1rem;
     }
+    &.no-padding {
+        padding: 0;
+    }
     &.cozy {
         margin-bottom: 1.5rem;
     }
@@ -3394,6 +3399,14 @@ rf-project-embed-page {
     &.analysis-histogram-card {
         max-width: 1284px;
         padding: 1rem;
+    }
+    &.transparent {
+        border: none;
+        background: none;
+        box-shadow: none;
+    }
+    &.wide {
+        max-width: 1300px;
     }
 }
 
@@ -3463,29 +3476,13 @@ rf-project-embed-page {
     }
 }
 
-rf-project-create-analysis-page {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: $white;
-    min-height: 0; // firefox flexbox compatability
-    height: 100%;
-    .sidebar {
-        background: $off-white;
-    }
-
-    .analysis-list {
-        margin-top: 0;
-        background: $white;
-    }
-}
-
 rf-list-item {
     display: block;
     background: $white;
     border: 1px solid $gray-lightest;
     border-radius: 3px;
     margin: 0.5em 0.5em 0;
+    box-shadow: 0px 3px 8px rgba($shade-normal, 0.1);
     &[ng-click] {
         cursor: pointer;
     }
@@ -3493,6 +3490,10 @@ rf-list-item {
     &.histogram-item {
         margin: 0.5rem auto;
         max-width: 1288px;
+    }
+    .list-group-item {
+        border: none !important;
+        background: none !important;
     }
 }
 
@@ -3610,7 +3611,7 @@ rf-selected-actions-bar {
         margin-right: 5px;
         font-size: 1.4rem;
         cursor: pointer;
-        
+
         &:after {
             border: 2px solid $shade-light;
         }
@@ -3810,7 +3811,7 @@ rf-data-viz-statistics {
     bottom: 10px;
     background: $white;
     border: 2px solid $off-white;
-    box-shadow: 0 5px 10px -4px rgba($shade-dark, .2);
+    box-shadow: 0 5px 10px -4px rgba($shade-dark, 0.2);
     border-radius: 5px;
     padding: 15px;
 
@@ -3882,7 +3883,7 @@ rf-project-analysis-quickedit-page {
     }
     .overlay {
         position: absolute;
-        background: rgba(255,255,255,0.5);
+        background: rgba(255, 255, 255, 0.5);
         top: 0;
         left: 0;
         right: 0;
@@ -3900,7 +3901,7 @@ rf-project-analysis-quickedit-page {
     flex-direction: row;
     align-items: center;
     margin-bottom: 12px;
-    >:first-child {
+    > :first-child {
         margin: 0 10px 0 0;
         line-height: 1;
         font-weight: 400;
@@ -3963,11 +3964,19 @@ rf-quick-edit-histogram {
         }
         .gradient-bar {
             height: 1.25rem;
-
         }
         .dropdown-menu {
             top: initial;
             bottom: 1.3em;
         }
+    }
+}
+.two-column-list {
+    justify-content: space-between;
+    rf-list-item {
+        max-width: 49.5%;
+        flex: 0 1 49.5%;
+        margin-left: 0;
+        margin-right: 0;
     }
 }
