@@ -256,7 +256,12 @@ class ProjectLayersPageController {
         if (layer) {
             layers = [layer];
         }
-        this.$state.go('project.create-analysis', {layers});
+        let layersWithoutAOI = layers.filter(l => !_.get(l, 'geometry.type'));
+        if (layersWithoutAOI.length) {
+            this.aoiRequiredModal(layersWithoutAOI[0]);
+        } else {
+            this.$state.go('project.create-analysis', {layers});
+        }
     }
 
     deleteProjectLayers(layers) {
@@ -364,6 +369,33 @@ class ProjectLayersPageController {
             colorGroupHex: layer.colorGroupHex,
             geometry: layer.geometry
         };
+    }
+
+    aoiRequiredModal(layer) {
+        this.modalService
+            .open({
+                component: 'rfFeedbackModal',
+                resolve: {
+                    title: () => `No AOI defined for "${layer.name}"`,
+                    content: () =>`
+                        <h2>
+                            Creating an analyses requires an AOI
+                        </h2>
+                        <p>
+                            but the layer "${layer.name}" does not have an AOI defined.
+                        </p>
+                    `,
+                    feedbackIconType: () => 'warning',
+                    feedbackIcon: () => 'icon-warning',
+                    feedbackBtnType: () => 'btn-warning',
+                    feedbackBtnText: () => 'Add AOI',
+                    cancelText: () => 'Cancel'
+                }
+            })
+            .result.then(resp => {
+                this.goToAoiDef(layer.id);
+            })
+            .catch(() => {});
     }
 
     goToAoiDef(id) {
