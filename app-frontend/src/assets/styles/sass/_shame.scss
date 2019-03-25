@@ -3495,6 +3495,11 @@ rf-list-item {
         border: none !important;
         background: none !important;
     }
+    item-date,
+    item-subtitle {
+        font-size: 1.3rem;
+        color: $shade-normal;
+    }
 }
 
 .column-6 {
@@ -3594,6 +3599,8 @@ rf-selected-actions-bar {
     justify-content: space-between;
     padding: 0.5rem 1.5rem;
     box-shadow: 0px 3px 8px rgba($shade-normal, 0.1);
+    position: relative;
+    border-bottom: 1px solid $gray-lightest;
 }
 
 .select-button {

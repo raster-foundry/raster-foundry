@@ -11,7 +11,9 @@
         <item-title>
             <strong ng-attr-title="{{ layer.name }}">{{ layer.name }}</strong>
         </item-title>
-        <item-date>{{ layer.createdAt | date }}</item-date>
+        <item-date ng-if="layer.rangeStart && layer.rangeEnd">
+            {{ layer.rangeStart | date }} - {{ layer.rangeEnd | date }}
+        </item-date>
         <item-actions>
             <rf-list-item-actions actions="$ctrl.layerActions.get(layer.id)">
             </rf-list-item-actions>

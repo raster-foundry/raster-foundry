@@ -26,14 +26,14 @@ class ProjectCreateAnalysisPageController {
 
     fetchLayers() {
         if (this.layers && this.layers.length) {
-            this.layerList = this.layers.map(this.toLayerInfo);
+            this.layerList = this.layers;
             this.layerActions = new Map(this.layerList.map(this.createLayerActions.bind(this)));
         } else {
             this.currentQuery = this.projectService
                 .getProjectLayer(this.project.id, this.project.defaultLayerId)
                 .then((defaultLayer) => {
                     delete this.currentQuery;
-                    this.layerList = [this.toLayerInfo(defaultLayer)];
+                    this.layerList = [defaultLayer];
                     this.layerActions = new Map(
                         this.layerList.map(this.createLayerActions.bind(this)));
                 }).catch(e => {
@@ -56,17 +56,6 @@ class ProjectCreateAnalysisPageController {
             });
         }
         return [layer.id, actions];
-    }
-
-    toLayerInfo(layer) {
-        return {
-            id: layer.id,
-            name: layer.name,
-            subtext: layer.subtext,
-            date: layer.createdAt,
-            colorGroupHex: layer.colorGroupHex,
-            geometry: layer.geometry
-        };
     }
 
     handleOwnershipFilterChange() {
