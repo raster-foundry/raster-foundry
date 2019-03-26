@@ -1,52 +1,57 @@
 <div ui-view class="flex-column">
-  <div class="sidebar-static">
-    <div class="sidebar-header">
-      <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit.colormode">
-        <i class="icon-arrow-left"></i>
-      </a>
-      <h5 class="sidebar-title">Advanced Color Correction</h5>
-    </div>
-    <div class="content">
-      <div class="sidebar-actions-group">
-        <label>Select which scenes to correct</label>
-        <div class="column-6 nogutter btn-group">
-          <button type="button"
-                  class="btn"
-                  ng-class="{'btn-primary': !$ctrl.shouldSelectAll()}"
-                  ng-disabled="$ctrl.selectedScenes.size === 0"
-                  ui-sref="projects.edit.advancedcolor.adjust">
-            Color Correct
-          </button>
-          <button type="button"
-                  class="btn btn-small"
-                  ng-class="{'btn-primary': !$ctrl.shouldSelectAll()}"
-                  ng-click="$ctrl.onToggleSelection()">
-            <i class="icon-check"></i>
-          </button>
+    <div class="sidebar-static">
+        <div class="sidebar-header">
+            <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit.colormode">
+                <i class="icon-arrow-left"></i>
+            </a>
+            <h5 class="sidebar-title">Advanced Color Correction</h5>
         </div>
-      </div>
+        <div class="content">
+            <div class="sidebar-actions-group">
+                <label>Select which scenes to correct</label>
+                <div class="column-6 nogutter btn-group">
+                    <button
+                        type="button"
+                        class="btn"
+                        ng-class="{'btn-primary': !$ctrl.shouldSelectAll()}"
+                        ng-disabled="$ctrl.selectedScenes.size === 0"
+                        ui-sref="projects.edit.advancedcolor.adjust"
+                    >
+                        Color Correct
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-small"
+                        ng-class="{'btn-primary': !$ctrl.shouldSelectAll()}"
+                        ng-click="$ctrl.onToggleSelection()"
+                    >
+                        <i class="icon-check"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="sidebar-scrollable">
-    <div class="list-group">
-      <rf-scene-item
-          previewable
-          clickable
-          ng-click="$ctrl.setSelected(scene, !$ctrl.isSelected(scene))"
-          scene="scene"
-          repository="$ctrl.repository"
-          selected="$ctrl.isSelected(scene)"
-          on-select="$ctrl.setSelected(scene, selected)"
-          ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
-          ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
-          ng-repeat="scene in $ctrl.sceneList track by scene.id">
-      </rf-scene-item>
+    <div class="sidebar-scrollable">
+        <div class="list-group">
+            <rf-scene-item
+                previewable
+                clickable
+                ng-click="$ctrl.setSelected(scene, !$ctrl.isSelected(scene))"
+                scene="scene"
+                repository="$ctrl.repository"
+                selected="$ctrl.isSelected(scene)"
+                on-select="$ctrl.setSelected(scene, selected)"
+                ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
+                ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
+                ng-repeat="scene in $ctrl.sceneList track by scene.id"
+            >
+            </rf-scene-item>
+        </div>
+        <rf-pagination-controls
+            pagination="$ctrl.pagination"
+            is-loading="$ctrl.currentQuery"
+            on-change="$ctrl.fetchPage(value)"
+            ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
+        ></rf-pagination-controls>
     </div>
-    <rf-pagination-controls
-        pagination="$ctrl.pagination"
-        is-loading="$ctrl.currentQuery"
-        on-change="$ctrl.fetchPage(value)"
-        ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
-    ></rf-pagination-controls>
-  </div>
 </div>

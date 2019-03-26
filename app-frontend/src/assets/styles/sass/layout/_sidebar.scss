@@ -126,9 +126,9 @@
 }
 
 .sidebar-actions-group {
-    a,.btn {
+    a,
+    .btn {
         box-shadow: initial;
-        padding: 1.15rem 1rem;
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -142,7 +142,8 @@ rf-selected-actions-bar {
     align-items: center;
     font-size: 1.3rem;
     z-index: 101;
-
+    border-bottom: 1px solid rgba(0, 0, 0, 0);
+    padding: 0.5rem;
     a {
         box-shadow: initial;
         display: flex;
@@ -161,9 +162,6 @@ rf-selected-actions-bar {
             font-weight: 600;
             font-size: 1.3rem;
         }
-    }
-    &.with-padding {
-        padding: 0.5rem 1.5rem;
     }
 
     p {

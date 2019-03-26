@@ -1,6 +1,6 @@
 <div class="sidebar-actions-group" ng-show="$ctrl.selected.size === 0">
-    <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
-        <i class="icon-plus"></i>Add imagery
+    <div uib-dropdown uib-dropdown-toggle>
+        <button class="btn btn-tiny btn-transparent"> <i class="icon-plus"></i>Add imagery </button>
         <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
             <li role="menuitem"><a href ng-click="$ctrl.browseScenes()">Browse</a></li>
             <li role="menuitem"><a href ng-click="$ctrl.openImportModal()">Import</a></li>
