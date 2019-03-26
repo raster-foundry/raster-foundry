@@ -6,16 +6,19 @@ import com.rasterfoundry.common.ast.{
   MamlConversion
 }
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.database.ProjectDao
 
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{ClassMap => _}
 
-class BacksplashMamlAdapter[HistStore,
-                            ProjStore: ProjectStore,
-                            LayerStore: ProjectStore](
+import cats.effect.IO
+import doobie.Transactor
+import doobie.implicits._
+
+class BacksplashMamlAdapter[HistStore, LayerStore: ProjectStore](
     mosaicImplicits: MosaicImplicits[HistStore],
-    projStore: ProjStore,
-    layerStore: LayerStore) {
+    layerStore: LayerStore,
+    xa: Transactor[IO]) {
   import mosaicImplicits._
 
   def asMaml(ast: MapAlgebraAST)
@@ -29,21 +32,18 @@ class BacksplashMamlAdapter[HistStore,
           val bandActual = band.getOrElse(
             throw SingleBandOptionsException(
               "Band must be provided to evaluate AST"))
-          // This is silly - mostly making up single band options here when all we really need is the band number
+          val mosaic = fs2.Stream.eval {
+            ProjectDao.unsafeGetProjectById(projId).transact(xa)
+          } flatMap { project =>
+            layerStore.read(project.defaultLayerId, None, None, None)
+          } map { backsplashImage =>
+            backsplashImage.copy(subsetBands = List(bandActual))
+          }
           Map[String, BacksplashMosaic](
-            s"${projId.toString}_${bandActual}" -> (
-              projStore
-                .read(
-                  projId,
-                  None,
-                  None,
-                  None
-                ) map { backsplashIm =>
-                backsplashIm.copy(subsetBands = List(bandActual))
-              }
-            )
+            s"${projId.toString}_${bandActual}" -> mosaic
           )
         }
+
         case MapAlgebraAST.LayerRaster(_, layerId, band, _, _) => {
           val bandActual = band.getOrElse(
             throw SingleBandOptionsException(
