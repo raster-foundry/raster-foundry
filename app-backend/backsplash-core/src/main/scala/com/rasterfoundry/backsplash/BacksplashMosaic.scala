@@ -1,5 +1,7 @@
 package com.rasterfoundry.backsplash
 
+import geotrellis.contrib.vlm.MosaicRasterSource
+import geotrellis.proj4.WebMercator
 import geotrellis.vector._
 import geotrellis.raster.histogram._
 import geotrellis.server._
@@ -13,6 +15,20 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 
 object BacksplashMosaic extends ToHistogramStoreOps {
+
+  def toRasterSource(bsm: BacksplashMosaic): IO[MosaicRasterSource] = {
+    filterRelevant(bsm).compile.toList map { backsplashImages =>
+      backsplashImages.toNel match {
+        case Some(images) =>
+          MosaicRasterSource(images map { image =>
+            BacksplashImage.getRasterSource(image.uri)
+          }, WebMercator)
+        case _ =>
+          throw new MetadataException(
+            "Cannot construct a mosaic with no scenes")
+      }
+    }
+  }
 
   /** Filter out images that don't need to be included  */
   def filterRelevant(bsm: BacksplashMosaic): BacksplashMosaic = {

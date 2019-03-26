@@ -10,7 +10,6 @@ import geotrellis.raster._
 import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
 import geotrellis.server._
-import com.azavea.maml.ast._
 import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
@@ -54,11 +53,10 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
   }
 
   val rawMosaicTmsReification = new TmsReification[BacksplashMosaic] {
-    def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
 
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
         implicit contextShift: ContextShift[IO]
-    ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
+    ) = (z: Int, x: Int, y: Int) => {
       val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
       val mosaic = {
         val mbtIO = (BacksplashMosaic.filterRelevant(self) map { relevant =>
@@ -70,13 +68,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
           case _       => Raster(MultibandTile(invisiTile), extent)
         })
       }
-      mosaic.map(RasterLit(_))
+      mosaic.map(ProjectedRaster(_, WebMercator))
     }
   }
 
   val paintedMosaicTmsReification = new TmsReification[BacksplashMosaic] {
-    def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
-
     def getNoDataValue(cellType: CellType): Option[Double] = {
       cellType match {
         case ByteUserDefinedNoDataCellType(value)   => Some(value.toDouble)
@@ -96,8 +92,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     /** We know the head below is safe because we have to have images to get there */
     @SuppressWarnings(Array("TraversableHead"))
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
-        implicit contextShift: ContextShift[IO])
-      : (Int, Int, Int) => IO[Literal] =
+        implicit contextShift: ContextShift[IO]) =
       (z: Int, x: Int, y: Int) =>
         (for {
           bandCount <- self
@@ -218,12 +213,13 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             }
           }
         } yield {
-          RasterLit(mosaic)
+          ProjectedRaster(mosaic, WebMercator)
         }).attempt.map {
           case Left(NoDataInRegionException) =>
-            RasterLit(
+            ProjectedRaster(
               Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
-                     Extent(0, 0, 256, 256)))
+                     Extent(0, 0, 256, 256)),
+              WebMercator)
           case Left(e)          => throw e
           case Right(rasterLit) => rasterLit
       }
@@ -255,8 +251,6 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
   // this for now instead.
   val paintedMosaicExtentReification: ExtentReification[BacksplashMosaic] =
     new ExtentReification[BacksplashMosaic] {
-      def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
-
       def extentReification(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]) =
         (extent: Extent, cs: CellSize) => {
@@ -304,7 +298,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                 .map(_.reduceOption(_ merge _))
                 .map({
                   case Some(r) => r
-                  case _       => Raster(invisiTile, extent)
+                  case _       => Raster(MultibandTile(invisiTile), extent)
                 })
             } else {
               logger.debug("Creating single band extent")
@@ -339,18 +333,17 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                     .map(_.reduceOption(_ merge _))
                     .map({
                       case Some(r) => r
-                      case _       => Raster(invisiTile, extent)
+                      case _       => Raster(MultibandTile(invisiTile), extent)
                     })
                 }
               }
             }
-          } yield RasterLit(mosaic)
+          } yield ProjectedRaster(mosaic, WebMercator)
         }
     }
 
   implicit val rawMosaicExtentReification: ExtentReification[BacksplashMosaic] =
     new ExtentReification[BacksplashMosaic] {
-      def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
 
       def extentReification(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]) =
@@ -368,11 +361,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             .map { tiles =>
               val rasters = tiles.map(Raster(_, extent))
               rasters.reduceOption(_ merge _) match {
-                case Some(r) => RasterLit(r)
-                case _       => RasterLit(Raster(MultibandTile(invisiTile), extent))
+                case Some(r) => r
+                case _       => Raster(MultibandTile(invisiTile), extent)
               }
             }
-          mosaic
+          mosaic map { ProjectedRaster(_, WebMercator) }
         }
     }
 

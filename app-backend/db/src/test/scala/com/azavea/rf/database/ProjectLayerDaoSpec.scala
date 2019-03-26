@@ -40,9 +40,11 @@ class ProjectLayerDaoSpec
               listed <- ProjectLayerDao.listProjectLayersForProject(
                 pageRequest,
                 dbProject.id)
-            } yield { (dbProject, inserted, listed) }
+              listedWithImagery <- ProjectLayerDao.listProjectLayersWithImagery(
+                dbProject.id)
+            } yield { (dbProject, inserted, listed, listedWithImagery) }
 
-            val (project, inserted, listed) =
+            val (project, inserted, listed, listedWithImagery) =
               xa.use(t => insertAndListIO.transact(t)).unsafeRunSync
 
             assert(
@@ -50,6 +52,11 @@ class ProjectLayerDaoSpec
                                                          inserted.id),
               "Default layer id and inserted layer id were not the only results in layers for project"
             )
+            assert(
+              listedWithImagery.length == 0,
+              "No layers should have imagery in them"
+            )
+
             true
           }
       }

@@ -53,7 +53,7 @@ object TileReification extends LazyLogging {
       def tmsReification(self: List[(String, List[Int], Option[Double])],
                          buffer: Int)(
           implicit contextShift: ContextShift[IO]
-      ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
+      ) = (z: Int, x: Int, y: Int) => {
         val layoutDefinition = getLayoutDefinition(z)
         val extent = layoutDefinition.mapTransform.keyToExtent(x, y)
         logger.debug(s"Extent of Tile ($x, $y): ${extent}")
@@ -114,7 +114,7 @@ object TileReification extends LazyLogging {
               Raster(MultibandTile(tiles), extent)
           }
         }
-        exportTile.map(RasterLit(_))
+        exportTile.map(ProjectedRaster(_, WebMercator))
       }
     }
 
@@ -126,7 +126,7 @@ object TileReification extends LazyLogging {
       def tmsReification(self: List[(String, Int, Option[Double])],
                          buffer: Int)(
           implicit contextShift: ContextShift[IO]
-      ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
+      ) = (z: Int, x: Int, y: Int) => {
         val layoutDefinition = getLayoutDefinition(z)
         val extent = layoutDefinition.mapTransform.keyToExtent(x, y)
         val subTilesIO: IO[List[Option[MultibandTile]]] = self.parTraverse {
@@ -167,7 +167,7 @@ object TileReification extends LazyLogging {
               Raster(MultibandTile(invisiTile), extent)
           }
         }
-        exportTile.map(RasterLit(_))
+        exportTile.map(ProjectedRaster(_, WebMercator))
       }
     }
 }
