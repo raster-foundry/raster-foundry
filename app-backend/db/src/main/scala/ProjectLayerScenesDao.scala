@@ -79,7 +79,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
 
     val paginatedScenes = for {
       page <- pageRequest.sort.isEmpty match {
-        case true => filterQ.page(pageRequest, manualOrder)
+        case true  => filterQ.page(pageRequest, manualOrder)
         case false => filterQ.page(pageRequest)
       }
     } yield page
