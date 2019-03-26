@@ -1,11 +1,19 @@
 import _ from 'lodash';
 import tpl from './index.html';
-import {Set, Map} from 'immutable';
+import { Set, Map } from 'immutable';
 
 class ProjectLayersPageController {
     constructor(
-        $rootScope, $state, $q, $log, $scope,
-        projectService, paginationService, modalService, authService, mapService
+        $rootScope,
+        $state,
+        $q,
+        $log,
+        $scope,
+        projectService,
+        paginationService,
+        modalService,
+        authService,
+        mapService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -16,17 +24,15 @@ class ProjectLayersPageController {
         const visibleLayers = this.projectService.getVisibleProjectLayers();
         this.visible = visibleLayers.size ? visibleLayers : Set([this.project.defaultLayerId]);
         this.syncMapLayersToVisible();
-        this.projectService.getProjectPermissions(this.project, this.user).then(
-            permissions => {
-                this.permissions = permissions.map(p => p.actionType);
-            });
-        this.projectService.getProjectLayerStats(this.project.id).then(
-            layerSceneCounts => {
-                this.layerStats = layerSceneCounts;
-            });
+        this.projectService.getProjectPermissions(this.project, this.user).then(permissions => {
+            this.permissions = permissions.map(p => p.actionType);
+        });
+        this.projectService.getProjectLayerStats(this.project.id).then(layerSceneCounts => {
+            this.layerStats = layerSceneCounts;
+        });
         this.fetchPage();
 
-        this.$scope.$watch('$ctrl.visible', (visibleProjectLayers) => {
+        this.$scope.$watch('$ctrl.visible', visibleProjectLayers => {
             if (visibleProjectLayers) {
                 this.projectService.setVisibleProjectLayers(visibleProjectLayers);
             }
@@ -35,7 +41,7 @@ class ProjectLayersPageController {
 
     $onDestroy() {
         // remove layers from map
-        this.getMap().then((map) => {
+        this.getMap().then(map => {
             map.deleteLayers('Project Layers');
         });
     }
@@ -51,41 +57,46 @@ class ProjectLayersPageController {
     fetchPage(page = this.$state.params.page || 1) {
         this.layerList = [];
         this.layerActions = {};
-        const currentQuery = this.projectService.getProjectLayers(
-            this.project.id,
-            {
+        const currentQuery = this.projectService
+            .getProjectLayers(this.project.id, {
                 pageSize: 30,
                 page: page - 1
-            }
-        ).then((paginatedResponse) => {
-            this.layerList = paginatedResponse.results;
-            this.layerList.forEach((layer) => {
-                layer.subtext = '';
-                if (layer.id === this.project.defaultLayerId) {
-                    layer.subtext += 'Default layer';
+            })
+            .then(
+                paginatedResponse => {
+                    this.layerList = paginatedResponse.results;
+                    this.layerList.forEach(layer => {
+                        layer.subtext = '';
+                        if (layer.id === this.project.defaultLayerId) {
+                            layer.subtext += 'Default layer';
+                        }
+                        if (layer.smartLayerId) {
+                            layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
+                        }
+                    });
+                    const defaultLayer = this.layerList.find(
+                        l => l.id === this.project.defaultLayerId
+                    );
+                    this.layerActions = this.layerList.map(l =>
+                        this.addLayerActions(l, defaultLayer === l)
+                    );
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page);
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
                 }
-                if (layer.smartLayerId) {
-                    layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
                 }
             });
-            const defaultLayer = this.layerList.find(l => l.id === this.project.defaultLayerId);
-            this.layerActions = this.layerList.map(
-                (l) => this.addLayerActions(l, defaultLayer === l)
-            );
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
         this.currentQuery = currentQuery;
         return currentQuery;
     }
@@ -111,7 +122,8 @@ class ProjectLayersPageController {
                 {
                     icon: 'icon-eye',
                     isActive: () => this.visible.has(layer.id)
-                }, {
+                },
+                {
                     icon: 'icon-eye-off',
                     isActive: () => !this.visible.has(layer.id)
                 }
@@ -123,10 +135,8 @@ class ProjectLayersPageController {
         };
         const editAction = {
             name: 'Edit',
-            callback: () => this.$state.go(
-                'project.layer',
-                {projectId: this.project.id, layerId: layer.id}
-            ),
+            callback: () =>
+                this.$state.go('project.layer', { projectId: this.project.id, layerId: layer.id }),
             menu: true
         };
         const setDefaultAction = {
@@ -141,44 +151,49 @@ class ProjectLayersPageController {
         };
         const publishAction = {
             name: 'Publishing',
-            callback: () => this.$state.go(
-                'project.layer.settings.publishing',
-                {projectId: this.project.id, layerId: layer.id}
-            ),
+            callback: () =>
+                this.$state.go('project.layer.settings.publishing', {
+                    projectId: this.project.id,
+                    layerId: layer.id
+                }),
             menu: true
         };
         const exportAction = {
             name: 'Export',
-            callback: () => this.$state.go(
-                'project.layer.settings.publishing',
-                {projectId: this.project.id, layerId: layer.id}
-            ),
+            callback: () =>
+                this.$state.go('project.layer.settings.publishing', {
+                    projectId: this.project.id,
+                    layerId: layer.id
+                }),
             menu: true
         };
         const importAction = {
             name: 'Import imagery',
-            callback: () => this.modalService.open({
-                component: 'rfSceneImportModal',
-                resolve: {
-                    project: () => this.project,
-                    layer: () => layer,
-                    origin: () => 'project'
-                }
-            })
+            callback: () =>
+                this.modalService.open({
+                    component: 'rfSceneImportModal',
+                    resolve: {
+                        project: () => this.project,
+                        layer: () => layer,
+                        origin: () => 'project'
+                    }
+                })
         };
         const browseAction = {
             name: 'Browse for imagery',
-            callback: () => this.$state.go(
-                'project.layer.browse',
-                {projectId: this.project.id, layerId: layer.id}
-            )
+            callback: () =>
+                this.$state.go('project.layer.browse', {
+                    projectId: this.project.id,
+                    layerId: layer.id
+                })
         };
         const settingsAction = {
             name: 'Settings',
-            callback: () => this.$state.go(
-                'project.layer.settings',
-                {projectId: this.project.id, layerId: layer.id}
-            ),
+            callback: () =>
+                this.$state.go('project.layer.settings', {
+                    projectId: this.project.id,
+                    layerId: layer.id
+                }),
             menu: true
         };
         const deleteAction = {
@@ -193,14 +208,18 @@ class ProjectLayersPageController {
         // TODO: add implement these when the views are finished:
         // const unimplementedActions = [publishAction, exportAction, settingsAction];
         const layerActions = [
-            previewAction, editAction, editAoiAction, createAnalysisAction,
-            importAction, browseAction
+            previewAction,
+            editAction,
+            editAoiAction,
+            createAnalysisAction,
+            importAction,
+            browseAction
         ];
 
         return [
-            ...!_.get(layer, 'geometry.type') ? [alertAoiAction] : [],
+            ...(!_.get(layer, 'geometry.type') ? [alertAoiAction] : []),
             ...layerActions,
-            ...!isDefaultLayer ? [setDefaultAction, deleteAction] : []
+            ...(!isDefaultLayer ? [setDefaultAction, deleteAction] : [])
         ];
     }
 
@@ -213,9 +232,7 @@ class ProjectLayersPageController {
         if (this.allVisibleSelected()) {
             this.selected = this.selected.clear();
         } else {
-            this.selected = this.selected.merge(
-                new Map(this.layerList.map(i => [i.id, i]))
-            );
+            this.selected = this.selected.merge(new Map(this.layerList.map(i => [i.id, i])));
         }
         this.updateSelectText();
     }
@@ -251,11 +268,15 @@ class ProjectLayersPageController {
     }
 
     setProjectDefaultLayer(layer) {
-        this.projectService.updateProject(Object.assign({}, this.project, {
-            defaultLayerId: layer.id
-        })).then(() => {
-            this.$state.go('.', {}, {inherit: true, reload: true});
-        });
+        this.projectService
+            .updateProject(
+                Object.assign({}, this.project, {
+                    defaultLayerId: layer.id
+                })
+            )
+            .then(() => {
+                this.$state.go('.', {}, { inherit: true, reload: true });
+            });
     }
 
     createAnalysis(layer) {
@@ -263,7 +284,7 @@ class ProjectLayersPageController {
         if (layer) {
             layers = [layer];
         }
-        this.$state.go('project.create-analysis', {layers});
+        this.$state.go('project.create-analysis', { layers });
     }
 
     deleteProjectLayers(layers) {
@@ -276,9 +297,9 @@ class ProjectLayersPageController {
                     title: () => `Really delete ${ids.length} layers?`,
                     subtitle: () => 'Deleting layers cannot be undone',
                     content: () =>
-                        '<h2>Do you wish to continue?</h2>'
-                        + '<p>Future attempts to access these '
-                        + 'layers or associated annotations, tiles, and scenes will fail.',
+                        '<h2>Do you wish to continue?</h2>' +
+                        '<p>Future attempts to access these ' +
+                        'layers or associated annotations, tiles, and scenes will fail.',
                     feedbackIconType: () => 'danger',
                     feedbackIcon: () => 'icon-warning',
                     feedbackBtnType: () => 'btn-danger',
@@ -293,9 +314,9 @@ class ProjectLayersPageController {
                     title: () => 'Really delete layer?',
                     subtitle: () => 'Deleting layers cannot be undone',
                     content: () =>
-                        '<h2>Do you wish to continue?</h2>'
-                        + '<p>Future attempts to access this '
-                        + 'layer or associated annotations, tiles, and scenes will fail.',
+                        '<h2>Do you wish to continue?</h2>' +
+                        '<p>Future attempts to access this ' +
+                        'layer or associated annotations, tiles, and scenes will fail.',
                     feedbackIconType: () => 'danger',
                     feedbackIcon: () => 'icon-warning',
                     feedbackBtnType: () => 'btn-danger',
@@ -304,21 +325,27 @@ class ProjectLayersPageController {
                 }
             }).result;
         }
-        modal.then(() => {
-            const promises = ids.map(
-                id => this.projectService.deleteProjectLayer(this.project.id, id)
-            );
-            this.$q.all(promises).then(() => {
-                this.visible = this.visible.subtract(this.selected.keySeq());
-                this.selected = new Map();
-            }).catch(e => {
-                this.$log.error(e);
-            }).finally(() => {
-                this.fetchPage();
+        modal
+            .then(() => {
+                const promises = ids.map(id =>
+                    this.projectService.deleteProjectLayer(this.project.id, id)
+                );
+                this.$q
+                    .all(promises)
+                    .then(() => {
+                        this.visible = this.visible.subtract(this.selected.keySeq());
+                        this.selected = new Map();
+                    })
+                    .catch(e => {
+                        this.$log.error(e);
+                    })
+                    .finally(() => {
+                        this.fetchPage();
+                    });
+            })
+            .catch(() => {
+                // modal closed
             });
-        }).catch(() => {
-            // modal closed
-        });
     }
 
     showDefaultLayer() {
@@ -357,9 +384,7 @@ class ProjectLayersPageController {
             }
         });
 
-        modal.result
-            .then(() => this.fetchPage())
-            .catch(() => {});
+        modal.result.then(() => this.fetchPage()).catch(() => {});
     }
 
     createItemInfo(layer) {
@@ -374,7 +399,7 @@ class ProjectLayersPageController {
     }
 
     goToAoiDef(id) {
-        this.$state.go('project.layer.aoi', {layerId: id, projectId: this.project.id});
+        this.$state.go('project.layer.aoi', { layerId: id, projectId: this.project.id });
     }
 }
 
@@ -391,5 +416,4 @@ const component = {
 export default angular
     .module('components.pages.projects.layers', [])
     .controller(ProjectLayersPageController.name, ProjectLayersPageController)
-    .component('rfProjectLayersPage', component)
-    .name;
+    .component('rfProjectLayersPage', component).name;
