@@ -34,6 +34,8 @@ object OgcStyles {
         val corrected = params.colorCorrect(subset, rgbHists.toSeq, None)
         toBytes(corrected, format)
       }
+
+      def legends = Nil
     }
 
   def fromSingleBandOptions(singleBandParams: SingleBandOptions.Params,
@@ -48,5 +50,7 @@ object OgcStyles {
       val colored = ColorRampMosaic.colorTile(tile, hist, singleBandParams)
       toBytes(colored, format)
     }
+
+    def legends = Nil
   }
 }
