@@ -1,95 +1,82 @@
-<div class="navbar light-navbar"
-     ng-style="$ctrl.eleStyle">
-  <div class="navbar-section aoi-draw-toolbar-left"
-       ng-style="$ctrl.leftStyle">
-    <button class="btn btn-small btn-primary btn-aoi-actions"
-            ng-click="$ctrl.onDrawAoi()"
-            ng-disabled="$ctrl.isDrawingAoi"
-            ng-if="!$ctrl.isValidGeometry()">
-      <i class="icon-plus"></i> Draw AOI
-    </button>
-    <button class="btn btn-small btn-primary btn-aoi-actions"
-            ng-if="$ctrl.isValidGeometry()"
-            ng-disabled="$ctrl.isEditingAoi"
+<div class="navbar light-navbar" ng-style="$ctrl.eleStyle">
+    <div class="navbar-section aoi-draw-toolbar-left" ng-style="$ctrl.leftStyle">
+        <button class="btn btn-tiny btn-transparent" ng-click="$ctrl.onClickCancel()">
+            <i class="icon-caret-left"></i>
+            Back
+        </button>
+        <div style="flex: 1;"></div>
+        <div
+            class="btn btn-small btn-transparent"
+            ng-disabled="$ctrl.isDrawingAoi || $ctrl.isEditingAoi"
+            ng-if="$ctrl.filterList.length"
             uib-dropdown
-            uib-dropdown-toggle>
-      <i class="icon-pencil"></i>Edit AOI<i class="icon-caret-down"></i>
-      <ul class="dropdown-menu dropdown-menu-light drop-left aoi-draw-dropdown"
-          role="menu"
-          uib-dropdown-menu >
-        <li role="menuitem">
-          <a class="aoi-draw-toolbar-menu"
-             ng-click="$ctrl.onClickEditAoi()">
-             Edit
-          </a>
-        </li>
-        <li role="menuitem">
-          <a class="aoi-draw-toolbar-menu"
-             ng-click="$ctrl.onClickDeleteAoi()">
-             Delete
-          </a>
-        </li>
-      </ul>
-    </button>
-    <div style="flex: 1;"></div>
-    <div class="btn btn-small btn-transparent"
-         ng-disabled="$ctrl.isDrawingAoi || $ctrl.isEditingAoi"
-         ng-if="$ctrl.filterList.length"
-         uib-dropdown
-         uib-dropdown-toggle>
-      {{$ctrl.selectedFilterName}}<i class="icon-caret-down"></i>
-      <ul class="dropdown-menu dropdown-menu-light drop-left"
-          role="menu"
-          uib-dropdown-menu >
-        <li role="menuitem"
-            ng-repeat="filter in $ctrl.filterList track by filter.id">
-          <a class="aoi-draw-toolbar-menu"
-             ng-click="$ctrl.onChangeFilter(filter.id)">
-            {{filter.name}}
-          </a>
-        </li>
-      </ul>
+            uib-dropdown-toggle
+        >
+            {{ $ctrl.selectedFilterName }}<i class="icon-caret-down"></i>
+            <ul class="dropdown-menu dropdown-menu-light drop-left" role="menu" uib-dropdown-menu>
+                <li role="menuitem" ng-repeat="filter in $ctrl.filterList track by filter.id">
+                    <a class="aoi-draw-toolbar-menu" ng-click="$ctrl.onChangeFilter(filter.id)">
+                        {{ filter.name }}
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
-  </div>
-  <div class="navbar-section secondary aoi-draw-toolbar-right"
-       ng-if="!$ctrl.isEditingAoi">
-    <div class="btn btn-small btn-transparent"
-         ng-click="$ctrl.onClickCancel()">
-      Cancel
+    <div class="navbar-section with-padding">
+        <button
+            ng-if="!$ctrl.isValidGeometry()"
+            class="btn btn-tiny btn-primary"
+            ng-click="$ctrl.onDrawAoi()"
+        >
+            <i class="icon-polygon"></i>
+            Draw AOI
+        </button>
+        <button
+            ng-if="$ctrl.isValidGeometry() && !$ctrl.isEditingAoi""
+            class="btn btn-tiny btn-lightest"
+            ng-click="$ctrl.onClickEditAoi()"
+        >
+            <i class="icon-pencil"></i>
+            Edit AOI
+        </button>
+        <button
+            ng-if="$ctrl.isValidGeometry() && !$ctrl.isEditingAoi""
+            class="btn btn-tiny btn-lightest"
+            ng-click="$ctrl.onClickDeleteAoi()"
+        >
+            <i class="icon-trash"></i>
+            Delete AOI
+        </button>
+        <button
+            ng-if="$ctrl.isEditingAoi"
+            class="btn btn-tiny btn-primary"
+            ng-click="$ctrl.onClickConfirmEdit()"
+        >
+            <i class="icon-pencil"></i>
+            Finish Editing
+        </button>
+        <button
+            ng-if="$ctrl.isEditingAoi"
+            class="btn btn-tiny btn-lightest"
+            ng-click="$ctrl.onClickCancelEdit()"
+        >
+            <i class="icon-trash"></i>
+            Cancel Editing
+        </button>
+        <div class="flex-fill"></div>
+        <button
+            ng-if="$ctrl.isValidGeometry() && !$ctrl.isEditingAoi""
+            class="btn btn-tiny btn-lightest"
+            ng-click="$ctrl.onClickConfirmAOI(true)"
+        >
+            Save shape & confirm
+        </button>
+        <button
+            ng-if="$ctrl.isValidGeometry() && !$ctrl.isEditingAoi""
+            class="btn btn-tiny btn-primary"
+            ng-click="$ctrl.onClickConfirmAOI(false)"
+        >
+            Confirm
+        </button>
     </div>
-    <div class="btn btn-small btn-primary"
-         ng-disabled="!$ctrl.isDrawnAoi || $ctrl.isEditingAoi"
-         uib-dropdown
-         uib-dropdown-toggle>
-      Confirm
-      <i class="icon-caret-down"></i>
-      <ul class="dropdown-menu dropdown-menu-light drop-left"
-          role="menu"
-          uib-dropdown-menu>
-        <li role="menuitem">
-          <a class="aoi-draw-toolbar-menu"
-             ng-click="$ctrl.onClickConfirmAOI(false)">
-             Confirm AOI
-          </a>
-        </li>
-        <li role="menuitem">
-          <a class="aoi-draw-toolbar-menu"
-             ng-click="$ctrl.onClickConfirmAOI(true)">
-             Confirm AOI and save as shape
-          </a>
-        </li>
-      </ul>
-    </div>
-  </div>
-  <div class="navbar-section secondary aoi-draw-toolbar-right"
-       ng-if="$ctrl.isEditingAoi">
-    <div class="btn btn-small btn-transparent"
-         ng-click="$ctrl.onClickCancelEdit()">
-      Cancel Edit
-    </div>
-    <div class="btn btn-small btn-transparent"
-         ng-click="$ctrl.onClickConfirmEdit()">
-      Confirm Edit
-    </div>
-  </div>
 </div>

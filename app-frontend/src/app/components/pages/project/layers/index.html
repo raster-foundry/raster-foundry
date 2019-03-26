@@ -57,9 +57,11 @@
             ></rf-list-item-selector
         ></item-selector>
         <item-title>
-            <strong ng-attr-title="{{ layer.name }}">
-                {{ layer.name }}
-            </strong>
+            <a ui-sref="project.layer({projectId: $ctrl.project.id, layerId: layer.id})">
+                <strong ng-attr-title="{{ layer.name }}">
+                    {{ layer.name }}
+                </strong>
+            </a>
         </item-title>
         <item-subtitle>
             <span>{{ layer.subtext }}</span>

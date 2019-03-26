@@ -144,6 +144,9 @@ class AoiDrawToolbarController {
 
     onClickCancel() {
         this.onShapeOp({ isInProgress: false });
+        this.isEditingAoi = false;
+        this.disableEditHandler();
+        this.removeEditAoi();
         this.disableDrawHandlers();
         this.onCancel();
     }
