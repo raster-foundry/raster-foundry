@@ -72,6 +72,9 @@
         <item-date ng-if="item.rangeStart && item.rangeEnd">
             {{ item.rangeStart | date }} - {{ item.rangeEnd | date }}
         </item-date>
+        <item-date ng-if="item.date">
+            {{ item.date | date }}
+        </item-date>
     </rf-list-item>
     <rf-pagination-controls
         pagination="$ctrl.pagination"
