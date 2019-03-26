@@ -1,6 +1,6 @@
 <div class="sidebar-actions-group" ng-show="$ctrl.selected.size === 0">
     <div class="flex-fill"></div>
-    <div class="btn btn-tiny btn-transparent" uib-dropdown uib-dropdown-toggle>
+    <button class="btn btn-tiny btn-transparent" uib-dropdown uib-dropdown-toggle>
         Analysis Visibility
         <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
             <li role="menuitem">
@@ -10,7 +10,7 @@
                 <a href ng-click="$ctrl.showAllAnalyses()">Show all on page</a>
             </li>
         </ul>
-    </div>
+    </button>
 </div>
 <div class="selected-actions-group" ng-show="$ctrl.selected.size > 0">
     <rf-selected-actions-bar
