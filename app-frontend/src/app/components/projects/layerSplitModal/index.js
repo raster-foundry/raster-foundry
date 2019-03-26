@@ -139,6 +139,7 @@ class LayerSplitModalController {
             .splitLayers(this.projectId, this.layerId, this.layerSplitBuffer)
             .then(resp => {
                 this.$state.go('project.layers', { projectId: this.projectId });
+                this.dismiss();
             })
             .catch(err => {
                 this.$log.error(err);

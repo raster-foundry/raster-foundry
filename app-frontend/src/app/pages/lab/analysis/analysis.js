@@ -8,7 +8,8 @@ class LabAnalysisController {
     constructor(
         $ngRedux, $scope, $rootScope, $state, $timeout, $element, $window, $document, modalService,
         mapService, projectService, authService, mapUtilsService, analysisService, tokenService,
-        platform, user, permissionsService,
+        permissionsService,
+        platform, user, permissions,
         APP_CONFIG,
     ) {
         'ngInject';
@@ -52,6 +53,11 @@ class LabAnalysisController {
         this.initAnalysis();
     }
 
+    userCanEdit() {
+        return this.permissions.includes('EDIT') ||
+            this.permissions.includes('*');
+    }
+
     getMap() {
         return this.mapService.getMap('lab-preview');
     }
@@ -65,20 +71,6 @@ class LabAnalysisController {
         } else if (!this.analysisId) {
             this.$state.go('lab.browse.analyses');
         }
-        let watchAnalysis = this.$scope.$watch('$ctrl.analysis', (current) => {
-            if (current) {
-                this.fetchAnalysisPermissions(current);
-                watchAnalysis();
-            }
-        });
-    }
-
-    fetchAnalysisPermissions(analysis) {
-        this.permissionsService
-            .getEditableObjectPermissions('tool-runs', 'ANALYSIS', analysis, this.authService.user)
-            .then(permissions => {
-                this.permissions = permissions;
-            });
     }
 
     onAnalysisParameterChange(nodeid, project, band, override, renderDef, position) {
@@ -606,7 +598,9 @@ LabAnalysisModule.resolve = {
         );
 
         return platformService.getPlatform(platformRole.groupId);
-    }
+    },
+    permissions: ($stateParams, analysisService) =>
+        analysisService.getAnalysisActions($stateParams.analysisid)
 };
 
 autoInject(LabAnalysisModule);
