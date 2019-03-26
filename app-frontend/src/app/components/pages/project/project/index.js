@@ -3,7 +3,8 @@ import tpl from './index.html';
 
 class ProjectPageController {
     constructor(
-        $rootScope, $state, $location, $transitions, mapService, mapUtilsService,
+        $rootScope, $state, $location, $transitions,
+        mapService, mapUtilsService, projectService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -22,6 +23,10 @@ class ProjectPageController {
                 }
             });
         });
+    }
+
+    $onDestroy() {
+        this.projectService.setVisibleProjectLayers();
     }
 
     getMap() {

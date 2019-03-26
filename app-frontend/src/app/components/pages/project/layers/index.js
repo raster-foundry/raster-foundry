@@ -4,7 +4,7 @@ import {Set, Map} from 'immutable';
 
 class ProjectLayersPageController {
     constructor(
-        $rootScope, $state, $q,
+        $rootScope, $state, $q, $log, $scope,
         projectService, paginationService, modalService, authService, mapService
     ) {
         'ngInject';
@@ -13,7 +13,8 @@ class ProjectLayersPageController {
 
     $onInit() {
         this.selected = new Map();
-        this.visible = new Set([this.project.defaultLayerId]);
+        const visibleLayers = this.projectService.getVisibleProjectLayers();
+        this.visible = visibleLayers.size ? visibleLayers : Set([this.project.defaultLayerId]);
         this.syncMapLayersToVisible();
         this.projectService.getProjectPermissions(this.project, this.user).then(
             permissions => {
@@ -24,6 +25,12 @@ class ProjectLayersPageController {
                 this.layerStats = layerSceneCounts;
             });
         this.fetchPage();
+
+        this.$scope.$watch('$ctrl.visible', (visibleProjectLayers) => {
+            if (visibleProjectLayers) {
+                this.projectService.setVisibleProjectLayers(visibleProjectLayers);
+            }
+        });
     }
 
     $onDestroy() {
@@ -198,7 +205,7 @@ class ProjectLayersPageController {
     }
 
     allVisibleSelected() {
-        let layerSet = new Set(this.layerList.map(l => l.id));
+        let layerSet = Set(this.layerList.map(l => l.id));
         return layerSet.intersect(this.selected.keySeq()).size === layerSet.size;
     }
 
@@ -315,7 +322,7 @@ class ProjectLayersPageController {
     }
 
     showDefaultLayer() {
-        this.visible = new Set([this.project.defaultLayerId]);
+        this.visible = Set([this.project.defaultLayerId]);
         this.syncMapLayersToVisible();
     }
 
