@@ -9,9 +9,17 @@ const exportActions = ['*', 'VIEW', 'EDIT', 'ANNOTATE', 'DELETE', 'EXPORT', 'DOW
 
 class LayerExportsController {
     constructor(
-        $rootScope, $scope, $state, $log,
-        moment, projectService, paginationService, modalService, authService,
-        mapService, exportService
+        $rootScope,
+        $scope,
+        $state,
+        $log,
+        moment,
+        projectService,
+        paginationService,
+        modalService,
+        authService,
+        mapService,
+        exportService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -20,9 +28,11 @@ class LayerExportsController {
     $onInit() {
         this.selected = new OrderedMap();
         this.visible = new Set();
+        this.exportStatusById = {};
         this.exportList = [];
         this.currentQuery = this.getPermissions().then(() => this.fetchPage());
         this.setMapLayers();
+        this.exportStatusMap = this.exportService.exportStatusMap;
     }
 
     $onDestroy() {
@@ -31,49 +41,52 @@ class LayerExportsController {
     }
 
     getPermissions() {
-        return this.projectService
-            .getAllowedActions(this.project.id)
-            .then((actions) => {
-                const deleteAllowed = _.intersection(actions, deleteActions).length;
-                const exportAllowed = _.intersection(actions, exportActions).length;
-                this.actionPermissions = {
-                    delete: deleteAllowed,
-                    export: exportAllowed
-                };
-            });
+        return this.projectService.getAllowedActions(this.project.id).then(actions => {
+            const deleteAllowed = _.intersection(actions, deleteActions).length;
+            const exportAllowed = _.intersection(actions, exportActions).length;
+            this.actionPermissions = {
+                delete: deleteAllowed,
+                export: exportAllowed
+            };
+        });
     }
 
     fetchPage(page = this.$state.params.page || 1) {
         delete this.fetchError;
         this.exportList = [];
         this.exportActions = new OrderedMap();
-        const currentQuery = this.projectService.listExports(
-            {
+        const currentQuery = this.projectService
+            .listExports({
                 sort: 'createdAt,desc',
                 pageSize: '10',
                 page: page - 1,
                 project: this.project.id,
                 layer: this.layer.id
-            }
-        ).then((paginatedResponse) => {
-            this.exportList = paginatedResponse.results;
-            this.exportActions = new OrderedMap(
-                this.exportList.map(expt => [expt.id, this.createExportActions(expt)])
-            );
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
+            })
+            .then(
+                paginatedResponse => {
+                    this.exportList = paginatedResponse.results;
+                    this.exportActions = new OrderedMap(
+                        this.exportList.map(expt => [expt.id, this.createExportActions(expt)])
+                    );
+                    this.createExportStatusById(this.exportList);
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page);
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
+                }
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
         this.currentQuery = currentQuery;
         return currentQuery;
     }
@@ -107,7 +120,8 @@ class LayerExportsController {
                 {
                     icon: 'icon-eye',
                     isActive: () => this.visible.has(exportItem.id)
-                }, {
+                },
+                {
                     icon: 'icon-eye-off',
                     isActive: () => !this.visible.has(exportItem.id)
                 }
@@ -132,8 +146,8 @@ class LayerExportsController {
         const defaultActions = [previewAction];
         return [
             ...defaultActions,
-            ...exportItem.exportStatus === 'EXPORTED' ? [downloadAction] : [],
-            ...this.actionPermissions.delete ? [deleteAction] : []
+            ...(exportItem.exportStatus === 'EXPORTED' ? [downloadAction] : []),
+            ...(this.actionPermissions.delete ? [deleteAction] : [])
         ];
     }
 
@@ -143,12 +157,13 @@ class LayerExportsController {
             component: 'rfFeedbackModal',
             resolve: {
                 title: () => `Delete ${isMultiple ? 'these exports' : 'this export'}?`,
-                subtitle: () => `Deleting ${isMultiple ? 'these exports' : 'this export'}`
-                    + ' cannot be undone',
+                subtitle: () =>
+                    `Deleting ${isMultiple ? 'these exports' : 'this export'}` +
+                    ' cannot be undone',
                 content: () =>
-                    '<h2>Do you wish to continue?</h2>'
-                    + `<p>Future attempts to access ${isMultiple ? 'these exports' : 'this export'}`
-                    + ' will fail.</p>',
+                    '<h2>Do you wish to continue?</h2>' +
+                    `<p>Future attempts to access ${isMultiple ? 'these exports' : 'this export'}` +
+                    ' will fail.</p>',
                 feedbackIconType: () => 'danger',
                 feedbackIcon: () => 'icon-warning',
                 feedbackBtnType: () => 'btn-danger',
@@ -157,7 +172,8 @@ class LayerExportsController {
             }
         });
         modal.result.then(() => {
-            this.exportService.deleteExports(exports.map(e => e.id))
+            this.exportService
+                .deleteExports(exports.map(e => e.id))
                 .then(() => {
                     this.fetchPage();
                     this.visible = this.visible.substract(this.selected.keySeq());
@@ -200,10 +216,14 @@ class LayerExportsController {
         const features = this.getFeaturesFromExports(visibleExportIds);
         if (features.length) {
             this.getMap().then(map => {
-                map.addGeojson(shapeLayer, {
-                    type: 'FeatureCollection',
-                    features: _.compact(features)
-                }, true);
+                map.addGeojson(
+                    shapeLayer,
+                    {
+                        type: 'FeatureCollection',
+                        features: _.compact(features)
+                    },
+                    true
+                );
             });
         } else {
             this.removeExportAois();
@@ -216,9 +236,9 @@ class LayerExportsController {
         const features = this.exportList.map(e => {
             if (exportIds.includes(e.id)) {
                 return {
-                    'geometry': e.exportOptions.mask,
-                    'properties': {},
-                    'type': 'Feature'
+                    geometry: e.exportOptions.mask,
+                    properties: {},
+                    type: 'Feature'
                 };
             }
             return 0;
@@ -231,12 +251,14 @@ class LayerExportsController {
     }
 
     openDownloadModal(expt) {
-        this.modalService.open({
-            component: 'rfExportDownloadModal',
-            resolve: {
-                export: () => expt
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfExportDownloadModal',
+                resolve: {
+                    export: () => expt
+                }
+            })
+            .result.catch(() => {});
     }
 
     selectAll() {
@@ -259,7 +281,6 @@ class LayerExportsController {
         this.updateSelectText();
     }
 
-
     isSelected(id) {
         return this.selected.has(id);
     }
@@ -276,6 +297,20 @@ class LayerExportsController {
             this.selectText = `Select all listed (${this.selected.size})`;
         }
     }
+
+    createExportStatusById(exportList) {
+        exportList.forEach(expt => {
+            this.exportStatusById[expt.id] = [
+                {
+                    status:
+                        expt.exportStatus !== 'FAILED' && expt.exportStatus !== 'EXPORTED'
+                            ? 'PROCESSING'
+                            : expt.exportStatus,
+                    count: 1
+                }
+            ];
+        });
+    }
 }
 
 const component = {
@@ -290,5 +325,4 @@ const component = {
 export default angular
     .module('components.pages.project.layer.exports', [])
     .controller(LayerExportsController.name, LayerExportsController)
-    .component('rfProjectLayerExportsPage', component)
-    .name;
+    .component('rfProjectLayerExportsPage', component).name;

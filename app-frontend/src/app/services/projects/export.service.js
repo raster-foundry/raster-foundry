@@ -1,11 +1,29 @@
 /* globals BUILDCONFIG */
 
+const exportStatusMap = {
+    FAILED: {
+        text: 'Failed',
+        class: 'color-danger'
+    },
+    EXPORTED: {
+        text: 'Complete',
+        class: 'color-green'
+    },
+    PROCESSING: {
+        text: 'Processing',
+        class: 'color-warning',
+        icon: 'icon-load animate-spin'
+    },
+    objectType: 'export'
+};
+
 export default app => {
     class ExportService {
         constructor($resource, $q, authService) {
             'ngInject';
             this.$q = $q;
             this.authService = authService;
+            this.exportStatusMap = exportStatusMap;
 
             this.Export = $resource(
                 `${BUILDCONFIG.API_HOST}/api/exports/:id/`,

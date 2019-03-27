@@ -9,12 +9,15 @@ class LayerScenesController {
         $rootScope,
         $scope,
         $state,
+        $q,
+        $log,
         projectService,
         RasterFoundryRepository,
         paginationService,
         modalService,
         authService,
-        mapService
+        mapService,
+        uploadService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -29,6 +32,8 @@ class LayerScenesController {
             });
         this.fetchPage();
         this.setMapLayers();
+        this.uploadStatusCardClosed = false;
+        this.fetchUploads();
     }
 
     $onDestroy() {
@@ -242,6 +247,38 @@ class LayerScenesController {
             }
         );
         // remove from selected map
+    }
+
+    fetchUploads() {
+        this.$q
+            .all({
+                pendingUploads: this.uploadService.query({
+                    uploadStatus: 'UPLOADED',
+                    projectId: this.projectId,
+                    layerId: this.layerId,
+                    pageSize: 0
+                }),
+                failedUploads: this.uploadService.query({
+                    uploadStatus: 'FAILED',
+                    projectId: this.projectId,
+                    layerId: this.layerId,
+                    pageSize: 0
+                })
+            })
+            .then(({ pendingUploads, failedUploads }) => {
+                this.uploadStatus = {
+                    UPLOADED: pendingUploads.count,
+                    FAILED: failedUploads.count
+                };
+            })
+            .catch(err => {
+                this.$log.error(err);
+                this.uploadStatus = {};
+            });
+    }
+
+    onCloseUploadStatusCard() {
+        this.uploadStatusCardClosed = true;
     }
 }
 

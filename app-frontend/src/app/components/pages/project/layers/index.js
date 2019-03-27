@@ -8,13 +8,13 @@ class ProjectLayersPageController {
         $state,
         $q,
         $log,
-        $scope,
         projectService,
         paginationService,
         modalService,
         authService,
         mapService,
-        projectEditService
+        projectEditService,
+        uploadService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -24,6 +24,7 @@ class ProjectLayersPageController {
         this.selected = new Map();
         const visibleLayers = this.projectEditService.getVisibleProjectLayers();
         this.visible = visibleLayers.size ? visibleLayers : Set([this.project.defaultLayerId]);
+        this.uploadStatusByLayer = {};
         this.syncMapLayersToVisible();
         this.projectService.getProjectPermissions(this.project, this.user).then(permissions => {
             this.permissions = permissions.map(p => p.actionType);
@@ -32,6 +33,7 @@ class ProjectLayersPageController {
             this.layerStats = layerSceneCounts;
         });
         this.fetchPage();
+        this.uploadStatusMap = this.uploadService.uploadStatusMap;
     }
 
     $onDestroy() {
@@ -68,6 +70,7 @@ class ProjectLayersPageController {
                         if (layer.smartLayerId) {
                             layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
                         }
+                        this.getLayerUploads(layer.id);
                     });
                     const defaultLayer = this.layerList.find(
                         l => l.id === this.project.defaultLayerId
@@ -428,6 +431,34 @@ class ProjectLayersPageController {
 
     goToAoiDef(id) {
         this.$state.go('project.layer.aoi', { layerId: id, projectId: this.project.id });
+    }
+
+    getLayerUploads(layerId) {
+        this.$q
+            .all({
+                pendingUploads: this.uploadService.query({
+                    uploadStatus: 'UPLOADED',
+                    projectId: this.projectId,
+                    layerId,
+                    pageSize: 0
+                }),
+                failedUploads: this.uploadService.query({
+                    uploadStatus: 'FAILED',
+                    projectId: this.projectId,
+                    layerId,
+                    pageSize: 0
+                })
+            })
+            .then(({ pendingUploads, failedUploads }) => {
+                this.uploadStatusByLayer[layerId] = [
+                    { status: 'UPLOADED', count: pendingUploads.count },
+                    { status: 'FAILED', count: failedUploads.count }
+                ];
+            })
+            .catch(err => {
+                this.$log.error(err);
+                this.uploadStatusByLayer[layerId] = [];
+            });
     }
 }
 
