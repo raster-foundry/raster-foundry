@@ -3,7 +3,6 @@ import pages from './components/pages';
 import projectComponents from './components/projects';
 import sceneComponents from './components/scenes';
 import commonComponents from './components/common';
-import exportComponents from './components/exports';
 import histogramComponent from './components/histogram';
 
 export default angular.module('index.components', [
@@ -96,7 +95,6 @@ export default angular.module('index.components', [
     require('./components/filters/sliderFilter/sliderFilter.module.js').default.name,
     require('./components/filters/tagFilter/tagFilter.module.js').default.name,
     require('./components/filters/ingestedFilter/ingestedFilter.module.js').default.name,
-    ...exportComponents,
 
     // common components (no domain)
     require('./components/common/navBar/navBar.module.js').default.name,
