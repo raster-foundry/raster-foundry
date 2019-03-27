@@ -403,7 +403,8 @@ object CombinedMapTokenQueryParameters {
 final case class UploadQueryParameters(
     datasource: Option[UUID] = None,
     uploadStatus: Option[String] = None,
-    projectId: Option[UUID] = None
+    projectId: Option[UUID] = None,
+    layerId: Option[UUID] = None
 )
 
 object UploadQueryParameters {
