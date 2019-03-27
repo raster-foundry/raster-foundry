@@ -1,18 +1,12 @@
-<div class="sidebar-actions-group with-padding" ng-show="$ctrl.selected.size === 0">
-    <div uib-dropdown uib-dropdown-toggle>
-        <button class="btn btn-tiny btn-transparent"><i class="icon-plus"></i>Add imagery</button>
+<div class="sidebar-actions-group" ng-show="$ctrl.selected.size === 0">
+    <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
+        <i class="icon-plus"></i>Add imagery
         <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
             <li role="menuitem"><a href ng-click="$ctrl.browseScenes()">Browse</a></li>
             <li role="menuitem"><a href ng-click="$ctrl.openImportModal()">Import</a></li>
         </ul>
     </div>
     <div class="flex-fill"></div>
-    <!-- <button class="btn btn-small btn-transparent">Filter...</button> -->
-    <!-- <select class="btn btn-small btn-transparent"> -->
-    <!-- <option value="">Newest</option> -->
-    <!-- <option value="manual">Manual</option> -->
-    <!-- <option value="manual">Ingest date</option> -->
-    <!-- </select> -->
 </div>
 <div class="selected-actions-group" ng-show="$ctrl.selected.size > 0">
     <rf-selected-actions-bar

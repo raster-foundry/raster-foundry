@@ -498,6 +498,28 @@ class AnalysesListController {
                 this.updateQuickEditState();
             });
     }
+
+    zoomToSelected() {
+        const geoms = this.selected.valueSeq().toArray().map(s => s.layerGeometry);
+        const bounds = L.geoJSON(geoms).getBounds();
+        this.getMap().then(map => {
+            map.map.fitBounds(bounds);
+        });
+    }
+
+    showSelected() {
+        this.visible = this.visible.union(this.selected.keySeq().toArray());
+        this.syncMapLayersToVisible()
+    }
+
+    hideSelected() {
+        this.visible = this.visible.subtract(this.selected.keySeq().toArray());
+        this.syncMapLayersToVisible();
+    }
+
+    deleteSelected() {
+        this.deleteProjectAnalyses(this.selected.valueSeq().toArray());
+    }
 }
 
 const component = {

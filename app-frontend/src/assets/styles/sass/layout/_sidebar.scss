@@ -125,6 +125,16 @@
     }
 }
 
+.sidebar-actions-group {
+    a,.btn {
+        box-shadow: initial;
+        padding: 1.15rem 1rem;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
 .sidebar-actions-group,
 rf-selected-actions-bar {
     display: flex;
@@ -134,8 +144,8 @@ rf-selected-actions-bar {
 
     a {
         box-shadow: initial;
-        padding: 1.25rem 1rem;
-        margin: 0.25rem;
+        // padding: 1.25rem 1rem;
+        // margin: 0.1rem;
         display: flex;
         flex-direction: row;
         align-items: center;
