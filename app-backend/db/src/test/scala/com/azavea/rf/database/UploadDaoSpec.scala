@@ -53,6 +53,87 @@ class UploadDaoSpec
     }
   }
 
+  test("insert an upload to a project") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         platform: Platform,
+         project: Project.Create,
+         upload: Upload.Create) =>
+          {
+            val uploadInsertIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
+              datasource <- unsafeGetRandomDatasource
+              uploadToInsert = upload.copy(owner = Some(user.id),
+                                           datasource = datasource.id,
+                                           projectId = Some(dbProject.id))
+              insertedUpload <- UploadDao.insert(uploadToInsert, dbUser)
+            } yield (insertedUpload, dbProject)
+
+            val (dbUpload, dbProject) =
+              xa.use(t => uploadInsertIO.transact(t)).unsafeRunSync
+
+            dbUpload.uploadStatus == upload.uploadStatus &&
+            dbUpload.fileType == upload.fileType &&
+            dbUpload.files == upload.files &&
+            dbUpload.metadata == upload.metadata &&
+            dbUpload.visibility == upload.visibility &&
+            dbUpload.source == upload.source &&
+            dbUpload.projectId == Some(dbProject.id) &&
+            dbUpload.layerId == Some(dbProject.defaultLayerId)
+          }
+      }
+    }
+  }
+
+  test("insert an upload to a project's non-default layer") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         platform: Platform,
+         project: Project.Create,
+         upload: Upload.Create,
+         projectLayerCreate: ProjectLayer.Create) =>
+          {
+            val uploadInsertIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
+              datasource <- unsafeGetRandomDatasource
+              dbLayer <- ProjectLayerDao.insertProjectLayer(
+                projectLayerCreate
+                  .copy(projectId = Some(dbProject.id))
+                  .toProjectLayer
+              )
+              uploadToInsert = upload.copy(owner = Some(user.id),
+                                           datasource = datasource.id,
+                                           projectId = Some(dbProject.id),
+                                           layerId = Some(dbLayer.id))
+              insertedUpload <- UploadDao.insert(uploadToInsert, dbUser)
+            } yield (insertedUpload, dbProject, dbLayer)
+
+            val (dbUpload, dbProject, dbLayer) =
+              xa.use(t => uploadInsertIO.transact(t)).unsafeRunSync
+
+            dbUpload.uploadStatus == upload.uploadStatus &&
+            dbUpload.fileType == upload.fileType &&
+            dbUpload.files == upload.files &&
+            dbUpload.metadata == upload.metadata &&
+            dbUpload.visibility == upload.visibility &&
+            dbUpload.source == upload.source &&
+            dbUpload.projectId == Some(dbProject.id) &&
+            dbUpload.layerId == Some(dbLayer.id)
+          }
+      }
+    }
+  }
+
   test("update an upload") {
     check {
       forAll {
