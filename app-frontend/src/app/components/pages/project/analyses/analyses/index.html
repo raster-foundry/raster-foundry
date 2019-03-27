@@ -46,12 +46,23 @@
                 Edit
             </button>
         </span>
-        <button
-            class="btn btn-transparent btn-tiny"
-            ng-click="$ctrl.deleteProjectAnalyses($ctrl.selected.valueSeq().toArray())"
-        >
-            Delete
-        </button>
+        <div class="btn btn-tiny btn-transparent" uib-dropdown uib-dropdown-toggle>
+            <span class="icon-menu"></span>
+            <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
+                <li role="menuitem">
+                    <a href ng-click="$ctrl.zoomToSelected()">Zoom to selected</a>
+                </li>
+                <li role="menuitem">
+                    <a href ng-click="$ctrl.showSelected()">Show on map</a>
+                </li>
+                <li role="menuitem">
+                    <a href ng-click="$ctrl.hideSelected()">Hide on map</a>
+                </li>
+                <li role="menuitem">
+                    <a href ng-click="$ctrl.deleteSelected()" class="color-danger">Delete</a>
+                </li>
+            </ul>
+        </div>
     </rf-selected-actions-bar>
 </div>
 <div class="sidebar-scrollable list-group">

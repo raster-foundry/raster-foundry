@@ -238,6 +238,39 @@ class ProjectLayersPageController {
         });
     }
 
+    zoomToSelected() {
+        // get geometries
+        const geoms = this.selected
+            .valueSeq()
+            .toArray()
+            .map(s => s.geometry);
+        const bounds = L.geoJSON(geoms).getBounds();
+
+        // go to bounds
+        this.getMap().then(map => {
+            map.map.fitBounds(bounds);
+        });
+    }
+
+    showSelected() {
+        this.visible = this.visible.union(this.selected.keySeq().toArray());
+        this.syncMapLayersToVisible();
+    }
+
+    hideSelected() {
+        this.visible = this.visible.subtract(this.selected.keySeq().toArray());
+        this.syncMapLayersToVisible();
+    }
+
+    deleteSelected() {
+        this.deleteProjectLayers(this.selected.valueSeq().toArray());
+    }
+
+    hideAll() {
+        this.visible = new Set();
+        this.syncMapLayersToVisible();
+    }
+
     allVisibleSelected() {
         let layerSet = Set(this.layerList.map(l => l.id));
         return layerSet.intersect(this.selected.keySeq()).size === layerSet.size;
@@ -256,7 +289,7 @@ class ProjectLayersPageController {
         if (this.allVisibleSelected()) {
             this.selectText = `Clear selected (${this.selected.size})`;
         } else {
-            this.selectText = `Select all listed (${this.selected.size})`;
+            this.selectText = `Select visible (${this.selected.size})`;
         }
     }
 
@@ -267,6 +300,7 @@ class ProjectLayersPageController {
             const layer = this.layerList.find(l => l.id === id);
             this.selected = this.selected.set(id, layer);
         }
+        this.updateSelectText();
     }
 
     isSelected(layerId) {
@@ -354,9 +388,10 @@ class ProjectLayersPageController {
                 this.$q
                     .all(promises)
                     .then(() => {
-                        this.visible = this.visible.subtract(this.selected.keySeq());
+                        this.visible = this.visible.subtract(this.selected.keySeq().toArray());
                         this.projectEditService.setVisibleProjectLayers(this.visible);
                         this.selected = new Map();
+                        this.syncMapLayersToVisible();
                     })
                     .catch(e => {
                         this.$log.error(e);
