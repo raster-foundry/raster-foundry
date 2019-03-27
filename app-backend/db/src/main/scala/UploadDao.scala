@@ -38,7 +38,18 @@ object UploadDao extends Dao[Upload] {
       }
       userPlatform <- UserDao.unsafeGetUserPlatform(user.id)
       userPlatformAdmin <- PlatformDao.userIsAdmin(user, userPlatform.id)
-      upload = newUpload.toUpload(user,
+      // Use project defaultLayerId as layerId if projectId is provided
+      // but layerId is not provided
+      // Use posted Upload.Create without modifications in other cases
+      projectO <- (newUpload.projectId, newUpload.layerId) match {
+        case (Some(projectId), None) => ProjectDao.getProjectById(projectId)
+        case _ => None.pure[ConnectionIO]
+      }
+      updatedUpload = projectO match {
+        case Some(project) => newUpload.copy(layerId = Some(project.defaultLayerId))
+        case _ => newUpload
+      }
+      upload = updatedUpload.toUpload(user,
                                   (userPlatform.id, userPlatformAdmin),
                                   ownerPlatform)
       insertedUpload <- (
