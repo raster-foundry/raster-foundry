@@ -376,24 +376,22 @@ class ProjectLayersPageController {
             .open({
                 component: 'rfFeedbackModal',
                 resolve: {
-                    title: () => `No AOI defined for "${layer.name}"`,
+                    title: () => 'No AOI defined',
                     content: () =>`
                         <h2>
                             Creating an analyses requires an AOI
                         </h2>
                         <p>
-                            but the layer "${layer.name}" does not have an AOI defined.
+                            At least one selected layer does not have an AOI defined.
+                            Click on the missing AOI warning icon
+                            (<i class="icon-warning color-danger"></i>)
+                            on selected layers to define an AOI.
                         </p>
                     `,
                     feedbackIconType: () => 'warning',
                     feedbackIcon: () => 'icon-warning',
-                    feedbackBtnType: () => 'btn-warning',
-                    feedbackBtnText: () => 'Add AOI',
-                    cancelText: () => 'Cancel'
+                    confirmText: () => 'OK'
                 }
-            })
-            .result.then(resp => {
-                this.goToAoiDef(layer.id);
             })
             .catch(() => {});
     }
