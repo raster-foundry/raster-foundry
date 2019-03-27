@@ -1,0 +1,9 @@
+<i ng-repeat="eachStatus in $ctrl.updatedStatuses track by $index"
+   ng-class="$ctrl.statusMap[eachStatus.status].class"
+   ng-if="eachStatus.count">
+  {{$ctrl.statusMap[eachStatus.status].text}}
+  <span ng-if="$ctrl.statusMap.objectType === 'upload'" class="right-margin-1">
+    ({{eachStatus.count}})
+  </span>
+  <i ng-class="$ctrl.statusMap[eachStatus.status].icon" ng-if="$ctrl.statusMap[eachStatus.status].icon"></i>
+</i>
