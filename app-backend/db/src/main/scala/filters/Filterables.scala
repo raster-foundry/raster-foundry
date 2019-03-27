@@ -296,6 +296,9 @@ trait Filterables extends RFMeta with LazyLogging {
               .toList
               .map(status => fr"upload_status = ${status}::upload_status")
             fr"(" ++ Fragments.or(statusF: _*) ++ fr")"
+          }),
+          uploadParams.layerId.map({ lid =>
+            fr"layer_id = ${lid}"
           })
         )
     }
