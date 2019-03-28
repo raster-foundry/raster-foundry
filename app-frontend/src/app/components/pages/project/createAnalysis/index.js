@@ -348,8 +348,7 @@ class ProjectCreateAnalysisPageController {
                         <p>
                             At least one selected layer does not have an AOI defined.
                             Click on the missing AOI warning icon
-                            (<i class="icon-warning color-danger"></i>)
-                            on selected layers to define an AOI.
+                            (<i class="icon-warning color-danger"></i>) to define an AOI.
                         </p>
                     `,
                     feedbackIconType: () => 'warning',

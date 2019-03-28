@@ -20,7 +20,7 @@
         <button
             type="button"
             class="btn"
-            ng-if="$ctrl.resolve.feede"
+            ng-if="$ctrl.resolve.feedbackBtnType && $ctrl.resolve.feedbackBtnText"
             ng-class="$ctrl.resolve.feedbackBtnType && $ctrl.resolve.feedbackBtnText"
             ng-click="$ctrl.close()"
         >
@@ -44,7 +44,7 @@
             type="button"
             class="btn btn-primary"
             ng-if="$ctrl.resolve.confirmText"
-            ng-click="$ctrl.resolve.onConfirm ? $ctrl.resolve.onConfirm() : $ctrl.dismiss()"
+            ng-click="$ctrl.resolve.onConfirm ? $ctrl.resolve.onConfirm() : $ctrl.close()"
         >
             {{ $ctrl.resolve.confirmText }}
         </button>
