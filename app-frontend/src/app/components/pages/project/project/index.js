@@ -1,9 +1,15 @@
-import {Map} from 'immutable';
+import { Map } from 'immutable';
 import tpl from './index.html';
 
 class ProjectPageController {
     constructor(
-        $rootScope, $state, $location, $transitions, mapService, mapUtilsService,
+        $rootScope,
+        $state,
+        $location,
+        $transitions,
+        mapService,
+        mapUtilsService,
+        projectService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -13,15 +19,22 @@ class ProjectPageController {
         if (!this.$location.search().bbox) {
             this.fitProjectExtent();
         }
-        this.getMap().then((map) => {
-            this.$transitions.onFinish({
-                to: 'project.*'
-            }, (transition) => {
-                if (!transition.to().name.includes('create-analysis')) {
-                    map.map.invalidateSize();
+        this.getMap().then(map => {
+            this.$transitions.onFinish(
+                {
+                    to: 'project.*'
+                },
+                transition => {
+                    if (!transition.to().name.includes('create-analysis')) {
+                        map.map.invalidateSize();
+                    }
                 }
-            });
+            );
         });
+    }
+
+    $onDestroy() {
+        this.projectService.setVisibleProjectLayers();
     }
 
     getMap() {
@@ -47,5 +60,4 @@ const component = {
 export default angular
     .module('components.pages.project.page', [])
     .controller(ProjectPageController.name, ProjectPageController)
-    .component('rfProjectPage', component)
-    .name;
+    .component('rfProjectPage', component).name;
