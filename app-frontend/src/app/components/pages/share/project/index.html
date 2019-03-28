@@ -87,6 +87,20 @@
 <div class="container column-stretch container-not-scrollable with-secondary-navbar">
     <div class="sidebar" ui-view></div>
     <div class="main">
-        <rf-map-container map-id="share"></rf-map-container>
+        <rf-map-container map-id="share">
+            <button
+                class="map-control-btn"
+                title="Show annotations"
+                ng-class="{'active': $ctrl.shareService.showingAnnotations}"
+                ng-click="$ctrl.shareService.toggleShowingAnnotations()"
+                tooltips
+                tooltip-template="Toggle layer annotations"
+                tooltip-size="small"
+                tooltip-class="map-control-tooltip"
+                tooltip-side="left"
+            >
+                <i class="icon-polygon"></i>
+            </button>
+        </rf-map-container>
     </div>
 </div>

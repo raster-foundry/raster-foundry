@@ -43,6 +43,7 @@ require('./projects/export.service').default(shared);
 require('./projects/histogram.service').default(shared);
 require('./projects/export.service').default(shared);
 require('./projects/aoi.service').default(shared);
+require('./projects/share.service').default(shared);
 
 // scenes
 require('./scenes/scene.service').default(shared);

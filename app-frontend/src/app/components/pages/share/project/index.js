@@ -7,7 +7,7 @@ let assetLogo = BUILDCONFIG.LOGOFILE
     : require('_assets/images/raster-foundry-logo.svg');
 
 class ShareProjectController {
-    constructor($rootScope, $log, $q, $state, authService, mapService) {
+    constructor($rootScope, $log, $q, $state, authService, mapService, shareService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
