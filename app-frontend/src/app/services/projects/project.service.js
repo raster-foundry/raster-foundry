@@ -1,6 +1,5 @@
 /* globals BUILDCONFIG L*/
 import _ from 'lodash';
-import { Set } from 'immutable';
 
 const availableProcessingOptions = [
     {
@@ -65,7 +64,6 @@ export default app => {
             this.$q = $q;
             this.availableProcessingOptions = availableProcessingOptions;
             this.availableProcessingOptionsThin = this.availableProcessingOptions.slice(0, 2);
-            this.visibleProjectLayers = Set([]);
 
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
@@ -858,14 +856,6 @@ export default app => {
 
         splitLayers(projectId, layerId, splitOptions) {
             return this.Project.splitLayers({ projectId, layerId }, splitOptions).$promise;
-        }
-
-        setVisibleProjectLayers(visibleLayerSet = Set([])) {
-            this.visibleProjectLayers = visibleLayerSet;
-        }
-
-        getVisibleProjectLayers() {
-            return this.visibleProjectLayers;
         }
     }
 

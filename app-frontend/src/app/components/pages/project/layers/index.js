@@ -13,7 +13,8 @@ class ProjectLayersPageController {
         paginationService,
         modalService,
         authService,
-        mapService
+        mapService,
+        projectEditService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -21,7 +22,7 @@ class ProjectLayersPageController {
 
     $onInit() {
         this.selected = new Map();
-        const visibleLayers = this.projectService.getVisibleProjectLayers();
+        const visibleLayers = this.projectEditService.getVisibleProjectLayers();
         this.visible = visibleLayers.size ? visibleLayers : Set([this.project.defaultLayerId]);
         this.syncMapLayersToVisible();
         this.projectService.getProjectPermissions(this.project, this.user).then(permissions => {
@@ -31,12 +32,6 @@ class ProjectLayersPageController {
             this.layerStats = layerSceneCounts;
         });
         this.fetchPage();
-
-        this.$scope.$watch('$ctrl.visible', visibleProjectLayers => {
-            if (visibleProjectLayers) {
-                this.projectService.setVisibleProjectLayers(visibleProjectLayers);
-            }
-        });
     }
 
     $onDestroy() {
@@ -264,6 +259,7 @@ class ProjectLayersPageController {
         } else {
             this.visible = this.visible.add(id);
         }
+        this.projectEditService.setVisibleProjectLayers(this.visible);
         this.syncMapLayersToVisible();
     }
 
@@ -334,6 +330,7 @@ class ProjectLayersPageController {
                     .all(promises)
                     .then(() => {
                         this.visible = this.visible.subtract(this.selected.keySeq());
+                        this.projectEditService.setVisibleProjectLayers(this.visible);
                         this.selected = new Map();
                     })
                     .catch(e => {
@@ -350,11 +347,13 @@ class ProjectLayersPageController {
 
     showDefaultLayer() {
         this.visible = Set([this.project.defaultLayerId]);
+        this.projectEditService.setVisibleProjectLayers(this.visible);
         this.syncMapLayersToVisible();
     }
 
     showPageLayers() {
         this.visible = this.visible.union(this.layerList.map(l => l.id));
+        this.projectEditService.setVisibleProjectLayers(this.visible);
         this.syncMapLayersToVisible();
     }
 
