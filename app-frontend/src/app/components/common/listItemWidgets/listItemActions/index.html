@@ -1,37 +1,46 @@
-<div class="btn btn-text btn-transparent"
-     ng-repeat="action in $ctrl.actions | filter: {menu: false}"
-     ng-attr-title="{{action.name}}"
-     ng-click="action.callback($event)"
-     tooltips
-     tooltip-template="{{action.tooltip}}"
-     tooltip-size="small"
-     tooltip-class="layer-item-tooltip"
-     tooltip-side="left"
-     tooltip-hidden="!action.tooltip"
+<div
+    class="display-i"
+    ng-repeat="action in $ctrl.actions | filter: {menu: false}"
+    ng-attr-title="{{ action.name }}"
+    tooltips
+    tooltip-template="{{ action.tooltip }}"
+    tooltip-size="small"
+    tooltip-class="layer-item-tooltip"
+    tooltip-side="left"
+    tooltip-hidden="!action.tooltip"
 >
-  <span ng-if="action.icon"
-        ng-attr-class="{{action.icon}}"
-  ></span>
-  <span ng-repeat="icon in action.icons"
-        ng-attr-class="{{icon.icon}}"
-        ng-if="icon.isActive()"
-  ></span>
+    <button
+        class="btn btn-text btn-transparent"
+        ng-click="action.callback($event)"
+        ng-disabled="action.disabled()"
+    >
+        <i ng-if="action.icon" ng-attr-class="{{ action.icon }}"></i>
+        <i
+            ng-repeat="icon in action.icons"
+            ng-attr-class="{{ icon.icon }}"
+            ng-if="icon.isActive()"
+        ></i>
+    </button>
 </div>
 <div uib-dropdown class="display-ib">
-  <button class="btn btn-text btn-transparent"
-          ng-if="($ctrl.actions | filter: {menu: true}).length > 0"
-          uib-dropdown-toggle
-  >
-    <i class="icon-menu"></i>
-    <span class="sr-only">More actions</span>
-  </button>
+    <button
+        class="btn btn-text btn-transparent"
+        ng-if="($ctrl.actions | filter: {menu: true}).length > 0"
+        uib-dropdown-toggle
+    >
+        <i class="icon-menu"></i>
+        <span class="sr-only">More actions</span>
+    </button>
     <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
-      <li role="menuitem"
-          ng-repeat="action in $ctrl.actions | filter: {menu: true}">
-        <a href ng-click="action.callback($event)"
-          ng-show="action.name"
-          ng-attr-title="{{action.title}}">{{action.name}}</a>
-        <span class="menu-separator" ng-show="action.separator"></span>
-      </li>
+        <li role="menuitem" ng-repeat="action in $ctrl.actions | filter: {menu: true}">
+            <a
+                href
+                ng-click="action.callback($event)"
+                ng-show="action.name"
+                ng-attr-title="{{ action.title }}"
+                >{{ action.name }}</a
+            >
+            <span class="menu-separator" ng-show="action.separator"></span>
+        </li>
     </ul>
 </div>

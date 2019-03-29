@@ -8,10 +8,6 @@
     >
     </rf-pagination-count>
     <rf-list-item ng-repeat="layer in $ctrl.layerList track by layer.id">
-        <item-selector>
-            <rf-list-item-selector id="layer.id" color="layer.colorGroupHex">
-            </rf-list-item-selector>
-        </item-selector>
         <item-title>
             <strong ng-attr-title="{{ layer.name }}">{{ layer.name }}</strong>
         </item-title>
