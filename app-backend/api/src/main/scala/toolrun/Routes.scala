@@ -262,7 +262,7 @@ trait ToolRunRoutes
   def listUserAnalysisActions(analysisId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ToolRunDao
-        .authorized(user, ObjectType.Analysis, analysisId, ActionType.Edit)
+        .authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
     } {

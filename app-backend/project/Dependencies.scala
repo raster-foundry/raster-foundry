@@ -44,6 +44,7 @@ object Dependencies {
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer
+  val geotrellisServerOgc = "com.azavea" %% "geotrellis-server-ogc" % Version.geotrellisServer
   val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis

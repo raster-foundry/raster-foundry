@@ -37,6 +37,12 @@
 - Added the histogram part of analysis data visualization UI [\#4756](https://github.com/raster-foundry/raster-foundry/pull/4756)
 - Add v2 project share page with layers and analyses [\#4768](https://github.com/raster-foundry/raster-foundry/pull/4768)
 - Added support for listing annotations on public projects without auth or with a map token query parameter [\#4795](https://github.com/raster-foundry/raster-foundry/pull/4795)
+- OGC
+  - Added GetCapabilities WMS and WCS endpoints for projects [\#4767](https://github.com/raster-foundry/raster-foundry/pull/4767)
+  - Added parameter handling for DescribeCoverage, GetCoverage, and GetMap requests [\#4782](https://github.com/raster-foundry/raster-foundry/pull/4782)
+  - Added map token authentication to OGC services [\#4778](https://github.com/raster-foundry/raster-foundry/pull/4778)
+  - Added style creation from bands and color composites on datasources [\#4789](https://github.com/raster-foundry/raster-foundry/pull/4789)
+- Preserve state of visible layers [\#4802](https://github.com/raster-foundry/raster-foundry/pull/4802)
 
 ### Changed
 
@@ -48,6 +54,7 @@
 - Made tools reference licenses by id [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701)
 - Support map tokens on /projects/{} get route, /tool-runs/ get route [\#4768](https://github.com/raster-foundry/raster-foundry/pull/4768)
 - Enabled inserting annotations in bulk in one `INSERT INTO` command [\#4777](https://github.com/raster-foundry/raster-foundry/pull/4777)
+- Started using swaggerhub for documentation [\#4818](https://github.com/raster-foundry/raster-foundry/pull/4818)
 
 ### Deprecated
 
@@ -60,6 +67,8 @@
 ### Fixed
 
 - No longer exclude public objects from searches for shared objects, except for scenes [\#4754](https://github.com/raster-foundry/raster-foundry/pull/4754)
+- Users that have edit permissions on an analysis can now share the analysis from within the lab interface [\#4797](https://github.com/raster-foundry/raster-foundry/pull/4797)
+- Fixed dependency conflict for circe between geotrellis-server, maml, and Raster Foundry [\#4703](https://github.com/raster-foundry/raster-foundry/pull/4703)
 
 ## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
 

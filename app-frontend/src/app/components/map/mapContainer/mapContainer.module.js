@@ -16,6 +16,7 @@ const GREEN = '#81C784';
 const MapContainerComponent = {
     templateUrl: mapTpl,
     controller: 'MapContainerController',
+    transclude: true,
     bindings: {
         mapId: '@',
         options: '<?',

@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.database.{
   LayerAttributeDao,
+  ProjectDao,
   SceneDao,
   SceneToLayerDao,
   ToolRunDao
@@ -25,6 +26,7 @@ import doobie.implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
+import scala.util.Properties
 import java.util.concurrent.{Executors, TimeUnit}
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
@@ -37,6 +39,12 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     ))
 
   val xa = RFTransactor.transactor(dbContextShift)
+
+  val ogcUrlPrefix = Properties.envOrNone("ENVIRONMENT") match {
+    case Some("Production") => "https://tiles.rasterfoundry.com"
+    case Some("Staging")    => "https://tiles.staging.rasterfoundry.com"
+    case _                  => "http://localhost:8081"
+  }
 
   override protected implicit def contextShift: ContextShift[IO] =
     IO.contextShift(
@@ -100,6 +108,8 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val mosaicImplicits = new MosaicImplicits(LayerAttributeDao())
   val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
   import toolStoreImplicits._
+  val ogcImplicits = new OgcImplicits(SceneToLayerDao(), xa)
+  import ogcImplicits._
 
   val analysisManager =
     new AnalysisManager(ToolRunDao(), mosaicImplicits, toolStoreImplicits, xa)
@@ -123,6 +133,18 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       )
     )
 
+  val wcsService = authenticators.tokensAuthMiddleware(
+    AuthedAutoSlash(
+      new WcsService(ProjectDao(), ogcUrlPrefix).routes
+    )
+  )
+
+  val wmsService = authenticators.tokensAuthMiddleware(
+    AuthedAutoSlash(
+      new WmsService(ProjectDao(), ogcUrlPrefix).routes
+    )
+  )
+
   val httpApp = errorHandling {
     Router(
       "/" -> ProjectToProjectLayerMiddleware(
@@ -130,6 +152,8 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
         xa),
       "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
       "/tools" -> withCORS(withTimeout(analysisService)),
+      "/wcs" -> withCORS(withTimeout(wcsService)),
+      "/wms" -> withCORS(withTimeout(wmsService)),
       "/healthcheck" -> AutoSlash(new HealthcheckService(xa).routes)
     )
   }

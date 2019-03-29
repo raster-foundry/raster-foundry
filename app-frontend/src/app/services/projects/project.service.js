@@ -294,6 +294,16 @@ export default app => {
                             layerId: '@layerId'
                         },
                         isArray: true
+                    },
+                    getAnnotationsForLayer: {
+                        method: 'GET',
+                        url:
+                            `${BUILDCONFIG.API_HOST}/api/projects/:projectId/` +
+                            'layers/:layerId/annotations',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
+                        }
                     }
                 }
             );
@@ -765,7 +775,7 @@ export default app => {
         }
 
         updateSceneOrder(projectId, sceneIds) {
-            return this.Project.updateSceneOrder({ projectId: projectId }, sceneIds).$promise;
+            return this.Project.updateSceneOrder({ projectId }, sceneIds).$promise;
         }
 
         getAnnotationShapefile(projectId) {
@@ -856,6 +866,10 @@ export default app => {
 
         splitLayers(projectId, layerId, splitOptions) {
             return this.Project.splitLayers({ projectId, layerId }, splitOptions).$promise;
+        }
+
+        getAnnotationsForLayer(projectId, layerId, params) {
+            return this.Project.getAnnotationsForLayer({ projectId, layerId, ...params}).$promise;
         }
     }
 

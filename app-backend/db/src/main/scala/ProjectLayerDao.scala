@@ -18,21 +18,37 @@ import java.util.UUID
 object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"
 
+  val selectAllColsF: Fragment =
+    fr"SELECT id, created_at, modified_at, name, project_id, color_group_hex, smart_layer_id, range_start, range_end, geometry, is_single_band, single_band_options"
+
   val selectF: Fragment =
-    fr"SELECT id, created_at, modified_at, name, project_id, color_group_hex, smart_layer_id, range_start, range_end, geometry, is_single_band, single_band_options from" ++ tableF
+    selectAllColsF ++ fr"from" ++ tableF
 
   def unsafeGetProjectLayerById(
       projectLayerId: UUID): ConnectionIO[ProjectLayer] = {
     query.filter(projectLayerId).select
   }
 
+  def listProjectLayersForProjectQ(projectId: UUID) =
+    query.filter(fr"project_id = ${projectId}")
+
   def listProjectLayersForProject(
       page: PageRequest,
-      projectId: UUID): ConnectionIO[PaginatedResponse[ProjectLayer]] = {
-    query
-      .filter(fr"project_id = ${projectId}")
-      .page(page)
+      projectId: UUID): ConnectionIO[PaginatedResponse[ProjectLayer]] =
+    listProjectLayersForProjectQ(projectId).page(page)
 
+  def listProjectLayersWithImagery(
+      projectId: UUID): ConnectionIO[List[ProjectLayer]] = {
+    val tableF =
+      fr"project_layers left join scenes_to_layers on project_layers.id = scenes_to_layers.project_layer_id"
+    val queryBuilder = Dao.QueryBuilder[ProjectLayer](
+      selectAllColsF ++ fr"from" ++ tableF,
+      tableF,
+      Nil)
+    queryBuilder
+      .filter(fr"scenes_to_layers.scene_id IS NOT NULL")
+      .filter(fr"project_id = ${projectId}")
+      .list
   }
 
   def insertProjectLayer(
