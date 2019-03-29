@@ -54,6 +54,7 @@
 - Made tools reference licenses by id [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701)
 - Support map tokens on /projects/{} get route, /tool-runs/ get route [\#4768](https://github.com/raster-foundry/raster-foundry/pull/4768)
 - Enabled inserting annotations in bulk in one `INSERT INTO` command [\#4777](https://github.com/raster-foundry/raster-foundry/pull/4777)
+- Started using swaggerhub for documentation [\#4818](https://github.com/raster-foundry/raster-foundry/pull/4818)
 
 ### Deprecated
 
