@@ -325,7 +325,7 @@ module.exports = function (_path) {
                     EMBED_URI: JSON.stringify('')
                 },
                 'HELPCONFIG': {
-                    API_DOCS_URL: JSON.stringify('https://docs.rasterfoundry.com/'),
+                    API_DOCS_URL: JSON.stringify('https://app.swaggerhub.com/apis/raster-foundry/raster-foundry/'),
                     HELP_HOME: JSON.stringify('https://help.rasterfoundry.com/'),
                     GETTING_STARTED_WITH_PROJECTS: JSON.stringify(
                         'https://help.rasterfoundry.com/creating-projects'
