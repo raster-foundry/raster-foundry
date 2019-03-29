@@ -152,7 +152,6 @@ class LayerExportCreateController {
     }
 
     isValidExportDef() {
-        console.log(this.exportType);
         const isValidType = this.exportType === 'S3' || this.exportType === 'Dropbox';
         const isValidResolution = this.availableResolutions
             .map(res => res.value)
@@ -166,8 +165,6 @@ class LayerExportCreateController {
         if (this.exportTarget !== 'internalS3') {
             result = result && get(this, 'exportSource.length');
         }
-
-        console.log(isValidType, isValidResolution, isValidMask, isValidBands);
 
         return result;
     }
