@@ -22,6 +22,7 @@ trait ProjectLayerAnnotationRoutes
     extends Authentication
     with CommonHandlers
     with PaginationDirectives
+    with ProjectAuthorizationDirectives
     with QueryParametersCommon {
 
   implicit val xa: Transactor[IO]
@@ -44,27 +45,27 @@ trait ProjectLayerAnnotationRoutes
   }
 
   def listLayerAnnotations(projectId: UUID, layerId: UUID): Route =
-    authenticate { user =>
-      authorizeAsync {
-        ProjectDao
-          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        (withPagination & annotationQueryParams) {
-          (page: PageRequest, queryParams: AnnotationQueryParameters) =>
-            complete {
-              AnnotationDao
-                .listByLayer(projectId, page, queryParams, Some(layerId))
-                .transact(xa)
-                .unsafeToFuture
-                .map { p =>
-                  {
-                    fromPaginatedResponseToGeoJson[Annotation,
-                                                   Annotation.GeoJSON](p)
+    extractTokenHeader { tokenO =>
+      extractMapTokenParam { mapTokenO =>
+        (projectAuthFromMapTokenO(mapTokenO, projectId) |
+          projectAuthFromTokenO(tokenO, projectId) | projectIsPublic(projectId)) {
+          (withPagination & annotationQueryParams) {
+            (page: PageRequest, queryParams: AnnotationQueryParameters) =>
+              complete {
+                AnnotationDao
+                  .listByLayer(projectId, page, queryParams, Some(layerId))
+                  .transact(xa)
+                  .unsafeToFuture
+                  .map { p =>
+                    {
+                      fromPaginatedResponseToGeoJson[
+                        Annotation,
+                        Annotation.GeoJSON
+                      ](p)
+                    }
                   }
-                }
-            }
+              }
+          }
         }
       }
     }
