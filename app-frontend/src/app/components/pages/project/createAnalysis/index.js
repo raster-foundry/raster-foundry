@@ -213,42 +213,47 @@ class ProjectCreateAnalysisPageController {
         if (this.creationPromise) {
             return;
         }
-        const modal = this.modalService.open({
-            component: 'rfConfirmationModal',
-            resolve: {
-                title: () => 'Create analyses',
-                content: () =>
-                    '<div class="text-center">' +
-                    'This will create new analysis for each layer you\'ve selected on' +
-                    `your project using the "${template.title}" template` +
-                    '</div>',
-                confirmText: () => 'Create analyses',
-                cancelText: () => 'Go back'
-            }
-        });
-        modal.result.then(() => {
-            const creationPromises = this.layerList.map((layer) => {
-                const layerTemplate = this.createLayerAnalysis(layer, template);
-                return this.analysisService.createAnalysis(layerTemplate);
+        let layersWithoutAOI = this.layers.filter(l => !_.get(l, 'geometry.type'));
+        if (layersWithoutAOI.length) {
+            this.aoiRequiredModal(layersWithoutAOI[0]);
+        } else {
+            const modal = this.modalService.open({
+                component: 'rfConfirmationModal',
+                resolve: {
+                    title: () => 'Create analyses',
+                    content: () =>
+                        '<div class="text-center">' +
+                        'This will create new analysis for each layer you\'ve selected on' +
+                        `your project using the "${template.title}" template` +
+                        '</div>',
+                    confirmText: () => 'Create analyses',
+                    cancelText: () => 'Go back'
+                }
             });
-            this.creationPromise = this.$q.all(creationPromises);
-            return this.creationPromise;
-        }).then(() => {
-            this.$state.go('project.analyses');
-        }).catch((error) => {
-            if (!error || typeof error === 'string' &&
-                (error.includes('backdrop') ||
-                 error.includes('escape'))
-               ) {
-                return;
-            }
-            this.createError = true;
-            this.$timeout(() => {
-                delete this.createError;
-            }, 10000);
-        }).finally(() => {
-            delete this.creationPromise;
-        });
+            modal.result.then(() => {
+                const creationPromises = this.layerList.map((layer) => {
+                    const layerTemplate = this.createLayerAnalysis(layer, template);
+                    return this.analysisService.createAnalysis(layerTemplate);
+                });
+                this.creationPromise = this.$q.all(creationPromises);
+                return this.creationPromise;
+            }).then(() => {
+                this.$state.go('project.analyses');
+            }).catch((error) => {
+                if (!error || typeof error === 'string' &&
+                    (error.includes('backdrop') ||
+                     error.includes('escape'))
+                ) {
+                    return;
+                }
+                this.createError = true;
+                this.$timeout(() => {
+                    delete this.createError;
+                }, 10000);
+            }).finally(() => {
+                delete this.creationPromise;
+            });
+        }
     }
 
     createLayerAnalysis(layer, template) {
@@ -328,6 +333,34 @@ class ProjectCreateAnalysisPageController {
         return this.layerList &&
             this.selected.size &&
             this.selected.size === this.layerList.length;
+    }
+
+    aoiRequiredModal(layer) {
+        this.modalService
+            .open({
+                component: 'rfFeedbackModal',
+                resolve: {
+                    title: () => 'No AOI defined',
+                    content: () =>`
+                        <h2>
+                            Creating an analyses requires an AOI
+                        </h2>
+                        <p>
+                            At least one selected layer does not have an AOI defined.
+                            Click on the missing AOI warning icon
+                            (<i class="icon-warning color-danger"></i>) to define an AOI.
+                        </p>
+                    `,
+                    feedbackIconType: () => 'warning',
+                    feedbackIcon: () => 'icon-warning',
+                    confirmText: () => 'OK'
+                }
+            })
+            .catch(() => {});
+    }
+
+    goToAoiDef(id) {
+        this.$state.go('project.layer.aoi', {layerId: id, projectId: this.project.id});
     }
 }
 
