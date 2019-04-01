@@ -13,7 +13,6 @@
     },
     "scripts": {
         "build": "cross-env NODE_ENV=production webpack --bail --colors",
-        "build-nginx": "rimraf ../nginx/srv/dist/* && yarn run build && cp -R dist/* ../nginx/srv/dist/",
         "dev": "cross-env NODE_ENV=development webpack-dev-server --verbose",
         "sort-packages": "sort-package-json",
         "package-sizes": "cross-env NODE_ENV=production webpack --bail --profile --json | tail -n +1 > stats.json && mv stats.json ./dist/stats.json && webpack-bundle-analyzer dist/stats.json",
