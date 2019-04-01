@@ -58,8 +58,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             run --rm app-frontend run validate-tile-spec
 
         echo "Preparing the database for testing"
-        # shellcheck source=scripts/update
-        source "${DIR}/update"
+        source "scripts/update"
         run_database_migrations
 
         echo "Executing Scala test suite"
