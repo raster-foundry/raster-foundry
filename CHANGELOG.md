@@ -44,6 +44,7 @@
   - Added style creation from bands and color composites on datasources [\#4789](https://github.com/raster-foundry/raster-foundry/pull/4789)
 - Preserve state of visible layers [\#4802](https://github.com/raster-foundry/raster-foundry/pull/4802)
 - Display processing imports on layer scenes UI [\#4809](https://github.com/raster-foundry/raster-foundry/pull/4809)
+- Added API specifications back to core repository [\#4819](https://github.com/raster-foundry/raster-foundry/pull/4819)
 
 ### Changed
 
