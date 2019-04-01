@@ -22,7 +22,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        if which shellcheck &>/dev/null; then
+        if command -v shellcheck &>/dev/null; then
             echo "Linting STRTA scripts"
             find ./scripts -type f -print0 | xargs -0 -r shellcheck
         fi
@@ -58,6 +58,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             run --rm app-frontend run validate-tile-spec
 
         echo "Preparing the database for testing"
+        # shellcheck source=scripts/update
         source "${DIR}/update"
         run_database_migrations
 
