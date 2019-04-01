@@ -48,13 +48,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Validating API spec"
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" 
+            -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend run validate-api-spec
 
         echo "Validating tile spec"
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" 
+            -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend run validate-tile-spec
 
         echo "Preparing the database for testing"
