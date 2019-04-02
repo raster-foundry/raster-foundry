@@ -6,3 +6,4 @@ coverage/
 .tmp/
 config/manifest.json
 config/webpack/overrides.js
+package-lock.json
