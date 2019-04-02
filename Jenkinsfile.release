@@ -23,7 +23,7 @@ node {
     // validate release tag ref
     stage('checkout') {
       checkout([$class: 'GitSCM',
-               branches: [[name: params.RELEASE_TAG ]],
+               branches: [[name: params.GIT_COMMIT ]],
                extensions: [[$class: 'PruneStaleBranch']],
                userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
                                     url: 'https://github.com/raster-foundry/raster-foundry']]
