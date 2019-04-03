@@ -8,7 +8,7 @@ def shift_footprint(footprint: List[Tuple[float, float]]) -> MultiPolygon:
     intersects = len(
         [x for (x, _) in footprint if x > 0]) not in (len(footprint), 0)
     if not intersects:
-        return MultiPolygon(Polygon(footprint))
+        return MultiPolygon([Polygon(footprint)])
     else:
         west_hemisphere = Polygon([(180, -90), (360, -90), (360, 90),
                                    (180, 90), (180, -90)])
@@ -19,9 +19,10 @@ def shift_footprint(footprint: List[Tuple[float, float]]) -> MultiPolygon:
         western = Polygon(
             [(x - 360, y)
              for x, y in new_poly.intersection(west_hemisphere).exterior.coords])
+        eastern = Polygon(new_poly.intersection(east_hemisphere).exterior.coords)
         return MultiPolygon(
             [western,
-             Polygon(footprint).intersection(east_hemisphere)])
+             new_poly.intersection(east_hemisphere)])
 
 
 class FilterFields(object):
@@ -49,7 +50,7 @@ class Footprints(object):
         """
 
         data_poly = shift_footprint(data_footprint + [data_footprint[0]])
-        tile_poly = MultiPolygon([data_poly.envelope])
+        tile_poly = MultiPolygon([x.envelope for x in data_poly])
         data_polygon = mapping(data_poly)
         tile_polygon = mapping(tile_poly)
         self.data_polygon = data_polygon
