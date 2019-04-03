@@ -16,13 +16,13 @@ def shift_footprint(footprint: List[Tuple[float, float]]) -> MultiPolygon:
                                    (0, -90)])
         new_poly = Polygon(
             [(x if x > 0 else x + 360, y) for x, y in footprint])
-        western = Polygon(
-            [(x - 360, y)
-             for x, y in new_poly.intersection(west_hemisphere).exterior.coords])
-        eastern = Polygon(new_poly.intersection(east_hemisphere).exterior.coords)
-        return MultiPolygon(
-            [western,
-             new_poly.intersection(east_hemisphere)])
+        western = Polygon([
+            (x - 360, y)
+            for x, y in new_poly.intersection(west_hemisphere).exterior.coords
+        ])
+        eastern = Polygon(
+            new_poly.intersection(east_hemisphere).exterior.coords)
+        return MultiPolygon([western, eastern])
 
 
 class FilterFields(object):
