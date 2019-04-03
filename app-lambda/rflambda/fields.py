@@ -4,6 +4,26 @@ from pyproj import Proj, transform  # type: ignore
 from shapely.geometry import MultiPolygon, Polygon, mapping  # type: ignore
 
 
+def shift_footprint(footprint: List[Tuple[float, float]]) -> MultiPolygon:
+    intersects = len(
+        [x for (x, _) in footprint if x > 0]) not in (len(footprint), 0)
+    if not intersects:
+        return MultiPolygon(Polygon(footprint))
+    else:
+        west_hemisphere = Polygon([(180, -90), (360, -90), (360, 90),
+                                   (180, 90), (180, -90)])
+        east_hemisphere = Polygon([(0, -90), (180, -90), (180, 90), (0, 90),
+                                   (0, -90)])
+        new_poly = Polygon(
+            [(x if x > 0 else x + 360, y) for x, y in footprint])
+        western = Polygon(
+            [(x - 360, y)
+             for x, y in new_poly.intersection(west_hemisphere).exterior.coords])
+        return MultiPolygon(
+            [western,
+             Polygon(footprint).intersection(east_hemisphere)])
+
+
 class FilterFields(object):
     def __init__(self, cloud_cover: Optional[float],
                  sun_azimuth: Optional[float], sun_elevation: Optional[float],
@@ -28,8 +48,7 @@ class Footprints(object):
         Points are assumed to be in ll, lr, ur, ul order
         """
 
-        data_poly = MultiPolygon(
-            [Polygon(data_footprint + [data_footprint[0]])])
+        data_poly = shift_footprint(data_footprint + [data_footprint[0]])
         tile_poly = MultiPolygon([data_poly.envelope])
         data_polygon = mapping(data_poly)
         tile_polygon = mapping(tile_poly)

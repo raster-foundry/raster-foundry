@@ -1,6 +1,6 @@
 import logging
 
-from rflambda.version import __version__
+from rflambda.version import __version__  # NOQA
 
 logger = logging.getLogger(__name__)
 log_handler = logging.StreamHandler()
