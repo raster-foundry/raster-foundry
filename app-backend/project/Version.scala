@@ -31,7 +31,7 @@ object Version {
   val hikariCP = "3.2.0"
   val http4s = "0.20.0-M6"
   val json4s = "3.5.0"
-  val jts = "1.13"
+  val jts = "1.16.0"
   val maml = "0.2.1"
   val nimbusJose = "0.6.0"
   val postgres = "42.1.1"
