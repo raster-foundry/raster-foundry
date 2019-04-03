@@ -82,7 +82,6 @@ services:
     build:
       context: app-lambda
       dockerfile: Dockerfile.test
-    image: python:3.6
     volumes:
       - ./app-lambda/:/opt/raster-foundry/app-lambda/
     working_dir: /opt/raster-foundry/app-lambda/
