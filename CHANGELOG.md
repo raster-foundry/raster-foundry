@@ -73,6 +73,7 @@
 - Users that have edit permissions on an analysis can now share the analysis from within the lab interface [\#4797](https://github.com/raster-foundry/raster-foundry/pull/4797)
 - Fixed dependency conflict for circe between geotrellis-server, maml, and Raster Foundry [\#4703](https://github.com/raster-foundry/raster-foundry/pull/4703)
 - Attached ACL policy to exports uploaded to external buckets to allow owner control [\#4825](https://github.com/raster-foundry/raster-foundry/pull/4825)
+- Restored footprint splitting logic for Landsat 8 and Sentinel-2 import [\#4828](https://github.com/raster-foundry/raster-foundry/pull/4828)
 - Fix annotation shapefile import and export [\#4829](https://github.com/raster-foundry/raster-foundry/pull/4829)
 - Set layerId to null when deleting upload records [\#4844](https://github.com/raster-foundry/raster-foundry/pull/4844)
 
