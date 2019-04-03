@@ -9,9 +9,11 @@ def test_footprint_shift():
         [Polygon(bbox + [bbox[0]])]
     )
     footprints = Footprints(bbox)
-    assert shape(footprints.data_polygon).area < bad_poly.area
+    data_area = shape(footprints.data_polygon).area
+    assert data_area < bad_poly.area
+    assert data_area == 2
     # Since the shape is rectangular, these should be the same
-    assert shape(footprints.tile_polygon).area == shape(footprints.data_polygon).area
+    assert data_area == shape(footprints.data_polygon).area
 
 
 def test_no_footprint_shift():
