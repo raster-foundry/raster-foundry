@@ -80,6 +80,10 @@
 - Started using swaggerhub for documentation [\#4818](https://github.com/raster-foundry/raster-foundry/pull/4818)
 - Made various UI improvements [\#4801](https://github.com/raster-foundry/raster-foundry/pull/4801)
 - Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
+- Improved responses and response types for errors in analysis rendering pipeline [\#4843](https://github.com/raster-foundry/raster-foundry/pull/4843)
+- Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
+
+### Deprecated
 
 ### Removed
 
