@@ -56,14 +56,14 @@ class ToolStoreImplicits[HistStore](mosaicImplicits: MosaicImplicits[HistStore],
         case Right(x) => x
         case Left(e) =>
           logger.error(e.getMessage)
-          throw MetadataException(s"Could not decode AST for $analysisId")
+          throw BadAnalysisASTException(e.getMessage)
       }
       nodeId map {
         decoded
           .find(_)
           .getOrElse {
-            throw MetadataException(
-              s"Node $nodeId missing from AST $analysisId")
+            throw BadAnalysisASTException(
+              s"Could not find node $nodeId in analysis $analysisId")
           }
       } getOrElse { decoded }
     }).transact(xa)

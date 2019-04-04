@@ -65,7 +65,8 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         }).collect({ case Some(mbtile) => mbtile }).compile.toList
         mbtIO.map(_.reduceOption(_ merge _) match {
           case Some(t) => Raster(t, extent)
-          case _       => Raster(MultibandTile(invisiTile), extent)
+          case _ =>
+            Raster(MultibandTile(invisiTile, invisiTile, invisiTile), extent)
         })
       }
       mosaic.map(ProjectedRaster(_, WebMercator))
@@ -146,7 +147,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               .toList
             mergeTiles(ioMBT).map {
               case Some(t) => Raster(t, extent)
-              case _       => Raster(MultibandTile(invisiTile), extent)
+              case _ =>
+                Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
+                       extent)
             }
           } else {
             // Assume that we're in a single band case. It isn't obvious what it would
@@ -206,7 +209,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                         ),
                         extent
                       )
-                    case _ => Raster(MultibandTile(invisiTile), extent)
+                    case _ =>
+                      Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
+                             extent)
                   }
 
               }
@@ -298,7 +303,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                 .map(_.reduceOption(_ merge _))
                 .map({
                   case Some(r) => r
-                  case _       => Raster(MultibandTile(invisiTile), extent)
+                  case _ =>
+                    Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
+                           extent)
                 })
             } else {
               logger.debug("Creating single band extent")
@@ -333,7 +340,10 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                     .map(_.reduceOption(_ merge _))
                     .map({
                       case Some(r) => r
-                      case _       => Raster(MultibandTile(invisiTile), extent)
+                      case _ =>
+                        Raster(
+                          MultibandTile(invisiTile, invisiTile, invisiTile),
+                          extent)
                     })
                 }
               }
@@ -362,7 +372,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               val rasters = tiles.map(Raster(_, extent))
               rasters.reduceOption(_ merge _) match {
                 case Some(r) => r
-                case _       => Raster(MultibandTile(invisiTile), extent)
+                case _ =>
+                  Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
+                         extent)
               }
             }
           mosaic map { ProjectedRaster(_, WebMercator) }
