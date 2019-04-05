@@ -41,7 +41,8 @@
     </div>
     <div
         class="modal-inner-container small text-center sidebar-top-margin"
-        ng-if="$ctrl.analysisList && !$ctrl.analysisList.length && !$ctrl.currentQuery"
+        ng-if="$ctrl.analysisList && !$ctrl.analysisList.length &&
+               !$ctrl.currentQuery && !$ctrl.fetchError"
     >
         <span class="modal-icon"><i class="icon-info"></i></span>
         <div>
