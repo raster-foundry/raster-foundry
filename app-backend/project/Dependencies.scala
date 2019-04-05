@@ -57,7 +57,7 @@ object Dependencies {
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
-  val jts = "com.vividsolutions" % "jts" % Version.jts
+  val jts = "org.locationtech.jts" % "jts-core" % Version.jts
   val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
   val mamlSpark = "com.azavea" %% "maml-spark" % Version.maml
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose

@@ -44,6 +44,8 @@
   - Added style creation from bands and color composites on datasources [\#4789](https://github.com/raster-foundry/raster-foundry/pull/4789)
 - Preserve state of visible layers [\#4802](https://github.com/raster-foundry/raster-foundry/pull/4802)
 - Display processing imports on layer scenes UI [\#4809](https://github.com/raster-foundry/raster-foundry/pull/4809)
+- Added quick edit functionality for project analyses [\#4804](https://github.com/raster-foundry/raster-foundry/pull/4804)
+- Add zooming, showing, hiding options to multi-select menu on analyses, layers [\4816](https://github.com/raster-foundry/raster-foundry/pull/4816)
 - Added API specifications back to core repository [\#4819](https://github.com/raster-foundry/raster-foundry/pull/4819)
 
 ### Changed
@@ -71,6 +73,10 @@
 - No longer exclude public objects from searches for shared objects, except for scenes [\#4754](https://github.com/raster-foundry/raster-foundry/pull/4754)
 - Users that have edit permissions on an analysis can now share the analysis from within the lab interface [\#4797](https://github.com/raster-foundry/raster-foundry/pull/4797)
 - Fixed dependency conflict for circe between geotrellis-server, maml, and Raster Foundry [\#4703](https://github.com/raster-foundry/raster-foundry/pull/4703)
+- Attached ACL policy to exports uploaded to external buckets to allow owner control [\#4825](https://github.com/raster-foundry/raster-foundry/pull/4825)
+- Restored footprint splitting logic for Landsat 8 and Sentinel-2 import [\#4828](https://github.com/raster-foundry/raster-foundry/pull/4828)
+- Fix annotation shapefile import and export [\#4829](https://github.com/raster-foundry/raster-foundry/pull/4829)
+- Set layerId to null when deleting upload records [\#4844](https://github.com/raster-foundry/raster-foundry/pull/4844)
 
 ## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
 

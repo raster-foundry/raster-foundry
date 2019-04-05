@@ -4,16 +4,13 @@ import L from 'leaflet';
 import tpl from './index.html';
 
 class AnalysisEditModalController {
-    constructor(
-        $rootScope, $timeout, $log, $q,
-        analysisService, projectService, mapService
-    ) {
+    constructor($rootScope, $timeout, $log, $q, analysisService, projectService, mapService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.mapOptions = {attributionControl: false};
+        this.mapOptions = { attributionControl: false };
         this.editableNodes = new OrderedMap();
         this.analyses = this.resolve.analyses;
         if (!this.analyses.length) {
@@ -25,7 +22,7 @@ class AnalysisEditModalController {
             const geojson = _.get(this.editableNodes.find(n => n.type === 'mask'), 'node.mask');
             if (geojson) {
                 const reprojected = this.geometryFromMaskGeometry(geojson);
-                this.getMap().then((mapContainer) => {
+                this.getMap().then(mapContainer => {
                     mapContainer.setGeojson('aoi', reprojected);
                     this.$timeout(() => {
                         mapContainer.map.fitBounds(L.geoJSON(reprojected).getBounds(), {
@@ -43,17 +40,16 @@ class AnalysisEditModalController {
 
     geometryFromMaskGeometry(geom) {
         if (geom.type.toLowerCase() !== 'multipolygon') {
-            throw new Error('Tried to reproject a shape that isn\'t a multipolygon');
+            throw new Error("Tried to reproject a shape that isn't a multipolygon");
         }
 
         const polygons = geom.coordinates[0];
         const reprojected = Object.assign({}, geom, {
             coordinates: [
-                polygons.map(
-                    polygon =>
-                        polygon
-                            .map(([lng, lat]) => L.CRS.EPSG3857.unproject({x: lng, y: lat}))
-                            .map(({lng, lat}) => [lng, lat])
+                polygons.map(polygon =>
+                    polygon
+                        .map(([lng, lat]) => L.CRS.EPSG3857.unproject({ x: lng, y: lat }))
+                        .map(({ lng, lat }) => [lng, lat])
                 )
             ]
         });
@@ -73,39 +69,56 @@ class AnalysisEditModalController {
         let editableNodes = new OrderedMap();
         let nodes = [root];
         const addEditableNode = node =>
-            ({
-                mask: () => editableNodes.set(node.id, {
-                    node, type: 'mask', value: node.mask
-                }),
+            (({
+                mask: () =>
+                    editableNodes.set(node.id, {
+                        node,
+                        type: 'mask',
+                        value: node.mask
+                    }),
                 layerSrc: () => {
+                    this.hasInconsistentSource =
+                        this.hasInconsistentSource ||
+                        node.projId !== analysis.projectId ||
+                        node.layerId !== analysis.projectLayerId;
                     const editableNode = {
-                        node, type: 'layerSrc', value: '' + node.band,
-                        options: [{name: node.band, number: node.band}]
+                        node,
+                        type: 'layerSrc',
+                        value: '' + node.band,
+                        options: [{ name: node.band, number: node.band }]
                     };
-                    this.projectService.getProjectLayerDatasources(
-                        analysis.projectId, analysis.projectLayerId
-                    ).then((datasources) => {
-                        if (datasources.length === 0) {
-                            this.$log.error('No datasources in layer, disabling changes');
-                        } else {
-                            if (datasources.length !== 1) {
-                                this.$log.error(
-                                    'layer has more than one datasource',
-                                    'falling back to the first one');
+                    this.projectService
+                        .getProjectLayerDatasources(analysis.projectId, analysis.projectLayerId)
+                        .then(datasources => {
+                            if (datasources.length === 0) {
+                                this.$log.error('No datasources in layer, disabling changes');
+                            } else {
+                                if (datasources.length !== 1) {
+                                    this.$log.error(
+                                        'layer has more than one datasource',
+                                        'falling back to the first one'
+                                    );
+                                }
+                                const datasource = _.first(datasources);
+                                editableNode.options = datasource.bands;
+                                if (
+                                    !datasource.bands
+                                        .map(d => d.number)
+                                        .includes(editableNode.value)
+                                ) {
+                                    editableNode.value = null;
+                                }
                             }
-                            const datasource = _.first(datasources);
-                            editableNode.options = datasource.bands;
-                            if (!datasource.bands.map(d => d.number).includes(editableNode.value)) {
-                                editableNode.value = null;
-                            }
-                        }
-                    });
+                        });
                     return editableNodes.set(node.id, editableNode);
                 },
-                const: () => editableNodes.set(node.id, {
-                    node, type: 'const', value: +node.constant
-                })
-            }[node.type || node.apply] || (() => editableNodes))();
+                const: () =>
+                    editableNodes.set(node.id, {
+                        node,
+                        type: 'const',
+                        value: +node.constant
+                    })
+            }[node.type || node.apply] || (() => editableNodes))());
         while (nodes.length) {
             const node = nodes.pop();
             editableNodes = addEditableNode(node);
@@ -117,16 +130,19 @@ class AnalysisEditModalController {
     }
 
     saveChanges() {
-        this.$q.all(
-            this.analyses
-                .map((analysis) => this.replaceNodesInAnalysis(this.editableNodes, analysis))
-                .map((analysis) => this.analysisService.updateAnalysis(analysis))
-        ).then((updatedAnalyses) => {
-            this.close({$value: updatedAnalyses});
-        }).catch(e => {
-            this.error = e;
-            this.$log.error(this.error);
-        });
+        this.$q
+            .all(
+                this.analyses
+                    .map(analysis => this.replaceNodesInAnalysis(this.editableNodes, analysis))
+                    .map(analysis => this.analysisService.updateAnalysis(analysis))
+            )
+            .then(updatedAnalyses => {
+                this.close({ $value: updatedAnalyses });
+            })
+            .catch(e => {
+                this.error = e;
+                this.$log.error(this.error);
+            });
     }
 
     replaceNodesInAnalysis(nodeMap, analysis) {
@@ -138,17 +154,22 @@ class AnalysisEditModalController {
                 nodes.push(...node.args);
             }
             if (nodeMap.has(node.id)) {
-                (n => ({
-                    mask: () => {
-                        node.mask = nodeMap.get(node.id).value;
-                    },
-                    layerSrc: () => {
-                        node.band = +nodeMap.get(node.id).value;
-                    },
-                    const: () => {
-                        node.constant = '' + nodeMap.get(node.id).value;
-                    }
-                }[n.type || n.apply] || (() => {})))(node)();
+                (n =>
+                    ({
+                        mask: () => {
+                            node.mask = nodeMap.get(node.id).value;
+                        },
+                        layerSrc: () => {
+                            Object.assign(node, {
+                                projId: analysis.projectId,
+                                layerId: analysis.projectLayerId,
+                                band: +nodeMap.get(node.id).value
+                            });
+                        },
+                        const: () => {
+                            node.constant = '' + nodeMap.get(node.id).value;
+                        }
+                    }[n.type || n.apply] || (() => {})))(node)();
             }
         }
         return analysis;
@@ -169,5 +190,4 @@ const component = {
 export default angular
     .module('components.projects.analysisEditModal', [])
     .controller(AnalysisEditModalController.name, AnalysisEditModalController)
-    .component('rfAnalysisEditModal', component)
-    .name;
+    .component('rfAnalysisEditModal', component).name;

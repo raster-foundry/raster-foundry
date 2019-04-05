@@ -131,6 +131,13 @@ class ProjectLayersPageController {
             callback: () => this.onHide(layer.id),
             menu: false
         };
+        const goToLayerAction = {
+            icon: 'icon-map',
+            name: 'View on map',
+            tooltip: 'View layer on map',
+            callback: () => this.viewLayerOnMap(layer),
+            menu: false
+        };
         const editAction = {
             name: 'Edit',
             callback: () =>
@@ -215,10 +222,53 @@ class ProjectLayersPageController {
         ];
 
         return [
-            ...(!_.get(layer, 'geometry.type') ? [alertAoiAction] : []),
             ...layerActions,
+            ...(_.get(layer, 'geometry.type') ? [goToLayerAction] : [alertAoiAction]),
             ...(!isDefaultLayer ? [setDefaultAction, deleteAction] : [])
         ];
+    }
+
+    viewLayerOnMap(layer) {
+        this.getMap().then(map => {
+            let bounds = L.geoJSON(layer.geometry).getBounds();
+            map.map.fitBounds(bounds);
+            this.visible = new Set([layer.id]);
+            this.projectEditService.setVisibleProjectLayers(this.visible);
+            this.syncMapLayersToVisible();
+        });
+    }
+
+    zoomToSelected() {
+        // get geometries
+        const geoms = this.selected
+            .valueSeq()
+            .toArray()
+            .map(s => s.geometry);
+        const bounds = L.geoJSON(geoms).getBounds();
+
+        // go to bounds
+        this.getMap().then(map => {
+            map.map.fitBounds(bounds);
+        });
+    }
+
+    showSelected() {
+        this.visible = this.visible.union(this.selected.keySeq().toArray());
+        this.syncMapLayersToVisible();
+    }
+
+    hideSelected() {
+        this.visible = this.visible.subtract(this.selected.keySeq().toArray());
+        this.syncMapLayersToVisible();
+    }
+
+    deleteSelected() {
+        this.deleteProjectLayers(this.selected.valueSeq().toArray());
+    }
+
+    hideAll() {
+        this.visible = new Set();
+        this.syncMapLayersToVisible();
     }
 
     allVisibleSelected() {
@@ -239,7 +289,7 @@ class ProjectLayersPageController {
         if (this.allVisibleSelected()) {
             this.selectText = `Clear selected (${this.selected.size})`;
         } else {
-            this.selectText = `Select all listed (${this.selected.size})`;
+            this.selectText = `Select visible (${this.selected.size})`;
         }
     }
 
@@ -250,6 +300,7 @@ class ProjectLayersPageController {
             const layer = this.layerList.find(l => l.id === id);
             this.selected = this.selected.set(id, layer);
         }
+        this.updateSelectText();
     }
 
     isSelected(layerId) {
@@ -337,9 +388,10 @@ class ProjectLayersPageController {
                 this.$q
                     .all(promises)
                     .then(() => {
-                        this.visible = this.visible.subtract(this.selected.keySeq());
+                        this.visible = this.visible.subtract(this.selected.keySeq().toArray());
                         this.projectEditService.setVisibleProjectLayers(this.visible);
                         this.selected = new Map();
+                        this.syncMapLayersToVisible();
                     })
                     .catch(e => {
                         this.$log.error(e);

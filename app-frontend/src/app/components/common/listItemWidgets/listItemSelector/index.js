@@ -23,6 +23,14 @@ class ListItemSelectorController {
             }
         }
     }
+
+    onSelectClick($event) {
+        $event.stopPropagation();
+        $event.preventDefault();
+        if (!this.disableSelection) {
+            this.onSelect({id: this.id});
+        }
+    }
 }
 
 const component = {

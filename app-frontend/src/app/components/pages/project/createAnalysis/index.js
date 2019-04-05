@@ -289,7 +289,8 @@ class ProjectCreateAnalysisPageController {
                 Object.assign(node, {
                     type: 'layerSrc',
                     band: 0,
-                    layerId: layer.id
+                    layerId: layer.id,
+                    projId: this.project.id
                 });
             }
         }

@@ -27,6 +27,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             find ./scripts -type f -print0 | xargs -0 -r shellcheck
         fi
 
+        echo "Executing lambda test suite"
+        docker-compose \
+            -f docker-compose.test.yml \
+            run --rm \
+            --entrypoint tox \
+            lambda
+
         if [ -f /opt/raster-foundry/jars/batch-assembly.jar ]; then
             echo "Verifying that Batch containers can run the batch jar"
             docker-compose \
