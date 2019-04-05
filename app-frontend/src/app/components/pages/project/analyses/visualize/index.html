@@ -2,13 +2,13 @@
     <div class="page-header wide">
         <h3>Key metrics</h3>
     </div>
-    <div class="page-card analysis-histogram-card text-center" ng-if="$ctrl.isLoadingAnalysis">
+    <div class="page-card analysis-histogram-card text-center" ng-if="$ctrl.loadingAnalysis">
       <h3>Loading histograms and maps<i class="icon-load animate-spin"></i></h3>
     </div>
-    <div class="page-card analysis-histogram-card text-center" ng-if="$ctrl.isLoadingAnalysisError">
+    <div class="page-card analysis-histogram-card text-center" ng-if="$ctrl.errorLoadingAnalysis">
       <h3 class="color-danger"><i class="icon-warning"></i>Failed to load histograms and maps. Please try again later.</h3>
     </div>
-    <div class="page-card analysis-maps-card" ng-if="!$ctrl.isLoadingAnalysis">
+    <div class="page-card analysis-maps-card" ng-if="!$ctrl.loadingAnalysis">
       <div class="row">
         <div class="column-4 flex-display" ng-repeat="analysis in $ctrl.analyses track by analysis.trackId">
           <rf-analysis-map-item
@@ -26,7 +26,7 @@
         </div>
       </div>
     </div>
-    <div class="page-card analysis-histogram-card" ng-repeat="analysis in $ctrl.analyses track by analysis.trackId" ng-if="!$ctrl.isLoadingAnalysis">
+    <div class="page-card analysis-histogram-card" ng-repeat="analysis in $ctrl.analyses track by analysis.trackId" ng-if="!$ctrl.loadingAnalysis">
       <div class="row">
         <div class="column-3 flex-display">
           <rf-list-item-selector
