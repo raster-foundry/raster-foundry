@@ -2,13 +2,20 @@ import { Map } from 'immutable';
 import { get, min, max } from 'lodash';
 
 import tpl from './index.html';
-import {createRenderDefinition} from '_redux/histogram-utils';
-import {nodesFromAst, astFromNodes} from '_redux/node-utils';
+import { createRenderDefinition } from '_redux/histogram-utils';
+import { nodesFromAst, astFromNodes } from '_redux/node-utils';
 
 class AnalysesVisualizeController {
     constructor(
-        $rootScope, $scope, $state, $log, $q,
-        uuid4, mapService, projectService, analysisService
+        $rootScope,
+        $scope,
+        $state,
+        $log,
+        $q,
+        uuid4,
+        mapService,
+        projectService,
+        analysisService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -30,13 +37,16 @@ class AnalysesVisualizeController {
                 id: analysisId,
                 trackId,
                 analysisTile: analysisPromise.then(a => a.analysisTile),
-                histogram: analysisPromise.then(a => (
-                    {histogram: a.histogram, statistics: a.statistics})),
+                histogram: analysisPromise.then(a => ({
+                    histogram: a.histogram,
+                    statistics: a.statistics
+                })),
                 statistics: analysisPromise.then(a => a.statistics)
             };
         });
 
-        this.histogramBounds = this.$q.all(this.analyses.map(a => a.statistics))
+        this.histogramBounds = this.$q
+            .all(this.analyses.map(a => a.statistics))
             .then(statistics => {
                 return statistics.reduce((acc, stat) => {
                     return {
@@ -58,53 +68,56 @@ class AnalysesVisualizeController {
     mapLayerFromAnalysis(analysisId, trackId) {
         this.loadingAnalysis = true;
         this.errorLoadingAnalysis = false;
-        return this.$q.all({
-            analysis: this.analysisService.getAnalysis(analysisId),
-            histogram: this.analysisService.getNodeHistogram(analysisId),
-            statistics: this.analysisService.getNodeStatistics(analysisId)
-        }).then(({analysis, histogram, statistics}) => {
-            if (
-                !get(analysis, 'executionParameters.metadata.manualRenderDefinition') ||
-                !get(analysis, 'executionParameters.metadata.renderDefinition')
-            ) {
-                const { renderDefinition, histogramOptions } = createRenderDefinition(
-                    histogram
-                );
-                const newNodeDefinition = Object.assign({}, analysis.executionParameters, {
-                    metadata: Object.assign({}, analysis.executionParameters.metadata, {
-                        renderDefinition,
-                        histogramOptions
-                    })
-                });
-                const nodes = nodesFromAst(analysis.executionParameters);
-                const updatedAnalysis = astFromNodes({ analysis, nodes }, [newNodeDefinition]);
-                return this.analysisService
-                    .updateAnalysis(updatedAnalysis)
-                    .then(res => {
+        return this.$q
+            .all({
+                analysis: this.analysisService.getAnalysis(analysisId),
+                histogram: this.analysisService.getNodeHistogram(analysisId),
+                statistics: this.analysisService.getNodeStatistics(analysisId)
+            })
+            .then(({ analysis, histogram, statistics }) => {
+                if (
+                    !get(analysis, 'executionParameters.metadata.manualRenderDefinition') ||
+                    !get(analysis, 'executionParameters.metadata.renderDefinition')
+                ) {
+                    const { renderDefinition, histogramOptions } = createRenderDefinition(
+                        histogram
+                    );
+                    const newNodeDefinition = Object.assign({}, analysis.executionParameters, {
+                        metadata: Object.assign({}, analysis.executionParameters.metadata, {
+                            renderDefinition,
+                            histogramOptions
+                        })
+                    });
+                    const nodes = nodesFromAst(analysis.executionParameters);
+                    const updatedAnalysis = astFromNodes({ analysis, nodes }, [newNodeDefinition]);
+                    return this.analysisService.updateAnalysis(updatedAnalysis).then(res => {
                         this.analysesMap = this.analysesMap.set(trackId, updatedAnalysis);
                         this.setLayerColorHex(updatedAnalysis);
-                        return ({ analysis: updatedAnalysis, histogram, statistics});
+                        return { analysis: updatedAnalysis, histogram, statistics };
                     });
-            }
-            this.analysesMap = this.analysesMap.set(trackId, analysis);
-            this.setLayerColorHex(analysis);
-            return { analysis, histogram, statistics };
-        }).then(({analysis, histogram, statistics}) => {
-            const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
-            return {
-                histogram,
-                statistics,
-                analysisTile: {
-                    analysis,
-                    mapTile: L.tileLayer(tileUrl, {maxZoom: 30})
                 }
-            };
-        }).catch(err => {
-            this.$log.error(err);
-            this.errorLoadingAnalysis = true;
-        }).finally(() => {
-            this.loadingAnalysis = false;
-        });
+                this.analysesMap = this.analysesMap.set(trackId, analysis);
+                this.setLayerColorHex(analysis);
+                return { analysis, histogram, statistics };
+            })
+            .then(({ analysis, histogram, statistics }) => {
+                const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
+                return {
+                    histogram,
+                    statistics,
+                    analysisTile: {
+                        analysis,
+                        mapTile: L.tileLayer(tileUrl, { maxZoom: 30 })
+                    }
+                };
+            })
+            .catch(err => {
+                this.$log.error(err);
+                this.errorLoadingAnalysis = true;
+            })
+            .finally(() => {
+                this.loadingAnalysis = false;
+            });
     }
 
     setLayerColorHex(analysis) {
@@ -131,5 +144,4 @@ const component = {
 export default angular
     .module('components.pages.project.analyses.visualize', [])
     .controller(AnalysesVisualizeController.name, AnalysesVisualizeController)
-    .component('rfProjectAnalysesVisualizePage', component)
-    .name;
+    .component('rfProjectAnalysesVisualizePage', component).name;
