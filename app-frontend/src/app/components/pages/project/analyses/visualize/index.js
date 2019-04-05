@@ -15,8 +15,8 @@ class AnalysesVisualizeController {
     }
 
     $onInit() {
-        this.isLoadingAnalysis = false;
-        this.isLoadingAnalysisError = false;
+        this.loadingAnalysis = false;
+        this.errorLoadingAnalysis = false;
         this.selected = new Map();
         this.analysesMap = new Map();
         this.projectId = this.$state.params.projectId;
@@ -56,32 +56,39 @@ class AnalysesVisualizeController {
     }
 
     mapLayerFromAnalysis(analysisId, trackId) {
-        this.isLoadingAnalysis = true;
-        this.isLoadingAnalysisError = false;
+        this.loadingAnalysis = true;
+        this.errorLoadingAnalysis = false;
         return this.$q.all({
             analysis: this.analysisService.getAnalysis(analysisId),
             histogram: this.analysisService.getNodeHistogram(analysisId),
             statistics: this.analysisService.getNodeStatistics(analysisId)
         }).then(({analysis, histogram, statistics}) => {
-            this.analysesMap = this.analysesMap.set(trackId, analysis);
-            this.setLayerColorHex(analysis);
-            const {
-                renderDefinition,
-                histogramOptions
-            } = createRenderDefinition(histogram);
-            const newNodeDefinition = Object.assign(
-                {}, analysis.executionParameters,
-                {
+            if (
+                !get(analysis, 'executionParameters.metadata.manualRenderDefinition') ||
+                !get(analysis, 'executionParameters.metadata.renderDefinition')
+            ) {
+                const { renderDefinition, histogramOptions } = createRenderDefinition(
+                    histogram
+                );
+                const newNodeDefinition = Object.assign({}, analysis.executionParameters, {
                     metadata: Object.assign({}, analysis.executionParameters.metadata, {
                         renderDefinition,
                         histogramOptions
                     })
-                }
-            );
-            const nodes = nodesFromAst(analysis.executionParameters);
-            const updatedAnalysis = astFromNodes({analysis, nodes}, [newNodeDefinition]);
-            this.analysisService.updateAnalysis(updatedAnalysis);
-            return {analysis, histogram, statistics};
+                });
+                const nodes = nodesFromAst(analysis.executionParameters);
+                const updatedAnalysis = astFromNodes({ analysis, nodes }, [newNodeDefinition]);
+                return this.analysisService
+                    .updateAnalysis(updatedAnalysis)
+                    .then(res => {
+                        this.analysesMap = this.analysesMap.set(trackId, updatedAnalysis);
+                        this.setLayerColorHex(updatedAnalysis);
+                        return ({ analysis: updatedAnalysis, histogram, statistics});
+                    });
+            }
+            this.analysesMap = this.analysesMap.set(trackId, analysis);
+            this.setLayerColorHex(analysis);
+            return { analysis, histogram, statistics };
         }).then(({analysis, histogram, statistics}) => {
             const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
             return {
@@ -94,9 +101,9 @@ class AnalysesVisualizeController {
             };
         }).catch(err => {
             this.$log.error(err);
-            this.isLoadingAnalysisError = true;
+            this.errorLoadingAnalysis = true;
         }).finally(() => {
-            this.isLoadingAnalysis = false;
+            this.loadingAnalysis = false;
         });
     }
 
