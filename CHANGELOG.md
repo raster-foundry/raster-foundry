@@ -46,6 +46,7 @@
 - Display processing imports on layer scenes UI [\#4809](https://github.com/raster-foundry/raster-foundry/pull/4809)
 - Added quick edit functionality for project analyses [\#4804](https://github.com/raster-foundry/raster-foundry/pull/4804)
 - Add zooming, showing, hiding options to multi-select menu on analyses, layers [\4816](https://github.com/raster-foundry/raster-foundry/pull/4816)
+- Added API specifications back to core repository [\#4819](https://github.com/raster-foundry/raster-foundry/pull/4819)
 
 ### Changed
 

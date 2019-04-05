@@ -1,0 +1,770 @@
+swagger: "2.0"
+info:
+  title: Raster Foundry
+  description: An application to find, view, and analyze geospatial data at any scale
+  version: "0.1.0"
+
+host: backsplash.rasterfoundry.com
+
+schemes:
+  - http
+  - https
+
+basePath: /
+
+produces:
+  - application/json
+  - img/png
+consumes:
+  - application/json
+
+x-top-matter:
+  - title: Introduction
+    level: 1
+    content: |
+      The backsplash server serves tiles and statistical information about tile layers in the Raster Foundry application.
+  - title: Authentication
+    level: 2
+    content: |
+      You can authenticate with the backsplash tile server in one of three ways:
+        - mapToken query parameters: these are in the form of UUIDs included as query parameters. You can get one of these from a project or analysis in the Raster Foundry application.
+        - token  query parameter: This is a <a href="https://jwt.io/introduction/" target="_blank">JSON Web Token (JWT)</a> that you include in a query parameter called 'token'. It <i>does not</i> include the 'Bearer ' component of the token.
+        - authorization headers: This is a <a href="https://jwt.io/introduction/" target="_blank">JSON Web Token (JWT)</a>. You can create one with a refresh token created in the Raster Foundry application.
+
+x-resources:
+  - name: Mosaic
+    description: |
+      Single- or multi-band visualization of a project layer.
+  - name: Analysis
+    description: |
+      Visualization of the results of map algebraic computations
+  - name: Healthcheck
+    description: |
+      Assurance that the tile server is still alive
+
+tags:
+  - name: Mosaic
+    description: "Interact with mosaics"
+  - name: Analysis
+    description: |
+      Visualization of the results of map algebraic computations
+  - name: Healthcheck
+    description: |
+      Assurance that the tile server is still alive
+
+paths:
+  /healthcheck/:
+    x-resource: Healthcheck
+    get:
+      summary: "Confirm the tile server is available"
+      tags:
+        - Healthcheck
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              reason:
+                type: array
+                items:
+                  type: string
+
+  /tools/{analysisId}/{z}/{x}/{y}/:
+    x-resource: Analysis
+    get:
+      produces:
+        - image/png
+      summary: Visualize an analysis (or node of an analysis) as a tile
+      tags:
+        - Analysis
+      parameters:
+        - $ref: "#/parameters/z"
+        - $ref: "#/parameters/x"
+        - $ref: "#/parameters/y"
+        - $ref: "#/parameters/token"
+        - $ref: "#/parameters/mapToken"
+        - name: analysisId
+          description: "ID of the analysis to visualize"
+          in: path
+          type: string
+          format: uuid
+          required: true
+        - name: node
+          description: "ID of the subnode of this analysis to visualize"
+          in: query
+          type: string
+          format: uuid
+          required: false
+      responses:
+        200:
+          description: OK
+        401:
+          description: "Authentication failed -- no authentication methods succeeded"
+        403:
+          description: "Analysis does not exist or user is not authorized to view analysis"
+
+  /{projectId}/{z}/{x}/{y}/:
+    x-resource: Mosaic
+    get:
+      produces:
+        - image/png
+      summary: Visualize a mosaic of a project
+      tags:
+        - Mosaic
+      parameters:
+        - $ref: "#/parameters/z"
+        - $ref: "#/parameters/x"
+        - $ref: "#/parameters/y"
+        - $ref: "#/parameters/token"
+        - $ref: "#/parameters/mapToken"
+        - $ref: "#/parameters/redBandOverride"
+        - $ref: "#/parameters/greenBandOverride"
+        - $ref: "#/parameters/blueBandOverride"
+        - $ref: "#/parameters/projectId"
+      responses:
+        200:
+          description: OK
+        401:
+          description: "Authentication failed -- no authentication methods succeeded"
+        403:
+          description: "Project does not exist or user is not authorized to view analysis"
+
+  /{projectId}/histogram/:
+    x-resource: Mosaic
+    get:
+      summary: "Obtain the project mosaic histogram"
+      tags:
+        - Mosaic
+      parameters:
+        - $ref: "#/parameters/token"
+        - $ref: "#/parameters/mapToken"
+        - $ref: "#/parameters/redBandOverride"
+        - $ref: "#/parameters/greenBandOverride"
+        - $ref: "#/parameters/blueBandOverride"
+        - $ref: "#/parameters/projectId"
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Histogram"
+        401:
+          description: "Authentication failed -- no authentication methods succeeded"
+        403:
+          description: "Project does not exist or user is not authorized to view analysis"
+    post:
+      summary: "Obtain the histogram for this a subset of the scenes in the mosaic for this project"
+      tags:
+        - Mosaic
+      consumes:
+        - text/plain
+      parameters:
+        - $ref: "#/parameters/token"
+        - $ref: "#/parameters/mapToken"
+        - $ref: "#/parameters/redBandOverride"
+        - $ref: "#/parameters/greenBandOverride"
+        - $ref: "#/parameters/blueBandOverride"
+        - $ref: "#/parameters/projectId"
+        - in: body
+          name: scenesSubset
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Histogram"
+        401:
+          description: "Authentication failed -- no authentication methods succeeded"
+        403:
+          description: "Project does not exist or user is not authorized to view analysis"
+
+parameters:
+  projectId:
+    name: projectId
+    in: path
+    description: "ID of the project to visualize"
+    type: string
+    format: uuid
+    required: true
+
+  z:
+    name: z
+    in: path
+    description: "Zoom level for tile visualization"
+    type: integer
+    required: true
+
+  x:
+    name: x
+    in: path
+    description: "Column for tile visualization"
+    type: integer
+    required: true
+
+  y:
+    name: y
+    in: path
+    description: "Row for tile visualization"
+    type: integer
+    required: true
+
+  token:
+    name: token
+    in: query
+    description: "Token to use for authorization"
+    required: false
+    type: string
+
+  mapToken:
+    name: mapToken
+    in: query
+    description: "Map token to use for authorization"
+    required: false
+    type: string
+    format: uuid
+
+  redBandOverride:
+    name: redBand
+    in: query
+    description: "Specific band to use for red if overriding project settings"
+    type: integer
+
+  greenBandOverride:
+    name: greenBand
+    in: query
+    description: "Specific band to use for green if overriding project settings"
+    type: integer
+
+  blueBandOverride:
+    name: blueBand
+    in: query
+    description: "Specific band to use for blue if overriding project settings"
+    type: integer
+
+definitions:
+  Histogram:
+    type: object
+    properties:
+      0:
+        type: integer
+      1:
+        type: integer
+      2:
+        type: integer
+      3:
+        type: integer
+      4:
+        type: integer
+      5:
+        type: integer
+      6:
+        type: integer
+      7:
+        type: integer
+      8:
+        type: integer
+      9:
+        type: integer
+      10:
+        type: integer
+      11:
+        type: integer
+      12:
+        type: integer
+      13:
+        type: integer
+      14:
+        type: integer
+      15:
+        type: integer
+      16:
+        type: integer
+      17:
+        type: integer
+      18:
+        type: integer
+      19:
+        type: integer
+      20:
+        type: integer
+      21:
+        type: integer
+      22:
+        type: integer
+      23:
+        type: integer
+      24:
+        type: integer
+      25:
+        type: integer
+      26:
+        type: integer
+      27:
+        type: integer
+      28:
+        type: integer
+      29:
+        type: integer
+      30:
+        type: integer
+      31:
+        type: integer
+      32:
+        type: integer
+      33:
+        type: integer
+      34:
+        type: integer
+      35:
+        type: integer
+      36:
+        type: integer
+      37:
+        type: integer
+      38:
+        type: integer
+      39:
+        type: integer
+      40:
+        type: integer
+      41:
+        type: integer
+      42:
+        type: integer
+      43:
+        type: integer
+      44:
+        type: integer
+      45:
+        type: integer
+      46:
+        type: integer
+      47:
+        type: integer
+      48:
+        type: integer
+      49:
+        type: integer
+      50:
+        type: integer
+      51:
+        type: integer
+      52:
+        type: integer
+      53:
+        type: integer
+      54:
+        type: integer
+      55:
+        type: integer
+      56:
+        type: integer
+      57:
+        type: integer
+      58:
+        type: integer
+      59:
+        type: integer
+      60:
+        type: integer
+      61:
+        type: integer
+      62:
+        type: integer
+      63:
+        type: integer
+      64:
+        type: integer
+      65:
+        type: integer
+      66:
+        type: integer
+      67:
+        type: integer
+      68:
+        type: integer
+      69:
+        type: integer
+      70:
+        type: integer
+      71:
+        type: integer
+      72:
+        type: integer
+      73:
+        type: integer
+      74:
+        type: integer
+      75:
+        type: integer
+      76:
+        type: integer
+      77:
+        type: integer
+      78:
+        type: integer
+      79:
+        type: integer
+      80:
+        type: integer
+      81:
+        type: integer
+      82:
+        type: integer
+      83:
+        type: integer
+      84:
+        type: integer
+      85:
+        type: integer
+      86:
+        type: integer
+      87:
+        type: integer
+      88:
+        type: integer
+      89:
+        type: integer
+      90:
+        type: integer
+      91:
+        type: integer
+      92:
+        type: integer
+      93:
+        type: integer
+      94:
+        type: integer
+      95:
+        type: integer
+      96:
+        type: integer
+      97:
+        type: integer
+      98:
+        type: integer
+      99:
+        type: integer
+      100:
+        type: integer
+      101:
+        type: integer
+      102:
+        type: integer
+      103:
+        type: integer
+      104:
+        type: integer
+      105:
+        type: integer
+      106:
+        type: integer
+      107:
+        type: integer
+      108:
+        type: integer
+      109:
+        type: integer
+      110:
+        type: integer
+      111:
+        type: integer
+      112:
+        type: integer
+      113:
+        type: integer
+      114:
+        type: integer
+      115:
+        type: integer
+      116:
+        type: integer
+      117:
+        type: integer
+      118:
+        type: integer
+      119:
+        type: integer
+      120:
+        type: integer
+      121:
+        type: integer
+      122:
+        type: integer
+      123:
+        type: integer
+      124:
+        type: integer
+      125:
+        type: integer
+      126:
+        type: integer
+      127:
+        type: integer
+      128:
+        type: integer
+      129:
+        type: integer
+      130:
+        type: integer
+      131:
+        type: integer
+      132:
+        type: integer
+      133:
+        type: integer
+      134:
+        type: integer
+      135:
+        type: integer
+      136:
+        type: integer
+      137:
+        type: integer
+      138:
+        type: integer
+      139:
+        type: integer
+      140:
+        type: integer
+      141:
+        type: integer
+      142:
+        type: integer
+      143:
+        type: integer
+      144:
+        type: integer
+      145:
+        type: integer
+      146:
+        type: integer
+      147:
+        type: integer
+      148:
+        type: integer
+      149:
+        type: integer
+      150:
+        type: integer
+      151:
+        type: integer
+      152:
+        type: integer
+      153:
+        type: integer
+      154:
+        type: integer
+      155:
+        type: integer
+      156:
+        type: integer
+      157:
+        type: integer
+      158:
+        type: integer
+      159:
+        type: integer
+      160:
+        type: integer
+      161:
+        type: integer
+      162:
+        type: integer
+      163:
+        type: integer
+      164:
+        type: integer
+      165:
+        type: integer
+      166:
+        type: integer
+      167:
+        type: integer
+      168:
+        type: integer
+      169:
+        type: integer
+      170:
+        type: integer
+      171:
+        type: integer
+      172:
+        type: integer
+      173:
+        type: integer
+      174:
+        type: integer
+      175:
+        type: integer
+      176:
+        type: integer
+      177:
+        type: integer
+      178:
+        type: integer
+      179:
+        type: integer
+      180:
+        type: integer
+      181:
+        type: integer
+      182:
+        type: integer
+      183:
+        type: integer
+      184:
+        type: integer
+      185:
+        type: integer
+      186:
+        type: integer
+      187:
+        type: integer
+      188:
+        type: integer
+      189:
+        type: integer
+      190:
+        type: integer
+      191:
+        type: integer
+      192:
+        type: integer
+      193:
+        type: integer
+      194:
+        type: integer
+      195:
+        type: integer
+      196:
+        type: integer
+      197:
+        type: integer
+      198:
+        type: integer
+      199:
+        type: integer
+      200:
+        type: integer
+      201:
+        type: integer
+      202:
+        type: integer
+      203:
+        type: integer
+      204:
+        type: integer
+      205:
+        type: integer
+      206:
+        type: integer
+      207:
+        type: integer
+      208:
+        type: integer
+      209:
+        type: integer
+      210:
+        type: integer
+      211:
+        type: integer
+      212:
+        type: integer
+      213:
+        type: integer
+      214:
+        type: integer
+      215:
+        type: integer
+      216:
+        type: integer
+      217:
+        type: integer
+      218:
+        type: integer
+      219:
+        type: integer
+      220:
+        type: integer
+      221:
+        type: integer
+      222:
+        type: integer
+      223:
+        type: integer
+      224:
+        type: integer
+      225:
+        type: integer
+      226:
+        type: integer
+      227:
+        type: integer
+      228:
+        type: integer
+      229:
+        type: integer
+      230:
+        type: integer
+      231:
+        type: integer
+      232:
+        type: integer
+      233:
+        type: integer
+      234:
+        type: integer
+      235:
+        type: integer
+      236:
+        type: integer
+      237:
+        type: integer
+      238:
+        type: integer
+      239:
+        type: integer
+      240:
+        type: integer
+      241:
+        type: integer
+      242:
+        type: integer
+      243:
+        type: integer
+      244:
+        type: integer
+      245:
+        type: integer
+      246:
+        type: integer
+      247:
+        type: integer
+      248:
+        type: integer
+      249:
+        type: integer
+      250:
+        type: integer
+      251:
+        type: integer
+      252:
+        type: integer
+      253:
+        type: integer
+      254:
+        type: integer
+      255:
+        type: integer
