@@ -5,6 +5,14 @@ from shapely.geometry import MultiPolygon, Polygon, mapping  # type: ignore
 
 
 def shift_footprint(footprint: List[Tuple[float, float]]) -> MultiPolygon:
+    """Split a footprint into eastern and western hemisphere components
+
+    This function splits footprint polygons that cross the anti-meridian into
+    a piece intersecting the Western hemisphere and a piece intersecting the Eastern
+    hemisphere. The reason for this is that if we don't split them, we end up with
+    terrible footprint spanning basically the entire globe, which wreaks havoc on
+    logic that uses the data / tile footprints.
+    """
     intersects = len(
         [x for (x, _) in footprint if x > 0]) not in (len(footprint), 0)
     if not intersects:
