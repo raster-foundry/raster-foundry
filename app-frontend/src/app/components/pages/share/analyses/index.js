@@ -45,12 +45,11 @@ class ShareProjectAnalysesController {
 
     fetchPage(page = this.$state.params.page || 1) {
         this.analysisList = [];
-        const currentQuery = this.analysisService
-            .fetchAnalyses({
+        const currentQuery = this.projectService
+            .getProjectAnalyses(this.project.id, {
                 pageSize: 10,
                 page: page - 1,
-                mapToken: this.token,
-                projectId: this.project.id
+                mapToken: this.token
             })
             .then(
                 paginatedResponse => {
