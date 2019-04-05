@@ -79,7 +79,9 @@ services:
     entrypoint: ./sbt
 
   lambda:
-    image: python:3.6
+    build:
+      context: app-lambda
+      dockerfile: Dockerfile.test
     volumes:
       - ./app-lambda/:/opt/raster-foundry/app-lambda/
     working_dir: /opt/raster-foundry/app-lambda/

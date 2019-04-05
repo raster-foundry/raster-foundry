@@ -39,7 +39,7 @@ def handler(event: eventType, context: Dict[str, Any]):
             )
         }
     }
-    result = rf_api.client.Imagery.post_scenes(
+    rf_api.client.Imagery.post_scenes(
         scene=scene_to_post,
         _request_options=request_options).result()
 
