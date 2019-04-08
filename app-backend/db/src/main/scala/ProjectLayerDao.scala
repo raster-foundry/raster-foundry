@@ -18,8 +18,12 @@ import java.util.UUID
 object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"
 
-  val selectAllColsF: Fragment =
-    fr"SELECT id, created_at, modified_at, name, project_id, color_group_hex, smart_layer_id, range_start, range_end, geometry, is_single_band, single_band_options"
+  val selectAllColsF: Fragment = fr"""
+    SELECT
+      id, created_at, modified_at, name, project_id, color_group_hex,
+      smart_layer_id, range_start, range_end, geometry, is_single_band,
+      single_band_options, overviews_location, min_zoom_level
+    """
 
   val selectF: Fragment =
     selectAllColsF ++ fr"from" ++ tableF
@@ -56,11 +60,14 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   ): ConnectionIO[ProjectLayer] = {
     (fr"INSERT INTO" ++ tableF ++ fr"""
     (id, created_at, modified_at, name, project_id, color_group_hex,
-    smart_layer_id, range_start, range_end, geometry, is_single_band, single_band_options)
+    smart_layer_id, range_start, range_end, geometry, is_single_band, single_band_options,
+    overviews_location, min_zoom_level
+    )
     VALUES
       (${pl.id}, ${pl.createdAt}, ${pl.modifiedAt}, ${pl.name}, ${pl.projectId},
       ${pl.colorGroupHex}, ${pl.smartLayerId}, ${pl.rangeStart}, ${pl.rangeEnd},
-      ${pl.geometry}, ${pl.isSingleBand}, ${pl.singleBandOptions})
+      ${pl.geometry}, ${pl.isSingleBand}, ${pl.singleBandOptions}, ${pl.overviewsLocation},
+      ${pl.minZoomLevel})
     """).update.withUniqueGeneratedKeys[ProjectLayer](
       "id",
       "created_at",
@@ -73,7 +80,9 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
       "range_end",
       "geometry",
       "is_single_band",
-      "single_band_options"
+      "single_band_options",
+      "overviews_location",
+      "min_zoom_level"
     )
   }
 
@@ -87,7 +96,9 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
       geometry = ${projectLayer.geometry},
       project_id = ${projectLayer.projectId},
       is_single_band = ${projectLayer.isSingleBand},
-      single_band_options = ${projectLayer.singleBandOptions}
+      single_band_options = ${projectLayer.singleBandOptions},
+      overviews_location=${projectLayer.overviewsLocation},
+      min_zoom_level=${projectLayer.minZoomLevel}
     """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
   }
@@ -133,7 +144,9 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
            Some(end),
            layer.geometry,
            layer.isSingleBand,
-           layer.singleBandOptions
+           layer.singleBandOptions,
+           layer.overviewsLocation,
+           layer.minZoomLevel
          ),
          scenes)
       case ((_, datasourceO), scenes) =>
@@ -152,7 +165,9 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
            None,
            layer.geometry,
            layer.isSingleBand,
-           layer.singleBandOptions
+           layer.singleBandOptions,
+           layer.overviewsLocation,
+           layer.minZoomLevel
          ),
          scenes)
     }
