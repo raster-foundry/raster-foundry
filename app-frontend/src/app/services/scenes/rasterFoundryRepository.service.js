@@ -27,8 +27,8 @@ export default (app) => {
             });
         }
 
-        getFilters() {
-            return [{
+        getFilters(options = {}) {
+            const standardParams = [{
                 param: 'datasource',
                 label: 'Imagery Sources',
                 type: 'search-select',
@@ -93,6 +93,15 @@ export default (app) => {
                     value: this.authService.getProfile().sub
                 }]
             }];
+
+            if (options.legacy) {
+                standardParams.splice(2, 0, {
+                    type: 'shape',
+                    label: 'Area of Interest',
+                    param: 'shape'
+                });
+            }
+            return standardParams;
         }
 
         getSources() {

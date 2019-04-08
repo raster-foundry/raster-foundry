@@ -13,14 +13,12 @@
         data-shape="$ctrl.shape"
         on-filter-change="$ctrl.onShapeChange(filter, filterParams)"
     ></rf-shape-filter>
-    <i class="icon-info"></i>
   </li>
   <li class="separator">
     <span class="label">Filters</span>
     <button class="btn btn-light fixedwidth" ng-click="$ctrl.toggleFilters()">
       Adjust Filters
     </button>
-    <i class="icon-info"></i>
   </li>
   <li class="separator">
     <span class="label">Update frequency</span>
@@ -37,7 +35,6 @@
         </li>
       </ul>
     </div>
-    <i class="icon-info"></i>
   </li>
   <li class="separator">
     <span class="label">Start time</span>
@@ -86,7 +83,7 @@
     <span ng-show="$ctrl.error" class="icon-refresh"></span>
   </button>
 </div>
-<div class="sidebar sidebar-extended sidebar-dark"
+<div class="sidebar sidebar-extended"
      ng-show="$ctrl.showFilters">
   <rf-aoi-filter-pane
     ng-if="$ctrl.showFilters"

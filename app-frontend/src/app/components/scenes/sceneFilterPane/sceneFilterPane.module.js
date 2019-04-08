@@ -15,7 +15,9 @@ const SceneFilterPaneComponent = {
         // array of repository name + service objects
         repositories: '<',
         // returns function fetchScenes(page, bbox, timestamp)
-        onRepositoryChange: '&?'
+        onRepositoryChange: '&?',
+        // TODO: remove this once v2 ui is deployed
+        legacy: '<'
     }
 };
 
@@ -96,7 +98,7 @@ class FilterPaneController {
             this.firstReset = false;
         }
 
-        this.filters = this.currentRepository.service.getFilters();
+        this.filters = this.currentRepository.service.getFilters(this.legacy ? {legacy: true} : {});
         this.filterParams = {};
         this.initializedFilters = this.initializedFilters.clear();
         this.filterComponents.forEach(({element, componentScope}) => {

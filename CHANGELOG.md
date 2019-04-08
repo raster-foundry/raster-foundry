@@ -78,6 +78,7 @@
 - Fix annotation shapefile import and export [\#4829](https://github.com/raster-foundry/raster-foundry/pull/4829)
 - Set layerId to null when deleting upload records [\#4844](https://github.com/raster-foundry/raster-foundry/pull/4844)
 - Project analyses Visualize view conditionally overwrites render def instead of always [\#4848](https://github.com/raster-foundry/raster-foundry/pull/4848)
+- Moved legacy filters over to new styling [\#4855](https://github.com/raster-foundry/raster-foundry/pull/4848)
 
 ## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
 
