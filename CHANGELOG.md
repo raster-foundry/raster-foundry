@@ -79,6 +79,7 @@
 - Set layerId to null when deleting upload records [\#4844](https://github.com/raster-foundry/raster-foundry/pull/4844)
 - Project analyses Visualize view conditionally overwrites render def instead of always [\#4848](https://github.com/raster-foundry/raster-foundry/pull/4848)
 - Moved legacy filters over to new styling [\#4855](https://github.com/raster-foundry/raster-foundry/pull/4848)
+- Make flake8 and pytest ignore dependencies in `opt` directory of `app-lambda` [\#4853](https://github.com/raster-foundry/raster-foundry/pull/4853)
 
 ## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
 
