@@ -141,6 +141,7 @@ rf-selected-actions-bar {
     justify-content: space-between;
     align-items: center;
     font-size: 1.3rem;
+    z-index: 101;
 
     a {
         box-shadow: initial;
@@ -207,48 +208,6 @@ rf-selected-actions-bar {
 .sidebar-separator {
     height: 1em;
     border-bottom: 1px solid $border-color-default;
-}
-
-.sidebar-extended {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 1000;
-}
-
-.map-filters,
-.sidebar-dark {
-    left: 40rem;
-    margin-left: -2px;
-    background: $shade-normal;
-    color: $white;
-    border: none;
-    z-index: 1001;
-
-    .sidebar-header {
-        background: $shade-dark;
-        border-bottom: 1px solid $shade-normal;
-    }
-
-    .btn.sidebar-header-nav-btn {
-        color: $white;
-        border-color: $white;
-
-        &:hover,
-        &:focus {
-            background: none;
-            color: $white;
-            border-color: $white;
-        }
-    }
-
-    h5,
-    .h5,
-    p,
-    label {
-        color: #fff;
-    }
 }
 
 .hidden {

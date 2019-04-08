@@ -3509,14 +3509,22 @@ rf-list-item {
     align-self: stretch;
 }
 
-.project-side-modal {
+.project-side-modal,
+.sidebar-extended {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     background: $off-white;
     display: block;
+    &.sidebar-extended {
+        left: 40rem;
+        z-index: 1000;
+    }
+
     // TODO replace other styles with this once we remove the other components
+
+    rf-aoi-filter-pane,
     rf-scene-filter-pane {
         .filter {
             label,
@@ -3526,7 +3534,9 @@ rf-list-item {
             .selectize-input {
                 background-color: $white;
                 border-color: $shade-light;
-                color: $shade-dark;
+                input {
+                    color: $shade-dark;
+                }
             }
         }
         .browse-source-drop-down {
