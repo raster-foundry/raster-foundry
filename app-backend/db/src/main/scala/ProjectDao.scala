@@ -95,6 +95,8 @@ object ProjectDao
                      None,
                      None,
                      false,
+                     None,
+                     None,
                      None)
       )
       project <- (fr"INSERT INTO" ++ tableF ++ fr"""

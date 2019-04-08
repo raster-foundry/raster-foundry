@@ -24,8 +24,10 @@ final case class ProjectLayer(
     rangeEnd: Option[Timestamp],
     geometry: Option[Projected[Geometry]],
     isSingleBand: Boolean,
-    singleBandOptions: Option[SingleBandOptions.Params])
-    extends GeoJSONSerializable[ProjectLayer.GeoJSON] {
+    singleBandOptions: Option[SingleBandOptions.Params],
+    overviewsLocation: Option[String],
+    minZoomLevel: Option[Int]
+) extends GeoJSONSerializable[ProjectLayer.GeoJSON] {
   def toGeoJSONFeature: ProjectLayer.GeoJSON = ProjectLayer.GeoJSON(
     this.id,
     this.geometry,
@@ -39,7 +41,9 @@ final case class ProjectLayer(
       this.rangeStart,
       this.rangeEnd,
       this.isSingleBand,
-      this.singleBandOptions
+      this.singleBandOptions,
+      this.overviewsLocation,
+      this.minZoomLevel
     )
   )
 }
@@ -55,7 +59,10 @@ final case class ProjectLayerProperties(
     rangeStart: Option[Timestamp],
     rangeEnd: Option[Timestamp],
     isSingleBand: Boolean,
-    singleBandOptions: Option[SingleBandOptions.Params])
+    singleBandOptions: Option[SingleBandOptions.Params],
+    overviewsLocation: Option[String],
+    minZoomLevel: Option[Int]
+)
 
 object ProjectLayer extends LazyLogging with JsonCodecs {
 
@@ -67,7 +74,9 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
                           rangeEnd: Option[Timestamp],
                           geometry: Option[Projected[Geometry]],
                           isSingleBand: Boolean,
-                          singleBandOptions: Option[SingleBandOptions.Params]) {
+                          singleBandOptions: Option[SingleBandOptions.Params],
+                          overviewsLocation: Option[String],
+                          minZoomLevel: Option[Int]) {
     def toProjectLayer: ProjectLayer = {
       val now = new Timestamp(new java.util.Date().getTime)
       ProjectLayer(
@@ -82,7 +91,9 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
         this.rangeEnd,
         this.geometry,
         this.isSingleBand,
-        this.singleBandOptions
+        this.singleBandOptions,
+        this.overviewsLocation,
+        this.minZoomLevel
       )
     }
   }
@@ -114,9 +125,11 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
           rangeEnd,
           geometry,
           false,
+          None,
+          None,
           None
         )
-      }) or Decoder.forProduct9(
+      }) or Decoder.forProduct11(
       "name",
       "projectId",
       "colorGroupHex",
@@ -125,7 +138,9 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
       "rangeEnd",
       "geometry",
       "isSingleBand",
-      "singleBandOptions"
+      "singleBandOptions",
+      "overviewsLocation",
+      "minZoomLevel"
     )(Create.apply _)
   }
 
@@ -147,7 +162,9 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
         properties.rangeEnd,
         geometry,
         properties.isSingleBand,
-        properties.singleBandOptions
+        properties.singleBandOptions,
+        properties.overviewsLocation,
+        properties.minZoomLevel
       )
     }
   }
