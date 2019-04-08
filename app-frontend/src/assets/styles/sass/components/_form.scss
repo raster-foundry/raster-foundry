@@ -261,8 +261,6 @@ div.checkbox {
     margin: 0;
     color: $text-base;
     user-select: none;
-    font-size: 2rem;
-    margin-right: 1rem;
     cursor: pointer;
 
     label {
@@ -397,7 +395,7 @@ div.radio {
     }
 
     &:before {
-        content: '';
+        content: '' !important;
         order: 0;
         width: 10px;
         height: 10px;
