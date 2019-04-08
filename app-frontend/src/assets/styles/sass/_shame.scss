@@ -3192,6 +3192,10 @@ rf-navbar-search {
 }
 
 .list-item-left-actions {
+    .checkbox {
+        font-size: 1.8rem;
+    }
+
     a {
         color: $brand-primary;
     }
@@ -3603,11 +3607,13 @@ rf-selected-actions-bar {
     align-self: center;
 
     label.checkbox {
-        font-size: 1.3rem;
+        margin-right: 5px;
+        font-size: 1.4rem;
+        cursor: pointer;
+        
         &:after {
             border: 2px solid $shade-light;
         }
-        cursor: pointer;
     }
 }
 
