@@ -55,17 +55,20 @@ trait ProjectLayerAnnotationRoutes
                 (queryParams.withOwnerInfo match {
                   case Some(true) =>
                     AnnotationDao
-                      .listByLayerWithOwnerInfo(projectId, page, queryParams, Some(layerId))
+                      .listByLayerWithOwnerInfo(projectId,
+                                                page,
+                                                queryParams,
+                                                Some(layerId))
                       .transact(xa)
-                        .unsafeToFuture
-                        .map { p =>
-                          {
-                            fromPaginatedResponseToGeoJson[
-                              AnnotationWithOwnerInfo,
-                              AnnotationWithOwnerInfo.GeoJSON
-                            ](p)
-                          }
+                      .unsafeToFuture
+                      .map { p =>
+                        {
+                          fromPaginatedResponseToGeoJson[
+                            AnnotationWithOwnerInfo,
+                            AnnotationWithOwnerInfo.GeoJSON
+                          ](p)
                         }
+                      }
                   case _ =>
                     AnnotationDao
                       .listByLayer(projectId, page, queryParams, Some(layerId))

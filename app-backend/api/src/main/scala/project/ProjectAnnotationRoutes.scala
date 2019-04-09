@@ -39,28 +39,28 @@ trait ProjectAnnotationRoutes
                   AnnotationDao
                     .listByLayerWithOwnerInfo(projectId, page, queryParams)
                     .transact(xa)
-                      .unsafeToFuture
-                      .map { p =>
-                        {
-                          fromPaginatedResponseToGeoJson[
-                            AnnotationWithOwnerInfo,
-                            AnnotationWithOwnerInfo.GeoJSON
-                          ](p)
-                        }
+                    .unsafeToFuture
+                    .map { p =>
+                      {
+                        fromPaginatedResponseToGeoJson[
+                          AnnotationWithOwnerInfo,
+                          AnnotationWithOwnerInfo.GeoJSON
+                        ](p)
                       }
+                    }
                 case _ =>
                   AnnotationDao
                     .listByLayer(projectId, page, queryParams)
                     .transact(xa)
-                      .unsafeToFuture
-                      .map { p =>
-                        {
-                          fromPaginatedResponseToGeoJson[
-                            Annotation,
-                            Annotation.GeoJSON
-                          ](p)
-                        }
+                    .unsafeToFuture
+                    .map { p =>
+                      {
+                        fromPaginatedResponseToGeoJson[
+                          Annotation,
+                          Annotation.GeoJSON
+                        ](p)
                       }
+                    }
               })
             }
         }
