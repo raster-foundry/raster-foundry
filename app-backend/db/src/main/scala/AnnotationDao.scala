@@ -227,9 +227,9 @@ object AnnotationDao extends Dao[Annotation] {
     query.filter(fr"project_id = ${projectId}").filter(annotationId).delete
 
   def createAnnotateWithOwnerInfoFilters(
-    projectId: UUID,
-    projectLayerId: UUID,
-    queryParams: AnnotationQueryParameters
+      projectId: UUID,
+      projectLayerId: UUID,
+      queryParams: AnnotationQueryParameters
   ): List[Option[Fragment]] =
     Filters.userQP(queryParams.userParams) ++
       List(
@@ -256,13 +256,13 @@ object AnnotationDao extends Dao[Annotation] {
             Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
           case _ => None
         }
-    )
+      )
 
   def listByLayerWithOwnerInfo(
-    projectId: UUID,
-    pageRequest: PageRequest,
-    queryParams: AnnotationQueryParameters,
-    projectLayerIdO: Option[UUID] = None
+      projectId: UUID,
+      pageRequest: PageRequest,
+      queryParams: AnnotationQueryParameters,
+      projectLayerIdO: Option[UUID] = None
   ): ConnectionIO[PaginatedResponse[AnnotationWithOwnerInfo]] = {
     val selectF: Fragment = fr"""
       SELECT a.id, a.project_id, a.created_at, a.created_by, a.modified_at,
@@ -282,7 +282,9 @@ object AnnotationDao extends Dao[Annotation] {
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
-      filters = createAnnotateWithOwnerInfoFilters(projectId, projectLayerId, queryParams)
+      filters = createAnnotateWithOwnerInfoFilters(projectId,
+                                                   projectLayerId,
+                                                   queryParams)
       page <- (selectF ++ fromF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
         pageRequest.copy(
           sort = pageRequest.sort ++ Map("a.modified_at" -> Order.Desc,
@@ -297,11 +299,11 @@ object AnnotationDao extends Dao[Annotation] {
       val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
 
       PaginatedResponse[AnnotationWithOwnerInfo](count,
-                                            hasPrevious,
-                                            hasNext,
-                                            pageRequest.offset,
-                                            pageRequest.limit,
-                                            page)
+                                                 hasPrevious,
+                                                 hasNext,
+                                                 pageRequest.offset,
+                                                 pageRequest.limit,
+                                                 page)
     }
   }
 }

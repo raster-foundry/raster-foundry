@@ -8,6 +8,7 @@ import cats.effect.IO
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
 class AnnotationDaoSpec
     extends FunSuite
@@ -216,6 +217,66 @@ class AnnotationDaoSpec
               (annotations.toSet map { (annotation: Annotation.Create) =>
                 annotation.label
               })
+          }
+      }
+    }
+  }
+
+  test("list annotations with owner info for project when withOwnerInfo QP is true") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         platform: Platform,
+         project: Project.Create,
+         annotations: List[Annotation.Create],
+         queryParams: AnnotationQueryParameters,
+         page: PageRequest
+        ) =>
+          {
+            val annotationsIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
+              inserted <- AnnotationDao.insertAnnotations(
+                annotations,
+                dbProject.id,
+                dbUser
+              )
+              forProject <- AnnotationDao.listByLayerWithOwnerInfo(
+                dbProject.id,
+                page,
+                queryParams.copy(withOwnerInfo = Some(true))
+              )
+            } yield { (inserted, forProject, dbUser) }
+
+            val (insertedAnnotations, annotationsForProject, dbUser) =
+              xa.use(t => annotationsIO.transact(t)).unsafeRunSync
+
+            insertedAnnotations.map(annotation => {
+              AnnotationWithOwnerInfo(
+                annotation.id,
+                annotation.projectId,
+                annotation.createdAt,
+                annotation.createdBy,
+                annotation.modifiedAt,
+                annotation.modifiedBy,
+                annotation.owner,
+                annotation.label,
+                annotation.description,
+                annotation.machineGenerated,
+                annotation.confidence,
+                annotation.quality,
+                annotation.geometry,
+                annotation.annotationGroup,
+                annotation.labeledBy,
+                annotation.verifiedBy,
+                annotation.projectLayerId,
+                dbUser.name,
+                dbUser.profileImageUri
+              )
+            }).toSet == annotationsForProject.results.toSet
           }
       }
     }

@@ -604,6 +604,9 @@ object Generators extends ArbitraryInstances {
   private def combinedSceneQueryParamsGen: Gen[CombinedSceneQueryParams] =
     Gen.const(CombinedSceneQueryParams())
 
+  private def annotationQueryParametersGen: Gen[AnnotationQueryParameters] =
+    Gen.const(AnnotationQueryParameters())
+
   private def projectSceneQueryParametersGen: Gen[ProjectSceneQueryParameters] =
     Gen.const(ProjectSceneQueryParameters())
 
@@ -965,6 +968,11 @@ object Generators extends ArbitraryInstances {
         sceneCreates <- arbitrary[List[Scene.Create]]
       } yield { (projectLayerCreate, sceneCreates) }
       Arbitrary { Gen.listOfN(5, tupGen) }
+    }
+
+    implicit def arbAnnotationQueryParameters
+      : Arbitrary[AnnotationQueryParameters] = Arbitrary {
+      annotationQueryParametersGen
     }
   }
 }
