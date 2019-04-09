@@ -109,7 +109,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
           'maxConfidence.as[Double].?,
           'quality.as[String].?,
           'annotationGroup.as[UUID].?,
-          'bbox.as[String].*
+          'bbox.as[String].*,
+          'withOwnerInfo.as[Boolean].?
         ))).as(AnnotationQueryParameters.apply _)
 
   def shapeQueryParams =

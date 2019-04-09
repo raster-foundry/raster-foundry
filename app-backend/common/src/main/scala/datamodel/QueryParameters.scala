@@ -449,7 +449,8 @@ final case class AnnotationQueryParameters(
     maxConfidence: Option[Double] = None,
     quality: Option[String] = None,
     annotationGroup: Option[UUID] = None,
-    bbox: Iterable[String] = Seq.empty[String]
+    bbox: Iterable[String] = Seq.empty[String],
+    withOwnerInfo: Option[Boolean] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
