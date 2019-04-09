@@ -34,18 +34,34 @@ trait ProjectAnnotationRoutes
         (withPagination & annotationQueryParams) {
           (page: PageRequest, queryParams: AnnotationQueryParameters) =>
             complete {
-              AnnotationDao
-                .listByLayer(projectId, page, queryParams)
-                .transact(xa)
-                .unsafeToFuture
-                .map { p =>
-                  {
-                    fromPaginatedResponseToGeoJson[
-                      Annotation,
-                      Annotation.GeoJSON
-                    ](p)
-                  }
-                }
+              (queryParams.withOwnerInfo match {
+                case Some(true) =>
+                  AnnotationDao
+                    .listByLayerWithOwnerInfo(projectId, page, queryParams)
+                    .transact(xa)
+                      .unsafeToFuture
+                      .map { p =>
+                        {
+                          fromPaginatedResponseToGeoJson[
+                            AnnotationWithOwnerInfo,
+                            AnnotationWithOwnerInfo.GeoJSON
+                          ](p)
+                        }
+                      }
+                case _ =>
+                  AnnotationDao
+                    .listByLayer(projectId, page, queryParams)
+                    .transact(xa)
+                      .unsafeToFuture
+                      .map { p =>
+                        {
+                          fromPaginatedResponseToGeoJson[
+                            Annotation,
+                            Annotation.GeoJSON
+                          ](p)
+                        }
+                      }
+              })
             }
         }
       }

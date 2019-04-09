@@ -276,3 +276,83 @@ object Annotation extends LazyLogging {
     }
   }
 }
+
+@JsonCodec
+final case class AnnotationWithOwnerInfo(id: UUID,
+                                         projectId: UUID,
+                                         createdAt: Timestamp,
+                                         createdBy: String,
+                                         modifiedAt: Timestamp,
+                                         modifiedBy: String,
+                                         owner: String,
+                                         label: String,
+                                         description: Option[String],
+                                         machineGenerated: Option[Boolean],
+                                         confidence: Option[Float],
+                                         quality: Option[AnnotationQuality],
+                                         geometry: Option[Projected[Geometry]],
+                                         annotationGroup: UUID,
+                                         labeledBy: Option[String],
+                                         verifiedBy: Option[String],
+                                         projectLayerId: UUID,
+                                         ownerName: String,
+                                         ownerProfileImageUri: String)
+  extends GeoJSONSerializable[AnnotationWithOwnerInfo.GeoJSON] {
+    def toGeoJSONFeature = AnnotationWithOwnerInfo.GeoJSON(
+      this.id,
+      this.geometry,
+        AnnotationWithOwnerInfoProperties(
+         this.projectId,
+         this.createdAt,
+         this.createdBy,
+         this.modifiedAt,
+         this.modifiedBy,
+         this.owner,
+         this.label,
+         this.description,
+         this.machineGenerated,
+         this.confidence,
+         this.quality,
+         this.annotationGroup,
+         this.labeledBy,
+         this.verifiedBy,
+         this.projectLayerId,
+         this.ownerName,
+         this.ownerProfileImageUri
+        )
+      )
+  }
+
+object AnnotationWithOwnerInfo {
+
+  implicit val config: Configuration =
+    Configuration.default.copy(transformMemberNames = {
+      case "_type" => "type"
+      case other   => other
+    })
+
+  @ConfiguredJsonCodec
+  final case class GeoJSON(id: UUID,
+                           geometry: Option[Projected[Geometry]],
+                           properties: AnnotationWithOwnerInfoProperties,
+                           _type: String = "Feature") extends GeoJSONFeature
+}
+
+@JsonCodec
+final case class AnnotationWithOwnerInfoProperties(projectId: UUID,
+                                      createdAt: Timestamp,
+                                      createdBy: String,
+                                      modifiedAt: Timestamp,
+                                      modifiedBy: String,
+                                      owner: String,
+                                      label: String,
+                                      description: Option[String],
+                                      machineGenerated: Option[Boolean],
+                                      confidence: Option[Float],
+                                      quality: Option[AnnotationQuality],
+                                      annotationGroup: UUID,
+                                      labeledBy: Option[String] = None,
+                                      verifiedBy: Option[String] = None,
+                                      projectLayerId: UUID,
+                                      ownerName: String,
+                                      ownerProfileImageUri: String)
