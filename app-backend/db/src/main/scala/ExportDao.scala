@@ -205,13 +205,13 @@ object ExportDao extends Dao[Export] {
     SceneToLayerDao.getMosaicDefinition(layerId).compile.toList map { mds =>
       // we definitely need NoData but it isn't obviously available :(
       val ndOverride: Option[Double] = None
-      val layers = mds.map { md =>
+      val layers = mds.flatMap { md =>
         md.ingestLocation.map { location =>
           (location,
            exportOptions.bands.map(_.toList).getOrElse(List()),
            ndOverride)
         }
-      }.flatten
+      }
       exportOptions.mask.map(_.geom.reproject(WebMercator, LatLng)) match {
         case Some(mask) =>
           MosaicExportSource(
