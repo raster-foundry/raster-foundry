@@ -1,5 +1,5 @@
 <div
-    class="sidebar-actions-group with-padding"
+    class="sidebar-actions-group"
     ng-if="!$ctrl.isCorrecting && !$ctrl.selections.size"
 >
     <div>
@@ -127,7 +127,7 @@
         ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
     ></rf-pagination-controls>
 </div>
-<div class="sidebar-actions-group with-padding" ng-if="$ctrl.isCorrecting">
+<div class="sidebar-actions-group" ng-if="$ctrl.isCorrecting">
     <div>
         <button
             class="btn btn-tiny btn-transparent btn-no-left-margin"

@@ -2,8 +2,8 @@
     <a class="btn btn-tiny btn-transparent" ng-click="$ctrl.showNewLayerModal()">
         <i class="icon-plus"></i> New Layer
     </a>
-    <div style="flex: 1;"></div>
-    <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
+    <div class="flex-fill"></div>
+    <div class="btn btn-tiny btn-transparent" uib-dropdown uib-dropdown-toggle>
         Layer Visibility
         <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
             <li role="menuitem">
@@ -56,19 +56,27 @@
                 color="layer.colorGroupHex"
             ></rf-list-item-selector
         ></item-selector>
-        <item-title
-            ><strong ng-attr-title="{{ layer.name }}">{{ layer.name }}</strong></item-title
-        >
-        <item-subtitle><span>{{ layer.subtext }}</span></item-subtitle>
-        <item-date>
-          <span class="export-date-subtext">{{ layer.createdAt | date }}</span>
-          <rf-list-item-status
-              class="export-status export-date-subtext"
-              has-count="true"
-              statuses="$ctrl.uploadStatusByLayer[layer.id]"
-              status-map="$ctrl.uploadStatusMap"
-          >
-          </rf-list-item-status>
+        <item-title>
+            <a ui-sref="project.layer({projectId: $ctrl.project.id, layerId: layer.id})">
+                <strong ng-attr-title="{{ layer.name }}">
+                    {{ layer.name }}
+                </strong>
+            </a>
+        </item-title>
+        <item-subtitle>
+            <span>{{ layer.subtext }}</span>
+        </item-subtitle>
+        <item-date ng-if="layer.rangeStart && layer.rangeEnd">
+            <span class="export-date-subtext"
+                >{{ layer.rangeStart | date }} - {{ layer.rangeEnd | date }}</span
+            >
+            <rf-list-item-status
+                class="export-status export-date-subtext"
+                has-count="true"
+                statuses="$ctrl.uploadStatusByLayer[layer.id]"
+                status-map="$ctrl.uploadStatusMap"
+            >
+            </rf-list-item-status>
         </item-date>
         <item-actions>
             <rf-list-item-actions actions="$ctrl.layerActions[$index]"></rf-list-item-actions>

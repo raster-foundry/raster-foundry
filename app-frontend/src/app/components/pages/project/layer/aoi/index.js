@@ -86,15 +86,7 @@ class ProjectLayerAoiController {
             .then(paginatedResponse => {
                 fetchedList = paginatedResponse.results;
                 this.itemList = fetchedList
-                    .filter(fl => fl.geometry && fl.id !== this.layer.id).map(fl => {
-                        return {
-                            id: fl.id,
-                            name: fl.name,
-                            date: fl.createdAt,
-                            colorGroupHex: fl.colorGroupHex,
-                            geometry: fl.geometry
-                        };
-                    });
+                    .filter(fl => fl.geometry && fl.id !== this.layer.id);
                 if (this.itemList.length) {
                     this.onSelect(this.layer.id);
                 }

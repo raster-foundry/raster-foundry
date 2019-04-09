@@ -1,6 +1,6 @@
 <div class="sidebar-actions-group" ng-show="$ctrl.selected.size === 0">
     <div class="flex-fill"></div>
-    <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
+    <button class="btn btn-tiny btn-transparent" uib-dropdown uib-dropdown-toggle>
         Analysis Visibility
         <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
             <li role="menuitem">
@@ -10,7 +10,7 @@
                 <a href ng-click="$ctrl.showAllAnalyses()">Show all on page</a>
             </li>
         </ul>
-    </div>
+    </button>
 </div>
 <div class="selected-actions-group" ng-show="$ctrl.selected.size > 0">
     <rf-selected-actions-bar
@@ -23,13 +23,15 @@
             tooltip-template="View maps and histograms of selected analyses on one page"
             tooltip-size="small"
             tooltip-class="rf-tooltip shrink"
-            tooltip-side="bottom">
-          <button class="btn btn-transparent btn-tiny"
-                  ng-click="$ctrl.visualizeAnalyses()"
-                  ng-disabled="!$ctrl.canVisualize()"
-          >
-            Visualize
-          </button>
+            tooltip-side="bottom"
+        >
+            <button
+                class="btn btn-transparent btn-tiny"
+                ng-click="$ctrl.visualizeAnalyses()"
+                ng-disabled="!$ctrl.canVisualize()"
+            >
+                Visualize
+            </button>
         </span>
         <span
             tooltips

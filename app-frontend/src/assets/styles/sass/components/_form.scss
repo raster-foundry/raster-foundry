@@ -151,14 +151,14 @@ input[type='radio'] {
     font-size: 1.3rem;
     margin-top: 5px;
     margin-bottom: 0;
-    color: lighten($text-base, 10%);
+    color: $shade-normal;
     font-style: italic;
 }
 
 .help-text {
     display: block;
     margin-bottom: 0.5rem;
-    color: lighten($text-base, 25%);
+    color: $shade-normal;
     font-style: italic;
 }
 
@@ -304,8 +304,7 @@ div.checkbox {
         visibility: hidden;
         opacity: 0;
         transform: scale(0.1);
-        transition: 0.2s ease-in-out opacity,
-            0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) transform;
+        transition: 0.2s ease-in-out opacity, 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) transform;
     }
 
     input[type='checkbox'] {
@@ -410,8 +409,7 @@ div.radio {
         visibility: hidden;
         opacity: 0;
         transform: scale(0.1);
-        transition: 0.2s ease-in-out opacity,
-            0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) transform;
+        transition: 0.2s ease-in-out opacity, 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) transform;
     }
 
     input[type='checkbox'],
