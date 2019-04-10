@@ -1787,11 +1787,14 @@ paths:
         - Imagery
       parameters:
         - $ref: '#/parameters/projectID'
-        - $ref: '#/parameters/AnnotationLabel'
+        - $ref: '#/parameters/annotationLabel'
         - $ref: '#/parameters/annotationQualityCheck'
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/queryMapToken'
+        - $ref: '#/parameters/bbox'
+        - $ref: '#/parameters/withOwnerInfo'
+        - $ref: '#/parameters/annotationGroup'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project default layer'
@@ -2888,10 +2891,13 @@ paths:
       parameters:
         - $ref: '#/parameters/projectID'
         - $ref: '#/parameters/layerID'
-        - $ref: '#/parameters/AnnotationLabel'
+        - $ref: '#/parameters/annotationLabel'
         - $ref: '#/parameters/annotationQualityCheck'
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/bbox'
+        - $ref: '#/parameters/withOwnerInfo'
+        - $ref: '#/parameters/annotationGroup'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project layer'
@@ -4568,7 +4574,7 @@ parameters:
         - 'modifiedAt,desc'
         - 'modifiedAt,asc'
   annotationQualityCheck:
-    name: annotationQualityCheck
+    name: quality
     description: 'Quality check on annotations'
     in: query
     type: string
@@ -4576,10 +4582,10 @@ parameters:
       - 'PASS'
       - 'FAIL'
       - 'NEUTRAL'
-  AnnotationLabel:
-    name: AnnotationLabel
+  annotationLabel:
+    name: label
     in: query
-    description: 'name of a label'
+    description: 'Name of an annotation label'
     type: string
   name:
     name: name
@@ -5046,6 +5052,19 @@ parameters:
     description: 'Bounding box of the form "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat". Delimit multiple with semicolons.'
     in: query
     type: string
+    required: false
+  withOwnerInfo:
+    name: withOwnerInfo
+    description: 'Boolean value indicating if to return annotations with owner name and profile picture uri.'
+    in: query
+    type: boolean
+    required: false
+  annotationGroup:
+    name: annotationGroup
+    description: 'UUID of an annotation group'
+    in: query
+    type: string
+    format: uuid
     required: false
   project:
     name: project
