@@ -20,7 +20,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     elif [ "${1:-}" = "sbt" ]; then
         docker-compose \
-            run --rm --no-deps sbt
+            run --rm sbt
     else
         docker-compose \
             run --rm --no-deps --service-ports \
