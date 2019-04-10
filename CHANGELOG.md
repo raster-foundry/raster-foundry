@@ -61,6 +61,7 @@
 - Enabled inserting annotations in bulk in one `INSERT INTO` command [\#4777](https://github.com/raster-foundry/raster-foundry/pull/4777)
 - Started using swaggerhub for documentation [\#4818](https://github.com/raster-foundry/raster-foundry/pull/4818)
 - Made various UI improvements [\#4801](https://github.com/raster-foundry/raster-foundry/pull/4801)
+- Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
 
 ### Deprecated
 
