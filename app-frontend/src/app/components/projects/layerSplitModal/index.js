@@ -129,7 +129,7 @@ class LayerSplitModalController {
         this.projectService
             .getProjectLayerDatasources(this.projectId, this.layerId)
             .then(datasources => {
-                this.hasMultipleDatasources = datasources.length;
+                this.hasMultipleDatasources = datasources.length > 1;
             });
     }
 
