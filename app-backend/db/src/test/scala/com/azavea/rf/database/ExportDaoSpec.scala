@@ -66,8 +66,7 @@ class ExportDaoSpec
               }
             } yield exportDefinition
 
-            val testExportDefinition =
-              xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
             true
           }
       }
@@ -110,8 +109,7 @@ class ExportDaoSpec
               }
             } yield exportDefinition
 
-            val testExportDefinition =
-              xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
             true
           }
       }
@@ -145,19 +143,23 @@ class ExportDaoSpec
                                                  dbProject.id,
                                                  dbProject.defaultLayerId)
               dbToolRun <- {
-                val projectRaster: ProjectRaster = ProjectRaster(UUID.randomUUID(),
-                                                     dbProject.id,
-                                                     Some(2),
-                                                     None,
-                                                     None)
-                val layerRaster: LayerRaster = LayerRaster(UUID.randomUUID(),
-                                                 dbProject.defaultLayerId,
-                                                 Some(1),
-                                                 None,
-                                                 None)
+                val projectRaster: ProjectRaster =
+                  ProjectRaster(UUID.randomUUID(),
+                                dbProject.id,
+                                Some(2),
+                                None,
+                                None)
+                val layerRaster: LayerRaster =
+                  LayerRaster(UUID.randomUUID(),
+                              dbProject.defaultLayerId,
+                              Some(1),
+                              None,
+                              None)
                 val ast =
                   MapAlgebraAST
-                    .Addition(List(projectRaster, layerRaster), UUID.randomUUID(), None)
+                    .Addition(List(projectRaster, layerRaster),
+                              UUID.randomUUID(),
+                              None)
 
                 val toolRun =
                   toolRunCreate.copy(executionParameters = ast.asJson)
@@ -169,11 +171,11 @@ class ExportDaoSpec
                 ExportDao.insert(export.copy(toolRunId = Some(dbToolRun.id)),
                                  dbUser)
               }
-              exportDefinition <- ExportDao.getExportDefinition(dbExport, dbUser)
+              exportDefinition <- ExportDao.getExportDefinition(dbExport,
+                                                                dbUser)
             } yield exportDefinition
 
-            val testExportDefinition =
-              xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
             true
           }
       }

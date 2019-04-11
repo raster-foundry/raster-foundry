@@ -784,14 +784,14 @@ object Generators extends ArbitraryInstances {
       operation <- arbitrary[String]
     } yield
       ExportOptions(mask,
-        resolution,
-                          crop,
-                          raw,
-                          bands,
-                          rasterSize,
-                          Some(3857),
-                          new URI(""),
-                          operation)
+                    resolution,
+                    crop,
+                    raw,
+                    bands,
+                    rasterSize,
+                    Some(3857),
+                    new URI(""),
+                    operation)
 
   private def exportCreateGen: Gen[Export.Create] =
     for {

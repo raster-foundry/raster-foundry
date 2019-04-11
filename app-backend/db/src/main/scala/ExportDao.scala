@@ -130,7 +130,8 @@ object ExportDao extends Dao[Export] {
         case (Some(projectId), None, None) =>
           for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            mosaicExportSourceList <- mosaicInput(project.defaultLayerId, exportOptions).map(_.asJson)
+            mosaicExportSourceList <- mosaicInput(project.defaultLayerId,
+                                                  exportOptions).map(_.asJson)
           } yield { mosaicExportSourceList }
         case (None, Some(projectLayerId), None) =>
           throw new Exception(
