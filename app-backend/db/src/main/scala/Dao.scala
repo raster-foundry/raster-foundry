@@ -203,8 +203,7 @@ object Dao extends LazyLogging {
         .query[T]
         .to[List]
 
-    def hasNext(pageRequest: PageRequest,
-                selectF: Fragment): ConnectionIO[Boolean] = {
+    def hasNext(pageRequest: PageRequest): ConnectionIO[Boolean] = {
       (existF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
         pageRequest.copy(offset = pageRequest.offset + 1)))
         .query[Boolean]
@@ -230,7 +229,7 @@ object Dao extends LazyLogging {
             (count, (pageRequest.offset * pageRequest.limit) + 1 < count)
           }
         } else {
-          hasNext(pageRequest, selectF) map {
+          hasNext(pageRequest) map {
             (-1, _)
           }
         }

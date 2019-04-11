@@ -133,7 +133,7 @@ trait ProjectLayerRoutes
         entity(as[SplitOptions]) { splitOptions =>
           onSuccess(
             ProjectLayerDao
-              .splitProjectLayer(projectId, layerId, splitOptions, user)
+              .splitProjectLayer(projectId, layerId, splitOptions)
               .transact(xa)
               .unsafeToFuture
           ) { splitLayers =>

@@ -220,10 +220,10 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
       }
   }
 
-  def splitProjectLayer(projectId: UUID,
-                        layerId: UUID,
-                        splitOptions: SplitOptions,
-                        user: User): ConnectionIO[List[ProjectLayer]] = {
+  def splitProjectLayer(
+      projectId: UUID,
+      layerId: UUID,
+      splitOptions: SplitOptions): ConnectionIO[List[ProjectLayer]] = {
     for {
       layer <- unsafeGetProjectLayerById(layerId)
       scenes <- ProjectLayerScenesDao.listLayerScenesRaw(layerId, splitOptions)

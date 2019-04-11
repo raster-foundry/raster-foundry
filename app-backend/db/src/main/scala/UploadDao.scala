@@ -43,15 +43,16 @@ object UploadDao extends Dao[Upload] {
       // Use posted Upload.Create without modifications in other cases
       projectO <- (newUpload.projectId, newUpload.layerId) match {
         case (Some(projectId), None) => ProjectDao.getProjectById(projectId)
-        case _ => None.pure[ConnectionIO]
+        case _                       => None.pure[ConnectionIO]
       }
       updatedUpload = projectO match {
-        case Some(project) => newUpload.copy(layerId = Some(project.defaultLayerId))
+        case Some(project) =>
+          newUpload.copy(layerId = Some(project.defaultLayerId))
         case _ => newUpload
       }
       upload = updatedUpload.toUpload(user,
-                                  (userPlatform.id, userPlatformAdmin),
-                                  ownerPlatform)
+                                      (userPlatform.id, userPlatformAdmin),
+                                      ownerPlatform)
       insertedUpload <- (
         sql"""
        INSERT INTO uploads
