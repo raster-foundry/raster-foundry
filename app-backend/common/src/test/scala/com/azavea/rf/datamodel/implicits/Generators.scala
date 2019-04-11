@@ -1,5 +1,7 @@
 package com.rasterfoundry.common.datamodel
 
+import java.net.URI
+
 import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
 import geotrellis.vector.testkit.Rectangle
 import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
@@ -7,7 +9,6 @@ import io.circe.syntax._
 import io.circe.testing.ArbitraryInstances
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck._
-
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.util.UUID
@@ -74,6 +75,13 @@ object Generators extends ArbitraryInstances {
 
   private def orgStatusGen: Gen[OrgStatus] =
     Gen.oneOf(OrgStatus.Requested, OrgStatus.Active, OrgStatus.Inactive)
+
+  private def exportStatusGen: Gen[ExportStatus] =
+    Gen.oneOf(ExportStatus.Exported,
+              ExportStatus.Exporting,
+              ExportStatus.Failed,
+              ExportStatus.ToBeExported,
+              ExportStatus.NotExported)
 
   private def sceneTypeGen: Gen[SceneType] =
     Gen.oneOf(SceneType.Avro, SceneType.COG)
@@ -760,6 +768,53 @@ object Generators extends ArbitraryInstances {
       MapToken.Create(name, None, None, None)
     }
 
+  private def exportTypeGen: Gen[ExportType] =
+    Gen.oneOf(ExportType.Dropbox, ExportType.Local, ExportType.S3)
+
+  private def exportOptionGen: Gen[ExportOptions] =
+    for {
+      mask: Option[Projected[MultiPolygon]] <- projectedMultiPolygonGen3857 map {
+        Some(_)
+      }
+      resolution <- arbitrary[Int]
+      rasterSize <- arbitrary[Option[Int]]
+      crop <- arbitrary[Boolean]
+      raw <- arbitrary[Boolean]
+      bands <- arbitrary[Option[Seq[Int]]]
+      operation <- arbitrary[String]
+    } yield
+      ExportOptions(mask,
+        resolution,
+                          crop,
+                          raw,
+                          bands,
+                          rasterSize,
+                          Some(3857),
+                          new URI(""),
+                          operation)
+
+  private def exportCreateGen: Gen[Export.Create] =
+    for {
+      projectId <- Gen.const(None)
+      exportStatus <- exportStatusGen
+      exportType <- exportTypeGen
+      visibility <- visibilityGen
+      toolRunId <- Gen.const(None)
+      projectLayerId <- Gen.const(None)
+      exportOptions <- exportOptionGen
+    } yield {
+      Export.Create(
+        projectId,
+        exportStatus,
+        exportType,
+        visibility,
+        None,
+        toolRunId,
+        exportOptions.asJson,
+        projectLayerId
+      )
+    }
+
   private def projectLayerCreateGen: Gen[ProjectLayer.Create] =
     for {
       name <- nonEmptyStringGen
@@ -815,6 +870,10 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbOrganization: Arbitrary[Organization] = Arbitrary {
       organizationGen
+    }
+
+    implicit def arbExport: Arbitrary[Export.Create] = Arbitrary {
+      exportCreateGen
     }
 
     implicit def arbOrganizationCreate: Arbitrary[Organization.Create] =

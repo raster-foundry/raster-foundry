@@ -4,7 +4,9 @@ import java.net.URI
 
 import geotrellis.proj4.CRS
 import geotrellis.vector.{MultiPolygon, Projected}
+import io.circe.{Decoder, ObjectEncoder}
 import io.circe.generic.extras.{Configuration, ConfiguredJsonCodec}
+import io.circe.generic.semiauto._
 
 @ConfiguredJsonCodec
 final case class ExportOptions(mask: Option[Projected[MultiPolygon]],
@@ -22,4 +24,7 @@ final case class ExportOptions(mask: Option[Projected[MultiPolygon]],
 
 object ExportOptions {
   implicit val config: Configuration = Configuration.default.withDefaults
+
+  implicit val encoder: ObjectEncoder[ExportOptions] =
+    deriveEncoder[ExportOptions]
 }
