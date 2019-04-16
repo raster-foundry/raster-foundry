@@ -17,6 +17,8 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
     logger.info('Warping tif to web mercator: %s', combined_tif_path)
     with rasterio.open(combined_tif_path) as src:
         meta = src.meta
+        logger.info('Initial nodata for %s: %s', warped_tif_path,
+                    meta['nodata'])
         new_meta = meta.copy()
         transform, width, height = calculate_default_transform(
             src.crs, dst_crs, src.width, src.height, *src.bounds)
@@ -39,17 +41,14 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
                     dst_transform=transform,
                     dst_crs=dst_crs,
                     resampling=Resampling.nearest,
-                    src_nodata=-28762
-                )
+                    src_nodata=-28762)
 
 
 def hdf_to_geotiffs(modis_path, local_dir):
     # Separate out into tifs for each band
     logger.info('Splitting MODIS bands from SDS %s', modis_path)
     split_base_path = os.path.join(local_dir, 'split.tif')
-    translate_command = [
-        'gdal_translate', '-sds', modis_path, split_base_path
-    ]
+    translate_command = ['gdal_translate', '-sds', modis_path, split_base_path]
     subprocess.check_call(translate_command)
     return glob.glob('{}/split*'.format(local_dir))
 
@@ -75,6 +74,12 @@ def create_geotiffs(modis_path, local_dir):
     warped_paths = cog.warp_tifs(tifs, local_dir)
     merged_tif = cog.merge_tifs(warped_paths, local_dir)
     warp_tif(merged_tif, post_web_mercator_path)
+    with rasterio.open(post_web_mercator_path, 'r') as src:
+        logger.info('Nodata before adding overviews: %s', src.meta['nodata'])
     cog.add_overviews(post_web_mercator_path)
+    with rasterio.open(post_web_mercator_path, 'r') as src:
+        logger.info('Nodata after adding overviews: %s', src.meta['nodata'])
     cog_path = cog.convert_to_cog(post_web_mercator_path, local_dir)
+    with rasterio.open(cog_path, 'r') as src:
+        logger.info('Nodata after cog conversion: %s', src.meta['nodata'])
     return [cog_path]

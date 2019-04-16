@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
     overviews_command = [
-        'gdaladdo', '-r', 'average', '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
-        tif_path
+        'gdaladdo', '-r', 'average', '--config', 'COMPRESS_OVERVIEW',
+        'DEFLATE', tif_path
     ]
     subprocess.check_call(overviews_command)
 
@@ -33,8 +33,8 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
     out_path = os.path.join(local_dir, 'cog.tif')
     cog_command = [
         'gdal_translate', tif_with_overviews_path, '-co', 'TILED=YES', '-co',
-        'COMPRESS=DEFLATE', '-co', 'COPY_SRC_OVERVIEWS=YES', '-co', 'BIGTIFF=IF_SAFER',
-        '-co', 'PREDICTOR=2', out_path
+        'COMPRESS=DEFLATE', '-co', 'COPY_SRC_OVERVIEWS=YES', '-co',
+        'BIGTIFF=IF_SAFER', '-co', 'PREDICTOR=2', out_path
     ]
     subprocess.check_call(cog_command)
     return out_path
@@ -72,10 +72,12 @@ def merge_tifs(local_tif_paths, local_dir):
     logger.debug('The files are:\n%s', '\n'.join(local_tif_paths))
     merged_path = os.path.join(local_dir, 'merged.tif')
     merge_command = [
-        'gdal_merge.py', '-o', merged_path, '-separate', '-co', 'COMPRESS=DEFLATE',
-        '-co', 'PREDICTOR=2', '-co', 'BIGTIFF=IF_SAFER'
+        'gdal_merge.py', '-o', merged_path, '-separate', '-co',
+        'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2', '-co', 'BIGTIFF=IF_SAFER'
     ] + local_tif_paths
     subprocess.check_call(merge_command)
+    with rasterio.open(merged_path, 'r') as src:
+        logger.info('No data after merge: %s', src.meta['nodata'])
     return merged_path
 
 
@@ -91,6 +93,9 @@ def sort_key(datasource_id, band):
 
 
 def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
+    with rasterio.open(src_path, 'r') as src:
+        logger.info('Initial no data before resampling: %s',
+                    src.meta['nodata'])
     src_fname = os.path.split(src_path)[-1]
     src_fname_ext = src_fname.split('.')[-1]
     dst_fname = src_fname.replace(src_fname_ext, 'warped.tif')
@@ -99,8 +104,10 @@ def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
         logger.info(
             'No need to reproject for %s, already in target resolution',
             src_path)
-        subprocess.check_call(
-            ['gdal_translate', '-co', 'COMPRESS=DEFLATE', '-co', 'BIGTIFF=IF_SAFER', src_path, dst_path])
+        subprocess.check_call([
+            'gdal_translate', '-co', 'COMPRESS=DEFLATE', '-co',
+            'BIGTIFF=IF_SAFER', src_path, dst_path
+        ])
     # if there are any resolution difference, including if they're weird, like a
     # greater x resolution and lesser y resolution, reproject to the same size
     else:
@@ -113,8 +120,8 @@ def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
         # No need to throw in -wo for the compression options, since we're doing all
         # of the bands at once
         subprocess.check_call([
-            'gdalwarp', '-co', 'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2',
-            '-co', 'BIGTIFF=IF_SAFER', '-tr',
+            'gdalwarp', '-co', 'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2', '-co',
+            'BIGTIFF=IF_SAFER', '-tr',
             str(dst_x),
             str(dst_y), src_path, dst_path
         ])
