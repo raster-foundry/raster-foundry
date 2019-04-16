@@ -4,6 +4,18 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Fixed
+
+### Security
+
+## [1.19.0](https://github.com/raster-foundry/raster-foundry/tree/1.19.0) (2019-04-16)
+
+### Added
+
 - Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
 - Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
 - Added project layer analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
@@ -64,8 +76,6 @@
 - Made various UI improvements [\#4801](https://github.com/raster-foundry/raster-foundry/pull/4801)
 - Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
 
-### Deprecated
-
 ### Removed
 
 - Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
@@ -86,7 +96,7 @@
 - Make flake8 and pytest ignore dependencies in `opt` directory of `app-lambda` [\#4853](https://github.com/raster-foundry/raster-foundry/pull/4853) [\#4863](https://github.com/raster-foundry/raster-foundry/pull/4863)
 - Fix v2 share page using the wrong endpoint to fetch analyses, fix error states [\#4845](https://github.com/raster-foundry/raster-foundry/pull/4845)
 
-## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
+## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.1) (2019-02-20)
 
 ### Fixed
 
