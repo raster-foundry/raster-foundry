@@ -30,9 +30,6 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
 import io.circe.generic.JsonCodec
-
-import scala.util.Success
-
 @JsonCodec
 final case class BulkAcceptParams(sceneIds: List[UUID])
 
