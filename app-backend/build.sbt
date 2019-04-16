@@ -246,7 +246,9 @@ lazy val migrations = project
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
   .settings({
-    libraryDependencies ++= List(Dependencies.scalaforklift)
+    libraryDependencies ++= Seq(Dependencies.scalaforklift,
+                                Dependencies.hikariCP % Runtime,
+                                Dependencies.postgres % Runtime)
   })
 
 /**
