@@ -244,13 +244,13 @@ class NodeHistogramController {
 
     rescaleInnerBreakpoints(breakpoint, value) {
         let minBreakpoint = this.breakpoints.reduce((min, current) => {
-            if (!min.value) {
+            if (!Number.isFinite(min.value)) {
                 return current;
             }
             return min.value < current.value ? min : current;
         }, {});
         let maxBreakpoint = this.breakpoints.reduce((max, current) => {
-            if (!max.value) {
+            if (!Number.isFinite(max.value)) {
                 return current;
             }
             return max.value > current.value ? max : current;

@@ -16,8 +16,14 @@ const InputNodeComponent = {
 
 class InputNodeController {
     constructor(
-        modalService, datasourceService, projectService,
-        $q, $scope, $ngRedux, $log, $rootScope
+        modalService,
+        datasourceService,
+        projectService,
+        $q,
+        $scope,
+        $ngRedux,
+        $log,
+        $rootScope
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -41,9 +47,10 @@ class InputNodeController {
         this.$scope.$on('$destroy', unsubscribe);
 
         this.$scope.$watch('$ctrl.node', (node, oldNode) => {
-            let inputsEqual = node && oldNode && (
-                (a, b) => a.projId === b.projId && a.band === b.band
-            )(node, oldNode);
+            let inputsEqual =
+                node &&
+                oldNode &&
+                _.matches(_.pick(node, ['projId', 'band', 'layerId']))(oldNode);
             if (node && (!inputsEqual || !this.initialized)) {
                 this.processUpdates();
             }
@@ -54,40 +61,46 @@ class InputNodeController {
         if (this.node) {
             this.initialized = true;
             if (
-                this.node.projId &&
-                !this.selectedProject ||
-                this.selectedProject &&
-                this.node.projId !== this.selectedProject.id
+                this.node.projId && !this.selectedProject && !this.selectedLayer ||
+                this.selectedProject && this.node.projId !== this.selectedProject.id ||
+                this.selectedLayer && this.node.layerId !== this.selectedLayer.id
             ) {
-                this.projectService.fetchProject(this.node.projId, {
-                    analysisId: this.analysis.id
-                }).then(p => {
-                    this.selectedProject = p;
-                    this.fetchDatasources(p.id);
-                    this.checkValidity();
-                });
+                this.projectService
+                    .fetchProject(this.node.projId, {
+                        analysisId: this.analysis.id
+                    })
+                    .then(project => {
+                        this.selectedProject = project;
+                        const layerId = this.node.layerId || project.defaultLayerId;
+                        this.projectService
+                            .getProjectLayer(project.id, layerId)
+                            .then(projectLayer => {
+                                this.checkValidity();
+                                this.selectedLayer = projectLayer;
+                                this.fetchDatasources(project.id, layerId);
+                            })
+                            .catch(() => {});
+                    });
             }
 
-            this.selectedBand = this.node.band ?
-                +this.node.band :
-                this.node.band;
+            this.selectedBand = this.node.band ? +this.node.band : this.node.band;
             this.manualBand = this.selectedBand;
             this.checkValidity();
         }
     }
 
-    fetchDatasources(projectId) {
+    fetchDatasources(projectId, layerId) {
         if (this.selectedProject) {
             this.fetchingDatasources = true;
-            this.projectService.getProjectDatasources(projectId, {
-                analysisId: this.analysis.id
-            }).then(
-                datasources => {
+            this.projectService
+                .getProjectLayerDatasources(projectId, layerId, {
+                    analysisId: this.analysis.id
+                })
+                .then(datasources => {
                     this.datasources = datasources;
                     this.bands = this.datasourceService.getUnifiedBands(this.datasources);
                     this.fetchingDatasources = false;
-                }
-            );
+                });
         }
     }
 
@@ -123,15 +136,44 @@ class InputNodeController {
                         nodeName: this.node.metadata.label
                     })
                 }
-            }).result.then(project => {
+            })
+            .result.then(project => {
                 this.checkValidity();
                 this.updateNode({
                     payload: Object.assign({}, this.node, {
-                        projId: project.id
+                        projId: project.id,
+                        layerId: project.defaultLayerId,
+                        type: 'layerSrc'
                     }),
                     hard: !this.analysisErrors.size
                 });
-            }).catch(() => {});
+            })
+            .catch(() => {});
+    }
+
+    selectLayerModal() {
+        this.modalService
+            .open({
+                component: 'rfProjectLayerSelectModal',
+                resolve: {
+                    project: () => this.selectedProject,
+                    content: () => ({
+                        title: 'Select a layer from this project',
+                        nodeName: this.node.metadata.label
+                    })
+                }
+            })
+            .result.then(projectLayer => {
+                this.checkValidity();
+                this.updateNode({
+                    payload: Object.assign({}, this.node, {
+                        layerId: projectLayer.id,
+                        type: 'layerSrc'
+                    }),
+                    hard: !this.analysisErrors.size
+                });
+            })
+            .catch(() => {});
     }
 
     onBandChange(index) {

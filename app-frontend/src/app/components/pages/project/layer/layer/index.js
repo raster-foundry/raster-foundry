@@ -1,7 +1,10 @@
 import tpl from './index.html';
 
 class ProjectLayerController {
-
+    constructor($rootScope) {
+        'ngInject';
+        $rootScope.autoInject(this, arguments);
+    }
 }
 
 const component = {

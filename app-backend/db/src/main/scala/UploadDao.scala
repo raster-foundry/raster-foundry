@@ -21,7 +21,7 @@ object UploadDao extends Dao[Upload] {
        id, created_at, created_by, modified_at, modified_by,
        owner, upload_status, file_type, upload_type,
        files, datasource, metadata, visibility, project_id,
-       source
+       layer_id, source
     FROM
   """ ++ tableF
 
@@ -38,21 +38,33 @@ object UploadDao extends Dao[Upload] {
       }
       userPlatform <- UserDao.unsafeGetUserPlatform(user.id)
       userPlatformAdmin <- PlatformDao.userIsAdmin(user, userPlatform.id)
-      upload = newUpload.toUpload(user,
-                                  (userPlatform.id, userPlatformAdmin),
-                                  ownerPlatform)
+      // Use project defaultLayerId as layerId if projectId is provided
+      // but layerId is not provided
+      // Use posted Upload.Create without modifications in other cases
+      projectO <- (newUpload.projectId, newUpload.layerId) match {
+        case (Some(projectId), None) => ProjectDao.getProjectById(projectId)
+        case _                       => None.pure[ConnectionIO]
+      }
+      updatedUpload = projectO match {
+        case Some(project) =>
+          newUpload.copy(layerId = Some(project.defaultLayerId))
+        case _ => newUpload
+      }
+      upload = updatedUpload.toUpload(user,
+                                      (userPlatform.id, userPlatformAdmin),
+                                      ownerPlatform)
       insertedUpload <- (
         sql"""
        INSERT INTO uploads
          (id, created_at, created_by, modified_at, modified_by,
           owner, upload_status, file_type, upload_type,
           files, datasource, metadata, visibility, project_id,
-          source)
+          layer_id, source)
        VALUES (
          ${upload.id}, ${upload.createdAt}, ${upload.createdBy}, ${upload.modifiedAt}, ${upload.modifiedBy},
          ${upload.owner}, ${upload.uploadStatus}, ${upload.fileType}, ${upload.uploadType},
          ${upload.files}, ${upload.datasource}, ${upload.metadata}, ${upload.visibility}, ${upload.projectId},
-         ${upload.source}
+         ${upload.layerId}, ${upload.source}
        )
       """.update.withUniqueGeneratedKeys[Upload](
           "id",
@@ -69,6 +81,7 @@ object UploadDao extends Dao[Upload] {
           "metadata",
           "visibility",
           "project_id",
+          "layer_id",
           "source"
         )
       )
@@ -90,6 +103,7 @@ object UploadDao extends Dao[Upload] {
           metadata = ${upload.metadata},
           visibility = ${upload.visibility},
           project_id = ${upload.projectId},
+          layer_id = ${upload.layerId},
           source = ${upload.source}
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
     (for {

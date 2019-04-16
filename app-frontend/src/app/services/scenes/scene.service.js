@@ -106,7 +106,12 @@ export default (app) => {
                         sceneType: 'COG'
                     }).$promise;
                 });
-                if (scene.projectId) {
+                if (scene.projectId && scene.layerId) {
+                    sceneP.then(newScene => {
+                        this.projectService
+                            .addScenesToLayer(scene.projectId, scene.layerId, [newScene.id]);
+                    });
+                } else if (scene.projectId) {
                     sceneP.then(newScene => {
                         this.projectService.addScenes(scene.projectId, [newScene.id]);
                     });
@@ -159,7 +164,7 @@ export default (app) => {
         // set the default floor to 25 to brighten up images -- this was a fine value for
         // MODIS Terra scenes, but other datasources may need to pass a different parameter
         cogThumbnail(sceneId, token, width = 128, height = 128,
-                     red = 0, green = 1, blue = 2, floor = 25) {
+            red = 0, green = 1, blue = 2, floor = 25) {
             return this.$http({
                 method: 'GET',
                 url: `${this.tileServer}/scenes/${sceneId}/thumbnail`,

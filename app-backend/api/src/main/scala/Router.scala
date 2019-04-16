@@ -16,9 +16,7 @@ import com.rasterfoundry.api.shape.ShapeRoutes
 import com.rasterfoundry.api.thumbnail.ThumbnailRoutes
 import com.rasterfoundry.api.token.TokenRoutes
 import com.rasterfoundry.api.tool.ToolRoutes
-import com.rasterfoundry.api.toolcategory.ToolCategoryRoutes
 import com.rasterfoundry.api.toolrun.ToolRunRoutes
-import com.rasterfoundry.api.tooltag.ToolTagRoutes
 import com.rasterfoundry.api.uploads.UploadRoutes
 import com.rasterfoundry.api.user.UserRoutes
 import com.rasterfoundry.api.utils.Config
@@ -47,9 +45,7 @@ trait Router
     with TokenRoutes
     with ThumbnailRoutes
     with ToolRoutes
-    with ToolTagRoutes
     with ConfigRoutes
-    with ToolCategoryRoutes
     with ToolRunRoutes
     with DatasourceRoutes
     with MapTokenRoutes
@@ -94,12 +90,6 @@ trait Router
           } ~
           pathPrefix("tools") {
             toolRoutes
-          } ~
-          pathPrefix("tool-tags") {
-            toolTagRoutes
-          } ~
-          pathPrefix("tool-categories") {
-            toolCategoryRoutes
           } ~
           pathPrefix("tool-runs") {
             toolRunRoutes

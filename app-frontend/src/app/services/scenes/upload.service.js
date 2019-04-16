@@ -1,13 +1,27 @@
 /* globals BUILDCONFIG */
 
-export default (app) => {
+const uploadStatusMap = {
+    FAILED: {
+        text: 'Failed',
+        class: 'color-danger'
+    },
+    UPLOADED: {
+        text: 'Processing',
+        class: 'color-warning'
+    },
+    objectType: 'upload'
+};
+
+export default app => {
     class UploadService {
         constructor($resource) {
             'ngInject';
             this.Upload = $resource(
-                `${BUILDCONFIG.API_HOST}/api/uploads/:id`, {
+                `${BUILDCONFIG.API_HOST}/api/uploads/:id`,
+                {
                     id: '@id'
-                }, {
+                },
+                {
                     query: {
                         method: 'GET',
                         cache: false
@@ -24,6 +38,7 @@ export default (app) => {
                     }
                 }
             );
+            this.uploadStatusMap = uploadStatusMap;
         }
 
         query(params = {}) {

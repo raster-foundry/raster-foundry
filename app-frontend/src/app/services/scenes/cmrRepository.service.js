@@ -215,7 +215,7 @@ export default (app) => {
             };
         }
 
-        sceneToUploadObject(scene, projectId, user) {
+        sceneToUploadObject(scene, projectId, layerId, user) {
             const datasource = this.datasources.find(d => d.id === scene.datasource);
             return {
                 files: datasource.fileAdapter(scene),
@@ -226,6 +226,7 @@ export default (app) => {
                 visibility: 'PRIVATE',
                 organizationId: user.organizationId,
                 projectId,
+                layerId,
                 metadata: {}
             };
         }
@@ -236,10 +237,22 @@ export default (app) => {
         */
         addToProject(projectId, scenes) {
             return this.authService.getCurrentUser().then(user => {
-                const uploads = scenes.map(s => this.sceneToUploadObject(s, projectId, user));
+                const uploads = scenes.map(
+                    s => this.sceneToUploadObject(s, projectId, null, user)
+                );
                 return this.$q.all(
                     uploads.map(u => this.uploadService.create(u))
                 );
+            });
+        }
+
+        addToLayer(projectId, layerId, scenes) {
+            return this.authService.getCurrentUser().then(user => {
+                const uploads = scenes.map(
+                    s => this.sceneToUploadObject(s, projectId, layerId, user)
+                );
+                return this.$q.all(
+                    uploads.map(u => this.uploadService.create(u)));
             });
         }
     }

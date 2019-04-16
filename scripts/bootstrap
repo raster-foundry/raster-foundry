@@ -46,17 +46,17 @@ function pull_env() {
     popd
 }
 
+function override_build_repos() {
+    echo "Overriding repository configuration for ${1}"
+    echo "-Dsbt.override.build.repos=true" >> app-backend/.sbtopts
+    echo "-Dsbt.repository.config=project/${1}/repositories" >> app-backend/.sbtopts
+}
+
 function generate_sbtopts() {
     echo "Generating .sbtopts"
     pushd "${DIR}"
 
     cp app-backend/.sbtopts.sample app-backend/.sbtopts
-
-    function override_build_repos() {
-        echo "Overriding repository configuration for ${1}"
-        echo "-Dsbt.override.build.repos=true" >> app-backend/.sbtopts
-        echo "-Dsbt.repository.config=project/${1}/repositories" >> app-backend/.sbtopts
-    }
 
     if host nexus.internal.azavea.com; then
         override_build_repos "development"

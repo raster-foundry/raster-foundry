@@ -2,11 +2,11 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.database.{
   LayerAttributeDao,
+  ProjectDao,
   SceneDao,
   SceneToLayerDao,
   ToolRunDao
 }
-import com.rasterfoundry.common.datamodel.User
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.database.util.RFTransactor
@@ -26,6 +26,7 @@ import doobie.implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
+import scala.util.Properties
 import java.util.concurrent.{Executors, TimeUnit}
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
@@ -38,6 +39,12 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     ))
 
   val xa = RFTransactor.transactor(dbContextShift)
+
+  val ogcUrlPrefix = Properties.envOrNone("ENVIRONMENT") match {
+    case Some("Production") => "https://tiles.rasterfoundry.com"
+    case Some("Staging")    => "https://tiles.staging.rasterfoundry.com"
+    case _                  => "http://localhost:8081"
+  }
 
   override protected implicit def contextShift: ContextShift[IO] =
     IO.contextShift(
@@ -59,12 +66,14 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
 
-  implicit val backsplashErrorHandler
-    : HttpErrorHandler[IO, BacksplashException, User] =
-    new BacksplashHttpErrorHandler[IO, User]
+  val backsplashErrorHandler: HttpErrorHandler[IO, BacksplashException] =
+    new BacksplashHttpErrorHandler[IO]
 
-  implicit val foreignErrorHandler: HttpErrorHandler[IO, Throwable, User] =
-    new ForeignErrorHandler[IO, Throwable, User]
+  val foreignErrorHandler: HttpErrorHandler[IO, Throwable] =
+    new ForeignErrorHandler[IO, Throwable]
+
+  val rollbarReporter: RollbarReporter[IO] =
+    new RollbarReporter()
 
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
@@ -85,24 +94,37 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       OptionT.pure[IO](Response[IO](Status.GatewayTimeout))
     )(service)
 
+  def errorHandling(service: HttpRoutes[IO]): HttpRoutes[IO] =
+    backsplashErrorHandler.handle {
+      rollbarReporter.handle {
+        foreignErrorHandler.handle {
+          service
+        }
+      }
+    }
+
   val authenticators = new Authenticators(xa)
 
   val mosaicImplicits = new MosaicImplicits(LayerAttributeDao())
   val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
   import toolStoreImplicits._
+  val ogcImplicits = new OgcImplicits(SceneToLayerDao(), xa)
+  import ogcImplicits._
+
+  val analysisManager =
+    new AnalysisManager(ToolRunDao(), mosaicImplicits, toolStoreImplicits, xa)
 
   val mosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
       AuthedAutoSlash(
-        new MosaicService(SceneToLayerDao(), mosaicImplicits, xa).routes))
+        new MosaicService(SceneToLayerDao(),
+                          mosaicImplicits,
+                          analysisManager,
+                          xa).routes))
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      AuthedAutoSlash(
-        new AnalysisService(ToolRunDao(),
-                            mosaicImplicits,
-                            toolStoreImplicits,
-                            xa).routes))
+      AuthedAutoSlash(new AnalysisService(analysisManager).routes))
 
   val sceneMosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
@@ -111,15 +133,30 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       )
     )
 
-  val httpApp =
+  val wcsService = authenticators.tokensAuthMiddleware(
+    AuthedAutoSlash(
+      new WcsService(ProjectDao(), ogcUrlPrefix).routes
+    )
+  )
+
+  val wmsService = authenticators.tokensAuthMiddleware(
+    AuthedAutoSlash(
+      new WmsService(ProjectDao(), ogcUrlPrefix).routes
+    )
+  )
+
+  val httpApp = errorHandling {
     Router(
       "/" -> ProjectToProjectLayerMiddleware(
         withCORS(withTimeout(mosaicService)),
         xa),
       "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
       "/tools" -> withCORS(withTimeout(analysisService)),
+      "/wcs" -> withCORS(withTimeout(wcsService)),
+      "/wms" -> withCORS(withTimeout(wmsService)),
       "/healthcheck" -> AutoSlash(new HealthcheckService(xa).routes)
     )
+  }
 
   val startupBanner =
     """|    ___                     _               _ __     _                     _

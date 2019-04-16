@@ -1,96 +1,106 @@
 <div class="admin-list-content column-stretch">
-  <div class="admin-list-actions">
-    <div>
-      <rf-pagination-count
-          start-index="$ctrl.pagination.startingItem"
-          end-index="$ctrl.pagination.endingItem"
-          total="$ctrl.pagination.count"
-          item-name="projects"
-          ng-if="!$ctrl.currentQuery && $ctrl.results.length"
-      >
-        <span ng-if="$ctrl.search">while searching for <strong>{{$ctrl.search}}</strong></span>
-      </rf-pagination-count>
+    <div class="admin-list-actions">
+        <div>
+            <rf-pagination-count
+                start-index="$ctrl.pagination.startingItem"
+                end-index="$ctrl.pagination.endingItem"
+                total="$ctrl.pagination.count"
+                item-name="projects"
+                ng-if="!$ctrl.currentQuery && $ctrl.results.length"
+            >
+                <span ng-if="$ctrl.search"
+                    >while searching for <strong>{{$ctrl.search}}</strong></span
+                >
+            </rf-pagination-count>
+        </div>
+        <div class="actions-right">
+            <rf-search
+                on-search="$ctrl.fetchPage(1, value)"
+                value="$ctrl.search"
+                placeholder="Search for projects"
+                auto-focus="true"
+            ></rf-search>
+        </div>
     </div>
-    <div class="actions-right">
-      <rf-search on-search="$ctrl.fetchPage(1, value)"
-                 value="$ctrl.search"
-                 placeholder="Search for projects"
-                 auto-focus="true"></rf-search>
-    </div>
-  </div>
 </div>
 <div class="row content stack-sm">
-  <div class="column-8">
-    <!-- Loading Indicator, show only when loading -->
-    <div class="text-center" ng-show="$ctrl.currentQuery">
-      <div>Loading Projects</div>
-      <span class="list-placeholder h3">
-        <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.currentQuery}"></i>
-      </span>
-    </div>
-    <!-- Loading indicator -->
-    <!-- No project placeholder -->
-    <div ng-if="!$ctrl.currentQuery && $ctrl.pagination && $ctrl.pagination.count == 0 && !$ctrl.fetchError && !$ctrl.search">
-      <rf-call-to-action-item title="You haven't created any projects yet" class="panel panel-off-white">
-        <p class="pb-25">
-          You can create a new project by <strong>importing</strong> your own earth observation
-          imagery, or <strong>searching</strong> publicly available scenes for use in your project.
-          Then you can <strong>edit</strong> your project to color-correct the scenes and arrange
-          them into a perfectly mosaicked basemap.
-        </p>
-
-        <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">New project</a>
-        <p>
-          <a ng-href="{{$ctrl.HELPCONFIG.GETTING_STARTED_WITH_PROJECTS}}" target="_blank">Getting started with Projects</a>
-        </p>
-      </rf-call-to-action-item>
-    </div>
-    <div
-        ng-if="!$ctrl.currentQuery && $ctrl.pagination && $ctrl.pagination.count == 0 && !$ctrl.fetchError && $ctrl.search">
-      <rf-call-to-action-item
-          title="Your search didn't return any projects"
-          class="panel panel-off-white">
-        <p class="pb-25">
-          Unable to find any projects matching "{{$ctrl.search}}".
-        </p>
-      </rf-call-to-action-item>
-    </div>
-    <div class="cta-row" ng-show="!$ctrl.currentQuery && $ctrl.fetchError">
-      <rf-call-to-action-item
-          title="There was an error fetching projects."
-          class="panel panel-off-white">
-        <div class="pb-25">
-          Please refresh the page and try again.<br />
-          If the problem persists, please contact {{$ctrl.BUILDCONFIG.APP_NAME}} support.
+    <div class="column-8">
+        <!-- Loading Indicator, show only when loading -->
+        <div class="text-center" ng-show="$ctrl.currentQuery">
+            <div>Loading Projects</div>
+            <span class="list-placeholder h3">
+                <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.currentQuery}"></i>
+            </span>
         </div>
-      </rf-call-to-action-item>
+        <!-- Loading indicator -->
+        <!-- No project placeholder -->
+        <div
+            ng-if="!$ctrl.currentQuery && $ctrl.pagination && $ctrl.pagination.count == 0 && !$ctrl.fetchError && !$ctrl.search"
+        >
+            <rf-call-to-action-item
+                title="You haven't created any projects yet"
+                class="panel panel-off-white"
+            >
+                <p class="pb-25">
+                    You can create a new project by <strong>importing</strong> your own earth
+                    observation imagery, or <strong>searching</strong> publicly available scenes for
+                    use in your project. Then you can <strong>edit</strong> your project to
+                    color-correct the scenes and arrange them into a perfectly mosaicked basemap.
+                </p>
+
+                <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">New project</a>
+                <p>
+                    <a ng-href="{{$ctrl.HELPCONFIG.GETTING_STARTED_WITH_PROJECTS}}" target="_blank"
+                        >Getting started with Projects</a
+                    >
+                </p>
+            </rf-call-to-action-item>
+        </div>
+        <div
+            ng-if="!$ctrl.currentQuery && $ctrl.pagination && $ctrl.pagination.count == 0 && !$ctrl.fetchError && $ctrl.search"
+        >
+            <rf-call-to-action-item
+                title="Your search didn't return any projects"
+                class="panel panel-off-white"
+            >
+                <p class="pb-25">Unable to find any projects matching "{{$ctrl.search}}".</p>
+            </rf-call-to-action-item>
+        </div>
+        <div class="cta-row" ng-show="!$ctrl.currentQuery && $ctrl.fetchError">
+            <rf-call-to-action-item
+                title="There was an error fetching projects."
+                class="panel panel-off-white"
+            >
+                <div class="pb-25">
+                    Please refresh the page and try again.<br />
+                    If the problem persists, please contact {{$ctrl.BUILDCONFIG.APP_NAME}} support.
+                </div>
+            </rf-call-to-action-item>
+        </div>
+        <div ng-if="!$ctrl.currentQuery && $ctrl.results.length" class="row stack-xs">
+            <div class="column-6 flex-display" ng-repeat="project in $ctrl.results">
+                <rf-project-item class="panel panel-off-white project-item" item="project">
+                </rf-project-item>
+            </div>
+        </div>
+        <rf-pagination-controls
+            pagination="$ctrl.pagination"
+            is-loading="$ctrl.currentQuery"
+            on-change="$ctrl.fetchPage(value)"
+            ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
+        ></rf-pagination-controls>
     </div>
-    <div ng-if="!$ctrl.currentQuery && $ctrl.results.length" class="row stack-xs">
-      <div class="column-6 flex-display"
-           ng-repeat="project in $ctrl.results"
-      >
-        <rf-project-item
-            class="panel panel-off-white project-item"
-            project="project">
-        </rf-project-item>
-      </div>
+    <div class="column spacer"></div>
+    <div class="column-3">
+        <rf-sidebar-organization-list
+            paginated-response="{ 'count': $ctrl.organizations.length, 'results': $ctrl.organizations }"
+            sref="user.organizations"
+        ></rf-sidebar-organization-list>
+        <rf-sidebar-team-list
+            paginated-response="{ 'count': $ctrl.teams.length, 'results': $ctrl.teams }"
+            show-org-logo="true"
+            sref="user.teams"
+        ></rf-sidebar-team-list>
     </div>
-    <rf-pagination-controls
-      pagination="$ctrl.pagination"
-      is-loading="$ctrl.currentQuery"
-      on-change="$ctrl.fetchPage(value)"
-      ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
-    ></rf-pagination-controls>
-  </div>
-  <div class="column spacer"></div>
-  <div class="column-3">
-    <rf-sidebar-organization-list
-      paginated-response="{ 'count': $ctrl.organizations.length, 'results': $ctrl.organizations }"
-      sref="user.organizations"></rf-sidebar-organization-list>
-    <rf-sidebar-team-list
-      paginated-response="{ 'count': $ctrl.teams.length, 'results': $ctrl.teams }"
-      show-org-logo="true"
-      sref="user.teams"></rf-sidebar-team-list>
-  </div>
-  <div class="column-1"></div>
+    <div class="column-1"></div>
 </div>

@@ -1,4 +1,5 @@
 import angular from 'angular';
+import { get } from 'lodash';
 
 import projectPlaceholder from '../../../../assets/images/transparent.svg';
 import projectItemTpl from './projectItem.html';
@@ -8,7 +9,7 @@ const ProjectItemComponent = {
     controller: 'ProjectItemController',
     transclude: true,
     bindings: {
-        project: '<',
+        item: '<',
         selected: '&',
         onSelect: '&',
         slim: '<',
@@ -20,9 +21,20 @@ const ProjectItemComponent = {
 
 class ProjectItemController {
     constructor(
-        $rootScope, $scope, $state, $attrs, $log, $q,
-        projectService, mapService, mapUtilsService, authService, modalService,
-        permissionsService, featureFlags
+        $rootScope,
+        $scope,
+        $state,
+        $attrs,
+        $log,
+        $q,
+        projectService,
+        mapService,
+        mapUtilsService,
+        authService,
+        modalService,
+        permissionsService,
+        userService,
+        featureFlags
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -32,25 +44,25 @@ class ProjectItemController {
     $onInit() {
         this.isSelectable = this.$attrs.hasOwnProperty('selectable');
         this.$scope.$watch(
-            () => this.selected({project: this.project}),
-            (selected) => {
+            () => this.selected({ project: this.item }),
+            selected => {
                 this.selectedStatus = selected;
             }
         );
-        this.mapId = `${this.project.id}-map`;
+        this.mapId = `${this.item.id}-map`;
 
-        this.showProjectThumbnail =
-            !this.featureFlags.isOnByDefault('project-preview-mini-map');
+        this.showProjectThumbnail = !this.featureFlags.isOnByDefault('project-preview-mini-map');
 
+        this.ownerAvatarUrl = '';
+        this.getOwnerAvatarUrl();
         this.getProjectStatus();
-        if (!this.user || this.hideOptions) {
+
+        if (!this.user || this.hideOptions || this.isLayer) {
             this.permissions = [];
         } else {
-            this.projectService
-                .getProjectPermissions(this.project, this.user)
-                .then(permissions => {
-                    this.permissions = permissions;
-                });
+            this.projectService.getProjectPermissions(this.item, this.user).then(permissions => {
+                this.permissions = permissions;
+            });
         }
     }
 
@@ -60,17 +72,17 @@ class ProjectItemController {
 
     getThumbnailURL() {
         this.thumbnailUrl = this.projectService.getProjectThumbnailURL(
-            this.project, this.authService.token()
+            this.item,
+            this.authService.token()
         );
     }
 
-    addProjectLayer() {
-        let url = this.projectService.getProjectTileURL(
-            this.project,
-            {token: this.authService.token()}
+    addProjectTile() {
+        const layer = L.tileLayer(
+            this.projectService.getProjectTileURL(this.item, {
+                token: this.authService.token()
+            })
         );
-
-        let layer = L.tileLayer(url);
 
         this.getMap().then(m => {
             m.addLayer('share-layer', layer);
@@ -79,28 +91,27 @@ class ProjectItemController {
 
     fitProjectExtent() {
         this.getMap().then(mapWrapper => {
-            this.mapUtilsService.fitMapToProject(mapWrapper, this.project, -2);
+            this.mapUtilsService.fitMapToProject(mapWrapper, this.item, -2);
             mapWrapper.map.invalidateSize();
         });
     }
 
     toggleSelected(event) {
-        this.onSelect({project: this.project, selected: !this.selectedStatus});
+        this.onSelect({ project: this.item, selected: !this.selectedStatus });
         event.stopPropagation();
     }
 
     getProjectStatus() {
         if (!this.statusFetched) {
-            this.projectService.getProjectStatus(this.project.id).then(status => {
+            this.projectService.getProjectStatus(this.item.id).then(status => {
                 this.status = status;
                 if (this.status === 'CURRENT') {
                     this.fitProjectExtent();
-                    this.addProjectLayer();
-
+                    this.addProjectTile();
                     if (this.showProjectThumbnail) {
                         this.getThumbnailURL();
                     } else {
-                        this.mapOptions = {attributionControl: false};
+                        this.mapOptions = { attributionControl: false };
                     }
                 }
             });
@@ -109,27 +120,31 @@ class ProjectItemController {
     }
 
     publishModal() {
-        this.modalService.open({
-            component: 'rfProjectPublishModal',
-            resolve: {
-                project: () => this.project,
-                tileUrl: () => this.projectService.getProjectTileURL(this.project),
-                shareUrl: () => this.projectService.getProjectShareURL(this.project)
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfProjectPublishModal',
+                resolve: {
+                    project: () => this.item,
+                    tileUrl: () => this.projectService.getProjectTileURL(this.item),
+                    shareUrl: () => this.projectService.getProjectShareURL(this.item)
+                }
+            })
+            .result.catch(() => {});
     }
 
     shareModal(project) {
-        this.modalService.open({
-            component: 'rfPermissionModal',
-            resolve: {
-                object: () => project,
-                permissionsBase: () => 'projects',
-                objectType: () => 'PROJECT',
-                objectName: () => project.name,
-                platform: () => this.platform
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfPermissionModal',
+                resolve: {
+                    object: () => project,
+                    permissionsBase: () => 'projects',
+                    objectType: () => 'PROJECT',
+                    objectName: () => project.name,
+                    platform: () => this.platform
+                }
+            })
+            .result.catch(() => {});
     }
 
     deleteModal() {
@@ -138,14 +153,13 @@ class ProjectItemController {
             resolve: {
                 title: () => 'Project deletion',
                 subtitle: () =>
-                    'The project will be deleted, '
-                    + 'but scenes will remain unaffected.',
+                    'The project will be deleted, ' + 'but scenes will remain unaffected.',
                 content: () =>
-                    '<h2>Do you wish to continue?</h2>'
-                    + '<p>Deleting the project will also make '
-                    + 'associated annotations, exports and '
-                    + 'analyses inaccessible. This is a '
-                    + 'permanent action.</p>',
+                    '<h2>Do you wish to continue?</h2>' +
+                    '<p>Deleting the project will also make ' +
+                    'associated annotations, exports and ' +
+                    'analyses inaccessible. This is a ' +
+                    'permanent action.</p>',
                 /* feedbackIconType : default, success, danger, warning */
                 feedbackIconType: () => 'danger',
                 feedbackIcon: () => 'icon-warning',
@@ -155,16 +169,30 @@ class ProjectItemController {
             }
         });
 
-        modal.result.then(() => {
-            this.projectService.deleteProject(this.project.id).then(
-                () => {
-                    this.$state.reload();
-                },
-                (err) => {
-                    this.$log.debug('error deleting project', err);
-                }
-            );
-        }).catch(() => {});
+        modal.result
+            .then(() => {
+                this.projectService.deleteProject(this.item.id).then(
+                    () => {
+                        this.$state.reload();
+                    },
+                    err => {
+                        this.$log.debug('error deleting project', err);
+                    }
+                );
+            })
+            .catch(() => {});
+    }
+
+    getOwnerAvatarUrl() {
+        const owner = get(this, 'item.owner') || get(this, 'parentProject.owner');
+        this.ownerAvatarUrl = owner.profileImageUri;
+        if (!this.ownerAvatarUrl && typeof owner === 'string') {
+            this.userService.getUserById(owner).then(user => {
+                // Public user objects contain profile image
+                // so getting it from a shared project's owner should work
+                this.ownerAvatarUrl = user.profileImageUri;
+            });
+        }
     }
 }
 

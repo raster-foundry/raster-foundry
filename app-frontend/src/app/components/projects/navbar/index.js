@@ -4,7 +4,7 @@ import {Set} from 'immutable';
 
 class ProjectLayersNavController {
     constructor(
-        $rootScope, $state, $scope, $transitions
+        $rootScope, $state, $scope, $transitions, $log
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -26,6 +26,7 @@ class ProjectLayersNavController {
             stateCurrent.name === 'project.layers' ||
             stateCurrent.name.includes('project.analyses') ||
             stateCurrent.name.includes('project.settings') ||
+            stateCurrent.name.includes('project.create-analysis') ||
             stateCurrent.name.includes('project.layer')
         ) {
             this.navs.push({
@@ -41,14 +42,30 @@ class ProjectLayersNavController {
             });
         }
 
+        if (stateCurrent.name.includes('project.create-analysis')) {
+            this.navs.push({
+                title: 'Create Analysis'
+            });
+        }
+
+        if (stateCurrent.name.includes('project.analyses.visualize')) {
+            this.navs.push({
+                title: 'Analyses',
+                sref: `project.analyses({projectId: '${this.project.id}'})`
+            },
+            {
+                title: 'Data visualizations'
+            });
+        }
+
         if (stateCurrent.name === 'project.layer' ||
             stateCurrent.name.includes('project.layer.')
         ) {
             this.navs.push({
-                title: this.layer.name,
+                title: this.layer && this.layer.name,
                 sref: `project.layer({
                     projectId: '${this.project.id}',
-                    layerId: '${this.layer.id}'
+                    layerId: '${this.layer && this.layer.id}'
                 })`
             });
         }
@@ -58,7 +75,7 @@ class ProjectLayersNavController {
                 title: 'Color correct',
                 sref: `project.layer.corrections({
                     projectId: '${this.project.id}',
-                    layerId: '${this.layer.id}'
+                    layerId: '${this.layer && this.layer.id}'
                 })`
             });
         }
@@ -68,7 +85,7 @@ class ProjectLayersNavController {
                 title: 'Browse imagery',
                 sref: `project.layer.scenes.browse({
                     projectId: '${this.project.id}',
-                    layerId: '${this.layer.id}'
+                    layerId: '${this.layer && this.layer.id}'
                 })`
             });
         }

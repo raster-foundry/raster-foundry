@@ -25,6 +25,24 @@ export default (app) => {
                     },
                     update: {
                         method: 'PUT'
+                    },
+                    getForLayer: {
+                        method: 'GET',
+                        cache: false,
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/` +
+                            'layers/:layerId/mosaic/:sceneId',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId',
+                            sceneId: '@sceneId'
+                        },
+                        transformResponse: (data) => {
+                            let parsedData = {};
+                            if (data !== '') {
+                                parsedData = angular.fromJson(data);
+                            }
+                            return Object.assign(this.getDefaultColorCorrection(), parsedData);
+                        }
                     }
                 }
             );
@@ -35,6 +53,15 @@ export default (app) => {
                         method: 'POST',
                         params: {
                             id: '@projectId'
+                        }
+                    },
+                    createForLayer: {
+                        method: 'POST',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/` +
+                            'layers/:layerId/mosaic/bulk-update-color-corrections',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
                         }
                     }
                 }
@@ -113,6 +140,12 @@ export default (app) => {
             ).$promise;
         }
 
+        getForLayer(sceneId, layerId, projectId) {
+            return this.colorCorrect.getForLayer(
+                {sceneId: sceneId, projectId, layerId}
+            ).$promise;
+        }
+
         /** Function to update or create color correction for scene/project
          *
          * @param {string} sceneId id for scene to update/create color correction
@@ -150,10 +183,24 @@ export default (app) => {
             ).$promise;
         }
 
+        bulkUpdateForLayer(projectId, layerId, sceneIds, data) {
+            const resolvedColorCorrection = data || this.getDefaultColorCorrection();
+            const bulkData = sceneIds.map(s => {
+                return {
+                    sceneId: s,
+                    params: resolvedColorCorrection
+                };
+            });
+            return this.bulkColorCorrect.createForLayer(
+                { projectId, layerId},
+                { items: bulkData }
+            ).$promise;
+        }
+
         bulkUpdateColorMode(projectId, corrections, bands) {
             const resolvedBands = bands ||
                   (({redBand, greenBand, blueBand, mode}) =>
-                   ({redBand, greenBand, blueBand, mode}))(this.getDefaultColorCorrection());
+                      ({redBand, greenBand, blueBand, mode}))(this.getDefaultColorCorrection());
             const bulkData = corrections.map(({id, correction}) => {
                 return {
                     sceneId: id,

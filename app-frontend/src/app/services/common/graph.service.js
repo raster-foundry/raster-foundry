@@ -1,15 +1,15 @@
 /* globals console */
 import _ from 'lodash';
-import {Map, Set} from 'immutable';
+import { Map, Set } from 'immutable';
 import * as d3 from 'd3';
 import $ from 'jquery';
 
-const defaultD3Options = (el) => ({
+const defaultD3Options = el => ({
     style: {
         height: '100px'
     },
     height: 100,
-    width: el.clientWidth || 100,
+    width: (el && el.clientWidth) || 100,
     margin: {
         top: 5,
         bottom: 5,
@@ -30,7 +30,6 @@ class D3Element {
         this.initSvg();
     }
 
-
     initSvg() {
         $(this.el).css({
             height: this.options.style.height,
@@ -50,7 +49,7 @@ class D3Element {
     }
 
     render() {
-        this.callbacks.forEach((callback) => {
+        this.callbacks.forEach(callback => {
             callback();
         });
         return this;
@@ -73,59 +72,118 @@ class ChannelHistogram extends D3Element {
 
         this.calculateAxis(svg, defs);
         switch (this.options.channel) {
-        case 'rgb':
-            this.renderPlot(svg, defs, this.data.rgb, '#959cad');
-            break;
-        case 'red':
-            this.renderPlot(svg, defs, this.data.red, '#ed1841');
-            break;
-        case 'green':
-            this.renderPlot(svg, defs, this.data.green, '#28af5f');
-            break;
-        case 'blue':
-            this.renderPlot(svg, defs, this.data.blue, '#206fed');
-            break;
-        default:
-            throw new Error(
-                `Invalid channel selected in ChannelHistogram options: ${this.options.channel}`
-            );
+            case 'rgb':
+                this.renderPlot(svg, defs, this.data.rgb, '#959cad');
+                break;
+            case 'red':
+                this.renderPlot(svg, defs, this.data.red, '#ed1841');
+                break;
+            case 'green':
+                this.renderPlot(svg, defs, this.data.green, '#28af5f');
+                break;
+            case 'blue':
+                this.renderPlot(svg, defs, this.data.blue, '#206fed');
+                break;
+            default:
+                throw new Error(
+                    `Invalid channel selected in ChannelHistogram options: ${this.options.channel}`
+                );
         }
         super.render();
     }
 
     calculateAxis(svg, defs) {
-        const xRange = [this.options.margin.left,
-                        this.el.width.baseVal.value - this.options.margin.right];
-        this.xScale = d3.scaleLinear()
+        const xRange = [
+            this.options.margin.left,
+            this.el.width.baseVal.value - this.options.margin.right
+        ];
+        this.xScale = d3
+            .scaleLinear()
             .domain([0, 255])
             .range(xRange);
-        let logScale = d3.scaleLog()
+        let logScale = d3
+            .scaleLog()
             .domain([0.01, this.data.maxY])
             .nice()
-            .range([this.options.height - this.options.margin.bottom,
-                    this.options.margin.top]);
-        this.yScale = (x) => logScale(x > 0 ? x : 0.01);
+            .range([this.options.height - this.options.margin.bottom, this.options.margin.top]);
+        this.yScale = x => logScale(x > 0 ? x : 0.01);
     }
 
     renderPlot(svg, defs, plot, color) {
-        let area = d3.area()
+        let area = d3
+            .area()
             .x(v => this.xScale(v.x))
             .y0(this.options.height - this.options.margin.bottom)
             .y1(v => this.yScale(v.y))
             .curve(d3.curveStepAfter);
-
 
         let areaPath = svg.select('#area-path');
         if (!areaPath.nodes().length) {
             areaPath = svg.append('path');
         }
 
-        areaPath.data([plot])
+        areaPath
+            .data([plot])
             .attr('id', 'area-path')
             .attr('class', 'data-fill')
             .attr('z-index', 11)
             .attr('stroke', color)
             .attr('fill', color)
+            .attr('d', area);
+    }
+}
+
+class StatHistogram extends D3Element {
+    render() {
+        // render d3 el
+        let svg = d3.select(this.el);
+        let defs = svg.select('defs');
+        if (!defs.nodes().length) {
+            defs = svg.append('defs');
+        }
+
+        if (this.data && this.data.histogram) {
+            this.calculateAxis(svg, defs);
+            this.renderData(svg, defs);
+        }
+
+        return super.render();
+    }
+
+    calculateAxis(svg, defs) {
+        const xRange = [
+            this.options.margin.left,
+            this.el.width.baseVal.value - this.options.margin.right
+        ];
+        const yRange = [this.options.height - this.options.margin.bottom, this.options.margin.top];
+        this.xScale = d3
+            .scaleLinear()
+            .domain([this.options.dataRange.min, this.options.dataRange.max])
+            .range(xRange);
+        this.yScale = d3
+            .scaleLinear()
+            .domain([d3.min(this.data.histogram, d => d.y), d3.max(this.data.histogram, d => d.y)])
+            .range(yRange);
+    }
+
+    renderData(svg, defs) {
+        let area = d3
+            .area()
+            .x(v => this.xScale(v.x))
+            .y0(this.options.height - this.options.margin.bottom)
+            .y1(v => this.yScale(v.y))
+            .curve(d3.curveStepAfter);
+
+        let areaPath = svg.select('#area-path');
+        if (!areaPath.nodes().length) {
+            areaPath = svg.append('path');
+        }
+
+        areaPath
+            .data([this.data.histogram])
+            .attr('id', 'area-path')
+            .attr('class', 'data-fill')
+            .attr('z-index', 11)
             .attr('d', area);
     }
 }
@@ -149,22 +207,29 @@ class SinglebandHistogram extends D3Element {
     }
 
     calculateAxis(svg, defs) {
-        const xRange = [this.options.margin.left,
-                        this.el.width.baseVal.value - this.options.margin.right];
-        this.xScale = d3.scaleLinear()
-            .domain([d3.min(this.data.histogram, d => d.x),
-                     d3.max(this.data.histogram, d => d.x)])
+        const xRange = [
+            this.options.margin.left,
+            this.el.width.baseVal.value - this.options.margin.right
+        ];
+        this.xScale = d3
+            .scaleLinear()
+            .domain(
+                this.options.range
+                    ? [this.options.range.min, this.options.range.max]
+                    : [d3.min(this.data.histogram, d => d.x), d3.max(this.data.histogram, d => d.x)]
+            )
             .range(xRange);
-        let logScale = d3.scaleLog()
+        let yScale = d3
+            .scaleLinear()
             .domain([0.01, d3.max(this.data.histogram, d => d.y)])
             .nice()
-            .range([this.options.height - this.options.margin.bottom,
-                    this.options.margin.top]);
-        this.yScale = (x) => logScale(x > 0 ? x : 0.01);
+            .range([this.options.height - this.options.margin.bottom, this.options.margin.top]);
+        this.yScale = x => yScale(x > 0 ? x : 0.01);
     }
 
     renderData(svg, defs) {
-        let areaShadow = d3.area()
+        let areaShadow = d3
+            .area()
             .x(v => this.xScale(v.x))
             .y0(this.options.height - this.options.margin.bottom)
             .y1(v => this.yScale(v.y))
@@ -175,26 +240,28 @@ class SinglebandHistogram extends D3Element {
             shadowPath = svg.append('path');
         }
 
-        shadowPath.data([this.data.histogram])
+        shadowPath
+            .data([this.data.histogram])
             .attr('id', 'shadow-path')
             .attr('z-index', 10)
             .attr('fill', 'rgba(1,1,1,0.15)')
             .attr('stroke', 'rgba(1,1,1,0.25)')
             .attr('d', areaShadow);
 
-        let area = d3.area()
+        let area = d3
+            .area()
             .x(v => this.xScale(v.x))
             .y0(this.options.height - this.options.margin.bottom)
             .y1(v => this.yScale(v.y))
             .curve(d3.curveStepAfter);
-
 
         let areaPath = svg.select('#area-path');
         if (!areaPath.nodes().length) {
             areaPath = svg.append('path');
         }
 
-        areaPath.data([this.data.histogram])
+        areaPath
+            .data([this.data.histogram])
             .attr('id', 'area-path')
             .attr('class', 'data-fill')
             .attr('z-index', 11)
@@ -205,40 +272,50 @@ class SinglebandHistogram extends D3Element {
         let linearGradient = svg.selectAll('linearGradient');
         if (!linearGradient.nodes().length) {
             linearGradient = defs.append('linearGradient');
-            linearGradient.attr('id', `line-gradient-${this.id}`)
+            linearGradient
+                .attr('id', `line-gradient-${this.id}`)
                 .attr('gradientUnits', 'userSpaceOnUse')
-                .attr('x1', '0%').attr('y1', 0)
-                .attr('x2', '100%').attr('y2', 0);
+                .attr('x1', '0%')
+                .attr('y1', 0)
+                .attr('x2', '100%')
+                .attr('y2', 0);
         }
 
         let colorData = this.calculateGradientColors();
 
-        linearGradient.selectAll('stop')
-            .data([]).exit().remove();
-        linearGradient.selectAll('stop')
+        linearGradient
+            .selectAll('stop')
+            .data([])
+            .exit()
+            .remove();
+        linearGradient
+            .selectAll('stop')
             .data(colorData)
             .enter()
             .append('stop')
-            .attr('offset', (d) => d.offset)
-            .attr('stop-color', (d) => d.color)
-            .attr('stop-opacity', (d) => Number.isFinite(d.opacity) ? d.opacity : 1.0);
+            .attr('offset', d => d.offset)
+            .attr('stop-color', d => d.color)
+            .attr('stop-opacity', d => (Number.isFinite(d.opacity) ? d.opacity : 1.0));
     }
 
     calculateGradientColors() {
         let max = d3.max(this.data.histogram, d => d.x);
         let min = d3.min(this.data.histogram, d => d.x);
         let range = max - min;
-        let data = this.data.breakpoints.map((bp) => {
-            let offset = (bp.value - min) / range * 100;
-            return {offset, color: bp.color};
-        }).sort((a, b) => a.offset - b.offset).map((bp) => {
-            return {offset: `${bp.offset}%`, color: bp.color};
-        });
+        let data = this.data.breakpoints
+            .map(bp => {
+                let offset = ((bp.value - min) / range) * 100;
+                return { offset, color: bp.color };
+            })
+            .sort((a, b) => a.offset - b.offset)
+            .map(bp => {
+                return { offset: `${bp.offset}%`, color: bp.color };
+            });
 
         if (this.options.baseScheme && this.options.baseScheme.colorBins > 0) {
             let offsetData = data.map((currentValue, index, array) => {
                 if (index !== array.length - 1) {
-                    return {offset: array[index + 1].offset, color: currentValue.color};
+                    return { offset: array[index + 1].offset, color: currentValue.color };
                 }
                 return currentValue;
             });
@@ -248,22 +325,21 @@ class SinglebandHistogram extends D3Element {
         if (_.get(this.options, 'masks.min') || this.options.discrete) {
             let last = _.last(data);
             if (last.color === 'NODATA' || !this.options.discrete) {
-                data.splice(0, 0, {offset: data[0].offset, color: '#353C58'});
-                data.splice(0, 0, {offset: data[0].offset, color: '#353C58'});
+                data.splice(0, 0, { offset: data[0].offset, color: '#353C58' });
+                data.splice(0, 0, { offset: data[0].offset, color: '#353C58' });
             } else {
-                data.splice(0, 0, {offset: data[0].offset, color: _.first(data.color)});
-                data.splice(0, 0, {offset: data[0].offset, color: last.color});
+                data.splice(0, 0, { offset: data[0].offset, color: _.first(data.color) });
+                data.splice(0, 0, { offset: data[0].offset, color: last.color });
             }
         }
-
 
         if (_.get(this.options, 'masks.max') || this.options.discrete) {
             let last = _.last(data);
             if (last.color === 'NODATA' || !this.options.discrete) {
-                data.push({offset: _.last(data).offset, color: '#353C58'});
-                data.push({offset: _.last(data).offset, color: '#353C58'});
+                data.push({ offset: _.last(data).offset, color: '#353C58' });
+                data.push({ offset: _.last(data).offset, color: '#353C58' });
             } else {
-                data.push({offset: _.last(data).offset, color: last.color});
+                data.push({ offset: _.last(data).offset, color: last.color });
             }
         }
 
@@ -271,7 +347,7 @@ class SinglebandHistogram extends D3Element {
     }
 }
 
-export default (app) => {
+export default app => {
     class GraphService {
         constructor($q) {
             'ngInject';
@@ -287,16 +363,19 @@ export default (app) => {
             }
             let graph;
             switch (options.type) {
-            case 'channel':
-                graph = new ChannelHistogram(el, id, options);
-                break;
-            case 'single':
-            default:
-                graph = new SinglebandHistogram(el, id, options);
+                case 'channel':
+                    graph = new ChannelHistogram(el, id, options);
+                    break;
+                case 'stat':
+                    graph = new StatHistogram(el, id, options);
+                    break;
+                case 'single':
+                default:
+                    graph = new SinglebandHistogram(el, id, options);
             }
             this.graphs = this.graphs.set(id, graph);
             if (this._graphPromises.has(id)) {
-                this._graphPromises.get(id).forEach((promise) => {
+                this._graphPromises.get(id).forEach(promise => {
                     promise.resolve(graph);
                 });
                 this._graphPromises.delete(id);
@@ -305,9 +384,9 @@ export default (app) => {
         }
 
         deregister(id) {
-            this.getGraph(id).then((graph) => {
+            this.getGraph(id).then(graph => {
                 if (this._graphPromises.has(id)) {
-                    this._graphPromises.get(id).forEach((promise) => {
+                    this._graphPromises.get(id).forEach(promise => {
                         promise.reject('Graph has been deleted');
                     });
                 }
@@ -324,10 +403,10 @@ export default (app) => {
                     resolve(this.graphs.get(id));
                 } else if (this._graphPromises.has(id)) {
                     const promises = this._graphPromises.get(id);
-                    promises.push({resolve, reject});
+                    promises.push({ resolve, reject });
                     this._graphPromises = this._graphPromises.set(id, promises);
                 } else {
-                    this._graphPromises = this._graphPromises.set(id, [{resolve, reject}]);
+                    this._graphPromises = this._graphPromises.set(id, [{ resolve, reject }]);
                 }
             });
         }

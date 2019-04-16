@@ -25,6 +25,7 @@ class SceneToLayerDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          scenes: List[Scene.Create],
          dsCreate: Datasource.Create,
@@ -32,8 +33,10 @@ class SceneToLayerDaoSpec
          csq: CombinedSceneQueryParams) =>
           {
             val acceptedSceneAndStlIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (_, dbUser, dbProject) = orgUserProject
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               scenesInsert <- (scenes map {
@@ -43,6 +46,7 @@ class SceneToLayerDaoSpec
               )
               _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id },
                                                  dbProject.id,
+                                                 dbProject.defaultLayerId,
                                                  false)
               acceptedSceneCount <- SceneToLayerDao.acceptScenes(
                 dbProject.defaultLayerId,
@@ -68,6 +72,7 @@ class SceneToLayerDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          scenes: List[Scene.Create],
          dsCreate: Datasource.Create,
@@ -75,7 +80,10 @@ class SceneToLayerDaoSpec
          csq: CombinedSceneQueryParams) =>
           {
             val mdAndStpsIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               scenesInsert <- (scenes map {
@@ -86,6 +94,7 @@ class SceneToLayerDaoSpec
               selectedSceneIds = scenesInsert.take(2) map { _.id }
               _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id },
                                                  dbProject.id,
+                                                 dbProject.defaultLayerId,
                                                  false)
               _ <- SceneToLayerDao.setManualOrder(dbProject.defaultLayerId,
                                                   scenesInsert map { _.id })

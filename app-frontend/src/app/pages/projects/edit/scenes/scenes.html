@@ -44,20 +44,15 @@
     </div>
   </div>
 </div>
-<div class="list-group-item sidebar-actions-group">
-  <label>Add scenes</label>
-  <div class="column-6 nogutter btn-group">
-    <button type="button"
-            class="btn btn-primary"
-            ng-click="$ctrl.gotoBrowse()">
-      Browse
-    </button>
-    <button type="button"
-            ng-click="$ctrl.openImportModal()"
-            class="btn btn-primary">
-      Import
-    </button>
+<div class="sidebar-actions-group">
+  <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
+    <i class="icon-plus"></i>Add imagery
+    <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+      <li role="menuitem"><a href ng-click="$ctrl.gotoBrowse()">Browse</a></li>
+      <li role="menuitem"><a href ng-click="$ctrl.openImportModal()">Import</a></li>
+    </ul>
   </div>
+  <div class="flex-fill"></div>
 </div>
 <div class="sidebar-scrollable"
      ui-tree="$ctrl.treeOptions"
@@ -80,7 +75,7 @@
         <i class="icon-download"></i>
       </button>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
-        <i class="icon-trash"></i>
+        Remove
       </button>
     </rf-scene-item>
     <rf-scene-item
@@ -98,7 +93,7 @@
         <i class="icon-download"></i>
       </button>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
-        <i class="icon-trash"></i>
+        Remove
       </button>
     </rf-scene-item>
   </div>

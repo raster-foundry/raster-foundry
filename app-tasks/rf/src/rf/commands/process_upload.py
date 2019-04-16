@@ -49,6 +49,7 @@ def process_upload(upload_id):
                 upload.id,
                 client,
                 upload.projectId,
+                upload.layerId,
                 upload.visibility,
                 [],
                 upload.owner
@@ -60,6 +61,7 @@ def process_upload(upload_id):
                 upload.datasource,
                 upload.id,
                 upload.projectId,
+                upload.layerId,
                 upload.visibility,
                 upload.owner
             )
@@ -74,7 +76,15 @@ def process_upload(upload_id):
         created_scenes = [scene.create() for scene in scenes]
         logger.info('Successfully created %s scenes (%s)', len(created_scenes), [s.id for s in created_scenes])
 
-        if upload.projectId:
+        if upload.layerId and upload.projectId:
+            logger.info('Upload specified to a project layer. Linking scenes to layer %s', upload.layerId)
+            scene_ids = [scene.id for scene in created_scenes]
+            batch_scene_to_layer_url = '{HOST}/api/projects/{PROJECT}/layers/{LAYER}/scenes'.format(
+                HOST=HOST, PROJECT=upload.projectId, LAYER=upload.layerId)
+            session = get_session()
+            response = session.post(batch_scene_to_layer_url, json=scene_ids)
+            response.raise_for_status()
+        elif upload.projectId:
             logger.info('Upload specified a project. Linking scenes to project %s', upload.projectId)
             scene_ids = [scene.id for scene in created_scenes]
             batch_scene_to_project_url = '{HOST}/api/projects/{PROJECT}/scenes'.format(HOST=HOST, PROJECT=upload.projectId)

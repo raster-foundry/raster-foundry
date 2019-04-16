@@ -12,6 +12,7 @@ trait UploadQueryParameterDirective extends QueryParametersCommon {
     (
       'datasource.as[UUID].?,
       'uploadStatus.as[String].?,
-      'projectId.as[UUID].?
+      'projectId.as[UUID].?,
+      'layerId.as[UUID].?
     )).as(UploadQueryParameters.apply _)
 }

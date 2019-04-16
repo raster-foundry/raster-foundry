@@ -22,24 +22,25 @@ class AnnotationGroupDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          annotationGroupCreate: AnnotationGroup.Create) =>
           {
-            val annotationGroupInsertWithUserAndProjectIO = insertUserOrgProject(
-              user,
-              org,
-              project) flatMap {
-              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-                AnnotationGroupDao.createAnnotationGroup(dbProject.id,
-                                                         annotationGroupCreate,
-                                                         dbUser) map {
-                  (_, dbUser, dbProject)
-                }
-              }
-            }
-            val (annotationGroup, _, _) = xa
+            val annotationGroupIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
+              annotationGroup <- AnnotationGroupDao.createAnnotationGroup(
+                dbProject.id,
+                annotationGroupCreate,
+                dbUser)
+            } yield annotationGroup
+            val annotationGroup = xa
               .use(t =>
-                annotationGroupInsertWithUserAndProjectIO
+                annotationGroupIO
                   .transact(t))
               .unsafeRunSync()
             assert(annotationGroup.name == annotationGroupCreate.name,
@@ -55,6 +56,7 @@ class AnnotationGroupDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project1: Project.Create,
          project2: Project.Create,
          agc1: AnnotationGroup.Create,
@@ -62,9 +64,10 @@ class AnnotationGroupDaoSpec
          agc3: AnnotationGroup.Create) =>
           {
             val annotationGroupIO = for {
-              (_, dbUser, dbProject1) <- insertUserOrgProject(user,
-                                                              org,
-                                                              project1)
+              (dbUser, _, _, dbProject1) <- insertUserOrgPlatProject(user,
+                                                                     org,
+                                                                     platform,
+                                                                     project1)
               dbProject2 <- ProjectDao.insertProject(project2, dbUser)
               agDb1 <- AnnotationGroupDao.createAnnotationGroup(dbProject1.id,
                                                                 agc1,
@@ -98,6 +101,7 @@ class AnnotationGroupDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project1: Project.Create,
          agc1: AnnotationGroup.Create,
          agc2: AnnotationGroup.Create,
@@ -105,9 +109,10 @@ class AnnotationGroupDaoSpec
          agc2Annotations: List[Annotation.Create]) =>
           {
             val annotationGroupIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user,
-                                                             org,
-                                                             project1)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project1)
               agDb1 <- AnnotationGroupDao.createAnnotationGroup(dbProject.id,
                                                                 agc1,
                                                                 dbUser)
@@ -163,12 +168,16 @@ class AnnotationGroupDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          ag: AnnotationGroup.Create,
          agAnnotations: List[Annotation.Create]) =>
           {
             val annotationGroupIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               annotationGroupDB <- AnnotationGroupDao.createAnnotationGroup(
                 dbProject.id,
                 ag,
@@ -223,13 +232,15 @@ class AnnotationGroupDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project1: Project.Create,
          annotations: List[Annotation.Create]) =>
           {
             val annotationGroupIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user,
-                                                             org,
-                                                             project1)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project1)
               dbAnnotations <- AnnotationDao.insertAnnotations(
                 annotations,
                 dbProject.id,

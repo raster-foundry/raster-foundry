@@ -384,6 +384,45 @@ export default (app) => {
             });
         }
 
+        addToLayer(projectId, layerId, scenes) {
+            const planetSceneId = scene => `${scene.datasource}:${scene.id}`;
+            const getDatasourceId =
+                  datasource => _.first(_.filter(this.sources, s => s.id === datasource)).uuid;
+            return this.$q((resolve, reject) => {
+                this.authService.getCurrentUser().then(user => {
+                    // create separate upload for each datasource
+                    let sceneGroups = _.groupBy(scenes, (scene) => scene.datasource);
+                    let datasourceIds = _.map(sceneGroups, (datasourceScenes, datasource) => {
+                        let sceneIds = datasourceScenes.map(planetSceneId);
+                        return {datasource, sceneIds};
+                    });
+                    let uploadPromises = datasourceIds.map(({datasource, sceneIds}) => {
+                        let dsId = getDatasourceId(datasource);
+                        let uploadObject = {
+                            files: sceneIds,
+                            fileType: 'GEOTIFF',
+                            datasource: dsId,
+                            uploadStatus: 'UPLOADED',
+                            visibility: 'PRIVATE',
+                            uploadType: 'PLANET',
+                            organizationId: user.organizationId,
+                            projectId,
+                            layerId,
+                            metadata: {
+                                planetKey: this.planetToken
+                            }
+                        };
+                        return this.uploadService.create(uploadObject);
+                    });
+                    this.$q.all(uploadPromises).then(() => {
+                        resolve(scenes.map(planetSceneId));
+                    }, (err) => {
+                        reject(err);
+                    });
+                });
+            });
+        }
+
         getScenePermissions(scene) {
             let result = [];
             if (scene && scene.permissions

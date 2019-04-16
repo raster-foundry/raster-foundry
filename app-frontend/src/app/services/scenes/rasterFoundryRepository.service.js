@@ -27,8 +27,8 @@ export default (app) => {
             });
         }
 
-        getFilters() {
-            return [{
+        getFilters(options = {}) {
+            const standardParams = [{
                 param: 'datasource',
                 label: 'Imagery Sources',
                 type: 'search-select',
@@ -41,10 +41,6 @@ export default (app) => {
                 label: 'Date Range',
                 type: 'daterange',
                 default: 'None'
-            }, {
-                type: 'shape',
-                label: 'Area of Interest',
-                param: 'shape'
             }, {
                 params: {
                     min: 'minCloudCover',
@@ -83,18 +79,8 @@ export default (app) => {
                 scale: 1
             }, {
                 param: 'ingested',
-                label: 'Ingest Status',
-                type: 'tag',
-                options: [{
-                    label: 'Show all',
-                    value: null
-                }, {
-                    label: 'Uningested Only',
-                    value: 'false'
-                }, {
-                    label: 'Ingested Only',
-                    value: 'true'
-                }]
+                label: 'Show Unprocessed',
+                type: 'checkbox'
             }, {
                 param: 'owner',
                 label: 'Owner',
@@ -107,6 +93,15 @@ export default (app) => {
                     value: this.authService.getProfile().sub
                 }]
             }];
+
+            if (options.legacy) {
+                standardParams.splice(2, 0, {
+                    type: 'shape',
+                    label: 'Area of Interest',
+                    param: 'shape'
+                });
+            }
+            return standardParams;
         }
 
         getSources() {
@@ -137,7 +132,7 @@ export default (app) => {
           Function chain:
           (filters) => (bbox) => () => Future(next page of scenes)
         */
-        fetchScenes(filters, projectId) {
+        fetchScenes(filters, projectId, layerId) {
             if (filters.shape && typeof filters.shape === 'object') {
                 filters.shape = filters.shape.id;
             }
@@ -160,17 +155,23 @@ export default (app) => {
                                 page,
                                 bbox,
                                 maxCreateDatetime: requestTime,
-                                project: projectId
+                                project: projectId,
+                                layer: layerId,
+                                projectLayerShape: layerId
                             }, params)
                         ).then((response) => {
                             // We aren't supporting concurrent scene paged requests
                             page = page + 1;
                             hasNext = response.hasNext;
+                            let count = 100;
+                            let calcCount = 20 * (page - 1) + response.results.length;
+                            count = count > calcCount ? count : calcCount;
                             resolve({
                                 scenes: response.results,
                                 hasNext,
                                 count: response.count >= 100 ?
-                                    'at least 100' : this.$filter('number')(response.count)
+                                    `at least ${count}` :
+                                    this.$filter('number')(response.count)
                             });
                         }, (error) => {
                             reject({
@@ -231,6 +232,10 @@ export default (app) => {
          */
         addToProject(projectId, scenes) {
             return this.projectService.addScenes(projectId, scenes.map(scene => scene.id));
+        }
+
+        addToLayer(projectId, layerId, scenes) {
+            return this.projectService.addScenesToLayer(projectId, layerId, scenes.map(s => s.id));
         }
 
         getScenePermissions(scene) {

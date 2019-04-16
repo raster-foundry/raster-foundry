@@ -1,6 +1,10 @@
 /* eslint-disable */
 import pages from './components/pages';
 import projectComponents from './components/projects';
+import sceneComponents from './components/scenes';
+import commonComponents from './components/common';
+import histogramComponents from './components/histogram';
+
 export default angular.module('index.components', [
     //admin components
     require('./components/admin/editableLogo/editableLogo.js').default.name,
@@ -20,7 +24,9 @@ export default angular.module('index.components', [
     require('./components/scenes/sceneImportModal/sceneImportModal.module.js').default.name,
     require('./components/scenes/sceneDownloadModal/sceneDownloadModal.module.js').default.name,
     require('./components/scenes/sceneFilterPane/sceneFilterPane.module.js').default.name,
-    require('./components/scenes/planetSceneDetailModal/planetSceneDetailModal.module.js').default.name,
+    require('./components/scenes/planetSceneDetailModal/planetSceneDetailModal.module.js').default
+        .name,
+    ...sceneComponents,
 
     // vector components
     require('./components/vectors/vectorImportModal/vectorImportModal.module.js').default.name,
@@ -35,12 +41,15 @@ export default angular.module('index.components', [
     require('./components/projects/projectCreateModal/projectCreateModal.module.js').default.name,
     require('./components/projects/projectExportModal/projectExportModal.module.js').default.name,
     require('./components/projects/annotateSidebarItem/annotateSidebarItem.module.js').default.name,
-    require('./components/projects/projectLayerCreateModal/projectLayerCreateModal.js').default.name,
+    require('./components/projects/projectLayerCreateModal/projectLayerCreateModal.js').default
+        .name,
 
     // datasource components
     require('./components/datasources/datasourceItem/datasourceItem.module.js').default.name,
-    require('./components/datasources/datasourceCreateModal/datasourceCreateModal.module.js').default.name,
-    require('./components/datasources/datasourceDeleteModal/datasourceDeleteModal.module.js').default.name,
+    require('./components/datasources/datasourceCreateModal/datasourceCreateModal.module.js')
+        .default.name,
+    require('./components/datasources/datasourceDeleteModal/datasourceDeleteModal.module.js')
+        .default.name,
 
     // lab components
     require('./components/lab/templateItem/templateItem.module.js').default.name,
@@ -62,7 +71,8 @@ export default angular.module('index.components', [
     // map components
     require('./components/map/mapContainer/mapContainer.module.js').default.name,
     require('./components/map/staticMap/staticMap.module.js').default.name,
-    require('./components/map/drawToolbar/drawToolbar.module.js').default.name, require('./components/map/labMap/labMap.module.js').default.name,
+    require('./components/map/drawToolbar/drawToolbar.module.js').default.name,
+    require('./components/map/labMap/labMap.module.js').default.name,
     require('./components/map/mapSearchModal/mapSearchModal.module.js').default.name,
     require('./components/map/annotateToolbar/annotateToolbar.module.js').default.name,
     require('./components/map/measurementPopup/measurementPopup.module.js').default.name,
@@ -70,7 +80,8 @@ export default angular.module('index.components', [
     // settings components
     require('./components/settings/refreshTokenModal/refreshTokenModal.module.js').default.name,
     require('./components/settings/enterTokenModal/enterTokenModal.module.js').default.name,
-    require('./components/settings/featureFlagOverrides/featureFlagOverrides.module.js').default.name,
+    require('./components/settings/featureFlagOverrides/featureFlagOverrides.module.js').default
+        .name,
     require('./components/settings/tokenItem/tokenItem.module.js').default.name,
     require('./components/settings/userModal/userModal.module.js').default.name,
     require('./components/settings/teamModal/teamModal.module.js').default.name,
@@ -81,7 +92,8 @@ export default angular.module('index.components', [
     // export components
     require('./components/exports/exportItem/exportItem.module.js').default.name,
     require('./components/exports/exportDownloadModal/exportDownloadModal.module.js').default.name,
-    require('./components/exports/exportAnalysisDownloadModal/exportAnalysisDownloadModal.module.js').default.name,
+    require('./components/exports/exportAnalysisDownloadModal/exportAnalysisDownloadModal.module.js')
+        .default.name,
 
     // filter components
     require('./components/filters/daterangeFilter/daterangeFilter.module.js').default.name,
@@ -89,7 +101,7 @@ export default angular.module('index.components', [
     require('./components/filters/shapeFilter/shapeFilter.module.js').default.name,
     require('./components/filters/sliderFilter/sliderFilter.module.js').default.name,
     require('./components/filters/tagFilter/tagFilter.module.js').default.name,
-
+    require('./components/filters/ingestedFilter/ingestedFilter.module.js').default.name,
 
     // common components (no domain)
     require('./components/common/navBar/navBar.module.js').default.name,
@@ -109,20 +121,26 @@ export default angular.module('index.components', [
     require('./components/common/paginationControls/paginationControls.js').default.name,
     require('./components/common/navbarSearch/navbarSearch.js').default.name,
     require('./components/common/itemActionButtons/itemActionButtons.js').default.name,
+    ...commonComponents,
 
     // Single components for new domains
     require('./components/aoiFilterPane/aoiFilterPane.module.js').default.name,
 
     // project color composite components
-    require('./components/colorComposites/colorSchemeBuilder/colorSchemeBuilder.module.js').default.name,
-    require('./components/colorComposites/colorSchemeDropdown/colorSchemeDropdown.module.js').default.name,
+    require('./components/colorComposites/colorSchemeBuilder/colorSchemeBuilder.module.js').default
+        .name,
+    require('./components/colorComposites/colorSchemeDropdown/colorSchemeDropdown.module.js')
+        .default.name,
     require('./components/colorComposites/bandSelect/bandSelect.js').default.name,
 
     // histogram components
     require('./components/histogram/channelHistogram/channelHistogram.module.js').default.name,
     require('./components/histogram/nodeHistogram/nodeHistogram.module.js').default.name,
-    require('./components/histogram/histogramBreakpoint/histogramBreakpoint.module.js').default.name,
-    require('./components/histogram/reclassifyHistogram/reclassifyHistogram.module.js').default.name,
+    require('./components/histogram/histogramBreakpoint/histogramBreakpoint.module.js').default
+        .name,
+    require('./components/histogram/reclassifyHistogram/reclassifyHistogram.module.js').default
+        .name,
+    ...histogramComponents,
 
     // pages
     ...pages

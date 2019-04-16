@@ -57,11 +57,19 @@ class SceneWithRelatedDaoSpec
               listedScenes <- SceneWithRelatedDao.listAuthorizedScenes(
                 pageRequest,
                 CombinedSceneQueryParams(),
+                dbUser1
+              )
+              listedScenesWithDS <- SceneWithRelatedDao.listAuthorizedScenes(
+                pageRequest,
+                CombinedSceneQueryParams(
+                  sceneParams =
+                    SceneQueryParameters(datasource = Seq(datasource1.id))),
                 dbUser1)
-            } yield { (dbScenes1, listedScenes) }
+            } yield { (dbScenes1, listedScenes, listedScenesWithDS) }
 
-            val (insertedScenes, listedScenes) =
+            val (insertedScenes, listedScenes, listedWithDS) =
               xa.use(t => scenesIO.transact(t)).unsafeRunSync
+
             val insertedNamesSet = insertedScenes.toSet map {
               (scene: Scene.WithRelated) =>
                 scene.name
@@ -73,6 +81,18 @@ class SceneWithRelatedDaoSpec
             assert(
               listedNamesSet.intersect(insertedNamesSet) == listedNamesSet,
               "listed scenes should be a strict subset of inserted scenes by user 1")
+            assert(
+              scenes1.length == listedWithDS.count,
+              "Listing with datasource should count the same number of scenes we started with"
+            )
+            assert(
+              listedScenes.hasNext == insertedScenes.length > pageRequest.limit,
+              "Has next correctly reflects whether there are more scenes"
+            )
+            assert(
+              listedWithDS.results.length == (listedWithDS.count `min` pageRequest.limit),
+              "Listing with datasource should return from the db the same number of scenes we started with"
+            )
             true
           }
       }
@@ -84,11 +104,15 @@ class SceneWithRelatedDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          scenes: List[Scene.Create]) =>
           {
             val scenesInsertWithUserProjectIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- unsafeGetRandomDatasource
               scenesInsert <- (scenes map {
                 fixupSceneCreate(dbUser, datasource, _)
@@ -101,7 +125,8 @@ class SceneWithRelatedDaoSpec
               scenesUserProject <- scenesInsertWithUserProjectIO
               (dbScenes, _, dbProject) = scenesUserProject
               _ <- ProjectDao.addScenesToProject(dbScenes map { _.id },
-                                                 dbProject.id)
+                                                 dbProject.id,
+                                                 dbProject.defaultLayerId)
               retrievedScenes <- dbScenes traverse { scene =>
                 SceneDao.unsafeGetSceneById(scene.id)
               }

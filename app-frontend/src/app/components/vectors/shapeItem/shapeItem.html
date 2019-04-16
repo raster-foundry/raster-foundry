@@ -2,12 +2,10 @@
      ng-class="{'disabled': $ctrl.isDisabled,
                 'clickable': $ctrl.isClickable}">
   <div class="list-group-overflow">
-    <div>
-      <span title="{{$ctrl.shape.properties.name}}">
-        <strong class="color-dark">
-          {{$ctrl.shape.properties.name}}
-        </strong>
-      </span>
+    <div class="text-overflow-ellipsis" title="{{$ctrl.shape.properties.name}}">
+      <strong class="color-dark">
+        {{$ctrl.shape.properties.name}}
+      </strong>
     </div>
     <div>
       <span title="{{$ctrl.shape.properties.modifiedAt}}">

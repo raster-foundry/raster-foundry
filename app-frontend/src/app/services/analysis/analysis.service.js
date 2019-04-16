@@ -1,4 +1,5 @@
 /* globals BUILDCONFIG */
+import _ from 'lodash';
 
 export default (app) => {
     class AnalysisService {
@@ -7,6 +8,7 @@ export default (app) => {
             this.$http = $http;
             this.$q = $q;
             this.authService = authService;
+            this.tileServer = APP_CONFIG.tileServerLocation;
             this.Template = $resource(
                 `${BUILDCONFIG.API_HOST}/api/tools/:id/`, {
                     id: '@properties.id'
@@ -21,6 +23,12 @@ export default (app) => {
                     },
                     create: {
                         method: 'POST'
+                    },
+                    update: {
+                        method: 'PUT',
+                        params: {
+                            id: '@id'
+                        }
                     },
                     delete: {
                         method: 'DELETE'
@@ -38,6 +46,7 @@ export default (app) => {
                     id: '@id'
                 }, {
                     create: {
+                        url: `${BUILDCONFIG.API_HOST}/api/tool-runs/`,
                         method: 'POST'
                     },
                     get: {
@@ -52,17 +61,23 @@ export default (app) => {
                         method: 'PUT'
                     },
                     histogram: {
-                        url: `${APP_CONFIG.tileServerLocation}/tools/:analysisId/histogram/`,
+                        url: `${this.tileServer}/tools/:analysisId/histogram/`,
                         method: 'GET',
                         cache: false
                     },
                     statistics: {
-                        url: `${APP_CONFIG.tileServerLocation}/tools/:analysisId/statistics/`,
+                        url: `${this.tileServer}/tools/:analysisId/statistics/`,
                         method: 'GET',
                         cache: false
                     },
                     delete: {
                         method: 'DELETE'
+                    },
+                    actions: {
+                        url: `${BUILDCONFIG.API_HOST}/api/tool-runs/:id/actions/`,
+                        method: 'GET',
+                        cache: false,
+                        isArray: true
                     }
                 }
             );
@@ -92,7 +107,7 @@ export default (app) => {
                 let numAnalyses = page.count;
                 let requests = [firstRequest];
                 if (page.count > pageSize) {
-                    let requestMaker = function *(totalResults) {
+                    let requestMaker = function* (totalResults) {
                         let pageNum = 1;
                         while (pageNum * pageSize <= totalResults) {
                             let pageParams = {
@@ -126,23 +141,33 @@ export default (app) => {
         }
 
         getTemplate(id) {
-            return this.Template.get({id}).$promise;
+            return this.Template.get({
+                id
+            }).$promise;
         }
 
         deleteTemplate(id) {
-            return this.Template.delete({id}).$promise;
+            return this.Template.delete({
+                id
+            }).$promise;
         }
 
         getTemplateActions(id) {
-            return this.Template.actions({id}).$promise;
+            return this.Template.actions({
+                id
+            }).$promise;
         }
 
         deleteAnalysis(id) {
-            return this.Analysis.delete({id}).$promise;
+            return this.Analysis.delete({
+                id
+            }).$promise;
         }
 
         getAnalysis(id) {
-            return this.Analysis.get({id}).$promise;
+            return this.Analysis.get({
+                id
+            }).$promise;
         }
 
         createTemplate(template) {
@@ -168,10 +193,12 @@ export default (app) => {
                 (user) => {
                     return this.Analysis.create(Object.assign(analysis, {
                         organizationId: user.organizationId
-                    })).$promise;
+                    })).$promise.catch(e => {
+                        throw e;
+                    });
                 },
-                () => {
-
+                (e) => {
+                    throw e;
                 }
             );
         }
@@ -182,7 +209,9 @@ export default (app) => {
 
         getNodeHistogram(analysis, nodeId) {
             return this.Analysis.histogram({
-                analysisId: analysis, node: nodeId, voidCache: true,
+                analysisId: analysis,
+                node: nodeId,
+                voidCache: true,
                 token: this.authService.token()
             }).$promise;
         }
@@ -206,7 +235,10 @@ export default (app) => {
             // Otherwise, update analysis in place
             // We're doing a depth-first graph traversal on the arguments here.
             // Start "before the beginning" of the arguments of the root operator.
-            let parents = [{node: analysis.executionParameters, argIdx: -1}];
+            let parents = [{
+                node: analysis.executionParameters,
+                argIdx: -1
+            }];
             if (analysis.executionParameters.id === targetId) {
                 Object.assign(analysis.executionParameters, assignment);
             }
@@ -225,7 +257,10 @@ export default (app) => {
                     let args = currChild.args || false;
                     // This child node is itself a parent. Push onto parents
                     if (args) {
-                        parents.push({node: currChild, argIdx: -1});
+                        parents.push({
+                            node: currChild,
+                            argIdx: -1
+                        });
                     }
                     // Edit it if it matches target. Usually this is leaf nodes, but not always
                     // (e.g. render definitions).
@@ -262,7 +297,10 @@ export default (app) => {
             }
             // We're doing a depth-first graph traversal on the arguments here.
             // Start "before the beginning" of the arguments of the root operator.
-            let parents = [{node: analysis.executionParameters, argIdx: -1}];
+            let parents = [{
+                node: analysis.executionParameters,
+                argIdx: -1
+            }];
             if (analysis.executionParameters.id === nodeId) {
                 return Object.assign({}, analysis.executionParameters.metadata);
             }
@@ -281,7 +319,10 @@ export default (app) => {
                     let args = currChild.args || false;
                     // This child node is itself a parent. Push onto parents
                     if (args) {
-                        parents.push({node: currChild, argIdx: -1});
+                        parents.push({
+                            node: currChild,
+                            argIdx: -1
+                        });
                     }
                     // Edit it if it matches target. Usually this is leaf nodes, but not always
                     // (e.g. render definitions).
@@ -315,7 +356,9 @@ export default (app) => {
             }
             nodes.forEach(n => {
                 // Only use projects, because constant nodes also have no apply.
-                if (!n.apply && (n.type === 'src' || n.type === 'projectSrc')) {
+                if (!n.apply && (n.type === 'src' ||
+                        n.type === 'projectSrc' ||
+                        n.type === 'layerSrc')) {
                     if (sourceIds.indexOf(n.id) < 0) {
                         sourceIds.push(n.id);
                         sources[n.id] = n;
@@ -347,6 +390,40 @@ export default (app) => {
                 this.isLoadingTemplate = false;
             });
             return request;
+        }
+
+        updateTemplate(template) {
+            return this.Template.update(template).$promise;
+        }
+
+        getAnalysisActions(id) {
+            return this.Analysis.actions({
+                id
+            }).$promise;
+        }
+
+        getAnalysisTileUrl(analysisId, params) {
+            const token = this.authService.token();
+            const formattedParams = L.Util.getParamString(_.omitBy(Object.assign({
+                token: this.authService.token(),
+                tag: new Date().getTime()
+            }, params), (i) => !i));
+            return `${this.tileServer}/tools/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
+        }
+
+        getAnalysisTileUrlForProject(projectId, analysisId, params) {
+            const token = this.authService.token();
+            const formattedParams = L.Util.getParamString(_.omitBy(Object.assign({
+                token: params.mapToken ? null : this.authService.token(),
+                tag: new Date().getTime()
+            }, params), (i) => !i));
+            return `${this.tileServer}/${projectId}/analyses/${
+                analysisId}/{z}/{x}/{y}/${formattedParams}`;
+        }
+
+        transformWmPointToLatLngArray(wmPoint) {
+            const latLng = L.Projection.SphericalMercator.unproject(wmPoint);
+            return [latLng.lng, latLng.lat];
         }
 
         // @TODO: implement getting related tags and categories

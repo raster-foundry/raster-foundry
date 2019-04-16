@@ -20,9 +20,12 @@ class DatasourceDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          dsCreate: Datasource.Create) => {
           val createDsIO = for {
-            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
+            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
           } yield dsInsert
           val createDs = xa.use(t => createDsIO.transact(t)).unsafeRunSync
@@ -37,9 +40,12 @@ class DatasourceDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          dsCreate: Datasource.Create) => {
           val getDsIO = for {
-            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
+            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsGet <- DatasourceDao.getDatasourceById(dsInsert.id)
           } yield dsGet
@@ -55,9 +61,12 @@ class DatasourceDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          dsCreate: Datasource.Create) => {
           val getDsUnsafeIO = for {
-            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
+            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id)
           } yield dsGetUnsafe
@@ -73,10 +82,13 @@ class DatasourceDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          dsCreate: Datasource.Create,
          dsUpdate: Datasource.Create) => {
           val updateDsIO = for {
-            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
+            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsUpdated <- fixupDatasource(dsUpdate, userInsert)
             rowUpdated <- DatasourceDao.updateDatasource(dsUpdated,
@@ -102,9 +114,12 @@ class DatasourceDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          dsCreate: Datasource.Create) => {
           val deleteDsIO = for {
-            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
+            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id)
           } yield rowDeleted
@@ -126,9 +141,12 @@ class DatasourceDaoSpec
         (userCreate: User.Create,
          ownerCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          dsCreate: Datasource.Create) => {
           val isDsDeletableIO = for {
-            (_, ownerInsert) <- insertUserAndOrg(ownerCreate, orgCreate)
+            (ownerInsert, _, _) <- insertUserOrgPlatform(ownerCreate,
+                                                         orgCreate,
+                                                         platform)
             userInsert <- UserDao.create(userCreate)
             dsInsert <- fixupDatasource(dsCreate, ownerInsert)
             isDeletableUser <- DatasourceDao.isDeletable(dsInsert.id,
@@ -157,9 +175,12 @@ class DatasourceDaoSpec
         (userCreate: User.Create,
          ownerCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          dsCreate: Datasource.Create) => {
           val isDsDeletableIO = for {
-            (_, ownerInsert) <- insertUserAndOrg(ownerCreate, orgCreate)
+            (ownerInsert, _, _) <- insertUserOrgPlatform(ownerCreate,
+                                                         orgCreate,
+                                                         platform)
             dsInsert <- fixupDatasource(dsCreate, ownerInsert)
             _ <- DatasourceDao.addPermission(
               dsInsert.id,

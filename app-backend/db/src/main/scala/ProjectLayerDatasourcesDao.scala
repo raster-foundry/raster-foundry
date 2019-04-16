@@ -15,7 +15,7 @@ object ProjectLayerDatasourcesDao extends Dao[Datasource] {
                      INNER JOIN datasources d on s.datasource = d.id"""
   val selectF = fr"""
       SELECT
-        distinct(d.id), d.created_at, d.created_by, d.modified_at, d.modified_by, d.owner,
+        d.id, d.created_at, d.created_by, d.modified_at, d.modified_by, d.owner,
         d.name, d.visibility, d.composites, d.extras, d.bands, d.license_name
           FROM""" ++ tableF
   def listProjectLayerDatasources(

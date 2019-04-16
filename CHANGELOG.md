@@ -1,4 +1,5 @@
 # Change Log
+
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
@@ -7,11 +8,95 @@
 
 ### Deprecated
 
+### Fixed
+
+### Security
+
+## [1.19.0](https://github.com/raster-foundry/raster-foundry/tree/1.19.0) (2019-04-16)
+
+### Added
+
+- Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
+- Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
+- Added project layer analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
+- Added project layer analyses create view [\#4659](https://github.com/raster-foundry/raster-foundry/pull/4659)
+- Added backend support for project layer async exports [\#4619](https://github.com/raster-foundry/raster-foundry/pull/4619)
+- Added front-end support for importing to project layers [\#4646](https://github.com/raster-foundry/raster-foundry/pull/4646)
+- Enhanced project layer lists to support list access with map tokens and to public projects [\#4656](https://github.com/raster-foundry/raster-foundry/pull/4656)
+- Added project layer export list UI [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
+- Added layer ID query parameter to export list endpoint [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
+- Added project layer annotation UI support [\#4665](https://github.com/raster-foundry/raster-foundry/pull/4665)
+- Added project settings pages for v2 UI [\#4637](https://github.com/raster-foundry/raster-foundry/pull/4637)
+- Added project layer color-mode UI [\#4706](https://github.com/raster-foundry/raster-foundry/pull/4706)
+- Added project layer color-correction UI [\#4722](https://github.com/raster-foundry/raster-foundry/pull/4722)
+- Added project embed UI [\#4793](https://github.com/raster-foundry/raster-foundry/pull/4793/files)
+- Added single-band color-mode support to project layer color-mode UI [\#4728](https://github.com/raster-foundry/raster-foundry/pull/4728)
+- Added owner query parameter to tools and tool-runs endpoints, support multiple owner qp's on applicable endpoints [\#4689](https://github.com/raster-foundry/raster-foundry/pull/4689)
+- Added Rollbar error reporting to backsplash [\#4691](https://github.com/raster-foundry/raster-foundry/pull/4691)
+- Added PLATFORM_USERS webpack overrides variable and make default platform filter use those ids [\#4692](https://github.com/raster-foundry/raster-foundry/pull/4692)
+- Added flag for whether tools can sensibly be run with only a single layer as input [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701) and used it to filter templates for layer analysis creation [\#4711](https://github.com/raster-foundry/raster-foundry/pull/4711)
+- Added AOI creation UI and component [\#4702](https://github.com/raster-foundry/raster-foundry/pull/4702)
+- Added single band options to project layers [\#4712](https://github.com/raster-foundry/raster-foundry/pull/4712)
+- Added project layer export creation UI [\#4718](https://github.com/raster-foundry/raster-foundry/pull/4718)
+- Enforced project layer AOI existence when browsing for scenes [\#4724](https://github.com/raster-foundry/raster-foundry/pull/4724)
+- Made templates editable except for their formulas [\#4729](https://github.com/raster-foundry/raster-foundry/pull/4729)
+- Added project analyses edit modal for v2 UI [\#4709](https://github.com/raster-foundry/raster-foundry/pull/4709)
+- Added query parameter to limit scene search by layer AOI and updated filters on the frontend [\#4733](https://github.com/raster-foundry/raster-foundry/pull/4733)
+- Added endpoint for splitting layers up by date and datasource [\#4738](https://github.com/raster-foundry/raster-foundry/pull/4738)
+- Added the map part of analysis data visualization UI [\#4739](https://github.com/raster-foundry/raster-foundry/pull/4739)
+- Enabled project layer selection in lab input raster nodes [\#4732](https://github.com/raster-foundry/raster-foundry/pull/4732)
+- Enabled project layer splitting on frontend [\#4766](https://github.com/raster-foundry/raster-foundry/pull/4766)
+- Added the histogram part of analysis data visualization UI [\#4756](https://github.com/raster-foundry/raster-foundry/pull/4756)
+- Add v2 project share page with layers and analyses [\#4768](https://github.com/raster-foundry/raster-foundry/pull/4768)
+- Added support for listing annotations on public projects without auth or with a map token query parameter [\#4795](https://github.com/raster-foundry/raster-foundry/pull/4795)
+- OGC
+  - Added GetCapabilities WMS and WCS endpoints for projects [\#4767](https://github.com/raster-foundry/raster-foundry/pull/4767)
+  - Added parameter handling for DescribeCoverage, GetCoverage, and GetMap requests [\#4782](https://github.com/raster-foundry/raster-foundry/pull/4782)
+  - Added map token authentication to OGC services [\#4778](https://github.com/raster-foundry/raster-foundry/pull/4778)
+  - Added style creation from bands and color composites on datasources [\#4789](https://github.com/raster-foundry/raster-foundry/pull/4789)
+- Preserve state of visible layers [\#4802](https://github.com/raster-foundry/raster-foundry/pull/4802)
+- Display processing imports on layer scenes UI [\#4809](https://github.com/raster-foundry/raster-foundry/pull/4809)
+- Added quick edit functionality for project analyses [\#4804](https://github.com/raster-foundry/raster-foundry/pull/4804)
+- Add zooming, showing, hiding options to multi-select menu on analyses, layers [\4816](https://github.com/raster-foundry/raster-foundry/pull/4816)
+- Added API specifications back to core repository [\#4819](https://github.com/raster-foundry/raster-foundry/pull/4819)
+- Added `overviewsLocation` and `minZoomLevel` to `projectLayers` [\#4857](https://github.com/raster-foundry/raster-foundry/pull/4857)
+- Enable listing annotations with owner info [\#4864](https://github.com/raster-foundry/raster-foundry/pull/4864)
+
+### Changed
+
+- Updated default project layer color group hex code [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
+- Updated `gdal-js` and `requests` [\#4618](https://github.com/raster-foundry/raster-foundry/pull/4618)
+- Swap trash icon for "Remove" text on scene item components [\#4621](https://github.com/raster-foundry/raster-foundry/pull/4621)
+- Bumped Nginx buffer size for scene creation requests [\#4672](https://github.com/raster-foundry/raster-foundry/pull/4672)
+- Use layer geometry to add a mask when creating analyses [\#4694](https://github.com/raster-foundry/raster-foundry/pull/4694)
+- Made tools reference licenses by id [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701)
+- Support map tokens on /projects/{} get route, /tool-runs/ get route [\#4768](https://github.com/raster-foundry/raster-foundry/pull/4768)
+- Enabled inserting annotations in bulk in one `INSERT INTO` command [\#4777](https://github.com/raster-foundry/raster-foundry/pull/4777)
+- Started using swaggerhub for documentation [\#4818](https://github.com/raster-foundry/raster-foundry/pull/4818)
+- Made various UI improvements [\#4801](https://github.com/raster-foundry/raster-foundry/pull/4801)
+- Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
+
 ### Removed
+
+- Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
+- Removed lingering database assocation of scenes and projects (in deference to scenes to layers to projects) [\#4764](https://github.com/raster-foundry/raster-foundry/pull/4764) [\#4867](https://github.com/raster-foundry/raster-foundry/pull/4867)
+- Removed tool categories and tags [\#4779](https://github.com/raster-foundry/raster-foundry/pull/4779)
 
 ### Fixed
 
-## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
+- No longer exclude public objects from searches for shared objects, except for scenes [\#4754](https://github.com/raster-foundry/raster-foundry/pull/4754)
+- Users that have edit permissions on an analysis can now share the analysis from within the lab interface [\#4797](https://github.com/raster-foundry/raster-foundry/pull/4797)
+- Fixed dependency conflict for circe between geotrellis-server, maml, and Raster Foundry [\#4703](https://github.com/raster-foundry/raster-foundry/pull/4703)
+- Attached ACL policy to exports uploaded to external buckets to allow owner control [\#4825](https://github.com/raster-foundry/raster-foundry/pull/4825)
+- Restored footprint splitting logic for Landsat 8 and Sentinel-2 import [\#4828](https://github.com/raster-foundry/raster-foundry/pull/4828)
+- Fix annotation shapefile import and export [\#4829](https://github.com/raster-foundry/raster-foundry/pull/4829)
+- Set layerId to null when deleting upload records [\#4844](https://github.com/raster-foundry/raster-foundry/pull/4844)
+- Project analyses Visualize view conditionally overwrites render def instead of always [\#4848](https://github.com/raster-foundry/raster-foundry/pull/4848)
+- Moved legacy filters over to new styling [\#4855](https://github.com/raster-foundry/raster-foundry/pull/4848)
+- Make flake8 and pytest ignore dependencies in `opt` directory of `app-lambda` [\#4853](https://github.com/raster-foundry/raster-foundry/pull/4853) [\#4863](https://github.com/raster-foundry/raster-foundry/pull/4863)
+- Fix v2 share page using the wrong endpoint to fetch analyses, fix error states [\#4845](https://github.com/raster-foundry/raster-foundry/pull/4845)
+
+## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.1) (2019-02-20)
 
 ### Fixed
 
@@ -30,23 +115,28 @@
 - Added publishing of lambda functions to CI build process [\#4586](https://github.com/raster-foundry/raster-foundry/pull/4586)
 - Added tile server support for masked analyses [\#4571](https://github.com/raster-foundry/raster-foundry/pull/4571)
 - Added project layer navigation bar [\#4581](https://github.com/raster-foundry/raster-foundry/pull/4581)
+- Added layer parameter to /api/scenes and added inLayer property to scene browse responses [\#4615](https://github.com/raster-foundry/raster-foundry/pull/4615)
 
 ### Fixed
 
 - Removed unused imports and assignments [\#4579](https://github.com/raster-foundry/raster-foundry/pull/4579)
 - Included geometry filter in backsplash scene service to prevent erroneous 500s [\#4580](https://github.com/raster-foundry/raster-foundry/pull/4580)
 - Made scapegoat less angry [\#4611](https://github.com/raster-foundry/raster-foundry/pull/4611)
+- Set hasNext correctly on /api/scenes when there are more than 100 scenes [\#4615](https://github.com/raster-foundry/raster-foundry/pull/4615)
+- Use sane default when the accepted query parameter is not set on /api/project/{}/layer/{}/scenes [\#4615](https://github.com/raster-foundry/raster-foundry/pull/4615)
 
 ### Security
 
 ## [1.17.1](https://github.com/raster-foundry/raster-foundry/tree/1.17.1) (2019-02-04)
 
 ### Fixed
+
 - Removed references from old tileserver from Jenkinsfile.release
 
 ## [1.17.0](https://github.com/raster-foundry/raster-foundry/tree/1.17.0) (2019-02-04)
 
 ### Added
+
 - Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Added ProjectLayer datamodel, dao, and migration [\#4460](https://github.com/raster-foundry/raster-foundry/pull/4460)
 - Added lambda function for reactively processing new Landsat 8 imagery [\#4471](https://github.com/raster-foundry/raster-foundry/pull/4471)
@@ -62,8 +152,10 @@
 - Added project, project layer, and template ID fields to tool runs for later filtering [\#4546](https://github.com/raster-foundry/raster-foundry/pull/4546) and to API routes as filter fields [\#4551](https://github.com/raster-foundry/raster-foundry/pull/4551)
 - Added project layer mosaic and scene order endpoint [\#4547](https://github.com/raster-foundry/raster-foundry/pull/4547)
 - Add Layer ID to Annotations and Annotation Groups [\#4558](https://github.com/raster-foundry/raster-foundry/pull/4558)
+- Support uploads to project layers on the API [#\4524](https://github.com/raster-foundry/raster-foundry/pull/4524)
 
 ### Changed
+
 - Reorganized project structure to simplify dependency graph (`tool` was mostly removed; `tool`s still-relevant pieces, `bridge`, and `datamodel` moved into the project `common`) [\#4564](https://github.com/raster-foundry/raster-foundry/pull/4564)
 - Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Updated permission check logic for lab templates to make ownership filter work as expected [\#4462](https://github.com/raster-foundry/raster-foundry/pull/4462)
@@ -76,18 +168,21 @@
 ### Deprecated
 
 ### Removed
+
 - Removed unused dependency `geotrellis-raster-testkit`[\#4482](https://github.com/raster-foundry/raster-foundry/pull/4482)
 - Removed legacy tile server subproject and configuration [\#4478](https://github.com/raster-foundry/raster-foundry/pull/4478)
 - Removed unused metrics collection resources and application code [\#4475](https://github.com/raster-foundry/raster-foundry/pull/4475), [\#4493](https://github.com/raster-foundry/raster-foundry/pull/4493)
 - Removed deprecated Gatling load tests [\#4504](https://github.com/raster-foundry/raster-foundry/pull/4504)
 
 ### Fixed
+
 - Shapes drawn within the scene search filter context can now be saved [\#4474](https://github.com/raster-foundry/raster-foundry/pull/4474)
-- Mosaics are again constructed with rasters instead of with IO[rasters] [\#4498](https://github.com/raster-foundry/raster-foundry/pull/4498)
+- Mosaics are again constructed with rasters instead of with IO[rasters][\#4498](https://github.com/raster-foundry/raster-foundry/pull/4498)
 - Improved healthcheck logic in backsplash healthcheck endpoint [\#4548](https://github.com/raster-foundry/raster-foundry/pull/4548)
 - Fixed bug for publishing project page [\#4578](https://github.com/raster-foundry/raster-foundry/pull/4578)
 
 ### Security
+
 - Upgrade webpack-dev-server to address vulnerability (https://nvd.nist.gov/vuln/detail/CVE-2018-14732) [\#4476](https://github.com/raster-foundry/raster-foundry/pull/4476)
 
 ## [1.16.4](https://github.com/raster-foundry/raster-foundry/tree/1.16.4) (2019-01-21)
@@ -97,11 +192,13 @@
 ## [1.16.3](https://github.com/raster-foundry/raster-foundry/tree/1.16.3) (2019-01-17)
 
 ### Fixed
+
 - Made backsplash respect the RF_LOG_LEVEL environment variable [\#4483](https://github.com/raster-foundry/raster-foundry/pull/4483)
 
 ## [1.16.2](https://github.com/raster-foundry/raster-foundry/tree/1.16.2) (2019-01-14)
 
 ### Added
+
 - Added caching for histograms, rastersources, and tiles [\#4429](https://github.com/raster-foundry/raster-foundry/pull/4429)[\#4437](https://github.com/raster-foundry/raster-foundry/pull/4437)
 - Made Raster Source configurable via environment variables to more easily test GDAL and GeoTiff Raster Sources [\#4440](https://github.com/raster-foundry/raster-foundry/pull/4440)
 - Parallelized mosaic construction from backsplash images [\#4463](https://github.com/raster-foundry/raster-foundry/pull/4463)
@@ -131,6 +228,7 @@
 - In this release, we have added more fields to platform email settings to make it work better. We strongly suggest platform admins to go to your platform email settings and fill in **all fields**.
 
 ### Added
+
 - Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Added a support email field to platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
 - Supported team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
@@ -183,6 +281,7 @@
 ## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
 
 ### Added
+
 - Add Ansible role to install Nexus Repo Manager [\#4277](https://github.com/raster-foundry/raster-foundry/pull/4277)
 - Added S3 path suggestions in scene import modal when users upload imageries from S3 buckets [\#4290](https://github.com/raster-foundry/raster-foundry/pull/4290)
 - Enabled deleting lab templates on the frontend [\#4287](https://github.com/raster-foundry/raster-foundry/pull/4287)
@@ -190,6 +289,7 @@
 - Added script for reprocessing sentinel 2 scenes which were imported with the wrong number of bands [\4349](https://github.com/raster-foundry/raster-foundry/pull/4349
 
 ### Changed
+
 - Populate user profiles from their identity tokens more intelligently [\#4298](https://github.com/raster-foundry/raster-foundry/pull/4298)
 - Improved project selection modal within the lab [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4324)
 - Upgraded to Webpack 4 and replace broken libraries / componenets [\#4199](https://github.com/raster-foundry/raster-foundry/pull/4199)
@@ -227,6 +327,7 @@
 ## [1.14.0](https://github.com/raster-foundry/raster-foundry/tree/1.14.0) (2018-11-08)
 
 ### Added
+
 - Added summary endpoint for annotation groups to list the number of labels with different qualities (YES, NO, MISS, UNSURE) to support annotation applications [\#4221](https://github.com/raster-foundry/raster-foundry/pull/4221)
 - Added project histogram support for COG and Avro scenes in backsplash [\#4190](https://github.com/raster-foundry/raster-foundry/pull/4190)
 - Added map token and authorization header authentication to backsplash [\#4271](https://github.com/raster-foundry/raster-foundry/pull/4271)
@@ -237,6 +338,7 @@
   - Allow platform administrators to create uploads for other users within their platforms [\#4237](https://github.com/raster-foundry/raster-foundry/pull/4237)
 
 ### Changed
+
 - Small text edit to the Imports page [\#4198](https://github.com/raster-foundry/raster-foundry/pull/4198)
 - Updated package and assembly jar names [\#3924](https://github.com/raster-foundry/raster-foundry/pull/3924), [\#4222](https://github.com/raster-foundry/raster-foundry/pull/4222), [\#4240](https://github.com/raster-foundry/raster-foundry/pull/4240)
 - Change homepage "Create a new Template" button to "Create a new Analysis" [/#4224](https://github.com/raster-foundry/raster-foundry/pull/4224)
@@ -247,6 +349,7 @@
 - Added recalculation and update of project extent after scene deletion [\#4283](https://github.com/raster-foundry/raster-foundry/pull/4283)
 
 ### Fixed
+
 - Increase nginx buffer size & count for Scene, Tool, and Thumbnail requests [\#4170](https://github.com/raster-foundry/raster-foundry/pull/4170)
 - Add user button no longer shows for non-admins of teams and orgs [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
 - Fix undefined function call when selecting project scenes by clicking the map in advanced color correction view [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
@@ -264,6 +367,7 @@
 ## [1.13.0](https://github.com/raster-foundry/raster-foundry/tree/1.13.0) (2018-10-10)
 
 ### Added
+
 - Disable blog feed and intercom initialization using webpack override file [\#4162](https://github.com/raster-foundry/raster-foundry/pull/4162)
 - Add support for google tag manager via webpack overrides [\#4165](https://github.com/raster-foundry/raster-foundry/pull/4165)
 - Added support for additional/future Planet asset types [\#4184](https://github.com/raster-foundry/raster-foundry/pull/4184)
@@ -339,7 +443,7 @@
 - Route lab tile requests through single band mosaic [\#4041](https://github.com/raster-foundry/raster-foundry/pull/4041)
 - Add download button to scene list [\#4035](https://github.com/raster-foundry/raster-foundry/pull/4035)
 - Use AutoHigherResolution [\#4033](https://github.com/raster-foundry/raster-foundry/pull/4033)
-- Add more statuses  for ingest control flow [\#4032](https://github.com/raster-foundry/raster-foundry/pull/4032)
+- Add more statuses for ingest control flow [\#4032](https://github.com/raster-foundry/raster-foundry/pull/4032)
 - Add scalafmt helper script [\#4030](https://github.com/raster-foundry/raster-foundry/pull/4030)
 - Allow user to search scenes using UTC or local time on frontend [\#4028](https://github.com/raster-foundry/raster-foundry/pull/4028)
 - Paginate and streamline project scene views [\#4014](https://github.com/raster-foundry/raster-foundry/pull/4014)
@@ -406,7 +510,7 @@
 - Add ownership filter controls to project list page [\#3851](https://github.com/raster-foundry/raster-foundry/pull/3851)
 - Make COG export work [\#3848](https://github.com/raster-foundry/raster-foundry/pull/3848)
 - Upgrade to GT 2.0 [\#3846](https://github.com/raster-foundry/raster-foundry/pull/3846)
-- Add support for configuring Hikari; setup connections with statement\_timeout [\#3841](https://github.com/raster-foundry/raster-foundry/pull/3841)
+- Add support for configuring Hikari; setup connections with statement_timeout [\#3841](https://github.com/raster-foundry/raster-foundry/pull/3841)
 - Persist map bounds when entering browse mode [\#3840](https://github.com/raster-foundry/raster-foundry/pull/3840)
 - Make logging configuration more consistent [\#3829](https://github.com/raster-foundry/raster-foundry/pull/3829)
 - Auto accept team invitation if user is in same organization [\#3823](https://github.com/raster-foundry/raster-foundry/pull/3823)
@@ -507,7 +611,7 @@
 - added help center and everyone sharing icons [\#3741](https://github.com/raster-foundry/raster-foundry/pull/3741)
 - Allow setting role when adding a user to an organization or team [\#3739](https://github.com/raster-foundry/raster-foundry/pull/3739)
 - Submit Update AOI projects from Scala [\#3738](https://github.com/raster-foundry/raster-foundry/pull/3738)
--  Add cron tasks to clean up Jenkins cache, bump versions  [\#3736](https://github.com/raster-foundry/raster-foundry/pull/3736)
+- Add cron tasks to clean up Jenkins cache, bump versions [\#3736](https://github.com/raster-foundry/raster-foundry/pull/3736)
 - Fix Match Error in Project Mosaics [\#3735](https://github.com/raster-foundry/raster-foundry/pull/3735)
 - Correct ImportLandsat8C1 and ImportSentinel2 data and tile footprint [\#3730](https://github.com/raster-foundry/raster-foundry/pull/3730)
 - Fix bringing up development environment from scratch [\#3725](https://github.com/raster-foundry/raster-foundry/pull/3725)
@@ -534,11 +638,11 @@
 - Add fallthrough mosaic match to extent and zoom fetch [\#3705](https://github.com/raster-foundry/raster-foundry/pull/3705)
 - Fix sentinel 2 ingest definition generation to fix missing band [\#3703](https://github.com/raster-foundry/raster-foundry/pull/3703)
 - Fix browse COG scene tile bug [\#3693](https://github.com/raster-foundry/raster-foundry/pull/3693)
-- Update redirect\_uris [\#3691](https://github.com/raster-foundry/raster-foundry/pull/3691)
+- Update redirect_uris [\#3691](https://github.com/raster-foundry/raster-foundry/pull/3691)
 - Fix MODIS thumbnails [\#3686](https://github.com/raster-foundry/raster-foundry/pull/3686)
 - Allow saving of bands without wavelength in UI [\#3684](https://github.com/raster-foundry/raster-foundry/pull/3684)
 - Fix organization setting button bug [\#3676](https://github.com/raster-foundry/raster-foundry/pull/3676)
-- Use BUILDCONFIG.APP\_NAME as base repository label [\#3674](https://github.com/raster-foundry/raster-foundry/pull/3674)
+- Use BUILDCONFIG.APP_NAME as base repository label [\#3674](https://github.com/raster-foundry/raster-foundry/pull/3674)
 - Add team search backend support [\#3661](https://github.com/raster-foundry/raster-foundry/pull/3661)
 - Fixup authorization in team and organization routes [\#3654](https://github.com/raster-foundry/raster-foundry/pull/3654)
 - Use correct cloud coverage field for Sentinel-2 [\#3643](https://github.com/raster-foundry/raster-foundry/pull/3643)
@@ -615,7 +719,7 @@
 - Separate Staging and production deployment pipelines [\#3568](https://github.com/raster-foundry/raster-foundry/pull/3568)
 - Add user group role acceptance statuses [\#3567](https://github.com/raster-foundry/raster-foundry/pull/3567)
 - Tell users where to update profile photo [\#3566](https://github.com/raster-foundry/raster-foundry/pull/3566)
-- Anti-meridian search fixes, migration for fixing data\_footprints [\#3563](https://github.com/raster-foundry/raster-foundry/pull/3563)
+- Anti-meridian search fixes, migration for fixing data_footprints [\#3563](https://github.com/raster-foundry/raster-foundry/pull/3563)
 - Display ownership information with projects [\#3549](https://github.com/raster-foundry/raster-foundry/pull/3549)
 - Filter organizations by visibility and platform [\#3531](https://github.com/raster-foundry/raster-foundry/pull/3531)
 
@@ -653,7 +757,7 @@
 - Signed requests should never send a HEAD request [\#3516](https://github.com/raster-foundry/raster-foundry/pull/3516)
 - Allow organization admins to add and modify roles for that organization [\#3511](https://github.com/raster-foundry/raster-foundry/pull/3511)
 - Platform email notification settings frontend [\#3501](https://github.com/raster-foundry/raster-foundry/pull/3501)
--  Add RF\_DEPLOYMENT\_ENVIRONMENT variable [\#3500](https://github.com/raster-foundry/raster-foundry/pull/3500)
+- Add RF_DEPLOYMENT_ENVIRONMENT variable [\#3500](https://github.com/raster-foundry/raster-foundry/pull/3500)
 
 ## [1.0.2](https://github.com/raster-foundry/raster-foundry/tree/1.0.2) (2018-06-12)
 
@@ -695,7 +799,7 @@
 - Add first cut permissions modal [\#3458](https://github.com/raster-foundry/raster-foundry/pull/3458)
 - Eagerly insert scenes and flip csv date order [\#3454](https://github.com/raster-foundry/raster-foundry/pull/3454)
 - Fix platform admin user search [\#3452](https://github.com/raster-foundry/raster-foundry/pull/3452)
-- Update admin UI permission and failure messages  [\#3450](https://github.com/raster-foundry/raster-foundry/pull/3450)
+- Update admin UI permission and failure messages [\#3450](https://github.com/raster-foundry/raster-foundry/pull/3450)
 - Fix text in the organization add user modal [\#3449](https://github.com/raster-foundry/raster-foundry/pull/3449)
 - Endpoints for listing user-specific actions on objects [\#3448](https://github.com/raster-foundry/raster-foundry/pull/3448)
 - Add organization and platform enabling/disabling endpoints [\#3447](https://github.com/raster-foundry/raster-foundry/pull/3447)
@@ -723,7 +827,7 @@
 - Respect time and space filters to find scenes to update aoi projects [\#3412](https://github.com/raster-foundry/raster-foundry/pull/3412)
 - Catch geometry parsing errors when reading Sentinel 2 scenes [\#3404](https://github.com/raster-foundry/raster-foundry/pull/3404)
 - Update .gitignore to handle .envrc files [\#3401](https://github.com/raster-foundry/raster-foundry/pull/3401)
-- Remove errant debugging argument for get\_tempdir [\#3400](https://github.com/raster-foundry/raster-foundry/pull/3400)
+- Remove errant debugging argument for get_tempdir [\#3400](https://github.com/raster-foundry/raster-foundry/pull/3400)
 - Add MODIS Scene Creation from Browsing [\#3397](https://github.com/raster-foundry/raster-foundry/pull/3397)
 - Update STRTA: `load\_development\_data` and `fix-migration` [\#3396](https://github.com/raster-foundry/raster-foundry/pull/3396)
 - Allow adding MODIS scenes to projects [\#3393](https://github.com/raster-foundry/raster-foundry/pull/3393)
@@ -798,7 +902,7 @@
 - Rework scenes sort and index [\#3190](https://github.com/raster-foundry/raster-foundry/pull/3190)
 - Update `annotation-reducer.js` to handle GeoJSON [\#3186](https://github.com/raster-foundry/raster-foundry/pull/3186)
 - Delete datasource after updating scenes [\#3177](https://github.com/raster-foundry/raster-foundry/pull/3177)
-- Add checklist item to PR template for APP\_NAME templating [\#3173](https://github.com/raster-foundry/raster-foundry/pull/3173)
+- Add checklist item to PR template for APP_NAME templating [\#3173](https://github.com/raster-foundry/raster-foundry/pull/3173)
 - Enable search by name/title/description on project/datasource/tool list endpoints [\#3153](https://github.com/raster-foundry/raster-foundry/pull/3153)
 - Annotation export as shapefile and project annotation api bug fix [\#3144](https://github.com/raster-foundry/raster-foundry/pull/3144)
 - Add shape filter to scenes in api and hook up frontend [\#3142](https://github.com/raster-foundry/raster-foundry/pull/3142)
@@ -1128,7 +1232,7 @@
 **Merged pull requests:**
 
 - Install imagemagick in batch container [\#2574](https://github.com/raster-foundry/raster-foundry/pull/2574)
-- Replace check\_database with docker-compose healthcheck [\#2551](https://github.com/raster-foundry/raster-foundry/pull/2551)
+- Replace check_database with docker-compose healthcheck [\#2551](https://github.com/raster-foundry/raster-foundry/pull/2551)
 - Full AST on toolrun [\#2509](https://github.com/raster-foundry/raster-foundry/pull/2509)
 
 ## [0.21.0](https://github.com/raster-foundry/raster-foundry/tree/0.21.0) (2017-09-25)
@@ -1204,7 +1308,7 @@
 
 **Merged pull requests:**
 
-- Fix password reset button; Allow Intercom APP\_ID to be specified in overrides [\#2455](https://github.com/raster-foundry/raster-foundry/pull/2455)
+- Fix password reset button; Allow Intercom APP_ID to be specified in overrides [\#2455](https://github.com/raster-foundry/raster-foundry/pull/2455)
 - Correctly handle disabled gamma and saturation options in API [\#2434](https://github.com/raster-foundry/raster-foundry/pull/2434)
 
 ## [0.20.0](https://github.com/raster-foundry/raster-foundry/tree/0.20.0) (2017-08-22)
@@ -1303,7 +1407,7 @@
 - Include scene post body params [\#2264](https://github.com/raster-foundry/raster-foundry/pull/2264)
 - Add lab map component and use in lab2 [\#2263](https://github.com/raster-foundry/raster-foundry/pull/2263)
 - Tune Slick/Hikari database configuration [\#2259](https://github.com/raster-foundry/raster-foundry/pull/2259)
-- Fix undefined $log [\#2258](https://github.com/raster-foundry/raster-foundry/pull/2258)
+- Fix undefined \$log [\#2258](https://github.com/raster-foundry/raster-foundry/pull/2258)
 - Remove extra export options [\#2252](https://github.com/raster-foundry/raster-foundry/pull/2252)
 - Allow deleting already shared projects [\#2249](https://github.com/raster-foundry/raster-foundry/pull/2249)
 - Feature/lk/operation node body [\#2239](https://github.com/raster-foundry/raster-foundry/pull/2239)
@@ -1375,7 +1479,7 @@
 - ColorCorrection improvements [\#2094](https://github.com/raster-foundry/raster-foundry/pull/2094)
 - Link logo to home page [\#2093](https://github.com/raster-foundry/raster-foundry/pull/2093)
 - Prompt before closing window while in upload [\#2088](https://github.com/raster-foundry/raster-foundry/pull/2088)
-- Add  field to sources [\#2085](https://github.com/raster-foundry/raster-foundry/pull/2085)
+- Add field to sources [\#2085](https://github.com/raster-foundry/raster-foundry/pull/2085)
 - Document tool rendering options [\#2068](https://github.com/raster-foundry/raster-foundry/pull/2068)
 
 ## [0.14.0](https://github.com/raster-foundry/raster-foundry/tree/0.14.0) (2017-06-21)
@@ -1430,7 +1534,7 @@
 - Add datasource creation modal [\#1981](https://github.com/raster-foundry/raster-foundry/pull/1981)
 - Add dag run timeout to ingest scenes [\#1979](https://github.com/raster-foundry/raster-foundry/pull/1979)
 - AOI Database & Endpoint fixes [\#1978](https://github.com/raster-foundry/raster-foundry/pull/1978)
-- Use S3 to track export status jobs  [\#1976](https://github.com/raster-foundry/raster-foundry/pull/1976)
+- Use S3 to track export status jobs [\#1976](https://github.com/raster-foundry/raster-foundry/pull/1976)
 - Feature/lk/draw aois [\#1970](https://github.com/raster-foundry/raster-foundry/pull/1970)
 - Airflow AOI task revisions [\#1969](https://github.com/raster-foundry/raster-foundry/pull/1969)
 - Adjust Ingest Parallelism on Data Size [\#1967](https://github.com/raster-foundry/raster-foundry/pull/1967)
@@ -1494,7 +1598,7 @@
 
 **Merged pull requests:**
 
-- Remove unecessary from\_string method [\#1853](https://github.com/raster-foundry/raster-foundry/pull/1853)
+- Remove unecessary from_string method [\#1853](https://github.com/raster-foundry/raster-foundry/pull/1853)
 
 ## [0.10.0](https://github.com/raster-foundry/raster-foundry/tree/0.10.0) (2017-05-26)
 
@@ -1516,7 +1620,7 @@
 - Refactor color correction storage [\#1843](https://github.com/raster-foundry/raster-foundry/pull/1843)
 - Fix object copied to clipboard in share modal [\#1842](https://github.com/raster-foundry/raster-foundry/pull/1842)
 - Cleans up main project edit page [\#1827](https://github.com/raster-foundry/raster-foundry/pull/1827)
-- C1 Scala Landsat8 import  [\#1821](https://github.com/raster-foundry/raster-foundry/pull/1821)
+- C1 Scala Landsat8 import [\#1821](https://github.com/raster-foundry/raster-foundry/pull/1821)
 - Dropbox export [\#1809](https://github.com/raster-foundry/raster-foundry/pull/1809)
 
 ## [0.9.0](https://github.com/raster-foundry/raster-foundry/tree/0.9.0) (2017-05-25)
@@ -1529,7 +1633,7 @@
 - Set data value explicitly [\#1831](https://github.com/raster-foundry/raster-foundry/pull/1831)
 - Fix imports view dropdown menus [\#1814](https://github.com/raster-foundry/raster-foundry/pull/1814)
 - Allow import into existing project [\#1813](https://github.com/raster-foundry/raster-foundry/pull/1813)
-- Add approval\_required and start\_time fields to AoisToProjects model [\#1794](https://github.com/raster-foundry/raster-foundry/pull/1794)
+- Add approval_required and start_time fields to AoisToProjects model [\#1794](https://github.com/raster-foundry/raster-foundry/pull/1794)
 
 ## [0.8.0](https://github.com/raster-foundry/raster-foundry/tree/0.8.0) (2017-05-25)
 
@@ -1670,7 +1774,7 @@
 - Use bulk color-correction endpoint [\#1456](https://github.com/raster-foundry/raster-foundry/pull/1456)
 - Allow import from project creation [\#1451](https://github.com/raster-foundry/raster-foundry/pull/1451)
 - AOI Swagger and Endpoints [\#1450](https://github.com/raster-foundry/raster-foundry/pull/1450)
-- Remove use of NODE\_ENV where possible [\#1448](https://github.com/raster-foundry/raster-foundry/pull/1448)
+- Remove use of NODE_ENV where possible [\#1448](https://github.com/raster-foundry/raster-foundry/pull/1448)
 - Fix config error page not showing [\#1436](https://github.com/raster-foundry/raster-foundry/pull/1436)
 - Add "closes" in PR template [\#1432](https://github.com/raster-foundry/raster-foundry/pull/1432)
 - Ensure thumbnail creation works for raw geotiff import [\#1406](https://github.com/raster-foundry/raster-foundry/pull/1406)
@@ -1770,7 +1874,7 @@
 - Allow updating user profile and password from frontend [\#1177](https://github.com/raster-foundry/raster-foundry/pull/1177)
 - Authorization logic for adding scenes to a project [\#1173](https://github.com/raster-foundry/raster-foundry/pull/1173)
 - Operationalize Scene Ingest Trigger [\#1171](https://github.com/raster-foundry/raster-foundry/pull/1171)
-- Update Nginx set\_real\_ip\_from for public subnets [\#1170](https://github.com/raster-foundry/raster-foundry/pull/1170)
+- Update Nginx set_real_ip_from for public subnets [\#1170](https://github.com/raster-foundry/raster-foundry/pull/1170)
 - Return error code when webpack build fails [\#1169](https://github.com/raster-foundry/raster-foundry/pull/1169)
 - Streamline requests for color-correction [\#1165](https://github.com/raster-foundry/raster-foundry/pull/1165)
 - Move app-frontend to docker-compose.yml [\#1162](https://github.com/raster-foundry/raster-foundry/pull/1162)
@@ -1812,7 +1916,7 @@
 - fixed majority of current known browser issues [\#1106](https://github.com/raster-foundry/raster-foundry/pull/1106)
 - Add custom tile URL format to publish modal [\#1105](https://github.com/raster-foundry/raster-foundry/pull/1105)
 - Fix scene grid param mismatch [\#1104](https://github.com/raster-foundry/raster-foundry/pull/1104)
-- Create and alter permissions on AIRFLOW\_HOME [\#1099](https://github.com/raster-foundry/raster-foundry/pull/1099)
+- Create and alter permissions on AIRFLOW_HOME [\#1099](https://github.com/raster-foundry/raster-foundry/pull/1099)
 - Create symlink for migration 41 [\#1097](https://github.com/raster-foundry/raster-foundry/pull/1097)
 - Build diagram from tool JSON [\#1091](https://github.com/raster-foundry/raster-foundry/pull/1091)
 - Filter library scenes to scenes which are created by user [\#1085](https://github.com/raster-foundry/raster-foundry/pull/1085)
@@ -1946,7 +2050,7 @@
 - Feature/update importer with data footprints [\#767](https://github.com/raster-foundry/raster-foundry/pull/767)
 - Write ADR for Tool UI framework [\#765](https://github.com/raster-foundry/raster-foundry/pull/765)
 - Feature/hookup color correction [\#762](https://github.com/raster-foundry/raster-foundry/pull/762)
-- Add data\_footprint to scenes [\#759](https://github.com/raster-foundry/raster-foundry/pull/759)
+- Add data_footprint to scenes [\#759](https://github.com/raster-foundry/raster-foundry/pull/759)
 - Add Tool Category route [\#758](https://github.com/raster-foundry/raster-foundry/pull/758)
 - Eliminate extra and duplicate requests [\#757](https://github.com/raster-foundry/raster-foundry/pull/757)
 - Add db model/endpoints for geospatial tools [\#756](https://github.com/raster-foundry/raster-foundry/pull/756)
@@ -2002,7 +2106,7 @@
 - Add metadata files fields to Scene and Image [\#590](https://github.com/raster-foundry/raster-foundry/pull/590)
 - Move resolutionMeters to image [\#588](https://github.com/raster-foundry/raster-foundry/pull/588)
 - Make slider css more specific [\#581](https://github.com/raster-foundry/raster-foundry/pull/581)
-- Manually set GIT\_COMMIT in Jenkinsfile [\#579](https://github.com/raster-foundry/raster-foundry/pull/579)
+- Manually set GIT_COMMIT in Jenkinsfile [\#579](https://github.com/raster-foundry/raster-foundry/pull/579)
 - Allow deleting buckets linked to scenes [\#578](https://github.com/raster-foundry/raster-foundry/pull/578)
 - Feature/refresh token frontend [\#574](https://github.com/raster-foundry/raster-foundry/pull/574)
 - Upgrade auth0 to auth.lock v10 [\#568](https://github.com/raster-foundry/raster-foundry/pull/568)
@@ -2097,13 +2201,13 @@
 **Merged pull requests:**
 
 - Add favicon [\#355](https://github.com/raster-foundry/raster-foundry/pull/355)
-- Fix EMR add\_steps function [\#351](https://github.com/raster-foundry/raster-foundry/pull/351)
+- Fix EMR add_steps function [\#351](https://github.com/raster-foundry/raster-foundry/pull/351)
 - Add exif data formatting [\#350](https://github.com/raster-foundry/raster-foundry/pull/350)
 - Add transparent "no data" layer [\#349](https://github.com/raster-foundry/raster-foundry/pull/349)
 - Fix column alignment on layer detail panel [\#348](https://github.com/raster-foundry/raster-foundry/pull/348)
 - Fix IOError during thumbnail phase [\#347](https://github.com/raster-foundry/raster-foundry/pull/347)
 - cleaned up login pages [\#345](https://github.com/raster-foundry/raster-foundry/pull/345)
-- Minor updates to swagger.yaml  [\#338](https://github.com/raster-foundry/raster-foundry/pull/338)
+- Minor updates to swagger.yaml [\#338](https://github.com/raster-foundry/raster-foundry/pull/338)
 - Add "zoom to extent" buttons [\#337](https://github.com/raster-foundry/raster-foundry/pull/337)
 - Feature/lol/image metadata [\#335](https://github.com/raster-foundry/raster-foundry/pull/335)
 - Upload status from Evaporate [\#327](https://github.com/raster-foundry/raster-foundry/pull/327)
@@ -2126,7 +2230,7 @@
 - Feature/lol/new status format ui [\#283](https://github.com/raster-foundry/raster-foundry/pull/283)
 - Fix dismiss [\#282](https://github.com/raster-foundry/raster-foundry/pull/282)
 - Add support for S3 HTTPS URI [\#281](https://github.com/raster-foundry/raster-foundry/pull/281)
-- Add scripts/poll.sh  [\#279](https://github.com/raster-foundry/raster-foundry/pull/279)
+- Add scripts/poll.sh [\#279](https://github.com/raster-foundry/raster-foundry/pull/279)
 - Use vsicurl to validate images [\#274](https://github.com/raster-foundry/raster-foundry/pull/274)
 - Feature/lol/new status format [\#273](https://github.com/raster-foundry/raster-foundry/pull/273)
 - Prevent job conflicts [\#272](https://github.com/raster-foundry/raster-foundry/pull/272)
@@ -2141,7 +2245,7 @@
 - Feature/lol/cluster heartbeat task [\#254](https://github.com/raster-foundry/raster-foundry/pull/254)
 - Improve validation [\#253](https://github.com/raster-foundry/raster-foundry/pull/253)
 - Change S3 bucket name for AWS deployments [\#252](https://github.com/raster-foundry/raster-foundry/pull/252)
-- Cast AWS\_EMR\_DEBUG to boolean [\#251](https://github.com/raster-foundry/raster-foundry/pull/251)
+- Cast AWS_EMR_DEBUG to boolean [\#251](https://github.com/raster-foundry/raster-foundry/pull/251)
 - Use correct layer status [\#250](https://github.com/raster-foundry/raster-foundry/pull/250)
 - Update status during EMR steps [\#249](https://github.com/raster-foundry/raster-foundry/pull/249)
 - Add monitoring endpoint. [\#243](https://github.com/raster-foundry/raster-foundry/pull/243)
@@ -2151,7 +2255,7 @@
 - Remove dark boundary on thumbnails [\#230](https://github.com/raster-foundry/raster-foundry/pull/230)
 - Add support for Route 53 DNS updates [\#224](https://github.com/raster-foundry/raster-foundry/pull/224)
 - Disable MultiAZ Amazon RDS [\#223](https://github.com/raster-foundry/raster-foundry/pull/223)
-- Allow blank on source\_s3\_bucket\_key [\#222](https://github.com/raster-foundry/raster-foundry/pull/222)
+- Allow blank on source_s3_bucket_key [\#222](https://github.com/raster-foundry/raster-foundry/pull/222)
 - Add EMR module and wire up handoff job [\#221](https://github.com/raster-foundry/raster-foundry/pull/221)
 - Add support for worker servers [\#215](https://github.com/raster-foundry/raster-foundry/pull/215)
 - Upgrade queue processor to boto3 [\#214](https://github.com/raster-foundry/raster-foundry/pull/214)
@@ -2161,7 +2265,7 @@
 - Feature/lol/date format error [\#204](https://github.com/raster-foundry/raster-foundry/pull/204)
 - Remove redis & change django cache to Postgres. [\#200](https://github.com/raster-foundry/raster-foundry/pull/200)
 - Start worker process during provisioning [\#199](https://github.com/raster-foundry/raster-foundry/pull/199)
-- Create thumbnails  [\#197](https://github.com/raster-foundry/raster-foundry/pull/197)
+- Create thumbnails [\#197](https://github.com/raster-foundry/raster-foundry/pull/197)
 - Add support for application servers [\#196](https://github.com/raster-foundry/raster-foundry/pull/196)
 - Add support RDS PostgreSQL database [\#195](https://github.com/raster-foundry/raster-foundry/pull/195)
 - Add support for Route 53 private hosted zone [\#194](https://github.com/raster-foundry/raster-foundry/pull/194)
@@ -2200,7 +2304,7 @@
 - Wire up import modal [\#103](https://github.com/raster-foundry/raster-foundry/pull/103)
 - Enable saving/loading layer favorites [\#97](https://github.com/raster-foundry/raster-foundry/pull/97)
 - Enable toggling tile layers [\#96](https://github.com/raster-foundry/raster-foundry/pull/96)
-- Trigger URL change when switching tabs  [\#95](https://github.com/raster-foundry/raster-foundry/pull/95)
+- Trigger URL change when switching tabs [\#95](https://github.com/raster-foundry/raster-foundry/pull/95)
 - Enable scrolling in layer selector component [\#93](https://github.com/raster-foundry/raster-foundry/pull/93)
 - Wire up endpoints to layer selector [\#92](https://github.com/raster-foundry/raster-foundry/pull/92)
 - Add account screens [\#90](https://github.com/raster-foundry/raster-foundry/pull/90)
@@ -2230,6 +2334,4 @@
 - Update README [\#27](https://github.com/raster-foundry/raster-foundry/pull/27)
 - Setup dev env [\#16](https://github.com/raster-foundry/raster-foundry/pull/16)
 
-
-
-* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
+* _This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)_

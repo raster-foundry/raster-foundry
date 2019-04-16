@@ -49,7 +49,7 @@ function load_database_backup() {
     # Command to create database backup
     # gosu postgres pg_dump -Fc rasterfoundry > database.pgdump
     docker-compose \
-        exec -T postgres gosu postgres pg_restore -Fc -d rasterfoundry /tmp/data/database.pgdump &>/dev/null
+        exec -T postgres pg_restore -U rasterfoundry -Fc -d rasterfoundry /tmp/data/database.pgdump
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]

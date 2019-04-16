@@ -108,11 +108,12 @@
     </button>
   </div>
 </div>
-<div class="sidebar sidebar-extended sidebar-dark"
+<div class="sidebar sidebar-extended"
      ng-show="$ctrl.showFilterPane">
   <rf-scene-filter-pane
     data-opened="$ctrl.showFilterPane"
     data-repositories="$ctrl.repositories"
+    data-legacy="true"
     on-repository-change="$ctrl.onRepositoryChange(fetchScenes, repository)"
   ></rf-scene-filter-pane>
 </div>

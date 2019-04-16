@@ -1,8 +1,8 @@
 ---
-aws_cli_version: "1.14.64"
+aws_cli_version: "1.16.*"
 
-docker_version: "18.*"
-docker_compose_version: "1.21.*"
+docker_version: "5:18.*"
+docker_compose_version: "1.23.*"
 
 shellcheck_version: "0.3.*"
 

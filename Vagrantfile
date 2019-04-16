@@ -23,12 +23,12 @@ Vagrant.configure(2) do |config|
 
   # application server
   config.vm.network :forwarded_port, guest: 9000, host: Integer(ENV.fetch("RF_PORT_9000", 9000))
-  # tileserver
-  config.vm.network :forwarded_port, guest: 9900, host: Integer(ENV.fetch("RF_PORT_9900", 9900))
+  # backsplash tileserver
+  config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
   # nginx-api
   config.vm.network :forwarded_port, guest: 9100, host: Integer(ENV.fetch("RF_PORT_9100", 9100))
-  # nginx-tileserver
-  config.vm.network :forwarded_port, guest: 9101, host: Integer(ENV.fetch("RF_PORT_9101", 9101))
+  # nginx backsplash tileserver
+  config.vm.network :forwarded_port, guest: 8081, host: Integer(ENV.fetch("RF_PORT_8081", 8081))
   # spark master
   config.vm.network :forwarded_port, guest: 8888, host: Integer(ENV.fetch("RF_PORT_8888", 8888))
   # spark worker
@@ -38,11 +38,7 @@ Vagrant.configure(2) do |config|
   # jmx api
   config.vm.network :forwarded_port, guest: 9010, host: Integer(ENV.fetch("RF_PORT_9010", 9010))
   # jmx tile
-  config.vm.network :forwarded_port, guest: 9020, host: Integer(ENV.fetch("RF_PORT_9020", 9020))
-  # backsplash tileserver
-  config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
-  # nginx backsplash tileserver
-  config.vm.network :forwarded_port, guest: 8081, host: Integer(ENV.fetch("RF_PORT_8081", 8081))
+  config.vm.network :forwarded_port, guest: 9030, host: Integer(ENV.fetch("RF_PORT_9030", 9030))
 
   config.vm.provider :virtualbox do |vb|
     vb.memory = 8096

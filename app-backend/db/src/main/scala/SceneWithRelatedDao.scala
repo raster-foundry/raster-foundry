@@ -5,7 +5,7 @@ import com.rasterfoundry.common.datamodel.{Scene, User, _}
 
 import cats.data._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -30,6 +30,11 @@ object SceneWithRelatedDao
         case Some(shpId) => ShapeDao.getShapeById(shpId)
         case _           => None.pure[ConnectionIO]
       }
+      projectLayerShapeO <- sceneParams.sceneParams.projectLayerShape match {
+        case Some(projectLayerId) =>
+          ProjectLayerDao.query.filter(fr"id = ${projectLayerId}").selectOption
+        case _ => None.pure[ConnectionIO]
+      }
       sceneSearchBuilder = {
         SceneDao
           .authQuery(
@@ -40,27 +45,30 @@ object SceneWithRelatedDao
             sceneParams.groupQueryParameters.groupId
           )
           .filter(shapeO map { _.geometry })
+          .filter(projectLayerShapeO map { _.geometry })
           .filter(sceneParams)
       }
-      scenes <- sceneSearchBuilder.list(
-        pageRequest.offset * pageRequest.limit,
-        pageRequest.limit,
-        fr"ORDER BY coalesce (acquisition_date, created_at) DESC, id DESC"
+      scenesPage <- sceneSearchBuilder.page(
+        pageRequest,
+        Map("acquisitionDatetime" -> Order.Desc) ++ pageRequest.sort,
+        false
       )
-      sceneBrowses <- scenesToSceneBrowse(scenes,
-                                          sceneParams.sceneParams.project)
+      sceneBrowses <- scenesToSceneBrowse(
+        scenesPage.results toList,
+        sceneParams.sceneParams.project,
+        sceneParams.sceneParams.layer
+      )
       count <- sceneSearchBuilder.sceneCountIO(
         sceneParams.sceneSearchModeParams.exactCount)
     } yield {
       val hasPrevious = pageRequest.offset > 0
-      val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
       PaginatedResponse[Scene.Browse](
         count,
         hasPrevious,
-        hasNext,
+        scenesPage.hasNext,
         pageRequest.offset,
         pageRequest.limit,
-        sceneBrowses
+        sceneBrowses.take(pageRequest.limit)
       )
     }
 
@@ -73,12 +81,28 @@ object SceneWithRelatedDao
     }
 
   def getScenesInProject(sceneIds: NonEmptyList[UUID], projectId: UUID) =
-    (fr"""SELECT id, CASE WHEN sp.project_id IS NULL THEN false ELSE true END as in_project
-             FROM scenes LEFT OUTER JOIN scenes_to_projects sp
-             ON scenes.id = sp.scene_id""" ++
+    (fr"""SELECT scenes.id, CASE WHEN pl.project_id IS NULL THEN false ELSE true END as in_project
+             FROM scenes
+             LEFT OUTER JOIN scenes_to_layers sl
+             ON scenes.id = sl.scene_id
+             JOIN project_layers pl
+             ON sl.project_layer_id = pl.id""" ++
       Fragments.whereAnd(
         Fragments.in(fr"scenes.id", sceneIds),
-        fr"sp.project_id = $projectId")).query[(UUID, Boolean)].to[List]
+        fr"pl.project_id = $projectId")).query[(UUID, Boolean)].to[List]
+
+  def getScenesInLayer(sceneIds: NonEmptyList[UUID],
+                       projectId: UUID,
+                       layerId: UUID) =
+    (fr"""SELECT scenes.id, CASE WHEN (sl.project_layer_id IS NULL OR pl.project_id != ${projectId}) THEN false ELSE true END as in_layer
+             FROM scenes LEFT OUTER JOIN scenes_to_layers sl
+             ON scenes.id = sl.scene_id
+             JOIN project_layers pl
+             ON sl.project_layer_id = pl.id
+""" ++
+      Fragments.whereAnd(
+        Fragments.in(fr"scenes.id", sceneIds),
+        fr"sl.project_layer_id = $layerId")).query[(UUID, Boolean)].to[List]
 
   def getScenesImages(
       sceneIds: List[UUID]): ConnectionIO[List[Image.WithRelated]] =
@@ -99,18 +123,6 @@ object SceneWithRelatedDao
         List.empty[Thumbnail].pure[ConnectionIO]
     }
 
-  def getSceneToProjects(sceneIds: List[UUID],
-                         projectId: UUID): ConnectionIO[List[SceneToProject]] =
-    sceneIds.toNel match {
-      case Some(ids) =>
-        SceneToProjectDao.query
-          .filter(Fragments.in(fr"scene_id", ids))
-          .filter(fr"project_id=$projectId")
-          .list
-      case _ =>
-        List.empty[SceneToProject].pure[ConnectionIO]
-    }
-
   def getScenesToLayers(
       sceneIds: List[UUID],
       layerId: UUID
@@ -129,12 +141,15 @@ object SceneWithRelatedDao
   @SuppressWarnings(Array("FilterDotHead", "TraversableHead"))
   def scenesToSceneBrowse(
       scenes: List[Scene],
-      projectIdO: Option[UUID]): ConnectionIO[List[Scene.Browse]] = {
+      projectIdO: Option[UUID],
+      layerIdO: Option[UUID]): ConnectionIO[List[Scene.Browse]] = {
     // "The astute among you will note that we don’t actually need a monad to do this;
     // an applicative functor is all we need here."
     // let's roll, doobie
-    val componentsIO: ConnectionIO[
-      (List[Thumbnail], List[Datasource], List[(UUID, Boolean)])] = {
+    val componentsIO: ConnectionIO[(List[Thumbnail],
+                                    List[Datasource],
+                                    List[(UUID, Boolean)],
+                                    List[(UUID, Boolean)])] = {
       val thumbnails = getScenesThumbnails(scenes map { _.id })
       val datasources = getScenesDatasources(scenes map { _.datasource })
       val inProjects = (scenes.toNel, projectIdO) match {
@@ -142,17 +157,23 @@ object SceneWithRelatedDao
           getScenesInProject(s map { _.id }, p)
         case _ => List.empty[(UUID, Boolean)].pure[ConnectionIO]
       }
-      (thumbnails, datasources, inProjects).tupled
+      val inLayers = (scenes.toNel, projectIdO, layerIdO) match {
+        case (Some(s), Some(p), Some(l)) =>
+          getScenesInLayer(s map { _.id }, p, l)
+        case _ => List.empty[(UUID, Boolean)].pure[ConnectionIO]
+      }
+      (thumbnails, datasources, inProjects, inLayers).tupled
     }
 
     componentsIO map {
-      case (thumbnails, datasources, inProjects) =>
+      case (thumbnails, datasources, inProjects, inLayers) =>
         val groupedThumbs = thumbnails.groupBy(_.sceneId)
         scenes map { scene: Scene =>
           scene.browseFromComponents(
             groupedThumbs.getOrElse(scene.id, List.empty[Thumbnail]),
             datasources.filter(_.id == scene.datasource).head,
-            inProjects.find(_._1 == scene.id).map(_._2)
+            inProjects.find(_._1 == scene.id).map(_._2),
+            inLayers.find(_._1 == scene.id).map(_._2)
           )
         }
     }

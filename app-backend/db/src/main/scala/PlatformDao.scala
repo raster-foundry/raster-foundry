@@ -273,9 +273,11 @@ object PlatformDao extends Dao[Platform] {
           ON ugr.group_id = plat.id
           JOIN projects AS prj
           ON u.id = prj.owner
-          JOIN scenes_to_projects AS stp
-          ON prj.id = stp.project_id
-        WHERE stp.scene_id = ${sceneIdString}
+          JOIN project_layers AS layers
+          ON layers.project_id = prj.id
+          JOIN scenes_to_layers AS stl
+          ON stl.project_layer_id = layers.id
+        WHERE stl.scene_id = ${sceneIdString}
           AND u.id IN ${userIdsString}
           AND ugr.is_active = true
       """).query[PlatformWithUsersSceneProjects].to[List]

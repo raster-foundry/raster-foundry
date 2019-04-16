@@ -96,7 +96,8 @@ trait Filterables extends RFMeta with LazyLogging {
           Filters.searchQP(
             toolParams.searchParams,
             List("title", "description")
-          )
+          ) ++
+          Filters.toolQP(toolParams.toolParams)
     }
 
   implicit val annotationQueryparamsFilter
@@ -223,16 +224,6 @@ trait Filterables extends RFMeta with LazyLogging {
           Filters.mapTokenQP(mapTokenParams.mapTokenParams)
     }
 
-  implicit val combinedToolCategoryParamsFilter
-    : Filterable[Any, CombinedToolCategoryQueryParams] =
-    Filterable[Any, CombinedToolCategoryQueryParams] {
-      ctcQP: CombinedToolCategoryQueryParams =>
-        Filters.timestampQP(ctcQP.timestampParams) :+
-          ctcQP.toolCategoryParams.search.map({ search =>
-            fr"category ILIKE $search"
-          })
-    }
-
   implicit val combinedToolRunQueryParameters
     : Filterable[Any, CombinedToolRunQueryParameters] =
     Filterable[Any, CombinedToolRunQueryParameters] {
@@ -305,6 +296,9 @@ trait Filterables extends RFMeta with LazyLogging {
               .toList
               .map(status => fr"upload_status = ${status}::upload_status")
             fr"(" ++ Fragments.or(statusF: _*) ++ fr")"
+          }),
+          uploadParams.layerId.map({ lid =>
+            fr"layer_id = ${lid}"
           })
         )
     }
@@ -321,6 +315,9 @@ trait Filterables extends RFMeta with LazyLogging {
           }),
           exportParams.analysis.map({ analysisId =>
             fr"toolrun_id = $analysisId"
+          }),
+          exportParams.layer.map({ layerId =>
+            fr"project_layer_id = $layerId"
           }),
           exportParams.exportStatus.toList.toNel.map({ statuses =>
             val exportStatuses = statuses.map({ status =>

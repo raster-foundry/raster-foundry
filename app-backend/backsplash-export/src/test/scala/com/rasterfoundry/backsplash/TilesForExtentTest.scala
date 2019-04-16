@@ -12,11 +12,7 @@ class TilesForExtentSpec extends FunSuite with Checkers with Matchers {
                         42.22851735620852)
 
     val tileAddresses = TilesForExtent.latLng(extent, 5)
-    assert(tileAddresses.contains((6, 11)))
-    assert(tileAddresses.contains((6, 12)))
-    assert(tileAddresses.contains((7, 11)))
-    assert(tileAddresses.contains((7, 12)))
+    assert(tileAddresses.contains((1, 2)))
+    assert(tileAddresses.contains((1, 3)))
   }
 }
-
-// tileRangeAtZoom5 = 7,11 / 7,12 / 6,11 / 6,12

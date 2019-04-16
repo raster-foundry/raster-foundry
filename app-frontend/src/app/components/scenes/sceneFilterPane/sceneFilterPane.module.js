@@ -15,7 +15,9 @@ const SceneFilterPaneComponent = {
         // array of repository name + service objects
         repositories: '<',
         // returns function fetchScenes(page, bbox, timestamp)
-        onRepositoryChange: '&?'
+        onRepositoryChange: '&?',
+        // TODO: remove this once v2 ui is deployed
+        legacy: '<'
     }
 };
 
@@ -96,7 +98,7 @@ class FilterPaneController {
             this.firstReset = false;
         }
 
-        this.filters = this.currentRepository.service.getFilters();
+        this.filters = this.currentRepository.service.getFilters(this.legacy ? {legacy: true} : {});
         this.filterParams = {};
         this.initializedFilters = this.initializedFilters.clear();
         this.filterComponents.forEach(({element, componentScope}) => {
@@ -112,8 +114,11 @@ class FilterPaneController {
         });
     }
 
-    onFilterChange(filter, filterParams) {
-        if (filter) {
+  onFilterChange(filter, filterParams, deleteFilterBoolean) {
+
+        if (filter.param === 'ingested' && filterParams.ingested === false) {
+            delete this.filterParams[filter.param];
+        } else if (filter) {
             this.filterParams = Object.assign({}, this.filterParams, filterParams);
             this.initializedFilters = this.initializedFilters.add(filter.label);
         }
@@ -128,7 +133,10 @@ class FilterPaneController {
 
         this.debouncedOnRepositoryChange({
             fetchScenes: this.currentRepository.service.fetchScenes(
-                this.filterParams, this.$state.params.projectid
+                this.filterParams,
+                // support old routes
+                this.$state.params.projectId || this.$state.params.projectid,
+                this.$state.params.layerId
             ),
             repository: this.currentRepository
         });

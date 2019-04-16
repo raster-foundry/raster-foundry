@@ -18,7 +18,8 @@ node {
       failedValidationMessage: 'Invalid SemVer.', 
       name: 'RELEASE_TAG', 
       regex: /^\d+\.\d+\.\d+$/],
-      string(defaultValue: 'rasterfoundry-production-config-us-east-1', description: 'Location of terraform state & vars files.', name: 'RF_SETTINGS_BUCKET', trim: false),
+      string(defaultValue: 'rasterfoundry-production-config-us-east-1', description: 'Location of Terraform state & vars files.', name: 'RF_SETTINGS_BUCKET', trim: false),
+      string(defaultValue: 'rasterfoundry-production-docs-site-us-east-1', description: 'Location of API documentation & specs.', name: 'RF_DOCS_BUCKET', trim: false),
       string(defaultValue: 'Production', description: 'Environment name, used to target Batch Compute Environments.', name: 'RF_DEPLOYMENT_ENVIRONMENT', trim: false),
       string(defaultValue: 'master', description: 'Branch of azavea/raster-foundry-deployment used for deployment.', name: 'RF_DEPLOYMENT_BRANCH', trim: false)
     ])
@@ -57,6 +58,13 @@ node {
           }
         }
       }
+    }
+
+    stage('publish-specs') {
+      sh """#!/bin/bash
+        aws s3 sync docs/swagger/ s3://${params.RF_DOCS_BUCKET}/spec/${params.RELEASE_TAG}/
+        aws s3 sync docs/swagger/ s3://${params.RF_DOCS_BUCKET}/spec/
+      """
     }
 
     stage('infra') {

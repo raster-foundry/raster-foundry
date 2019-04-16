@@ -20,20 +20,20 @@ class ProjectDaoSpec
     with DBTestConfig
     with PropTestHelpers {
 
-  // insertProject
   test("insert a project") {
     check {
       forAll {
         (user: User.Create,
          org: Organization.Create,
-         project: Project.Create) =>
+         project: Project.Create,
+         platform: Platform) =>
           {
-            val projInsertIO = insertUserAndOrg(user, org) flatMap {
-              case (org: Organization, user: User) => {
-                ProjectDao.insertProject(fixupProjectCreate(user, project),
-                                         user)
-              }
-            }
+            val projInsertIO = for {
+              (_, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                               org,
+                                                               platform,
+                                                               project)
+            } yield dbProject
             val insertedProject =
               xa.use(t => projInsertIO.transact(t)).unsafeRunSync
             insertedProject.name == project.name &&
@@ -50,44 +50,31 @@ class ProjectDaoSpec
     }
   }
 
-  // updateProject
   test("update a project") {
     check {
       forAll {
         (user: User.Create,
          org: Organization.Create,
          insertProject: Project.Create,
-         updateProject: Project.Create) =>
+         updateProject: Project.Create,
+         platform: Platform) =>
           {
-            val projInsertWithUserAndOrgIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                ProjectDao.insertProject(fixupProjectCreate(dbUser,
-                                                            insertProject),
-                                         dbUser) map {
-                  (_, dbUser, dbOrg)
-                }
-              }
-            }
-            val updateProjectWithUpdatedIO = projInsertWithUserAndOrgIO flatMap {
-              case (dbProject: Project, dbUser: User, dbOrg: Organization) => {
-                val fixedUpUpdateProject =
-                  fixupProjectCreate(dbUser, updateProject)
-                    .toProject(dbUser, dbProject.defaultLayerId)
-                ProjectDao.updateProject(fixedUpUpdateProject,
-                                         dbProject.id,
-                                         dbUser) flatMap {
-                  (affectedRows: Int) =>
-                    {
-                      ProjectDao.unsafeGetProjectById(dbProject.id) map {
-                        (affectedRows, _)
-                      }
-                    }
-                }
-              }
-            }
+            val rowsAndUpdateIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                insertProject)
+              fixedUpUpdateProject = fixupProjectCreate(dbUser, updateProject)
+                .toProject(dbUser, dbProject.defaultLayerId)
+              affectedRows <- ProjectDao.updateProject(fixedUpUpdateProject,
+                                                       dbProject.id,
+                                                       dbUser)
+              fetched <- ProjectDao.unsafeGetProjectById(dbProject.id)
+            } yield { (affectedRows, fetched) }
 
             val (affectedRows, updatedProject) =
-              xa.use(t => updateProjectWithUpdatedIO.transact(t)).unsafeRunSync
+              xa.use(t => rowsAndUpdateIO.transact(t)).unsafeRunSync
 
             affectedRows == 1 &&
             updatedProject.owner == user.id &&
@@ -105,50 +92,48 @@ class ProjectDaoSpec
     }
   }
 
-  // deleteProject
   test("delete a project") {
     check {
       forAll {
         (user: User.Create,
          org: Organization.Create,
-         project: Project.Create) =>
+         project: Project.Create,
+         platform: Platform) =>
           {
-            val projInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
-                                         dbUser) map {
-                  (_, dbUser)
-                }
-              }
-            }
+            val deleteIO = for {
+              (_, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                               org,
+                                                               platform,
+                                                               project)
+              fetched <- ProjectDao.getProjectById(dbProject.id)
+              _ <- ProjectDao.deleteProject(dbProject.id)
+              fetched2 <- ProjectDao.getProjectById(dbProject.id)
+            } yield { (fetched, fetched2) }
 
-            val projDeleteIO = projInsertWithUserIO flatMap {
-              case (dbProject: Project, dbUser: User) => {
-                ProjectDao.deleteProject(dbProject.id) flatMap { _ =>
-                  ProjectDao.getProjectById(dbProject.id)
-                }
-              }
-            }
+            val (fetched1, fetched2) = xa
+              .use(t => deleteIO.transact(t))
+              .unsafeRunSync
 
-            xa.use(t => projDeleteIO.transact(t)).unsafeRunSync == None
+            !fetched1.isEmpty && fetched2.isEmpty
           }
       }
     }
   }
 
-  // list projects
   test("list projects") {
     check {
       forAll {
         (user: User.Create,
          org: Organization.Create,
          project: Project.Create,
+         platform: Platform,
          pageRequest: PageRequest) =>
           {
             val projectsListIO = for {
-              (_, dbUser) <- insertUserAndOrg(user, org)
-              _ <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
-                                            dbUser)
+              (dbUser, _, _, _) <- insertUserOrgPlatProject(user,
+                                                            org,
+                                                            platform,
+                                                            project)
               listedProjects <- {
                 ProjectDao
                   .authQuery(dbUser, ObjectType.Project)
@@ -158,14 +143,14 @@ class ProjectDaoSpec
               }
             } yield { listedProjects }
 
-            val returnedThinUser =
+            val projectsWithRelatedPage =
               xa.use(t => projectsListIO.transact(t))
                 .unsafeRunSync
                 .results
                 .head
                 .owner
             assert(
-              returnedThinUser.id == user.id,
+              projectsWithRelatedPage.id == user.id,
               "Listed project's owner should be the same as the creating user")
             true
           }
@@ -173,108 +158,6 @@ class ProjectDaoSpec
     }
   }
 
-  // add scenes to a project
-  // also exercises createScenesToProject
-  test("add scenes to a project") {
-    check {
-      forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         scenes: List[Scene.Create],
-         project: Project.Create,
-         datasource: Datasource.Create) =>
-          {
-            val addScenesIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
-              dbDatasource <- fixupDatasource(datasource, dbUser)
-              insertedScenes <- scenes traverse { scene =>
-                SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
-                                dbUser)
-              }
-              _ <- ProjectDao.addScenesToProject(
-                insertedScenes map { _.id },
-                dbProject.id,
-                true
-              )
-              scenesInProject <- ProjectScenesDao.listProjectScenes(
-                dbProject.id,
-                PageRequest(0, 100, Map.empty),
-                CombinedSceneQueryParams())
-            } yield scenesInProject.results
-
-            val addedScenes = xa.use(t => addScenesIO.transact(t)).unsafeRunSync
-
-            assert(
-              (Set(addedScenes filter {
-                _.sceneType map { _ == SceneType.Avro } getOrElse true
-              } map {
-                _.statusFields.ingestStatus
-              }: _*) |
-                Set(IngestStatus.ToBeIngested,
-                    IngestStatus.Ingesting,
-                    IngestStatus.Ingested)) ==
-                Set(IngestStatus.ToBeIngested,
-                    IngestStatus.Ingesting,
-                    IngestStatus.Ingested),
-              "; Some scenes are neither ingesting nor scheduled for ingest"
-            )
-
-            assert(
-              addedScenes.length == scenes.length,
-              "; Correct number of scenes was not added"
-            )
-
-            assert(
-              (addedScenes map { _.name } toSet) == (scenes map { _.name } toSet),
-              "; Some scenes were returned that were not inserted, or the opposite"
-            )
-
-            true
-          }
-      }
-    }
-  }
-
-  test("delete scenes from a project") {
-    check {
-      forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         scenes: List[Scene.Create],
-         project: Project.Create,
-         datasource: Datasource.Create) =>
-          {
-            val listScenesIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
-              dbDatasource <- fixupDatasource(datasource, dbUser)
-              scenes <- scenes traverse { scene =>
-                SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
-                                dbUser)
-              }
-              _ <- ProjectDao.addScenesToProject(scenes map { _.id },
-                                                 dbProject.id,
-                                                 true)
-              _ <- ProjectDao.deleteScenesFromProject(scenes map { _.id },
-                                                      dbProject.id)
-              listedScenes <- ProjectScenesDao.listProjectScenes(
-                dbProject.id,
-                PageRequest(0, 100, Map.empty),
-                CombinedSceneQueryParams()
-              ) map { _.results }
-            } yield listedScenes
-
-            val scenesInProject =
-              xa.use(t => listScenesIO.transact(t)).unsafeRunSync
-
-            assert(
-              scenesInProject == Nil,
-              "; Project should have no scenes after deleting all added scenes."
-            )
-            true
-          }
-      }
-    }
-  }
   // addPermission and getPermissions
   test("add a permission to a project and get it back") {
     check {
@@ -495,7 +378,6 @@ class ProjectDaoSpec
     }
   }
 
-  // authQuery -- a function for listing viewable objects
   test("list projects a user can view") {
     check {
       forAll {

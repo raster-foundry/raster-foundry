@@ -9,6 +9,7 @@
 
   roles:
     - role: "raster-foundry.docker"
+    - role: "raster-foundry.shellcheck"
     - role: "raster-foundry.aws-cli"
 
   tasks:

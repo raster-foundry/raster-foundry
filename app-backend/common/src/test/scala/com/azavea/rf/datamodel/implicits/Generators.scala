@@ -1,5 +1,7 @@
 package com.rasterfoundry.common.datamodel
 
+import java.net.URI
+
 import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
 import geotrellis.vector.testkit.Rectangle
 import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
@@ -7,16 +9,11 @@ import io.circe.syntax._
 import io.circe.testing.ArbitraryInstances
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck._
-
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.util.UUID
 
 object Generators extends ArbitraryInstances {
-
-  // This is only necessary until a Platform generator is supported
-  val defaultPlatformId: UUID =
-    UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")
 
   private def stringOptionGen: Gen[Option[String]] =
     Gen.oneOf(
@@ -28,13 +25,13 @@ object Generators extends ArbitraryInstances {
     Gen.oneOf(0, 15) flatMap { Gen.listOfN(_, nonEmptyStringGen) }
 
   private def nonEmptyStringGen: Gen[String] =
-    Gen.nonEmptyListOf[Char](Gen.alphaChar) map { _.mkString }
+    Gen.listOfN(30, Gen.alphaChar) map { _.mkString }
 
   private def possiblyEmptyStringGen: Gen[String] =
     Gen.containerOf[List, Char](Gen.alphaChar) map { _.mkString }
 
   private def pageRequestGen: Gen[PageRequest] =
-    Gen.const(PageRequest(0, 20, Map("created_at" -> Order.Desc)))
+    Gen.const(PageRequest(0, 10, Map("created_at" -> Order.Desc)))
 
   private def userRoleGen: Gen[UserRole] =
     Gen.oneOf(UserRoleRole, Viewer, Admin)
@@ -78,6 +75,13 @@ object Generators extends ArbitraryInstances {
 
   private def orgStatusGen: Gen[OrgStatus] =
     Gen.oneOf(OrgStatus.Requested, OrgStatus.Active, OrgStatus.Inactive)
+
+  private def exportStatusGen: Gen[ExportStatus] =
+    Gen.oneOf(ExportStatus.Exported,
+              ExportStatus.Exporting,
+              ExportStatus.Failed,
+              ExportStatus.ToBeExported,
+              ExportStatus.NotExported)
 
   private def sceneTypeGen: Gen[SceneType] =
     Gen.oneOf(SceneType.Avro, SceneType.COG)
@@ -227,7 +231,7 @@ object Generators extends ArbitraryInstances {
       orgStatus <- orgStatusGen
     } yield
       Organization
-        .Create(name, defaultPlatformId, Some(visibility), orgStatus)
+        .Create(name, UUID.randomUUID, Some(visibility), orgStatus)
 
   private def organizationGen: Gen[Organization] = organizationCreateGen map {
     _.toOrganization(true)
@@ -571,6 +575,7 @@ object Generators extends ArbitraryInstances {
       owner <- Gen.const(None)
       visibility <- visibilityGen
       projectId <- Gen.const(None)
+      layerId <- Gen.const(None)
       source <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
     } yield {
       Upload.Create(
@@ -583,6 +588,7 @@ object Generators extends ArbitraryInstances {
         owner,
         visibility,
         projectId,
+        layerId,
         source
       )
     }
@@ -605,6 +611,9 @@ object Generators extends ArbitraryInstances {
 
   private def combinedSceneQueryParamsGen: Gen[CombinedSceneQueryParams] =
     Gen.const(CombinedSceneQueryParams())
+
+  private def annotationQueryParametersGen: Gen[AnnotationQueryParameters] =
+    Gen.const(AnnotationQueryParameters())
 
   private def projectSceneQueryParametersGen: Gen[ProjectSceneQueryParameters] =
     Gen.const(ProjectSceneQueryParameters())
@@ -717,15 +726,13 @@ object Generators extends ArbitraryInstances {
       title <- nonEmptyStringGen
       description <- nonEmptyStringGen
       requirements <- nonEmptyStringGen
-      license <- Gen.const("BSD-3")
+      license <- Gen.const(Option.empty[Int])
       visibility <- visibilityGen
       compatibleDataSources <- Gen.const(List.empty)
       owner <- Gen.const(None)
       stars <- Gen.const(9999.9f) // good tools only :sunglasses:
       definition <- Gen.const(().asJson)
-      // not super into dealing with tags or categories in testing-land right now
-      tags <- Gen.const(Seq.empty)
-      categories <- Gen.const(Seq.empty)
+      singleSource <- arbitrary[Boolean]
     } yield {
       Tool.Create(
         title,
@@ -737,8 +744,7 @@ object Generators extends ArbitraryInstances {
         owner,
         stars,
         definition,
-        tags,
-        categories
+        singleSource
       )
     }
 
@@ -763,6 +769,80 @@ object Generators extends ArbitraryInstances {
   private def mapTokenCreateGen: Gen[MapToken.Create] =
     nonEmptyStringGen map { name =>
       MapToken.Create(name, None, None, None)
+    }
+
+  private def exportTypeGen: Gen[ExportType] =
+    Gen.oneOf(ExportType.Dropbox, ExportType.Local, ExportType.S3)
+
+  private def exportOptionGen: Gen[ExportOptions] =
+    for {
+      mask: Option[Projected[MultiPolygon]] <- projectedMultiPolygonGen3857 map {
+        Some(_)
+      }
+      resolution <- arbitrary[Int]
+      rasterSize <- arbitrary[Option[Int]]
+      crop <- arbitrary[Boolean]
+      raw <- arbitrary[Boolean]
+      bands <- arbitrary[Option[Seq[Int]]]
+      operation <- arbitrary[String]
+    } yield
+      ExportOptions(mask,
+                    resolution,
+                    crop,
+                    raw,
+                    bands,
+                    rasterSize,
+                    Some(3857),
+                    new URI(""),
+                    operation)
+
+  private def exportCreateGen: Gen[Export.Create] =
+    for {
+      projectId <- Gen.const(None)
+      exportStatus <- exportStatusGen
+      exportType <- exportTypeGen
+      visibility <- visibilityGen
+      toolRunId <- Gen.const(None)
+      projectLayerId <- Gen.const(None)
+      exportOptions <- exportOptionGen
+    } yield {
+      Export.Create(
+        projectId,
+        exportStatus,
+        exportType,
+        visibility,
+        None,
+        toolRunId,
+        exportOptions.asJson,
+        projectLayerId
+      )
+    }
+
+  private def projectLayerCreateGen: Gen[ProjectLayer.Create] =
+    for {
+      name <- nonEmptyStringGen
+      projectId <- Gen.const(None)
+      colorGroupHex <- Gen.const("#ABCDEF")
+      smartLayerId <- Gen.const(None)
+      rangeStart <- Gen.const(None)
+      rangeEnd <- Gen.const(None)
+      geometry <- Gen.const(None)
+      isSingleBand <- Gen.const(false)
+      singleBandOptions <- Gen.const(None)
+      overviewsLocation <- Gen.const(None)
+      minZoomLevel <- Gen.const(None)
+    } yield {
+      ProjectLayer.Create(name,
+                          projectId,
+                          colorGroupHex,
+                          smartLayerId,
+                          rangeStart,
+                          rangeEnd,
+                          geometry,
+                          isSingleBand,
+                          singleBandOptions,
+                          overviewsLocation,
+                          minZoomLevel)
     }
 
   object Implicits {
@@ -797,6 +877,10 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbOrganization: Arbitrary[Organization] = Arbitrary {
       organizationGen
+    }
+
+    implicit def arbExport: Arbitrary[Export.Create] = Arbitrary {
+      exportCreateGen
     }
 
     implicit def arbOrganizationCreate: Arbitrary[Organization.Create] =
@@ -840,6 +924,9 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary {
       Gen.oneOf(
+        // 11 is one more than the size of the pageRequest that we'll generate, so this allows
+        // testing paging and counting correctly
+        Gen.listOfN(11, sceneCreateGen),
         Gen.listOfN(7, sceneCreateGen),
         Gen.listOfN(0, sceneCreateGen)
       )
@@ -916,10 +1003,35 @@ object Generators extends ArbitraryInstances {
     implicit def arbToolCreate: Arbitrary[Tool.Create] =
       Arbitrary { toolCreateGen }
 
+    implicit def arbListToolCreate: Arbitrary[List[Tool.Create]] =
+      Arbitrary {
+        Gen.oneOf(
+          Gen.listOfN(7, toolCreateGen),
+          Gen.listOfN(0, toolCreateGen)
+        )
+      }
+
     implicit def arbToolRunCreate: Arbitrary[ToolRun.Create] =
       Arbitrary { toolRunCreateGen }
 
     implicit def arbMapTokenCreate: Arbitrary[MapToken.Create] =
       Arbitrary { mapTokenCreateGen }
+
+    implicit def arbProjectLayerCreate: Arbitrary[ProjectLayer.Create] =
+      Arbitrary { projectLayerCreateGen }
+
+    implicit def arbProjectLayerCreateWithScenes
+      : Arbitrary[List[(ProjectLayer.Create, List[Scene.Create])]] = {
+      val tupGen = for {
+        projectLayerCreate <- arbitrary[ProjectLayer.Create]
+        sceneCreates <- arbitrary[List[Scene.Create]]
+      } yield { (projectLayerCreate, sceneCreates) }
+      Arbitrary { Gen.listOfN(5, tupGen) }
+    }
+
+    implicit def arbAnnotationQueryParameters
+      : Arbitrary[AnnotationQueryParameters] = Arbitrary {
+      annotationQueryParametersGen
+    }
   }
 }

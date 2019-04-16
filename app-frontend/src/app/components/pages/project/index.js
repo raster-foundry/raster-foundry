@@ -4,6 +4,7 @@ import autoInject from '_appRoot/autoInject';
 import layerPages from './layer';
 import projectPage from './project';
 import layersPage from './layers';
+import createAnalysisPage from './createAnalysis';
 import settingsPages from './settings';
 import analysesPages from './analyses';
 
@@ -47,6 +48,7 @@ export {
 export default [
     layersPage,
     projectPage,
+    createAnalysisPage,
     ...layerPages,
     ...settingsPages,
     ...analysesPages

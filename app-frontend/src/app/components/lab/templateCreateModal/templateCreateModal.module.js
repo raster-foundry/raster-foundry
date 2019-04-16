@@ -28,49 +28,72 @@ const allowedOps = [
 
 class TemplateCreateModalController {
     constructor(
-        $scope, $state, uuid4, analysisService
+        $scope, $state, uuid4, analysisService, datasourceLicenseService
     ) {
         'ngInject';
         this.$scope = $scope;
         this.$state = $state;
         this.uuid4 = uuid4;
         this.analysisService = analysisService;
+        this.datasourceLicenseService = datasourceLicenseService;
     }
 
     $onInit() {
-        this.templateBuffer = {
-            title: '',
-            description: '',
-            visibility: 'PRIVATE'
-        };
+        this.initFromExisting(this.resolve.existingTemplate);
         this.isProcessing = false;
         this.definitionExpression = '';
+        this.datasourceLicenseService.getLicenses({pageSize: 10000}).then( licenses => {
+            this.availableLicenses = licenses.results;
+        });
     }
 
     templateIsPublic() {
         return this.templateBuffer.visibility === 'PUBLIC';
     }
 
+    updateTemplate() {
+        this.isProcessing = true;
+        let updated = Object.assign({},
+                                    this.resolve.existingTemplate,
+                                    this.templateBuffer);
+        return this.analysisService.updateTemplate(updated).then( () => {
+            this.close({ $value: updated });
+            this.$state.go('lab.browse.templates');
+        }).catch(e => {
+            this.currentParsingError = 'Could not update template from provided parameters';
+        }).finally(() => {
+            this.isProcessing = false;
+        });
+    }
+
     createTemplate() {
+        let expressionTree = null;
+        require.ensure(['mathjs'], (require) => {
+            const mathjs = require('mathjs');
+            expressionTree = mathjs.parse(this.definitionExpression);
+            this.templateBuffer.definition = this.expressionTreeToMAML(expressionTree);
+            this.analysisService.createTemplate(this.templateBuffer).then(template => {
+                this.dismiss();
+                this.$state.go('lab.startAnalysis', { templateid: template.id });
+            });
+        }, (error) => {
+            this.currentError =
+                'There was an error fetching dependencies. Please try again later.';
+            this.isProcessing = false;
+            throw new Error('Error fetching math.js dependency. Check webpack config');
+        });
+    }
+
+    flushBuffer() {
         this.currentError = '';
         this.isProcessing = true;
         this.commonSymbols = [];
-        let expressionTree = null;
         try {
-            require.ensure(['mathjs'], (require) => {
-                const mathjs = require('mathjs');
-                expressionTree = mathjs.parse(this.definitionExpression);
-                this.templateBuffer.definition = this.expressionTreeToMAML(expressionTree);
-                this.analysisService.createTemplate(this.templateBuffer).then(template => {
-                    this.dismiss();
-                    this.$state.go('lab.startAnalysis', { templateid: template.id });
-                });
-            }, (error) => {
-                this.currentError =
-                    'There was an error fetching dependencies. Please try again later.';
-                this.isProcessing = false;
-                throw new Error('Error fetching math.js dependency. Check webpack config');
-            });
+            if (this.editing) {
+                this.updateTemplate();
+            } else {
+                this.createTemplate();
+            }
         } catch (e) {
             this.currentError = 'The template definition is not valid';
             this.isProcessing = false;
@@ -186,7 +209,8 @@ class TemplateCreateModalController {
         } else if (!bracesBalanced) {
             this.currentParsingError = 'The braces in this expression are not balanced';
         }
-        return this.templateBuffer.title && this.definitionExpression && parensBalanced;
+        return (this.templateBuffer.title && this.definitionExpression && parensBalanced) ||
+            this.editing;
     }
 
     validateParenDepth() {
@@ -223,6 +247,34 @@ class TemplateCreateModalController {
         return result.continue && result.depth === 0;
     }
 
+
+    initFromExisting(template) {
+        if (template) {
+            this.templateBuffer = {
+                title: this.resolve.existingTemplate.title,
+                description: this.resolve.existingTemplate.description || '',
+                singleSource: this.resolve.existingTemplate.singleSource,
+                visibility: this.resolve.existingTemplate.visibility,
+                license: this.resolve.existingTemplate.license ?
+                    this.resolve.existingTemplate.license :
+                    null
+            };
+            this.editing = true;
+        } else {
+            this.templateBuffer = {
+                title: '',
+                description: '',
+                singleSource: false,
+                visibility: 'PRIVATE',
+                license: null
+            };
+            this.editing = false;
+        }
+    }
+
+    toggleTemplateSingleSource() {
+        this.templateBuffer.singleSource = !this.templateBuffer.singleSource;
+    }
 }
 
 const TemplateCreateModalModule = angular.module('components.lab.templateCreateModal', []);

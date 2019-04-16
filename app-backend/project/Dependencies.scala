@@ -24,7 +24,7 @@ object Dependencies {
   val circeCore = "io.circe" %% "circe-core" % Version.circe
   val circeGeneric = "io.circe" %% "circe-generic" % Version.circe
   val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Version.circe
-  val circeOptics = "io.circe" %% "circe-optics" % Version.circe
+  val circeOptics = "io.circe" %% "circe-optics" % Version.circeOptics
   val circeParser = "io.circe" %% "circe-parser" % Version.circe
   val circeTest = "io.circe" %% "circe-testing" % Version.circe % "test"
   val commonsIO = "commons-io" % "commons-io" % Version.commonsIO
@@ -44,6 +44,7 @@ object Dependencies {
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer
+  val geotrellisServerOgc = "com.azavea" %% "geotrellis-server-ogc" % Version.geotrellisServer
   val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
@@ -56,7 +57,7 @@ object Dependencies {
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
-  val jts = "com.vividsolutions" % "jts" % Version.jts
+  val jts = "org.locationtech.jts" % "jts-core" % Version.jts
   val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
   val mamlSpark = "com.azavea" %% "maml-spark" % Version.maml
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose

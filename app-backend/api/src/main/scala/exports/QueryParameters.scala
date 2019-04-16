@@ -14,6 +14,7 @@ trait ExportQueryParameterDirective extends QueryParametersCommon {
       'organization.as[UUID].?,
       'project.as[UUID].?,
       'analysis.as[UUID].?,
-      'exportStatus.as[String].*
+      'exportStatus.as[String].*,
+      'layer.as[UUID].?
     )).as(ExportQueryParameters.apply _)
 }

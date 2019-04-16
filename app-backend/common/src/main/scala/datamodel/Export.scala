@@ -19,7 +19,8 @@ final case class Export(id: UUID,
                         exportType: ExportType,
                         visibility: Visibility,
                         toolRunId: Option[UUID],
-                        exportOptions: Json) {
+                        exportOptions: Json,
+                        projectLayerId: Option[UUID]) {
   def getExportOptions: Option[ExportOptions] =
     exportOptions.as[ExportOptions].toOption
 }
@@ -37,7 +38,8 @@ object Export {
                           visibility: Visibility,
                           owner: Option[String],
                           toolRunId: Option[UUID],
-                          exportOptions: Json)
+                          exportOptions: Json,
+                          projectLayerId: Option[UUID])
       extends OwnerCheck {
 
     def toExport(user: User): Export = {
@@ -58,7 +60,8 @@ object Export {
         exportType = this.exportType,
         visibility = this.visibility,
         toolRunId = this.toolRunId,
-        exportOptions = this.exportOptions
+        exportOptions = this.exportOptions,
+        projectLayerId = this.projectLayerId
       )
     }
   }

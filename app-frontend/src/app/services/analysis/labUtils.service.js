@@ -1,9 +1,9 @@
 import _ from 'lodash';
-import {Map} from 'immutable';
-import {getNodeArgs} from '_redux/node-utils';
+import { Map } from 'immutable';
+import { getNodeArgs } from '_redux/node-utils';
 // TODO tear out all references to tool run - it should use redux to pull in the correct stuff
 
-export default (app) => {
+export default app => {
     class LabUtils {
         constructor($rootScope, $compile) {
             'ngInject';
@@ -22,20 +22,22 @@ export default (app) => {
 
             joint.shapes.html = {};
             joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
-                defaults: joint.util.deepSupplement({
-                    type: 'html.Element',
-                    attrs: {
-                        rect: {
-                            stroke: 'none',
-                            'fill-opacity': 0
+                defaults: joint.util.deepSupplement(
+                    {
+                        type: 'html.Element',
+                        attrs: {
+                            rect: {
+                                stroke: 'none',
+                                'fill-opacity': 0
+                            }
                         }
-                    }
-                }, joint.shapes.basic.Rect.prototype.defaults)
+                    },
+                    joint.shapes.basic.Rect.prototype.defaults
+                )
             });
 
             joint.shapes.html.ElementView = joint.dia.ElementView.extend({
-                template:
-                    `<rf-lab-node node-id="nodeId"
+                template: `<rf-lab-node node-id="nodeId"
                                   model="model"
                                   enable-sharing="data.enableSharing"
                     ></rf-lab-node>`,
@@ -58,23 +60,27 @@ export default (app) => {
                     this.updateBox();
                     this.listenTo(this.paper, 'translate', () => {
                         let bbox = this.model.getBBox();
-                        let origin = this.paper ? this.paper.options.origin : {
-                            x: 0,
-                            y: 0
-                        };
+                        let origin = this.paper
+                            ? this.paper.options.origin
+                            : {
+                                x: 0,
+                                y: 0
+                            };
                         this.$box.css({
                             left: `${bbox.x * this.scale + origin.x}px`,
                             top: `${bbox.y * this.scale + origin.y}px`
                         });
                     });
                     this.scale = 1;
-                    this.listenTo(this.paper, 'scale', (scale) => {
+                    this.listenTo(this.paper, 'scale', scale => {
                         this.scale = scale;
                         let bbox = this.model.getBBox();
-                        let origin = this.paper ? this.paper.options.origin : {
-                            x: 0,
-                            y: 0
-                        };
+                        let origin = this.paper
+                            ? this.paper.options.origin
+                            : {
+                                x: 0,
+                                y: 0
+                            };
                         this.$box.css({
                             left: `${bbox.x * this.scale + origin.x}px`,
                             top: `${bbox.y * this.scale + origin.y}px`,
@@ -91,10 +97,12 @@ export default (app) => {
                         this.scope.model = this.model;
                     }
 
-                    let origin = this.paper ? this.paper.options.origin : {
-                        x: 0,
-                        y: 0
-                    };
+                    let origin = this.paper
+                        ? this.paper.options.origin
+                        : {
+                            x: 0,
+                            y: 0
+                        };
 
                     this.$box.css({
                         width: `${bbox.width}px`,
@@ -114,8 +122,7 @@ export default (app) => {
 
         createPorts(inputs, outputs) {
             let ports = [];
-            let inputList = Array.isArray(inputs) ?
-                inputs : Array(inputs).fill();
+            let inputList = Array.isArray(inputs) ? inputs : Array(inputs).fill();
 
             ports = inputList.map((item, idx) => {
                 return {
@@ -125,12 +132,14 @@ export default (app) => {
                 };
             });
 
-            ports = ports.concat(outputs.map(o => {
-                return {
-                    id: o,
-                    group: 'outputs'
-                };
-            }));
+            ports = ports.concat(
+                outputs.map(o => {
+                    return {
+                        id: o,
+                        group: 'outputs'
+                    };
+                })
+            );
 
             return ports;
         }
@@ -139,21 +148,24 @@ export default (app) => {
             let rectInputs = getNodeArgs(node).length;
             let rectOutputs = ['Output'];
             let ports = this.createPorts(rectInputs, rectOutputs);
-            return Object.assign({
-                id: node.id,
-                label: this.getNodeLabel(node),
-                type: this.getNodeType(node),
-                inputs: rectInputs,
-                outputs: rectOutputs,
-                tag: node.tag,
-                ports: ports
-            }, {
-                operation: node.apply,
-                metadata: node.metadata,
-                classMap: node.classMap,
-                value: node.constant,
-                positionOverride: node.metadata && node.metadata.positionOverride
-            });
+            return Object.assign(
+                {
+                    id: node.id,
+                    label: this.getNodeLabel(node),
+                    type: this.getNodeType(node),
+                    inputs: rectInputs,
+                    outputs: rectOutputs,
+                    tag: node.tag,
+                    ports: ports
+                },
+                {
+                    operation: node.apply,
+                    metadata: node.metadata,
+                    classMap: node.classMap,
+                    value: node.constant,
+                    positionOverride: node.metadata && node.metadata.positionOverride
+                }
+            );
         }
 
         getNodeLabel(json) {
@@ -173,45 +185,63 @@ export default (app) => {
         }
 
         constructRect(config, dimensions) {
-            return new this.joint.shapes.html.Element(Object.assign({
-                id: config.id,
-                size: {
-                    width: dimensions.width,
-                    height: dimensions.height
-                },
-                cellType: config.type,
-                title: config.label || config.id.toString(),
-                operation: config.operation,
-                metadata: config.metadata,
-                classMap: config.classMap,
-                ports: {
-                    groups: {
-                        inputs: {
-                            position: {
-                                name: 'left'
-                            }
+            return new this.joint.shapes.html.Element(
+                Object.assign(
+                    {
+                        id: config.id,
+                        size: {
+                            width: dimensions.width,
+                            height: dimensions.height
                         },
-                        outputs: {
-                            position: {
-                                name: 'right'
-                            }
+                        cellType: config.type,
+                        title: config.label || config.id.toString(),
+                        operation: config.operation,
+                        metadata: config.metadata,
+                        classMap: config.classMap,
+                        ports: {
+                            groups: {
+                                inputs: {
+                                    position: {
+                                        name: 'left'
+                                    }
+                                },
+                                outputs: {
+                                    position: {
+                                        name: 'right'
+                                    }
+                                }
+                            },
+                            items: config.ports
                         }
                     },
-                    items: config.ports
-                }
-            }, {
-                value: config.value,
-                positionOverride: config.positionOverride
-            }));
+                    {
+                        value: config.value,
+                        positionOverride: config.positionOverride
+                    }
+                )
+            );
         }
 
-        extractShapes(
-            ast, cellDimensions
-        ) {
+        extractShapes(ast) {
             let nodes = new Map();
             let shapes = [];
             let json = Object.assign({}, ast);
             let inputs = [json];
+
+            const cellTypeDimensions = {
+                projectSrc: {
+                    width: 400,
+                    height: 280
+                },
+                layerSrc: {
+                    width: 400,
+                    height: 280
+                },
+                default: {
+                    width: 400,
+                    height: 200
+                }
+            };
 
             while (inputs.length) {
                 let input = inputs.pop();
@@ -224,12 +254,17 @@ export default (app) => {
                 }
 
                 // Input nodes not of the layer type are not made into rectangles
-                if (!input.type || input.type === 'projectSrc' || input.type === 'const') {
+                if (
+                    !input.type ||
+                    input.type === 'projectSrc' ||
+                    input.type === 'const' ||
+                    input.type === 'layerSrc'
+                ) {
                     let rectAttrs = this.getNodeAttributes(input);
 
                     rectangle = this.constructRect(
                         rectAttrs,
-                        cellDimensions
+                        cellTypeDimensions[input.type] || cellTypeDimensions.default
                     );
 
                     nodes = nodes.set(input.id, rectAttrs);
@@ -271,17 +306,22 @@ export default (app) => {
                         shapes.push(link);
                     }
                     inputs = inputs.concat(
-                        getNodeArgs(input).reverse()
-                            .map((a) => {
-                                return Object.assign({
-                                    parent: rectangle
-                                }, a);
+                        getNodeArgs(input)
+                            .reverse()
+                            .map(a => {
+                                return Object.assign(
+                                    {
+                                        parent: rectangle
+                                    },
+                                    a
+                                );
                             })
                     );
                 }
             }
             return {
-                shapes, nodes
+                shapes,
+                nodes
             };
         }
     }

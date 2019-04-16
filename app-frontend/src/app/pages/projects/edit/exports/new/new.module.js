@@ -4,9 +4,15 @@ import { min, range, isUndefined } from 'lodash';
 
 class NewExportController {
     constructor(
-        $scope, $state, $timeout,
-        projectService, analysisService, mapService,
-        projectEditService, exportService, authService,
+        $scope,
+        $state,
+        $timeout,
+        projectService,
+        analysisService,
+        mapService,
+        projectEditService,
+        exportService,
+        authService,
         modalService
     ) {
         'ngInject';
@@ -46,25 +52,27 @@ class NewExportController {
         this.exportProcessingOption = this.getDefaultProcessingOption();
         this.exportTarget = this.getDefaultTarget();
 
-        this.projectEditService.fetchCurrentProject().then(project => {
-            this.project = project;
-        }).then( () => {
-            this.projectService.getProjectDatasources(this.project.id).then(
-                datasources => {
-                    let minBands = min(datasources.map((datasource) => {
-                        return datasource.bands.length;
-                    }));
+        this.projectEditService
+            .fetchCurrentProject()
+            .then(project => {
+                this.project = project;
+            })
+            .then(() => {
+                this.projectService.getProjectDatasources(this.project.id).then(datasources => {
+                    let minBands = min(
+                        datasources.map(datasource => {
+                            return datasource.bands.length;
+                        })
+                    );
                     this.defaultBands = range(0, minBands);
-                }
-            );
-        });
-
+                });
+            });
 
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
     }
 
     $onDestroy() {
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             mapWrapper.deleteLayers('Export Area');
         });
     }
@@ -73,22 +81,20 @@ class NewExportController {
         return this.mapService.getMap('edit');
     }
 
-
     getDefaultTarget() {
-        return this.availableTargets.find(t => t.default) ||
-               this.availableTargets[0];
+        return this.availableTargets.find(t => t.default) || this.availableTargets[0];
     }
 
-
     getDefaultProcessingOption() {
-        return this.availableProcessingOptions.find(o => o.default) ||
-               this.availableProcessingOptions[0];
+        return (
+            this.availableProcessingOptions.find(o => o.default) ||
+            this.availableProcessingOptions[0]
+        );
     }
 
     getCurrentResolution() {
         const resolutionValue = this.exportOptions.resolution;
-        return this.availableResolutions
-            .find(r => r.value === resolutionValue);
+        return this.availableResolutions.find(r => r.value === resolutionValue);
     }
 
     getCurrentTarget() {
@@ -97,17 +103,15 @@ class NewExportController {
 
     getCurrentProcessingOption() {
         const option = this.exportProcessingOption;
-        return this.availableProcessingOptions
-            .find(o => o.value === option.value);
+        return this.availableProcessingOptions.find(o => o.value === option.value);
     }
-
 
     getExportOptions(options = {}) {
         return Object.assign(
             this.exportOptions,
             this.getCurrentProcessingOption().exportOptions,
-            this.mask ? {mask: this.mask} : {},
-            {bands: this.defaultBands},
+            this.mask ? { mask: this.mask } : {},
+            { bands: this.defaultBands },
             options
         );
     }
@@ -117,9 +121,7 @@ class NewExportController {
     }
 
     shouldShowProcessingParams(option) {
-        return this.isCurrentProcessingOption(option) &&
-               option.templateId &&
-               !this.isAnalysis;
+        return this.isCurrentProcessingOption(option) && option.templateId && !this.isAnalysis;
     }
 
     shouldShowTargetParams() {
@@ -136,7 +138,8 @@ class NewExportController {
 
     updateTarget(target) {
         if (target.value === 'dropbox') {
-            let hasDropbox = this.authService.user.dropboxCredential &&
+            let hasDropbox =
+                this.authService.user.dropboxCredential &&
                 this.authService.user.dropboxCredential.length;
             if (hasDropbox) {
                 this.exportTarget = target;
@@ -151,17 +154,20 @@ class NewExportController {
     }
 
     displayDropboxModal() {
-        this.modalService.open({
-            component: 'rfConfirmationModal',
-            resolve: {
-                title: () => 'You don\'t have Dropbox credential set',
-                content: () => 'Go to your API connections page and set one?',
-                confirmText: () => 'Add Dropbox credential',
-                cancelText: () => 'Cancel'
-            }
-        }).result.then((resp) => {
-            this.$state.go('user.settings.connections');
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfConfirmationModal',
+                resolve: {
+                    title: () => 'You don\'t have Dropbox credential set',
+                    content: () => 'Go to your API connections page and set one?',
+                    confirmText: () => 'Add Dropbox credential',
+                    cancelText: () => 'Cancel'
+                }
+            })
+            .result.then(resp => {
+                this.$state.go('user.settings.connections');
+            })
+            .catch(() => {});
     }
 
     handleOptionChange(state, option) {
@@ -193,13 +199,12 @@ class NewExportController {
         this.isAnalysis = true;
         this.currentAnalysisSources = null;
         this.templateRequest = this.analysisService.getTemplate(templateId);
-        this.templateRequest
-            .then(t => {
-                this.currentTemplate = t;
-                this.currentAnalysisSources = this.analysisService.generateSourcesFromAST(t);
-                this.currentAnalysis = this.analysisService.generateAnalysis(t);
-                this.isAnalysis = false;
-            });
+        this.templateRequest.then(t => {
+            this.currentTemplate = t;
+            this.currentAnalysisSources = this.analysisService.generateSourcesFromAST(t);
+            this.currentAnalysis = this.analysisService.generateAnalysis(t);
+            this.isAnalysis = false;
+        });
     }
 
     finalizeExportOptions() {
@@ -226,9 +231,7 @@ class NewExportController {
         if (this.getCurrentTarget().value === 'externalS3') {
             validationState = validationState && this.exportTargetURI;
         }
-        return validationState &&
-            !isUndefined(this.mask) &&
-            !isUndefined(this.defaultBands);
+        return validationState && !isUndefined(this.mask) && !isUndefined(this.defaultBands);
     }
 
     startExport() {
@@ -242,29 +245,29 @@ class NewExportController {
     }
 
     createAnalysisExport() {
-        this.analysisService
-            .createAnalysis(this.currentAnalysis)
-            .then(tr => {
-                this.projectService
-                    .export(
-                        this.project, {
-                            analysisId: tr.id
-                        },
-                        this.getExportOptions()
-                    )
-                    .finally(() => {
-                        this.finishExport();
-                    });
-            });
+        this.analysisService.createAnalysis(this.currentAnalysis).then(tr => {
+            this.projectService
+                .export(
+                    this.project,
+                    {
+                        analysisId: tr.id
+                    },
+                    this.getExportOptions()
+                )
+                .finally(() => {
+                    this.finishExport();
+                });
+        });
     }
 
     createBasicExport() {
         let exportOpts = this.getExportOptions();
-        console.log(exportOpts);
         this.projectService
-            .export(this.project,
-                    {exportType: this.getCurrentTarget().value === 'dropbox' ? 'Dropbox' : 'S3' },
-                    this.getExportOptions())
+            .export(
+                this.project,
+                { exportType: this.getCurrentTarget().value === 'dropbox' ? 'Dropbox' : 'S3' },
+                this.getExportOptions()
+            )
             .finally(() => {
                 this.finishExport();
             });
@@ -292,11 +295,11 @@ class NewExportController {
                     };
                 }
             });
-            this.getMap().then((mapWrapper) => {
+            this.getMap().then(mapWrapper => {
                 mapWrapper.setLayer('Export Area', exportAreaLayer, true);
             });
         } else {
-            this.getMap().then((mapWrapper) => {
+            this.getMap().then(mapWrapper => {
                 mapWrapper.deleteLayers('Export Area');
             });
         }
@@ -304,14 +307,14 @@ class NewExportController {
 
     onDrawCancel() {
         this.drawing = false;
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             mapWrapper.showLayers('Export Area', true);
         });
     }
 
     startDrawing() {
         this.drawing = true;
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             mapWrapper.hideLayers('Export Area', false);
         });
     }

@@ -157,17 +157,18 @@ trait ObjectPermissions[Model] {
   // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
 
   def createVisibilityF(objectType: ObjectType,
-                        actionType: ActionType): Fragment =
+                        actionType: ActionType,
+                        tableName: String): Fragment =
     (objectType, actionType) match {
       case (ObjectType.Shape, ActionType.View) =>
-        Fragment.const("")
+        Fragment.empty
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
           (ObjectType.Project, ActionType.Export) |
           (ObjectType.Project, ActionType.Annotate) |
           (ObjectType.Analysis, ActionType.Export) =>
-        Fragment.const("visibility = 'PUBLIC' OR")
+        Fragment.const(s"${tableName}visibility = 'PUBLIC' OR")
       case _ =>
-        Fragment.const("")
+        Fragment.empty
     }
 
   def createInheritedF(user: User,
@@ -192,37 +193,57 @@ trait ObjectPermissions[Model] {
                     actionType: ActionType,
                     ownershipTypeO: Option[String] = None,
                     groupTypeO: Option[GroupType] = None,
-                    groupIdO: Option[UUID] = None): Option[Fragment] = {
+                    groupIdO: Option[UUID] = None,
+                    tableNameO: Option[String] = None): Option[Fragment] = {
+    val tableName: String = tableNameO match {
+      case Some(tableName) => s"${tableName}."
+      case _               => ""
+    }
     val ownedF: Fragment =
-      Fragment.const(s"owner = '${user.id}'")
+      Fragment.const(s"${tableName}owner =") ++ fr"${user.id}"
     val visibilityF: Fragment =
-      createVisibilityF(objectType, actionType)
+      createVisibilityF(objectType, actionType, tableName)
     val sharedF: Fragment =
       Fragment.const(
         s"""ARRAY['ALL;;${actionType.toString}', 'USER;${user.id};${actionType.toString}']""")
     val inheritedF: Fragment =
       createInheritedF(user, actionType, groupTypeO, groupIdO)
     val acrFilterF
-      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") && acrs"
+      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
+      .const(s"${tableName}acrs")
 
     ownershipTypeO match {
       // owned by the requesting user only
-      case Some(ownershipType) if ownershipType == "owned" =>
+      case Some("owned") =>
         Some(ownedF)
       // shared to the requesting user directly, across platform, or due to group membership
-      case Some(ownershipType) if ownershipType == "shared" =>
+      case Some("shared") =>
+        val scenePublicExclude: Option[Fragment] =
+          if (objectType == ObjectType.Scene) {
+            Some(
+              Fragment
+                .const(s"(${tableName}visibility)") ++ fr" != 'PUBLIC' AND ")
+          } else {
+            None
+          }
         if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
-          Some(fr"(" ++ acrFilterF ++ fr") AND owner <> ${user.id}")
-        } else {
           Some(
-            fr"visibility != 'PUBLIC' AND (" ++ acrFilterF ++ fr") AND owner <> ${user.id}")
+            fr"(" ++ acrFilterF ++ fr") AND" ++ Fragment.const(
+              s"${tableName}owner") ++ fr"<> ${user.id}")
+        } else {
+          scenePublicExclude combine Some(
+            acrFilterF ++ fr" AND " ++ Fragment
+              .const(s"${tableName}owner") ++ fr"<> ${user.id}")
         }
       // shared to the requesting user due to group membership
-      case Some(ownershipType) if ownershipType == "inherited" =>
+      case Some("inherited") =>
         if (objectType == ObjectType.Shape) {
-          Some(inheritedF ++ fr"&& acrs")
+          Some(inheritedF ++ Fragment.const(s"&& ${tableName}acrs"))
         } else {
-          Some(fr"visibility != 'PUBLIC' AND (" ++ inheritedF ++ fr"&& acrs)")
+          Some(
+            Fragment
+              .const(s"${tableName}visibility") ++ fr"!= 'PUBLIC' AND (" ++ inheritedF ++ Fragment
+              .const(s"&& ${tableName}acrs)"))
         }
       // the default
       case _ =>

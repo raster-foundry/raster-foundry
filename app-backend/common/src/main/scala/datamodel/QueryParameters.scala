@@ -53,10 +53,12 @@ final case class SceneQueryParameters(
     bbox: Iterable[String] = Seq.empty[String],
     point: Option[String] = None,
     project: Option[UUID] = None,
+    layer: Option[UUID] = None,
     ingested: Option[Boolean] = None,
     ingestStatus: Iterable[String] = Seq.empty[String],
     pending: Option[Boolean] = None,
-    shape: Option[UUID] = None
+    shape: Option[UUID] = None,
+    projectLayerShape: Option[UUID] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
@@ -162,12 +164,25 @@ object AoiQueryParameters {
     deriveDecoder[AoiQueryParameters]
 }
 
+final case class ToolQueryParameters(
+    singleSource: Option[Boolean] = None
+)
+
+object ToolQueryParameters {
+  implicit def encToolQueryParameters: Encoder[ToolQueryParameters] =
+    deriveEncoder[ToolQueryParameters]
+  implicit def decToolQueryParameters: Decoder[ToolQueryParameters] =
+    deriveDecoder[ToolQueryParameters]
+}
+
 /** Combined tool query parameters */
 final case class CombinedToolQueryParameters(
+    toolParams: ToolQueryParameters = ToolQueryParameters(),
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
     searchParams: SearchQueryParameters = SearchQueryParameters(),
+    ownerQueryParams: OwnerQueryParameters = OwnerQueryParameters(),
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
@@ -236,7 +251,8 @@ object UserAuditQueryParameters {
 }
 
 /** Query parameters to filter by owners */
-final case class OwnerQueryParameters(owner: Option[String] = None)
+final case class OwnerQueryParameters(
+    owner: Iterable[String] = List.empty[String])
 
 object OwnerQueryParameters {
   implicit def encOwnerQueryParameters: Encoder[OwnerQueryParameters] =
@@ -306,17 +322,6 @@ object TimestampQueryParameters {
     deriveDecoder[TimestampQueryParameters]
 }
 
-final case class ToolCategoryQueryParameters(search: Option[String] = None)
-
-object ToolCategoryQueryParameters {
-  implicit def encToolCategoryQueryParameters
-    : Encoder[ToolCategoryQueryParameters] =
-    deriveEncoder[ToolCategoryQueryParameters]
-  implicit def decToolCategoryQueryParameters
-    : Decoder[ToolCategoryQueryParameters] =
-    deriveDecoder[ToolCategoryQueryParameters]
-}
-
 final case class ToolRunQueryParameters(
     createdBy: Option[String] = None,
     projectId: Option[UUID] = None,
@@ -334,6 +339,7 @@ object ToolRunQueryParameters {
 final case class CombinedToolRunQueryParameters(
     toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+    ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
@@ -348,21 +354,6 @@ object CombinedToolRunQueryParameters {
   implicit def decCombinedToolRunQueryParameters
     : Decoder[CombinedToolRunQueryParameters] =
     deriveDecoder[CombinedToolRunQueryParameters]
-}
-
-final case class CombinedToolCategoryQueryParams(
-    timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-    toolCategoryParams: ToolCategoryQueryParameters =
-      ToolCategoryQueryParameters()
-)
-
-object CombinedToolCategoryQueryParams {
-  implicit def encCombinedToolCategoryQueryParams
-    : Encoder[CombinedToolCategoryQueryParams] =
-    deriveEncoder[CombinedToolCategoryQueryParams]
-  implicit def decCombinedToolCategoryQueryParams
-    : Decoder[CombinedToolCategoryQueryParams] =
-    deriveDecoder[CombinedToolCategoryQueryParams]
 }
 
 final case class DatasourceQueryParameters(
@@ -412,7 +403,8 @@ object CombinedMapTokenQueryParameters {
 final case class UploadQueryParameters(
     datasource: Option[UUID] = None,
     uploadStatus: Option[String] = None,
-    projectId: Option[UUID] = None
+    projectId: Option[UUID] = None,
+    layerId: Option[UUID] = None
 )
 
 object UploadQueryParameters {
@@ -426,7 +418,8 @@ final case class ExportQueryParameters(
     organization: Option[UUID] = None,
     project: Option[UUID] = None,
     analysis: Option[UUID] = None,
-    exportStatus: Iterable[String] = Seq.empty[String]
+    exportStatus: Iterable[String] = Seq.empty[String],
+    layer: Option[UUID] = None
 )
 
 object ExportQueryParameters {
@@ -456,7 +449,8 @@ final case class AnnotationQueryParameters(
     maxConfidence: Option[Double] = None,
     quality: Option[String] = None,
     annotationGroup: Option[UUID] = None,
-    bbox: Iterable[String] = Seq.empty[String]
+    bbox: Iterable[String] = Seq.empty[String],
+    withOwnerInfo: Option[Boolean] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)

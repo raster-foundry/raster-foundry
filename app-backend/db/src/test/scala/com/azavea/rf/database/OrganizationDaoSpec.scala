@@ -45,16 +45,14 @@ class OrganizationDaoSpec
   test("get an organization by id") {
     check {
       forAll(
-        (orgCreate: Organization.Create) => {
-          val retrievedNameIO = OrganizationDao
-            .createOrganization(orgCreate) flatMap { (org: Organization) =>
-            {
-              OrganizationDao.getOrganizationById(org.id) map {
-                (retrievedO: Option[Organization]) =>
-                  retrievedO map { _.name }
-              }
-            }
-          }
+        (orgCreate: Organization.Create, platform: Platform) => {
+          val retrievedNameIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            dbOrg <- OrganizationDao.createOrganization(
+              orgCreate.copy(platformId = dbPlatform.id))
+            fetched <- OrganizationDao.getOrganizationById(dbOrg.id)
+          } yield { fetched map { _.name } }
+
           xa.use(t => retrievedNameIO.transact(t))
             .unsafeRunSync
             .get == orgCreate.name
@@ -67,23 +65,19 @@ class OrganizationDaoSpec
   test("update an organization") {
     check {
       forAll(
-        (orgCreate: Organization.Create, newName: String) => {
+        (orgCreate: Organization.Create,
+         newName: String,
+         platform: Platform) => {
           val withoutNull = newName.filter(_ != '\u0000').mkString
-          val insertOrgIO = OrganizationDao.createOrganization(orgCreate)
-          val insertAndUpdateIO = insertOrgIO flatMap {
-            (org: Organization) =>
-              {
-                OrganizationDao
-                  .update(org.copy(name = withoutNull), org.id) flatMap {
-                  case (affectedRows: Int) => {
-                    OrganizationDao.unsafeGetOrganizationById(org.id) map {
-                      (retrievedOrg: Organization) =>
-                        (affectedRows, retrievedOrg.name, retrievedOrg.status)
-                    }
-                  }
-                }
-              }
-          }
+          val insertAndUpdateIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            dbOrg <- OrganizationDao.createOrganization(
+              orgCreate.copy(platformId = dbPlatform.id))
+            affectedRows <- OrganizationDao
+              .update(dbOrg.copy(name = withoutNull), dbOrg.id)
+            fetched <- OrganizationDao.unsafeGetOrganizationById(dbOrg.id)
+          } yield (affectedRows, fetched.name, fetched.status)
+
           val (affectedRows, updatedName, updatedStatus) =
             xa.use(t => insertAndUpdateIO.transact(t)).unsafeRunSync
           (affectedRows == 1) && (updatedName == withoutNull) && (updatedStatus == orgCreate.status)
@@ -227,22 +221,25 @@ class OrganizationDaoSpec
   test("add a user role") {
     check {
       forAll {
-        (userCreate: User.Create,
+        (platform: Platform,
+         userCreate: User.Create,
          orgCreate: Organization.Create,
          userRole: GroupRole) =>
           {
             val addPlatformRoleWithPlatformIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
-              (org, dbUser) = orgAndUser
+              (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                          orgCreate,
+                                                          platform,
+                                                          false)
               insertedUserGroupRole <- OrganizationDao.addUserRole(
-                org.platformId,
+                dbOrg.platformId,
                 dbUser,
                 dbUser.id,
-                org.id,
+                dbOrg.id,
                 userRole)
               byIdUserGroupRole <- UserGroupRoleDao.getOption(
                 insertedUserGroupRole.id)
-            } yield { (org, byIdUserGroupRole) }
+            } yield { (dbOrg, byIdUserGroupRole) }
 
             val (dbOrg, dbUserGroupRole) =
               xa.use(t => addPlatformRoleWithPlatformIO.transact(t))
@@ -277,24 +274,27 @@ class OrganizationDaoSpec
     check {
       forAll {
         (
+            platform: Platform,
             userCreate: User.Create,
             orgCreate: Organization.Create,
             userRole: GroupRole
         ) =>
           {
             val setPlatformRoleIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
-              (org, dbUser) = orgAndUser
+              (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                          orgCreate,
+                                                          platform,
+                                                          false)
               originalUserGroupRole <- OrganizationDao.addUserRole(
-                org.platformId,
+                dbOrg.platformId,
                 dbUser,
                 dbUser.id,
-                org.id,
+                dbOrg.id,
                 userRole)
               updatedUserGroupRoles <- OrganizationDao.deactivateUserRoles(
                 dbUser,
                 dbUser.id,
-                org.id)
+                dbOrg.id)
             } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
             val (dbOldUGR, dbUpdatedUGRs) =

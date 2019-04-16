@@ -32,7 +32,8 @@ export default class ExportController {
                 sort: 'createdAt,desc',
                 pageSize: '10',
                 page: requestPage,
-                project: this.project.id
+                project: this.project.id,
+                layer: this.project.defaultLayerId
             }
         ).then(exportResult => {
             this.lastExportResult = exportResult;

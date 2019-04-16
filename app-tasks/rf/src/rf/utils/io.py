@@ -195,11 +195,15 @@ def upload_tifs(tifs, user_id, scene_id):
 
 
 def s3_upload_export(local_path, source):
+    object_acl = None if os.getenv('DATA_BUCKET') in source else 'bucket-owner-full-control'
     s3_client = boto3.client('s3')
     (bucket, key) = s3_bucket_and_key_from_url(urllib.unquote(source))
     logger.info('Uploading %s => bucket: %s, key: %s', local_path, bucket, key)
     with open(local_path, 'rb') as inf:
-        s3_client.put_object(Bucket=bucket, Body=inf, Key=key)
+        if object_acl:
+            s3_client.put_object(Bucket=bucket, Body=inf, Key=key, ACL=object_acl)
+        else:
+            s3_client.put_object(Bucket=bucket, Body=inf, Key=key)
     return key
 
 

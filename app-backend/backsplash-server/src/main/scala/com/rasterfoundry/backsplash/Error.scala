@@ -1,6 +1,7 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.common.RollbarNotifier
 
 import cats._
 import com.amazonaws.services.s3.model.AmazonS3Exception
@@ -10,9 +11,9 @@ import org.http4s._
 import org.http4s.dsl._
 import java.lang.IllegalArgumentException
 
-class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
+class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
     extends LazyLogging
-    with HttpErrorHandler[F, E, U]
+    with HttpErrorHandler[F, E]
     with Http4sDsl[F] {
   private def wrapError(t: E): F[Response[F]] = t match {
     case (err: InvariantViolation) =>
@@ -36,6 +37,36 @@ class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
     }
   }
 
-  override def handle(service: AuthedService[U, F]): AuthedService[U, F] =
+  override def handle(service: HttpRoutes[F]): HttpRoutes[F] =
+    ServiceHttpErrorHandler(service)(wrapError)
+}
+
+class RollbarReporter[F[_]](implicit M: MonadError[F, BacksplashException])
+    extends RollbarNotifier
+    with HttpErrorHandler[F, BacksplashException] {
+  private def wrapError(t: BacksplashException): F[Response[F]] = t match {
+    case e @ UningestedScenesException(_) =>
+      sendError(e)
+      throw e
+    case e @ MetadataException(_) =>
+      sendError(e)
+      throw e
+    case e @ SingleBandOptionsException(_) =>
+      sendError(e)
+      throw e
+    case e @ UnknownSceneTypeException(_) =>
+      sendError(e)
+      throw e
+    case e @ BadAnalysisASTException(_) =>
+      sendError(e)
+      throw e
+    case e @ UnknownException(_) =>
+      sendError(e)
+      throw e
+    case e =>
+      throw e
+  }
+
+  override def handle(service: HttpRoutes[F]): HttpRoutes[F] =
     ServiceHttpErrorHandler(service)(wrapError)
 }

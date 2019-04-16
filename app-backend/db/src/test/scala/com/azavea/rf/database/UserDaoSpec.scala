@@ -344,11 +344,11 @@ class UserDaoSpec
         (user1: User.Create,
          user2: User.Create,
          user3: User.Create,
-         org: Organization.Create) =>
+         org: Organization.Create,
+         platform: Platform) =>
           {
             val outUsersIO = for {
-              orgAndUser <- insertUserAndOrg(user1, org)
-              (_, dbUser1) = orgAndUser
+              (dbUser1, _, _) <- insertUserOrgPlatform(user1, org, platform)
               dbUser2 <- UserDao.create(user2)
               _ <- UserDao.create(user3)
               listedUsers <- UserDao.getUsersByIds(List(dbUser1.id, dbUser2.id))
@@ -365,17 +365,18 @@ class UserDaoSpec
 
   test("Getting another user's info should not return credentials") {
     check {
-      forAll { (user: User.Create, org: Organization.Create) =>
-        {
-          val createdUserIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (_, dbUser) = orgAndUser
-            createdUser <- UserDao.unsafeGetUserById(dbUser.id, Some(false))
-          } yield (createdUser)
-          val createdUser = xa.use(t => createdUserIO.transact(t)).unsafeRunSync
-          createdUser.planetCredential == Credential(Some("")) &&
-          createdUser.dropboxCredential == Credential(Some(""))
-        }
+      forAll {
+        (user: User.Create, org: Organization.Create, platform: Platform) =>
+          {
+            val createdUserIO = for {
+              (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
+              createdUser <- UserDao.unsafeGetUserById(dbUser.id, Some(false))
+            } yield (createdUser)
+            val createdUser =
+              xa.use(t => createdUserIO.transact(t)).unsafeRunSync
+            createdUser.planetCredential == Credential(Some("")) &&
+            createdUser.dropboxCredential == Credential(Some(""))
+          }
       }
     }
   }

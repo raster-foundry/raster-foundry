@@ -1,3 +1,5 @@
+import { Set } from 'immutable';
+
 export default (app) => {
     class ProjectEditService {
         constructor(
@@ -16,6 +18,7 @@ export default (app) => {
             this.currentProjectId = null;
             this.currentProject = null;
             this.projectFetchError = null;
+            this.visibleProjectLayers = Set([]);
         }
 
         fetchCurrentProject() {
@@ -56,18 +59,27 @@ export default (app) => {
 
         updateCurrentProject(params) {
             return this.$q((resolve, reject) => {
-                this.projectService.updateProject(params).then(() => {
+                this.projectService.updateProject(params).then((project) => {
                     this.setCurrentProject(this.currentProjectId, true)
-                        .then((project) => {
+                        .then(() => {
                             resolve(project);
                         }, (error) => {
                             const message = 'Error fetching updated project from API';
                             reject({message: message, error});
                         });
+                    return project;
                 }, (error) => {
                     reject({message: 'Error updating project', error});
                 });
             });
+        }
+
+        setVisibleProjectLayers(visibleLayerSet = Set([])) {
+            this.visibleProjectLayers = visibleLayerSet;
+        }
+
+        getVisibleProjectLayers() {
+            return this.visibleProjectLayers;
         }
     }
 

@@ -25,17 +25,47 @@ object ProjectLayerScenesDao extends Dao[Scene] {
           s.acquisition_date, s.sun_azimuth, s.sun_elevation, s.thumbnail_status,
           s.boundary_status, s.ingest_status, s.scene_type FROM""" ++ tableF
 
+  def countLayerScenes(
+      projectId: UUID
+  ): ConnectionIO[List[(UUID, Int)]] = {
+    (Fragment.const(
+      """
+      | SELECT project_layer_id, count(1)
+      | FROM
+      | (scenes_to_layers JOIN project_layers ON scenes_to_layers.project_layer_id = project_layers.id) s2lpl
+      | JOIN projects ON s2lpl.project_id = projects.id
+      """.trim.stripMargin) ++ Fragments.whereAnd(fr"project_id = ${projectId}") ++ fr"GROUP BY project_layer_id")
+      .query[(UUID, Int)]
+      .to[List]
+  }
+
+  def listLayerScenesRaw(
+      layerId: UUID,
+      splitOptions: SplitOptions): ConnectionIO[List[Scene.ProjectScene]] = {
+    val sceneParams = CombinedSceneQueryParams(
+      sceneParams = SceneQueryParameters(
+        minAcquisitionDatetime = Some(splitOptions.rangeStart),
+        maxAcquisitionDatetime = Some(splitOptions.rangeEnd)
+      ))
+    query
+      .filter(fr"project_layer_id = ${layerId}")
+      .filter(sceneParams)
+      .list
+      .flatMap(scenesToProjectScenes(_, layerId))
+  }
+
   def listLayerScenes(
       layerId: UUID,
       pageRequest: PageRequest,
       sceneParams: ProjectSceneQueryParameters
   ): ConnectionIO[PaginatedResponse[Scene.ProjectScene]] = {
 
-    val layerQuery = ProjectLayerDao.query.filter(layerId).select
-    val andPendingF: Fragment = sceneParams.accepted match {
-      case Some(true) => fr"accepted = true"
-      case _          => fr"accepted = false"
-    }
+    val andPendingF: Option[Fragment] =
+      sceneParams.accepted match {
+        case Some(true)  => Some(fr"accepted = true")
+        case Some(false) => Some(fr"accepted = false")
+        case _           => None
+      }
 
     val manualOrder = Map(
       "scene_order" -> Order.Asc,
@@ -48,8 +78,10 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       .filter(sceneParams)
 
     val paginatedScenes = for {
-      layer <- layerQuery
-      page <- filterQ.page(pageRequest, manualOrder)
+      page <- pageRequest.sort.isEmpty match {
+        case true  => filterQ.page(pageRequest, manualOrder)
+        case false => filterQ.page(pageRequest)
+      }
     } yield page
     paginatedScenes.flatMap { (pr: PaginatedResponse[Scene]) =>
       scenesToProjectScenes(pr.results.toList, layerId).map(
@@ -72,9 +104,6 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       scenes: List[Scene],
       layerId: UUID
   ): ConnectionIO[List[Scene.ProjectScene]] = {
-    // "The astute among you will note that we don’t actually need a monad to do this;
-    // an applicative functor is all we need here."
-    // let's roll, doobie
     val componentsIO: ConnectionIO[
       (List[Thumbnail], List[Datasource], List[SceneToLayer])
     ] = {

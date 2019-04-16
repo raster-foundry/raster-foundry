@@ -1,29 +1,38 @@
 #!/bin/bash
+
 set -e
 
 if [[ -n "${RF_DEBUG}" ]]; then
     set -x
 fi
 
-GIT_COMMIT="${GIT_COMMIT:-latest}"
+DIR="$(dirname "$0")"
 
 function usage() {
     echo -n \
 "Usage: $(basename "$0")
+
 Run various test suites.
 "
 }
 
-if [ "${BASH_SOURCE[0]}" = "${0}" ]
-then
-    if [ "${1:-}" = "--help" ]
-    then
+GIT_COMMIT="${GIT_COMMIT:-latest}"
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
         usage
     else
-        if which shellcheck &>/dev/null; then
+        if command -v shellcheck &>/dev/null; then
             echo "Linting STRTA scripts"
             find ./scripts -type f -print0 | xargs -0 -r shellcheck
         fi
+
+        echo "Executing lambda test suite"
+        docker-compose \
+            -f docker-compose.test.yml \
+            run --rm \
+            --entrypoint tox \
+            lambda
 
         if [ -f /opt/raster-foundry/jars/batch-assembly.jar ]; then
             echo "Verifying that Batch containers can run the batch jar"
@@ -35,26 +44,34 @@ then
 
         echo "Updating Scala dependencies"
         docker-compose \
-            run --rm --no-deps api-server update
+            run --rm --no-deps sbt \
+            update
 
         echo "Linting Scala source code"
         docker-compose \
-            run --rm --no-deps api-server scalafmtCheck
+            run --rm --no-deps sbt \
+            ";scalafmtCheck;scalafmtSbtCheck;scapegoat"
+
+        echo "Validating API service spec"
         docker-compose \
-            run --rm --no-deps api-server scalafmtSbtCheck
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm app-frontend run validate-api-spec
+
+        echo "Validating tile service spec"
         docker-compose \
-            run --rm --no-deps api-server scapegoat
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm app-frontend run validate-tile-spec
 
         echo "Preparing the database for testing"
-        docker-compose \
-            run --rm api-server "mg init" || true
-        docker-compose \
-            run --rm api-server ";mg update;mg apply"
+        source "scripts/update"
+        run_database_migrations
 
         echo "Executing Scala test suite"
         docker-compose \
-            run --rm api-server test
+            run --rm sbt \
+            test
 
     fi
-    exit
 fi

@@ -1,4 +1,4 @@
-/* global _ */
+/* global _ BUILDCONFIG */
 
 class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
@@ -8,6 +8,7 @@ class LabBrowseTemplatesController {
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
+        this.BUILDCONFIG = BUILDCONFIG;
     }
 
     $onInit() {
@@ -19,30 +20,38 @@ class LabBrowseTemplatesController {
         this.search = search && search.length ? search : null;
         delete this.fetchError;
         this.results = [];
-        let currentQuery = this.analysisService.fetchTemplates({
+        const queryParams = {
             sort: 'createdAt,desc',
             pageSize: 10,
             page: page - 1,
-            search: this.search,
-            ownershipType: this.currentOwnershipFilter
-        }).then(paginatedResponse => {
-            this.results = paginatedResponse.results;
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, this.search, null, {
-                ownership: this.currentOwnershipFilter
+            search: this.search
+        };
+        if (!this.currentOwnershipFilter) {
+            queryParams.owner = this.BUILDCONFIG.PLATFORM_USERS;
+        } else if (this.currentOwnershipFilter !== 'all') {
+            queryParams.ownershipType = this.currentOwnershipFilter;
+        }
+
+        let currentQuery = this.analysisService
+            .fetchTemplates(queryParams)
+            .then(paginatedResponse => {
+                this.results = paginatedResponse.results;
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                this.paginationService.updatePageParam(page, this.search, null, {
+                    ownership: this.currentOwnershipFilter
+                });
+                if (this.currentQuery === currentQuery) {
+                    delete this.fetchError;
+                }
+            }, (e) => {
+                if (this.currentQuery === currentQuery) {
+                    this.fetchError = e;
+                }
+            }).finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
             });
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
         this.currentQuery = currentQuery;
     }
 
@@ -68,6 +77,18 @@ class LabBrowseTemplatesController {
                 objectName: () => template.name,
                 platform: () => this.platform
             }
+        });
+    }
+
+    onTemplateEditClick(template) {
+        this.modalService.open({
+            component: 'rfTemplateCreateModal',
+            resolve: {
+                existingTemplate: () => template
+            }
+        }).result.then( data => {
+            let idx = this.results.findIndex( tpl => tpl.id === data.id );
+            this.results[idx] = data;
         });
     }
 }

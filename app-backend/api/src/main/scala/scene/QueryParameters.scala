@@ -28,10 +28,12 @@ trait SceneQueryParameterDirective extends QueryParametersCommon {
       'bbox.as[String].*,
       'point.as[String].?,
       'project.as[UUID].?,
+      'layer.as[UUID].?,
       'ingested.as[Boolean].?,
       'ingestStatus.as[String].*,
       'pending.as[Boolean].?,
-      'shape.as[UUID].?
+      'shape.as[UUID].?,
+      'projectLayerShape.as[UUID].?
     )).as(SceneQueryParameters.apply _)
 
   val sceneSearchModeQueryParams = parameters(

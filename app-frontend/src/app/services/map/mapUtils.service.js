@@ -1,28 +1,46 @@
-export default (app) => {
+export default app => {
     class MapUtilsService {
-
         constructor($timeout) {
             'ngInject';
             this.$timeout = $timeout;
         }
 
         /** Get the extent from a project (if it exists) and fit the map to it
-          * @param {MapWrapper} mapWrapper mapWrapper object of map to interact with
-          * @param {Project} project to hold, e.g. specifying latlng center and zoom
-          * @param {Number} offset arbitrary padding offset (positive for zoom in)
-          * @return {MapUtilsService} this service
-          */
+         * @param {MapWrapper} mapWrapper mapWrapper object of map to interact with
+         * @param {Project} project to hold, e.g. specifying latlng center and zoom
+         * @param {Number} offset arbitrary padding offset (positive for zoom in)
+         * @return {MapUtilsService} this service
+         */
         fitMapToProject(mapWrapper, project, offset = 0) {
             if (project.extent) {
-                mapWrapper.map.invalidateSize();
-                this.$timeout(() => {
-                    mapWrapper.map.fitBounds(L.geoJSON(project.extent).getBounds(), {
-                        padding: [offset, offset],
-                        animate: false
-                    });
-                }, 250);
+                this.fitMapToExtent(mapWrapper, project.extent, offset);
             }
             return this;
+        }
+
+        /** Get the extent from a project layer (if it exists) and fit the map to it
+         * @param {MapWrapper} mapWrapper mapWrapper object of map to interact with
+         * @param {Layer} layer to hold, e.g. specifying latlng center and zoom
+         * @param {Project} project to hold, e.g. specifying latlng center and zoom
+         * @param {Number} offset arbitrary padding offset (positive for zoom in)
+         * @return {MapUtilsService} this service
+         */
+        fitMapToProjectLayer(mapWrapper, layer, project, offset = 0) {
+            if (!layer.geometry) {
+                return this.fitMapToProject(mapWrapper, project, offset);
+            }
+            this.fitMapToExtent(mapWrapper, layer.geometry, offset);
+            return this;
+        }
+
+        fitMapToExtent(mapWrapper, extent, offset = 0) {
+            mapWrapper.map.invalidateSize();
+            this.$timeout(() => {
+                mapWrapper.map.fitBounds(L.geoJSON(extent).getBounds(), {
+                    padding: [offset, offset],
+                    animate: false
+                });
+            }, 250);
         }
 
         /**
@@ -46,9 +64,15 @@ export default (app) => {
          * @returns {numeric} y-coordinate of tile
          */
         lat2Tile(lat, zoom) {
-            return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) +
-                                            1 / Math.cos(lat * Math.PI / 180))
-                               / Math.PI) / 2 * Math.pow(2, zoom + 2));
+            return Math.floor(
+                (1 -
+                    Math.log(
+                        Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)
+                    ) /
+                        Math.PI) /
+                    2 *
+                    Math.pow(2, zoom + 2)
+            );
         }
 
         /**

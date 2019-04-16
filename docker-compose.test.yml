@@ -1,4 +1,4 @@
-version: '2.3'
+version: "2.3"
 services:
   nginx-api:
     image: raster-foundry-nginx-api:${GIT_COMMIT:-latest}
@@ -26,7 +26,7 @@ services:
       - ./app-frontend/package.json:/opt/raster-foundry/app-frontend/package.json
       - ./app-frontend/src:/opt/raster-foundry/app-frontend/src
       - ./app-frontend/webpack.config.js:/opt/raster-foundry/app-frontend/webpack.config.js
-      - ./docs/swagger/spec.yml:/opt/swagger/spec.yml
+      - ./docs/swagger/:/opt/swagger/
     entrypoint: yarn
     command: run build
 
@@ -79,7 +79,9 @@ services:
     entrypoint: ./sbt
 
   lambda:
-    image: python:3.6
+    build:
+      context: app-lambda
+      dockerfile: Dockerfile.test
     volumes:
       - ./app-lambda/:/opt/raster-foundry/app-lambda/
     working_dir: /opt/raster-foundry/app-lambda/

@@ -9,7 +9,12 @@ import com.rasterfoundry.common.notification.Email.{
 }
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.database.{PlatformDao, ProjectDao, SceneDao}
+import com.rasterfoundry.database.{
+  PlatformDao,
+  ProjectLayerDao,
+  ProjectDao,
+  SceneDao
+}
 import com.rasterfoundry.common.datamodel._
 
 import cats.effect.IO
@@ -31,12 +36,24 @@ final case class NotifyIngestStatus(sceneId: UUID)(
 
   def runJob(args: List[String]) = ???
 
+  // We make sure that projectId isn't None in the filter, so it's safe to `.get`
+  @SuppressWarnings(Array("OptionGet"))
   def getSceneConsumers(sceneId: UUID): ConnectionIO[List[String]] = {
     for {
-      projects <- ProjectDao.query
+      layers <- ProjectLayerDao.query
         .filter(
-          fr"id IN (SELECT project_id FROM scenes_to_projects WHERE scene_id = ${sceneId})")
+          fr"id IN (SELECT project_layer_id FROM scenes_to_layers WHERE scene_id = ${sceneId})")
         .list
+      projects <- layers.filter(!_.projectId.isEmpty).toNel match {
+        case Some(nel) =>
+          ProjectDao.query
+            .filter(
+              Fragments.in(fr"id", nel map { _.projectId.get })
+            )
+            .list
+        case _ =>
+          List.empty[Project].pure[ConnectionIO]
+      }
     } yield
       projects
         .map(_.owner)
