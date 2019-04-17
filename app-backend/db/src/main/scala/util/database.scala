@@ -11,7 +11,7 @@ import java.util.concurrent.Executors
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 
 object RFTransactor {
-  case class TransactorConfig(
+  final case class TransactorConfig(
       dbName: String = Properties.envOrElse("POSTGRES_NAME", "rasterfoundry"),
       driver: String = "org.postgresql.Driver",
       postgresUrl: String = Properties.envOrElse(
