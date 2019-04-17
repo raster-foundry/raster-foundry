@@ -22,16 +22,15 @@ def create_cog(image_locations, scene, same_path=False):
     with get_tempdir() as local_dir:
         dsts = [os.path.join(local_dir, fname) for _, fname in image_locations]
         cog.fetch_imagery(image_locations, local_dir)
-        warped_paths = cog.warp_tifs(dsts, local_dir)
-        merged_tif = cog.merge_tifs(warped_paths, local_dir)
-        cog.add_overviews(merged_tif)
-        cog_path = cog.convert_to_cog(merged_tif, local_dir)
+        cog_path = cog.merge_tifs(dsts, local_dir)
+        cog.add_overviews(cog_path)
         if same_path:
             updated_scene = upload_tif(
                 cog_path, scene,
-                os.path.join('user-uploads', scene.owner, '{}_COG.tif'.format(scene.id)),
-                os.path.join('user-uploads', urllib.quote_plus(scene.owner), '{}_COG.tif'.format(scene.id))
-            )
+                os.path.join('user-uploads', scene.owner, '{}_COG.tif'.format(
+                    scene.id)),
+                os.path.join('user-uploads', urllib.quote_plus(scene.owner),
+                             '{}_COG.tif'.format(scene.id)))
         else:
             updated_scene = upload_tif(cog_path, scene)
         updated_scene.update()

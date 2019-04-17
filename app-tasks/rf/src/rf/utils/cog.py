@@ -70,14 +70,24 @@ def fetch_image(location, filename, local_dir):
 def merge_tifs(local_tif_paths, local_dir):
     logger.info('Merging {} tif paths'.format(len(local_tif_paths)))
     logger.debug('The files are:\n%s', '\n'.join(local_tif_paths))
+    vrt_path = os.path.join(local_dir, 'merged.vrt')
     merged_path = os.path.join(local_dir, 'merged.tif')
-    merge_command = [
-        'gdal_merge.py', '-o', merged_path, '-separate', '-co',
-        'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2', '-co', 'BIGTIFF=IF_SAFER'
+    nodata_vals = []
+    for p in local_tif_paths:
+        with rasterio.open(p, 'r') as src:
+            nodata_vals.append(str(int(src.meta['nodata'] or 0)))
+    vrt_command = [
+        'gdalbuildvrt', '-separate', '-resolution', 'highest', '-srcnodata',
+        ' '.join(nodata_vals), '-vrtnodata', ' '.join(nodata_vals), vrt_path
     ] + local_tif_paths
+    subprocess.check_call(vrt_command)
+    merge_command = [
+        'gdal_translate', '-co', 'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2',
+        '-co', 'BIGTIFF=IF_SAFER', '-co', 'TILED=YES', vrt_path, merged_path
+    ]
     subprocess.check_call(merge_command)
     with rasterio.open(merged_path, 'r') as src:
-        logger.info('No data after merge: %s', src.meta['nodata'])
+        logger.debug('No data after merge: %s', src.meta['nodata'])
     return merged_path
 
 
@@ -90,87 +100,6 @@ def sort_key(datasource_id, band):
         raise ValueError(
             'Trying to run public COG ingest for scene with mysterious datasource',
             datasource_id)
-
-
-def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
-    with rasterio.open(src_path, 'r') as src:
-        logger.info('Initial no data before resampling: %s',
-                    src.meta['nodata'])
-    src_fname = os.path.split(src_path)[-1]
-    src_fname_ext = src_fname.split('.')[-1]
-    dst_fname = src_fname.replace(src_fname_ext, 'warped.tif')
-    dst_path = os.path.join(local_dir, dst_fname)
-    if src_x == dst_x and src_y == dst_y:
-        logger.info(
-            'No need to reproject for %s, already in target resolution',
-            src_path)
-        subprocess.check_call([
-            'gdal_translate', '-co', 'COMPRESS=DEFLATE', '-co',
-            'BIGTIFF=IF_SAFER', src_path, dst_path
-        ])
-    # if there are any resolution difference, including if they're weird, like a
-    # greater x resolution and lesser y resolution, reproject to the same size
-    else:
-        # Landsat 8 / Sentinel-2 images have a bunch of single band components
-        x_rat = int(src_x / dst_x)
-        y_rat = int(src_y / dst_y)
-        logger.info('Resampling %s', src_fname)
-        logger.info('Increasing x resolution by %sx, y resolution by %sx',
-                    x_rat, y_rat)
-        # No need to throw in -wo for the compression options, since we're doing all
-        # of the bands at once
-        subprocess.check_call([
-            'gdalwarp', '-co', 'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2', '-co',
-            'BIGTIFF=IF_SAFER', '-tr',
-            str(dst_x),
-            str(dst_y), src_path, dst_path
-        ])
-    return dst_path
-
-
-def warp_tifs(local_tif_paths, local_dir, parallel=True):
-    logger.info('Getting metadata for tifs')
-    sources = [rasterio.open(p) for p in local_tif_paths]
-    # a is x resoution, e is y resolution
-    paths_with_resolutions = [
-        (path, source.meta['transform'].a, source.meta['transform'].e)
-        for path, source in zip(local_tif_paths, sources)
-    ]
-    # assume cells are square to find the minimum -- this could be wrong, but isn't for any
-    # of the imagery we know we're using
-    min_resolution = sorted(paths_with_resolutions, key=lambda x: x[1])[0]
-    tupled = [(src_path, local_dir, src_x, min_resolution[1], src_y,
-               min_resolution[2])
-              for src_path, src_x, src_y in paths_with_resolutions]
-    logger.info('Resampling to maximum available resolution')
-    pool = Pool(cpu_count())
-    try:
-        warped_paths = pool.map(resample_tif_uncurried, tupled)
-    finally:
-        pool.close()
-    return warped_paths
-
-
-def resample_tif_uncurried(tup):
-    """Resample a tif from a tuple containing all the resample_tif arguments
-
-    The tuple is:
-
-    (src_path, local_dir, src_x, dst_x, src_y, dst_y)
-
-    This function exists so that something can be pickled and passed to pool.map,
-    since resampling is costly, functions are only pickleable if they're
-    defined at the top level of a module, and pool.map takes functions of one
-    argument.
-
-    Uncurried from:
-
-    uncurried :: (a -> b -> c) -> (a, b) -> c
-
-    in Haskell-land
-    """
-
-    return resample_tif(tup[0], tup[1], tup[2], tup[3], tup[4], tup[5])
 
 
 def fetch_imagery_uncurried(tup):

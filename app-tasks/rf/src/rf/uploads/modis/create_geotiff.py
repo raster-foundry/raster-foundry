@@ -71,15 +71,11 @@ def create_geotiffs(modis_path, local_dir):
 
     tifs = sorted(hdf_to_geotiffs(modis_path, local_dir))
     logger.info('Tifs: %s', '\n'.join(tifs))
-    warped_paths = cog.warp_tifs(tifs, local_dir)
-    merged_tif = cog.merge_tifs(warped_paths, local_dir)
+    merged_tif = cog.merge_tifs(tifs, local_dir)
     warp_tif(merged_tif, post_web_mercator_path)
     with rasterio.open(post_web_mercator_path, 'r') as src:
         logger.info('Nodata before adding overviews: %s', src.meta['nodata'])
     cog.add_overviews(post_web_mercator_path)
     with rasterio.open(post_web_mercator_path, 'r') as src:
         logger.info('Nodata after adding overviews: %s', src.meta['nodata'])
-    cog_path = cog.convert_to_cog(post_web_mercator_path, local_dir)
-    with rasterio.open(cog_path, 'r') as src:
-        logger.info('Nodata after cog conversion: %s', src.meta['nodata'])
-    return [cog_path]
+    return [post_web_mercator_path]

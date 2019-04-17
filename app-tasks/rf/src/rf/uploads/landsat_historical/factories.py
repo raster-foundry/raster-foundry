@@ -127,10 +127,8 @@ def process_to_cog(prefix, gcs_prefix, landsat_id, config):
         'STACKED': os.path.join(prefix, stacked_fname)
     }
     local_paths = sorted(glob.glob('{}/{}*.TIF'.format(prefix, landsat_id)))
-    warped_paths = cog.warp_tifs(local_paths, prefix)
-    merged = cog.merge_tifs(warped_paths, prefix)
-    cog.add_overviews(merged)
-    cog_path = cog.convert_to_cog(merged, prefix)
+    cog_path = cog.merge_tifs(local_paths, prefix)
+    cog.add_overviews(cog_path)
     shutil.move(cog_path, filenames['COG'])
     return (filenames['COG'], cog_fname)
 
