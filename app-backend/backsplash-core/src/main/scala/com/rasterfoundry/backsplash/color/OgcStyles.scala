@@ -45,8 +45,8 @@ object OgcStyles {
     def renderImage(mbtile: MultibandTile,
                     format: OutputFormat,
                     hists: List[Histogram[Double]]): Array[Byte] = {
-      val tile = mbtile.subsetBands(singleBandParams.band)
-      val hist = List(hists(singleBandParams.band))
+      val tile = mbtile.subsetBands(singleBandParams.band - 1)
+      val hist = List(hists(singleBandParams.band - 1))
       val colored = ColorRampMosaic.colorTile(tile, hist, singleBandParams)
       toBytes(colored, format)
     }

@@ -5,6 +5,7 @@
 ### Added
 
 ### Changed
+- Improved supported CRS for WMS and WCS Services [\#4875](https://github.com/raster-foundry/raster-foundry/pull/4875)
 
 ### Deprecated
 
