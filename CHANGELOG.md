@@ -10,6 +10,8 @@
 
 ### Fixed
 
+- Add gitSnapshots prefix to Maven Central release command [\#4874](https://github.com/raster-foundry/raster-foundry/pull/4874)
+
 ### Security
 
 ## [1.19.0](https://github.com/raster-foundry/raster-foundry/tree/1.19.0) (2019-04-16)
