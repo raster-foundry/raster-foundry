@@ -25,15 +25,7 @@ object Main extends App with Config with Router {
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
-  val dbContextShift: ContextShift[IO] = IO.contextShift(
-    ExecutionContext.fromExecutor(
-      Executors.newFixedThreadPool(
-        8,
-        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
-      )
-    ))
-
-  val xa = RFTransactor.transactor(dbContextShift)
+  val xa = RFTransactor.buildTransactor()
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
   println(s"Server Started (${canSelect})")
