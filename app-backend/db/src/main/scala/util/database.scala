@@ -24,7 +24,7 @@ object RFTransactor {
       statementTimeout: String =
         Properties.envOrElse("POSTGRES_STATEMENT_TIMEOUT", "30000"),
       maximumPoolSize: Int =
-        Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "5").toInt,
+        Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "32").toInt,
       poolName: String = "Raster-Foundry-Hikari-Pool",
       maybeInitSql: Option[String] = None,
       contextShift: ContextShift[IO] = IO.contextShift(
