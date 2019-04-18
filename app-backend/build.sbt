@@ -212,7 +212,8 @@ lazy val common = project
       Dependencies.awsBatchSdk,
       Dependencies.rollbar,
       Dependencies.apacheCommonsEmail,
-      Dependencies.scalaCheck
+      Dependencies.scalaCheck,
+      Dependencies.akkaHttpExtensions
     )
   })
 
