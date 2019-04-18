@@ -9,7 +9,7 @@ import com.rasterfoundry.database.util.RFTransactor
 
 import doobie.implicits._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 object AkkaSystem {
   implicit val system = ActorSystem("rf-system")

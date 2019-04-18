@@ -7,7 +7,6 @@ import com.rasterfoundry.common.ast.MapAlgebraAST.{LayerRaster, ProjectRaster}
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
 import io.circe.syntax._
 import doobie.implicits._
 import org.scalatest._
