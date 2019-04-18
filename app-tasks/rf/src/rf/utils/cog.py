@@ -76,18 +76,22 @@ def merge_tifs(local_tif_paths, local_dir):
     for p in local_tif_paths:
         with rasterio.open(p, 'r') as src:
             nodata_vals.append(str(int(src.meta['nodata'] or 0)))
+    logger.info('Nodata vals before vrt: %s', nodata_vals)
     vrt_command = [
         'gdalbuildvrt', '-separate', '-resolution', 'highest', '-srcnodata',
         ' '.join(nodata_vals), '-vrtnodata', ' '.join(nodata_vals), vrt_path
     ] + local_tif_paths
+    logger.info('VRT Command is: %s', vrt_command)
     subprocess.check_call(vrt_command)
+    with rasterio.open(vrt_path, 'r') as src:
+        logger.info('Nodata vals in vrt: %s', src.nodatavals)
     merge_command = [
         'gdal_translate', '-co', 'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2',
         '-co', 'BIGTIFF=IF_SAFER', '-co', 'TILED=YES', vrt_path, merged_path
     ]
     subprocess.check_call(merge_command)
     with rasterio.open(merged_path, 'r') as src:
-        logger.debug('No data after merge: %s', src.meta['nodata'])
+        logger.info('No data after merge: %s', src.nodatavals)
     return merged_path
 
 

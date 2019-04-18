@@ -17,8 +17,6 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
     logger.info('Warping tif to web mercator: %s', combined_tif_path)
     with rasterio.open(combined_tif_path) as src:
         meta = src.meta
-        logger.info('Initial nodata for %s: %s', warped_tif_path,
-                    meta['nodata'])
         new_meta = meta.copy()
         transform, width, height = calculate_default_transform(
             src.crs, dst_crs, src.width, src.height, *src.bounds)
@@ -26,8 +24,7 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
             'crs': dst_crs,
             'transform': transform,
             'width': width,
-            'height': height,
-            'nodata': -28762
+            'height': height
         })
         with rasterio.open(
                 warped_tif_path, 'w', compress='DEFLATE', tiled=True,
@@ -40,8 +37,7 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
                     src_crs=src.crs,
                     dst_transform=transform,
                     dst_crs=dst_crs,
-                    resampling=Resampling.nearest,
-                    src_nodata=-28762)
+                    resampling=Resampling.nearest)
 
 
 def hdf_to_geotiffs(modis_path, local_dir):
@@ -72,10 +68,12 @@ def create_geotiffs(modis_path, local_dir):
     tifs = sorted(hdf_to_geotiffs(modis_path, local_dir))
     logger.info('Tifs: %s', '\n'.join(tifs))
     merged_tif = cog.merge_tifs(tifs, local_dir)
+    with rasterio.open(merged_tif, 'r') as src:
+        logger.info('Nodata before re-warping: %s', src.nodatavals)
     warp_tif(merged_tif, post_web_mercator_path)
     with rasterio.open(post_web_mercator_path, 'r') as src:
-        logger.info('Nodata before adding overviews: %s', src.meta['nodata'])
+        logger.info('Nodata before adding overviews: %s', src.nodatavals)
     cog.add_overviews(post_web_mercator_path)
     with rasterio.open(post_web_mercator_path, 'r') as src:
-        logger.info('Nodata after adding overviews: %s', src.meta['nodata'])
+        logger.info('Nodata after adding overviews: %s', src.nodatavals)
     return [post_web_mercator_path]
