@@ -6,7 +6,8 @@ addCommandAlias("mg", "migrations/run")
 
 addCommandAlias(
   "gitSnapshots",
-  ";set version in ThisBuild := git.gitDescribedVersion.value.get + \"-SNAPSHOT\"")
+  ";set version in ThisBuild := git.gitDescribedVersion.value.get + \"-SNAPSHOT\""
+)
 
 git.gitTagToVersionNumber in ThisBuild := { tag: String =>
   if (tag matches "[0-9]+\\..*") Some(tag)
@@ -23,8 +24,10 @@ lazy val sharedSettings = Seq(
   scalafmtOnCompile := true,
   scapegoatVersion in ThisBuild := "1.3.8",
   scalaVersion in ThisBuild := Version.scala,
-  unusedCompileDependenciesFilter -= moduleFilter("com.sksamuel.scapegoat",
-                                                  "scalac-scapegoat-plugin"),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "com.sksamuel.scapegoat",
+    "scalac-scapegoat-plugin"
+  ),
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",
@@ -65,7 +68,8 @@ lazy val sharedSettings = Seq(
     Opts.resolver.sonatypeReleases,
     Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins"),
     Resolver.file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
-      Resolver.ivyStylePatterns) // important to pull deps from the local repo
+      Resolver.ivyStylePatterns
+    ) // important to pull deps from the local repo
   ),
   shellPrompt := { s =>
     Project.extract(s).currentProject.id + " > "
@@ -73,7 +77,8 @@ lazy val sharedSettings = Seq(
   // https://www.scala-sbt.org/0.13/docs/Compiler-Plugins.html
   autoCompilerPlugins := true,
   addCompilerPlugin(
-    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
+  ),
   addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
 ) ++ publishSettings
@@ -94,19 +99,26 @@ lazy val publishSettings = Seq(
   description := "A platform to find, combine and analyze earth imagery at any scale.",
   sonatypeProfileName := "com.rasterfoundry",
   sonatypeProjectHosting := Some(
-    GitHubHosting(user = "raster-foundry",
-                  repository = "raster-foundry",
-                  email = "info@rasterfoundry.com")),
+    GitHubHosting(
+      user = "raster-foundry",
+      repository = "raster-foundry",
+      email = "info@rasterfoundry.com"
+    )
+  ),
   developers := List(
-    Developer(id = "azavea",
-              name = "Azavea Inc.",
-              email = "systems@azavea.com",
-              url = url("https://www.azavea.com"))
+    Developer(
+      id = "azavea",
+      name = "Azavea Inc.",
+      email = "systems@azavea.com",
+      url = url("https://www.azavea.com")
+    )
   ),
   licenses := Seq(
-    "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
+    "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")
+  ),
   pgpPassphrase := Some(
-    System.getenv().getOrDefault("PGP_PASSPHRASE", "").toCharArray),
+    System.getenv().getOrDefault("PGP_PASSPHRASE", "").toCharArray
+  ),
   pgpSecretRing := file("/root/.gnupg/secring.gpg"),
   usePgpKeyHex(System.getenv().getOrDefault("PGP_HEX_KEY", "0")),
   releaseProcess := Seq[ReleaseStep](
@@ -124,25 +136,29 @@ lazy val credentialsSettings = Seq(
     username <- Option(System.getenv().get("SONATYPE_USERNAME"))
     password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
   } yield
-    Credentials("Sonatype Nexus Repository Manager",
-                "oss.sonatype.org",
-                username,
-                password)).toSeq
+    Credentials(
+      "Sonatype Nexus Repository Manager",
+      "oss.sonatype.org",
+      username,
+      password
+    )).toSeq
 )
 
 lazy val root = project
   .in(file("."))
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
-  .aggregate(api,
-             akkautil,
-             db,
-             common,
-             migrations,
-             batch,
-             backsplashCore,
-             backsplashServer,
-             backsplashExport)
+  .aggregate(
+    api,
+    akkautil,
+    db,
+    common,
+    migrations,
+    batch,
+    backsplashCore,
+    backsplashServer,
+    backsplashExport
+  )
 
 /**
   * API Project Settings
@@ -212,7 +228,8 @@ lazy val common = project
       Dependencies.awsBatchSdk,
       Dependencies.rollbar,
       Dependencies.apacheCommonsEmail,
-      Dependencies.scalaCheck
+      Dependencies.scalaCheck,
+      Dependencies.akkaHttpExtensions % "test"
     )
   })
 
@@ -246,9 +263,11 @@ lazy val migrations = project
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
   .settings({
-    libraryDependencies ++= Seq(Dependencies.scalaforklift,
-                                Dependencies.hikariCP % Runtime,
-                                Dependencies.postgres % Runtime)
+    libraryDependencies ++= Seq(
+      Dependencies.scalaforklift,
+      Dependencies.hikariCP % Runtime,
+      Dependencies.postgres % Runtime
+    )
   })
 
 /**
@@ -280,19 +299,23 @@ lazy val batch = project
       "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.9.2"
     )
   })
-  .settings(assemblyShadeRules in assembly := Seq(
-    ShadeRule.rename("shapeless.**" -> "com.azavea.shaded.shapeless.@1").inAll,
-    ShadeRule
-      .rename(
-        "com.amazonaws.services.s3.**" -> "com.azavea.shaded.amazonaws.services.s3.@1"
-      )
-      .inAll,
-    ShadeRule
-      .rename(
-        "com.amazonaws.**" -> "com.azavea.shaded.amazonaws.@1"
-      )
-      .inAll
-  ))
+  .settings(
+    assemblyShadeRules in assembly := Seq(
+      ShadeRule
+        .rename("shapeless.**" -> "com.azavea.shaded.shapeless.@1")
+        .inAll,
+      ShadeRule
+        .rename(
+          "com.amazonaws.services.s3.**" -> "com.azavea.shaded.amazonaws.services.s3.@1"
+        )
+        .inAll,
+      ShadeRule
+        .rename(
+          "com.amazonaws.**" -> "com.azavea.shaded.amazonaws.@1"
+        )
+        .inAll
+    )
+  )
 
 /**
   * GeoTrellis Settings
@@ -344,7 +367,8 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin(
-      "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+      "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
+    )
   )
 
 /**
@@ -357,7 +381,9 @@ lazy val backsplashExport =
     .settings(
       resolvers += Resolver
         .file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
-          Resolver.ivyStylePatterns))
+          Resolver.ivyStylePatterns
+        )
+    )
     .settings(
       fork in run := true,
       libraryDependencies ++= Seq(
@@ -372,7 +398,8 @@ lazy val backsplashExport =
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
       addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
       addCompilerPlugin(
-        "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+        "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
+      ),
       assemblyJarName in assembly := "backsplash-export-assembly.jar"
     )
     .settings(assemblyMergeStrategy in assembly := {
@@ -389,39 +416,40 @@ lazy val backsplashExport =
 /**
   * Backsplash Server Settings
   */
-lazy val backsplashServer = Project("backsplash-server",
-                                    file("backsplash-server"))
-  .dependsOn(http4sUtil, db, backsplashCore)
-  .settings(sharedSettings: _*)
-  .settings(noPublishSettings)
-  .settings(fork in run := true)
-  .settings({
-    libraryDependencies ++= Seq(
-      Dependencies.catsMeow,
-      Dependencies.geotrellisServer,
-      Dependencies.http4sBlaze,
-      Dependencies.http4sCirce,
-      Dependencies.http4sDSL,
-      Dependencies.http4sServer,
-      Dependencies.mamlJvm,
-      Dependencies.sup,
-      Dependencies.scalacacheCore,
-      Dependencies.scalacacheCats,
-      Dependencies.scalacacheCaffeine
-    )
-  })
-  .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
-  .settings(assemblyMergeStrategy in assembly := {
-    case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard
-    case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
-    case "reference.conf"                               => MergeStrategy.concat
-    case "application.conf"                             => MergeStrategy.concat
-    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
-      MergeStrategy.discard
-    case _ => MergeStrategy.first
-  })
-  .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
-  .settings(test in assembly := {})
+lazy val backsplashServer =
+  Project("backsplash-server", file("backsplash-server"))
+    .dependsOn(http4sUtil, db, backsplashCore)
+    .settings(sharedSettings: _*)
+    .settings(noPublishSettings)
+    .settings(fork in run := true)
+    .settings({
+      libraryDependencies ++= Seq(
+        Dependencies.catsMeow,
+        Dependencies.geotrellisServer,
+        Dependencies.http4sBlaze,
+        Dependencies.http4sCirce,
+        Dependencies.http4sDSL,
+        Dependencies.http4sServer,
+        Dependencies.mamlJvm,
+        Dependencies.sup,
+        Dependencies.scalacacheCore,
+        Dependencies.scalacacheCats,
+        Dependencies.scalacacheCaffeine
+      )
+    })
+    .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
+    .settings(assemblyMergeStrategy in assembly := {
+      case m if m.toLowerCase.endsWith("manifest.mf") => MergeStrategy.discard
+      case m if m.toLowerCase.matches("meta-inf.*\\.sf$") =>
+        MergeStrategy.discard
+      case "reference.conf"   => MergeStrategy.concat
+      case "application.conf" => MergeStrategy.concat
+      case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
+        MergeStrategy.discard
+      case _ => MergeStrategy.first
+    })
+    .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
+    .settings(test in assembly := {})
 
 /**
   * http4s Utility project
