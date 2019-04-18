@@ -8,14 +8,10 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Strategy
 import doobie.free.connection.unit
-import cats.effect._
 import cats.implicits._
 import org.scalatest.{Suite, BeforeAndAfterAll}
 import scala.sys.process._
-import scala.concurrent.ExecutionContext
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 
-import java.util.concurrent.Executors
 import java.util.UUID
 
 // SetupTemplateDB is a singleton that is used to instantiate the template db
@@ -86,6 +82,7 @@ trait DBTestConfig extends BeforeAndAfterAll { this: Suite =>
           .const(templateDbName)
       ).update.run.transact(t)
     }.unsafeRunSync
+    ()
   }
 
   override def afterAll {
@@ -94,6 +91,7 @@ trait DBTestConfig extends BeforeAndAfterAll { this: Suite =>
       (fr"DROP DATABASE IF EXISTS" ++ Fragment.const(dbName)).update.run
         .transact(t)
     }.unsafeRunSync
+    ()
   }
 
   val defaultUserQ = UserDao.unsafeGetUserById("default")
