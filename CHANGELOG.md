@@ -10,6 +10,8 @@
 
 ### Fixed
 
+- Fixed broken publishing workflow when a user owns too many map tokens [\#4886](https://github.com/raster-foundry/raster-foundry/pull/4886)
+
 ### Security
 
 ## [1.19.0](https://github.com/raster-foundry/raster-foundry/tree/1.19.0) (2019-04-16)
