@@ -60,7 +60,7 @@ class ProjectLayerDatasourceDaoSpec
               "Listed datasources should be the same as that of scenes in this layer")
             assert(
               insertedDatasourceIds.toSet.size == listedDatasourceIds.length,
-              "Listed datasources length should be the same of deduplicated list of scene datasources")
+              "Listed datasources length should be the same as deduplicated list of scene datasources")
             true
           }
       }
