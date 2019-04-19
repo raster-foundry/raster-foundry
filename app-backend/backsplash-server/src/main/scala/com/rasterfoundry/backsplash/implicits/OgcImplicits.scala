@@ -52,6 +52,7 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
         decoded getOrElse Nil
       }
     }
+
     val shortest = bands.minBy(_.length)
     shortest map { band =>
       OgcStyles.fromSingleBandOptions(
@@ -70,13 +71,25 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
   }
 
   private def getStyles(projectLayerId: UUID): IO[List[OgcStyle]] =
-    ProjectLayerDatasourcesDao
-      .listProjectLayerDatasources(projectLayerId)
-      .transact(xa) map { datasources =>
-      (datasources flatMap { datasource =>
-        compositesToOgcStyles(datasource.composites)
-      }) ++ datasourcesToOgcStyles(datasources)
-    }
+    for {
+      configured <- ProjectLayerDatasourcesDao
+        .listProjectLayerDatasources(projectLayerId)
+        .transact(xa) map { datasources =>
+        (datasources flatMap { datasource =>
+          compositesToOgcStyles(datasource.composites)
+        }) ++ datasourcesToOgcStyles(datasources)
+      }
+      rf <- ProjectLayerDao
+        .unsafeGetProjectLayerById(projectLayerId)
+        .transact(xa) map { projectLayer =>
+        (projectLayer.singleBandOptions asJson)
+          .as[SingleBandOptions.Params] map {
+          OgcStyles.fromSingleBandOptions(_,
+                                          "Raster Foundry",
+                                          indexBand = false)
+        } toList
+      }
+    } yield { configured ++ rf }
 
   private def projectLayerToSimpleSource(
       projectLayer: ProjectLayer): IO[SimpleSource] =
