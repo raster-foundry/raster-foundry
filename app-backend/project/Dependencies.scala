@@ -29,7 +29,7 @@ object Version {
   val ficus = "1.4.0"
   val geotools = "17.1"
   val geotrellis = "2.2.0"
-  val geotrellisContrib = "0.10.2"
+  val geotrellisContrib = "2.11.0"
   val geotrellisServer = "0.1.15"
   val hadoop = "2.8.4"
   val hikariCP = "3.2.0"

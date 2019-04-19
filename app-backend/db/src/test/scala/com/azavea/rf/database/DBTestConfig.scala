@@ -51,6 +51,7 @@ object SetupTemplateDB {
 trait DBTestConfig extends BeforeAndAfterAll { this: Suite =>
   SetupTemplateDB
   val dbName = getClass.getSimpleName.toLowerCase
+  println(s"DBNAME: ${dbName}")
   val templateDbName = SetupTemplateDB.templateDbName
 
   // Transactor used by tests with rollback behavior and transactions

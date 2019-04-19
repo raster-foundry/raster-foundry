@@ -123,17 +123,17 @@ object UploadDao extends Dao[Upload] {
          platform.publicSettings.emailIngestNotification,
          owner.getEmail) match {
           case (_, _, _, "") | (_, _, false, _) => {
-            logger.info(
+            logger.debug(
               s"Upload complete, but user ${owner.id} or platform ${platform.name} has not requested email notifications")
             nAffected.pure[ConnectionIO]
           }
           case (UploadStatus.Processing, UploadStatus.Failed, true, s) => {
-            logger.info(s"notifying user ${owner.id} that their upload failed")
+            logger.debug(s"notifying user ${owner.id} that their upload failed")
             UploadNotifier(platform.id, id, MessageType.UploadFailed).send *>
               nAffected.pure[ConnectionIO]
           }
           case (UploadStatus.Processing, UploadStatus.Complete, true, s) => {
-            logger.info(
+            logger.debug(
               s"Notifying user ${owner.id} that their upload succeeded")
             UploadNotifier(platform.id, id, MessageType.UploadSucceeded).send *>
               nAffected.pure[ConnectionIO]
