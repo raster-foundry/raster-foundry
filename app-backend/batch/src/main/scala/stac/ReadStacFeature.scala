@@ -53,7 +53,9 @@ object CommandLine {
         .action(
           (p, conf) => conf.copy(path = p)
         )
-        .text("STAC geojson URI. ex: 'file:///opt/raster-foundry/app-backend/stac.geojson' 's3://{uri}' 'http://{uri}'")
+        .text(
+          "STAC geojson URI. ex: 'file:///opt/raster-foundry/app-backend/stac.geojson' 's3://{uri}' 'http://{uri}'"
+        )
 
       opt[String]('d', "datasource")
         .required()
@@ -68,7 +70,9 @@ object CommandLine {
 
 object ReadStacFeature extends Config with LazyLogging {
   val name = "read_stac_feature"
-  implicit val xa = RFTransactor.xa
+  implicit val xa = RFTransactor.buildTransactor()
+
+  RFTransactor.buildTransactor()
 
   def main(args: Array[String]): Unit = {
     val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
@@ -79,7 +83,8 @@ object ReadStacFeature extends Config with LazyLogging {
     }
     val path = params.path
     val rootUri = new URI(
-      path.split("/").iterator.sliding(2).flatMap(_.headOption).mkString("/"))
+      path.split("/").iterator.sliding(2).flatMap(_.headOption).mkString("/")
+    )
     val geojson =
       Source.fromInputStream(getStream(new URI(path))).getLines.mkString
     val decoded = decode[stac.Feature](geojson)
@@ -89,14 +94,16 @@ object ReadStacFeature extends Config with LazyLogging {
         params.testRun match {
           case true =>
             logger.info(
-              s"Test run, so scene was not actually created:\n${scene}")
+              s"Test run, so scene was not actually created:\n${scene}"
+            )
           case _ =>
             writeSceneToDb(scene)
             ()
         }
       case Left(error) =>
         logger.error(
-          s"There was an error decoding the geojson into a stac Feature: ${error.getLocalizedMessage}")
+          s"There was an error decoding the geojson into a stac Feature: ${error.getLocalizedMessage}"
+        )
     }
   }
 
@@ -128,8 +135,10 @@ object ReadStacFeature extends Config with LazyLogging {
       visibility = Visibility.Public,
       tags = feature.properties.provider.split(",").map(_.trim).toList,
       datasource = datasource,
-      sceneMetadata = MetadataWithStartStop(feature.properties.start,
-                                            feature.properties.end).asJson,
+      sceneMetadata = MetadataWithStartStop(
+        feature.properties.start,
+        feature.properties.end
+      ).asJson,
       name = feature.id,
       owner = Some(systemUser),
       tileFootprint = Some(multipolygonFromBbox(feature.bbox)),
@@ -157,8 +166,9 @@ object ReadStacFeature extends Config with LazyLogging {
     )
   }
 
-  protected def writeSceneToDb(scene: Scene.Create)(
-      implicit xa: Transactor[IO]): Scene.WithRelated = {
+  protected def writeSceneToDb(
+      scene: Scene.Create
+  )(implicit xa: Transactor[IO]): Scene.WithRelated = {
     val sceneInsertIO: ConnectionIO[Scene.WithRelated] =
       UserDao.getUserById(systemUser) flatMap {
         case Some(user) =>
@@ -166,35 +176,41 @@ object ReadStacFeature extends Config with LazyLogging {
           SceneDao.insert(scene, user)
         case _ =>
           throw new RuntimeException(
-            "System user not found. Make sure migrations have been run, and that batch config is correct")
+            "System user not found. Make sure migrations have been run, and that batch config is correct"
+          )
       }
     sceneInsertIO.transact(xa).unsafeRunSync
   }
 
-  protected def getBandedImages(imageAssets: Seq[stac.Asset],
-                                sceneId: UUID,
-                                rootUri: URI): List[Image.Banded] = {
+  protected def getBandedImages(
+      imageAssets: Seq[stac.Asset],
+      sceneId: UUID,
+      rootUri: URI
+  ): List[Image.Banded] = {
     // get product
     imageAssets
-      .flatMap(imageAsset =>
-        imageAsset.product match {
-          case Some(href) =>
-            // get product from file
-            val productJson = Source
-              .fromInputStream(getStream(new URI(href), rootUri))
-              .getLines
-              .mkString
-            val decoded = decode[stac.Product](productJson)
-            decoded match {
-              case Right(stacProduct) =>
-                Some(createImage(stacProduct, imageAsset, sceneId, rootUri))
-              case Left(error) =>
-                logger.error(
-                  s"There was an error decoding json into a stac Product: ${error.getLocalizedMessage}")
-                None
-            }
-          case _ => None
-      })
+      .flatMap(
+        imageAsset =>
+          imageAsset.product match {
+            case Some(href) =>
+              // get product from file
+              val productJson = Source
+                .fromInputStream(getStream(new URI(href), rootUri))
+                .getLines
+                .mkString
+              val decoded = decode[stac.Product](productJson)
+              decoded match {
+                case Right(stacProduct) =>
+                  Some(createImage(stacProduct, imageAsset, sceneId, rootUri))
+                case Left(error) =>
+                  logger.error(
+                    s"There was an error decoding json into a stac Product: ${error.getLocalizedMessage}"
+                  )
+                  None
+              }
+            case _ => None
+          }
+      )
       .toList
   }
 
@@ -220,13 +236,14 @@ object ReadStacFeature extends Config with LazyLogging {
             name = band.commonName,
             number = band.imageBandIndex,
             wavelength = List(band.centerWavelength.toInt)
-        )
+          )
       )
     )
   }
 
   protected def multipolygonFromBbox(
-      bbox: Seq[Double]): Projected[MultiPolygon] = {
+      bbox: Seq[Double]
+  ): Projected[MultiPolygon] = {
     val topLeft = Point(bbox(0), bbox(1))
     val topRight = Point(bbox(2), bbox(1))
     val lowerRight = Point(bbox(2), bbox(3))
@@ -256,7 +273,8 @@ object ReadStacFeature extends Config with LazyLogging {
   protected def thumbnailFromLink(
       link: stac.Link,
       sceneId: UUID,
-      rootUri: URI): Option[Thumbnail.Identified] = {
+      rootUri: URI
+  ): Option[Thumbnail.Identified] = {
     // fetch thumbnail, get width/height
     try {
       val thumb = ImageIO.read(getStream(new URI(link.href), rootUri))
@@ -271,11 +289,13 @@ object ReadStacFeature extends Config with LazyLogging {
           heightPx = thumb.getHeight,
           sceneId = sceneId,
           url = createThumbnailUrl(new URI(link.href), rootUri).toString
-        ))
+        )
+      )
     } catch {
       case e: Exception =>
         logger.error(
-          s"Error fetching thumbnail with URI: ${link.href}, ${rootUri}")
+          s"Error fetching thumbnail with URI: ${link.href}, ${rootUri}"
+        )
         None
     }
   }

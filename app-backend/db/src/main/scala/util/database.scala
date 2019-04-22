@@ -10,96 +10,96 @@ import java.util.concurrent.Executors
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 
-trait Config {
-  var jdbcDriver: String = "org.postgresql.Driver"
-  val jdbcNoDBUrl: String =
-    Properties.envOrElse(
-      "POSTGRES_URL",
-      "jdbc:postgresql://database.service.rasterfoundry.internal/")
-  val jdbcDBName: String =
-    Properties.envOrElse("POSTGRES_NAME", "rasterfoundry")
-  val jdbcUrl: String = jdbcNoDBUrl + jdbcDBName
-  val dbUser: String = Properties.envOrElse("POSTGRES_USER", "rasterfoundry")
-  val dbPassword: String =
-    Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry")
-  val dbStatementTimeout: String =
-    Properties.envOrElse("POSTGRES_STATEMENT_TIMEOUT", "30000")
-  val dbMaximumPoolSize: Int =
-    Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "5").toInt
-}
-
-object RFTransactor extends Config {
-
-  val hikariConfig = new HikariConfig()
-  hikariConfig.setPoolName("Raster-Foundry-Hikari-Pool")
-  hikariConfig.setMaximumPoolSize(dbMaximumPoolSize)
-  hikariConfig.setConnectionInitSql(
-    s"SET statement_timeout = ${dbStatementTimeout};")
-  hikariConfig.setJdbcUrl(jdbcUrl)
-  hikariConfig.setUsername(dbUser)
-  hikariConfig.setPassword(dbPassword)
-  hikariConfig.setDriverClassName(jdbcDriver)
-
-  val hikariDS = new HikariDataSource(hikariConfig)
-
-  // Execution contexts to be used by Hikari
-  val connectionEC =
-    ExecutionContext.fromExecutor(
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          Properties.envOrElse("HIKARI_CONNECTION_THREADS", "8").toInt,
-          new ThreadFactoryBuilder().setNameFormat("db-connection-%d").build()
+object RFTransactor {
+  final case class TransactorConfig(
+      dbName: String = Properties.envOrElse("POSTGRES_NAME", "rasterfoundry"),
+      driver: String = "org.postgresql.Driver",
+      postgresUrl: String = Properties.envOrElse(
+        "POSTGRES_URL",
+        "jdbc:postgresql://database.service.rasterfoundry.internal/"
+      ),
+      user: String = Properties.envOrElse("POSTGRES_USER", "rasterfoundry"),
+      password: String =
+        Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry"),
+      statementTimeout: String =
+        Properties.envOrElse("POSTGRES_STATEMENT_TIMEOUT", "30000"),
+      maximumPoolSize: Int =
+        Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "32").toInt,
+      poolName: String = "Raster-Foundry-Hikari-Pool",
+      maybeInitSql: Option[String] = None,
+      contextShift: ContextShift[IO] = IO.contextShift(
+        ExecutionContext.fromExecutor(
+          Executors.newFixedThreadPool(
+            8,
+            new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
+          )
         )
-      ))
+      )
+  ) {
+    val url = postgresUrl + dbName
+    val initSql =
+      maybeInitSql.getOrElse(s"SET statement_timeout = ${statementTimeout};")
 
-  val transactionEC =
-    ExecutionContext.fromExecutor(
+    lazy val hikariDataSource = {
+      val hikariConfig = new HikariConfig()
+      hikariConfig.setPoolName(poolName)
+      hikariConfig.setMaximumPoolSize(maximumPoolSize)
+      hikariConfig.setConnectionInitSql(initSql)
+      hikariConfig.setJdbcUrl(url)
+      hikariConfig.setUsername(user)
+      hikariConfig.setPassword(password)
+      hikariConfig.setDriverClassName(driver)
+
+      new HikariDataSource(hikariConfig)
+    }
+
+    val connectionEC =
       ExecutionContext.fromExecutor(
-        Executors.newCachedThreadPool(
-          new ThreadFactoryBuilder().setNameFormat("db-transaction-%d").build()
+        ExecutionContext.fromExecutor(
+          Executors.newFixedThreadPool(
+            Properties.envOrElse("HIKARI_CONNECTION_THREADS", "8").toInt,
+            new ThreadFactoryBuilder().setNameFormat("db-connection-%d").build()
+          )
         )
-      ))
+      )
 
-  def transactor(contextShift: ContextShift[IO]): HikariTransactor[IO] = {
-    implicit val cs = contextShift
-    HikariTransactor.apply[IO](hikariDS, connectionEC, transactionEC)
+    val transactionEC =
+      ExecutionContext.fromExecutor(
+        ExecutionContext.fromExecutor(
+          Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder()
+              .setNameFormat("db-transaction-%d")
+              .build()
+          )
+        )
+      )
   }
 
-  lazy val xaResource: Resource[IO, HikariTransactor[IO]] = {
-
-    implicit val cs: ContextShift[IO] = IO.contextShift(
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          8,
-          new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
-        )
-      ))
-
-    HikariTransactor.newHikariTransactor[IO](
-      jdbcDriver,
-      jdbcNoDBUrl,
-      dbUser,
-      dbPassword,
-      connectionEC,
-      transactionEC
-    )
-  }
-
-  // Only use in Tile subproject!!
-  lazy val xa: HikariTransactor[IO] = {
-
-    implicit val cs: ContextShift[IO] = IO.contextShift(
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          8,
-          new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
-        )
-      ))
-
+  def buildTransactor(
+      config: TransactorConfig = TransactorConfig()
+  ): HikariTransactor[IO] = {
+    implicit val cs: ContextShift[IO] = config.contextShift
     HikariTransactor.apply[IO](
-      hikariDS,
-      connectionEC,
-      transactionEC
+      config.hikariDataSource,
+      config.connectionEC,
+      config.transactionEC
     )
   }
+
+  def buildTransactorResource(
+      config: TransactorConfig = TransactorConfig()
+  ): Resource[IO, HikariTransactor[IO]] = {
+    implicit val cs: ContextShift[IO] = config.contextShift
+    HikariTransactor.newHikariTransactor[IO](
+      config.driver,
+      config.postgresUrl,
+      config.user,
+      config.password,
+      config.connectionEC,
+      config.transactionEC
+    )
+  }
+
+  lazy val xaResource: Resource[IO, HikariTransactor[IO]] =
+    buildTransactorResource()
 }
