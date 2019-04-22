@@ -58,8 +58,9 @@ trait DBTestConfig extends BeforeAndAfterAll { this: Suite =>
     dbName = dbName,
     maximumPoolSize = 100
   )
-  def xa = RFTransactor.nonHikariTransactor(xaConfig)
-  Transactor.after.set(xa, HC.rollback)
+  def xa =
+    Transactor.after
+      .set(RFTransactor.nonHikariTransactor(xaConfig), HC.rollback)
 
   // this transactor has error handling and cleanup but no transaction/auto-commit behavior
   val xantConfig = RFTransactor.TransactorConfig(dbName = "")
