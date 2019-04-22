@@ -18,9 +18,7 @@ class AoiDaoSpec
     with PropTestHelpers {
 
   test("list AOIs") {
-    xa.use(t => AoiDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    AoiDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("insert an AOI") {
@@ -45,7 +43,7 @@ class AoiDaoSpec
             } yield { (dbShape, dbAoi) }
 
             val (insertedShape, insertedAoi) =
-              xa.use(t => aoiInsertIO.transact(t)).unsafeRunSync
+              aoiInsertIO.transact(xa).unsafeRunSync
 
             assert(insertedAoi.shape == insertedShape.id,
                    "Shape should round trip with equality")
@@ -90,9 +88,8 @@ class AoiDaoSpec
               updatedAoi <- AoiDao.unsafeGetAoiById(dbAoi.id)
             } yield
               (dbAoi, shape, updatedRows, updatedAoi, newShape) //shape, aoi, dbOrg, dbUser, dbProject, update, updatedRows, updatedAoi)
-            val (_, _, affectedRows, updatedAoi, updatedShape) = xa
-              .use(t => aoiInsertWithOrgUserProjectIO.transact(t))
-              .unsafeRunSync
+            val (_, _, affectedRows, updatedAoi, updatedShape) =
+              aoiInsertWithOrgUserProjectIO.transact(xa).unsafeRunSync
 
             assert(affectedRows == 1, "Only one row should be updated")
             assert(updatedAoi.shape == updatedShape.id,
@@ -133,7 +130,7 @@ class AoiDaoSpec
               deletedShapes <- AoiDao.deleteAOI(dbAoi.id)
             } yield deletedShapes
 
-            xa.use(t => aoiDeleteIO.transact(t)).unsafeRunSync == 1
+            aoiDeleteIO.transact(xa).unsafeRunSync == 1
           }
       }
     }
@@ -189,7 +186,7 @@ class AoiDaoSpec
             }
 
             val (dbAois, listedAois) =
-              xa.use(t => aoisForProject.transact(t)).unsafeRunSync
+              aoisForProject.transact(xa).unsafeRunSync
             (dbAois.toSet map { (aoi: AOI) =>
               aoi.id
             }) == (listedAois.results.toSet map { (aoi: AOI) =>
@@ -247,7 +244,7 @@ class AoiDaoSpec
                                                       page)
             } yield (dbAois1, listedAois)
             val (insertedAois, listedAois) =
-              xa.use(t => aoisInsertAndListIO.transact(t)).unsafeRunSync
+              aoisInsertAndListIO.transact(xa).unsafeRunSync
             val insertedAoiAreaSet = insertedAois map { _.id } toSet
             val listedAoisAreaSet = listedAois.results map { _.id } toSet
 

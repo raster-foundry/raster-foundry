@@ -17,9 +17,7 @@ class ToolDaoSpec
     with DBTestConfig
     with PropTestHelpers {
   test("selection types") {
-    xa.use(t => ToolDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    ToolDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("list tools") {
@@ -45,7 +43,7 @@ class ToolDaoSpec
             } yield (dbTools, listed)
 
             val (inserted, listed) =
-              xa.use(t => toolListIO.transact(t)).unsafeRunSync
+              toolListIO.transact(xa).unsafeRunSync
 
             assert(toolCreates.length == inserted.length,
                    "all of the tools were inserted into the db")
@@ -80,7 +78,7 @@ class ToolDaoSpec
             } yield (dbTool2, fetched)
 
             val (updateTool, fetched) =
-              xa.use(t => updateIO.transact(t)).unsafeRunSync
+              updateIO.transact(xa).unsafeRunSync
             assert(
               fetched.title == updateTool.title,
               "Title of fetched tool should be the title of the udpate tool")

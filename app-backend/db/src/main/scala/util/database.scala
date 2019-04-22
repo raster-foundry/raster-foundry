@@ -9,6 +9,8 @@ import scala.util.Properties
 import java.util.concurrent.Executors
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import doobie.util.transactor.Transactor
+import doobie.util.transactor.Transactor.Aux
 
 object RFTransactor {
   final case class TransactorConfig(
@@ -97,6 +99,16 @@ object RFTransactor {
       config.password,
       config.connectionEC,
       config.transactionEC
+    )
+  }
+
+  def nonHikariTransactor(config: TransactorConfig) = {
+    implicit val cs: ContextShift[IO] = config.contextShift
+    Transactor.fromDriverManager[IO](
+      "org.postgresql.Driver",
+      config.postgresUrl,
+      config.user,
+      config.password
     )
   }
 

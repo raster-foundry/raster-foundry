@@ -42,6 +42,6 @@ class CirceJsonbMetaSpec extends FunSpec with Matchers with DBTestConfig {
       js <- select(123)
     } yield js
 
-    xa.use(t => jsonOut.transact(t)).unsafeRunSync shouldBe jsonIn
+    jsonOut.transact(xa).unsafeRunSync shouldBe jsonIn
   }
 }
