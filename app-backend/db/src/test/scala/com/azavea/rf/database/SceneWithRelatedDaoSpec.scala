@@ -68,7 +68,7 @@ class SceneWithRelatedDaoSpec
             } yield { (dbScenes1, listedScenes, listedScenesWithDS) }
 
             val (insertedScenes, listedScenes, listedWithDS) =
-              xa.use(t => scenesIO.transact(t)).unsafeRunSync
+              scenesIO.transact(xa).unsafeRunSync
 
             val insertedNamesSet = insertedScenes.toSet map {
               (scene: Scene.WithRelated) =>
@@ -133,7 +133,7 @@ class SceneWithRelatedDaoSpec
             } yield { (dbScenes, retrievedScenes) }
 
             val (insertedScenes, scenesInProject) =
-              xa.use(t => scenesToIngestIO.transact(t)).unsafeRunSync
+              scenesToIngestIO.transact(xa).unsafeRunSync
             val ingestableScenesIds = scenesInProject filter { scene =>
               (scene.statusFields.ingestStatus, scene.sceneType) match {
                 case (_, Some(SceneType.COG))       => false

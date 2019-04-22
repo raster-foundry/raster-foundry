@@ -38,7 +38,7 @@ class ToolRunDaoSpec
             } yield (withProjectId.projectId, inserted)
 
             val (projectIdCheck, insertedToolRun) =
-              xa.use(t => toolRunInsertIO.transact(t)).unsafeRunSync
+              toolRunInsertIO.transact(xa).unsafeRunSync
 
             assert(
               insertedToolRun.name == toolRunCreate.name,
@@ -90,7 +90,7 @@ class ToolRunDaoSpec
             } yield (withProjectLayerId.projectLayerId, inserted)
 
             val (projectLayerIdCheck, insertedToolRun) =
-              xa.use(t => toolRunInsertIO.transact(t)).unsafeRunSync
+              toolRunInsertIO.transact(xa).unsafeRunSync
 
             assert(
               insertedToolRun.name == toolRunCreate.name,
@@ -143,7 +143,7 @@ class ToolRunDaoSpec
             } yield (withTemplateId.templateId, inserted)
 
             val (templateIdCheck, insertedToolRun) =
-              xa.use(t => toolRunInsertIO.transact(t)).unsafeRunSync
+              toolRunInsertIO.transact(xa).unsafeRunSync
 
             assert(
               insertedToolRun.name == toolRunCreate.name,
@@ -198,7 +198,7 @@ class ToolRunDaoSpec
             } yield { (fetched, inserted2) }
 
             val (retrieved, updateRecord) =
-              xa.use(t => insertAndUpdateIO.transact(t)).unsafeRunSync
+              insertAndUpdateIO.transact(xa).unsafeRunSync
 
             assert(
               retrieved.name == updateRecord.name,
@@ -263,7 +263,7 @@ class ToolRunDaoSpec
                 .list
             } yield { (listedGood, listedBad) }
 
-            val (good, bad) = xa.use(t => listIO.transact(t)).unsafeRunSync
+            val (good, bad) = listIO.transact(xa).unsafeRunSync
             assert(
               good.length == 1,
               "Only the tool run we just created should have come back from the good list")
@@ -326,7 +326,7 @@ class ToolRunDaoSpec
                 .list
             } yield { (listedGood, listedBad) }
 
-            val (good, bad) = xa.use(t => listIO.transact(t)).unsafeRunSync
+            val (good, bad) = listIO.transact(xa).unsafeRunSync
             assert(
               good.length == 1,
               "Only the tool run we just created should have come back from the good list")
@@ -387,7 +387,7 @@ class ToolRunDaoSpec
                 .list
             } yield { (listedGood, listedBad) }
 
-            val (good, bad) = xa.use(t => listIO.transact(t)).unsafeRunSync
+            val (good, bad) = listIO.transact(xa).unsafeRunSync
             assert(
               good.length == 1,
               "Only the tool run we just created should have come back from the good list")
@@ -440,7 +440,7 @@ class ToolRunDaoSpec
                  projectLayer,
                  dbTemplate,
                  dbAnalysis) =
-              xa.use(t => listAnalysesWithRelatedIO.transact(t)).unsafeRunSync
+              listAnalysesWithRelatedIO.transact(xa).unsafeRunSync
             val analysisWithRelated = ToolRunWithRelated(
               dbAnalysis.id,
               dbAnalysis.name,

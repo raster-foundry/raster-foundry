@@ -22,13 +22,8 @@ class ExportDaoSpec
     with MapAlgebraCodec {
 
   test("types") {
-    xa.use(
-        t => {
-          ExportDao.query.list.transact(t)
-        }
-      )
-      .unsafeRunSync
-      .length should be >= 0
+
+    ExportDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("can create an export definition for project export") {
@@ -65,7 +60,7 @@ class ExportDaoSpec
               }
             } yield exportDefinition
 
-            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            projectInsertIO.transact(xa).unsafeRunSync
             true
           }
       }
@@ -108,7 +103,7 @@ class ExportDaoSpec
               }
             } yield exportDefinition
 
-            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            projectInsertIO.transact(xa).unsafeRunSync
             true
           }
       }
@@ -174,7 +169,7 @@ class ExportDaoSpec
                                                                 dbUser)
             } yield exportDefinition
 
-            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            projectInsertIO.transact(xa).unsafeRunSync
             true
           }
       }

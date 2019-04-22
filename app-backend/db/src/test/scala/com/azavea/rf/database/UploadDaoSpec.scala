@@ -15,9 +15,7 @@ class UploadDaoSpec
     with DBTestConfig
     with PropTestHelpers {
   test("list uploads") {
-    xa.use(t => UploadDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    UploadDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("insert an upload") {
@@ -40,7 +38,7 @@ class UploadDaoSpec
                 dbUser)
             } yield insertedUpload
 
-            val dbUpload = xa.use(t => uploadInsertIO.transact(t)).unsafeRunSync
+            val dbUpload = uploadInsertIO.transact(xa).unsafeRunSync
 
             dbUpload.uploadStatus == upload.uploadStatus &&
             dbUpload.fileType == upload.fileType &&
@@ -75,7 +73,7 @@ class UploadDaoSpec
             } yield (insertedUpload, dbProject)
 
             val (dbUpload, dbProject) =
-              xa.use(t => uploadInsertIO.transact(t)).unsafeRunSync
+              uploadInsertIO.transact(xa).unsafeRunSync
 
             dbUpload.uploadStatus == upload.uploadStatus &&
             dbUpload.fileType == upload.fileType &&
@@ -119,7 +117,7 @@ class UploadDaoSpec
             } yield (insertedUpload, dbProject, dbLayer)
 
             val (dbUpload, dbProject, dbLayer) =
-              xa.use(t => uploadInsertIO.transact(t)).unsafeRunSync
+              uploadInsertIO.transact(xa).unsafeRunSync
 
             dbUpload.uploadStatus == upload.uploadStatus &&
             dbUpload.fileType == upload.fileType &&
@@ -185,7 +183,7 @@ class UploadDaoSpec
             }
 
             val (affectedRows, updatedUpload) =
-              xa.use(t => uploadUpdateWithUploadIO.transact(t)).unsafeRunSync
+              uploadUpdateWithUploadIO.transact(xa).unsafeRunSync
 
             affectedRows == 1 &&
             updatedUpload.uploadStatus == updateUpload.uploadStatus &&

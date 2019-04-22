@@ -70,7 +70,7 @@ class ProjectLayerDatasourceDaoSpec
             }
 
             val (insertedDatasources, listedDatasources) =
-              xa.use(t => datasourceListIO.transact(t)).unsafeRunSync
+              datasourceListIO.transact(xa).unsafeRunSync
             val insertedIds = insertedDatasources.toSet map {
               (datasource: Datasource.Thin) =>
                 datasource.id
