@@ -53,7 +53,7 @@ class ProjectLayerDatasourceDaoSpec
             } yield (dbScenes.map(_.datasource.id), layerDatsources.map(_.id))
 
             val (insertedDatasourceIds, listedDatasourceIds) =
-              xa.use(t => datasourcesIO.transact(t)).unsafeRunSync
+              datasourcesIO.transact(xa).unsafeRunSync
 
             assert(
               insertedDatasourceIds.toSet == listedDatasourceIds.toSet,
