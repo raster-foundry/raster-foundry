@@ -8,6 +8,7 @@ export default (app) => {
             this.previewOnMap = false;
             this.authService = authService;
             this.uploadService = uploadService;
+            this.showDateWarning = false;
         }
 
         initDatasources() {
@@ -184,8 +185,19 @@ export default (app) => {
         }
 
         dateFilterAdapter(filters) {
+            let oneDayAgoUnix = Math.round(new Date().getTime() / 1000) - (24 * 3600);
+            let oneDayAgo = new Date(oneDayAgoUnix * 1000);
+            let filterMax = new Date(filters.maxAcquisitionDatetime);
+            let maxAcquisitionDatetime;
+            if (oneDayAgo < filterMax) {
+                this.showDateWarning = true;
+                maxAcquisitionDatetime = oneDayAgo;
+            } else {
+                this.showDateWarning = false;
+                maxAcquisitionDatetime = filterMax;
+            }
             // eslint-disable-next-line
-            return `${filters.minAcquisitionDatetime || ''},${filters.maxAcquisitionDatetime || ''}`;
+            return `${filters.minAcquisitionDatetime || ''},${maxAcquisitionDatetime.toISOString() || ''}`;
         }
 
         // Transform a single scene

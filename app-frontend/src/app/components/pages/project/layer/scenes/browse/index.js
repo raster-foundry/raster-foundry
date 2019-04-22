@@ -383,6 +383,12 @@ class LayerScenesBrowseController {
             this.scenesOnMap = newSceneIds;
         });
     }
+
+    showDateWarning() {
+        return this.currentRepository &&
+            this.currentRepository.label === 'NASA CMR' &&
+            this.currentRepository.service.showDateWarning;
+    }
 }
 
 const component = {
