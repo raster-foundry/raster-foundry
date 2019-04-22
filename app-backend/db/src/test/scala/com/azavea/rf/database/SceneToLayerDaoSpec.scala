@@ -79,6 +79,7 @@ class SceneToLayerDaoSpec
          page: PageRequest,
          csq: CombinedSceneQueryParams) =>
           {
+
             val mdAndStpsIO = for {
               (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
                                                                     org,

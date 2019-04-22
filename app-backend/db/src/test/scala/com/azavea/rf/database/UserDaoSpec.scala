@@ -293,7 +293,6 @@ class UserDaoSpec
              u3VisibleUsers,
              u3AdminVisibleUsers)
           }
-          orgsIO.transact(xa).unsafeRunSync
 
           val (u1, _, u3, u4, u1users, u2users, u3users, u3usersAdmin) =
             orgsIO.transact(xa).unsafeRunSync
