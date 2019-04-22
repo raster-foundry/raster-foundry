@@ -10,6 +10,7 @@
 
 ### Fixed
 
+- Deduplicate datasources returned from layer datasource endpoint [\#4885](https://github.com/raster-foundry/raster-foundry/pull/4885)
 - Fixed broken publishing workflow when a user owns too many map tokens [\#4886](https://github.com/raster-foundry/raster-foundry/pull/4886)
 
 ### Security
