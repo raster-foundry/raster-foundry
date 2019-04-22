@@ -248,9 +248,6 @@ class AoiDaoSpec
             val insertedAoiAreaSet = insertedAois map { _.id } toSet
             val listedAoisAreaSet = listedAois.results map { _.id } toSet
 
-            println(s"AOIS1: ${aois1.length}")
-            println(s"Inserted AOIs: ${insertedAoiAreaSet.size}")
-            println(s"Listed AOIs: ${listedAoisAreaSet}")
             assert(listedAoisAreaSet
                      .intersect(insertedAoiAreaSet) == listedAoisAreaSet,
                    "Listed AOI areas are a strict subset of inserted AOI areas")

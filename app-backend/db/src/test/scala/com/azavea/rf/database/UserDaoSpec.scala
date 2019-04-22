@@ -218,14 +218,8 @@ class UserDaoSpec
          org2: Organization.Create) => {
           val defaultUser = uc1.toUser.copy(id = "default")
           val orgsIO = for {
-            p1 <- {
-              println(s"Platform 1: ${pc1.id}")
-              PlatformDao.create(pc1)
-            }
-            p2 <- {
-              println(s"Platform 2: ${pc2.id}")
-              PlatformDao.create(pc2)
-            }
+            p1 <- PlatformDao.create(pc1)
+            p2 <- PlatformDao.create(pc2)
             org1 <- OrganizationDao.createOrganization(
               org1.copy(platformId = p1.id))
             org2 <- OrganizationDao.createOrganization(
