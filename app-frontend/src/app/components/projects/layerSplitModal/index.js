@@ -1,5 +1,5 @@
 import angular from 'angular';
-import { get } from 'lodash';
+import { get, uniqBy } from 'lodash';
 
 import tpl from './index.html';
 
@@ -129,7 +129,7 @@ class LayerSplitModalController {
         this.projectService
             .getProjectLayerDatasources(this.projectId, this.layerId)
             .then(datasources => {
-                this.hasMultipleDatasources = datasources.length > 1;
+                this.hasMultipleDatasources = get(uniqBy(datasources, 'id'), 'length') > 1;
             });
     }
 

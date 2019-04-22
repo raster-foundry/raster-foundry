@@ -10,6 +10,8 @@
 
 ### Fixed
 
+- Deduplicate datasources returned from layer datasource endpoint [\#4885](https://github.com/raster-foundry/raster-foundry/pull/4885)
+
 ### Security
 
 ## [1.19.0](https://github.com/raster-foundry/raster-foundry/tree/1.19.0) (2019-04-16)
