@@ -23,7 +23,7 @@ class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
   """.update
 
   val createTable = sql"""
-    CREATE TABLE jtsgeom_test_table (
+    CREATE TABLE IF NOT EXISTS jtsgeom_test_table (
       id          integer                      NOT NULL UNIQUE,
       point       geometry(Point, 3857)        NOT NULL,
       line        geometry(LineString, 3857)   NOT NULL,
@@ -62,6 +62,7 @@ class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
     )
 
     val geomOut = for {
+      _ <- drop.run
       _ <- createTable.run
       _ <- insert(GeometryClass(123, point, line, poly, mpoly)).run
       js <- select(123)

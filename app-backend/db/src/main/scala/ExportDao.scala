@@ -93,7 +93,7 @@ object ExportDao extends Dao[Export] {
       case Right(eo) => eo
     }
 
-    logger.debug("Decoded export options successfully")
+    logger.trace("Decoded export options successfully")
 
     val outputDefinition: ConnectionIO[OutputDefinition] = for {
       user <- UserDao.getUserById(export.owner)
@@ -107,8 +107,8 @@ object ExportDao extends Dao[Export] {
 
     val exportSource: ConnectionIO[Json] = {
 
-      logger.debug(s"Project id when getting input style: ${export.projectId}")
-      logger.debug(s"Tool run id when getting input style: ${export.toolRunId}")
+      logger.trace(s"Project id when getting input style: ${export.projectId}")
+      logger.trace(s"Tool run id when getting input style: ${export.toolRunId}")
       (export.projectId, export.projectLayerId, export.toolRunId) match {
         // Exporting a tool-run
         case (_, _, Some(toolRunId)) =>
@@ -143,14 +143,14 @@ object ExportDao extends Dao[Export] {
     }
 
     for {
-      _ <- logger.debug("Creating output definition").pure[ConnectionIO]
+      _ <- logger.trace("Creating output definition").pure[ConnectionIO]
       outputDef <- outputDefinition
       _ <- logger
         .info(s"Created output definition for ${exportOptions.source}")
         .pure[ConnectionIO]
-      _ <- logger.debug(s"Creating input definition").pure[ConnectionIO]
+      _ <- logger.trace(s"Creating input definition").pure[ConnectionIO]
       sourceDef <- exportSource
-      _ <- logger.debug("Created input definition").pure[ConnectionIO]
+      _ <- logger.trace("Created input definition").pure[ConnectionIO]
     } yield {
       Json.obj("id" -> export.id.asJson,
                "src" -> sourceDef,
@@ -170,14 +170,14 @@ object ExportDao extends Dao[Export] {
   ): ConnectionIO[AnalysisExportSource] = {
     for {
       toolRun <- ToolRunDao.query.filter(toolRunId).select
-      _ <- logger.debug("Got tool run").pure[ConnectionIO]
+      _ <- logger.trace("Got tool run").pure[ConnectionIO]
       oldAST <- {
         toolRun.executionParameters.as[MapAlgebraAST] match {
           case Right(mapAlgebraAST) => mapAlgebraAST
           case Left(e)              => throw e
         }
       }.pure[ConnectionIO]
-      _ <- logger.debug("Fetched ast").pure[ConnectionIO]
+      _ <- logger.trace("Fetched ast").pure[ConnectionIO]
       exportParameters <- getExportParameters(oldAST)
       _ <- logger
         .debug("Found ingest locations for projects")
@@ -331,8 +331,8 @@ object ExportDao extends Dao[Export] {
     }
 
     val parameters: Set[Parameters] = {
-      logger.debug(s"AST TILE SOURCES: ${ast.tileSources}")
-      logger.debug(s"AST ${ast.asJson}")
+      logger.trace(s"AST TILE SOURCES: ${ast.tileSources}")
+      logger.trace(s"AST ${ast.asJson}")
 
       ast.tileSources.flatMap { s =>
         s match {
@@ -351,8 +351,8 @@ object ExportDao extends Dao[Export] {
         }
       }
     }
-    logger.debug(s"Parameters: ${parameters}")
-    logger.debug(s"Working with this many parameters: ${parameters.size}")
+    logger.trace(s"Parameters: ${parameters}")
+    logger.trace(s"Working with this many parameters: ${parameters.size}")
 
     val projectIds =
       parameters

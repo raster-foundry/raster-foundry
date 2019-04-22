@@ -303,7 +303,7 @@ object ProjectDao
       _ <- updateSceneIngestStatus(projectLayerId)
       scenesToIngest <- SceneWithRelatedDao.getScenesToIngest(projectLayerId)
       _ <- scenesToIngest traverse { (scene: Scene) =>
-        logger.debug(
+        logger.trace(
           s"Kicking off ingest for scene ${scene.id} with ingest status ${scene.statusFields.ingestStatus}")
         kickoffSceneIngest(scene.id).pure[ConnectionIO]
       }

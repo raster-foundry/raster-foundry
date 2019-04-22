@@ -18,7 +18,7 @@ class CirceJsonbMetaSpec extends FunSpec with Matchers with DBTestConfig {
   """.update
 
   val createTable = sql"""
-    CREATE TABLE jsonb_test_table (
+    CREATE TABLE IF NOT EXISTS jsonb_test_table (
       id          integer       NOT NULL UNIQUE,
       json        jsonb         NOT NULL
     )
@@ -37,6 +37,7 @@ class CirceJsonbMetaSpec extends FunSpec with Matchers with DBTestConfig {
     val jsonIn = List(123, 234, 345).asJson
 
     val jsonOut = for {
+      _ <- drop.run
       _ <- createTable.run
       _ <- insert(JsonClass(123, jsonIn)).run
       js <- select(123)
