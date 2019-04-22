@@ -30,56 +30,38 @@ class ProjectLayerDatasourceDaoSpec
             page: PageRequest
         ) =>
           {
-            val scenesInsertWithUserProjectIO = for {
+            val datasourcesIO = for {
               (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
                                                                     org,
                                                                     platform,
                                                                     project)
-              datasource <- DatasourceDao.create(
-                dsCreate.toDatasource(dbUser),
-                dbUser
-              )
-              scenesInsert <- (scenes map {
+              datasource <- fixupDatasource(dsCreate, dbUser)
+              dbScenes <- (scenes map {
                 fixupSceneCreate(dbUser, datasource, _)
               }).traverse(
                 (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
               )
-            } yield (scenesInsert, dbUser, dbProject, datasource)
-
-            val datasourceListIO = scenesInsertWithUserProjectIO flatMap {
-              case (
-                  dbScenes: List[Scene.WithRelated],
-                  dbUser: User,
-                  dbProject: Project,
-                  datasource: Datasource
-                  ) => {
-                ProjectDao.addScenesToProject(
-                  dbScenes map { _.id },
-                  dbProject.id,
+              _ <- ProjectDao.addScenesToProject(
+                dbScenes map { _.id },
+                dbProject.id,
+                dbProject.defaultLayerId
+              )
+              layerDatsources <- ProjectLayerDatasourcesDao
+                .listProjectLayerDatasources(
                   dbProject.defaultLayerId
-                ) flatMap { _ =>
-                  {
-                    ProjectLayerDatasourcesDao.listProjectLayerDatasources(
-                      dbProject.defaultLayerId
-                    ) map { datasources: List[Datasource] =>
-                      (dbScenes.map { _.datasource }, datasources)
-                    }
-                  }
-                }
-              }
-            }
+                )
+            } yield (dbScenes.map(_.datasource.id), layerDatsources.map(_.id))
 
-            val (insertedDatasources, listedDatasources) =
-              datasourceListIO.transact(xa).unsafeRunSync
-            val insertedIds = insertedDatasources.toSet map {
-              (datasource: Datasource.Thin) =>
-                datasource.id
-            }
-            val listedIds = listedDatasources.toSet map {
-              (datasource: Datasource) =>
-                datasource.id
-            }
-            insertedIds == listedIds
+            val (insertedDatasourceIds, listedDatasourceIds) =
+              datasourcesIO.transact(xa).unsafeRunSync
+
+            assert(
+              insertedDatasourceIds.toSet == listedDatasourceIds.toSet,
+              "Listed datasources should be the same as that of scenes in this layer")
+            assert(
+              insertedDatasourceIds.toSet.size == listedDatasourceIds.length,
+              "Listed datasources length should be the same as deduplicated list of scene datasources")
+            true
           }
       }
     }
