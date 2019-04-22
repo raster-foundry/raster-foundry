@@ -4,6 +4,8 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.histogram.Histogram
+import geotrellis.vector.{MultiPolygon, Point}
+import org.locationtech.spatial4j.io.GeohashUtils
 import scalacache._
 import scalacache.caffeine._
 import scalacache.memcached._
@@ -23,6 +25,27 @@ object Cache extends LazyLogging {
       Config.cache.memcachedTimeoutMilliseconds
   }
 
+  class BacksplashCacheKeyBuilder extends CacheKeyBuilder {
+    def toCacheKey(parts: Seq[Any]): String = {
+      val strs = parts flatMap {
+        // Can't match on Option[MultiPolygon] directly since the type parameter
+        // gets eliminated
+        case opt: Option[_] =>
+          opt flatMap {
+            case mp: MultiPolygon =>
+              mp.centroid.as[Point] map { point =>
+                GeohashUtils.encodeLatLon(point.x, point.y, 15)
+              }
+            case x => Some(x.toString)
+          }
+        case part => Some(part.toString)
+      }
+      strs.mkString(":")
+    }
+
+    def stringToCacheKey(key: String) = ""
+  }
+
   val tileCache: Cache[Option[MultibandTile]] = {
 
     val address = new InetSocketAddress(Config.cache.memcachedHost,
@@ -31,6 +54,7 @@ object Cache extends LazyLogging {
       new MemcachedClient(new BacksplashConnectionFactory, List(address).asJava)
 
     implicit val cacheConfig: CacheConfig = CacheConfig(
+      cacheKeyBuilder = new BacksplashCacheKeyBuilder,
       memoization = MemoizationConfig(
         MethodCallToStringConverter.includeClassConstructorParams)
     )

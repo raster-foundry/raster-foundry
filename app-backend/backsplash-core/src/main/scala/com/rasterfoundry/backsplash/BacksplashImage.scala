@@ -15,6 +15,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.raster.MultibandTile
+import geotrellis.vector.MultiPolygon
 import scalacache._
 import scalacache.memoization._
 import scalacache.modes.sync._
@@ -47,7 +48,8 @@ final case class BacksplashImage(
     @cacheKeyExclude footprint: MultiPolygon,
     subsetBands: List[Int],
     @cacheKeyExclude corrections: ColorCorrect.Params,
-    @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params])
+    @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params],
+    mask: Option[MultiPolygon])
     extends LazyLogging {
 
   implicit val tileCache = Cache.tileCache

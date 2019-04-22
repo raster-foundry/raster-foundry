@@ -53,6 +53,7 @@ object Version {
   val scopt = "3.5.0"
   val decline = "0.6.0"
   val slickMigrationAPI = "0.4.0"
+  val spatial4j = "0.7"
   val spark = "2.2.0"
   val sup = "0.2.0"
 }
@@ -129,5 +130,6 @@ object Dependencies {
   val slickMigrationAPI = "io.github.nafg" %% "slick-migration-api" % Version.slickMigrationAPI
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
   val sparkCore = "org.apache.spark" %% "spark-core" % Version.spark
+  val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
 }
