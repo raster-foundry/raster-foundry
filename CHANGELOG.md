@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Switched general single band options out for configured single band options from RF database [\#4888](https://github.com/raster-foundry/raster-foundry/pull/4888)
+
 ### Deprecated
 
 ### Fixed
