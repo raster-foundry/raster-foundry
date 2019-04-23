@@ -10,7 +10,6 @@ import java.util.concurrent.Executors
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.util.transactor.Transactor
-import doobie.util.transactor.Transactor.Aux
 
 object RFTransactor {
   final case class TransactorConfig(
