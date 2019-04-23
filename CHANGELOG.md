@@ -66,6 +66,7 @@
 - Added quick edit functionality for project analyses [\#4804](https://github.com/raster-foundry/raster-foundry/pull/4804)
 - Add zooming, showing, hiding options to multi-select menu on analyses, layers [\4816](https://github.com/raster-foundry/raster-foundry/pull/4816)
 - Added API specifications back to core repository [\#4819](https://github.com/raster-foundry/raster-foundry/pull/4819)
+- Added tile server support for visualizing masked mosaic layers [\#4822](https://github.com/raster-foundry/raster-foundry/pull/4822/)
 - Added `overviewsLocation` and `minZoomLevel` to `projectLayers` [\#4857](https://github.com/raster-foundry/raster-foundry/pull/4857)
 - Enable listing annotations with owner info [\#4864](https://github.com/raster-foundry/raster-foundry/pull/4864)
 
@@ -82,6 +83,10 @@
 - Started using swaggerhub for documentation [\#4818](https://github.com/raster-foundry/raster-foundry/pull/4818)
 - Made various UI improvements [\#4801](https://github.com/raster-foundry/raster-foundry/pull/4801)
 - Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
+- Improved responses and response types for errors in analysis rendering pipeline [\#4843](https://github.com/raster-foundry/raster-foundry/pull/4843)
+- Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
+
+### Deprecated
 
 ### Removed
 

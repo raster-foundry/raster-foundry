@@ -209,7 +209,7 @@ object ReadStacFeature extends Config with LazyLogging {
                   None
               }
             case _ => None
-          }
+        }
       )
       .toList
   }
@@ -236,7 +236,7 @@ object ReadStacFeature extends Config with LazyLogging {
             name = band.commonName,
             number = band.imageBandIndex,
             wavelength = List(band.centerWavelength.toInt)
-          )
+        )
       )
     )
   }

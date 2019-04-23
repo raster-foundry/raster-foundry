@@ -117,7 +117,7 @@ object SceneDao
         sceneWithRelated
       }
       _ <- if (kickoffIngest) {
-        logger.info(
+        logger.trace(
           s"Kicking off ingest for newly created scene: ${sceneWithRelated.id} with ingest status ${sceneWithRelated.statusFields.ingestStatus}"
         )
         kickoffSceneIngest(sceneWithRelated.id).pure[ConnectionIO] <*

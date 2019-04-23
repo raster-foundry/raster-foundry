@@ -28,7 +28,7 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
       .withJobQueue(jobQueueName)
       .withParameters(parameters.asJava)
 
-    logger.info(s"Using ${awsbatchConfig.environment} in AWS Batch")
+    logger.debug(s"Using ${awsbatchConfig.environment} in AWS Batch")
 
     val runBatch: Boolean = {
       awsbatchConfig.environment
@@ -37,10 +37,10 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
     }
 
     if (runBatch) {
-      logger.info(s"Trying to submit job: ${jobName}")
+      logger.debug(s"Trying to submit job: ${jobName}")
       try {
         val submitJobResult = batchClient.submitJob(jobRequest)
-        logger.info(s"Submit Job Result: ${submitJobResult}")
+        logger.debug(s"Submit Job Result: ${submitJobResult}")
       } catch {
         case e: Exception =>
           logger.error(
@@ -49,9 +49,9 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
           throw e
       }
     } else {
-      logger.info(
+      logger.debug(
         s"Not submitting AWS Batch -- not in production or staging, in ${awsbatchConfig.environment}")
-      logger.info(
+      logger.debug(
         s"Job Request: ${jobName} -- ${jobDefinition} -- ${parameters}")
     }
 

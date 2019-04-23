@@ -5,10 +5,11 @@ import scala.util.Try
 import cats.syntax.either._
 import geotrellis.proj4.CRS
 import geotrellis.vector.{Extent, MultiPolygon}
+import geotrellis.vector._
 import geotrellis.vector.io._
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
+import _root_.io.circe._
+import _root_.io.circe.parser._
+import _root_.io.circe.syntax._
 
 package object common {
 

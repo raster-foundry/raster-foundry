@@ -64,10 +64,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend run validate-tile-spec
 
-        echo "Preparing the database for testing"
-        source "scripts/update"
-        run_database_migrations
-
         echo "Executing Scala test suite"
         docker-compose \
             run --rm sbt \

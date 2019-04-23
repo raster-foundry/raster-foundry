@@ -20,11 +20,9 @@ class PlatformDaoSpec
     check {
       forAll { (pageRequest: PageRequest) =>
         {
-          xa.use(
-              t =>
-                PlatformDao
-                  .listPlatforms(pageRequest)
-                  .transact(t))
+          PlatformDao
+            .listPlatforms(pageRequest)
+            .transact(xa)
             .unsafeRunSync
             .results
             .length >= 0
@@ -42,7 +40,7 @@ class PlatformDaoSpec
           {
             val insertPlatformIO = PlatformDao.create(platform)
             val dbPlatform =
-              xa.use(t => insertPlatformIO.transact(t)).unsafeRunSync
+              insertPlatformIO.transact(xa).unsafeRunSync
 
             dbPlatform.name == platform.name &&
             dbPlatform.publicSettings == platform.publicSettings &&
@@ -69,9 +67,8 @@ class PlatformDaoSpec
             } yield { (affectedRows, fetched) }
 
             val (affectedRows, updatedPlatform) =
-              xa.use(t =>
-                  platformUpdateIO
-                    .transact(t))
+              platformUpdateIO
+                .transact(xa)
                 .unsafeRunSync
             affectedRows == 1 &&
             updatedPlatform.name == platformUpdate.name &&
@@ -96,8 +93,7 @@ class PlatformDaoSpec
             } yield { (deletePlatform, byIdPlatform) }
 
             val (rowsAffected, platformById) =
-              xa.use(t => deletePlatformWithPlatformIO.transact(t))
-                .unsafeRunSync
+              deletePlatformWithPlatformIO.transact(xa).unsafeRunSync
             rowsAffected == 1 && platformById == None
           }
       }
@@ -128,8 +124,7 @@ class PlatformDaoSpec
             } yield { (dbPlatform, byIdUserGroupRole) }
 
             val (dbPlatform, dbUserGroupRole) =
-              xa.use(t => addPlatformRoleWithPlatformIO.transact(t))
-                .unsafeRunSync
+              addPlatformRoleWithPlatformIO.transact(xa).unsafeRunSync
             dbUserGroupRole match {
               case Some(ugr) =>
                 assert(ugr.isActive, "; Added role should be active")
@@ -177,7 +172,7 @@ class PlatformDaoSpec
             }
 
             val (_, dbOldUGR, dbNewUGRs) =
-              xa.use(t => setPlatformRoleIO.transact(t)).unsafeRunSync
+              setPlatformRoleIO.transact(xa).unsafeRunSync
 
             assert(dbNewUGRs.filter((ugr) => ugr.isActive == true).size == 1,
                    "; Updated UGRs should have one set to active")
@@ -229,7 +224,7 @@ class PlatformDaoSpec
             }
 
             val (_, _, dbNewUGRs) =
-              xa.use(t => setPlatformRoleIO.transact(t)).unsafeRunSync
+              setPlatformRoleIO.transact(xa).unsafeRunSync
 
             assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
                    "; The updated UGR should be inactive")
@@ -302,7 +297,7 @@ class PlatformDaoSpec
                  dbProject,
                  dbProjectAnother,
                  listOfPUSP) =
-              xa.use(t => listOfPwuIO.transact(t)).unsafeRunSync
+              listOfPwuIO.transact(xa).unsafeRunSync
 
             assert(listOfPUSP.length == 2, "; list of return length is not 2")
             assert(listOfPUSP(0).platId == dbPlatform.id &&
@@ -394,7 +389,7 @@ class PlatformDaoSpec
             } yield (dbUser, dbPlatform, dbProject, pUO)
 
             val (dbUser, dbPlatform, _, pU) =
-              xa.use(t => puIO.transact(t)).unsafeRunSync
+              puIO.transact(xa).unsafeRunSync
 
             assert(pU.platId == dbPlatform.id, "; platform ID don't match")
             assert(pU.platName == dbPlatform.name,
@@ -491,7 +486,7 @@ class PlatformDaoSpec
             } yield (teamInsert1, teamInsert2, teamInsert3, searchedTeams)
 
             val (teamInsert1, teamInsert2, teamInsert3, searchedTeams) =
-              xa.use(t => createAndGetTeamsIO.transact(t)).unsafeRunSync
+              createAndGetTeamsIO.transact(xa).unsafeRunSync
 
             val teams = List(teamInsert1, teamInsert2, teamInsert3)
 

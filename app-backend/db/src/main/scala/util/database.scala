@@ -9,6 +9,7 @@ import scala.util.Properties
 import java.util.concurrent.Executors
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import doobie.util.transactor.Transactor
 
 object RFTransactor {
   final case class TransactorConfig(
@@ -36,7 +37,7 @@ object RFTransactor {
         )
       )
   ) {
-    val url = postgresUrl + dbName
+    val url = postgresUrl ++ dbName
     val initSql =
       maybeInitSql.getOrElse(s"SET statement_timeout = ${statementTimeout};")
 
@@ -97,6 +98,16 @@ object RFTransactor {
       config.password,
       config.connectionEC,
       config.transactionEC
+    )
+  }
+
+  def nonHikariTransactor(config: TransactorConfig) = {
+    implicit val cs: ContextShift[IO] = config.contextShift
+    Transactor.fromDriverManager[IO](
+      "org.postgresql.Driver",
+      config.url,
+      config.user,
+      config.password
     )
   }
 

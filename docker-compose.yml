@@ -175,7 +175,7 @@ services:
       - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     environment:
-      - RF_LOG_LEVEL=DEBUG
+      - RF_LOG_LEVEL=INFO
       - COURSIER_CACHE=/root/.coursier
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/

@@ -43,7 +43,7 @@ class ImageDaoSpec
             }
           }
           val insertedImage =
-            xa.use(t => imageInsertIO.transact(t)).unsafeRunSync.get
+            imageInsertIO.transact(xa).unsafeRunSync.get
           insertedImage.rawDataBytes == image.rawDataBytes &&
           insertedImage.visibility == image.visibility &&
           insertedImage.filename == image.filename &&
@@ -102,7 +102,7 @@ class ImageDaoSpec
           }
 
           val (affectedRows, updatedImage) =
-            xa.use(t => imageUpdateWithUpdatedImageIO.transact(t)).unsafeRunSync
+            imageUpdateWithUpdatedImageIO.transact(xa).unsafeRunSync
           affectedRows == 1 &&
           updatedImage.rawDataBytes == imageUpdate.rawDataBytes &&
           updatedImage.visibility == imageUpdate.visibility &&
@@ -117,6 +117,6 @@ class ImageDaoSpec
   }
 
   test("list images") {
-    xa.use(t => ImageDao.query.list.transact(t)).unsafeRunSync
+    ImageDao.query.list.transact(xa).unsafeRunSync
   }
 }

@@ -15,9 +15,7 @@ class SceneDaoSpec
     with DBTestConfig
     with PropTestHelpers {
   test("list scenes") {
-    xa.use(t => SceneDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    SceneDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("insert a scene") {
@@ -35,7 +33,7 @@ class SceneDaoSpec
               sceneInsert <- SceneDao.insert(fixedUpSceneCreate, dbUser)
             } yield (fixedUpSceneCreate, sceneInsert)
             val (fixedUpSceneCreate, insertedScene) =
-              xa.use(t => sceneInsertIO.transact(t)).unsafeRunSync
+              sceneInsertIO.transact(xa).unsafeRunSync
 
             assert(insertedScene.visibility == fixedUpSceneCreate.visibility,
                    "Visibilities match")
@@ -83,7 +81,7 @@ class SceneDaoSpec
               sceneInsert <- SceneDao.insertMaybe(fixedUpSceneCreate, dbUser)
             } yield (fixedUpSceneCreate, sceneInsert)
             val (fixedUpSceneCreate, insertedSceneO) =
-              xa.use(t => sceneInsertIO.transact(t)).unsafeRunSync
+              sceneInsertIO.transact(xa).unsafeRunSync
             // our expectation is that this should succeed so this should be safe -- if it fails that indicates
             // something else was wrong
             val insertedScene = insertedSceneO.get
@@ -146,7 +144,7 @@ class SceneDaoSpec
             } yield (affectedRows, fixedUpUpdateScene, endScene)
 
             val (affectedRows, fixedUpUpdateScene, updatedScene) =
-              xa.use(t => sceneUpdateIO.transact(t)).unsafeRunSync
+              sceneUpdateIO.transact(xa).unsafeRunSync
 
             assert(affectedRows == 1, "Number of affected rows is correct")
             assert(updatedScene.visibility == fixedUpUpdateScene.visibility,

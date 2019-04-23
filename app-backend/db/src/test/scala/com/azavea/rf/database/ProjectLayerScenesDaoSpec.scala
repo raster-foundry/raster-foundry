@@ -75,7 +75,7 @@ class LayerScenesDaoSpec
             }
 
             val (insertedScenes, listedScenes) =
-              xa.use(t => scenesListIO.transact(t)).unsafeRunSync
+              scenesListIO.transact(xa).unsafeRunSync
             val insertedIds = insertedScenes.toSet map {
               (scene: Scene.WithRelated) =>
                 scene.id
@@ -133,7 +133,7 @@ class LayerScenesDaoSpec
             } yield (counted, dbLayersWithSceneCounts)
 
             val (counted, expectedCounts) =
-              xa.use(t => countsWithCountedIO.transact(t)) map {
+              countsWithCountedIO.transact(xa) map {
                 case (tups1, tups2) => (Map(tups1: _*), Map(tups2: _*))
               } unsafeRunSync
 

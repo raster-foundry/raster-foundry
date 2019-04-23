@@ -7,7 +7,6 @@ import com.rasterfoundry.common.ast.MapAlgebraAST.{LayerRaster, ProjectRaster}
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
 import io.circe.syntax._
 import doobie.implicits._
 import org.scalatest._
@@ -23,13 +22,8 @@ class ExportDaoSpec
     with MapAlgebraCodec {
 
   test("types") {
-    xa.use(
-        t => {
-          ExportDao.query.list.transact(t)
-        }
-      )
-      .unsafeRunSync
-      .length should be >= 0
+
+    ExportDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("can create an export definition for project export") {
@@ -66,7 +60,7 @@ class ExportDaoSpec
               }
             } yield exportDefinition
 
-            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            projectInsertIO.transact(xa).unsafeRunSync
             true
           }
       }
@@ -109,7 +103,7 @@ class ExportDaoSpec
               }
             } yield exportDefinition
 
-            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            projectInsertIO.transact(xa).unsafeRunSync
             true
           }
       }
@@ -175,7 +169,7 @@ class ExportDaoSpec
                                                                 dbUser)
             } yield exportDefinition
 
-            xa.use(t => projectInsertIO.transact(t)).unsafeRunSync
+            projectInsertIO.transact(xa).unsafeRunSync
             true
           }
       }

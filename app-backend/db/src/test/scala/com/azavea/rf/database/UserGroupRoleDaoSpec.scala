@@ -18,9 +18,7 @@ class UserGroupRoleDaoSpec
     with PropTestHelpers {
 
   test("list user group roles") {
-    xa.use(t => UserGroupRoleDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    UserGroupRoleDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("insert a user group role") {
@@ -52,7 +50,7 @@ class UserGroupRoleDaoSpec
               )
             } yield { insertedUgr }
 
-            val insertedUgr = xa.use(t => insertUgrIO.transact(t)).unsafeRunSync
+            val insertedUgr = insertUgrIO.transact(xa).unsafeRunSync
 
             insertedUgr.userId == userCreate.id &&
             insertedUgr.groupType == ugrCreate.groupType &&
@@ -143,7 +141,7 @@ class UserGroupRoleDaoSpec
             } yield { usersInPlatform }
 
             val usersInPlatform =
-              xa.use(t => usersInPlatformIO.transact(t)).unsafeRunSync
+              usersInPlatformIO.transact(xa).unsafeRunSync
 
             assert(
               usersInPlatform.count == 1,
@@ -233,7 +231,7 @@ class UserGroupRoleDaoSpec
             } yield { usersInPlatform }
 
             val usersInPlatform =
-              xa.use(t => usersInPlatformIO.transact(t)).unsafeRunSync
+              usersInPlatformIO.transact(xa).unsafeRunSync
 
             assert(
               usersInPlatform.count == 2,
@@ -330,7 +328,7 @@ class UserGroupRoleDaoSpec
             } yield { usersInPlatform }
 
             val usersInPlatform =
-              xa.use(t => usersInPlatformIO.transact(t)).unsafeRunSync
+              usersInPlatformIO.transact(xa).unsafeRunSync
 
             assert(
               usersInPlatform.count == 2,
@@ -444,7 +442,7 @@ class UserGroupRoleDaoSpec
             } yield { usersInPlatform }
 
             val usersInPlatform =
-              xa.use(t => usersInPlatformIO.transact(t)).unsafeRunSync
+              usersInPlatformIO.transact(xa).unsafeRunSync
 
             assert(
               usersInPlatform.count == 2,
@@ -529,9 +527,8 @@ class UserGroupRoleDaoSpec
               }
             }
 
-            val (affectedRows, updatedUgr) = xa
-              .use(t => updateUgrWithUpdatedAndAffectedRowsIO.transact(t))
-              .unsafeRunSync
+            val (affectedRows, updatedUgr) =
+              updateUgrWithUpdatedAndAffectedRowsIO.transact(xa).unsafeRunSync
             // isActive should always be true since it doesn't exist on UserGroupRole.Creates and is set
             // to true when those are turned into UserGroupRoles
             affectedRows == 1 &&
@@ -587,9 +584,8 @@ class UserGroupRoleDaoSpec
               }
             }
 
-            val (affectedRows, updatedUgr) = xa
-              .use(t => deactivateWithDeactivatedUgrIO.transact(t))
-              .unsafeRunSync
+            val (affectedRows, updatedUgr) =
+              deactivateWithDeactivatedUgrIO.transact(xa).unsafeRunSync
             affectedRows == 1 &&
             updatedUgr.isActive == false &&
             updatedUgr.modifiedBy == userCreate.id &&
@@ -640,9 +636,8 @@ class UserGroupRoleDaoSpec
               }
             }
 
-            val updatedUGRs = xa
-              .use(t => deactivateWithDeactivatedUgrIO.transact(t))
-              .unsafeRunSync
+            val updatedUGRs =
+              deactivateWithDeactivatedUgrIO.transact(xa).unsafeRunSync
             updatedUGRs.size == 1 &&
             updatedUGRs
               .filter(
@@ -702,9 +697,8 @@ class UserGroupRoleDaoSpec
               ugrWithName <- UserGroupRoleDao.listByUserWithRelated(dbUser)
             } yield { (ugrWithName, dbPlat, dbOrg, dbTeam) }
 
-            val (ugrWithName, dbPlat, dbOrg, dbTeam) = xa
-              .use(t => getUgrWithNameIO.transact(t))
-              .unsafeRunSync
+            val (ugrWithName, dbPlat, dbOrg, dbTeam) =
+              getUgrWithNameIO.transact(xa).unsafeRunSync
             val groupNames = ugrWithName.map(_.groupName)
 
             val realGroupNames = List(dbPlat.name, dbOrg.name, dbTeam.name)
