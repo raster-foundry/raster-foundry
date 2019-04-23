@@ -38,7 +38,7 @@ object RFTransactor {
         )
       )
   ) {
-    val url = postgresUrl + dbName
+    val url = postgresUrl ++ dbName
     val initSql =
       maybeInitSql.getOrElse(s"SET statement_timeout = ${statementTimeout};")
 
@@ -106,7 +106,7 @@ object RFTransactor {
     implicit val cs: ContextShift[IO] = config.contextShift
     Transactor.fromDriverManager[IO](
       "org.postgresql.Driver",
-      config.postgresUrl,
+      config.url,
       config.user,
       config.password
     )
