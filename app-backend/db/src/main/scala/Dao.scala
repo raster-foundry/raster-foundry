@@ -112,7 +112,7 @@ object Dao extends LazyLogging {
         .zip(a.map(s => "'" + s + "'"))
         .flatMap({ case (t1, t2) => List(t1, t2) })
         .mkString("")
-      logger.trace(s"""Successful Statement Execution:
+      logger.debug(s"""Successful Statement Execution:
         |
         |  ${logString}
         |

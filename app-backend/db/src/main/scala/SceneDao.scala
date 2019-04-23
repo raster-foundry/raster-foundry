@@ -217,7 +217,7 @@ object SceneDao
             case (IngestStatus.Queued, IngestStatus.Queued) =>
               n.pure[ConnectionIO]
             case (previous, IngestStatus.Queued) =>
-              logger.trace(
+              logger.info(
                 s"Kicking off scene ingest for scene ${id} which entered state ${IngestStatus.Queued.toString} from ${previous.toString}")
               n.pure[ConnectionIO] <*
                 kickoffSceneIngest(id).pure[ConnectionIO] <*
@@ -228,7 +228,7 @@ object SceneDao
                        user)
             case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
               if (ts.getTime < now.getTime - (24 hours).toMillis) {
-                logger.trace(
+                logger.info(
                   s"Kicking off scene ingest for scene ${id} which has been ingesting for too long")
                 n.pure[ConnectionIO] <*
                   kickoffSceneIngest(id).pure[ConnectionIO] <*
