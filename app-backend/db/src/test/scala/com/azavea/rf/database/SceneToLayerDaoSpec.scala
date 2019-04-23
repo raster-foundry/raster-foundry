@@ -57,7 +57,7 @@ class SceneToLayerDaoSpec
             } yield (acceptedSceneCount, stls)
 
             val (acceptedSceneCount, stls) =
-              xa.use(t => acceptedSceneAndStlIO.transact(t)).unsafeRunSync
+              acceptedSceneAndStlIO.transact(xa).unsafeRunSync
 
             acceptedSceneCount == scenes.length &&
             stls.length == scenes.length &&
@@ -79,6 +79,7 @@ class SceneToLayerDaoSpec
          page: PageRequest,
          csq: CombinedSceneQueryParams) =>
           {
+
             val mdAndStpsIO = for {
               (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
                                                                     org,
@@ -113,7 +114,7 @@ class SceneToLayerDaoSpec
             } yield (mds, stls, selectedSceneIds)
 
             val (mds, stls, _) =
-              xa.use(t => mdAndStpsIO.transact(t)).unsafeRunSync
+              mdAndStpsIO.transact(xa).unsafeRunSync
 
             // Mapping of scene ids to scene order
             val sceneMap =

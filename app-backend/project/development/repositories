@@ -5,3 +5,4 @@
   locationtech-releases: http://nexus.internal.azavea.com/repository/locationtech-releases/
   locationtech-snapshots: http://nexus.internal.azavea.com/repository/locationtech-snapshots/
   azavea-snapshots: http://nexus.internal.azavea.com/repository/azavea-snapshots/
+  azavea-releases: http://nexus.internal.azavea.com/repository/azavea-releases/

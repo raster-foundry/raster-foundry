@@ -8,14 +8,10 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Strategy
 import doobie.free.connection.unit
-import cats.effect._
 import cats.implicits._
 import org.scalatest.{Suite, BeforeAndAfterAll}
 import scala.sys.process._
-import scala.concurrent.ExecutionContext
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 
-import java.util.concurrent.Executors
 import java.util.UUID
 
 // SetupTemplateDB is a singleton that is used to instantiate the template db
@@ -26,23 +22,22 @@ object SetupTemplateDB {
   // db create/drop cannot be done with transactions
   // this transactor has error handling and cleanup but no transaction/auto-commit behavior
   val xantConfig = RFTransactor.TransactorConfig(dbName = "")
-  val xant = RFTransactor.buildTransactorResource(xantConfig) map { xa =>
-    Transactor.strategy.set(
-      xa,
-      Strategy.default.copy(before = unit, after = unit)
-    )
-  }
+  val xant = RFTransactor.nonHikariTransactor(xantConfig)
 
   // we use a template database so that migrations only need to be run once
   // test-suite specific databases are created using this db as a template
 
+  def withoutTransaction[A](p: ConnectionIO[A]): ConnectionIO[A] =
+    FC.setAutoCommit(true) *> p <* FC.setAutoCommit(false)
+
   // drop and create template database
-  xant.use { t =>
-    (
-      fr"DROP DATABASE IF EXISTS" ++ Fragment.const(templateDbName) ++ fr";" ++
-        fr"CREATE DATABASE" ++ Fragment.const(templateDbName)
-    ).update.run.transact(t)
-  }.unsafeRunSync
+  val setupDB =
+    (fr"DROP DATABASE IF EXISTS" ++ Fragment.const(templateDbName) ++ fr";" ++
+      fr"CREATE DATABASE" ++ Fragment.const(templateDbName)).update.run
+
+  withoutTransaction(setupDB)
+    .transact(xant)
+    .unsafeRunSync
 
   // run migrations using sbt pointed to the template db
   Process(
@@ -62,38 +57,39 @@ trait DBTestConfig extends BeforeAndAfterAll { this: Suite =>
     dbName = dbName,
     maximumPoolSize = 100
   )
-  def xa = RFTransactor.buildTransactorResource(xaConfig) map { xa =>
-    Transactor.after.set(xa, HC.rollback)
-  }
+  def xa =
+    Transactor.after
+      .set(RFTransactor.nonHikariTransactor(xaConfig), HC.rollback)
 
   // this transactor has error handling and cleanup but no transaction/auto-commit behavior
   val xantConfig = RFTransactor.TransactorConfig(dbName = "")
-  val xant = RFTransactor.buildTransactorResource(xantConfig) map { xa =>
-    Transactor.strategy.set(
-      xa,
-      Strategy.default
-        .copy(before = unit, after = unit)
-    )
-  }
+  val xant = RFTransactor.nonHikariTransactor(xantConfig)
+  Transactor.strategy
+    .set(xant, Strategy.default.copy(before = unit, after = unit))
+
+  def withoutTransaction[A](p: ConnectionIO[A]): ConnectionIO[A] =
+    FC.setAutoCommit(true) *> p <* FC.setAutoCommit(false)
 
   override def beforeAll {
     // using the no-transaction transactor, drop the database in case it's hanging around for some reason
     // and then create the database
-    xant.use { t =>
-      (
-        fr"DROP DATABASE IF EXISTS" ++ Fragment.const(dbName) ++ fr";CREATE DATABASE" ++ Fragment
-          .const(dbName) ++ fr"WITH TEMPLATE" ++ Fragment
-          .const(templateDbName)
-      ).update.run.transact(t)
-    }.unsafeRunSync
+    val x = (
+      fr"DROP DATABASE IF EXISTS" ++ Fragment.const(dbName) ++ fr";CREATE DATABASE" ++ Fragment
+        .const(dbName) ++ fr"WITH TEMPLATE" ++ Fragment
+        .const(templateDbName)
+    ).update.run
+
+    withoutTransaction(x).transact(xant).unsafeRunSync
+    ()
   }
 
   override def afterAll {
     // using the no-transaction transactor, drop the db for the test suite
-    xant.use { t =>
-      (fr"DROP DATABASE IF EXISTS" ++ Fragment.const(dbName)).update.run
-        .transact(t)
-    }.unsafeRunSync
+    val x = (fr"DROP DATABASE IF EXISTS" ++ Fragment.const(dbName)).update.run
+    withoutTransaction(x)
+      .transact(xant)
+      .unsafeRunSync
+    ()
   }
 
   val defaultUserQ = UserDao.unsafeGetUserById("default")

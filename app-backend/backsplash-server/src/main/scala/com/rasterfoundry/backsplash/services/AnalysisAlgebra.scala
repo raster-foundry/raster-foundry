@@ -81,8 +81,10 @@ class AnalysisManager[Param: ToolStore, HistStore](
       }
       paintable <- paintableFiber.join
       histsValidated <- paintable.histogram(4000) map {
-        case Valid(hists) =>
+        case Valid(hists) if hists.filter(_.binCounts.length == 0).isEmpty =>
           Ok(hists.head asJson)
+        case Valid(hists) =>
+          NotFound(s"Did not find any data for $analysisId")
         case Invalid(e) =>
           BadRequest(s"Unable to produce histogram for $analysisId: $e")
       }

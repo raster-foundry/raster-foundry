@@ -45,7 +45,7 @@ class ProjectLayerDaoSpec
             } yield { (dbProject, inserted, listed, listedWithImagery) }
 
             val (project, inserted, listed, listedWithImagery) =
-              xa.use(t => insertAndListIO.transact(t)).unsafeRunSync
+              insertAndListIO.transact(xa).unsafeRunSync
 
             assert(
               (listed.results map { _.id } toSet) == Set(project.defaultLayerId,
@@ -98,7 +98,7 @@ class ProjectLayerDaoSpec
             } yield { (inserted, fetched) }
 
             val (inserted, fetched) =
-              xa.use(t => updateIO.transact(t)).unsafeRunSync
+              updateIO.transact(xa).unsafeRunSync
 
             assert(
               inserted.isSingleBand == false && inserted.singleBandOptions != Some(

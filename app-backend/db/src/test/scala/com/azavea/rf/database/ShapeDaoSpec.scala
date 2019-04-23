@@ -16,9 +16,7 @@ class ShapeDaoSpec
     with PropTestHelpers {
 
   test("list shapes") {
-    xa.use(t => ShapeDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    ShapeDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("insert shapes") {
@@ -35,9 +33,7 @@ class ShapeDaoSpec
                 fixupShapeCreate(dbUser, _)
               }, dbUser)
             } yield shapes
-            xa.use(t => shapeInsertIO.transact(t))
-              .unsafeRunSync
-              .length == shapes.length
+            shapeInsertIO.transact(xa).unsafeRunSync.length == shapes.length
           }
       }
     }
@@ -65,7 +61,7 @@ class ShapeDaoSpec
             } yield { (affectedRows, fetched) }
 
             val (affectedRows, updatedShape) =
-              xa.use(t => shapeUpdateIO.transact(t)).unsafeRunSync
+              shapeUpdateIO.transact(xa).unsafeRunSync
 
             val shapeUpdateShape = shapeUpdate.toShape
 

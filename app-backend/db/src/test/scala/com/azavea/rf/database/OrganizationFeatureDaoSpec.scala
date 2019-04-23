@@ -9,7 +9,8 @@ class OrganizationFeatureDaoSpec
     with Matchers
     with DBTestConfig {
   test("selection types") {
-    xa.use(t => OrganizationFeatureDao.query.list.transact(t))
+    OrganizationFeatureDao.query.list
+      .transact(xa)
       .unsafeRunSync
       .length should be >= 0
   }

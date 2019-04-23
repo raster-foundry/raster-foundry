@@ -61,7 +61,7 @@ class AuthorizationSpec
             } yield (user1Authorized, user2Authorized)
 
             val (user1Authed, user2Authed) =
-              xa.use(t => usersAuthedIO.transact(t)).unsafeRunSync
+              usersAuthedIO.transact(xa).unsafeRunSync
 
             assert(
               user1Authed && user2Authed,
@@ -120,7 +120,7 @@ class AuthorizationSpec
             } yield { (user1Authorized, user2Authorized) }
 
             val (user1Authed, user2Authed) =
-              xa.use(t => usersAuthedIO.transact(t)).unsafeRunSync
+              usersAuthedIO.transact(xa).unsafeRunSync
 
             assert(
               user1Authed,
@@ -175,7 +175,7 @@ class AuthorizationSpec
             } yield { (user1Authorized, user2Authorized) }
 
             val (user1Authed, user2Authed) =
-              xa.use(t => usersAuthedIO.transact(t)).unsafeRunSync
+              usersAuthedIO.transact(xa).unsafeRunSync
             assert(
               user1Authed,
               "A user in the same org as the authorized org should be authorized")
@@ -222,7 +222,7 @@ class AuthorizationSpec
             } yield { (acrs, dbAcrs) }
 
             val (acrs, dbAcrs) =
-              xa.use(t => insertManyAcrsIO.transact(t)).unsafeRunSync
+              insertManyAcrsIO.transact(xa).unsafeRunSync
 
             assert(
               acrs.toSet == dbAcrs.flatten.toSet,
@@ -259,7 +259,7 @@ class AuthorizationSpec
             } yield listOfActions
 
             val listUserActions =
-              xa.use(t => listUserActionsIO.transact(t)).unsafeRunSync
+              listUserActionsIO.transact(xa).unsafeRunSync
 
             assert(listUserActions.length == 3,
                    "; List of permitted actions should be 3")
@@ -302,7 +302,7 @@ class AuthorizationSpec
             } yield listOfActions
 
             val listUserActions =
-              xa.use(t => listUserActionsIO.transact(t)).unsafeRunSync
+              listUserActionsIO.transact(xa).unsafeRunSync
             listUserActions.length == 0
           }
       }
@@ -338,7 +338,7 @@ class AuthorizationSpec
             } yield listOfActions
 
             val listUserActions =
-              xa.use(t => listUserActionsIO.transact(t)).unsafeRunSync
+              listUserActionsIO.transact(xa).unsafeRunSync
 
             assert(listUserActions.length == 3,
                    "; List of permitted actions should be 3")
@@ -381,7 +381,7 @@ class AuthorizationSpec
             } yield listOfActions
 
             val listUserActions =
-              xa.use(t => listUserActionsIO.transact(t)).unsafeRunSync
+              listUserActionsIO.transact(xa).unsafeRunSync
 
             assert(listUserActions.length == 3,
                    "; List of permitted actions should be 3")
