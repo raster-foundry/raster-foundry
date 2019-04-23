@@ -67,6 +67,11 @@ object Generators extends ArbitraryInstances {
     AnnotationQuality.Unsure
   )
 
+  private def splitPeriodGen: Gen[SplitPeriod] = Gen.oneOf(
+    SplitPeriod.Day,
+    SplitPeriod.Week
+  )
+
   private def visibilityGen: Gen[Visibility] =
     Gen.oneOf(Visibility.Public, Visibility.Organization, Visibility.Private)
 
@@ -845,6 +850,35 @@ object Generators extends ArbitraryInstances {
                           minZoomLevel)
     }
 
+  private def splitOptionsGen: Gen[SplitOptions] =
+    for {
+      name <- nonEmptyStringGen
+      colorGroupHex <- Gen.const(None)
+      t1 <- timestampIn2016Gen
+      t2 <- timestampIn2016Gen
+      period <- splitPeriodGen
+      onDatasource <- arbitrary[Option[Boolean]]
+      removeFromLayer <- arbitrary[Option[Boolean]]
+    } yield {
+      if (t1.before(t2)) {
+        SplitOptions(name,
+                     colorGroupHex,
+                     t1,
+                     t2,
+                     period,
+                     onDatasource,
+                     removeFromLayer)
+      } else {
+        SplitOptions(name,
+                     colorGroupHex,
+                     t2,
+                     t1,
+                     period,
+                     onDatasource,
+                     removeFromLayer)
+      }
+    }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -1032,6 +1066,10 @@ object Generators extends ArbitraryInstances {
     implicit def arbAnnotationQueryParameters
       : Arbitrary[AnnotationQueryParameters] = Arbitrary {
       annotationQueryParametersGen
+    }
+
+    implicit def arbSplitOptions: Arbitrary[SplitOptions] = Arbitrary {
+      splitOptionsGen
     }
   }
 }
