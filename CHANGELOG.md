@@ -5,6 +5,7 @@
 ### Added
 
 ### Changed
+- Improved supported CRS for WMS and WCS Services [\#4875](https://github.com/raster-foundry/raster-foundry/pull/4875)
 
 - Switched general single band options out for configured single band options from RF database [\#4888](https://github.com/raster-foundry/raster-foundry/pull/4888)
 
