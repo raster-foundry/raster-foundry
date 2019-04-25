@@ -1,7 +1,7 @@
 /* globals BUILDCONFIG */
 import _ from 'lodash';
 
-export default (app) => {
+export default app => {
     class AnalysisService {
         constructor($resource, $http, $q, authService, APP_CONFIG) {
             'ngInject';
@@ -10,9 +10,11 @@ export default (app) => {
             this.authService = authService;
             this.tileServer = APP_CONFIG.tileServerLocation;
             this.Template = $resource(
-                `${BUILDCONFIG.API_HOST}/api/tools/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/tools/:id/`,
+                {
                     id: '@properties.id'
-                }, {
+                },
+                {
                     query: {
                         method: 'GET',
                         cache: false
@@ -42,9 +44,11 @@ export default (app) => {
                 }
             );
             this.Analysis = $resource(
-                `${BUILDCONFIG.API_HOST}/api/tool-runs/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/tool-runs/:id/`,
+                {
                     id: '@id'
-                }, {
+                },
+                {
                     create: {
                         url: `${BUILDCONFIG.API_HOST}/api/tool-runs/`,
                         method: 'POST'
@@ -102,40 +106,43 @@ export default (app) => {
 
             let firstRequest = this.Template.query(firstPageParams).$promise;
 
-            firstRequest.then((page) => {
-                let self = this;
-                let numAnalyses = page.count;
-                let requests = [firstRequest];
-                if (page.count > pageSize) {
-                    let requestMaker = function* (totalResults) {
-                        let pageNum = 1;
-                        while (pageNum * pageSize <= totalResults) {
-                            let pageParams = {
-                                pageSize: pageSize,
-                                page: pageNum,
-                                sort: 'createdAt,desc'
-                            };
-                            yield self.query(pageParams);
-                            pageNum += 1;
-                        }
-                    };
+            firstRequest.then(
+                page => {
+                    let self = this;
+                    let numAnalyses = page.count;
+                    let requests = [firstRequest];
+                    if (page.count > pageSize) {
+                        let requestMaker = function*(totalResults) {
+                            let pageNum = 1;
+                            while (pageNum * pageSize <= totalResults) {
+                                let pageParams = {
+                                    pageSize: pageSize,
+                                    page: pageNum,
+                                    sort: 'createdAt,desc'
+                                };
+                                yield self.query(pageParams);
+                                pageNum += 1;
+                            }
+                        };
 
-                    requests = requests.concat(Array.from(requestMaker(numAnalyses)));
-                }
-
-                this.$q.all(requests).then(
-                    (allResponses) => {
-                        deferred.resolve(
-                            allResponses.reduce((res, resp) => res.concat(resp.results), [])
-                        );
-                    },
-                    () => {
-                        deferred.reject('Error loading templates.');
+                        requests = requests.concat(Array.from(requestMaker(numAnalyses)));
                     }
-                );
-            }, () => {
-                deferred.reject('Error loading templates.');
-            });
+
+                    this.$q.all(requests).then(
+                        allResponses => {
+                            deferred.resolve(
+                                allResponses.reduce((res, resp) => res.concat(resp.results), [])
+                            );
+                        },
+                        () => {
+                            deferred.reject('Error loading templates.');
+                        }
+                    );
+                },
+                () => {
+                    deferred.reject('Error loading templates.');
+                }
+            );
 
             return deferred.promise;
         }
@@ -171,33 +178,33 @@ export default (app) => {
         }
 
         createTemplate(template) {
-            return this.authService.getCurrentUser().then(
-                user => {
-                    const templateDefaults = {
-                        organizationId: user.organizationId,
-                        requirements: '',
-                        license: '',
-                        compatibleDataSources: [],
-                        stars: 5.0,
-                        tags: [],
-                        categories: [],
-                        owner: user.id
-                    };
-                    return this.Template.create(Object.assign(templateDefaults, template)).$promise;
-                }
-            );
+            return this.authService.getCurrentUser().then(user => {
+                const templateDefaults = {
+                    organizationId: user.organizationId,
+                    requirements: '',
+                    license: '',
+                    compatibleDataSources: [],
+                    stars: 5.0,
+                    tags: [],
+                    categories: [],
+                    owner: user.id
+                };
+                return this.Template.create(Object.assign(templateDefaults, template)).$promise;
+            });
         }
 
         createAnalysis(analysis) {
             return this.authService.getCurrentUser().then(
-                (user) => {
-                    return this.Analysis.create(Object.assign(analysis, {
-                        organizationId: user.organizationId
-                    })).$promise.catch(e => {
+                user => {
+                    return this.Analysis.create(
+                        Object.assign(analysis, {
+                            organizationId: user.organizationId
+                        })
+                    ).$promise.catch(e => {
                         throw e;
                     });
                 },
-                (e) => {
+                e => {
                     throw e;
                 }
             );
@@ -235,10 +242,12 @@ export default (app) => {
             // Otherwise, update analysis in place
             // We're doing a depth-first graph traversal on the arguments here.
             // Start "before the beginning" of the arguments of the root operator.
-            let parents = [{
-                node: analysis.executionParameters,
-                argIdx: -1
-            }];
+            let parents = [
+                {
+                    node: analysis.executionParameters,
+                    argIdx: -1
+                }
+            ];
             if (analysis.executionParameters.id === targetId) {
                 Object.assign(analysis.executionParameters, assignment);
             }
@@ -297,10 +306,12 @@ export default (app) => {
             }
             // We're doing a depth-first graph traversal on the arguments here.
             // Start "before the beginning" of the arguments of the root operator.
-            let parents = [{
-                node: analysis.executionParameters,
-                argIdx: -1
-            }];
+            let parents = [
+                {
+                    node: analysis.executionParameters,
+                    argIdx: -1
+                }
+            ];
             if (analysis.executionParameters.id === nodeId) {
                 return Object.assign({}, analysis.executionParameters.metadata);
             }
@@ -356,9 +367,10 @@ export default (app) => {
             }
             nodes.forEach(n => {
                 // Only use projects, because constant nodes also have no apply.
-                if (!n.apply && (n.type === 'src' ||
-                        n.type === 'projectSrc' ||
-                        n.type === 'layerSrc')) {
+                if (
+                    !n.apply &&
+                    (n.type === 'src' || n.type === 'projectSrc' || n.type === 'layerSrc')
+                ) {
                     if (sourceIds.indexOf(n.id) < 0) {
                         sourceIds.push(n.id);
                         sources[n.id] = n;
@@ -382,13 +394,18 @@ export default (app) => {
             this.isLoadingTemplate = true;
             this.currentTemplateId = templateId;
             const request = this.get(templateId);
-            request.then(t => {
-                this.currentTemplate = t;
-            }, () => {
-                this.currentTemplateId = null;
-            }).finally(() => {
-                this.isLoadingTemplate = false;
-            });
+            request
+                .then(
+                    t => {
+                        this.currentTemplate = t;
+                    },
+                    () => {
+                        this.currentTemplateId = null;
+                    }
+                )
+                .finally(() => {
+                    this.isLoadingTemplate = false;
+                });
             return request;
         }
 
@@ -404,21 +421,38 @@ export default (app) => {
 
         getAnalysisTileUrl(analysisId, params) {
             const token = this.authService.token();
-            const formattedParams = L.Util.getParamString(_.omitBy(Object.assign({
-                token: this.authService.token(),
-                tag: new Date().getTime()
-            }, params), (i) => !i));
+            const formattedParams = L.Util.getParamString(
+                _.omitBy(
+                    Object.assign(
+                        {
+                            token: this.authService.token(),
+                            tag: new Date().getTime()
+                        },
+                        params
+                    ),
+                    i => !i
+                )
+            );
             return `${this.tileServer}/tools/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         getAnalysisTileUrlForProject(projectId, analysisId, params) {
             const token = this.authService.token();
-            const formattedParams = L.Util.getParamString(_.omitBy(Object.assign({
-                token: params.mapToken ? null : this.authService.token(),
-                tag: new Date().getTime()
-            }, params), (i) => !i));
-            return `${this.tileServer}/${projectId}/analyses/${
-                analysisId}/{z}/{x}/{y}/${formattedParams}`;
+            const formattedParams = L.Util.getParamString(
+                _.omitBy(
+                    Object.assign(
+                        {
+                            token: params.mapToken ? null : this.authService.token(),
+                            tag: new Date().getTime()
+                        },
+                        params
+                    ),
+                    i => !i
+                )
+            );
+            return `${
+                this.tileServer
+            }/${projectId}/analyses/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         transformWmPointToLatLngArray(wmPoint) {

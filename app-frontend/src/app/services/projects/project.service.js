@@ -439,7 +439,7 @@ export default app => {
             throw new Error(
                 'ERROR: Update project.service getProjectCorners to use the ' +
                     'project extent. This function was not updated because ' +
-                    'we don\'t seem to use it anywhere right now.'
+                    "we don't seem to use it anywhere right now."
             );
             // return this.fetchProject(id).then(({project}) => {
 
@@ -869,7 +869,7 @@ export default app => {
         }
 
         getAnnotationsForLayer(projectId, layerId, params) {
-            return this.Project.getAnnotationsForLayer({ projectId, layerId, ...params}).$promise;
+            return this.Project.getAnnotationsForLayer({ projectId, layerId, ...params }).$promise;
         }
     }
 
