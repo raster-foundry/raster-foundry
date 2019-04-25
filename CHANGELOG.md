@@ -4,6 +4,8 @@
 
 ### Added
 
+- Included tests for project layer split behavior [\#4901](https://github.com/raster-foundry/raster-foundry/pull/4901)
+
 ### Changed
 
 - Switched general single band options out for configured single band options from RF database [\#4888](https://github.com/raster-foundry/raster-foundry/pull/4888)
