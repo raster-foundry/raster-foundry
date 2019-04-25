@@ -1,6 +1,6 @@
 import tpl from './index.html';
 import _ from 'lodash';
-import { Set } from 'immutable';
+import { Set, Map } from 'immutable';
 
 class ProjectPublishingController {
     constructor(
@@ -11,6 +11,7 @@ class ProjectPublishingController {
         $state,
         $timeout,
         projectService,
+        analysisService,
         tokenService,
         authService,
         paginationService
@@ -21,22 +22,10 @@ class ProjectPublishingController {
 
     $onInit() {
         this.selectedLayers = new Set();
+        this.layersToAnalyses = new Map();
         this.layerUrls = [];
         this.tileUrl = this.projectService.getProjectTileURL(this.project);
-        this.urlMappings = {
-            standard: {
-                label: 'Standard',
-                z: 'z',
-                x: 'x',
-                y: 'y'
-            },
-            arcGIS: {
-                label: 'ArcGIS',
-                z: 'level',
-                x: 'col',
-                y: 'row'
-            }
-        };
+        this.showAnalyses = true;
 
         let sharePolicies = [
             {
@@ -101,13 +90,22 @@ class ProjectPublishingController {
                 paginatedResponse => {
                     this.layerList = paginatedResponse.results;
                     this.layerList.forEach(layer => {
-                        layer.subtext = '';
-                        if (layer.id === this.project.defaultLayerId) {
-                            layer.subtext += 'Default layer';
-                        }
-                        if (layer.smartLayerId) {
-                            layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
-                        }
+                        layer.loadingAnalyses = true;
+                        this.analysisService
+                            .fetchAnalyses({
+                                projectId: this.project.id,
+                                projectLayerId: layer.id,
+                                pageSize: 0,
+                                page: 0
+                            })
+                            .then(paginatedAnalyses => {
+                                layer.loadingAnalyses = false;
+                                layer.analysisCount = paginatedAnalyses.count;
+                            })
+                            .catch(e => {
+                                this.$log.error(e);
+                                layer.loadingAnalyses = false;
+                            });
                     });
                     const defaultLayer = this.layerList.find(
                         l => l.id === this.project.defaultLayerId
@@ -135,6 +133,10 @@ class ProjectPublishingController {
         return currentQuery;
     }
 
+    toggleShowAnalyses() {
+        this.showAnalyses = !this.showAnalyses;
+    }
+
     onSelect(layer) {
         const without = this.selectedLayers.filter(i => i.id !== layer.id);
         if (without.size !== this.selectedLayers.size) {
@@ -142,7 +144,16 @@ class ProjectPublishingController {
         } else {
             this.selectedLayers = this.selectedLayers.add(layer);
         }
-        this.updateLayerURLs();
+    }
+
+    updateAnalysesMap() {
+        if (!this.showAnalyses) {
+            return this.$q.reject();
+        }
+        const selectedLayerIds = Set(this.selectedLayers.map(sl => sl.id));
+        const cachedLayerIds = Set(this.layersToAnalyses.keySeq().map(l => l.id));
+        const layerAnalysesToFetch = selectedLayerIds.subtract(cachedLayerIds);
+        return this.$q.all(layerAnalysesToFetch.map(this.fetchLayerAnalyses.bind(this)));
     }
 
     updateMapToken() {
@@ -152,99 +163,50 @@ class ProjectPublishingController {
         });
     }
 
-    updateLayerURLs() {
-        const zxy = (url, layer) => {
-            const m = this.urlMappings.standard;
-            return url
-                .replace('{layerId}', layer.id)
-                .replace('{z}', `{${m.z}}`)
-                .replace('{x}', `{${m.x}}`)
-                .replace('{y}', `{${m.y}}`);
-        };
-        const arcGis = (url, layer) => {
-            const m = this.urlMappings.arcGIS;
-            return url
-                .replace('{layerId}', layer.id)
-                .replace('{z}', `{${m.z}}`)
-                .replace('{x}', `{${m.x}}`)
-                .replace('{y}', `{${m.y}}`);
-        };
-        if (this.activePolicy && this.activePolicy.enum !== 'PRIVATE') {
-            const layerUrl = this.projectService.getProjectLayerTileUrl(this.project, '{layerId}', {
-                tag: new Date().getTime()
-            });
-            this.layerZXYURL = l => zxy(layerUrl, l);
-            this.layerArcGISURL = l => arcGis(layerUrl, l);
-        } else {
-            this.updateMapToken().then(t => {
-                this.mapToken = t;
-                const layerUrl = this.projectService.getProjectLayerTileUrl(
-                    this.project,
-                    '{layerId}',
-                    {
-                        mapToken: this.mapToken.id,
-                        tag: new Date().getTime()
-                    }
-                );
-                this.layerZXYURL = l => zxy(layerUrl, l);
-                this.layerArcGISURL = l => arcGis(layerUrl, l);
-            });
-        }
-    }
-
-    getLayerUrl(layer, mapping) {
-        const url = this.projectService.getProjectLayerTileUrl(this.project, layer);
-        const m = this.urlMappings[mapping];
-        return url
-            .replace('{z}', `{${m.z}}`)
-            .replace('{x}', `{${m.x}}`)
-            .replace('{y}', `{${m.y}}`);
-    }
-
     isSelected(layer) {
         return this.selectedLayers.has(layer);
     }
 
     updateShareUrl() {
-        this.projectService.getProjectShareURL(this.project).then(url => {
+        this.projectService.getProjectShareURL(this.project, this.mapToken).then(url => {
             this.shareUrl = url;
         });
     }
 
-    onPolicyChange(policy) {
-        let shouldUpdate = true;
-
-        let oldPolicy = this.activePolicy;
-        if (this.activePolicy) {
-            this.activePolicy.active = false;
-        } else {
-            shouldUpdate = false;
-        }
-
-        this.activePolicy = policy;
-        policy.active = true;
-
-        this.project.tileVisibility = policy.enum;
-        this.project.visibility = policy.enum;
-
-        if (shouldUpdate) {
+    onPolicyChange(policy, $event) {
+        if (!this.updatingPolicy && this.activePolicy !== policy) {
+            // TODO: Show spinner and disable checkboxes while updating
+            this.updatingPolicy = true;
             if (this.project.owner.id) {
                 this.project.owner = this.project.owner.id;
             }
-            this.projectService.updateProject(this.project).then(
-                res => {
-                    this.$log.debug(res);
-                },
-                err => {
-                    // TODO: Toast this
-                    this.$log.debug('Error while updating project share policy', err);
-                    this.activePolicy.active = false;
-                    oldPolicy.active = true;
-                    this.activePolicy = oldPolicy;
-                }
-            );
+            this.projectService
+                .updateProject(Object.assign({}, this.project, {
+                    tileVisibility: policy.enum,
+                    visibility: policy.enum
+                }))
+                .then(() => {
+                    if (this.activePolicy) {
+                        this.activePolicy.active = false;
+                    }
+                    policy.active = true;
+                    this.activePolicy = policy;
+                    this.project.tileVisibility = policy.enum;
+                    this.project.visibility = policy.enum;
+                    if (_.get(this, 'activePolicy.enum') === 'PRIVATE') {
+                        this.updateMapToken().then(() => this.updateShareUrl());
+                    } else {
+                        this.updateShareUrl();
+                    }
+                })
+                .catch(e => {
+                    this.$log.error('Error while updating project share policy', e);
+                    this.policyError = e;
+                })
+                .finally(() => {
+                    this.updatingPolicy = false;
+                });
         }
-        this.updateLayerURLs();
     }
 
     onCopyClick(e, url, type) {

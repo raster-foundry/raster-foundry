@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- New publish page now lists analyses for selected layers [\4902](https://github.com/raster-foundry/raster-foundry/pull/4902)
 
 ### Changed
 - Improved supported CRS for WMS and WCS Services [\#4875](https://github.com/raster-foundry/raster-foundry/pull/4875)

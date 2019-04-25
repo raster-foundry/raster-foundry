@@ -45,8 +45,9 @@ class ShareProjectAnalysesController {
 
     fetchPage(page = this.$state.params.page || 1) {
         this.analysisList = [];
-        const currentQuery = this.projectService
-            .getProjectAnalyses(this.project.id, {
+        const currentQuery = this.analysisService
+            .fetchAnalyses(this.project.id, {
+                projectId: this.project.id,
                 pageSize: 10,
                 page: page - 1,
                 mapToken: this.token
