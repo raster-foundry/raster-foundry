@@ -364,7 +364,8 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.scalacacheMemcached,
       Dependencies.scalaCheck,
       Dependencies.elasticacheClient,
-      Dependencies.geotrellisServerOgc
+      Dependencies.geotrellisServerOgc,
+      Dependencies.spatial4j
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin(

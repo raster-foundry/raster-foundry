@@ -286,7 +286,8 @@ object SceneDao
             scene.ingestLocation,
             scene.dataFootprint map { _.geom },
             false,
-            Some(().asJson)
+            Some(().asJson),
+            None
           ))
       } getOrElse { Seq.empty }
     }

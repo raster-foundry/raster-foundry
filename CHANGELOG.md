@@ -16,6 +16,7 @@
 - Add gitSnapshots prefix to Maven Central release command [\#4874](https://github.com/raster-foundry/raster-foundry/pull/4874)
 - Deduplicate datasources returned from layer datasource endpoint [\#4885](https://github.com/raster-foundry/raster-foundry/pull/4885)
 - Fixed broken publishing workflow when a user owns too many map tokens [\#4886](https://github.com/raster-foundry/raster-foundry/pull/4886)
+- Void tile cache when project layer mask changes [\#4889](https://github.com/raster-foundry/raster-foundry/pulls)
 - Cascade layer deletion so that exports are deleted [\#4890](https://github.com/raster-foundry/raster-foundry/pull/4890)
 
 ### Security
