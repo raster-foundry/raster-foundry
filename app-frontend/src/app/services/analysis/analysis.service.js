@@ -419,13 +419,13 @@ export default app => {
             }).$promise;
         }
 
-        getAnalysisTileUrl(analysisId, params) {
+        getAnalysisTileUrl(analysisId, params, setToken = true) {
             const token = this.authService.token();
             const formattedParams = L.Util.getParamString(
                 _.omitBy(
                     Object.assign(
                         {
-                            token: this.authService.token(),
+                            token: setToken ? this.authService.token() : null,
                             tag: new Date().getTime()
                         },
                         params
@@ -436,13 +436,13 @@ export default app => {
             return `${this.tileServer}/tools/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
-        getAnalysisTileUrlForProject(projectId, analysisId, params) {
+        getAnalysisTileUrlForProject(projectId, analysisId, params = {}, setToken = true) {
             const token = this.authService.token();
             const formattedParams = L.Util.getParamString(
                 _.omitBy(
                     Object.assign(
                         {
-                            token: params.mapToken ? null : this.authService.token(),
+                            token: setToken ? this.authService.token() : null,
                             tag: new Date().getTime()
                         },
                         params

@@ -220,13 +220,6 @@ export default app => {
                             projectId: '@projectId'
                         }
                     },
-                    listAnalyses: {
-                        method: 'GET',
-                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/analyses`,
-                        params: {
-                            projectId: '@projectId'
-                        }
-                    },
                     getLayer: {
                         method: 'GET',
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId`,
@@ -642,7 +635,7 @@ export default app => {
             return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
-        getProjectLayerTileUrl(project, layer, params = {}) {
+        getProjectLayerTileUrl(project, layer, params = {}, setToken = true) {
             let projectId = typeof project === 'object' ? project.id : project;
             let layerId = typeof layer === 'object' ? layer.id : layer;
 
@@ -651,7 +644,7 @@ export default app => {
                     {},
                     {
                         tag: new Date().valueOf(),
-                        token: this.authService.token()
+                        token: setToken ? this.authService.token() : null
                     },
                     params
                 ),
@@ -727,16 +720,20 @@ export default app => {
             return `${protocol}://${host}${formattedPort}`;
         }
 
-        getProjectShareURL(project) {
+        getProjectShareURL(project, token) {
             return this.$q((resolve, reject) => {
                 let shareUrl = `${this.getBaseURL()}/share/${project.id}`;
                 if (project.tileVisibility === 'PRIVATE') {
-                    this.tokenService.getOrCreateProjectMapToken(project).then(
-                        token => {
-                            resolve(`${shareUrl}/?mapToken=${token.id}`);
-                        },
-                        error => reject(error)
-                    );
+                    if (token) {
+                        resolve(`${shareUrl}/?mapToken=${token.id}`);
+                    } else {
+                        this.tokenService.getOrCreateProjectMapToken(project).then(
+                            mapToken => {
+                                resolve(`${shareUrl}/?mapToken=${mapToken.id}`);
+                            },
+                            error => reject(error)
+                        );
+                    }
                 } else {
                     resolve(shareUrl);
                 }
@@ -826,10 +823,6 @@ export default app => {
 
         getProjectLayers(projectId, params = {}) {
             return this.Project.listLayers({ ...params, projectId }).$promise;
-        }
-
-        getProjectAnalyses(projectId, params = {}) {
-            return this.Project.listAnalyses({ ...params, projectId }).$promise;
         }
 
         getProjectLayer(projectId, layerId) {

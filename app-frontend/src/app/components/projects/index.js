@@ -9,6 +9,7 @@ import analysisMapItem from './analysisMapItem';
 import projectLayerSelectModal from './projectLayerSelectModal';
 import projectLayerItem from './projectLayerItem';
 import layerSplitModal from './layerSplitModal';
+import mapUrlCard from './mapUrlCard';
 
 export default [
     projectSettingsNavbar,
@@ -21,5 +22,6 @@ export default [
     analysisMapItem,
     projectLayerSelectModal,
     projectLayerItem,
-    layerSplitModal
+    layerSplitModal,
+    mapUrlCard
 ];

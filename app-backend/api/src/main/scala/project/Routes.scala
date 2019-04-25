@@ -295,13 +295,6 @@ trait ProjectRoutes
                   }
               }
           } ~
-          pathPrefix("analyses") {
-            pathEndOrSingleSlash {
-              get {
-                listProjectAnalyses(projectId)
-              }
-            }
-          } ~
           pathPrefix("project-color-mode") {
             pathEndOrSingleSlash {
               post {
@@ -1165,28 +1158,6 @@ trait ProjectRoutes
       }
     }
   }
-
-  def listProjectAnalyses(projectId: UUID): Route =
-    extractTokenHeader { tokenO =>
-      extractMapTokenParam { mapTokenO =>
-        (projectAuthFromMapTokenO(mapTokenO, projectId) | projectAuthFromTokenO(
-          tokenO,
-          projectId) | projectIsPublic(projectId)) {
-          withPagination { page =>
-            complete {
-              ToolRunDao
-                .listAnalysesWithRelated(
-                  None,
-                  page,
-                  projectId
-                )
-                .transact(xa)
-                .unsafeToFuture
-            }
-          }
-        }
-      }
-    }
 
   def processShapefileUpload(matches: Iterator[ScalaFile]): List[String] = {
     // shapefile should have same fields in the property table
