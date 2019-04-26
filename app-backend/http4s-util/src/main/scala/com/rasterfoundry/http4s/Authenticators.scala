@@ -1,7 +1,7 @@
 package com.rasterfoundry.http4s
 
 import com.rasterfoundry.database.UserDao
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 
 import cats.data.OptionT
 import cats.effect.IO

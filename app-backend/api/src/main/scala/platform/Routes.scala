@@ -11,7 +11,7 @@ import com.rasterfoundry.database.{
   TeamDao,
   UserDao
 }
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 

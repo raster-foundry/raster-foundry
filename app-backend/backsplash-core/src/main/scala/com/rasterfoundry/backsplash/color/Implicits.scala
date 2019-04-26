@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.color
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.render._

@@ -1,17 +1,17 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import cats._
 import cats.implicits._
-
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
-
+import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
 import java.util.UUID
+
+import com.rasterfoundry.common.SceneToLayer
 
 object ProjectLayerScenesDao extends Dao[Scene] {
   val tableName =

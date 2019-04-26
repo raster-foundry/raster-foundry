@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._

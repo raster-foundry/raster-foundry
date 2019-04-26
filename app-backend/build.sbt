@@ -1,6 +1,11 @@
 import xerial.sbt.Sonatype._
 import ReleaseTransformations._
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
+import sbtassembly.AssemblyPlugin.defaultShellScript
+
+lazy val scala212 = "2.12.8"
+lazy val scala211 = "2.11.12"
+lazy val supportedScalaVersions = List(scala212, scala211)
 
 addCommandAlias("mg", "migrations/run")
 
@@ -16,6 +21,27 @@ git.gitTagToVersionNumber in ThisBuild := { tag: String =>
 
 cancelable in Global := true
 
+val scalaOptions = Seq(
+  "-deprecation",
+  "-unchecked",
+  "-feature",
+  "-language:implicitConversions",
+  "-language:reflectiveCalls",
+  "-language:higherKinds",
+  "-language:postfixOps",
+  "-language:existentials",
+  "-language:experimental.macros",
+  "-Xmax-classfile-name",
+  "100",
+  "-Yrangepos",
+  "-Ywarn-value-discard",
+  "-Ywarn-unused",
+  "-Ywarn-unused-import",
+  "-Ypartial-unification",
+  "-Ypatmat-exhaust-depth",
+  "100"
+)
+
 /**
   * Shared settings across all subprojects
   */
@@ -28,26 +54,15 @@ lazy val sharedSettings = Seq(
     "com.sksamuel.scapegoat",
     "scalac-scapegoat-plugin"
   ),
-  scalacOptions := Seq(
-    "-deprecation",
-    "-unchecked",
-    "-feature",
-    "-language:implicitConversions",
-    "-language:reflectiveCalls",
-    "-language:higherKinds",
-    "-language:postfixOps",
-    "-language:existentials",
-    "-language:experimental.macros",
-    "-Xmax-classfile-name",
-    "100",
-    "-Yrangepos",
-    "-Ywarn-value-discard",
-    "-Ywarn-unused",
-    "-Ywarn-unused-import",
-    "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth",
-    "100"
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "org.locationtech.geotrellis",
+    "*"
   ),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "com.azavea",
+    "maml-jvm"
+  ),
+  scalacOptions := scalaOptions,
   // https://github.com/sbt/sbt/issues/3570
   updateOptions := updateOptions.value.withGigahorse(false),
   externalResolvers := Seq(
@@ -74,6 +89,17 @@ lazy val sharedSettings = Seq(
   ),
   shellPrompt := { s =>
     Project.extract(s).currentProject.id + " > "
+  },
+  assemblyMergeStrategy in assembly := {
+    case "reference.conf"                       => MergeStrategy.concat
+    case "application.conf"                     => MergeStrategy.concat
+    case n if n.startsWith("META-INF/services") => MergeStrategy.concat
+    case n
+        if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") || n
+          .endsWith(".semanticdb") =>
+      MergeStrategy.discard
+    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+    case _                      => MergeStrategy.first
   },
   // https://www.scala-sbt.org/0.13/docs/Compiler-Plugins.html
   autoCompilerPlugins := true,
@@ -149,17 +175,17 @@ lazy val root = project
   .in(file("."))
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
-  .aggregate(
-    api,
-    akkautil,
-    db,
-    common,
-    migrations,
-    batch,
-    backsplashCore,
-    backsplashServer,
-    backsplashExport
-  )
+  .aggregate(api,
+             akkautil,
+             db,
+             common,
+             datamodel,
+             migrations,
+             batch,
+             backsplashCore,
+             backsplashServer,
+             backsplashExport,
+             lambdaOverviews)
 
 /**
   * API Project Settings
@@ -168,15 +194,6 @@ lazy val apiSettings = sharedSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
   cancelable in Global := true,
-  assemblyMergeStrategy in assembly := {
-    case "reference.conf"                       => MergeStrategy.concat
-    case "application.conf"                     => MergeStrategy.concat
-    case n if n.startsWith("META-INF/services") => MergeStrategy.concat
-    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
-      MergeStrategy.discard
-    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
-    case _                      => MergeStrategy.first
-  },
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
   resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
@@ -206,10 +223,47 @@ lazy val api = project
   })
 
 /**
+  * Lambda Overviews
+  */
+lazy val lambdaOverviews = project
+  .in(file("lambda-overviews"))
+  .dependsOn(datamodel)
+  .settings(sharedSettings: _*)
+  .settings(
+    mainClass in assembly := Some("com.rasterfoundry.lambda.overviews.Main"),
+    crossScalaVersions := supportedScalaVersions,
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
+    addCompilerPlugin(scalafixSemanticdb),
+    assemblyOption in assembly := (assemblyOption in assembly).value.copy(
+      includeScala = false),
+    assemblyJarName in assembly := "lambda-overviews-assembly.jar"
+  )
+  .settings({
+    libraryDependencies ++= Seq(
+      Dependencies.awsS3,
+      Dependencies.awsLambdaCore,
+      Dependencies.geotrellisContribVLM,
+      Dependencies.commonsIO % Runtime,
+      Dependencies.sttpCore,
+      Dependencies.sttpCirce,
+      Dependencies.spire,
+      Dependencies.circeCore,
+      Dependencies.slf4j % Runtime,
+      Dependencies.circeParser,
+      Dependencies.scalatest,
+      Dependencies.clistCore,
+      Dependencies.clistMacros % "provided"
+    )
+  })
+
+lazy val lambdaOverviewsNoScala = lambdaOverviews.settings()
+
+/**
   * Common Settings
   */
 lazy val common = project
   .in(file("common"))
+  .dependsOn(datamodel)
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
@@ -224,7 +278,6 @@ lazy val common = project
       Dependencies.circeParser,
       Dependencies.circeOptics,
       Dependencies.circeTest,
-      Dependencies.circeGenericExtras,
       Dependencies.chill,
       Dependencies.awsBatchSdk,
       Dependencies.rollbar,
@@ -232,6 +285,32 @@ lazy val common = project
       Dependencies.scalaCheck,
       Dependencies.catsScalacheck,
       Dependencies.akkaHttpExtensions % "test",
+    )
+  })
+
+lazy val datamodel = project
+  .in(file("datamodel"))
+  .settings(apiSettings: _*)
+  .settings(scalaVersion := "2.11.12")
+  .settings(crossScalaVersions := supportedScalaVersions)
+  .settings({
+    libraryDependencies ++= Seq(
+      Dependencies.shapeless,
+      Dependencies.monocleCore,
+      Dependencies.scalaLogging,
+      Dependencies.circeGeneric,
+      Dependencies.spray,
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisVector,
+      Dependencies.geotrellisProj4,
+      Dependencies.slf4jApi,
+      Dependencies.geotrellisVectorTestkit,
+      Dependencies.circeCore,
+      Dependencies.circeParser,
+      Dependencies.circeOptics,
+      Dependencies.circeTest,
+      Dependencies.circeGenericExtras,
+      Dependencies.scalaCheck
     )
   })
 
@@ -254,8 +333,6 @@ lazy val db = project
       Dependencies.akkaHttpExtensions
     )
   })
-  .settings(
-    )
 
 /**
   * Migrations Settings
@@ -291,7 +368,8 @@ lazy val batch = project
       Dependencies.geotrellisRaster,
       Dependencies.sparkCore,
       Dependencies.ficus,
-      Dependencies.dropbox
+      Dependencies.dropbox,
+      Dependencies.scopt
     )
   })
   .settings({
@@ -358,6 +436,8 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
     fork in run := true,
     libraryDependencies ++= Seq(
       Dependencies.http4sDSL,
+      Dependencies.geotrellisContribVLM,
+      Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisServer,
       Dependencies.scalacacheCats,
       Dependencies.scalacacheCore,
@@ -390,7 +470,8 @@ lazy val backsplashExport =
     .settings(
       fork in run := true,
       libraryDependencies ++= Seq(
-        "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
+        Dependencies.geotrellisServer,
+        Dependencies.geotrellisContribGDAL,
         Dependencies.decline,
         Dependencies.geotrellisS3,
         Dependencies.geotrellisRaster,
@@ -405,16 +486,6 @@ lazy val backsplashExport =
       ),
       assemblyJarName in assembly := "backsplash-export-assembly.jar"
     )
-    .settings(assemblyMergeStrategy in assembly := {
-      case m if m.toLowerCase.endsWith("manifest.mf") => MergeStrategy.discard
-      case m if m.toLowerCase.matches("meta-inf.*\\.sf$") =>
-        MergeStrategy.discard
-      case "reference.conf"   => MergeStrategy.concat
-      case "application.conf" => MergeStrategy.concat
-      case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
-        MergeStrategy.discard
-      case _ => MergeStrategy.first
-    })
 
 /**
   * Backsplash Server Settings
@@ -433,6 +504,7 @@ lazy val backsplashServer =
         Dependencies.http4sCirce,
         Dependencies.http4sDSL,
         Dependencies.http4sServer,
+        Dependencies.http4sXml,
         Dependencies.mamlJvm,
         Dependencies.sup,
         Dependencies.scalacacheCore,
@@ -441,16 +513,6 @@ lazy val backsplashServer =
       )
     })
     .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
-    .settings(assemblyMergeStrategy in assembly := {
-      case m if m.toLowerCase.endsWith("manifest.mf") => MergeStrategy.discard
-      case m if m.toLowerCase.matches("meta-inf.*\\.sf$") =>
-        MergeStrategy.discard
-      case "reference.conf"   => MergeStrategy.concat
-      case "application.conf" => MergeStrategy.concat
-      case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
-        MergeStrategy.discard
-      case _ => MergeStrategy.first
-    })
     .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
     .settings(test in assembly := {})
 
@@ -465,9 +527,9 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
     libraryDependencies ++= Seq(
       Dependencies.doobieCore,
       Dependencies.nimbusJose,
-      "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
-      "com.github.cb372" %% "scalacache-core" % "0.27.0",
-      "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
+      Dependencies.scalacacheCore,
+      Dependencies.scalacacheCats,
+      Dependencies.scalacacheCaffeine
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))

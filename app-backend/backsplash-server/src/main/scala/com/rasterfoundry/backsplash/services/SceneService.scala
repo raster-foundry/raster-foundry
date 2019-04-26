@@ -4,7 +4,7 @@ import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.common.datamodel.{BandOverride, User}
+import com.rasterfoundry.datamodel.{BandOverride, User}
 import com.rasterfoundry.common.utils.TileUtils
 import com.rasterfoundry.database.SceneDao
 

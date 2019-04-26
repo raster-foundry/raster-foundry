@@ -1,17 +1,17 @@
 package com.rasterfoundry.backsplash.color
 
-import com.rasterfoundry.common.datamodel.ColorComposite
-
+import com.rasterfoundry.datamodel.ColorComposite
 import geotrellis.raster._
 import geotrellis.raster.histogram._
-import geotrellis.server.ogc.{OutputFormat, OgcStyle}
+import geotrellis.server.ogc.OutputFormat.Png
+import geotrellis.server.ogc.{OgcStyle, OutputFormat}
 
 object OgcStyles {
 
   private def toBytes(mbt: MultibandTile,
                       outputFormat: OutputFormat): Array[Byte] =
     outputFormat match {
-      case OutputFormat.Png => mbt.renderPng.bytes
+      case Png(_)           => mbt.renderPng.bytes
       case OutputFormat.Jpg => mbt.renderJpg.bytes
       // Not implementable without an extent, I think
       case OutputFormat.GeoTiff => ???

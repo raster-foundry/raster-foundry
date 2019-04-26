@@ -12,7 +12,7 @@ import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 
 import com.rasterfoundry.akkautil.UserErrorHandler
 import com.rasterfoundry.api.utils.queryparams._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

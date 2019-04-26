@@ -6,7 +6,7 @@ import com.rasterfoundry.akkautil.{
   CommonHandlers
 }
 import com.rasterfoundry.database._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
 
 import akka.http.scaladsl.server.Route

@@ -1,7 +1,7 @@
 package com.rasterfoundry.akkautil
 
 import com.rasterfoundry.database._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected

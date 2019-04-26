@@ -1,6 +1,6 @@
 package com.rasterfoundry.batch.export.json
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import io.circe.generic.JsonCodec
 

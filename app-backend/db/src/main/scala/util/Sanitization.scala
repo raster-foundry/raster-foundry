@@ -1,6 +1,6 @@
 package com.rasterfoundry.database.util
 
-import com.rasterfoundry.common.datamodel.{User, Credential}
+import com.rasterfoundry.datamodel.{User, Credential}
 
 trait Sanitization {
 

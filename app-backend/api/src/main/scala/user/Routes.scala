@@ -12,7 +12,7 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging

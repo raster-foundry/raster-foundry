@@ -7,6 +7,7 @@ import geotrellis.raster.histogram._
 import geotrellis.server._
 
 import cats.implicits._
+import cats.data.{NonEmptyList => _}
 import cats.data.Validated._
 import cats.effect._
 

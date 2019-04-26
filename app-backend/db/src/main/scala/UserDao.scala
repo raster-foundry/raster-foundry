@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.database.Implicits._
 

@@ -1,6 +1,6 @@
 package com.rasterfoundry.batch.util.conf
 
-import com.rasterfoundry.common.datamodel.Band
+import com.rasterfoundry.datamodel.Band
 
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig}

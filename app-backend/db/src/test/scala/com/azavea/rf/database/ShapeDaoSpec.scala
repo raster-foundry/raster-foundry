@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel.{User, Organization, Platform, Shape}
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel.{User, Organization, Platform, Shape}
+import com.rasterfoundry.common.Generators.Implicits._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll

@@ -3,8 +3,8 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.ast.MapAlgebraAST._
 import com.rasterfoundry.common.ast._
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.export._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.export._
 import com.rasterfoundry.database.Implicits._
 import geotrellis.raster._
 import geotrellis.vector.reproject.Implicits._

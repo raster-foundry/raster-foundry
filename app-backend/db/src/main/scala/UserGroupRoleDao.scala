@@ -3,7 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.notification.{GroupNotifier, MessageType}
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import doobie._, doobie.implicits._
 import doobie.postgres.implicits._

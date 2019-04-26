@@ -7,7 +7,7 @@ import java.util.Date
 
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.common.S3
-import com.rasterfoundry.common.datamodel.{Export, ExportOptions, User}
+import com.rasterfoundry.datamodel.{Export, ExportOptions, User}
 import io.circe.syntax._
 
 package object exports extends Config {

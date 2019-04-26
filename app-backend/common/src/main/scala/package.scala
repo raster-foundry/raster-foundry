@@ -1,17 +1,16 @@
 package com.rasterfoundry
 
 import scala.util.Try
-
 import cats.syntax.either._
 import geotrellis.proj4.CRS
 import geotrellis.vector.{Extent, MultiPolygon}
 import geotrellis.vector._
-import geotrellis.vector.io._
+import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import _root_.io.circe._
 import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
 
-package object common {
+package object common extends GeoJsonImplicits {
 
   implicit val crsEncoder: Encoder[CRS] =
     Encoder.encodeString.contramap[CRS] { crs =>

@@ -2,9 +2,9 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-
 import doobie.implicits._
 import cats.implicits._
+import com.rasterfoundry.datamodel.Metric
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers

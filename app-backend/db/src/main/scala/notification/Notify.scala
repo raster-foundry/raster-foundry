@@ -7,7 +7,7 @@ import com.rasterfoundry.common.notification.Email.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.notification.templates._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import cats.implicits._
 import doobie.ConnectionIO

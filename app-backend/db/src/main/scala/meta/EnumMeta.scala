@@ -1,6 +1,6 @@
 package com.rasterfoundry.database.meta
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import doobie._
 import doobie.postgres.implicits._

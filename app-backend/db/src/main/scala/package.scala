@@ -2,7 +2,7 @@ package com.rasterfoundry
 
 import com.rasterfoundry.database.meta.RFMeta
 import com.rasterfoundry.database.filter.Filterables
-import com.rasterfoundry.common.datamodel.Credential
+import com.rasterfoundry.datamodel.Credential
 import doobie.util.Meta
 
 package object database {

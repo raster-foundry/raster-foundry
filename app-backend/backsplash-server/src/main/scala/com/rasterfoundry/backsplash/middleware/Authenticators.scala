@@ -3,7 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.database.{MapTokenDao, ProjectDao}
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.{MapToken, Project, User, Visibility}
+import com.rasterfoundry.datamodel.{MapToken, Project, User, Visibility}
 import com.rasterfoundry.{http4s => RFHttp4s}
 
 import cats.data._
