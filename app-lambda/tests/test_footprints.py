@@ -25,3 +25,14 @@ def test_no_footprint_shift():
     assert shape(footprints.data_polygon).area == good_poly.area
     # Since the shape is rectangular, these should be the same
     assert shape(footprints.tile_polygon).area == shape(footprints.data_polygon).area
+
+
+def test_prime_meridian_footprint():
+    bbox = [(-20, 0), (20, 0), (20, 5), (-20, 5)]
+    good_poly = MultiPolygon(
+        [Polygon(bbox + [bbox[0]])]
+    )
+    footprints = Footprints(bbox)
+    assert shape(footprints.data_polygon).area == good_poly.area
+    # Since the shape is rectangular, these should be the same
+    assert shape(footprints.tile_polygon).area == shape(footprints.data_polygon).area
