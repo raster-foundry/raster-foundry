@@ -16,7 +16,8 @@ queryability, platform dependence, and difficulty.
 One option is to take our existing infrastructure for metrics collection, move 
 it into a collection of AWS Lambda functions, and orchestrate those Lambda 
 functions with a Step Function. We have a plan for how this would work already 
-(see issues #684 through #688 for the beginnings of how this would work). 
+(see issues azavea/raster-foundry-platform#684 through azavea/raster-foundry-platform#688
+for the beginnings of how this would work). 
 Athena queries initiated via AWS Lambda would process the aggregate data and 
 insert the aggregated metrics into the Raster Foundry database where 
 information could be exposed to users or reports could be generated regularly 
