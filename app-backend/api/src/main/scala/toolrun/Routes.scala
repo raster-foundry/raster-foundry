@@ -93,6 +93,7 @@ trait ToolRunRoutes
                           Some(user),
                           page,
                           projectId,
+                          runParams.toolRunParams.projectLayerId,
                           runParams.ownershipTypeParams.ownershipType,
                           runParams.groupQueryParameters.groupType,
                           runParams.groupQueryParameters.groupId
@@ -102,6 +103,7 @@ trait ToolRunRoutes
                       None,
                       page,
                       projectId,
+                      runParams.toolRunParams.projectLayerId,
                       None,
                       None,
                       None

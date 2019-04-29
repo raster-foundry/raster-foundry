@@ -198,6 +198,9 @@
 .flex-none {
     flex: none !important;
 }
+.flex-between {
+    justify-content: space-between;
+}
 
 .display-i {
     display: inline;

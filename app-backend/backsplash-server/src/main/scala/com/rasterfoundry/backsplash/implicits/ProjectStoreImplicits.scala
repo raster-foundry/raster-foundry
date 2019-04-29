@@ -109,7 +109,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       footprint,
       subsetBands,
       colorCorrectParameters,
-      singleBandOptions
+      singleBandOptions,
+      mosaicDefinition.mask
     )
   }
 
@@ -151,7 +152,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
           footprint,
           imageBandOverride,
           colorCorrectParams,
-          None // no single band options ever
+          None, // no single band options ever
+          None // not adding the mask here, since out of functional scope for md to image
         )
       }
     }
@@ -173,8 +175,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
           bandOverride map { _.redBand },
           bandOverride map { _.greenBand },
           bandOverride map { _.blueBand },
-          imageSubset map { _.toList } getOrElse List.empty) map {
-          mosaicDefinitionToImage(_, bandOverride, projId)
+          imageSubset map { _.toList } getOrElse List.empty) map { md =>
+          mosaicDefinitionToImage(md, bandOverride, projId)
         } transact (xa)
       }
     }

@@ -1,5 +1,8 @@
 <div class="sidebar">
-    <rf-list-item ng-repeat="layer in $ctrl.layerList track by layer.id">
+    <rf-list-item
+        ng-repeat="layer in $ctrl.layerList track by layer.id"
+        ng-click="$ctrl.onSelect(layer)"
+    >
         <item-selector>
             <rf-list-item-selector
                 id="layer.id"
@@ -13,6 +16,22 @@
                 {{ layer.name }}
             </strong>
         </item-title>
+        <item-subtitle ng-if="layer.analysisCount >= 0 || layer.loadingAnalyses">
+            <span
+                ng-show="layer.loadingAnalyses"
+                class="icon-load animate-spin"
+                ng-class="{'stop': !layer.loadingAnalyses}"
+            ></span>
+            <span ng-show="!layer.loadingAnalyses">
+                <ng-pluralize
+                    count="layer.analysisCount"
+                    when="{'0': 'No analyses',
+                            'one': '1 analysis',
+                            'other': '{} analyses'
+                        }"
+                ></ng-pluralize>
+            </span>
+        </item-subtitle>
         <item-date ng-if="layer.rangeStart && layer.rangeEnd">
             {{ layer.rangeStart | date }} - {{ layer.rangeEnd | date }}
         </item-date>
@@ -72,7 +91,7 @@
                     class="radio"
                     ng-repeat="policy in $ctrl.sharePolicies"
                     ng-if="policy.enabled"
-                    ng-click="$ctrl.onPolicyChange(policy)"
+                    ng-click="$ctrl.onPolicyChange(policy, $event)"
                     ng-class="{'active': policy.active}"
                     ng-disabled="!policy.enabled"
                 >
@@ -155,10 +174,20 @@
             </div>
         </div>
     </div>
-    <div class="page-header">
+    <div class="page-header flex-display flex-between">
         <h3>
             Tile layer URLs
         </h3>
+        <button class="btn select-button btn-tiny" ng-click="$ctrl.toggleShowAnalyses()">
+            <label class="checkbox" ng-class="{active: !$ctrl.showAnalyses}">
+                <input
+                    type="checkbox"
+                    ng-checked="!$ctrl.showAnalyses"
+                    ng-click="$ctrl.toggleShowAnalyses()"
+                />
+            </label>
+            <span>Hide Analyses</span>
+        </button>
     </div>
     <div ng-if="!$ctrl.selectedLayers.size" class="page-card">
         <div class="page-card-content center">
@@ -168,84 +197,14 @@
             <p>Select a layer from the list to view its tile layer URLs</p>
         </div>
     </div>
-    <div
+    <rf-map-url-card
         ng-if="$ctrl.selectedLayers.size"
-        class="page-card"
-        ng-repeat="layer in $ctrl.selectedLayers.toArray()"
+        ng-repeat="layer in $ctrl.selectedLayers.toArray() track by layer.id"
+        project="$ctrl.project"
+        layer="layer"
+        map-token="$ctrl.mapToken"
+        share-policy="$ctrl.activePolicy"
+        show-analyses="$ctrl.showAnalyses"
     >
-        <div class="page-card-section">
-            <h4>{{ layer.name }}</h4>
-        </div>
-        <div class="page-card-header">
-            <h5>Base Layer</h5>
-        </div>
-        <div class="form-group">
-            <label for="published-link">ZXY Tile Layer URL</label>
-            <div class="input-group">
-                <input
-                    id="published-link"
-                    type="text"
-                    class="form-control"
-                    value="{{ $ctrl.layerZXYURL(layer) }}"
-                    readonly
-                />
-                <button
-                    class="btn btn-link btn-square btn-icon"
-                    clipboard
-                    text="$ctrl.shareUrl"
-                    ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
-                    tooltips
-                    tooltip-size="small"
-                    tooltip-side="top right"
-                    tooltip-template="Copy URL"
-                >
-                    <i
-                        class="icon-copy color-base"
-                        aria-hidden="true"
-                        ng-show="$ctrl.copyType !== 'page'"
-                        ><span class="sr-only">Copy URL</span></i
-                    >
-                    <i
-                        class="icon-check color-green"
-                        aria-hidden="true"
-                        ng-show="$ctrl.copyType === 'page'"
-                    ></i>
-                </button>
-            </div>
-        </div>
-        <div class="form-group">
-            <label for="published-link">ArcGIS Tile Layer URL</label>
-            <div class="input-group">
-                <input
-                    id="published-link"
-                    type="text"
-                    class="form-control"
-                    value="{{ $ctrl.layerArcGISURL(layer) }}"
-                    readonly
-                />
-                <button
-                    class="btn btn-link btn-square btn-icon"
-                    clipboard
-                    text="$ctrl.shareUrl"
-                    ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
-                    tooltips
-                    tooltip-size="small"
-                    tooltip-side="top right"
-                    tooltip-template="Copy URL"
-                >
-                    <i
-                        class="icon-copy color-base"
-                        aria-hidden="true"
-                        ng-show="$ctrl.copyType !== 'page'"
-                        ><span class="sr-only">Copy URL</span></i
-                    >
-                    <i
-                        class="icon-check color-green"
-                        aria-hidden="true"
-                        ng-show="$ctrl.copyType === 'page'"
-                    ></i>
-                </button>
-            </div>
-        </div>
-    </div>
+    </rf-map-url-card>
 </div>
