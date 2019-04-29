@@ -173,4 +173,5 @@ object MigrationSummary {
   M173
   M174
   M175
+  M176
 }
