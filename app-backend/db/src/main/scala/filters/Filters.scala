@@ -111,4 +111,28 @@ object Filters {
     List(platformIdParams.platformId.map(platformId =>
       fr"platform_id = ${platformId}"))
   }
+
+  def metricQP(
+      metricQueryParams: MetricQueryParameters): List[Option[Fragment]] = {
+    List(
+      metricQueryParams.projectId map { projId =>
+        fr"""metric_event @> '{"projectId": "$projId"}'"""
+      },
+      metricQueryParams.projectLayerId map { projLayerId =>
+        fr"""metric_event @> '{"projectLayerId": "$projLayerId"}'"""
+      },
+      metricQueryParams.analysisId map { analysisId =>
+        fr"""metric_event @> '{"analysisId": "$analysisId"}'"""
+      },
+      metricQueryParams.nodeId map { nodeId =>
+        fr"""metric_event @> '{"nodeId": "$nodeId"}'"""
+      },
+      metricQueryParams.requestType match {
+        case MetricRequestType.ProjectMosaicRequest =>
+          Some(fr"""metric_event ? 'projectOwner'""")
+        case MetricRequestType.AnalysisRequest =>
+          Some(fr"""metric_event ? 'analysisOwner'""")
+      }
+    )
+  }
 }
