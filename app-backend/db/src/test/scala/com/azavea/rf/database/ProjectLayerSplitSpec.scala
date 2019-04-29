@@ -100,7 +100,6 @@ class ProjectLayerSplitSpec
                   Map(projectLayerId -> sceneList)
                 }
               } map { sceneMaps =>
-                // guess wheter maps have a semigroup :sunglasses:
                 sceneMaps.toNel map { _.reduce } getOrElse { Map.empty }
               }
             } yield (sceneMap, dbProject.defaultLayerId)
