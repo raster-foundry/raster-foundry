@@ -21,6 +21,7 @@
 - Fixed broken publishing workflow when a user owns too many map tokens [\#4886](https://github.com/raster-foundry/raster-foundry/pull/4886)
 - Void tile cache when project layer mask changes [\#4889](https://github.com/raster-foundry/raster-foundry/pulls)
 - Cascade layer deletion so that exports are deleted [\#4890](https://github.com/raster-foundry/raster-foundry/pull/4890)
+- Filtered out MODIS and Landsat 7 images from less than 24 hours ago when browsing NASA CMR [\#4896](https://github.com/raster-foundry/raster-foundry/pull/4896)
 - Fix anti-meridian splitting logic also splitting prime-meridian scenes [\#4904](https://github.com/raster-foundry/raster-foundry/pull/4904)
 
 ### Security
