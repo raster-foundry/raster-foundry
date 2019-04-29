@@ -1,13 +1,12 @@
 package com.rasterfoundry.backsplash
 
 import geotrellis.contrib.vlm.MosaicRasterSource
-import geotrellis.proj4.{WebMercator, CRS}
+import geotrellis.proj4.CRS
 import geotrellis.vector._
 import geotrellis.raster.histogram._
 import geotrellis.server._
 
 import cats.implicits._
-import cats.data.{NonEmptyList => NEL}
 import cats.data.Validated._
 import cats.effect._
 
