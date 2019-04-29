@@ -18,6 +18,8 @@ import geotrellis.vector.io._
 
 import scala.util._
 
+import java.time.LocalDate
+
 @SuppressWarnings(Array("CatchException"))
 trait JsonCodecs {
   // Double key serialization
@@ -66,6 +68,29 @@ trait JsonCodecs {
       Either
         .catchNonFatal(Timestamp.from(Instant.parse(timeStr)))
         .leftMap(_ => "Timestamp")
+    }
+
+  implicit val timeRangeEncoder: Encoder[(LocalDate, LocalDate)] =
+    Encoder.encodeString.contramap[(LocalDate, LocalDate)]({
+      case (t1, t2) =>
+        s"[$t1 00:00, $t2 00:00)"
+    })
+  implicit val timeRangeDecoder: Decoder[(LocalDate, LocalDate)] =
+    Decoder.decodeString.emap { str =>
+      val (s1, s2) = str
+        .replace(" 00:00", "")
+        .replace("[", "")
+        .replace(")", "")
+        .split(", ")
+        .toList match {
+        case h :: t :: Nil =>
+          (h, t)
+        case _ =>
+          ("", "")
+      }
+      Either
+        .catchNonFatal((LocalDate.parse(s1), LocalDate.parse(s2)))
+        .leftMap(_ => "Timerange")
     }
 
   implicit val uuidEncoder: Encoder[UUID] =
