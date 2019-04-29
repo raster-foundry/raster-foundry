@@ -5,6 +5,8 @@
 ### Added
 - New publish page now lists analyses for selected layers [\4902](https://github.com/raster-foundry/raster-foundry/pull/4902)
 
+- Included tests for project layer split behavior [\#4901](https://github.com/raster-foundry/raster-foundry/pull/4901)
+
 ### Changed
 - Improved supported CRS for WMS and WCS Services [\#4875](https://github.com/raster-foundry/raster-foundry/pull/4875)
 
