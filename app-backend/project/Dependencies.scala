@@ -18,6 +18,7 @@ object Version {
   val cats = "1.4.0"
   val catsEffect = "1.0.0"
   val catsMeow = "0.2.0"
+  val catsScalacheck = "0.1.1"
   val chill = "0.9.2"
   val circe = "0.11.1"
   val circeOptics = "0.11.0"
@@ -75,6 +76,7 @@ object Dependencies {
   val catsCore = "org.typelevel" %% "cats-core" % Version.cats
   val catsEffect = "org.typelevel" %% "cats-effect" % Version.catsEffect
   val catsMeow = "com.olegpy" %% "meow-mtl" % Version.catsMeow
+  val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % Version.catsScalacheck % "test"
   val chill = "com.twitter" %% "chill" % Version.chill
   val circeCore = "io.circe" %% "circe-core" % Version.circe
   val circeGeneric = "io.circe" %% "circe-generic" % Version.circe
