@@ -79,8 +79,6 @@ trait JsonCodecs {
     new Decoder[(LocalDate, LocalDate)] {
       def apply(c: HCursor): Decoder.Result[(LocalDate, LocalDate)] = {
         val intervalString = c.focus map { _.noSpaces } getOrElse { "\"[,)\"" }
-        println(s"Original focus was: ${c.focus}")
-        println(s"Interval string is: ${intervalString}")
         val (s1, s2) = intervalString
           .replace(" 00:00", "")
           .replace("[", "")

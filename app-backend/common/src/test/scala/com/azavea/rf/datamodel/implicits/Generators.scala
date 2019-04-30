@@ -1125,6 +1125,7 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbSplitOptions: Arbitrary[SplitOptions] = Arbitrary {
       splitOptionsGen
+    }
 
     implicit def arbMetric: Arbitrary[Metric] = Arbitrary {
       metricGen

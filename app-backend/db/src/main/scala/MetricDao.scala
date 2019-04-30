@@ -31,7 +31,6 @@ object MetricDao extends Dao[Metric] {
   }
 
   def increment(metric: Metric): ConnectionIO[Int] = {
-    println(s"Filters are ${uniquenessFilters(metric)}")
     val q = query
       .filter(uniquenessFilters(metric))
     q.exists flatMap {

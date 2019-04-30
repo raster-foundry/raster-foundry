@@ -27,11 +27,7 @@ class MetricDaoSpec
         {
           val repetitions = getRepetitionAttempts(0)
           val metricIO = for {
-            _ <- MetricDao.increment(metric) map { result =>
-              println(s"Result is: $result")
-              result
-            }
-            countOnce <- MetricDao.unsafeGetMetricById(metric.id)
+            _ <- MetricDao.increment(metric)            countOnce <- MetricDao.unsafeGetMetricById(metric.id)
             _ <- List.fill(repetitions)(()) traverse { _ =>
               MetricDao.increment(metric)
             }

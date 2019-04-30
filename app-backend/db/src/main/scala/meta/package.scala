@@ -23,7 +23,6 @@ package object meta {
           // We can't piggy-back on json here, since the format of the interval string makes
           // circe _extremely angry_ and we can't even construct an HCursor to write a
           // custom decoder.
-          println(s"Value to start is: ${intervalString.getValue}")
           val (s1, s2) = intervalString.getValue
             .replace("\"", "")
             .replace(" 00:00:00", "")
@@ -45,7 +44,6 @@ package object meta {
             val o = new PGobject
             o.setType("tsrange")
             o.setValue(a.asJson.noSpaces.replace("\"", ""))
-            println(o)
             o
           }
         )
