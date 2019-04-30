@@ -19,8 +19,8 @@ object Metric {
   implicit val encMetric: Encoder[Metric] = deriveEncoder[Metric]
 
   def apply(id: UUID,
-            metricEvent: MetricEvent,
             occurredAt: Instant,
+            metricEvent: MetricEvent,
             value: Int,
             requester: String): Metric =
     Metric(
