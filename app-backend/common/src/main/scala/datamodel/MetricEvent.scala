@@ -27,7 +27,8 @@ object MetricEvent {
 case class ProjectLayerMosaicEvent(
     projectId: UUID,
     projectLayerId: UUID,
-    projectOwner: String
+    projectOwner: String,
+    isAnalysis: Boolean = false
 ) extends MetricEvent {
   def toQueryParams = MetricQueryParameters(
     projectId = Some(projectId),
@@ -48,7 +49,8 @@ case class AnalysisEvent(
     projectLayerId: Option[UUID],
     analysisId: UUID,
     nodeId: Option[UUID],
-    analysisOwner: String
+    analysisOwner: String,
+    isAnalysis: Boolean = true
 ) extends MetricEvent {
   def toQueryParams = MetricQueryParameters(
     analysisId = Some(analysisId),

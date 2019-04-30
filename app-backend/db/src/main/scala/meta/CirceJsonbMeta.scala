@@ -10,7 +10,6 @@ import io.circe.syntax._
 
 import scala.reflect.runtime.universe.TypeTag
 import java.net.URI
-import java.time.LocalDate
 
 object CirceJsonbMeta {
   def apply[Type: TypeTag: Encoder: Decoder] = {
@@ -56,9 +55,6 @@ trait CirceJsonbMeta {
 
   implicit val jsonMeta: Meta[Json] =
     CirceJsonbMeta[Json]
-
-  implicit val timeRangeMeta: Meta[(LocalDate, LocalDate)] =
-    CirceJsonbMeta[(LocalDate, LocalDate)]
 
   implicit val metricEventMeta: Meta[MetricEvent] =
     CirceJsonbMeta[MetricEvent]

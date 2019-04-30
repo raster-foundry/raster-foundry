@@ -114,25 +114,36 @@ object Filters {
 
   def metricQP(
       metricQueryParams: MetricQueryParameters): List[Option[Fragment]] = {
-    List(
-      metricQueryParams.projectId map { projId =>
-        fr"""metric_event @> '{"projectId": "$projId"}'"""
-      },
-      metricQueryParams.projectLayerId map { projLayerId =>
-        fr"""metric_event @> '{"projectLayerId": "$projLayerId"}'"""
-      },
-      metricQueryParams.analysisId map { analysisId =>
-        fr"""metric_event @> '{"analysisId": "$analysisId"}'"""
-      },
-      metricQueryParams.nodeId map { nodeId =>
-        fr"""metric_event @> '{"nodeId": "$nodeId"}'"""
-      },
+    val requestTypeF = {
       metricQueryParams.requestType match {
         case MetricRequestType.ProjectMosaicRequest =>
-          Some(fr"""metric_event ? 'projectOwner'""")
+          val jsString = """{"isAnalysis":false}"""
+          Some(fr"metric_event @> $jsString :: jsonb")
         case MetricRequestType.AnalysisRequest =>
-          Some(fr"""metric_event ? 'analysisOwner'""")
+          val jsString = """{"isAnalysis":true}"""
+          Some(fr"metric_event @> $jsString :: jsonb")
       }
+    }
+    List(
+      metricQueryParams.projectId map { projId =>
+        {
+          val jsString = s"""{"projectId":"$projId"}"""
+          fr"metric_event @> $jsString :: jsonb"
+        }
+      },
+      metricQueryParams.projectLayerId map { projLayerId =>
+        val jsString = s"""{"projectLayerId":"$projLayerId"}"""
+        fr"metric_event @> $jsString :: jsonb"
+      },
+      metricQueryParams.analysisId map { analysisId =>
+        val jsString = s"""{"analysisId":"$analysisId"}"""
+        fr"metric_event @> $jsString :: jsonb"
+      },
+      metricQueryParams.nodeId map { nodeId =>
+        val jsString = s"""{"nodeId":"$nodeId"}"""
+        fr"metric_event @> $jsString :: jsonb"
+      },
+      requestTypeF
     )
   }
 }

@@ -1,11 +1,11 @@
 package com.rasterfoundry.common.datamodel
 
-import io.circe.generic.JsonCodec
+import io.circe._
+import io.circe.generic.semiauto._
 
 import java.time.{Instant, LocalDateTime, LocalDate, ZoneOffset}
 import java.util.UUID
 
-@JsonCodec
 case class Metric(
     id: UUID,
     period: (LocalDate, LocalDate),
@@ -15,6 +15,9 @@ case class Metric(
 )
 
 object Metric {
+
+  implicit val encMetric: Encoder[Metric] = deriveEncoder[Metric]
+
   def apply(id: UUID,
             metricEvent: MetricEvent,
             occurredAt: Instant,
