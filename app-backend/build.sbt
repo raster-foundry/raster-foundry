@@ -230,7 +230,8 @@ lazy val common = project
       Dependencies.rollbar,
       Dependencies.apacheCommonsEmail,
       Dependencies.scalaCheck,
-      Dependencies.akkaHttpExtensions % "test"
+      Dependencies.catsScalacheck,
+      Dependencies.akkaHttpExtensions % "test",
     )
   })
 

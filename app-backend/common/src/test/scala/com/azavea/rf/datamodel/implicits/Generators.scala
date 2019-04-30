@@ -2,6 +2,7 @@ package com.rasterfoundry.common.datamodel
 
 import java.net.URI
 
+import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
 import geotrellis.vector.testkit.Rectangle
 import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
@@ -9,6 +10,8 @@ import io.circe.syntax._
 import io.circe.testing.ArbitraryInstances
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck._
+import org.scalacheck.cats.implicits._
+
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.util.UUID
@@ -166,6 +169,16 @@ object Generators extends ArbitraryInstances {
 
   private def fileTypeGen: Gen[FileType] =
     Gen.oneOf(FileType.Geotiff, FileType.GeotiffWithMetadata)
+
+  private def timeRangeGen: Gen[(LocalDate, LocalDate)] =
+    for {
+      year <- Gen.choose(2005, 2019)
+      month <- Gen.choose(1, 12)
+      day <- Gen.choose(1, 28)
+    } yield {
+      val start = LocalDate.of(year, month, day)
+      (start, start.plusDays(1))
+    }
 
   private def timestampIn2016Gen: Gen[Timestamp] =
     for {
@@ -879,6 +892,48 @@ object Generators extends ArbitraryInstances {
       }
     }
 
+  private def metricEventGen: Gen[MetricEvent] = Gen.oneOf(
+    projectMosaicEventGen.widen,
+    analysisEventGen.widen
+  )
+
+  private def projectMosaicEventGen: Gen[ProjectLayerMosaicEvent] =
+    for {
+      projectId <- uuidGen
+      projectLayerId <- uuidGen
+      projectOwner <- nonEmptyStringGen
+    } yield ProjectLayerMosaicEvent(projectId, projectLayerId, projectOwner)
+
+  private def analysisEventGen: Gen[AnalysisEvent] =
+    for {
+      (projectId, projectLayerId) <- Gen.oneOf(
+        (uuidGen map { Some(_) }, uuidGen map {
+          Some(_)
+        }).tupled,
+        Gen.const((None, None))
+      )
+      analysisId <- uuidGen
+      nodeId <- Gen.oneOf(
+        Gen.const(None),
+        uuidGen map { Some(_) }
+      )
+      analysisOwner <- nonEmptyStringGen
+    } yield
+      AnalysisEvent(projectId,
+                    projectLayerId,
+                    analysisId,
+                    nodeId,
+                    analysisOwner)
+
+  private def metricGen: Gen[Metric] =
+    for {
+      id <- uuidGen
+      period <- timeRangeGen
+      metricEvent <- metricEventGen
+      value <- Gen.const(1)
+      requester <- nonEmptyStringGen
+    } yield { Metric(id, period, metricEvent, value, requester) }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -1070,6 +1125,10 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbSplitOptions: Arbitrary[SplitOptions] = Arbitrary {
       splitOptionsGen
+    }
+
+    implicit def arbMetric: Arbitrary[Metric] = Arbitrary {
+      metricGen
     }
   }
 }

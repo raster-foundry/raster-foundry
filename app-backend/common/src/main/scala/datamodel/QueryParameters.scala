@@ -636,4 +636,13 @@ object BboxUtil {
           "Four comma separated coordinates must be given for bbox"
         ).initCause(e)
     }
+
 }
+
+final case class MetricQueryParameters(
+    projectId: Option[UUID] = None,
+    projectLayerId: Option[UUID] = None,
+    analysisId: Option[UUID] = None,
+    nodeId: Option[UUID] = None,
+    requestType: MetricRequestType
+)
