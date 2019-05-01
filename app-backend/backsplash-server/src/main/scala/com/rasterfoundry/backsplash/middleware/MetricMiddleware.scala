@@ -11,6 +11,7 @@ import cats.implicits._
 import doobie.{ConnectionIO, Transactor}
 import doobie.implicits._
 import org.http4s._
+import org.http4s.headers._
 import org.http4s.dsl.io._
 
 import java.time.Instant
@@ -37,8 +38,8 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
                       Metric(Instant.now,
                              ProjectLayerMosaicEvent(projectId,
                                                      layerId,
-                                                     project.owner),
-                             1,
+                                                     project.owner,
+                                                     getReferer(req.req)),
                              user.id)
                     MetricDao.insert(metric)
                   }
@@ -55,7 +56,11 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
         for {
           metricFib <- OptionT.liftF {
             Conc.start {
-              analysisToMetricFib(analysisId, Some(projectId), node, user.id)
+              analysisToMetricFib(analysisId,
+                                  Some(projectId),
+                                  node,
+                                  user.id,
+                                  getReferer(req.req))
             }
           }
           resp <- http(req)
@@ -67,7 +72,11 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
         for {
           metricFib <- OptionT.liftF {
             Conc.start {
-              analysisToMetricFib(analysisId, None, node, user.id)
+              analysisToMetricFib(analysisId,
+                                  None,
+                                  node,
+                                  user.id,
+                                  getReferer(req.req))
             }
           }
           resp <- http(req)
@@ -78,7 +87,8 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
   private def analysisToMetricFib(analysisId: UUID,
                                   projectId: Option[UUID],
                                   nodeId: Option[UUID],
-                                  requester: String) =
+                                  requester: String,
+                                  referer: String) =
     (ToolRunDao.query
       .filter(analysisId)
       .selectOption flatMap { toolRunO =>
@@ -86,17 +96,22 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
         .map({ toolRun =>
           {
             val metric =
-              Metric(Instant.now,
-                     AnalysisEvent(projectId orElse toolRun.projectId,
-                                   toolRun.projectLayerId,
-                                   toolRun.id,
-                                   nodeId,
-                                   toolRun.owner),
-                     1,
-                     requester)
+              Metric(
+                Instant.now,
+                AnalysisEvent(projectId orElse toolRun.projectId,
+                              toolRun.projectLayerId,
+                              toolRun.id,
+                              nodeId,
+                              toolRun.owner,
+                              referer),
+                requester
+              )
             MetricDao.insert(metric)
           }
         })
         .getOrElse { 0.pure[ConnectionIO] }
     }).transact(xa)
+
+  private def getReferer[F[_]](req: Request[F]): String =
+    req.headers.get(Referer) map { _.value } getOrElse ""
 }
