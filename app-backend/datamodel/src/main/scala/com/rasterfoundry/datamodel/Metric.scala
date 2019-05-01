@@ -6,29 +6,27 @@ import java.util.UUID
 import io.circe._
 import io.circe.generic.semiauto._
 
+import java.time.{Instant, LocalDateTime, LocalDate, ZoneOffset}
+
 case class Metric(
-    id: UUID,
     period: (LocalDate, LocalDate),
     metricEvent: MetricEvent,
-    value: Int,
-    requester: String
+    requester: String,
+    value: Int
 )
 
 object Metric {
 
   implicit val encMetric: Encoder[Metric] = deriveEncoder[Metric]
 
-  def apply(id: UUID,
-            occurredAt: Instant,
+  def apply(occurredAt: Instant,
             metricEvent: MetricEvent,
-            value: Int,
             requester: String): Metric =
     Metric(
-      id,
       rangeForInstant(occurredAt),
       metricEvent,
-      value,
-      requester
+      requester,
+      1
     )
 
   def rangeForInstant(instant: Instant): (LocalDate, LocalDate) = {

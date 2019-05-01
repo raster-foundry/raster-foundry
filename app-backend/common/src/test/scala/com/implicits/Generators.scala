@@ -903,7 +903,9 @@ object Generators extends ArbitraryInstances {
       projectId <- uuidGen
       projectLayerId <- uuidGen
       projectOwner <- nonEmptyStringGen
-    } yield ProjectLayerMosaicEvent(projectId, projectLayerId, projectOwner)
+      referer <- nonEmptyStringGen
+    } yield
+      ProjectLayerMosaicEvent(projectId, projectLayerId, projectOwner, referer)
 
   private def analysisEventGen: Gen[AnalysisEvent] =
     for {
@@ -919,21 +921,22 @@ object Generators extends ArbitraryInstances {
         uuidGen map { Some(_) }
       )
       analysisOwner <- nonEmptyStringGen
+      referer <- nonEmptyStringGen
     } yield
       AnalysisEvent(projectId,
                     projectLayerId,
                     analysisId,
                     nodeId,
-                    analysisOwner)
+                    analysisOwner,
+                    referer)
 
   private def metricGen: Gen[Metric] =
     for {
-      id <- uuidGen
       period <- timeRangeGen
       metricEvent <- metricEventGen
       value <- Gen.const(1)
       requester <- nonEmptyStringGen
-    } yield { Metric(id, period, metricEvent, value, requester) }
+    } yield { Metric(period, metricEvent, requester, value) }
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {

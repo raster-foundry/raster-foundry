@@ -117,31 +117,35 @@ object Filters {
     val requestTypeF = {
       metricQueryParams.requestType match {
         case MetricRequestType.ProjectMosaicRequest =>
-          val jsString = """{"isAnalysis":false}"""
-          Some(fr"metric_event @> $jsString :: jsonb")
+          val keyFilter = "projectOwner"
+          Some(fr"metrics.metric_event ?? $keyFilter")
         case MetricRequestType.AnalysisRequest =>
-          val jsString = """{"isAnalysis":true}"""
-          Some(fr"metric_event @> $jsString :: jsonb")
+          val keyFilter = "analysisOwner"
+          Some(fr"metrics.metric_event ?? $keyFilter")
       }
     }
     List(
       metricQueryParams.projectId map { projId =>
         {
           val jsString = s"""{"projectId":"$projId"}"""
-          fr"metric_event @> $jsString :: jsonb"
+          fr"metrics.metric_event @> $jsString :: jsonb"
         }
       },
       metricQueryParams.projectLayerId map { projLayerId =>
         val jsString = s"""{"projectLayerId":"$projLayerId"}"""
-        fr"metric_event @> $jsString :: jsonb"
+        fr"metrics.metric_event @> $jsString :: jsonb"
       },
       metricQueryParams.analysisId map { analysisId =>
         val jsString = s"""{"analysisId":"$analysisId"}"""
-        fr"metric_event @> $jsString :: jsonb"
+        fr"metrics.metric_event @> $jsString :: jsonb"
       },
       metricQueryParams.nodeId map { nodeId =>
         val jsString = s"""{"nodeId":"$nodeId"}"""
-        fr"metric_event @> $jsString :: jsonb"
+        fr"metrics.metric_event @> $jsString :: jsonb"
+      },
+      metricQueryParams.referer map { referer =>
+        val jsString = s"""{"referer":"$referer"}"""
+        fr"metrics.metric_event @> $jsString :: jsonb"
       },
       requestTypeF
     )

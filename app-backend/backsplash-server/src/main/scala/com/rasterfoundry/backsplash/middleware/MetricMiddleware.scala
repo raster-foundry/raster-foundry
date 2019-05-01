@@ -34,14 +34,13 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
                 (projectO map { project =>
                   {
                     val metric =
-                      Metric(UUID.randomUUID,
-                             Instant.now,
+                      Metric(Instant.now,
                              ProjectLayerMosaicEvent(projectId,
                                                      layerId,
                                                      project.owner),
                              1,
                              user.id)
-                    MetricDao.increment(metric)
+                    MetricDao.insert(metric)
                   }
                 }).getOrElse(0.pure[ConnectionIO])
               }).transact(xa)
@@ -87,8 +86,7 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
         .map({ toolRun =>
           {
             val metric =
-              Metric(UUID.randomUUID,
-                     Instant.now,
+              Metric(Instant.now,
                      AnalysisEvent(projectId orElse toolRun.projectId,
                                    toolRun.projectLayerId,
                                    toolRun.id,
@@ -96,7 +94,7 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
                                    toolRun.owner),
                      1,
                      requester)
-            MetricDao.increment(metric)
+            MetricDao.insert(metric)
           }
         })
         .getOrElse { 0.pure[ConnectionIO] }
