@@ -58,7 +58,7 @@ node {
                -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
                -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
                -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
-               build "release release-version ${params.RELEASE_TAG} with-defaults"
+               build "gitSnapshots ;release release-version ${params.RELEASE_TAG} with-defaults"
           """
         }
       }

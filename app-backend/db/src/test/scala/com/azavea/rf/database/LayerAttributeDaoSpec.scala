@@ -16,17 +16,13 @@ class LayerAttributeDaoSpec
     with DBTestConfig {
 
   test("list all layer ids") {
-    xa.use(t => LayerAttributeDao.layerIds.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    LayerAttributeDao.layerIds.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("get max zooms for layers") {
-    xa.use(
-        t =>
-          LayerAttributeDao
-            .maxZoomsForLayers(Set.empty[String])
-            .transact(t))
+    LayerAttributeDao
+      .maxZoomsForLayers(Set.empty[String])
+      .transact(xa)
       .unsafeRunSync
       .length should be >= 0
   }
@@ -41,7 +37,7 @@ class LayerAttributeDaoSpec
             layerAttribute) flatMap { _ =>
             LayerAttributeDao.unsafeGetAttribute(layerId, layerAttribute.name)
           }
-          xa.use(t => attributeIO.transact(t)).unsafeRunSync == layerAttribute
+          attributeIO.transact(xa).unsafeRunSync == layerAttribute
         }
       }
     }
@@ -60,7 +56,7 @@ class LayerAttributeDaoSpec
             LayerAttributeDao.listAllAttributes(layerAttributes.head.name)
           }
 
-          xa.use(t => attributesIO.transact(t)).unsafeRunSync.length ==
+          attributesIO.transact(xa).unsafeRunSync.length ==
             layerAttributes.filter(_.name == layerAttributes.head.name).length
         }
       }
@@ -77,7 +73,7 @@ class LayerAttributeDaoSpec
             layerAttribute) flatMap { _ =>
             LayerAttributeDao.layerExists(layerId)
           }
-          xa.use(t => attributesIO.transact(t)).unsafeRunSync
+          attributesIO.transact(xa).unsafeRunSync
         }
       }
     }

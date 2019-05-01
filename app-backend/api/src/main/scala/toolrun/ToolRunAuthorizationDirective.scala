@@ -1,8 +1,7 @@
 package com.rasterfoundry.api.toolrun
 
 import com.rasterfoundry.akkautil.Authentication
-import com.rasterfoundry.database.{ProjectDao, ToolRunDao, UserDao, MapTokenDao}
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.database.MapTokenDao
 
 import cats.effect.IO
 import cats.implicits._

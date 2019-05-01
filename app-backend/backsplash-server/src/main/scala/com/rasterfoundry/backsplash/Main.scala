@@ -31,14 +31,18 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
-  val dbContextShift: ContextShift[IO] = IO.contextShift(
-    ExecutionContext.fromExecutor(
-      Executors.newFixedThreadPool(
-        Config.parallelism.dbThreadPoolSize,
-        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build())
-    ))
+  val xaConfig = RFTransactor.TransactorConfig(
+    contextShift = IO.contextShift(
+      ExecutionContext.fromExecutor(
+        Executors.newFixedThreadPool(
+          Config.parallelism.dbThreadPoolSize,
+          new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
+        )
+      )
+    )
+  )
 
-  val xa = RFTransactor.transactor(dbContextShift)
+  val xa = RFTransactor.buildTransactor(xaConfig)
 
   val ogcUrlPrefix = Properties.envOrNone("ENVIRONMENT") match {
     case Some("Production") => "https://tiles.rasterfoundry.com"
@@ -53,12 +57,14 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
           Config.parallelism.http4sThreadPoolSize,
           new ThreadFactoryBuilder().setNameFormat("http4s-%d").build()
         )
-      ))
+      )
+    )
 
   val blazeEC = ExecutionContext.fromExecutor(
     Executors.newFixedThreadPool(
       Config.parallelism.blazeThreadPoolSize,
-      new ThreadFactoryBuilder().setNameFormat("blaze-cached-%d").build())
+      new ThreadFactoryBuilder().setNameFormat("blaze-cached-%d").build()
+    )
   )
 
   val projectStoreImplicits = new ProjectStoreImplicits(xa)
@@ -117,14 +123,19 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val mosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
       AuthedAutoSlash(
-        new MosaicService(SceneToLayerDao(),
-                          mosaicImplicits,
-                          analysisManager,
-                          xa).routes))
+        new MosaicService(
+          SceneToLayerDao(),
+          mosaicImplicits,
+          analysisManager,
+          xa
+        ).routes
+      )
+    )
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      AuthedAutoSlash(new AnalysisService(analysisManager).routes))
+      AuthedAutoSlash(new AnalysisService(analysisManager).routes)
+    )
 
   val sceneMosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
@@ -149,7 +160,8 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     Router(
       "/" -> ProjectToProjectLayerMiddleware(
         withCORS(withTimeout(mosaicService)),
-        xa),
+        xa
+      ),
       "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
       "/tools" -> withCORS(withTimeout(analysisService)),
       "/wcs" -> withCORS(withTimeout(wcsService)),

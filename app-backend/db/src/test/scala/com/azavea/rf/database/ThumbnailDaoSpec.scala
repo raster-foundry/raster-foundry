@@ -16,9 +16,7 @@ class ThumbnailDaoSpec
     with PropTestHelpers {
 
   test("list thumbnails") {
-    xa.use(t => ThumbnailDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    ThumbnailDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("insert a thumbnail") {
@@ -42,7 +40,7 @@ class ThumbnailDaoSpec
               }
             }
             val insertedThumbnail =
-              xa.use(t => thumbnailInsertIO.transact(t)).unsafeRunSync
+              thumbnailInsertIO.transact(xa).unsafeRunSync
 
             insertedThumbnail.widthPx == thumbnail.widthPx &&
             insertedThumbnail.heightPx == thumbnail.heightPx &&
@@ -75,8 +73,7 @@ class ThumbnailDaoSpec
                 })
               }
             }
-            xa.use(t => thumbnailsInsertIO.transact(t))
-              .unsafeRunSync == thumbnails.length
+            thumbnailsInsertIO.transact(xa).unsafeRunSync == thumbnails.length
           }
       }
     }
@@ -123,8 +120,7 @@ class ThumbnailDaoSpec
             }
 
             val (affectedRows, updatedThumbnail) =
-              xa.use(t => thumbnailUpdateWithThumbnailIO.transact(t))
-                .unsafeRunSync
+              thumbnailUpdateWithThumbnailIO.transact(xa).unsafeRunSync
             affectedRows == 1 &&
             updatedThumbnail.widthPx == updateThumbnail.widthPx &&
             updatedThumbnail.heightPx == updateThumbnail.heightPx &&

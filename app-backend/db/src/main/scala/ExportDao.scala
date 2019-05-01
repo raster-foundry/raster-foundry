@@ -107,8 +107,8 @@ object ExportDao extends Dao[Export] {
 
     val exportSource: ConnectionIO[Json] = {
 
-      logger.info(s"Project id when getting input style: ${export.projectId}")
-      logger.info(s"Tool run id when getting input style: ${export.toolRunId}")
+      logger.debug(s"Project id when getting input style: ${export.projectId}")
+      logger.debug(s"Tool run id when getting input style: ${export.toolRunId}")
       (export.projectId, export.projectLayerId, export.toolRunId) match {
         // Exporting a tool-run
         case (_, _, Some(toolRunId)) =>
@@ -143,14 +143,14 @@ object ExportDao extends Dao[Export] {
     }
 
     for {
-      _ <- logger.info("Creating output definition").pure[ConnectionIO]
+      _ <- logger.debug("Creating output definition").pure[ConnectionIO]
       outputDef <- outputDefinition
       _ <- logger
         .info(s"Created output definition for ${exportOptions.source}")
         .pure[ConnectionIO]
-      _ <- logger.info(s"Creating input definition").pure[ConnectionIO]
+      _ <- logger.debug(s"Creating input definition").pure[ConnectionIO]
       sourceDef <- exportSource
-      _ <- logger.info("Created input definition").pure[ConnectionIO]
+      _ <- logger.debug("Created input definition").pure[ConnectionIO]
     } yield {
       Json.obj("id" -> export.id.asJson,
                "src" -> sourceDef,

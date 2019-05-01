@@ -85,7 +85,7 @@ object CogUtils {
 
     val partitions: Array[Array[GridBounds]] =
       info.segmentLayout.partitionWindowsBySegments(
-        windows,
+        windows.toSeq,
         partitionBytes / math.max(info.cellType.bytes, 1))
 
     val layoutScheme = FloatingLayoutScheme(maxTileSize)

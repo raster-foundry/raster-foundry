@@ -6,8 +6,6 @@ import org.scalatest._
 
 class LicenseDaoSpec extends FunSuite with Matchers with DBTestConfig {
   test("selection types") {
-    xa.use(t => LicenseDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    LicenseDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 }

@@ -32,7 +32,7 @@ class OrganizationDaoSpec
                 .toOrganization(true))
           } yield (newOrg, insertedPlatform)
           val (insertedOrg, insertedPlatform) =
-            xa.use(t => orgInsertIO.transact(t)).unsafeRunSync
+            orgInsertIO.transact(xa).unsafeRunSync
 
           insertedOrg.platformId == insertedPlatform.id &&
           insertedOrg.name == orgCreate.name
@@ -53,9 +53,7 @@ class OrganizationDaoSpec
             fetched <- OrganizationDao.getOrganizationById(dbOrg.id)
           } yield { fetched map { _.name } }
 
-          xa.use(t => retrievedNameIO.transact(t))
-            .unsafeRunSync
-            .get == orgCreate.name
+          retrievedNameIO.transact(xa).unsafeRunSync.get == orgCreate.name
         }
       )
     }
@@ -79,7 +77,7 @@ class OrganizationDaoSpec
           } yield (affectedRows, fetched.name, fetched.status)
 
           val (affectedRows, updatedName, updatedStatus) =
-            xa.use(t => insertAndUpdateIO.transact(t)).unsafeRunSync
+            insertAndUpdateIO.transact(xa).unsafeRunSync
           (affectedRows == 1) && (updatedName == withoutNull) && (updatedStatus == orgCreate.status)
         }
       )
@@ -88,9 +86,7 @@ class OrganizationDaoSpec
 
   // list organizations
   test("list organizations") {
-    xa.use(t => OrganizationDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    OrganizationDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("list authorized organizations") {
@@ -183,7 +179,7 @@ class OrganizationDaoSpec
                u1orgs,
                u2orgs,
                u3orgs,
-               u2orgsAdmin) = xa.use(t => orgsIO.transact(t)).unsafeRunSync
+               u2orgsAdmin) = orgsIO.transact(xa).unsafeRunSync
           val u1orgids = u1orgs.toSet.map { o: Organization =>
             o.id
           }
@@ -242,8 +238,7 @@ class OrganizationDaoSpec
             } yield { (dbOrg, byIdUserGroupRole) }
 
             val (dbOrg, dbUserGroupRole) =
-              xa.use(t => addPlatformRoleWithPlatformIO.transact(t))
-                .unsafeRunSync
+              addPlatformRoleWithPlatformIO.transact(xa).unsafeRunSync
             dbUserGroupRole match {
               case Some(ugr) =>
                 assert(
@@ -298,7 +293,7 @@ class OrganizationDaoSpec
             } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
             val (dbOldUGR, dbUpdatedUGRs) =
-              xa.use(t => setPlatformRoleIO.transact(t)).unsafeRunSync
+              setPlatformRoleIO.transact(xa).unsafeRunSync
 
             assert(dbUpdatedUGRs.size === 1, "; A single UGR should be updated")
             assert(

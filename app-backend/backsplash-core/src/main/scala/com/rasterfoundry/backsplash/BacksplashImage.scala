@@ -1,8 +1,7 @@
 package com.rasterfoundry.backsplash
 
-import java.net.URLDecoder
-
 import com.rasterfoundry.backsplash.color._
+
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.resample.NearestNeighbor
@@ -16,9 +15,14 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.raster.MultibandTile
+import geotrellis.vector.MultiPolygon
 import scalacache._
 import scalacache.memoization._
 import scalacache.modes.sync._
+
+import scala.util.Try
+
+import java.net.URLDecoder
 
 /** An image used in a tile or export service, can be color corrected, and requested a subet of the bands from the
   * image
@@ -44,7 +48,8 @@ final case class BacksplashImage(
     @cacheKeyExclude footprint: MultiPolygon,
     subsetBands: List[Int],
     @cacheKeyExclude corrections: ColorCorrect.Params,
-    @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params])
+    @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params],
+    mask: Option[MultiPolygon])
     extends LazyLogging {
 
   implicit val tileCache = Cache.tileCache
@@ -63,12 +68,14 @@ final case class BacksplashImage(
       logger.debug(s"Reading ${z}-${x}-${y} - Image: ${imageId} at ${uri}")
       val layoutDefinition = BacksplashImage.tmsLevels(z)
       logger.debug(s"CELL TYPE: ${rasterSource.cellType}")
-      rasterSource
-        .reproject(WebMercator)
-        .tileToLayout(layoutDefinition, NearestNeighbor)
-        .read(SpatialKey(x, y), subsetBands) map { tile =>
-        tile.mapBands((n: Int, t: Tile) => t.toArrayTile)
-      }
+      Try {
+        rasterSource
+          .reproject(WebMercator)
+          .tileToLayout(layoutDefinition, NearestNeighbor)
+          .read(SpatialKey(x, y), subsetBands.toSeq) map { tile =>
+          tile.mapBands((n: Int, t: Tile) => t.toArrayTile)
+        }
+      }.toOption.flatten
     }
 
   /** Read tile - defers to a private method to enable disable/enabling of cache **/
@@ -89,11 +96,13 @@ final case class BacksplashImage(
       val rasterExtent = RasterExtent(extent, cs)
       logger.debug(
         s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
-      rasterSource
-        .reproject(WebMercator, NearestNeighbor)
-        .resampleToGrid(rasterExtent, NearestNeighbor)
-        .read(extent, subsetBands.toSeq)
-        .map(_.tile)
+      Try {
+        rasterSource
+          .reproject(WebMercator, NearestNeighbor)
+          .resampleToGrid(rasterExtent, NearestNeighbor)
+          .read(extent, subsetBands.toSeq)
+          .map(_.tile)
+      }.toOption.flatten
     }
   }
 }
@@ -116,7 +125,6 @@ object BacksplashImage extends RasterSourceUtils with LazyLogging {
         val rs = new GeoTiffRasterSource(uri)
         // access lazy vals so they are cached
         rs.tiff
-        rs.rasterExtent
         rs.resolutions
         rs
       }

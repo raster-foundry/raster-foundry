@@ -1,18 +1,9 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.{BacksplashMosaic, OgcStore, ProjectStore}
-import com.rasterfoundry.backsplash.color.{
-  BandDataType,
-  OgcStyles,
-  SingleBandOptions
-}
+import com.rasterfoundry.backsplash.color.{OgcStyles, SingleBandOptions}
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
-import com.rasterfoundry.common.datamodel.{
-  Band,
-  ColorComposite,
-  Datasource,
-  ProjectLayer
-}
+import com.rasterfoundry.common.datamodel.{ColorComposite, ProjectLayer}
 import com.rasterfoundry.database.{
   LayerAttributeDao,
   ProjectDao,
@@ -24,9 +15,8 @@ import cats.effect.IO
 import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
-import geotrellis.proj4.{LatLng, WebMercator}
+import geotrellis.proj4.{LatLng, WebMercator, CRS}
 import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.render.ColorRamps.Viridis
 import geotrellis.server.ogc.{OgcSource, SimpleSource, OgcStyle}
 import geotrellis.server.ogc.ows._
 import geotrellis.server.ogc.wcs.WcsModel
@@ -44,68 +34,62 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
       composites: Map[String, ColorComposite]): List[OgcStyle] =
     composites.values map { OgcStyles.fromColorComposite _ } toList
 
-  private def datasourcesToOgcStyles(
-      datasources: List[Datasource]): List[OgcStyle] = {
-    val bands: List[List[Band.Create]] = datasources map { datasource =>
-      {
-        val decoded = datasource.bands.as[List[Band.Create]]
-        decoded getOrElse Nil
-      }
-    }
-    val shortest = bands.minBy(_.length)
-    shortest map { band =>
-      OgcStyles.fromSingleBandOptions(
-        SingleBandOptions.Params(
-          band.number,
-          BandDataType.Sequential,
-          0,
-          Viridis.colors map { color =>
-            s"#${color.toHexString.take(6)}"
-          } asJson,
-          "left"
-        ),
-        s"Single band - ${band.name}"
-      )
-    }
-  }
-
   private def getStyles(projectLayerId: UUID): IO[List[OgcStyle]] =
-    ProjectLayerDatasourcesDao
-      .listProjectLayerDatasources(projectLayerId)
-      .transact(xa) map { datasources =>
-      (datasources flatMap { datasource =>
-        compositesToOgcStyles(datasource.composites)
-      }) ++ datasourcesToOgcStyles(datasources)
-    }
+    for {
+      configured <- ProjectLayerDatasourcesDao
+        .listProjectLayerDatasources(projectLayerId)
+        .transact(xa) map { datasources =>
+        (datasources flatMap { datasource =>
+          compositesToOgcStyles(datasource.composites)
+        })
+      }
+      rf <- ProjectLayerDao
+        .unsafeGetProjectLayerById(projectLayerId)
+        .transact(xa) map { projectLayer =>
+        (projectLayer.singleBandOptions asJson)
+          .as[SingleBandOptions.Params] map {
+          OgcStyles.fromSingleBandOptions(_, "Single Band", indexBand = false)
+        } toList
+      }
+    } yield { configured ++ rf }
 
   private def projectLayerToSimpleSource(
-      projectLayer: ProjectLayer): IO[SimpleSource] =
+      projectLayer: ProjectLayer): IO[(SimpleSource, List[CRS])] =
     for {
       rsm <- BacksplashMosaic.toRasterSource(
-        layers.read(projectLayer.id, None, None, None))
+        layers.read(projectLayer.id, None, None, None)
+      )
+      crs <- BacksplashMosaic.getRasterSourceOriginalCRS(
+        layers.read(projectLayer.id, None, None, None)
+      )
       ogcStyles <- getStyles(projectLayer.id)
     } yield {
-      SimpleSource(
-        projectLayer.name,
-        projectLayer.id.toString,
-        rsm,
-        ogcStyles
+      (
+        SimpleSource(
+          projectLayer.name,
+          projectLayer.id.toString,
+          rsm,
+          ogcStyles
+        ),
+        crs
       )
+
     }
 
-  private def getSources(projectId: UUID): IO[List[OgcSource]] =
+  private def getSources(projectId: UUID): IO[List[(OgcSource, List[CRS])]] =
     for {
       projectLayers <- ProjectLayerDao
         .listProjectLayersWithImagery(projectId)
         .transact(xa)
-      sources <- projectLayers traverse { projectLayerToSimpleSource _ }
-    } yield sources
+      sourcesAndCRS <- projectLayers traverse { projectLayerToSimpleSource _ }
+    } yield sourcesAndCRS
 
   implicit val projectOgcStore: OgcStore[ProjectDao] =
     new OgcStore[ProjectDao] {
       def getWcsModel(self: ProjectDao, id: UUID): IO[WcsModel] =
         for {
-          sources <- getSources(id)
+          sourcesAndCRS <- getSources(id)
+          sources = sourcesAndCRS.map(_._1)
         } yield {
           val serviceMeta = ServiceMetadata(
             Identification("", "", Nil, Nil, None, Nil),
@@ -116,13 +100,16 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
 
       def getWmsModel(self: ProjectDao, id: UUID): IO[WmsModel] =
         for {
-          sources <- getSources(id)
+          sourcesAndCRS <- getSources(id)
+          sources = sourcesAndCRS.map(_._1)
+          crs = sourcesAndCRS.flatMap(_._2)
           service <- getWmsServiceMetadata(self, id)
         } yield {
-          val parentLayerMeta = WmsParentLayerMeta(None,
-                                                   "Raster Foundry WMS Layer",
-                                                   None,
-                                                   List(LatLng, WebMercator))
+          val parentLayerMeta = WmsParentLayerMeta(
+            None,
+            "Raster Foundry WMS Layer",
+            None,
+            List(LatLng, WebMercator) ++ crs)
           WmsModel(service, parentLayerMeta, sources)
         }
 

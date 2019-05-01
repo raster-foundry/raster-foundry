@@ -50,7 +50,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Linting Scala source code"
         docker-compose \
             run --rm --no-deps sbt \
-            ";scalafmtCheck;scalafmtSbtCheck;scapegoat"
+            ";scalafmtCheck;scalafmtSbtCheck;scapegoat;unusedCompileDependenciesTest"
 
         echo "Validating API service spec"
         docker-compose \
@@ -63,10 +63,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend run validate-tile-spec
-
-        echo "Preparing the database for testing"
-        source "scripts/update"
-        run_database_migrations
 
         echo "Executing Scala test suite"
         docker-compose \

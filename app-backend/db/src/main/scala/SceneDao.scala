@@ -117,7 +117,7 @@ object SceneDao
         sceneWithRelated
       }
       _ <- if (kickoffIngest) {
-        logger.info(
+        logger.trace(
           s"Kicking off ingest for newly created scene: ${sceneWithRelated.id} with ingest status ${sceneWithRelated.statusFields.ingestStatus}"
         )
         kickoffSceneIngest(sceneWithRelated.id).pure[ConnectionIO] <*
@@ -286,7 +286,8 @@ object SceneDao
             scene.ingestLocation,
             scene.dataFootprint map { _.geom },
             false,
-            Some(().asJson)
+            Some(().asJson),
+            None
           ))
       } getOrElse { Seq.empty }
     }

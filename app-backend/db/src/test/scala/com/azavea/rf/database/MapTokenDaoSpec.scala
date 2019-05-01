@@ -18,9 +18,7 @@ class MapTokenDaoSpec
     with PropTestHelpers {
 
   test("types") {
-    xa.use(t => MapTokenDao.query.list.transact(t))
-      .unsafeRunSync
-      .length should be >= 0
+    MapTokenDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("Retrieve a map token for a project") {
@@ -44,9 +42,8 @@ class MapTokenDaoSpec
                   dbMapToken.id)
               } yield { (dbMapToken, retrievedGood, retrievedBad) }
 
-            val (mapToken, shouldBeSome, shouldBeNone) = xa.use { t =>
-              retrievedMapTokensIO.transact(t)
-            } unsafeRunSync
+            val (mapToken, shouldBeSome, shouldBeNone) =
+              retrievedMapTokensIO.transact(xa).unsafeRunSync
 
             assert(
               Some(mapToken) == shouldBeSome,
@@ -84,9 +81,8 @@ class MapTokenDaoSpec
                   dbMapToken.id)
               } yield { (dbMapToken, retrievedGood, retrievedBad) }
 
-            val (mapToken, shouldBeSome, shouldBeNone) = xa.use { t =>
-              retrievedMapTokensIO.transact(t)
-            } unsafeRunSync
+            val (mapToken, shouldBeSome, shouldBeNone) =
+              retrievedMapTokensIO.transact(xa).unsafeRunSync
 
             assert(
               Some(mapToken) == shouldBeSome,

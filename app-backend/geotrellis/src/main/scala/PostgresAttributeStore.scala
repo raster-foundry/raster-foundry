@@ -9,11 +9,7 @@ import cats.implicits._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
-import doobie._
 import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
 import geotrellis.raster.io.json._
 import geotrellis.spark.LayerId
 import geotrellis.spark.io.DiscreteLayerAttributeStore
@@ -98,6 +94,7 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(
         .unsafeToFuture,
       awaitTimeout
     )
+    ()
   }
 
   def getHistogram[T: JsonFormat](layerId: LayerId): Future[Option[T]] = {
@@ -122,6 +119,7 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(
     logger.debug(s"delete($layerId)")
     Await.result(LayerAttributeDao.delete(layerId).transact(xa).unsafeToFuture,
                  awaitTimeout)
+    ()
   }
 
   def delete(layerId: LayerId, attributeName: String): Unit = {
@@ -131,6 +129,7 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(
                    .transact(xa)
                    .unsafeToFuture,
                  awaitTimeout)
+    ()
   }
 
   def layerIds: Seq[LayerId] = {
@@ -164,8 +163,8 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(
       .transact(xa)
       .unsafeToFuture
       .map {
-        case seq if seq.length > 0 => seq.toMap.some
-        case _                     => None
+        case seq if seq.nonEmpty => seq.toMap.some
+        case _                   => None
       }
   }
 

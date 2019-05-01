@@ -67,8 +67,9 @@ class AnalysesListController {
 
     fetchPage(page = this.$state.params.page || 1) {
         this.itemList = [];
-        const currentQuery = this.projectService
-            .getProjectAnalyses(this.project.id, {
+        const currentQuery = this.analysisService
+            .fetchAnalyses({
+                projectId: this.project.id,
                 pageSize: 30,
                 page: page - 1
             })

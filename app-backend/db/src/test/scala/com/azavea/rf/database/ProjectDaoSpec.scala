@@ -35,7 +35,7 @@ class ProjectDaoSpec
                                                                project)
             } yield dbProject
             val insertedProject =
-              xa.use(t => projInsertIO.transact(t)).unsafeRunSync
+              projInsertIO.transact(xa).unsafeRunSync
             insertedProject.name == project.name &&
             insertedProject.description == project.description &&
             insertedProject.visibility == project.visibility &&
@@ -74,7 +74,7 @@ class ProjectDaoSpec
             } yield { (affectedRows, fetched) }
 
             val (affectedRows, updatedProject) =
-              xa.use(t => rowsAndUpdateIO.transact(t)).unsafeRunSync
+              rowsAndUpdateIO.transact(xa).unsafeRunSync
 
             affectedRows == 1 &&
             updatedProject.owner == user.id &&
@@ -110,9 +110,7 @@ class ProjectDaoSpec
               fetched2 <- ProjectDao.getProjectById(dbProject.id)
             } yield { (fetched, fetched2) }
 
-            val (fetched1, fetched2) = xa
-              .use(t => deleteIO.transact(t))
-              .unsafeRunSync
+            val (fetched1, fetched2) = deleteIO.transact(xa).unsafeRunSync
 
             !fetched1.isEmpty && fetched2.isEmpty
           }
@@ -144,11 +142,7 @@ class ProjectDaoSpec
             } yield { listedProjects }
 
             val projectsWithRelatedPage =
-              xa.use(t => projectsListIO.transact(t))
-                .unsafeRunSync
-                .results
-                .head
-                .owner
+              projectsListIO.transact(xa).unsafeRunSync.results.head.owner
             assert(
               projectsWithRelatedPage.id == user.id,
               "Listed project's owner should be the same as the creating user")
@@ -182,7 +176,7 @@ class ProjectDaoSpec
             } yield { (permissions, acrInsert) }
 
             val (permissions, acrInsert) =
-              xa.use(t => projectPermissionIO.transact(t)).unsafeRunSync
+              projectPermissionIO.transact(xa).unsafeRunSync
 
             assert(
               permissions.flatten.headOption == Some(acrInsert),
@@ -220,7 +214,7 @@ class ProjectDaoSpec
             } yield { (permissionsInsert, permissionsBack) }
 
             val (permissionsInsert, permissionsBack) =
-              xa.use(t => projectPermissionsIO.transact(t)).unsafeRunSync
+              projectPermissionsIO.transact(xa).unsafeRunSync
 
             assert(
               permissionsInsert.diff(permissionsBack).length == 0,
@@ -260,7 +254,7 @@ class ProjectDaoSpec
             } yield { (permReplaced, permissionsBack) }
 
             val (permReplaced, permissionsBack) =
-              xa.use(t => projectReplacePermissionsIO.transact(t)).unsafeRunSync
+              projectReplacePermissionsIO.transact(xa).unsafeRunSync
 
             assert(
               permReplaced.diff(permissionsBack).length == 0,
@@ -298,7 +292,7 @@ class ProjectDaoSpec
             } yield { (permsDeleted, permissionsBack) }
 
             val (permsDeleted, permissionsBack) =
-              xa.use(t => projectDeletePermissionsIO.transact(t)).unsafeRunSync
+              projectDeletePermissionsIO.transact(xa).unsafeRunSync
 
             assert(
               permsDeleted == 1,
@@ -364,7 +358,7 @@ class ProjectDaoSpec
             } yield { (actions, permissionsBack) }
 
             val (userActions, permissionsBack) =
-              xa.use(t => userActionsIO.transact(t)).unsafeRunSync
+              userActionsIO.transact(xa).unsafeRunSync
 
             val acrActionsDistinct =
               permissionsBack.flatten.map(_.actionType.toString).distinct
@@ -445,7 +439,7 @@ class ProjectDaoSpec
                  projectInsert2,
                  permissionsBack,
                  paginatedProjects) =
-              xa.use(t => listProjectsIO.transact(t)).unsafeRunSync
+              listProjectsIO.transact(xa).unsafeRunSync
 
             val hasViewPermission =
               permissionsBack.flatten.exists(_.actionType == ActionType.View)
@@ -562,7 +556,7 @@ class ProjectDaoSpec
             } yield { (action, projectInsert2, isPermitted1, isPermitted2) }
 
             val (action, projectInsert2, isPermitted1, isPermitted2) =
-              xa.use(t => isUserPermittedIO.transact(t)).unsafeRunSync
+              isUserPermittedIO.transact(xa).unsafeRunSync
 
             if (projectInsert2.visibility == Visibility.Public) {
               (action) match {

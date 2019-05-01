@@ -48,6 +48,11 @@
             1 - {{ $ctrl.sceneList.length }} of {{ $ctrl.sceneCount }} scenes
         </strong>
     </div>
+    <div class="list-group-item" ng-if="$ctrl.showDateWarning()">
+      <strong class="color-warning">
+        MODIS and Landsat 7 results will omit imagery from the last 24 hours.
+      </strong>
+    </div>
     <div class="list-group-item" ng-if="$ctrl.fetchError">
         <strong class="color-danger">
             There was an error fetching scenes

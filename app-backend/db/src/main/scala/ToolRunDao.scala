@@ -155,6 +155,7 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
   def listAnalysesWithRelated(user: Option[User],
                               pageRequest: PageRequest,
                               projectId: UUID,
+                              layerIdO: Option[UUID] = None,
                               ownershipTypeO: Option[String] = None,
                               groupTypeO: Option[GroupType] = None,
                               groupIdO: Option[UUID] = None)
@@ -172,6 +173,7 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
       """
     val filters: List[Option[Fragment]] = List(
       Some(fr"tr.project_id = ${projectId}"),
+      layerIdO.map(layerId => fr"tr.project_layer_id = ${layerId}"),
       user flatMap {
         queryObjectsF(_,
                       ObjectType.Analysis,

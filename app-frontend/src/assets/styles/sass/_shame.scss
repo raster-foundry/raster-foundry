@@ -3325,6 +3325,7 @@ rf-project-embed-page {
     display: flex;
     flex-direction: column;
     background: #f4f5f7;
+    max-height: 100%;
     .sidebar {
         background: #f4f5f7;
         overflow-y: auto;
@@ -3580,6 +3581,19 @@ rf-list-item {
             border-color: $shade-light;
             color: $brand-primary;
         }
+    }
+}
+
+.filter-light {
+    .btn-toggle {
+        &.active {
+            background: $brand-primary;
+            border-color: $brand-primary;
+            color: $white;
+        }
+        background: $white;
+        border-color: $shade-light;
+        color: $brand-primary;
     }
 }
 
@@ -3990,4 +4004,11 @@ rf-quick-edit-histogram {
 
 rf-list-item item-title a {
     color: inherit;
+}
+
+.horizontal-separator {
+    flex: 1;
+    margin-bottom: 1em;
+    border-radius: 1px;
+    border-bottom: 1px solid $shade-light;
 }

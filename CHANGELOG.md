@@ -12,6 +12,25 @@
 
 ### Security
 
+## [1.20.0](https://github.com/raster-foundry/raster-foundry/tree/1.20.0) (2019-05-01)
+
+### Added
+- Included tests for project layer split behavior [\#4901](https://github.com/raster-foundry/raster-foundry/pull/4901)
+- New publish page now lists analyses for selected layers [\4902](https://github.com/raster-foundry/raster-foundry/pull/4902)
+- Created metrics table and MetricDao for incrementing request counts [\#4916](https://github.com/raster-foundry/raster-foundry/pull/4916)
+
+### Changed
+- Improved supported CRS for WMS and WCS Services [\#4875](https://github.com/raster-foundry/raster-foundry/pull/4875)
+- Switched general single band options out for configured single band options from RF database [\#4888](https://github.com/raster-foundry/raster-foundry/pull/4888)
+- Add gitSnapshots prefix to Maven Central release command [\#4874](https://github.com/raster-foundry/raster-foundry/pull/4874)
+- Deduplicate datasources returned from layer datasource endpoint [\#4885](https://github.com/raster-foundry/raster-foundry/pull/4885)
+- Fixed broken publishing workflow when a user owns too many map tokens [\#4886](https://github.com/raster-foundry/raster-foundry/pull/4886)
+- Void tile cache when project layer mask changes [\#4889](https://github.com/raster-foundry/raster-foundry/pulls)
+- Cascade layer deletion so that exports are deleted [\#4890](https://github.com/raster-foundry/raster-foundry/pull/4890)
+- Filtered out MODIS and Landsat 7 images from less than 24 hours ago when browsing NASA CMR [\#4896](https://github.com/raster-foundry/raster-foundry/pull/4896)
+- Fix anti-meridian splitting logic also splitting prime-meridian scenes [\#4904](https://github.com/raster-foundry/raster-foundry/pull/4904)
+- Fix prime meridian scenes which were split accidentally [\#4921](https://github.com/raster-foundry/raster-foundry/pull/4921)
+
 ## [1.19.0](https://github.com/raster-foundry/raster-foundry/tree/1.19.0) (2019-04-16)
 
 ### Added
@@ -59,6 +78,7 @@
 - Added quick edit functionality for project analyses [\#4804](https://github.com/raster-foundry/raster-foundry/pull/4804)
 - Add zooming, showing, hiding options to multi-select menu on analyses, layers [\4816](https://github.com/raster-foundry/raster-foundry/pull/4816)
 - Added API specifications back to core repository [\#4819](https://github.com/raster-foundry/raster-foundry/pull/4819)
+- Added tile server support for visualizing masked mosaic layers [\#4822](https://github.com/raster-foundry/raster-foundry/pull/4822/)
 - Added `overviewsLocation` and `minZoomLevel` to `projectLayers` [\#4857](https://github.com/raster-foundry/raster-foundry/pull/4857)
 - Enable listing annotations with owner info [\#4864](https://github.com/raster-foundry/raster-foundry/pull/4864)
 
@@ -75,12 +95,17 @@
 - Started using swaggerhub for documentation [\#4818](https://github.com/raster-foundry/raster-foundry/pull/4818)
 - Made various UI improvements [\#4801](https://github.com/raster-foundry/raster-foundry/pull/4801)
 - Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
+- Improved responses and response types for errors in analysis rendering pipeline [\#4843](https://github.com/raster-foundry/raster-foundry/pull/4843)
+- Make `./scripts/console sbt` run with docker dependencies [\#4865](https://github.com/raster-foundry/raster-foundry/pull/4865)
+
+### Deprecated
 
 ### Removed
 
 - Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
 - Removed lingering database assocation of scenes and projects (in deference to scenes to layers to projects) [\#4764](https://github.com/raster-foundry/raster-foundry/pull/4764) [\#4867](https://github.com/raster-foundry/raster-foundry/pull/4867)
 - Removed tool categories and tags [\#4779](https://github.com/raster-foundry/raster-foundry/pull/4779)
+- Removed unused dependencies and cleaned up the build file [\#4870](https://github.com/raster-foundry/raster-foundry/pull/4870)
 
 ### Fixed
 

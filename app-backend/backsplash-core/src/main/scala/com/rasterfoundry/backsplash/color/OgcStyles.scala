@@ -39,18 +39,28 @@ object OgcStyles {
     }
 
   def fromSingleBandOptions(singleBandParams: SingleBandOptions.Params,
-                            layerName: String): OgcStyle = new OgcStyle {
-    val name = s"$layerName - ${singleBandParams.band}"
-    val title = s"$layerName - ${singleBandParams.band}"
-    def renderImage(mbtile: MultibandTile,
-                    format: OutputFormat,
-                    hists: List[Histogram[Double]]): Array[Byte] = {
-      val tile = mbtile.subsetBands(singleBandParams.band)
-      val hist = List(hists(singleBandParams.band))
-      val colored = ColorRampMosaic.colorTile(tile, hist, singleBandParams)
-      toBytes(colored, format)
-    }
+                            layerName: String,
+                            indexBand: Boolean = true): OgcStyle =
+    new OgcStyle {
+      val name = if (indexBand) {
+        s"$layerName - ${singleBandParams.band}"
+      } else {
+        layerName
+      }
+      val title = if (indexBand) {
+        s"$layerName - ${singleBandParams.band}"
+      } else {
+        layerName
+      }
+      def renderImage(mbtile: MultibandTile,
+                      format: OutputFormat,
+                      hists: List[Histogram[Double]]): Array[Byte] = {
+        val tile = mbtile.subsetBands(singleBandParams.band)
+        val hist = List(hists(singleBandParams.band))
+        val colored = ColorRampMosaic.colorTile(tile, hist, singleBandParams)
+        toBytes(colored, format)
+      }
 
-    def legends = Nil
-  }
+      def legends = Nil
+    }
 }

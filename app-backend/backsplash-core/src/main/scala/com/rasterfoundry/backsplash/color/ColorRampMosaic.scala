@@ -124,9 +124,12 @@ object ColorRampMosaic extends LazyLogging {
           colorMapFromMap(o.toMap map { case (k, v) => (k, v.noSpaces) })
         case _ =>
           val message =
-            "Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping of raster values to hex colors."
+            s"""
+              | Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping
+              | of raster values to hex colors. Color scheme: ${options.colorScheme.noSpaces}"
+            """.trim.stripMargin
           logger.error(message)
-          throw new IllegalArgumentException(message)
+          throw new BadAnalysisASTException(message)
       }
 
     val renderedTile =

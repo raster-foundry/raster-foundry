@@ -55,4 +55,7 @@ trait CirceJsonbMeta {
 
   implicit val jsonMeta: Meta[Json] =
     CirceJsonbMeta[Json]
+
+  implicit val metricEventMeta: Meta[MetricEvent] =
+    CirceJsonbMeta[MetricEvent]
 }

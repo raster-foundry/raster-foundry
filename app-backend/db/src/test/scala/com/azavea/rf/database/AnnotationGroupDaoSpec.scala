@@ -38,11 +38,10 @@ class AnnotationGroupDaoSpec
                 annotationGroupCreate,
                 dbUser)
             } yield annotationGroup
-            val annotationGroup = xa
-              .use(t =>
-                annotationGroupIO
-                  .transact(t))
-              .unsafeRunSync()
+            val annotationGroup =
+              annotationGroupIO
+                .transact(xa)
+                .unsafeRunSync()
             assert(annotationGroup.name == annotationGroupCreate.name,
                    "; Annotation group should be inserted")
             true
@@ -86,7 +85,7 @@ class AnnotationGroupDaoSpec
               (agDb1, agDb2, agDb3, p1AnnotationGroups, p2AnnotationGroups)
 
             val (_, _, _, p1ag, p2ag) =
-              xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
+              annotationGroupIO.transact(xa).unsafeRunSync()
 
             assert(p1ag.length == 2 && p2ag.length == 1,
                    "; annotation groups are filters to project")
@@ -147,7 +146,7 @@ class AnnotationGroupDaoSpec
                  projectAnnotations,
                  projectAnnotationGroups,
                  deleteCount) =
-              xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
+              annotationGroupIO.transact(xa).unsafeRunSync()
 
             assert(
               deleteCount == 1,
@@ -197,7 +196,7 @@ class AnnotationGroupDaoSpec
             } yield (annotationGroupSummary, annotationsDB)
 
             val (annotationGroupSummary, annotationsDB) =
-              xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
+              annotationGroupIO.transact(xa).unsafeRunSync()
 
             assert(annotationGroupSummary.length > 0,
                    "; No summary produced for annotation group")
@@ -255,7 +254,7 @@ class AnnotationGroupDaoSpec
             } yield (projectAnnotationGroups, updatedProject)
 
             val (projectAnnotationGroups, project) =
-              xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
+              annotationGroupIO.transact(xa).unsafeRunSync()
 
             assert(
               projectAnnotationGroups.length == 1,

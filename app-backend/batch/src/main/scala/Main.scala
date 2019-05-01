@@ -5,8 +5,6 @@ import com.rasterfoundry.batch.cogMetadata.HistogramBackfill
 import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
 import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.aoi.UpdateAOIProject
-import com.rasterfoundry.batch.landsat8.{ImportLandsat8, ImportLandsat8C1}
-import com.rasterfoundry.batch.sentinel2.ImportSentinel2
 import com.rasterfoundry.batch.stac.{ReadStacFeature}
 import com.rasterfoundry.batch.notification.NotifyIngestStatus
 
@@ -17,9 +15,6 @@ object Main {
     FindAOIProjects.name -> (FindAOIProjects.main(_)),
     HealthCheck.name -> (HealthCheck.main(_)),
     HistogramBackfill.name -> (HistogramBackfill.main(_)),
-    ImportLandsat8.name -> (ImportLandsat8.main(_)),
-    ImportLandsat8C1.name -> (ImportLandsat8C1.main(_)),
-    ImportSentinel2.name -> (ImportSentinel2.main(_)),
     NotifyIngestStatus.name -> (NotifyIngestStatus.main(_)),
     ReadStacFeature.name -> (ReadStacFeature.main(_)),
     UpdateAOIProject.name -> (UpdateAOIProject.main(_))

@@ -92,15 +92,11 @@ object MapTokenDao extends Dao[MapToken] {
       analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id }).toNel map {
         Fragments.in(fr"toolrun_id", _)
       }
-      authFilterF: Fragment = Fragments.orOpt(projIdsF,
-                                              analysesIdsF,
-                                              Some(fr"owner = ${user.id}"))
-      mapTokens <- {
-        MapTokenDao.query
-          .filter(mapTokenParams)
-          .filter(authFilterF)
-          .page(page)
-      }
+      authFilterF: Fragment = Fragments.orOpt(projIdsF, analysesIdsF)
+      mapTokens <- MapTokenDao.query
+        .filter(mapTokenParams)
+        .filter(authFilterF)
+        .page(page)
     } yield { mapTokens }
   }
 

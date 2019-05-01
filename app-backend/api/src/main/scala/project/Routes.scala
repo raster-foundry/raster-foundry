@@ -31,8 +31,6 @@ import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
 import io.circe.generic.JsonCodec
 
-import scala.util.Success
-
 @JsonCodec
 final case class BulkAcceptParams(sceneIds: List[UUID])
 
@@ -296,13 +294,6 @@ trait ProjectRoutes
                     }
                   }
               }
-          } ~
-          pathPrefix("analyses") {
-            pathEndOrSingleSlash {
-              get {
-                listProjectAnalyses(projectId)
-              }
-            }
           } ~
           pathPrefix("project-color-mode") {
             pathEndOrSingleSlash {
@@ -1167,28 +1158,6 @@ trait ProjectRoutes
       }
     }
   }
-
-  def listProjectAnalyses(projectId: UUID): Route =
-    extractTokenHeader { tokenO =>
-      extractMapTokenParam { mapTokenO =>
-        (projectAuthFromMapTokenO(mapTokenO, projectId) | projectAuthFromTokenO(
-          tokenO,
-          projectId) | projectIsPublic(projectId)) {
-          withPagination { page =>
-            complete {
-              ToolRunDao
-                .listAnalysesWithRelated(
-                  None,
-                  page,
-                  projectId
-                )
-                .transact(xa)
-                .unsafeToFuture
-            }
-          }
-        }
-      }
-    }
 
   def processShapefileUpload(matches: Iterator[ScalaFile]): List[String] = {
     // shapefile should have same fields in the property table

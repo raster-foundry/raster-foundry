@@ -111,4 +111,39 @@ object Filters {
     List(platformIdParams.platformId.map(platformId =>
       fr"platform_id = ${platformId}"))
   }
+
+  def metricQP(
+      metricQueryParams: MetricQueryParameters): List[Option[Fragment]] = {
+    val requestTypeF = {
+      metricQueryParams.requestType match {
+        case MetricRequestType.ProjectMosaicRequest =>
+          val jsString = """{"isAnalysis":false}"""
+          Some(fr"metric_event @> $jsString :: jsonb")
+        case MetricRequestType.AnalysisRequest =>
+          val jsString = """{"isAnalysis":true}"""
+          Some(fr"metric_event @> $jsString :: jsonb")
+      }
+    }
+    List(
+      metricQueryParams.projectId map { projId =>
+        {
+          val jsString = s"""{"projectId":"$projId"}"""
+          fr"metric_event @> $jsString :: jsonb"
+        }
+      },
+      metricQueryParams.projectLayerId map { projLayerId =>
+        val jsString = s"""{"projectLayerId":"$projLayerId"}"""
+        fr"metric_event @> $jsString :: jsonb"
+      },
+      metricQueryParams.analysisId map { analysisId =>
+        val jsString = s"""{"analysisId":"$analysisId"}"""
+        fr"metric_event @> $jsString :: jsonb"
+      },
+      metricQueryParams.nodeId map { nodeId =>
+        val jsString = s"""{"nodeId":"$nodeId"}"""
+        fr"metric_event @> $jsString :: jsonb"
+      },
+      requestTypeF
+    )
+  }
 }
