@@ -3,19 +3,25 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Fixed
+
+### Security
+
+## [1.20.0](https://github.com/raster-foundry/raster-foundry/tree/1.20.0) (2019-05-01)
+
+### Added
 - Included tests for project layer split behavior [\#4901](https://github.com/raster-foundry/raster-foundry/pull/4901)
 - New publish page now lists analyses for selected layers [\4902](https://github.com/raster-foundry/raster-foundry/pull/4902)
 - Created metrics table and MetricDao for incrementing request counts [\#4916](https://github.com/raster-foundry/raster-foundry/pull/4916)
 
 ### Changed
 - Improved supported CRS for WMS and WCS Services [\#4875](https://github.com/raster-foundry/raster-foundry/pull/4875)
-
 - Switched general single band options out for configured single band options from RF database [\#4888](https://github.com/raster-foundry/raster-foundry/pull/4888)
-
-### Deprecated
-
-### Fixed
-
 - Add gitSnapshots prefix to Maven Central release command [\#4874](https://github.com/raster-foundry/raster-foundry/pull/4874)
 - Deduplicate datasources returned from layer datasource endpoint [\#4885](https://github.com/raster-foundry/raster-foundry/pull/4885)
 - Fixed broken publishing workflow when a user owns too many map tokens [\#4886](https://github.com/raster-foundry/raster-foundry/pull/4886)
@@ -24,8 +30,6 @@
 - Filtered out MODIS and Landsat 7 images from less than 24 hours ago when browsing NASA CMR [\#4896](https://github.com/raster-foundry/raster-foundry/pull/4896)
 - Fix anti-meridian splitting logic also splitting prime-meridian scenes [\#4904](https://github.com/raster-foundry/raster-foundry/pull/4904)
 - Fix prime meridian scenes which were split accidentally [\#4921](https://github.com/raster-foundry/raster-foundry/pull/4921)
-
-### Security
 
 ## [1.19.0](https://github.com/raster-foundry/raster-foundry/tree/1.19.0) (2019-04-16)
 
