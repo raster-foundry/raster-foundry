@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${RF_API_DEBUG}" ]]; then
+    set -x
+fi
+
+if [ "$0" = "bash" ]; then
+    SCRIPTDIR="$(dirname "${BASH_SOURCE[0]}")"
+else
+    SCRIPTDIR="$(dirname "$0")"
+fi
+
+# shellcheck source=/dev/null
+source "$SCRIPTDIR/utility"
+
+function usage() {
+    echo -n \
+         "Usage: $(basename "$0") [flyway command]
+
+Runs app-backend migrations via flywaydb CLI
+
+Available flyway commands are migrate|clean|info|validate|undo|baseline|repair
+
+"
+}
+
+# TODO: this docker command doesn't seem to be respecting the healthcheck on the database, and then
+# the migrate fails because the database isn't ready yet
+MIGRATE_COMMAND="docker-compose -f docker-compose.yml run --rm app-backend-migrations"
+
+if [ "${1}" = help ] ; then
+    usage
+else
+    pushd "$SCRIPTDIR/.." > /dev/null
+    logInfo "Running migrations with docker-compose"
+    FLYWAY_COMMAND="${1:-info}"
+    ${MIGRATE_COMMAND} "${FLYWAY_COMMAND}"
+    popd > /dev/null
+fi
