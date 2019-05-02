@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.{ProjectDao, MetricDao, ToolRunDao}
 
