@@ -28,6 +28,6 @@ object AnnotationQuality {
 
   implicit val annotationQualityDecoder: Decoder[AnnotationQuality] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "AnnotationQuality")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "AnnotationQuality")
     }
 }

@@ -24,6 +24,6 @@ object SceneType {
 
   implicit val jobStatusDecoder: Decoder[SceneType] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "SceneType")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "SceneType")
     }
 }

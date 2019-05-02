@@ -24,6 +24,6 @@ object GroupType {
 
   implicit val groupTypeDecoder: Decoder[GroupType] =
     Decoder.decodeString.emap { s =>
-      Either.catchNonFatal(fromString(s)).leftMap(gt => "GroupType")
+      Either.catchNonFatal(fromString(s)).leftMap(_ => "GroupType")
     }
 }

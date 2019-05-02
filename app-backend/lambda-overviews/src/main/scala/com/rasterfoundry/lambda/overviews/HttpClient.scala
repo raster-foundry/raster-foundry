@@ -1,5 +1,4 @@
 package com.rasterfoundry.lambda.overviews
-import java.net.URI
 import java.util.UUID
 
 import com.rasterfoundry.datamodel._

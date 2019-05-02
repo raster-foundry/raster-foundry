@@ -27,6 +27,6 @@ object MembershipStatus {
 
   implicit val membershipStatusDecoder: Decoder[MembershipStatus] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "MembershipStatus")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "MembershipStatus")
     }
 }

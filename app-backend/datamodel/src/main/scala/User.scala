@@ -92,7 +92,7 @@ object OrganizationType {
 
   implicit val organizationTypeDecoder: Decoder[OrganizationType] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "OrganizationType")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "OrganizationType")
     }
 }
 

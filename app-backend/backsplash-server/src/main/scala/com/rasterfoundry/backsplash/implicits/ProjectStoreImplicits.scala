@@ -23,7 +23,6 @@ import com.rasterfoundry.backsplash.color.{
 
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
-import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._

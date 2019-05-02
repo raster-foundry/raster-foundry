@@ -28,6 +28,6 @@ object SubjectType {
 
   implicit val SubjectTypeDecoder: Decoder[SubjectType] =
     Decoder.decodeString.emap { s =>
-      Either.catchNonFatal(fromString(s)).leftMap(gt => "SubjectType")
+      Either.catchNonFatal(fromString(s)).leftMap(_ => "SubjectType")
     }
 }

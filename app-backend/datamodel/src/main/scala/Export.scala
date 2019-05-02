@@ -3,7 +3,6 @@ package com.rasterfoundry.datamodel
 import java.sql.Timestamp
 import java.util.UUID
 
-import cats.implicits._
 import io.circe._
 import io.circe.generic.JsonCodec
 

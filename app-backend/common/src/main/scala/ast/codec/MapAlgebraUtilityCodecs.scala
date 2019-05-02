@@ -7,7 +7,6 @@ import geotrellis.raster.histogram._
 import geotrellis.raster.summary.Statistics
 import geotrellis.raster.render._
 import geotrellis.raster.mapalgebra.focal._
-import cats.syntax.either._
 import spray.json._
 import io.circe._
 import io.circe.syntax._

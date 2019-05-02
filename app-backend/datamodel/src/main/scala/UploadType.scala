@@ -29,6 +29,6 @@ object UploadType {
 
   implicit val uploadTypeDecoder: Decoder[UploadType] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "UploadType")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "UploadType")
     }
 }

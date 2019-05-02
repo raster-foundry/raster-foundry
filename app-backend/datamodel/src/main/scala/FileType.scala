@@ -21,6 +21,6 @@ object FileType {
 
   implicit val fileTypeDecoder: Decoder[FileType] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "FileType")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "FileType")
     }
 }

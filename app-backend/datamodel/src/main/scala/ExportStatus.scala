@@ -45,6 +45,6 @@ object ExportStatus {
 
   implicit val ingestStatusDecoder: Decoder[ExportStatus] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "ExportStatus")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "ExportStatus")
     }
 }
