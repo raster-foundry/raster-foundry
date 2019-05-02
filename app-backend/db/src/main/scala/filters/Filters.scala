@@ -59,13 +59,15 @@ object Filters {
 
   def imageQP(imageParams: ImageQueryParameters): List[Option[Fragment]] = {
     val f1 =
-      imageParams.minRawDataBytes.map(minBytes => fr"raw_data_bytes > minBytes")
+      imageParams.minRawDataBytes.map(minBytes =>
+        fr"raw_data_bytes > $minBytes")
     val f2 =
-      imageParams.maxRawDataBytes.map(maxBytes => fr"raw_data_bytes < maxBytes")
+      imageParams.maxRawDataBytes.map(maxBytes =>
+        fr"raw_data_bytes < $maxBytes")
     val f3 =
-      imageParams.minResolution.map(minRes => fr"resolution_meters > minRes")
+      imageParams.minResolution.map(minRes => fr"resolution_meters > $minRes")
     val f4 =
-      imageParams.maxResolution.map(maxRes => fr"resolution_meters < maxRes")
+      imageParams.maxResolution.map(maxRes => fr"resolution_meters < $maxRes")
     val f5 = imageParams.scene.toList.toNel.map(scenes => in(fr"scene", scenes))
     List(f1, f2, f3, f4, f5)
   }
