@@ -1,7 +1,6 @@
 package com.rasterfoundry.datamodel
 
 import java.time.{Instant, LocalDate, LocalDateTime, ZoneOffset}
-import java.util.UUID
 
 import io.circe._
 import io.circe.generic.semiauto._
