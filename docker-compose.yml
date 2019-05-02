@@ -187,3 +187,21 @@ services:
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
+
+  app-backend-migrations:
+    image: boxfuse/flyway:5.2.4
+    environment:
+      - FLYWAY_DRIVER=org.postgresql.Driver
+      - FLYWAY_URL=jdbc:postgresql://database.service.rasterfoundry.internal/
+      - FLYWAY_USER=rasterfoundry
+      - FLYWAY_PASSWORD=rasterfoundry
+      - FLYWAY_LOCATIONS=filesystem:/opt/raster-foundry/app-backend/db/src/main/resources/migrations
+      - FLYWAY_SCHEMAS=public
+      - FLYWAY_BASELINE_ON_MIGRATE=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres:database.service.rasterfoundry.internal
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
