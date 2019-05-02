@@ -198,14 +198,14 @@ class AnnotationDaoSpec
               updatedAnnotationO match {
                 case Some(updatedAnnotation) =>
                   updatedAnnotation.label == annotationUpdate.label &&
-                  updatedAnnotation.description == annotationUpdate.description &&
-                  updatedAnnotation.machineGenerated == annotationUpdate.machineGenerated &&
-                  updatedAnnotation.confidence == annotationUpdate.confidence &&
-                  updatedAnnotation.quality == annotationUpdate.quality &&
-                  updatedAnnotation.geometry == annotationUpdate.geometry &&
-                  updatedAnnotation.verifiedBy == Some(verifier.id) &&
-                  updatedAnnotation.ownerName == dbUser.name &&
-                  updatedAnnotation.ownerProfileImageUri == dbUser.profileImageUri
+                    updatedAnnotation.description == annotationUpdate.description &&
+                    updatedAnnotation.machineGenerated == annotationUpdate.machineGenerated &&
+                    updatedAnnotation.confidence == annotationUpdate.confidence &&
+                    updatedAnnotation.quality == annotationUpdate.quality &&
+                    updatedAnnotation.geometry == annotationUpdate.geometry &&
+                    updatedAnnotation.verifiedBy == Some(verifier.id) &&
+                    updatedAnnotation.ownerName == dbUser.name &&
+                    updatedAnnotation.ownerProfileImageUri == dbUser.profileImageUri
               }
             )
           }

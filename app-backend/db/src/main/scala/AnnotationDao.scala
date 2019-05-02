@@ -29,8 +29,9 @@ object AnnotationDao extends Dao[Annotation] {
   def unsafeGetAnnotationById(annotationId: UUID): ConnectionIO[Annotation] =
     query.filter(annotationId).select
 
-  def getAnnotationById(projectId: UUID,
-                        annotationId: UUID): ConnectionIO[Option[AnnotationWithOwnerInfo]] =
+  def getAnnotationById(
+      projectId: UUID,
+      annotationId: UUID): ConnectionIO[Option[AnnotationWithOwnerInfo]] =
     for {
       annotationO <- query
         .filter(fr"project_id = ${projectId}")
@@ -38,33 +39,37 @@ object AnnotationDao extends Dao[Annotation] {
         .selectOption
       ownerIO = annotationO match {
         case Some(annotation) => UserDao.getUserById(annotation.owner)
-        case None => None.pure[ConnectionIO]
+        case None             => None.pure[ConnectionIO]
       }
       ownerO <- ownerIO
-    } yield { (annotationO, ownerO) match {
-      case (Some(annotation), Some(owner)) => Some(AnnotationWithOwnerInfo(
-        annotation.id,
-        annotation.projectId,
-        annotation.createdAt,
-        annotation.createdBy,
-        annotation.modifiedAt,
-        annotation.modifiedBy,
-        annotation.owner,
-        annotation.label,
-        annotation.description,
-        annotation.machineGenerated,
-        annotation.confidence,
-        annotation.quality,
-        annotation.geometry,
-        annotation.annotationGroup,
-        annotation.labeledBy,
-        annotation.verifiedBy,
-        annotation.projectLayerId,
-        owner.name,
-        owner.profileImageUri
-      ))
-      case _ => None
-    } }
+    } yield {
+      (annotationO, ownerO) match {
+        case (Some(annotation), Some(owner)) =>
+          Some(
+            AnnotationWithOwnerInfo(
+              annotation.id,
+              annotation.projectId,
+              annotation.createdAt,
+              annotation.createdBy,
+              annotation.modifiedAt,
+              annotation.modifiedBy,
+              annotation.owner,
+              annotation.label,
+              annotation.description,
+              annotation.machineGenerated,
+              annotation.confidence,
+              annotation.quality,
+              annotation.geometry,
+              annotation.annotationGroup,
+              annotation.labeledBy,
+              annotation.verifiedBy,
+              annotation.projectLayerId,
+              owner.name,
+              owner.profileImageUri
+            ))
+        case _ => None
+      }
+    }
 
   def listAnnotationsForProject(
       projectId: UUID): ConnectionIO[List[Annotation]] = {
