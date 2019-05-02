@@ -14,7 +14,7 @@ import com.rasterfoundry.akkautil.{
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._

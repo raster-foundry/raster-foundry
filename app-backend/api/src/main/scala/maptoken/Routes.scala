@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import cats.effect.IO
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,

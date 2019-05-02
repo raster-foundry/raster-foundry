@@ -8,7 +8,7 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import cats._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
+import com.rasterfoundry.datamodel.{Order, PageRequest}
 import java.util.UUID
 
 import com.rasterfoundry.common.SceneToLayer

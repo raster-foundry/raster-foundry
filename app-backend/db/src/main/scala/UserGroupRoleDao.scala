@@ -8,7 +8,7 @@ import com.rasterfoundry.datamodel._
 import doobie._, doobie.implicits._
 import doobie.postgres.implicits._
 import cats._, cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.rasterfoundry.datamodel.{PageRequest, Order}
 
 import java.util.UUID
 

@@ -8,7 +8,7 @@ import com.rasterfoundry.akkautil.{
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import akka.http.scaladsl.server.Route
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import java.util.UUID
 

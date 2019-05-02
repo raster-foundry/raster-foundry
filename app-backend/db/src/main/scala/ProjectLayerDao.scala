@@ -5,7 +5,7 @@ import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 import cats.implicits._
 import java.sql.Timestamp
 import java.time.temporal.IsoFields

@@ -14,7 +14,6 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ShapeDao
 import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.datamodel._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._

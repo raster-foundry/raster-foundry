@@ -6,7 +6,7 @@ import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.Email
 import com.rasterfoundry.datamodel._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.rasterfoundry.datamodel.{PageRequest, Order}
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.{Fragment, Fragments, _}

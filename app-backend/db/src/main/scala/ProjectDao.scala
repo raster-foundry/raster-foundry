@@ -4,7 +4,7 @@ import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.color._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 import cats.data._
 import cats.implicits._
 import doobie._

@@ -5,7 +5,7 @@ import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.rasterfoundry.datamodel.{PageRequest, Order}
 
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.Implicits._

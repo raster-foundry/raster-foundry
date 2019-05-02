@@ -5,7 +5,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 
 import doobie.implicits._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
