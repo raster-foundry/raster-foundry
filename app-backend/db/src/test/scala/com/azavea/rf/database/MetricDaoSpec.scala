@@ -27,12 +27,12 @@ class MetricDaoSpec
         {
           val repetitions = getRepetitionAttempts(0)
           val metricIO = for {
-            _ <- MetricDao.increment(metric)
-            countOnce <- MetricDao.unsafeGetMetricById(metric.id)
+            _ <- MetricDao.insert(metric)
+            countOnce <- MetricDao.unsafeGetMetric(metric)
             _ <- List.fill(repetitions)(()) traverse { _ =>
-              MetricDao.increment(metric)
+              MetricDao.insert(metric)
             }
-            countAgain <- MetricDao.unsafeGetMetricById(metric.id)
+            countAgain <- MetricDao.unsafeGetMetric(metric)
           } yield { (countOnce, countAgain) }
 
           val (initial, afterUpdate) = metricIO.transact(xa).unsafeRunSync

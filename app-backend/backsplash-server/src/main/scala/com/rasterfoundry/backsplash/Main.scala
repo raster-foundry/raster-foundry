@@ -120,21 +120,27 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val analysisManager =
     new AnalysisManager(ToolRunDao(), mosaicImplicits, toolStoreImplicits, xa)
 
+  val metricMiddleware = new MetricMiddleware(xa)
+
   val mosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      AuthedAutoSlash(
-        new MosaicService(
-          SceneToLayerDao(),
-          mosaicImplicits,
-          analysisManager,
-          xa
-        ).routes
+      metricMiddleware.middleware(
+        AuthedAutoSlash(
+          new MosaicService(
+            SceneToLayerDao(),
+            mosaicImplicits,
+            analysisManager,
+            xa
+          ).routes
+        )
       )
     )
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      AuthedAutoSlash(new AnalysisService(analysisManager).routes)
+      metricMiddleware.middleware(
+        AuthedAutoSlash(new AnalysisService(analysisManager).routes)
+      )
     )
 
   val sceneMosaicService: HttpRoutes[IO] =

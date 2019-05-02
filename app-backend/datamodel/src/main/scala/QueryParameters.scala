@@ -644,5 +644,6 @@ final case class MetricQueryParameters(
     projectLayerId: Option[UUID] = None,
     analysisId: Option[UUID] = None,
     nodeId: Option[UUID] = None,
+    referer: Option[String] = None,
     requestType: MetricRequestType
 )

@@ -9,6 +9,7 @@ import io.circe.syntax._
 
 sealed trait MetricEvent {
   def toQueryParams: MetricQueryParameters
+  val referer: String
 }
 
 object MetricEvent {
@@ -28,11 +29,12 @@ case class ProjectLayerMosaicEvent(
     projectId: UUID,
     projectLayerId: UUID,
     projectOwner: String,
-    isAnalysis: Boolean = false
+    referer: String
 ) extends MetricEvent {
   def toQueryParams = MetricQueryParameters(
     projectId = Some(projectId),
     projectLayerId = Some(projectLayerId),
+    referer = Some(referer),
     requestType = MetricRequestType.ProjectMosaicRequest
   )
 }
@@ -50,11 +52,12 @@ case class AnalysisEvent(
     analysisId: UUID,
     nodeId: Option[UUID],
     analysisOwner: String,
-    isAnalysis: Boolean = true
+    referer: String
 ) extends MetricEvent {
   def toQueryParams = MetricQueryParameters(
     analysisId = Some(analysisId),
     nodeId = nodeId,
+    referer = Some(referer),
     requestType = MetricRequestType.AnalysisRequest
   )
 }

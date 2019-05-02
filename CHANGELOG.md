@@ -5,6 +5,8 @@
 ### Added
 - Add lambda function for creating project layer overviews and reorganize project [\#4900](https://github.com/raster-foundry/raster-foundry/pull/4900)
 
+- Added request counting middleware to backsplash-server [\#4919](https://github.com/raster-foundry/raster-foundry/pull/4919)
+
 ### Changed
 
 ### Deprecated

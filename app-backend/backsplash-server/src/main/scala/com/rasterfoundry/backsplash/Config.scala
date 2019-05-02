@@ -26,4 +26,9 @@ object Config {
     val authenticationCacheEnable =
       cacheConfig.getBoolean("authenticationCacheEnable")
   }
+
+  object metrics {
+    private val metricsConfig = config.getConfig("metrics")
+    val enableMetrics = metricsConfig.getBoolean("enableMetrics")
+  }
 }
