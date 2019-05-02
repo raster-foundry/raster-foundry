@@ -3,10 +3,6 @@ import ReleaseTransformations._
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
 import sbtassembly.AssemblyPlugin.defaultShellScript
 
-lazy val scala212 = "2.12.8"
-lazy val scala211 = "2.11.12"
-lazy val supportedScalaVersions = List(scala212, scala211)
-
 addCommandAlias("mg", "migrations/run")
 
 addCommandAlias(
@@ -38,6 +34,8 @@ val scalaOptions = Seq(
   "-Ywarn-unused",
   "-Ywarn-unused-import",
   "-Ypartial-unification",
+  "-Ybackend-parallelism",
+  "4",
   "-Ypatmat-exhaust-depth",
   "100"
 )
@@ -54,14 +52,6 @@ lazy val sharedSettings = Seq(
     "com.sksamuel.scapegoat",
     "scalac-scapegoat-plugin"
   ),
-  unusedCompileDependenciesFilter -= moduleFilter(
-    "org.locationtech.geotrellis",
-    "*"
-  ),
-  unusedCompileDependenciesFilter -= moduleFilter(
-    "com.azavea",
-    "maml-jvm"
-  ),
   scalacOptions := scalaOptions,
   // https://github.com/sbt/sbt/issues/3570
   updateOptions := updateOptions.value.withGigahorse(false),
@@ -74,7 +64,6 @@ lazy val sharedSettings = Seq(
     Resolver.sonatypeRepo("snapshots"),
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("azavea", "geotrellis"),
-    Resolver.bintrayRepo("lonelyplanet", "maven"),
     Resolver.bintrayRepo("guizmaii", "maven"),
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
@@ -196,7 +185,6 @@ lazy val apiSettings = sharedSettings ++ Seq(
   cancelable in Global := true,
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
-  resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
   test in assembly := {}
 )
 
@@ -231,7 +219,6 @@ lazy val lambdaOverviews = project
   .settings(sharedSettings: _*)
   .settings(
     mainClass in assembly := Some("com.rasterfoundry.lambda.overviews.Main"),
-    crossScalaVersions := supportedScalaVersions,
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
     addCompilerPlugin(scalafixSemanticdb),
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(
@@ -242,9 +229,15 @@ lazy val lambdaOverviews = project
     libraryDependencies ++= Seq(
       Dependencies.awsS3,
       Dependencies.awsLambdaCore,
+      Dependencies.catsCore,
       Dependencies.geotrellisContribVLM,
+      Dependencies.geotrellisS3,
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisVector,
       Dependencies.commonsIO % Runtime,
       Dependencies.sttpCore,
+      Dependencies.sttpJson,
       Dependencies.sttpCirce,
       Dependencies.spire,
       Dependencies.circeCore,
@@ -278,24 +271,21 @@ lazy val common = project
       Dependencies.circeParser,
       Dependencies.circeOptics,
       Dependencies.circeTest,
-      Dependencies.chill,
       Dependencies.awsBatchSdk,
       Dependencies.rollbar,
       Dependencies.apacheCommonsEmail,
       Dependencies.scalaCheck,
       Dependencies.catsScalacheck,
-      Dependencies.akkaHttpExtensions % "test",
     )
   })
 
 lazy val datamodel = project
   .in(file("datamodel"))
   .settings(apiSettings: _*)
-  .settings(scalaVersion := "2.11.12")
-  .settings(crossScalaVersions := supportedScalaVersions)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.shapeless,
+      Dependencies.catsCore,
       Dependencies.monocleCore,
       Dependencies.scalaLogging,
       Dependencies.circeGeneric,
@@ -329,8 +319,7 @@ lazy val db = project
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
       Dependencies.scalaCheck,
-      Dependencies.postgis,
-      Dependencies.akkaHttpExtensions
+      Dependencies.postgis
     )
   })
 
@@ -417,7 +406,7 @@ lazy val geotrellis = project
   */
 lazy val akkautil = project
   .in(file("akkautil"))
-  .dependsOn(common, db)
+  .dependsOn(common, db, datamodel)
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
@@ -473,6 +462,7 @@ lazy val backsplashExport =
         Dependencies.geotrellisServer,
         Dependencies.geotrellisContribGDAL,
         Dependencies.decline,
+        Dependencies.mamlJvm,
         Dependencies.geotrellisS3,
         Dependencies.geotrellisRaster,
         Dependencies.geotrellisSpark,
