@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Add lambda function for creating project layer overviews and reorganize project [\#4900](https://github.com/raster-foundry/raster-foundry/pull/4900)
 
 ### Changed
 

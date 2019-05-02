@@ -21,7 +21,7 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.common.datamodel.{Annotation, _}
+import com.rasterfoundry.datamodel.{Annotation, _}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -30,6 +30,8 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
 import io.circe.generic.JsonCodec
+import com.rasterfoundry.common.color._
+import com.rasterfoundry.common._
 
 @JsonCodec
 final case class BulkAcceptParams(sceneIds: List[UUID])
@@ -1129,7 +1131,7 @@ trait ProjectRoutes
     finally projectionSource.close()
 
     val featureAccumulationResult =
-      Shapefile.accumulateFeatures(Annotation.fromSimpleFeatureWithProps)(
+      Shapefile.accumulateFeatures(Shapefile.fromSimpleFeatureWithProps)(
         List(),
         List(),
         features.toList,

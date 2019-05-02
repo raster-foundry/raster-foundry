@@ -3,7 +3,7 @@ package com.rasterfoundry.api.tool
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common.ast._
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.ToolDao
 

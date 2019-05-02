@@ -1,7 +1,7 @@
 package com.rasterfoundry.database.notification
 
 import com.rasterfoundry.database.notification.templates.EmailData
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 
 import doobie.ConnectionIO
 

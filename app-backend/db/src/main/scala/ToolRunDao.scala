@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.{
+import com.rasterfoundry.datamodel.{
   ToolRun,
   User,
   ObjectType,

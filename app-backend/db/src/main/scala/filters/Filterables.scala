@@ -2,7 +2,7 @@ package com.rasterfoundry.database.filter
 
 import com.rasterfoundry.database.Filterable
 import com.rasterfoundry.database.meta.RFMeta
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging

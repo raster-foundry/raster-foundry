@@ -4,14 +4,14 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 
 object GTHack {
-  def closestTiffOverview[T <: CellGrid](
+  def closestTiffOverview[T <: CellGrid[Int]](
       tiff: GeoTiff[T],
       cs: CellSize,
       strategy: OverviewStrategy
   ): GeoTiff[T] = getClosestOverviewHack(tiff, cs, strategy)
 
   // https://github.com/locationtech/geotrellis/pull/2802
-  def getClosestOverviewHack[T <: CellGrid](
+  def getClosestOverviewHack[T <: CellGrid[Int]](
       tiff: GeoTiff[T],
       cellSize: CellSize,
       strategy: OverviewStrategy

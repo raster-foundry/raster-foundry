@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash
 
 import cats.data.{NonEmptyList => NEL}
-import com.rasterfoundry.common.datamodel.BandOverride
+import com.rasterfoundry.datamodel.BandOverride
 import geotrellis.vector.{Polygon, Projected}
 import simulacrum._
 

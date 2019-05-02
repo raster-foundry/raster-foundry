@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.export
 
-import com.rasterfoundry.common.datamodel.export._
+import com.rasterfoundry.common.export._
 import TileReification._
 import geotrellis.raster._
 import geotrellis.proj4._

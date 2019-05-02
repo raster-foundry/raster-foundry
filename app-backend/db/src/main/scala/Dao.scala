@@ -6,7 +6,7 @@ import cats.implicits._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.filter.Filterables
 import com.rasterfoundry.database.util._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import doobie.{LogHandler => _, _}
 import doobie.implicits._
@@ -112,7 +112,7 @@ object Dao extends LazyLogging {
         .zip(a.map(s => "'" + s + "'"))
         .flatMap({ case (t1, t2) => List(t1, t2) })
         .mkString("")
-      logger.debug(s"""Successful Statement Execution:
+      logger.trace(s"""Successful Statement Execution:
         |
         |  ${logString}
         |

@@ -16,7 +16,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import doobie.util.transactor.Transactor
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._

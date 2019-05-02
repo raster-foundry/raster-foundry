@@ -3,7 +3,7 @@ package com.rasterfoundry.common.utils
 import com.rasterfoundry.common.cache._
 import com.rasterfoundry.common.cache.kryo._
 import com.rasterfoundry.common.{Config => CommonConfig}
-import com.rasterfoundry.common.datamodel.TiffWithMetadata
+import com.rasterfoundry.datamodel.TiffWithMetadata
 
 import geotrellis.vector._
 import geotrellis.raster._
@@ -79,11 +79,11 @@ object CogUtils {
     val info = readInfo
 
     // This listing can be masked by Geometry if desired
-    val windows: Array[GridBounds] = info.segmentLayout
+    val windows: Array[GridBounds[Int]] = info.segmentLayout
       .listWindows(maxTileSize)
       .map(_.buffer(pixelBuffer))
 
-    val partitions: Array[Array[GridBounds]] =
+    val partitions: Array[Array[GridBounds[Int]]] =
       info.segmentLayout.partitionWindowsBySegments(
         windows.toSeq,
         partitionBytes / math.max(info.cellType.bytes, 1))
@@ -235,7 +235,7 @@ object CogUtils {
   }
 
   /** Work around GeoTiff.closestTiffOverview being private to geotrellis */
-  def closestTiffOverview[T <: CellGrid](
+  def closestTiffOverview[T <: CellGrid[Int]](
       tiff: GeoTiff[T],
       cs: CellSize,
       strategy: OverviewStrategy): GeoTiff[T] = {
@@ -255,8 +255,8 @@ object CogUtils {
   }
 
   /** Work around bug in GeoTiff.crop(extent) method */
-  def cropGeoTiff[T <: CellGrid](tiff: GeoTiff[T],
-                                 extent: Extent): Option[Raster[T]] = {
+  def cropGeoTiff[T <: CellGrid[Int]](tiff: GeoTiff[T],
+                                      extent: Extent): Option[Raster[T]] = {
     if (extent.intersects(tiff.extent)) {
       val bounds = tiff.rasterExtent.gridBoundsFor(extent)
       val clipExtent = tiff.rasterExtent.extentFor(bounds)

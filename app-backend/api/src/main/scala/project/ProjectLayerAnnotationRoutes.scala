@@ -1,8 +1,8 @@
 package com.rasterfoundry.api.project
 
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.GeoJsonCodec._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.database._
 import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
 

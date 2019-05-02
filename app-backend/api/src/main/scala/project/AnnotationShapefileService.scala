@@ -1,6 +1,6 @@
 package com.rasterfoundry.api.project
 
-import com.rasterfoundry.common.datamodel.{Annotation, User}
+import com.rasterfoundry.datamodel.{Annotation, User}
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.api.utils.Config
 

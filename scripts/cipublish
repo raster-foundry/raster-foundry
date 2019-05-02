@@ -45,7 +45,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 run --rm --no-deps \
                 build backsplash-server/assembly
 
-            echo "Building lambda functions"
+            echo "Building python lambda functions"
             docker-compose -f "${DIR}/../docker-compose.test.yml" \
                            run --rm --no-deps lambda \
                            pip install -t opt/ ./
@@ -56,11 +56,22 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
               zip -9 -r ../package.zip ./*
             popd
 
-            echo "Uploading Lambda Function"
+            echo "Uploading python Lambda Function"
             aws s3 cp \
                 "${DIR}/../app-lambda/package.zip" \
                 "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/package-${GIT_COMMIT}.zip"
             rm "${DIR}/../app-lambda/package.zip"
+
+            echo "Building Lambda Overview Jar"
+            docker-compose \
+                -f "${DIR}/../docker-compose.test.yml" \
+                run --rm --no-deps \
+                build "++ 2.12.8 lambdaOverviews/assembly"
+
+            echo "Uploading Java Lambda Overview Function"
+            aws s3 cp \
+                "${DIR}/../app-backend/lambda-overviews/target/scala-2.12/lambda-overviews-assembly.jar" \
+                "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/lambda-overviews-${GIT_COMMIT}.jar"
 
             echo "Uploading API specs"
             # At the most recent version prefixed

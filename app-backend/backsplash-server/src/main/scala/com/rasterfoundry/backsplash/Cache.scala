@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.http4s.{Cache => Http4sUtilCache}
 
 import com.typesafe.scalalogging.LazyLogging

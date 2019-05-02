@@ -12,6 +12,8 @@ object Version {
   val apacheCommonsEmail = "1.5"
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.196"
+  val awsLambdaCore = "1.1.0"
+  val awsS3 = "1.11.535"
   val awsStsSdk = "1.11.232"
   val betterFiles = "3.4.0"
   val caffeine = "2.3.5"
@@ -29,9 +31,9 @@ object Version {
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
   val geotools = "17.1"
-  val geotrellis = "2.2.0"
-  val geotrellisContrib = "2.11.0"
-  val geotrellisServer = "0.1.15"
+  val geotrellisContrib = "3.13.0"
+  val geotrellis = "3.0.0-M3"
+  val geotrellisServer = "3.3.3"
   val hadoop = "2.8.4"
   val hikariCP = "3.2.0"
   val http4s = "0.20.0-M6"
@@ -56,6 +58,8 @@ object Version {
   val slickMigrationAPI = "0.4.0"
   val spatial4j = "0.7"
   val spark = "2.2.0"
+  val spire = "0.16.0"
+  val spray = "1.3.4"
   val sup = "0.2.0"
 }
 
@@ -70,6 +74,8 @@ object Dependencies {
   val apacheCommonsEmail = "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
+  val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % Version.awsLambdaCore
+  val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsS3
   val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsStsSdk
   val betterFiles = "com.github.pathikrit" %% "better-files" % Version.betterFiles
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % Version.caffeine
@@ -84,6 +90,8 @@ object Dependencies {
   val circeOptics = "io.circe" %% "circe-optics" % Version.circeOptics
   val circeParser = "io.circe" %% "circe-parser" % Version.circe
   val circeTest = "io.circe" %% "circe-testing" % Version.circe % "test"
+  val clistCore = "org.backuity.clist" %% "clist-core" % "3.5.0"
+  val clistMacros = "org.backuity.clist" %% "clist-macros" % "3.5.0"
   val commonsIO = "commons-io" % "commons-io" % Version.commonsIO
   val doobieCore = "org.tpolecat" %% "doobie-core" % Version.doobie
   val doobieHikari = "org.tpolecat" %% "doobie-hikari" % Version.doobie
@@ -100,7 +108,7 @@ object Dependencies {
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer
-
+  val geotrellisProj4 = "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellis
   val geotrellisServerOgc = "com.azavea" %% "geotrellis-server-ogc" % Version.geotrellisServer
   val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
@@ -113,7 +121,9 @@ object Dependencies {
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
+  val http4sXml = "org.http4s" %% "http4s-scala-xml" % Version.http4s
   val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
+  val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % "1.5.1-cats"
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val postgres = "org.postgresql" % "postgresql" % Version.postgres
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
@@ -128,10 +138,17 @@ object Dependencies {
   val scalaforklift = "com.liyaos" %% "scala-forklift-slick" % Version.scalaForklift
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
+  val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
+  val slf4j = "org.slf4j" % "slf4j-simple" % "1.7.25"
+  val slf4jApi = "org.slf4j" % "slf4j-api" % "1.7.25"
+  val sttpCore = "com.softwaremill.sttp" %% "core" % "1.5.12"
+  val sttpCirce = "com.softwaremill.sttp" %% "circe" % "1.5.12"
+  val spire = "org.typelevel" %% "spire" % Version.spire
   val decline = "com.monovore" %% "decline" % Version.decline
   val slickMigrationAPI = "io.github.nafg" %% "slick-migration-api" % Version.slickMigrationAPI
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
   val sparkCore = "org.apache.spark" %% "spark-core" % Version.spark
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
+  val spray = "io.spray" %% "spray-json" % Version.spray
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
 }

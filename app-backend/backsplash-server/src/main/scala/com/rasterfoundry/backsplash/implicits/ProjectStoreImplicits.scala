@@ -5,8 +5,9 @@ import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.{DatasourceDao, SceneDao, SceneToLayerDao}
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.{BandOverride, MosaicDefinition}
-import com.rasterfoundry.common.datamodel.color.{
+import com.rasterfoundry.datamodel.BandOverride
+import com.rasterfoundry.common._
+import com.rasterfoundry.common.color.{
   BandGamma => RFBandGamma,
   PerBandClipping => RFPerBandClipping,
   MultiBandClipping => RFMultiBandClipping,

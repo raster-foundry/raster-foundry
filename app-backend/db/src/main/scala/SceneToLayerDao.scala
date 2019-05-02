@@ -1,8 +1,6 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel._
-
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
@@ -13,8 +11,16 @@ import doobie.postgres.implicits._
 import fs2.Stream
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import com.typesafe.scalalogging.LazyLogging
-
 import java.util.UUID
+
+import com.rasterfoundry.common.color.ColorCorrect
+import com.rasterfoundry.common.{
+  BatchParams,
+  MosaicDefinition,
+  ProjectColorModeParams,
+  SceneToLayer,
+  SceneToLayerWithSceneType
+}
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneToLayerDao()

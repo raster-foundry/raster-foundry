@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash
 
-import com.rasterfoundry.common.datamodel.BandOverride
+import com.rasterfoundry.datamodel.BandOverride
 
 import cats.Applicative
 import cats.implicits._

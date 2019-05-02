@@ -2,11 +2,10 @@ package com.rasterfoundry.common.utils
 
 import geotrellis.proj4._
 import geotrellis.vector._
-import geotrellis.vector.io._
-
+import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import com.typesafe.scalalogging.LazyLogging
 
-object AntimeridianUtils extends LazyLogging {
+object AntimeridianUtils extends GeoJsonImplicits with LazyLogging {
   def shiftPoint(p: Point,
                  split: Double,
                  compareMultiplier: Double,

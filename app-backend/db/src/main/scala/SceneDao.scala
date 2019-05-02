@@ -1,9 +1,9 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.common._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.color._
-import com.rasterfoundry.common.datamodel.{Scene, User, _}
+import com.rasterfoundry.common.color._
+import com.rasterfoundry.datamodel.{Scene, User, _}
 
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging

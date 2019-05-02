@@ -3,7 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.OgcStore
 import com.rasterfoundry.backsplash.OgcStore.ToOgcStoreOps
 import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 
 import cats.data.Validated
 import cats.effect.{ContextShift, IO}

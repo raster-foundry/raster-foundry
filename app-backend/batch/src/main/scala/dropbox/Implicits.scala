@@ -25,7 +25,8 @@ trait Implicits {
   }
 
   @SuppressWarnings(Array("ClassNames"))
-  implicit class withGeoTiffWriteMethods[T <: CellGrid](val self: GeoTiff[T]) {
+  implicit class withGeoTiffWriteMethods[T <: CellGrid[Int]](
+      val self: GeoTiff[T]) {
     def dropboxWrite(save: InputStream => String): String = {
       val bos = new ByteArrayOutputStream()
       try {

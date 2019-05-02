@@ -1,6 +1,6 @@
 package com.rasterfoundry.api.user
 
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._

@@ -1,7 +1,9 @@
 package com.rasterfoundry.api.project
 
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.color._
+import com.rasterfoundry.common._
 import com.rasterfoundry.database._
 import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
 

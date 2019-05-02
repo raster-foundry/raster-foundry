@@ -1,5 +1,8 @@
 package com.rasterfoundry.backsplash
 
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.spark.SpatialKey
@@ -7,11 +10,8 @@ import geotrellis.spark.tiling._
 import geotrellis.proj4._
 import geotrellis.vector.{Extent, Point}
 import geotrellis.contrib.vlm._
+import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.contrib.vlm.geotiff._
-import geotrellis.contrib.vlm.gdal._
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
-
 import com.typesafe.scalalogging.LazyLogging
 
 package object export extends LazyLogging {
@@ -65,5 +65,6 @@ package object export extends LazyLogging {
     } else {
       new GeoTiffRasterSource(uri)
     }
+
   }
 }

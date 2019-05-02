@@ -12,8 +12,8 @@ import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ShapeDao
-import com.rasterfoundry.common.datamodel.GeoJsonCodec._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel.GeoJsonCodec._
+import com.rasterfoundry.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._

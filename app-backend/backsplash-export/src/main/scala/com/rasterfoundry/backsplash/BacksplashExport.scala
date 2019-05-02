@@ -2,7 +2,7 @@ package com.rasterfoundry.backsplash.export
 
 import com.rasterfoundry.backsplash.export.shapes._
 import com.rasterfoundry.backsplash.export.ExportableInstances._
-import com.rasterfoundry.common.datamodel.export._
+import com.rasterfoundry.common.export._
 
 import cats.effect._
 import cats.implicits._
@@ -39,7 +39,7 @@ object BacksplashExport
         val exportDefOpt =
           Opts.option[URI]("definition",
                            short = "d",
-                           help = "URI of ExportDefinition JSON")
+                           help = "URI of export.ExportDefinition JSON")
 
         val compressionLevelOpt = Opts
           .option[Int]("compression",

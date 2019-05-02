@@ -1,6 +1,6 @@
 package com.rasterfoundry.api.datasource
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.queryparams._
 
 trait DatasourceQueryParameterDirective extends QueryParametersCommon {

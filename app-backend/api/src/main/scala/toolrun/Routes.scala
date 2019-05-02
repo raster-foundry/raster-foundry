@@ -1,7 +1,7 @@
 package com.rasterfoundry.api.toolrun
 
 import com.rasterfoundry.akkautil._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.{ToolRunDao, UserDao}
 import com.rasterfoundry.api.project.ProjectAuthorizationDirectives
