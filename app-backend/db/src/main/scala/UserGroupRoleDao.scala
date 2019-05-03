@@ -107,10 +107,6 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           .filter(fr"is_active = true")
           .selectOption
       }
-      roleTargetEmail <- UserDao.unsafeGetUserById(subjectId) map { _.email }
-      roleCreatorEmail <- UserDao.unsafeGetUserById(actingUser.id) map {
-        _.email
-      }
       existingMembershipStatus = existingRoleO map { _.membershipStatus }
       rolesMatch = existingRoleO
         .map(

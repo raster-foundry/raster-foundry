@@ -84,7 +84,7 @@ object UserDao extends Dao[User] with Sanitization {
         .selectOption
       createdUser <- {
         organization match {
-          case Some(o) =>
+          case Some(_) =>
             val newUser = User.Create(
               jwtUser.id,
               Viewer,

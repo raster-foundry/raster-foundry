@@ -85,7 +85,7 @@ object ExportDao extends Dao[Export] {
       .option
   }
 
-  def getExportDefinition(export: Export, user: User): ConnectionIO[Json] = {
+  def getExportDefinition(export: Export): ConnectionIO[Json] = {
     val exportOptions = export.exportOptions.as[ExportOptions] match {
       case Left(e) =>
         throw new Exception(
@@ -228,7 +228,7 @@ object ExportDao extends Dao[Export] {
   private def stripMetadata(ast: MapAlgebraAST): MapAlgebraAST = ast match {
     case astLeaf: MapAlgebraAST.MapAlgebraLeaf =>
       astLeaf.withMetadata(NodeMetadata())
-    case astNode: MapAlgebraAST =>
+    case _: MapAlgebraAST =>
       val args = ast.args.map(stripMetadata)
       ast.withMetadata(NodeMetadata()).withArgs(args)
   }

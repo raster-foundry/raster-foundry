@@ -13,7 +13,6 @@ final case class UploadFailure(uploadId: UUID, platformId: UUID) {
       platformHost = platform.publicSettings.platformHost
         .getOrElse("app.rasterfoundry.com")
       upload <- UploadDao.unsafeGetUploadById(uploadId)
-      owner <- UserDao.unsafeGetUserById(upload.owner)
     } yield {
       val plainFiles = upload.files.mkString(", ")
       val richFiles = upload.files map { fname =>
