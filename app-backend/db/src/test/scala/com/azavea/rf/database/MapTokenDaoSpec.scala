@@ -27,6 +27,7 @@ class MapTokenDaoSpec
     check {
       forAll {
         (tokensAndProjects: NEL[(MapToken.Create, Project.Create)],
+         tokensAndToolRuns: NEL[(MapToken.Create, ToolRun.Create)],
          user: User.Create) =>
           {
             val retrievedMapTokensIO =
@@ -42,6 +43,17 @@ class MapTokenDaoSpec
                         )
                     }
                 } map { _.head }
+                _ <- tokensAndToolRuns traverse {
+                  case (token, toolRun) =>
+                    ToolRunDao.insertToolRun(toolRun, dbUser) flatMap {
+                      dbToolRun =>
+                        MapTokenDao.insert(fixupMapToken(token,
+                                                         dbUser,
+                                                         None,
+                                                         Some(dbToolRun)),
+                                           dbUser)
+                    }
+                }
                 retrievedGood <- MapTokenDao.checkProject(
                   dbMapToken.project.get)(dbMapToken.id)
                 retrievedBad <- MapTokenDao.checkProject(UUID.randomUUID)(
