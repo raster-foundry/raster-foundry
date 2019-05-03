@@ -292,7 +292,7 @@ object ReadStacFeature extends Config with LazyLogging {
         )
       )
     } catch {
-      case e: Exception =>
+      case _: Exception =>
         logger.error(
           s"Error fetching thumbnail with URI: ${link.href}, ${rootUri}"
         )
