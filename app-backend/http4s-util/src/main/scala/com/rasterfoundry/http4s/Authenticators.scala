@@ -55,7 +55,7 @@ trait Authenticators extends LazyLogging {
         val userIdFromJWT = jwtClaims.getStringClaim("sub")
         getUserFromJWTwithCache(userIdFromJWT)
       }
-      case Left(e) =>
+      case Left(_) =>
         IO(None: Option[User])
     }
     OptionT(userFromTokenIO)
