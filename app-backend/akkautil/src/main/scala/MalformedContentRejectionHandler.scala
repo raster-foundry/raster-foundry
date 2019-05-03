@@ -14,7 +14,7 @@ object RFRejectionHandler {
           """(.*decode value.*)(?:DownField\()(.*)(?:\))""".r
         val badTypePattern = """(?:.*DownField\()(.*)(?:\))""".r
         e.getCause.getMessage match {
-          case missingFieldPattern(missing, field) =>
+          case missingFieldPattern(_, field) =>
             complete(ClientError(400)("Bad Request", s"Missing field: $field"))
           case badTypePattern(field) =>
             complete(
