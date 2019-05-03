@@ -32,6 +32,6 @@ object ObjectType {
 
   implicit val ObjectTypeDecoder: Decoder[ObjectType] =
     Decoder.decodeString.emap { s =>
-      Either.catchNonFatal(fromString(s)).leftMap(gt => "ObjectType")
+      Either.catchNonFatal(fromString(s)).leftMap(_ => "ObjectType")
     }
 }

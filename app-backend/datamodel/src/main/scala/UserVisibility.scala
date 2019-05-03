@@ -22,6 +22,6 @@ object UserVisibility {
 
   implicit val UserVisibilityDecoder: Decoder[UserVisibility] =
     Decoder.decodeString.emap { s =>
-      Either.catchNonFatal(fromString(s)).leftMap(gt => "UserVisibility")
+      Either.catchNonFatal(fromString(s)).leftMap(_ => "UserVisibility")
     }
 }

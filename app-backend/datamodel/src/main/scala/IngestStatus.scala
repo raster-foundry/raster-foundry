@@ -48,6 +48,6 @@ object IngestStatus {
 
   implicit val ingestStatusDecoder: Decoder[IngestStatus] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "IngestStatus")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "IngestStatus")
     }
 }

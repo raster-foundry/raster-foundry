@@ -4,7 +4,7 @@ import com.rasterfoundry.datamodel._
 import java.net.URI
 
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
+import com.rasterfoundry.datamodel.{Order, PageRequest}
 import geotrellis.vector.testkit.Rectangle
 import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
 import io.circe.syntax._

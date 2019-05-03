@@ -7,7 +7,6 @@ import com.rasterfoundry.api.utils.Config
 import com.typesafe.scalalogging.LazyLogging
 import org.locationtech.jts.{geom => jts}
 import com.amazonaws.services.s3.AmazonS3URI
-import geotrellis.geotools._
 import geotrellis.proj4.CRS
 import geotrellis.vector._
 import geotrellis.vector.reproject.Reproject

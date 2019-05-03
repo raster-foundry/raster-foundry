@@ -6,7 +6,7 @@ import com.rasterfoundry.common.S3
 
 import cats.implicits._
 import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.rasterfoundry.datamodel.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._

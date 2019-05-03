@@ -9,8 +9,9 @@ import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.{CellSize, GridExtent}
 import geotrellis.spark.io.s3.S3Client
 import cats.syntax.list._
+import com.typesafe.scalalogging.LazyLogging
 
-object OverviewGenerator {
+object OverviewGenerator extends LazyLogging {
 
   def createProjectOverview(sceneURIs: List[String],
                             pixelSize: Int): Option[MultibandGeoTiff] = {
@@ -31,8 +32,11 @@ object OverviewGenerator {
         GridExtent[Long](combined, cs)
       })
 
+    logger.debug(s"Using ${rasterSources.length} rastersources")
+
     rasterSources.toNel match {
-      case Some(rasterSourcesList) => {
+      case Some(rasterSourcesList) =>
+        logger.debug(s"Generating mosaic raster source")
         val mosaicRasterSource =
           MosaicRasterSource(rasterSourcesList, WebMercator, sourceCombinedGrid)
 
@@ -50,12 +54,12 @@ object OverviewGenerator {
                 NearestNeighbor))
           case _ => None
         }
-      }
       case _ => None
     }
   }
 
   def writeOverviewToS3(tiff: MultibandGeoTiff, uri: String): Unit = {
+    logger.debug(s"Writing tiff to $uri")
     val s3Uri = new AmazonS3URI(uri)
 
     S3Client.DEFAULT.putObject(s3Uri.getBucket,
@@ -66,15 +70,22 @@ object OverviewGenerator {
 
   def createOverview(overviewInput: OverviewInput): Unit = {
 
+    logger.debug(s"Retrieving JWT with Refresh Token")
     val authToken = HttpClient.getSystemToken(overviewInput.refreshToken)
+    logger.debug(s"Getting project layer scenes")
     val initialProjectScenes = HttpClient.getProjectLayerScenes(
       authToken,
       overviewInput.projectId,
       overviewInput.projectLayerId
     )
+
+    logger.debug(s"Creating project overview")
     val projectOverviewOption =
       OverviewGenerator.createProjectOverview(initialProjectScenes,
                                               overviewInput.pixelSizeMeters)
+
+    logger.debug(
+      "Checking if scenes have been updated or removed from project layer")
     val currentProjectScenes = HttpClient.getProjectLayerScenes(
       authToken,
       overviewInput.projectId,
@@ -83,7 +94,16 @@ object OverviewGenerator {
     (currentProjectScenes == initialProjectScenes, projectOverviewOption) match {
       case (true, Some(projectOverview)) =>
         writeOverviewToS3(projectOverview, overviewInput.outputLocation)
-      case _ => ()
+        logger.debug("Updating project layer in API with overview")
+        HttpClient.updateProjectWithOverview(authToken,
+                                             overviewInput.projectId,
+                                             overviewInput.projectLayerId,
+                                             overviewInput.outputLocation)
+      case _ =>
+        logger.debug(
+          "Skipping adding project overview, project layer scenes have changed since overview generated")
+        ()
     }
+
   }
 }

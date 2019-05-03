@@ -7,7 +7,6 @@ import org.opengis.feature.simple.SimpleFeature
 import org.opengis.referencing.crs.CoordinateReferenceSystem
 import geotrellis.vector.{Geometry, Projected, io => _}
 import geotrellis.vector.reproject.Reproject
-import cats.implicits._
 import geotrellis.geotools._
 import geotrellis.proj4.{CRS, WebMercator}
 import geotrellis.vector.{Geometry, Projected, io => _}

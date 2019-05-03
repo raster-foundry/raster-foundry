@@ -23,6 +23,6 @@ object BandDataType {
 
   implicit val bandDataTypeDecoder: Decoder[BandDataType] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "BandDataType")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "BandDataType")
     }
 }

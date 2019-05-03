@@ -30,6 +30,6 @@ object JobStatus {
 
   implicit val jobStatusDecoder: Decoder[JobStatus] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "JobStatus")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "JobStatus")
     }
 }

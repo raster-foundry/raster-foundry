@@ -1,5 +1,4 @@
 package com.rasterfoundry.lambda.overviews
-import java.net.URI
 import java.util.UUID
 
 import com.rasterfoundry.datamodel._
@@ -58,7 +57,7 @@ object HttpClient {
   def updateProjectWithOverview(authToken: String,
                                 projectId: UUID,
                                 layerId: UUID,
-                                overviewLocation: URI): ProjectLayer = {
+                                overviewLocation: String): ProjectLayer = {
     val projectLayerUri =
       uri"$rfApiServer/api/projects/$projectId/layers/$layerId"
 
@@ -75,8 +74,7 @@ object HttpClient {
     val updatedProjectLayer = client
       .headers(Map("Authorization" -> s"Bearer $authToken"))
       .put(projectLayerUri)
-      .body(
-        projectLayer.copy(overviewsLocation = Some(overviewLocation.toString)))
+      .body(projectLayer.copy(overviewsLocation = Some(overviewLocation)))
       .response(asJson[ProjectLayer])
       .send()
       .unsafeBody match {

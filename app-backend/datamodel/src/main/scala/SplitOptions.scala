@@ -25,7 +25,7 @@ object SplitPeriod {
 
   implicit val splitPeriodDecoder: Decoder[SplitPeriod] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "SplitPeriod")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "SplitPeriod")
     }
 }
 

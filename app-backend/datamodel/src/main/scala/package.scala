@@ -252,7 +252,7 @@ package object datamodel extends JsonCodecs {
         throw new IllegalArgumentException(
           "Cannot instantiate with empty string or string with only null bytes"
         )
-      case o => f(s)
+      case _ => f(s)
     }
   }
 
@@ -261,7 +261,7 @@ package object datamodel extends JsonCodecs {
       (createUser, ownerUserId) match {
         case (user, Some(id)) if user.id == id    => user.id
         case (user, Some(id)) if user.isSuperuser => id
-        case (user, Some(id)) if !user.isSuperuser =>
+        case (user, Some(_)) if !user.isSuperuser =>
           throw new IllegalArgumentException(
             "Insufficient permissions to set owner on object"
           )

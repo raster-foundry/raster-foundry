@@ -1,7 +1,6 @@
 package com.rasterfoundry.datamodel
 
 import cats.implicits._
-import cats.syntax.either._
 import geotrellis.vector.io.json.GeoJsonSupport
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._

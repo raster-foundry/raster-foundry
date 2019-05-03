@@ -22,6 +22,6 @@ object GroupRole {
 
   implicit val GroupRoleDecoder: Decoder[GroupRole] =
     Decoder.decodeString.emap { s =>
-      Either.catchNonFatal(fromString(s)).leftMap(gt => "GroupRole")
+      Either.catchNonFatal(fromString(s)).leftMap(_ => "GroupRole")
     }
 }

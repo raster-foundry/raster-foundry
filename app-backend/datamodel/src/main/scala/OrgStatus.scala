@@ -32,6 +32,6 @@ object OrgStatus {
 
   implicit val orgStatusDecoder: Decoder[OrgStatus] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "OrgStatus")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "OrgStatus")
     }
 }

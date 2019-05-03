@@ -4,18 +4,15 @@ import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.database._
-import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
-
+import com.rasterfoundry.akkautil._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.effect._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.Transactor
 import doobie.implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import java.util.UUID
 
 trait ProjectAnnotationRoutes

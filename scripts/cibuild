@@ -51,7 +51,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             run --rm --no-deps \
             build batch/assembly
 
-        cp "${DIR}/../app-backend/batch/target/scala-2.11/batch-assembly.jar" \
+        cp "${DIR}/../app-backend/batch/target/scala-2.12/batch-assembly.jar" \
            "${DIR}/../app-tasks/jars/batch-assembly.jar"
 
 
@@ -60,7 +60,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             run --rm --no-deps \
             build backsplash-export/assembly
 
-        cp "${DIR}/../app-backend/backsplash-export/target/scala-2.11/backsplash-export-assembly.jar" \
+        cp "${DIR}/../app-backend/backsplash-export/target/scala-2.12/backsplash-export-assembly.jar" \
            "${DIR}/../app-tasks/jars/backsplash-export-assembly.jar"
 
         echo "Building Batch container image"

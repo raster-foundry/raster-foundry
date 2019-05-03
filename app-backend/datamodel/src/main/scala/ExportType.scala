@@ -23,6 +23,6 @@ object ExportType {
 
   implicit val uploadTypeDecoder: Decoder[ExportType] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "ExportType")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "ExportType")
     }
 }

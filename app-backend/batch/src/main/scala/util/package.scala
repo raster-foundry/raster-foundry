@@ -2,7 +2,6 @@ package com.rasterfoundry.batch
 
 import com.rasterfoundry.common.S3
 
-import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags

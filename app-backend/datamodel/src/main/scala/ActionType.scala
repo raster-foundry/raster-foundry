@@ -32,6 +32,6 @@ object ActionType {
 
   implicit val ActionTypeDecoder: Decoder[ActionType] =
     Decoder.decodeString.emap { s =>
-      Either.catchNonFatal(fromString(s)).leftMap(gt => "ActionType")
+      Either.catchNonFatal(fromString(s)).leftMap(_ => "ActionType")
     }
 }

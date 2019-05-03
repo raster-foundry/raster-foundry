@@ -36,6 +36,6 @@ object UploadStatus {
 
   implicit val uploadStatusDecoder: Decoder[UploadStatus] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(fromString(str)).leftMap(t => "UploadStatus")
+      Either.catchNonFatal(fromString(str)).leftMap(_ => "UploadStatus")
     }
 }

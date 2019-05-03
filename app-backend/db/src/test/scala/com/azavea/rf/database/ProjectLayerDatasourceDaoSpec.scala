@@ -3,7 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.Generators.Implicits._
 
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 
 import doobie.implicits._
 import cats.implicits._

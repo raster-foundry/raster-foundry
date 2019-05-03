@@ -3,7 +3,7 @@ package com.rasterfoundry.database.util
 import doobie._, doobie.implicits._
 import doobie.util.fragment.Fragment
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.rasterfoundry.datamodel.{PageRequest, Order}
 
 object Page {
 

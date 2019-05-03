@@ -4,7 +4,6 @@ import java.util.UUID
 
 import _root_.io.circe._
 import _root_.io.circe.syntax._
-import cats.implicits._
 import com.azavea.maml.ast._
 import geotrellis.proj4.WebMercator
 import geotrellis.vector._
