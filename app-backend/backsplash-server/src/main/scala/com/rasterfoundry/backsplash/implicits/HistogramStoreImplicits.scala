@@ -43,7 +43,7 @@ trait HistogramStoreImplicits
       result: Either[Throwable, Array[Histogram[Double]]],
       layerId: UUID,
       subsetBands: List[Int]) = result match {
-    case Left(e: ArrayIndexOutOfBoundsException) =>
+    case Left(_: ArrayIndexOutOfBoundsException) =>
       logger.warn(
         s"Requested bands not available in layer $layerId: $subsetBands")
       IO { Array.empty[Histogram[Double]] }

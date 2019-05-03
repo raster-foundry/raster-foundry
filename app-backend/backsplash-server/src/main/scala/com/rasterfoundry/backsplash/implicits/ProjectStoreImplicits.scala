@@ -3,7 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{DatasourceDao, SceneDao, SceneToLayerDao}
+import com.rasterfoundry.database.{SceneDao, SceneToLayerDao}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.BandOverride
 import com.rasterfoundry.common._
@@ -123,11 +123,6 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
       for {
         scene <- SceneDao.streamSceneById(projId, window).transact(xa)
-        compositeO <- fs2.Stream.eval {
-          DatasourceDao.unsafeGetDatasourceById(scene.datasource).transact(xa)
-        } map {
-          _.defaultColorComposite
-        }
       } yield {
         // We don't actually have a project, so just make something up
         val randomProjectId = UUID.randomUUID

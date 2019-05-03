@@ -25,11 +25,11 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
   def withMetrics(http: AuthedService[User, F])(
       authedReq: AuthedRequest[F, User]): OptionT[F, Response[F]] =
     authedReq match {
-      case _ as user if !Config.metrics.enableMetrics => http(authedReq)
+      case _ if !Config.metrics.enableMetrics => http(authedReq)
       case req @ GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
-            layerId) / IntVar(z) / IntVar(x) / IntVar(y) as user =>
+            layerId) / IntVar(_) / IntVar(_) / IntVar(_) as user =>
         for {
-          metricFib <- OptionT.liftF {
+          _ <- OptionT.liftF {
             Conc.start {
               (ProjectDao.getProjectById(projectId) flatMap { projectO =>
                 (projectO map { project =>
@@ -51,10 +51,10 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
         } yield resp
 
       case req @ GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
-            analysisId) / IntVar(z) / IntVar(x) / IntVar(y) :? NodeQueryParamMatcher(
+            analysisId) / IntVar(_) / IntVar(_) / IntVar(_) :? NodeQueryParamMatcher(
             node) as user =>
         for {
-          metricFib <- OptionT.liftF {
+          _ <- OptionT.liftF {
             Conc.start {
               analysisToMetricFib(analysisId,
                                   Some(projectId),
@@ -66,11 +66,11 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
           resp <- http(req)
         } yield resp
 
-      case req @ GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
-            y) :? NodeQueryParamMatcher(node) as user
+      case req @ GET -> Root / UUIDWrapper(analysisId) / IntVar(_) / IntVar(_) / IntVar(
+            _) :? NodeQueryParamMatcher(node) as user
           if req.req.scriptName == "/tools" =>
         for {
-          metricFib <- OptionT.liftF {
+          _ <- OptionT.liftF {
             Conc.start {
               analysisToMetricFib(analysisId,
                                   None,
@@ -81,7 +81,7 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
           }
           resp <- http(req)
         } yield resp
-      case GET -> _ as use => http(authedReq)
+      case GET -> _ as _ => http(authedReq)
     }
 
   private def analysisToMetricFib(analysisId: UUID,

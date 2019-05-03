@@ -72,7 +72,7 @@ final case class BacksplashImage(
           .reproject(WebMercator)
           .tileToLayout(layoutDefinition, NearestNeighbor)
           .read(SpatialKey(x, y), subsetBands.toSeq) map { tile =>
-          tile.mapBands((n: Int, t: Tile) => t.toArrayTile)
+          tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
         }
       }.toOption.flatten
     }
