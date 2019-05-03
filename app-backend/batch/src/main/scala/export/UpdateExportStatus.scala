@@ -204,7 +204,7 @@ final case class UpdateExportStatus(
       _ <- logger
         .info(s"Setting export status to ${copied.exportStatus}")
         .pure[ConnectionIO]
-      update <- ExportDao.update(copied, exportId, user)
+      _ <- ExportDao.update(copied, exportId, user)
     } yield {
       logger.info("Successfully updated export status")
     }

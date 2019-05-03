@@ -11,7 +11,6 @@ import com.rasterfoundry.database.{ExportDao, UserDao}
 import com.rasterfoundry.datamodel._
 
 import cats.effect.IO
-import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -55,15 +54,8 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
   def run(): Unit = {
     val exportDefinitionWrite: ConnectionIO[Unit] = for {
       user <- UserDao.unsafeGetUserById(systemUser)
-      _ <- logger
-        .debug(s"Fetched user successfully: ${user.id}")
-        .pure[ConnectionIO]
       export <- ExportDao.query.filter(exportId).select
-      _ <- logger
-        .debug(s"Fetched export successfully: ${export.id}")
-        .pure[ConnectionIO]
-      exportDef <- ExportDao.getExportDefinition(export, user)
-      _ <- logger.debug("Got export definition").pure[ConnectionIO]
+      exportDef <- ExportDao.getExportDefinition(export)
       updatedExport = export.copy(
         exportStatus = ExportStatus.Exporting,
         exportOptions = exportDef.asJson
