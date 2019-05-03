@@ -9,6 +9,7 @@ import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.{CellSize, GridExtent}
 import geotrellis.spark.io.s3.S3Client
 import cats.syntax.list._
+import com.rasterfoundry.datamodel.ProjectLayer
 import com.typesafe.scalalogging.LazyLogging
 
 object OverviewGenerator extends LazyLogging {
@@ -68,7 +69,7 @@ object OverviewGenerator extends LazyLogging {
     ()
   }
 
-  def createOverview(overviewInput: OverviewInput): Unit = {
+  def createOverview(overviewInput: OverviewInput): Option[ProjectLayer] = {
 
     logger.debug(s"Retrieving JWT with Refresh Token")
     val authToken = HttpClient.getSystemToken(overviewInput.refreshToken)
@@ -95,14 +96,16 @@ object OverviewGenerator extends LazyLogging {
       case (true, Some(projectOverview)) =>
         writeOverviewToS3(projectOverview, overviewInput.outputLocation)
         logger.debug("Updating project layer in API with overview")
-        HttpClient.updateProjectWithOverview(authToken,
-                                             overviewInput.projectId,
-                                             overviewInput.projectLayerId,
-                                             overviewInput.outputLocation)
+        val projectLayer = HttpClient.updateProjectWithOverview(
+          authToken,
+          overviewInput.projectId,
+          overviewInput.projectLayerId,
+          overviewInput.outputLocation)
+        Some(projectLayer)
       case _ =>
         logger.debug(
           "Skipping adding project overview, project layer scenes have changed since overview generated")
-        ()
+        None
     }
 
   }
