@@ -3,6 +3,7 @@ package com.rasterfoundry.common
 import com.rasterfoundry.datamodel._
 import java.net.URI
 
+import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
 import com.rasterfoundry.datamodel.{Order, PageRequest}
 import geotrellis.vector.testkit.Rectangle
@@ -1133,6 +1134,13 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbMetric: Arbitrary[Metric] = Arbitrary {
       metricGen
+    }
+
+    implicit def arbNEL[T: Arbitrary]: Arbitrary[NEL[T]] = Arbitrary {
+      for {
+        h <- arbitrary[T]
+        t <- arbitrary[List[T]]
+      } yield { NEL(h, t) }
     }
   }
 }
