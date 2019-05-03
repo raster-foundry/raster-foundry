@@ -12,17 +12,17 @@ object MamlConversion {
 
       val args: List[Expression] = ast.args.map(eval)
       ast match {
-        case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => {
+        case MapAlgebraAST.ProjectRaster(_, projId, band, _, _) => {
           val bandActual = band.getOrElse(1)
           RasterVar(s"${projId.toString}_${bandActual}")
         }
-        case MapAlgebraAST.LayerRaster(_, layerId, band, celltype, _) => {
+        case MapAlgebraAST.LayerRaster(_, layerId, band, _, _) => {
           val bandActual = band.getOrElse(1)
           RasterVar(s"${layerId.toString}_${bandActual}")
         }
 
         case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
-        case MapAlgebraAST.LiteralTile(_, lt, _) =>
+        case MapAlgebraAST.LiteralTile(_, _, _) =>
           throw new Exception(
             "No literal tiles should appear on pre-MAML RFML tools")
         case MapAlgebraAST.ToolReference(_, _) =>

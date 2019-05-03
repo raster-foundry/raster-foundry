@@ -17,7 +17,7 @@ sealed trait MapAlgebraAST extends Product with Serializable {
   def tileSources: Set[RFMLRaster] = {
     val tileList: List[RFMLRaster] = this match {
       case r: RFMLRaster                   => List(r)
-      case l: MapAlgebraAST.MapAlgebraLeaf => List()
+      case _: MapAlgebraAST.MapAlgebraLeaf => List()
       case ast                             => ast.args.flatMap(_.tileSources)
     }
     tileList.toSet
@@ -32,8 +32,7 @@ sealed trait MapAlgebraAST extends Product with Serializable {
       case op: MapAlgebraAST.Operation =>
         op.args.flatMap(_.bufferedSources(buffered))
       // case MapAlgebraAST.Source(id, _)        => if (buffered) List(id) else List()
-      case leaf: MapAlgebraAST.MapAlgebraLeaf => List()
-      case _                                  => List()
+      case _ => List()
     }
     bufferList.toSet
   }
