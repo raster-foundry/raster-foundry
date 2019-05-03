@@ -83,7 +83,7 @@ class AnalysisManager[Param: ToolStore, HistStore](
       histsValidated <- paintable.histogram(4000) map {
         case Valid(hists) if hists.filter(_.binCounts.length == 0).isEmpty =>
           Ok(hists.head asJson)
-        case Valid(hists) =>
+        case Valid(_) =>
           NotFound(s"Did not find any data for $analysisId")
         case Invalid(e) =>
           BadRequest(s"Unable to produce histogram for $analysisId: $e")

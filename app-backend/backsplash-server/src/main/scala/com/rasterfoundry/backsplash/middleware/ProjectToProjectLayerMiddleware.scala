@@ -35,8 +35,7 @@ object ProjectToProjectLayerMiddleware {
         } else if (scriptName.isEmpty) {
           req match {
             case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
-                  y)
-                  :? BandOverrideQueryParamDecoder(bandOverride) =>
+                  y) =>
               for {
                 defaultLayerId <- getDefaultLayerId(projectId, xa)
                 resp <- service(
@@ -44,8 +43,7 @@ object ProjectToProjectLayerMiddleware {
                     s"/${projectId}/layers/${defaultLayerId}/${z}/${x}/${y}"))
               } yield resp
 
-            case GET -> Root / UUIDWrapper(projectId) / "histogram" :? BandOverrideQueryParamDecoder(
-                  bandOverride) =>
+            case GET -> Root / UUIDWrapper(projectId) / "histogram" =>
               for {
                 defaultLayerId <- getDefaultLayerId(projectId, xa)
                 resp <- service(
@@ -55,8 +53,7 @@ object ProjectToProjectLayerMiddleware {
                 )
               } yield resp
 
-            case POST -> Root / UUIDWrapper(projectId) / "histogram" :? BandOverrideQueryParamDecoder(
-                  bandOverride) =>
+            case POST -> Root / UUIDWrapper(projectId) / "histogram" =>
               for {
                 defaultLayerId <- getDefaultLayerId(projectId, xa)
                 resp <- service(
@@ -66,10 +63,7 @@ object ProjectToProjectLayerMiddleware {
                 )
               } yield resp
 
-            case GET -> Root / UUIDWrapper(projectId) / "export"
-                  :? ExtentQueryParamMatcher(extent)
-                  :? ZoomQueryParamMatcher(zoom)
-                  :? BandOverrideQueryParamDecoder(bandOverride) =>
+            case GET -> Root / UUIDWrapper(projectId) / "export" =>
               for {
                 defaultLayerId <- getDefaultLayerId(projectId, xa)
                 resp <- service(

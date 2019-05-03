@@ -47,7 +47,7 @@ object TileReification extends LazyLogging {
 
   implicit val mosaicExportTmsReification =
     new TmsReification[List[(String, List[Int], Option[Double])]] {
-      def kind(self: List[(String, List[Int], Option[Double])]): MamlKind =
+      def kind(): MamlKind =
         MamlKind.Image
 
       def tmsReification(self: List[(String, List[Int], Option[Double])],
@@ -72,7 +72,7 @@ object TileReification extends LazyLogging {
         }
         val subTilesIO: IO[List[Option[MultibandTile]]] =
           self.parTraverse {
-            case (uri, bands, ndOverride) =>
+            case (uri, bands, _) =>
               IO {
                 val rs = RasterSources
                   .getOrUpdate(uri)
@@ -120,7 +120,7 @@ object TileReification extends LazyLogging {
 
   implicit val analysisExportTmsReification =
     new TmsReification[List[(String, Int, Option[Double])]] {
-      def kind(self: List[(String, Int, Option[Double])]): MamlKind =
+      def kind(): MamlKind =
         MamlKind.Image
 
       def tmsReification(self: List[(String, Int, Option[Double])],
@@ -130,7 +130,7 @@ object TileReification extends LazyLogging {
         val layoutDefinition = getLayoutDefinition(z)
         val extent = layoutDefinition.mapTransform.keyToExtent(x, y)
         val subTilesIO: IO[List[Option[MultibandTile]]] = self.parTraverse {
-          case (uri, band, ndOverride) =>
+          case (uri, band, _) =>
             IO {
               val rs = RasterSources
                 .getOrUpdate(uri)

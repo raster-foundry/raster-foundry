@@ -5,7 +5,6 @@ import com.rasterfoundry.backsplash.OgcStore
 import com.rasterfoundry.backsplash.OgcStore.ToOgcStoreOps
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.datamodel.User
-
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
@@ -19,9 +18,7 @@ import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.scalaxml._
-
 import com.typesafe.scalalogging.LazyLogging
-
 import java.net.URL
 import java.util.UUID
 
@@ -43,10 +40,9 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
           .generateErrorMessage(errors.toList)}")
       case Valid(p) =>
         p match {
-          case params: WmsParams.GetCapabilities =>
+          case _: WmsParams.GetCapabilities =>
             for {
               rsm <- layers.getWmsModel(projectId)
-              metadata <- layers.getWmsServiceMetadata(projectId)
               resp <- Ok(new CapabilitiesView(rsm, new URL(serviceUrl)).toXML)
             } yield resp
           case params: WmsParams.GetMap =>
@@ -70,7 +66,7 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
                 case sl @ SimpleOgcLayer(_, title, _, _, _) =>
                   (LayerExtent.identity(sl),
                    layers.getLayerHistogram(UUID.fromString(title)))
-                case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
+                case _: MapAlgebraOgcLayer =>
                   throw MetadataException(
                     "Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
               }
@@ -100,12 +96,12 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     }
 
   def routes: AuthedService[User, IO] = AuthedService[User, IO] {
-    case authedReq @ GET -> Root / UUIDWrapper(projectId) as user =>
+    case authedReq @ GET -> Root / UUIDWrapper(projectId) as _ =>
       val serviceUrl = requestToServiceUrl(authedReq.req)
       authedReqToResponse(authedReq, projectId, serviceUrl)
 
     case authedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
-          _) as user =>
+          _) as _ =>
       val serviceUrl = requestToServiceUrl(authedReq.req)
       authedReqToResponse(authedReq, projectId, serviceUrl)
   }

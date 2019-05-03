@@ -20,7 +20,7 @@ import cats.effect._
   @op("exportExtent") def exportExtent(self: A): Extent
 
   // I imagine we'll just be using webmercator for now
-  @op("exportCRS") def exportCRS(self: A): CRS = WebMercator
+  @op("exportCRS") def exportCRS: CRS = WebMercator
 
   @op("exportZoom") def exportZoom(self: A): Int
 
@@ -47,6 +47,6 @@ import cats.effect._
     val tilesForExtent = TilesForExtent.latLng(latLngExtent, exportZoom(self))
     val outputExtent =
       ExtentOfTiles.webMercator(tilesForExtent, exportZoom(self))
-    MultibandGeoTiff(tifftile, outputExtent, exportCRS(self))
+    MultibandGeoTiff(tifftile, outputExtent, exportCRS)
   }
 }

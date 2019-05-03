@@ -28,7 +28,7 @@ class BacksplashMamlAdapter[HistStore, LayerStore: ProjectStore](
       val args = ast.args.map(evalParams)
 
       ast match {
-        case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => {
+        case MapAlgebraAST.ProjectRaster(_, projId, band, _, _) => {
           val bandActual = band.getOrElse(
             throw SingleBandOptionsException(
               "Band must be provided to evaluate AST"))
