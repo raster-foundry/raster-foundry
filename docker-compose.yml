@@ -75,7 +75,7 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.11/
+    working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.12/
     entrypoint: java
     command:
       - "-Dcom.sun.management.jmxremote.rmi.port=9010"
@@ -92,8 +92,8 @@ services:
     image: raster-foundry-batch
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
-      - ./app-backend/batch/target/scala-2.11/batch-assembly.jar:/opt/raster-foundry/jars/batch-assembly.jar
-      - ./app-backend/backsplash-export/target/scala-2.11/backsplash-export-assembly.jar:/opt/raster-foundry/jars/backsplash-export-assembly.jar
+      - ./app-backend/batch/target/scala-2.12/batch-assembly.jar:/opt/raster-foundry/jars/batch-assembly.jar
+      - ./app-backend/backsplash-export/target/scala-2.12/backsplash-export-assembly.jar:/opt/raster-foundry/jars/backsplash-export-assembly.jar
       - ./data/:/opt/data/
       - $HOME/.aws:/root/.aws:ro
     build:
@@ -153,7 +153,7 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/raster-foundry/app-backend/backsplash-server/target/scala-2.11/
+    working_dir: /opt/raster-foundry/app-backend/backsplash-server/target/scala-2.12/
     entrypoint: java
     command:
       - "-Dcom.sun.management.jmxremote.rmi.port=9030"
