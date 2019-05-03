@@ -1,0 +1,16 @@
+--
+-- Data for Name: feature_flags; Type: TABLE DATA; Schema: public; Owner: rasterfoundry
+--
+
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('68144a5a-bf71-4925-b2f6-94893333c88d', 'profile-org-edit', false, 'Profile Organization Edit', 'Join / Create / Edit / Leave / Delete organizations in user profile settings') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('76ffc49d-f92f-4f4f-99ad-40e8b1ff529f', 'make-source-histogram', false, 'Make source histogram', 'Show or hide the "make source histogram" link in color correction') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('515c2eb5-7255-4c31-aef8-8423ba15d6c7', 'market-search', false, 'Market Search', 'Allow the market search feature to be visible') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('99e38005-0ae5-41cd-bbea-330bda92499a', 'display-histogram', false, 'Display Histogram', 'Display and fetch histograms for color correction') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('a75d427f-576d-4850-96c3-895bbf384098', 'tools-ui', true, 'Enable Tools UI', 'Enable UI elements providing access to Tools functionality') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('e8eeb7b0-dc6b-466f-b708-41861a997f66', 'external-source-browse-planet', false, 'External source browse - Planet', 'Allow users to browse planet imagery') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('828c77c9-49e8-4a99-9814-169300ec1b88', 'user-vectors', false, 'Vector data integration', 'Support user defined vectors') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('d73087dd-5047-4d79-b82c-01a7feef9068', 'external-source-browse', true, 'External source browse', 'Allow users to browse imagery from external providers') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('c3d1e27e-5e25-4cff-9d03-af310e3c2dc4', 'external-source-browse-cmr', true, 'External source browse - CMR', 'Allow users to browse CMR collections') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('dd486e2d-de6c-4ea6-afbe-cd0a2a2fa698', 'project-preview-mini-map', true, 'Project preview mini leaflet map', 'Make Project Previews mini Leaflet Maps') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('37b77b33-ff5e-4ac4-aa9c-e53da3182651', 'project-list-sharing-filter', false, 'Project list sharing filter', 'Allow users to switch between their own projects and projects that have been shared with them') ON CONFLICT DO NOTHING;
+INSERT INTO public.feature_flags (id, key, active, name, description) VALUES ('dc804621-b93e-43cd-b537-e3a81a3ce582', 'analyses-sharing', false, 'Anlyses Sharing', 'Allow sharing analyses and let users to switch between their own analyses and anlyses that have been shared with them') ON CONFLICT DO NOTHING;
