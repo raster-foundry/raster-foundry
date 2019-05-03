@@ -52,9 +52,6 @@ trait PlatformRoutes
             put {
               updatePlatform(platformId)
             } ~
-            delete {
-              deletePlatform(platformId)
-            } ~
             post {
               setPlatformStatus(platformId)
             }
@@ -112,7 +109,7 @@ trait PlatformRoutes
                       getOrganization(platformId, orgId)
                     } ~
                       put {
-                        updateOrganization(platformId, orgId)
+                        updateOrganization(orgId)
                       } ~
                       post {
                         setOrganizationStatus(platformId, orgId)
@@ -129,7 +126,7 @@ trait PlatformRoutes
                         "Resource path invalid"
                       ) {
                         get {
-                          listOrganizationMembers(platformId, orgId)
+                          listOrganizationMembers(orgId)
                         } ~
                           post {
                             addUserToOrganization(platformId, orgId)
@@ -138,7 +135,7 @@ trait PlatformRoutes
                     } ~
                       pathPrefix(Segment) { userId =>
                         delete {
-                          removeUserFromOrganization(platformId, orgId, userId)
+                          removeUserFromOrganization(orgId, userId)
                         }
                       }
                   } ~
@@ -152,10 +149,10 @@ trait PlatformRoutes
                         "Resource path invalid"
                       ) {
                         get {
-                          listTeams(platformId, orgId)
+                          listTeams(orgId)
                         } ~
                           post {
-                            createTeam(platformId, orgId)
+                            createTeam(orgId)
                           }
                       }
                     } ~
@@ -169,13 +166,13 @@ trait PlatformRoutes
                             "Resource path invalid"
                           ) {
                             get {
-                              getTeam(platformId, orgId, teamId)
+                              getTeam(orgId, teamId)
                             } ~
                               put {
-                                updateTeam(platformId, orgId, teamId)
+                                updateTeam(teamId)
                               } ~
                               delete {
-                                deleteTeam(platformId, orgId, teamId)
+                                deleteTeam(teamId)
                               }
                           }
                         } ~
@@ -189,18 +186,15 @@ trait PlatformRoutes
                             ) {
                               pathEndOrSingleSlash {
                                 get {
-                                  listTeamMembers(platformId, orgId, teamId)
+                                  listTeamMembers(orgId, teamId)
                                 } ~
                                   post {
-                                    addUserToTeam(platformId, orgId, teamId)
+                                    addUserToTeam(platformId, teamId)
                                   }
                               } ~
                                 pathPrefix(Segment) { userId =>
                                   delete {
-                                    removeUserFromTeam(platformId,
-                                                       orgId,
-                                                       teamId,
-                                                       userId)
+                                    removeUserFromTeam(teamId, userId)
                                   }
                                 }
                             }
@@ -261,17 +255,6 @@ trait PlatformRoutes
             .transact(xa)
             .unsafeToFuture
         }
-      }
-    }
-  }
-
-  // @TODO: We may want to remove this functionality and instead deactivate platforms
-  def deletePlatform(platformId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      UserDao.isSuperUser(user).transact(xa).unsafeToFuture
-    } {
-      completeWithOneOrFail {
-        ???
       }
     }
   }
@@ -356,34 +339,22 @@ trait PlatformRoutes
       }
   }
 
-  def updateOrganization(platformId: UUID, orgId: UUID): Route = authenticate {
-    user =>
-      authorizeAsync {
-        OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
-      } {
-        entity(as[Organization]) { orgToUpdate =>
-          completeWithOneOrFail {
-            OrganizationDao
-              .update(orgToUpdate, orgId)
-              .transact(xa)
-              .unsafeToFuture
-          }
-        }
-      }
-  }
-
-  def deleteOrganization(platformId: UUID, orgId: UUID): Route = authenticate {
-    user =>
-      authorizeAsync {
-        PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
-      } {
+  def updateOrganization(orgId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+    } {
+      entity(as[Organization]) { orgToUpdate =>
         completeWithOneOrFail {
-          ???
+          OrganizationDao
+            .update(orgToUpdate, orgId)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
+    }
   }
 
-  def listOrganizationMembers(platformId: UUID, orgId: UUID): Route =
+  def listOrganizationMembers(orgId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
         // QUESTION: should this be open to members of the same platform?
@@ -426,50 +397,48 @@ trait PlatformRoutes
       }
     }
 
-  def removeUserFromOrganization(platformId: UUID,
-                                 orgId: UUID,
-                                 userId: String): Route = authenticate { user =>
-    authorizeAsync {
-      val authCheck = (
-        OrganizationDao.userIsAdmin(user, orgId),
-        (userId == user.id).pure[ConnectionIO]
-      ).tupled.map(
-        {
-          case (true, _) | (_, true) => true
-          case _                     => false
+  def removeUserFromOrganization(orgId: UUID, userId: String): Route =
+    authenticate { user =>
+      authorizeAsync {
+        val authCheck = (
+          OrganizationDao.userIsAdmin(user, orgId),
+          (userId == user.id).pure[ConnectionIO]
+        ).tupled.map(
+          {
+            case (true, _) | (_, true) => true
+            case _                     => false
+          }
+        )
+        authCheck.transact(xa).unsafeToFuture
+      } {
+        complete {
+          OrganizationDao
+            .deactivateUserRoles(user, userId, orgId)
+            .transact(xa)
+            .unsafeToFuture
         }
-      )
-      authCheck.transact(xa).unsafeToFuture
+      }
+    }
+
+  def listTeams(organizationId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      OrganizationDao
+        .userIsMember(user, organizationId)
+        .transact(xa)
+        .unsafeToFuture
     } {
-      complete {
-        OrganizationDao
-          .deactivateUserRoles(user, userId, orgId)
-          .transact(xa)
-          .unsafeToFuture
+      (withPagination & teamQueryParameters) { (page, teamQueryParams) =>
+        complete {
+          TeamDao
+            .listOrgTeams(organizationId, page, teamQueryParams)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }
 
-  def listTeams(platformId: UUID, organizationId: UUID): Route = authenticate {
-    user =>
-      authorizeAsync {
-        OrganizationDao
-          .userIsMember(user, organizationId)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        (withPagination & teamQueryParameters) { (page, teamQueryParams) =>
-          complete {
-            TeamDao
-              .listOrgTeams(organizationId, page, teamQueryParams)
-              .transact(xa)
-              .unsafeToFuture
-          }
-        }
-      }
-  }
-
-  def createTeam(platformId: UUID, orgId: UUID): Route = authenticate { user =>
+  def createTeam(orgId: UUID): Route = authenticate { user =>
     authorizeAsync {
       OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
     } {
@@ -494,7 +463,7 @@ trait PlatformRoutes
     }
   }
 
-  def getTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+  def getTeam(orgId: UUID, teamId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
         OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
@@ -511,7 +480,7 @@ trait PlatformRoutes
       }
     }
 
-  def updateTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+  def updateTeam(teamId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
         TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
@@ -529,7 +498,7 @@ trait PlatformRoutes
       }
     }
 
-  def deleteTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+  def deleteTeam(teamId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
         TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
@@ -540,7 +509,7 @@ trait PlatformRoutes
       }
     }
 
-  def listTeamMembers(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+  def listTeamMembers(orgId: UUID, teamId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
         // The authorization here is necessary to allow users within cross-organizational teams to view
@@ -563,7 +532,7 @@ trait PlatformRoutes
       }
     }
 
-  def addUserToTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+  def addUserToTeam(platformId: UUID, teamId: UUID): Route =
     authenticate { user =>
       entity(as[UserGroupRole.UserRole]) { ur =>
         authorizeAsync {
@@ -589,29 +558,27 @@ trait PlatformRoutes
       }
     }
 
-  def removeUserFromTeam(platformId: UUID,
-                         orgId: UUID,
-                         teamId: UUID,
-                         userId: String): Route = authenticate { user =>
-    authorizeAsync {
-      val authCheck = (
-        TeamDao.userIsAdmin(user, teamId),
-        (userId == user.id).pure[ConnectionIO]
-      ).tupled.map(
-        {
-          case (true, _) | (_, true) => true
-          case _                     => false
+  def removeUserFromTeam(teamId: UUID, userId: String): Route = authenticate {
+    user =>
+      authorizeAsync {
+        val authCheck = (
+          TeamDao.userIsAdmin(user, teamId),
+          (userId == user.id).pure[ConnectionIO]
+        ).tupled.map(
+          {
+            case (true, _) | (_, true) => true
+            case _                     => false
+          }
+        )
+        authCheck.transact(xa).unsafeToFuture
+      } {
+        complete {
+          TeamDao
+            .deactivateUserRoles(user, userId, teamId)
+            .transact(xa)
+            .unsafeToFuture
         }
-      )
-      authCheck.transact(xa).unsafeToFuture
-    } {
-      complete {
-        TeamDao
-          .deactivateUserRoles(user, userId, teamId)
-          .transact(xa)
-          .unsafeToFuture
       }
-    }
   }
 
   def setPlatformStatus(platformId: UUID): Route = authenticate { user =>
@@ -652,7 +619,7 @@ trait PlatformRoutes
           case status: String if status == OrgStatus.Active.toString =>
             activateOrganization(platformId, organizationId, user)
           case status: String if status == OrgStatus.Inactive.toString =>
-            deactivateOrganization(platformId, organizationId, user)
+            deactivateOrganization(organizationId, user)
         }
       }
     }
@@ -671,9 +638,7 @@ trait PlatformRoutes
       }
     }
 
-  def deactivateOrganization(platformId: UUID,
-                             organizationId: UUID,
-                             user: User): Route =
+  def deactivateOrganization(organizationId: UUID, user: User): Route =
     authorizeAsync {
       OrganizationDao
         .userIsAdmin(user, organizationId)

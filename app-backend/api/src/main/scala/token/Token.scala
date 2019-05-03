@@ -41,7 +41,7 @@ object TokenService extends Config with ErrorAccumulatingCirceSupport {
     Scaffeine()
       .expireAfterWrite(1.hour)
       .maximumSize(1)
-      .buildAsyncFuture((i: Int) => getManagementBearerToken())
+      .buildAsyncFuture((_: Int) => getManagementBearerToken())
 
   def getManagementBearerToken(): Future[ManagementBearerToken] = {
     val bearerTokenUri = Uri(s"https://$auth0Domain/oauth/token")

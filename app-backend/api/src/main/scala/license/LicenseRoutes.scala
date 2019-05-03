@@ -9,10 +9,10 @@ import com.rasterfoundry.database.LicenseDao
 import akka.http.scaladsl.server.Route
 import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
 import cats.effect.IO
 import doobie.util.transactor.Transactor
 import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel.User
 import doobie._
 import doobie.implicits._
 
@@ -32,13 +32,13 @@ trait LicenseRoutes
     }
   }
 
-  def listLicenses: Route = authenticate { user =>
+  def listLicenses: Route = authenticate { _: User =>
     withPagination { pageRequest =>
       complete(LicenseDao.query.page(pageRequest).transact(xa).unsafeToFuture)
     }
   }
 
-  def getLicense(shortName: String): Route = authenticate { user =>
+  def getLicense(shortName: String): Route = authenticate { _: User =>
     rejectEmptyResponse {
       complete(
         LicenseDao.query

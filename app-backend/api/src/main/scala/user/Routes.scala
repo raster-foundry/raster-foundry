@@ -156,7 +156,7 @@ trait UserRoutes
   }
 
   def updateUserByEncodedAuthId(authIdEncoded: String): Route =
-    authenticateSuperUser { root =>
+    authenticateSuperUser { _ =>
       entity(as[User]) { updatedUser =>
         onSuccess(
           UserDao

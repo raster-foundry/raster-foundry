@@ -9,8 +9,8 @@ import com.rasterfoundry.akkautil.{
 import com.rasterfoundry.database.FeatureFlagDao
 import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
 import cats.effect.IO
+import com.rasterfoundry.datamodel.User
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
@@ -32,7 +32,7 @@ trait FeatureFlagRoutes
     }
   }
 
-  def getFeatureFlags: Route = authenticate { user =>
+  def getFeatureFlags: Route = authenticate { _: User =>
     complete(FeatureFlagDao.query.list.transact(xa).unsafeToFuture())
   }
 }

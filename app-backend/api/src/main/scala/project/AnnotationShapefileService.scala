@@ -85,14 +85,14 @@ object AnnotationShapefileService extends LazyLogging with Config {
 
         sftb.setName("Annotaion")
         geom match {
-          case pt: Point   => sftb.add(geometryField, classOf[jts.Point])
-          case ln: Line    => sftb.add(geometryField, classOf[jts.LineString])
-          case pg: Polygon => sftb.add(geometryField, classOf[jts.Polygon])
-          case mp: MultiPoint =>
+          case _: Point   => sftb.add(geometryField, classOf[jts.Point])
+          case _: Line    => sftb.add(geometryField, classOf[jts.LineString])
+          case _: Polygon => sftb.add(geometryField, classOf[jts.Polygon])
+          case _: MultiPoint =>
             sftb.add(geometryField, classOf[jts.MultiPoint])
-          case ml: MultiLine =>
+          case _: MultiLine =>
             sftb.add(geometryField, classOf[jts.MultiLineString])
-          case mp: MultiPolygon =>
+          case _: MultiPolygon =>
             sftb.add(geometryField, classOf[jts.MultiPolygon])
           case g: Geometry =>
             throw new Exception(s"Unhandled Geotrellis Geometry $g")
@@ -133,7 +133,7 @@ object AnnotationShapefileService extends LazyLogging with Config {
           case g: Geometry =>
             throw new Exception(s"Unhandled Geotrellis Geometry $g")
         }
-        data.foreach({ case (key, value) => sfb.add(value) })
+        data.foreach({ case (_, value) => sfb.add(value) })
 
         Some(sfb.buildFeature(annotation.id.toString))
       case _ =>
