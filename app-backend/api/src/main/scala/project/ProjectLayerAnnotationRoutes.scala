@@ -157,9 +157,7 @@ trait ProjectLayerAnnotationRoutes
       }
     }
   }
-  def updateLayerAnnotation(projectId: UUID,
-                            annotationId: UUID,
-                            layerId: UUID): Route =
+  def updateLayerAnnotation(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
         ProjectDao
@@ -212,7 +210,7 @@ trait ProjectLayerAnnotationRoutes
             .listForLayerExport(projectId, layerId)
             .transact(xa)
             .unsafeToFuture) {
-          case annotations @ (annotation: List[Annotation]) => {
+          case annotations @ (_: List[Annotation]) => {
             complete(
               AnnotationShapefileService
                 .getAnnotationShapefileDownloadUrl(annotations, user)

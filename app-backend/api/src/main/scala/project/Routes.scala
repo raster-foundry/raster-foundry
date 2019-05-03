@@ -4,7 +4,6 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.directives._
 import better.files.{File => ScalaFile}
 import cats.data.NonEmptyList
 import cats.effect.IO
@@ -179,9 +178,7 @@ trait ProjectRoutes
                             getLayerAnnotation(projectId, annotationId, layerId)
                           } ~
                             put {
-                              updateLayerAnnotation(projectId,
-                                                    annotationId,
-                                                    layerId)
+                              updateLayerAnnotation(projectId, layerId)
                             } ~
                             delete {
                               deleteLayerAnnotation(projectId,
@@ -196,16 +193,15 @@ trait ProjectRoutes
                             exportLayerAnnotationShapefile(projectId, layerId)
                           } ~
                             post {
-                              authenticate { user =>
+                              authenticate { _ =>
                                 val tempFile = ScalaFile.newTemporaryFile()
                                 tempFile.deleteOnExit()
                                 val response =
                                   storeUploadedFile("name",
                                                     (_) => tempFile.toJava) {
-                                    (m, _) =>
+                                    (_, _) =>
                                       processShapefile(projectId,
                                                        tempFile,
-                                                       m,
                                                        None,
                                                        Some(layerId))
                                   }
@@ -217,16 +213,15 @@ trait ProjectRoutes
                           pathPrefix("import") {
                             pathEndOrSingleSlash {
                               (post & formFieldMap) { fields =>
-                                authenticate { user =>
+                                authenticate { _ =>
                                   val tempFile = ScalaFile.newTemporaryFile()
                                   tempFile.deleteOnExit()
                                   val response =
                                     storeUploadedFile("shapefile",
                                                       (_) => tempFile.toJava) {
-                                      (m, _) =>
+                                      (_, _) =>
                                         processShapefile(projectId,
                                                          tempFile,
-                                                         m,
                                                          Some(fields),
                                                          Some(layerId))
                                     }
@@ -355,17 +350,13 @@ trait ProjectRoutes
                     exportAnnotationShapefile(projectId)
                   } ~
                     post {
-                      authenticate { user =>
+                      authenticate { _ =>
                         val tempFile = ScalaFile.newTemporaryFile()
                         tempFile.deleteOnExit()
                         val response =
                           storeUploadedFile("name", (_) => tempFile.toJava) {
-                            (m, _) =>
-                              processShapefile(projectId,
-                                               tempFile,
-                                               m,
-                                               None,
-                                               None)
+                            (_, _) =>
+                              processShapefile(projectId, tempFile, None, None)
                           }
                         tempFile.delete()
                         response
@@ -375,16 +366,15 @@ trait ProjectRoutes
                   pathPrefix("import") {
                     pathEndOrSingleSlash {
                       (post & formFieldMap) { fields =>
-                        authenticate { user =>
+                        authenticate { _ =>
                           val tempFile = ScalaFile.newTemporaryFile()
                           tempFile.deleteOnExit()
                           val response =
                             storeUploadedFile("shapefile",
                                               (_) => tempFile.toJava) {
-                              (m, _) =>
+                              (_, _) =>
                                 processShapefile(projectId,
                                                  tempFile,
-                                                 m,
                                                  Some(fields),
                                                  None)
                             }
@@ -401,7 +391,7 @@ trait ProjectRoutes
                     getAnnotation(projectId, annotationId)
                   } ~
                     put {
-                      updateAnnotation(projectId, annotationId)
+                      updateAnnotation(projectId)
                     } ~
                     delete {
                       deleteAnnotation(projectId, annotationId)
@@ -669,7 +659,7 @@ trait ProjectRoutes
                                                        sceneIds)
         } yield { rowsAffected }
 
-        onSuccess(acceptScenesIO.transact(xa).unsafeToFuture) { updatedOrder =>
+        onSuccess(acceptScenesIO.transact(xa).unsafeToFuture) { _ =>
           complete(StatusCodes.NoContent)
         }
       }
@@ -749,7 +739,7 @@ trait ProjectRoutes
                                                          sceneIds)
         } yield { updatedOrder }
 
-        onSuccess(setOrderIO.transact(xa).unsafeToFuture) { updatedOrder =>
+        onSuccess(setOrderIO.transact(xa).unsafeToFuture) { _ =>
           complete(StatusCodes.NoContent)
         }
       }
@@ -795,9 +785,8 @@ trait ProjectRoutes
                                                          ccParams)
           } yield { stl }
 
-          onSuccess(setColorCorrectParamsIO.transact(xa).unsafeToFuture) {
-            stl =>
-              complete(StatusCodes.NoContent)
+          onSuccess(setColorCorrectParamsIO.transact(xa).unsafeToFuture) { _ =>
+            complete(StatusCodes.NoContent)
           }
         }
       }
@@ -841,7 +830,7 @@ trait ProjectRoutes
           } yield { stl }
 
           onSuccess(setColorCorrectParamsBatchIO.transact(xa).unsafeToFuture) {
-            scenesToProject =>
+            _ =>
               complete(StatusCodes.NoContent)
           }
         }
@@ -1077,7 +1066,6 @@ trait ProjectRoutes
 
   def processShapefile(projectId: UUID,
                        tempFile: ScalaFile,
-                       fileMetadata: FileInfo,
                        propsO: Option[Map[String, String]] = None,
                        projectLayerIdO: Option[UUID]): Route =
     authenticate { user =>

@@ -108,7 +108,7 @@ trait ExportRoutes
       rejectEmptyResponse {
         val exportDefinition = for {
           export <- ExportDao.query.filter(exportId).select
-          eo <- ExportDao.getExportDefinition(export, user)
+          eo <- ExportDao.getExportDefinition(export)
         } yield eo
         onSuccess(exportDefinition.transact(xa).unsafeToFuture) { eo =>
           complete { eo }
@@ -123,7 +123,7 @@ trait ExportRoutes
         case Left(df: DecodingFailure) =>
           complete(
             (StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
-        case Right(x) => {
+        case Right(_) => {
           val updatedExport =
             user.updateDefaultExportSource(newExport.toExport(user))
           onSuccess(

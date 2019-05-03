@@ -200,7 +200,7 @@ trait ProjectLayerRoutes
             SceneToLayerDao
               .setColorCorrectParams(layerId, sceneId, ccParams)
               .transact(xa)
-              .unsafeToFuture) { stl =>
+              .unsafeToFuture) { _ =>
             complete(StatusCodes.NoContent)
           }
         }
@@ -222,7 +222,7 @@ trait ProjectLayerRoutes
               .setColorCorrectParamsBatch(layerId, params)
               .transact(xa)
               .unsafeToFuture
-          ) { scenesToLayer =>
+          ) { _ =>
             complete(StatusCodes.NoContent)
           }
         }
@@ -247,7 +247,7 @@ trait ProjectLayerRoutes
               .setManualOrder(layerId, sceneIds)
               .transact(xa)
               .unsafeToFuture
-          ) { updatedOrder =>
+          ) { _ =>
             complete(StatusCodes.NoContent)
           }
         }

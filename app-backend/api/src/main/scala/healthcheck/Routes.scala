@@ -1,6 +1,7 @@
 package com.rasterfoundry.api.healthcheck
 
 import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import com.rasterfoundry.akkautil.Authentication
@@ -23,7 +24,7 @@ trait HealthCheckRoutes extends Authentication with RollbarNotifier {
   val healthCheckExceptionHandler = ExceptionHandler {
     case e: PSQLException =>
       sendError(e)
-      extractUri { uri =>
+      extractUri { _: Uri =>
         val dbCheck = ServiceCheck("database", HealthCheckStatus.Failing)
         val healthCheck = HealthCheck(HealthCheckStatus.Failing, Seq(dbCheck))
         complete((InternalServerError, healthCheck))

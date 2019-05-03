@@ -96,7 +96,7 @@ trait UploadRoutes
             throw new IllegalStateException(
               "S3 upload must specify a source if no files are specified")
         }
-        case (uploadType, _) => {
+        case (_, _) => {
           if (newUpload.files.nonEmpty) newUpload
           else
             throw new IllegalStateException(

@@ -142,8 +142,8 @@ trait SceneRoutes
         }
 
       val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
-        case (Some(tf), None) => tileFootprint
-        case _                => newScene.dataFootprint
+        case (Some(_), None) => tileFootprint
+        case _               => newScene.dataFootprint
       }
 
       val updatedScene = newScene.copy(dataFootprint = dataFootprint,

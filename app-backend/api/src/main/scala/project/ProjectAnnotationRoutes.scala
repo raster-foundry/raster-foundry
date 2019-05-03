@@ -103,7 +103,7 @@ trait ProjectAnnotationRoutes
             .listForProjectExport(projectId, annotationExportQP)
             .transact(xa)
             .unsafeToFuture) {
-          case annotations @ (annotation: List[Annotation]) => {
+          case annotations @ (_: List[Annotation]) => {
             complete(
               AnnotationShapefileService
                 .getAnnotationShapefileDownloadUrl(annotations, user)
@@ -140,7 +140,7 @@ trait ProjectAnnotationRoutes
       }
   }
 
-  def updateAnnotation(projectId: UUID, annotationId: UUID): Route =
+  def updateAnnotation(projectId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
         ProjectDao
