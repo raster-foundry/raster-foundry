@@ -27,7 +27,7 @@ object Notify extends RollbarNotifier {
     for {
       _ <- publicSettings.emailSmtpUserName match {
         case "" => ().pure[ConnectionIO]
-        case s => {
+        case _ => {
           val preparedEmail = email.setEmail(
             EmailConfig(
               publicSettings.emailSmtpHost,
@@ -79,7 +79,7 @@ object Notify extends RollbarNotifier {
       _ <- logger
         .debug(s"Sending emails to ${recipients.length} admins")
         .pure[ConnectionIO]
-      result <- emails
+      _ <- emails
         .map(
           sendEmail(publicSettings,
                     privateSettings,

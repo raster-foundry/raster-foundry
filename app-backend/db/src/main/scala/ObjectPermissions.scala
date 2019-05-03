@@ -118,7 +118,6 @@ trait ObjectPermissions[Model] {
                          replace: Boolean = false)
     : ConnectionIO[List[Option[ObjectAccessControlRule]]] = {
     for {
-      permissions <- getPermissions(id)
       addPermissionsMany <- acrList match {
         case Nil if !replace =>
           throw new Exception(s"All permissions exist for ${tableName} ${id}")

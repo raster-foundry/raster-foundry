@@ -247,7 +247,7 @@ object TeamDao extends Dao[Team] {
   // TODO: ACR deactivation needs to be reconsidered in issue 4020
   def deactivate(teamId: UUID): ConnectionIO[Int] = {
     for {
-      roles <- UserGroupRoleDao.deactivateByGroup(GroupType.Team, teamId)
+      _ <- UserGroupRoleDao.deactivateByGroup(GroupType.Team, teamId)
       teamUpdate <- (fr"UPDATE" ++ tableF ++ fr"""SET
                       is_active = false
                       WHERE id = ${teamId}""").update.run

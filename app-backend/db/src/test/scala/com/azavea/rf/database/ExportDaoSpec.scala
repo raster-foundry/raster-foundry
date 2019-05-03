@@ -56,7 +56,7 @@ class ExportDaoSpec
                                  dbUser)
               }
               exportDefinition <- {
-                ExportDao.getExportDefinition(dbExport, dbUser)
+                ExportDao.getExportDefinition(dbExport)
               }
             } yield exportDefinition
 
@@ -99,7 +99,7 @@ class ExportDaoSpec
                                  dbUser)
               }
               exportDefinition <- {
-                ExportDao.getExportDefinition(dbExport, dbUser)
+                ExportDao.getExportDefinition(dbExport)
               }
             } yield exportDefinition
 
@@ -165,8 +165,7 @@ class ExportDaoSpec
                 ExportDao.insert(export.copy(toolRunId = Some(dbToolRun.id)),
                                  dbUser)
               }
-              exportDefinition <- ExportDao.getExportDefinition(dbExport,
-                                                                dbUser)
+              exportDefinition <- ExportDao.getExportDefinition(dbExport)
             } yield exportDefinition
 
             projectInsertIO.transact(xa).unsafeRunSync

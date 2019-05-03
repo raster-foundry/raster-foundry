@@ -176,7 +176,7 @@ object ProjectDao
     for {
       // User must have access to the project by the time they get here, so it exists
       dbProject <- unsafeGetProjectById(id)
-      updateSceneOrder <- (project.manualOrder, dbProject.manualOrder) match {
+      _ <- (project.manualOrder, dbProject.manualOrder) match {
         case (true, false) =>
           SceneToLayerDao.addSceneOrdering(id)
         case _ =>
@@ -364,7 +364,7 @@ object ProjectDao
       projectId: UUID,
       projectLayerId: UUID): ConnectionIO[Iterable[Scene]] =
     for {
-      project <- ProjectDao.unsafeGetProjectById(projectId)
+      _ <- ProjectDao.unsafeGetProjectById(projectId)
       _ <- sql"DELETE FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}".update.run
       _ <- addScenesToProject(sceneIds, projectId, projectLayerId, true)
       scenes <- SceneDao.query
@@ -378,9 +378,9 @@ object ProjectDao
                               projectLayerId: UUID): ConnectionIO[Int] = {
     val f: Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
     f match {
-      case fragO @ Some(_) =>
+      case _ @Some(_) =>
         for {
-          project <- ProjectDao.unsafeGetProjectById(projectId)
+          _ <- ProjectDao.unsafeGetProjectById(projectId)
           rowsDeleted <- (fr"DELETE FROM scenes_to_layers" ++
             Fragments.whereAndOpt(
               f,
