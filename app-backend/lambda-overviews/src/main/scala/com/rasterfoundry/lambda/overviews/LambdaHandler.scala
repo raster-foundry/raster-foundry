@@ -15,7 +15,14 @@ class LambdaHandler extends RequestStreamHandler with LazyLogging {
     logger.info(s"Received input: $inputString")
     decode[OverviewInput](inputString) match {
       case Right(overviewInput) =>
-        OverviewGenerator.createOverview(overviewInput)
+        OverviewGenerator.createOverview(overviewInput) match {
+          case Some(projectLayer) =>
+            logger.info(
+              s"Created overview and updated project layer: ${projectLayer.id}")
+          case _ =>
+            logger.warn(
+              s"Did not update project layer, scenes were stale prior to writing layer")
+        }
       case Left(e) => throw e
     }
   }
