@@ -53,6 +53,10 @@ lazy val sharedSettings = Seq(
     "com.sksamuel.scapegoat",
     "scalac-scapegoat-plugin"
   ),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "org.apache.spark",
+    "spark-core"
+  ),
   scalacOptions := scalaOptions,
   // https://github.com/sbt/sbt/issues/3570
   updateOptions := updateOptions.value.withGigahorse(false),
@@ -267,6 +271,7 @@ lazy val common = project
       Dependencies.geotrellisGeotools,
       Dependencies.geotrellisVectorTestkit,
       Dependencies.mamlJvm,
+      Dependencies.sparkCore,
       Dependencies.circeCore,
       Dependencies.circeParser,
       Dependencies.circeOptics,
