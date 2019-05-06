@@ -118,3 +118,6 @@ scratch/
 stats.json
 app-lambda/opt/*
 /app-lambda/package.sh
+
+# Env specific migrations
+app-backend/db/src/main/resources/env_migrations
