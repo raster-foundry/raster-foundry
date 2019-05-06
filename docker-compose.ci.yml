@@ -1,0 +1,7 @@
+version: '2.1'
+services:
+  shellcheck:
+    image: koalaman/shellcheck:stable
+    volumes:
+      - ./:/usr/local/src
+    working_dir: /usr/local/src

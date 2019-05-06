@@ -22,10 +22,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        if command -v shellcheck &>/dev/null; then
-            echo "Linting STRTA scripts"
-            find ./scripts -type f -print0 | xargs -0 -r shellcheck
-        fi
+        echo "Linting Bash scripts"
+        docker-compose \
+            -f docker-compose.ci.yml \
+            run --rm --no-deps shellcheck \
+            scripts/*
 
         echo "Executing lambda test suite"
         docker-compose \
