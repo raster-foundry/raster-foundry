@@ -237,6 +237,13 @@ trait Authentication extends Directives with LazyLogging {
       }
     )
 
+    val userRole = getStringClaimOrBlank(
+      jwtClaims,
+      "https://app.rasterfoundry.com;platformRole").toUpperCase match {
+      case "ADMIN" => GroupRole.Admin
+      case _       => GroupRole.Member
+    }
+
     for {
       platform <- PlatformDao.getPlatformById(platformId)
       systemUserO <- UserDao.getUserById(auth0SystemUser)
@@ -263,7 +270,7 @@ trait Authentication extends Directives with LazyLogging {
         orgID
       )
       newUserWithRoles <- {
-        UserDao.createUserWithJWT(systemUser, jwtUser)
+        UserDao.createUserWithJWT(systemUser, jwtUser, userRole)
       }
     } yield newUserWithRoles
   }
