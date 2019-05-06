@@ -120,4 +120,6 @@ app-lambda/opt/*
 /app-lambda/package.sh
 
 # Env specific migrations
-app-backend/db/src/main/resources/env_migrations
+app-backend/db/src/main/resources/env_migrations/*.sql
+app-backend/db/src/main/resources/env_migrations/*.zip
+app-backend/db/src/main/resources/env_migrations/*.bak
