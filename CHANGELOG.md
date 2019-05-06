@@ -3,10 +3,11 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+
 - Add lambda function for creating project layer overviews and reorganize project [\#4900](https://github.com/raster-foundry/raster-foundry/pull/4900)
 - Add owner name and profile URL to the return of annotation GET endpoint [\#4924](https://github.com/raster-foundry/raster-foundry/pull/4924)
-
 - Added request counting middleware to backsplash-server [\#4919](https://github.com/raster-foundry/raster-foundry/pull/4919)
+- Enabled getting and writing user group roles from JWT [\#4931](https://github.com/raster-foundry/raster-foundry/pull/4931)
 
 ### Changed
 
@@ -21,11 +22,13 @@
 ## [1.20.0](https://github.com/raster-foundry/raster-foundry/tree/1.20.0) (2019-05-01)
 
 ### Added
+
 - Included tests for project layer split behavior [\#4901](https://github.com/raster-foundry/raster-foundry/pull/4901)
 - New publish page now lists analyses for selected layers [\4902](https://github.com/raster-foundry/raster-foundry/pull/4902)
 - Created metrics table and MetricDao for incrementing request counts [\#4916](https://github.com/raster-foundry/raster-foundry/pull/4916)
 
 ### Changed
+
 - Improved supported CRS for WMS and WCS Services [\#4875](https://github.com/raster-foundry/raster-foundry/pull/4875)
 - Switched general single band options out for configured single band options from RF database [\#4888](https://github.com/raster-foundry/raster-foundry/pull/4888)
 - Add gitSnapshots prefix to Maven Central release command [\#4874](https://github.com/raster-foundry/raster-foundry/pull/4874)

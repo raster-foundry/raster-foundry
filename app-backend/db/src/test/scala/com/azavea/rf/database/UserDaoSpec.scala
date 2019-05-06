@@ -55,7 +55,9 @@ class UserDaoSpec
               val newUserFields =
                 jwtFields.copy(platformId = insertedPlatform.id,
                                organizationId = insertedOrg.id)
-              UserDao.createUserWithJWT(creatingUser, newUserFields)
+              UserDao.createUserWithJWT(creatingUser,
+                                        newUserFields,
+                                        GroupRole.Member)
             }
             userRoles <- UserGroupRoleDao.listByUser(newUser)
           } yield (newUser, userRoles)
