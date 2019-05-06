@@ -4,6 +4,8 @@ import com.typesafe.scalalogging.LazyLogging
 import org.backuity.clist._
 import io.circe.parser._
 
+import com.rasterfoundry.datamodel.OverviewInput
+
 class CommandLine
     extends Command(description =
       "generates overview tif for a Raster Foundry project layer") {

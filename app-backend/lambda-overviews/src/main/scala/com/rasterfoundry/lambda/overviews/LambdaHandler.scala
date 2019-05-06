@@ -6,6 +6,8 @@ import com.amazonaws.services.lambda.runtime.{Context, RequestStreamHandler}
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.parser.decode
 
+import com.rasterfoundry.datamodel.OverviewInput
+
 class LambdaHandler extends RequestStreamHandler with LazyLogging {
 
   def handleRequest(input: InputStream,

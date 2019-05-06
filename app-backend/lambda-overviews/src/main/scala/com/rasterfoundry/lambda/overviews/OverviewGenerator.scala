@@ -12,6 +12,8 @@ import cats.syntax.list._
 import com.rasterfoundry.datamodel.ProjectLayer
 import com.typesafe.scalalogging.LazyLogging
 
+import com.rasterfoundry.datamodel.OverviewInput
+
 object OverviewGenerator extends LazyLogging {
 
   def createProjectOverview(sceneURIs: List[String],
