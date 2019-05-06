@@ -1914,7 +1914,7 @@ paths:
         200:
           description: 'GeoJSON feature containing one annotation from this project default layer'
           schema:
-            $ref: '#/definitions/AnnotationFeature'
+            $ref: '#/definitions/AnnotationFeatureWithOwnerInfo'
         403:
           description: 'Insufficient permissions for resource or resource does not exist'
           schema:
@@ -3019,7 +3019,7 @@ paths:
         200:
           description: 'GeoJSON feature containing one annotation from this project layer'
           schema:
-            $ref: '#/definitions/AnnotationFeature'
+            $ref: '#/definitions/AnnotationFeatureWithOwnerInfo'
         403:
           description: 'Insufficient permissions for resource or resource does not exist'
           schema:
@@ -7232,6 +7232,47 @@ definitions:
           annotationGroup:
             type: string
             format: uuid
+      geometry:
+        $ref: "#/definitions/Geometry"
+
+  AnnotationFeatureWithOwnerInfo:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        allOf:
+        - $ref: '#/definitions/BaseModel'
+        - $ref: '#/definitions/TimeModelMixin'
+        - $ref: '#/definitions/UserTrackingMixin'
+        - type: object
+        properties:
+          label:
+            type: string
+          description:
+            type: string
+          machineGenerated:
+            type: boolean
+          confidence:
+            type: number
+            format: float
+          quality:
+            type: string
+            enum:
+              - 'YES'
+              - 'NO'
+              - 'MISS'
+              - 'MATCH'
+          projectId:
+            type: string
+            format: uuid
+          annotationGroup:
+            type: string
+            format: uuid
+          ownerName:
+            type: string
+          ownerProfileImageUri:
+            type: string
       geometry:
         $ref: "#/definitions/Geometry"
 

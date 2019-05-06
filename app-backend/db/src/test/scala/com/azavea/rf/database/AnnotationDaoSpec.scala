@@ -182,25 +182,32 @@ class AnnotationDaoSpec
                   dbUser
                 ) flatMap { (affectedRows: Int) =>
                   {
-                    AnnotationDao.unsafeGetAnnotationById(annotationId) map {
-                      (affectedRows, _, verifier)
+                    AnnotationDao.getAnnotationById(dbProject.id, annotationId) map {
+                      (affectedRows, _, verifier, dbUser)
                     }
                   }
                 }
               }
             }
 
-            val (affectedRows, updatedAnnotation, verifier) =
+            val (affectedRows, updatedAnnotationO, verifier, dbUser) =
               annotationsUpdateWithAnnotationIO.transact(xa).unsafeRunSync
 
             affectedRows == 1 &&
-            updatedAnnotation.label == annotationUpdate.label &&
-            updatedAnnotation.description == annotationUpdate.description &&
-            updatedAnnotation.machineGenerated == annotationUpdate.machineGenerated &&
-            updatedAnnotation.confidence == annotationUpdate.confidence &&
-            updatedAnnotation.quality == annotationUpdate.quality &&
-            updatedAnnotation.geometry == annotationUpdate.geometry &&
-            updatedAnnotation.verifiedBy == Some(verifier.id)
+            (
+              updatedAnnotationO match {
+                case Some(updatedAnnotation) =>
+                  updatedAnnotation.label == annotationUpdate.label &&
+                    updatedAnnotation.description == annotationUpdate.description &&
+                    updatedAnnotation.machineGenerated == annotationUpdate.machineGenerated &&
+                    updatedAnnotation.confidence == annotationUpdate.confidence &&
+                    updatedAnnotation.quality == annotationUpdate.quality &&
+                    updatedAnnotation.geometry == annotationUpdate.geometry &&
+                    updatedAnnotation.verifiedBy == Some(verifier.id) &&
+                    updatedAnnotation.ownerName == dbUser.name &&
+                    updatedAnnotation.ownerProfileImageUri == dbUser.profileImageUri
+              }
+            )
           }
       }
     }
