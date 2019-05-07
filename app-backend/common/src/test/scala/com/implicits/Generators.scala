@@ -804,7 +804,7 @@ object Generators extends ArbitraryInstances {
       crop <- arbitrary[Boolean]
       raw <- arbitrary[Boolean]
       bands <- arbitrary[Option[Seq[Int]]]
-      operation <- arbitrary[String]
+      operation <- nonEmptyStringGen
     } yield
       ExportOptions(mask,
                     resolution,
