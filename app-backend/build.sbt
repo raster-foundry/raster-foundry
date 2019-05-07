@@ -33,6 +33,7 @@ val scalaOptions = Seq(
   "-Ywarn-value-discard",
   "-Ywarn-macros:after",
   "-Ywarn-unused",
+  "-Xfatal-warnings",
   "-Ywarn-unused-import",
   "-Ypartial-unification",
   "-Ybackend-parallelism",
