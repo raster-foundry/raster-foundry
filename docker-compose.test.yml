@@ -85,3 +85,8 @@ services:
     volumes:
       - ./app-lambda/:/opt/raster-foundry/app-lambda/
     working_dir: /opt/raster-foundry/app-lambda/
+  shellcheck:
+    image: koalaman/shellcheck:stable
+    volumes:
+      - ./:/usr/local/src
+    working_dir: /usr/local/src
