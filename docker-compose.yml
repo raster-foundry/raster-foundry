@@ -198,7 +198,7 @@ services:
       - FLYWAY_URL=jdbc:postgresql://database.service.rasterfoundry.internal/
       - FLYWAY_USER=rasterfoundry
       - FLYWAY_PASSWORD=rasterfoundry
-      - FLYWAY_LOCATIONS=filesystem:/opt/raster-foundry/app-backend/db/src/main/resources/migrations,filesystem:/opt/raster-foundry/app-backend/db/src/main/resources/env_migrations
+      - FLYWAY_LOCATIONS=filesystem:/opt/raster-foundry/app-backend/db/src/main/resources/migrations
       - FLYWAY_SCHEMAS=public
       - FLYWAY_BASELINE_ON_MIGRATE=true
     depends_on:
