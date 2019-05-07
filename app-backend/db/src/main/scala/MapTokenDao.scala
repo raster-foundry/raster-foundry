@@ -92,7 +92,7 @@ object MapTokenDao extends Dao[MapToken] {
       analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id }).toNel map {
         Fragments.in(fr"toolrun_id", _)
       }
-      authFilterF: Fragment = Fragments.orOpt(projIdsF, analysesIdsF)
+      authFilterF: Fragment = projIdsF orElse analysesIdsF getOrElse Fragment.empty
       mapTokens <- MapTokenDao.query
         .filter(mapTokenParams)
         .filter(authFilterF)

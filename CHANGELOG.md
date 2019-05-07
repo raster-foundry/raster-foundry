@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Fixed query parameter handling that listed all tool run map tokens with project map tokens [\#4928](https://github.com/raster-foundry/raster-foundry/pull/4928)
+
 ### Security
 
 ## [1.20.0](https://github.com/raster-foundry/raster-foundry/tree/1.20.0) (2019-05-01)
