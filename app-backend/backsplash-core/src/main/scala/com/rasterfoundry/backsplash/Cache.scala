@@ -43,7 +43,7 @@ object Cache extends LazyLogging {
       strs.mkString(":")
     }
 
-    def stringToCacheKey(key: String) = ""
+    def stringToCacheKey(key: String) = key
   }
 
   val tileCache: Cache[Option[MultibandTile]] = {
