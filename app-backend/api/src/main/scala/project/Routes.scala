@@ -735,7 +735,8 @@ trait ProjectRoutes
 
         val setOrderIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          updatedOrder <- SceneToLayerDao.setManualOrder(project.defaultLayerId,
+          updatedOrder <- SceneToLayerDao.setManualOrder(projectId,
+                                                         project.defaultLayerId,
                                                          sceneIds)
         } yield { updatedOrder }
 

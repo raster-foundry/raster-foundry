@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.common.{AWSBatch, AWSLambda}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.color._
@@ -22,6 +22,7 @@ final case class ProjectDao()
 object ProjectDao
     extends Dao[Project]
     with AWSBatch
+    with AWSLambda
     with ObjectPermissions[Project] {
 
   val tableName = "projects"
@@ -176,12 +177,6 @@ object ProjectDao
     for {
       // User must have access to the project by the time they get here, so it exists
       dbProject <- unsafeGetProjectById(id)
-      _ <- (project.manualOrder, dbProject.manualOrder) match {
-        case (true, false) =>
-          SceneToLayerDao.addSceneOrdering(id)
-        case _ =>
-          0.pure[ConnectionIO]
-      }
       defaultLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
         dbProject.defaultLayerId)
       _ <- ProjectLayerDao.updateProjectLayer(
@@ -315,7 +310,15 @@ object ProjectDao
           user
         )
       }
-    } yield sceneToLayerInserts
+    } yield {
+      if (sceneIdWithDatasource.map(_._2.id).distinct.length == 1) {
+        logger
+          .info(
+            s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+        kickoffLayerOverviewCreate(projectId, projectLayerId)
+      }
+      sceneToLayerInserts
+    }
   }
 
   def createScenesToLayer(sceneId: UUID,
@@ -386,7 +389,17 @@ object ProjectDao
               f,
               Some(fr"project_layer_id = ${projectLayerId}"))).update.run
           _ <- updateProjectExtentIO(projectId)
-        } yield rowsDeleted
+          layerDatasources <- ProjectLayerDatasourcesDao
+            .listProjectLayerDatasources(projectLayerId)
+        } yield {
+          if (layerDatasources.length == 1) {
+            logger
+              .info(
+                s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+            kickoffLayerOverviewCreate(projectId, projectLayerId)
+          }
+          rowsDeleted
+        }
       case _ => 0.pure[ConnectionIO]
     }
   }

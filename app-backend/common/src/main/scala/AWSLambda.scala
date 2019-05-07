@@ -44,7 +44,8 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     }
 
     if (runLambda) {
-      logger.debug(s"Trying to invoke lambda function: $functionName with overview input: $payload")
+      logger.debug(
+        s"Trying to invoke lambda function: $functionName with overview input: $payload")
       try {
         val invokeResult: InvokeResult = lambdaClient.invoke(request);
         logger.debug(s"Invoke Lambda Function Result: $invokeResult")
@@ -58,21 +59,27 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     } else {
       logger.debug(
         s"Not invoking AWS Lambda -- not in production or staging, in ${lambdaConfig.environment}")
-      logger.debug(
-        s"Lambda Function: $functionName -- Payload: $payload")
+      logger.debug(s"Lambda Function: $functionName -- Payload: $payload")
     }
 
   }
 
   def kickoffLayerOverviewCreate(projectId: UUID, layerId: UUID): Unit = {
-    val functionName: String = s"func${lambdaConfig.environment}GenerateProjectLayerOverviews"
+    val functionName: String =
+      s"func${lambdaConfig.environment}GenerateProjectLayerOverviews"
     val invocationType: String = "Event"
     val logType: String = "Tail"
-    val outputLocation: String = s"s3://rasterfoundry-${lambdaConfig.environment}-data-us-east-1/lambdaOverviews/projects/${projectId.toString()}/layers/${layerId.toString()}/${projectId.toString()}-${layerId.toString()}-overview.tif"
+    val outputLocation: String =
+      s"s3://rasterfoundry-${lambdaConfig.environment.toLowerCase()}-data-us-east-1/lambdaOverviews/projects/${projectId
+        .toString()}/${layerId.toString()}-overview.tif"
     val refreshToken: String = auth0Config.systemRefreshToken
     val pixelSizeMeters: Int = 2444
     val payload: String = OverviewInput(
-      outputLocation, projectId, layerId, refreshToken, pixelSizeMeters
+      outputLocation,
+      projectId,
+      layerId,
+      refreshToken,
+      pixelSizeMeters
     ).asJson.toString
     invokeLambdaFunction(functionName, invocationType, logType, payload)
   }
