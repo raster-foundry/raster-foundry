@@ -79,6 +79,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     }))
   }
 
+  @SuppressWarnings(Array("TraversableHead"))
   def renderStreamSB(
       mosaic: BacksplashMosaic,
       z: Int,
@@ -156,6 +157,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       .toList
   }
 
+  @SuppressWarnings(Array("TraversableHead"))
   def renderStreamMB(
       mosaic: BacksplashMosaic,
       z: Int,
@@ -231,7 +233,6 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
   val paintedMosaicTmsReification = new TmsReification[BacksplashMosaic] {
 
     /** We know the head below is safe because we have to have images to get there */
-    @SuppressWarnings(Array("TraversableHead"))
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
         implicit contextShift: ContextShift[IO]
     ) =
