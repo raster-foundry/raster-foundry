@@ -108,7 +108,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
 
     BacksplashGeotiff(
       sceneId,
-      projId,
+      projId, // actually the layer ID
+      mosaicDefinition.projectId,
       ingestLocation,
       subsetBands,
       colorCorrectParameters,
@@ -145,6 +146,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         BacksplashGeotiff(
           scene.id,
           randomProjectId,
+          randomProjectId,
           ingestLocation,
           imageBandOverride,
           colorCorrectParams,
@@ -160,12 +162,13 @@ class ProjectStoreImplicits(xa: Transactor[IO])
     new ProjectStore[SceneToLayerDao] {
       // projId here actually refers to a layer -- but the argument names have to
       // match the typeclass we're providing evidence for
-      def read(self: SceneToLayerDao,
-               projId: UUID,
-               window: Option[Projected[Polygon]],
-               bandOverride: Option[BandOverride],
-               imageSubset: Option[NEL[UUID]])
-        : fs2.Stream[IO, BacksplashImage[IO]] = {
+
+      def read(
+          self: SceneToLayerDao,
+          projId: UUID,
+          window: Option[Projected[Polygon]],
+          bandOverride: Option[BandOverride],
+          imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
         SceneToLayerDao.getMosaicDefinition(
           projId,
           window,

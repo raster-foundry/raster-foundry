@@ -9,11 +9,14 @@ import io.circe.Json
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-final case class MosaicDefinition(sceneId: UUID,
-                                  colorCorrections: ColorCorrect.Params,
-                                  sceneType: Option[SceneType] = None,
-                                  ingestLocation: Option[String],
-                                  footprint: Option[MultiPolygon],
-                                  isSingleBand: Boolean,
-                                  singleBandOptions: Option[Json],
-                                  mask: Option[MultiPolygon])
+final case class MosaicDefinition(
+    sceneId: UUID,
+    projectId: UUID,
+    colorCorrections: ColorCorrect.Params,
+    sceneType: Option[SceneType] = None,
+    ingestLocation: Option[String],
+    footprint: Option[MultiPolygon],
+    isSingleBand: Boolean,
+    singleBandOptions: Option[Json],
+    mask: Option[MultiPolygon]
+)

@@ -154,6 +154,7 @@ object SceneToLayerDao
           case (r, g, b) =>
             MosaicDefinition(
               stp.sceneId,
+              stp.projectId,
               stp.colorCorrectParams.copy(
                 redBand = r,
                 greenBand = g,
@@ -169,6 +170,7 @@ object SceneToLayerDao
         } getOrElse {
           MosaicDefinition(
             stp.sceneId,
+            stp.projectId,
             stp.colorCorrectParams,
             stp.sceneType,
             stp.ingestLocation,

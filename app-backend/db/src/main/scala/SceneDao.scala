@@ -280,6 +280,7 @@ object SceneDao
         Seq(
           MosaicDefinition(
             scene.id,
+            UUID.randomUUID, // we don't have a project id here, so fake it
             ColorCorrect.Params(
               redBand,
               greenBand,
