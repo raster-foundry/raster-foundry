@@ -6,7 +6,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class OrganizationDaoSpec
     extends FunSuite
@@ -19,12 +19,8 @@ class OrganizationDaoSpec
   test("insert an organization from an Organization.Create") {
     check {
       forAll(
-        (rootUserCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform) => {
+        (orgCreate: Organization.Create, platform: Platform) => {
           val orgInsertIO = for {
-            rootOrg <- rootOrgQ
-            insertedUser <- UserDao.create(rootUserCreate)
             insertedPlatform <- PlatformDao.create(platform)
             newOrg <- OrganizationDao.create(
               orgCreate

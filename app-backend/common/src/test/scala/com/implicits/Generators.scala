@@ -475,7 +475,6 @@ object Generators extends ArbitraryInstances {
   private def thumbnailGen: Gen[Thumbnail] =
     for {
       thumbnailIdentified <- thumbnailIdentifiedGen
-      userId <- nonEmptyStringGen
     } yield { thumbnailIdentified.toThumbnail }
 
   private def sceneCreateGen: Gen[Scene.Create] =

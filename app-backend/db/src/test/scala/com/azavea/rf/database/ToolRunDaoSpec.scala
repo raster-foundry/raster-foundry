@@ -8,7 +8,7 @@ import com.rasterfoundry.datamodel.PageRequest
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID
 

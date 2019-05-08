@@ -1,18 +1,19 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel.{User, Organization, Platform, Shape}
+import com.rasterfoundry.datamodel.{Organization, Platform, Shape, User}
 import com.rasterfoundry.common.Generators.Implicits._
-
+import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class ShapeDaoSpec
     extends FunSuite
     with Matchers
     with Checkers
     with DBTestConfig
+    with LazyLogging
     with PropTestHelpers {
 
   test("list shapes") {
@@ -32,6 +33,7 @@ class ShapeDaoSpec
               dbShapes <- ShapeDao.insertShapes(shapes map {
                 fixupShapeCreate(dbUser, _)
               }, dbUser)
+              _ = logger.trace(s"Inserted $dbShapes shapes")
             } yield shapes
             shapeInsertIO.transact(xa).unsafeRunSync.length == shapes.length
           }

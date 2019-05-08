@@ -7,7 +7,7 @@ import doobie.implicits._
 import cats.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class LayerAttributeDaoSpec
     extends FunSuite

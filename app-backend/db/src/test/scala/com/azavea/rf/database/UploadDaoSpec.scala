@@ -6,7 +6,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class UploadDaoSpec
     extends FunSuite
@@ -158,7 +158,7 @@ class UploadDaoSpec
             val uploadUpdateWithUploadIO = uploadInsertWithUserOrgProjectDatasourceIO flatMap {
               case (dbUpload: Upload,
                     dbUser: User,
-                    dbOrg: Organization,
+                    _: Organization,
                     dbPlatform: Platform,
                     dbProject: Project,
                     dbDatasource: Datasource) => {

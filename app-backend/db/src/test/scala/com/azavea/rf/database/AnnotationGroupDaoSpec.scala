@@ -8,7 +8,7 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class AnnotationGroupDaoSpec
     extends FunSuite
@@ -186,10 +186,10 @@ class AnnotationGroupDaoSpec
                   _.copy(annotationGroup = Some(annotationGroupDB.id))),
                 dbProject.id,
                 dbUser)
-              projectAnnotations <- AnnotationDao.query
+              _ <- AnnotationDao.query
                 .filter(fr"project_id=${dbProject.id}")
                 .list
-              projectAnnotationGroups <- AnnotationGroupDao
+              _ <- AnnotationGroupDao
                 .listForProject(dbProject.id)
               annotationGroupSummary <- AnnotationGroupDao
                 .getAnnotationGroupSummary(dbProject.id, annotationGroupDB.id)
@@ -198,7 +198,7 @@ class AnnotationGroupDaoSpec
             val (annotationGroupSummary, annotationsDB) =
               annotationGroupIO.transact(xa).unsafeRunSync()
 
-            assert(annotationGroupSummary.length > 0,
+            assert(annotationGroupSummary.nonEmpty,
                    "; No summary produced for annotation group")
 
             val annotationLabelSet = annotationsDB.map(_.label).toSet
@@ -212,11 +212,9 @@ class AnnotationGroupDaoSpec
                   .as[Map[String, Int]]
                   .right
                   .get
-                  .map(_._2)
-                  .foldLeft(0)(_ + _)
-              assert(annotationCount === annotationsDB
-                       .filter(_.label == label)
-                       .length,
+                  .values
+                  .sum
+              assert(annotationCount === annotationsDB.count(_.label == label),
                      "; Count of car qualities did not equal number inserted")
             }
 
@@ -233,25 +231,22 @@ class AnnotationGroupDaoSpec
          org: Organization.Create,
          platform: Platform,
          project1: Project.Create,
-         annotations: List[Annotation.Create]) =>
+         agAnnotations: List[Annotation.Create]) =>
           {
             val annotationGroupIO = for {
               (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
                                                                     org,
                                                                     platform,
                                                                     project1)
-              dbAnnotations <- AnnotationDao.insertAnnotations(
-                annotations,
-                dbProject.id,
-                dbUser
-              )
-              projectAnnotations <- AnnotationDao.query
-                .filter(fr"project_id=${dbProject.id}")
-                .list
+              _ <- AnnotationDao.insertAnnotations(agAnnotations,
+                                                   dbProject.id,
+                                                   dbUser)
               projectAnnotationGroups <- AnnotationGroupDao
                 .listForProject(dbProject.id)
               updatedProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
-            } yield (projectAnnotationGroups, updatedProject)
+            } yield {
+              (projectAnnotationGroups, updatedProject)
+            }
 
             val (projectAnnotationGroups, project) =
               annotationGroupIO.transact(xa).unsafeRunSync()
@@ -261,7 +256,8 @@ class AnnotationGroupDaoSpec
               "; Project has an annotation group created on it automatically")
             val defaultAnnotationGroup = projectAnnotationGroups.head
             assert(
-              Some(defaultAnnotationGroup.id) == project.defaultAnnotationGroup,
+              project.defaultAnnotationGroup.contains(
+                defaultAnnotationGroup.id),
               "; Automatically created annotation group is set as project default")
             assert(defaultAnnotationGroup.name == "Annotations",
                    "; Default annotation group is named 'Annotations'")

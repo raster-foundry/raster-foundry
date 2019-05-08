@@ -6,7 +6,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 /** We only need to test inserting a single image and listing images because inserting
   *  many is tested in inserting a scene from a Scene.Create

@@ -8,7 +8,7 @@ import cats.implicits._
 import doobie.implicits._
 import org.scalatest._
 import org.scalacheck.Prop.forAll
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID
 

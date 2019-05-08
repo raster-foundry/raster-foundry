@@ -9,7 +9,7 @@ import doobie.implicits._
 import io.circe.syntax._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class ProjectLayerDaoSpec
     extends FunSuite
