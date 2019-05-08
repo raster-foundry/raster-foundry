@@ -30,6 +30,7 @@
 - Add owner name and profile URL to the return of annotation GET endpoint [\#4924](https://github.com/raster-foundry/raster-foundry/pull/4924)
 - Added request counting middleware to backsplash-server [\#4919](https://github.com/raster-foundry/raster-foundry/pull/4919)
 - Enabled getting and writing user group roles from JWT [\#4931](https://github.com/raster-foundry/raster-foundry/pull/4931)
+- Added check for pre-generated overview tif for low zoom levels [\#4942](https://github.com/raster-foundry/raster-foundry/pull/4942)
 
 ### Fixed
 
