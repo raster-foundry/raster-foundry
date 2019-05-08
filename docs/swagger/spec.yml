@@ -2890,6 +2890,7 @@ paths:
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/withOwnerInfo'
         - $ref: '#/parameters/annotationGroup'
+        - $ref: '#/parameters/task'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project layer'
@@ -3209,6 +3210,192 @@ paths:
             format: integer
         403:
           description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+
+  /projects/{projectID}/layers/{layerID}/tasks/:
+    get:
+      summary: 'Get tasks belonging to a project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/bbox'
+        - $ref: '#/parameters/locked'
+        - $ref: '#/parameters/lockedBy'
+        - $ref: '#/parameters/actionUser'
+        - $ref: '#/parameters/actionStatus'
+        - $ref: '#/parameters/actionStartTime'
+        - $ref: '#/parameters/actionEndTime'
+        - $ref: '#/parameters/actionMinCount'
+        - $ref: '#/parameters/actionMaxCount'
+      responses:
+        200:
+          description: 'Paginated geoJSON feature collection containing tasks for this project layer'
+          schema:
+            $ref: '#/definitions/TaskFeatureCollectionPaginated'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: 'Create tasks for a project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - name: tasks
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TaskFeatureCollectionCreate'
+      responses:
+        201:
+          description: 'Tasks successfully created'
+          schema:
+            $ref: '#/definitions/TaskFeatureCollection'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Delete all tasks from a project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+      responses:
+        201:
+          description: 'Tasks Deleted'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+
+  /projects/{projectID}/layers/{layerID}/tasks/{taskID}/:
+    get:
+      summary: 'Get a task belonging to a project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+      responses:
+        200:
+          description: 'GeoJSON feature containing one task from this project layer'
+          schema:
+            $ref: '#/definitions/TaskFeature'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: 'Update a task of this project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+        - name: annotation
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TaskFeatureUpdate'
+      responses:
+        204:
+          description: 'No content, update successful'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Delete a task'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+      responses:
+        204:
+          description: 'Deletion successful.'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+  /projects/{projectID}/layers/{layerID}/tasks/{taskID}/lock:
+    get:
+      summary: 'Lock a task so that it cannot be updated or locked by another user'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+      responses:
+        200:
+          description: 'GeoJSON feature containing the locked task'
+          schema:
+            $ref: '#/definitions/TaskFeature'
+        403:
+          description: 'Task already locked, insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+  /projects/{projectID}/layers/{layerID}/tasks/{taskID}/unlock:
+    get:
+      summary: 'Remove the lock from a task so that it can be update by other users'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+      responses:
+        200:
+          description: 'GeoJSON feature containing the unlocked task'
+          schema:
+            $ref: '#/definitions/TaskFeature'
+        403:
+          description: 'Task locked by another user, insufficient permissions for resource or resource does not exist'
           schema:
             $ref: '#/definitions/Error'
         default:
@@ -4743,6 +4930,12 @@ parameters:
     in: path
     required: true
     type: string
+  taskID:
+    name: taskID
+    description: 'A specific task UUID'
+    in: path
+    type: string
+    required: true
   slugLabel:
     name: slugLabel
     description: 'A url-safe slug label'
@@ -5145,6 +5338,65 @@ parameters:
     description: 'Filter to resources that have been approved by the user'
     in: query
     type: boolean
+    required: false
+  locked:
+    name: locked
+    description: >
+      Filter to tasks that have or don't have a lock applied'
+    in: query
+    type: boolean
+    required: false
+  lockedBy:
+    name: lockedBy
+    description: 'Filter to tasks that are currently locked by the specified user'
+    in: query
+    type: string
+    required: false
+  actionUser:
+    name: actionUser
+    description: 'Filter to tasks that the specified user has participated in'
+    in: query
+    type: string
+    required: false
+  actionStatus:
+    name: actionStatus
+    description: 'Filter to tasks that the specified status has at one time been applied to'
+    in: query
+    type: string
+    required: false
+  actionStartTime:
+    name: actionStartTime
+    description: 'Filter to tasks that have actions occurring after this time'
+    in: query
+    type: string
+    required: false
+  actionEndTime:
+    name: actionEndTime
+    description: 'Filter to tasks that have actions occurring before this time'
+    in: query
+    type: string
+    required: false
+  actionMinCount:
+    name: actionMinCount
+    description: >
+      Must be paired with `actionStatus`.
+      Filter to tasks that have at least the specified number of occurences of the specified action.
+    in: query
+    type: integer
+    required: false
+  actionMaxCount:
+    name: actionMaxCount
+    description: >
+      Must be paired with `actionStatus`.
+      Filter to tasks that have at most the specified number of occurences of the specified action.
+    in: query
+    type: integer
+    required: false
+  task:
+    name: task
+    description: 'Filter to annotations belonging to the specified task'
+    in: query
+    type: string
     required: false
 
 definitions:
@@ -7221,6 +7473,9 @@ definitions:
           annotationGroup:
             type: string
             format: uuid
+          taskId:
+            type: string
+            format: uuid
       geometry:
         $ref: '#/definitions/Geometry'
 
@@ -7292,6 +7547,9 @@ definitions:
           annotationGroup:
             type: string
             format: uuid
+          taskId:
+            type: string
+            format: uuid
       geometry:
         $ref: '#/definitions/Geometry'
 
@@ -7322,6 +7580,9 @@ definitions:
               - 'MISS'
               - 'MATCH'
           annotationGroup:
+            type: string
+            format: uuid
+          taskId:
             type: string
             format: uuid
       geometry:
@@ -7491,3 +7752,148 @@ definitions:
         type: string
       counts:
         type: object
+  TaskFeature:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        allOf:
+          - $ref: '#/definitions/BaseModel'
+          - $ref: '#/definitions/TimeModelMixin'
+          - $ref: '#/definitions/UserTrackingMixin'
+          - type: object
+        properties:
+          projectId:
+            type: string
+            format: uuid
+          projectLayerId:
+            type: string
+            format: uuid
+          status:
+            type: string
+            enum:
+              [
+                UNLABELED,
+                LABELING_IN_PROGRESS,
+                LABELED,
+                VALIDATION_IN_PROGRESS,
+                VALIDATED,
+              ]
+          lockedBy:
+            type: string
+            format: uuid
+          lockedOn:
+            type: string
+            format: date-time
+          actions:
+            type: array
+            items:
+              $ref: '#/definitions/TaskActionStamp'
+      geometry:
+        $ref: '#/definitions/Geometry'
+
+  TaskFeatureCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        allOf:
+          - $ref: '#/definitions/BaseCreate'
+          - type: object
+        properties:
+          projectId:
+            type: string
+            format: uuid
+          projectLayerId:
+            type: string
+            format: uuid
+          status:
+            type: string
+            enum:
+              [
+                UNLABELED,
+                LABELING_IN_PROGRESS,
+                LABELED,
+                VALIDATION_IN_PROGRESS,
+                VALIDATED,
+              ]
+      geometry:
+        $ref: '#/definitions/Geometry'
+
+  TaskFeatureUpdate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        type: object
+        properties:
+          projectId:
+            type: string
+            format: uuid
+          projectLayerId:
+            type: string
+            format: uuid
+          status:
+            $ref: '#/definitions/TaskStatus'
+      geometry:
+        $ref: '#/definitions/Geometry'
+
+  TaskStatus:
+    type: string
+    enum:
+      [
+        UNLABELED,
+        LABELING_IN_PROGRESS,
+        LABELED,
+        VALIDATION_IN_PROGRESS,
+        VALIDATED,
+      ]
+
+  TaskActionStamp:
+    type: object
+    properties:
+      userId:
+        type: string
+        format: uuid
+      timestamp:
+        type: string
+        format: date-time
+      fromStatus:
+        $ref: '#/definitions/TaskStatus'
+      toStatus:
+        $ref: '#/definitions/TaskStatus'
+
+  TaskFeatureCollection:
+    type: object
+    properties:
+      type:
+        type: string
+      features:
+        type: array
+        items:
+          $ref: '#/definitions/TaskFeature'
+
+  TaskFeatureCollectionPaginated:
+    type: object
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          type:
+            type: string
+          features:
+            type: array
+            items:
+              $ref: '#/definitions/TaskFeature'
+  TaskFeatureCollectionCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      features:
+        type: array
+        items:
+          $ref: '#/definitions/TaskFeatureCreate'
