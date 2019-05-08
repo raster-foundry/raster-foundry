@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.{AWSBatch, AWSLambda}
+import com.rasterfoundry.common.{AWSBatch, AWSLambda, S3}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.color._
@@ -15,6 +15,8 @@ import io.circe._
 import io.circe.syntax._
 import java.sql.Timestamp
 import java.util.UUID
+import java.net.URI
+import java.net.URLDecoder
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class ProjectDao()
@@ -193,6 +195,14 @@ object ProjectDao
     val aoiDeleteQuery = sql"DELETE FROM aois where aois.project_id = ${id}"
     for {
       _ <- aoiDeleteQuery.update.run
+      layers <- ProjectLayerDao.listProjectLayersForProjectQ(id).list
+      _ <- layers
+        .map(pl => {
+          pl.overviewsLocation match {
+            case Some(locUrl) => removeLayerOverview(pl.id, locUrl)
+          }
+        })
+        .pure[ConnectionIO]
       projectDeleteCount <- query.filter(fr"id = ${id}").delete
     } yield projectDeleteCount
   }
@@ -391,6 +401,16 @@ object ProjectDao
           _ <- updateProjectExtentIO(projectId)
           layerDatasources <- ProjectLayerDatasourcesDao
             .listProjectLayerDatasources(projectLayerId)
+          projectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
+            projectLayerId)
+          _ <- projectLayer.overviewsLocation match {
+            case Some(locUrl) if layerDatasources.length == 0 =>
+              removeLayerOverview(projectLayerId, locUrl)
+              ProjectLayerDao.updateProjectLayer(
+                projectLayer.copy(overviewsLocation = None),
+                projectLayer.id)
+            case _ => 0.pure[ConnectionIO]
+          }
         } yield {
           if (layerDatasources.length == 1) {
             logger
@@ -480,4 +500,26 @@ object ProjectDao
       authProject <- authorized(user, ObjectType.Project, projectId, actionType)
       layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
     } yield { authProject && layerExist }
+
+  def removeLayerOverview(projectLayerId: UUID, locUrl: String): Unit = {
+    logger
+      .info(
+        s"No scenes left in project layer $projectLayerId with overview location $locUrl")
+    val jUri = URI.create(locUrl)
+    val urlPath = jUri.getPath()
+    val bucket = URLDecoder.decode(jUri.getHost(), "UTF-8")
+    val key = URLDecoder.decode(urlPath.slice(1, urlPath.size), "UTF-8")
+    val s3 = S3()
+    if (s3.doesObjectExist(bucket, key)) {
+      logger
+        .info(
+          s"Found overview: $locUrl for layer $projectLayerId, deleting it...")
+      s3.deleteObject(bucket, key)
+      logger
+        .info(s"Deleted overview: $locUrl for layer $projectLayerId")
+    } else {
+      logger
+        .info(s"Not Found overview: $locUrl for layer $projectLayerId")
+    }
+  }
 }
