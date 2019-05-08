@@ -9,7 +9,7 @@ import doobie.implicits._
 import cats.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class LayerScenesDaoSpec
     extends FunSuite
@@ -50,9 +50,9 @@ class LayerScenesDaoSpec
             val scenesListIO = scenesInsertWithUserProjectIO flatMap {
               case (
                   dbScenes: List[Scene.WithRelated],
-                  dbUser: User,
+                  _: User,
                   dbProject: Project
-                  ) => {
+                  ) =>
                 ProjectDao.addScenesToProject(
                   dbScenes map { _.id },
                   dbProject.id,
@@ -64,24 +64,22 @@ class LayerScenesDaoSpec
                       page,
                       csq
                     ) map {
-                      (paginatedResponse: PaginatedResponse[
-                        Scene.ProjectScene
-                      ]) =>
+                      paginatedResponse: PaginatedResponse[
+                        Scene.ProjectScene] =>
                         (dbScenes, paginatedResponse.results)
                     }
                   }
                 }
-              }
             }
 
             val (insertedScenes, listedScenes) =
               scenesListIO.transact(xa).unsafeRunSync
             val insertedIds = insertedScenes.toSet map {
-              (scene: Scene.WithRelated) =>
+              scene: Scene.WithRelated =>
                 scene.id
             }
             val listedIds = listedScenes.toSet map {
-              (scene: Scene.ProjectScene) =>
+              scene: Scene.ProjectScene =>
                 scene.id
             }
             // page request can ask for fewer scenes than the number we inserted
@@ -125,8 +123,7 @@ class LayerScenesDaoSpec
                     }
                     _ <- ProjectDao.addScenesToProject(dbScenes map { _.id },
                                                        dbProject.id,
-                                                       dbProjectLayer.id,
-                                                       true)
+                                                       dbProjectLayer.id)
                   } yield { (dbProjectLayer.id, dbScenes.length) }
               }
               counted <- ProjectLayerScenesDao.countLayerScenes(dbProject.id)
@@ -139,7 +136,7 @@ class LayerScenesDaoSpec
 
             val expectation =
               if (counted.isEmpty) {
-                expectedCounts.values.foldLeft(0)(_ + _) == 0
+                expectedCounts.values.sum == 0
               } else {
                 expectedCounts.filter(kvPair => kvPair._2 != 0) == counted
               }

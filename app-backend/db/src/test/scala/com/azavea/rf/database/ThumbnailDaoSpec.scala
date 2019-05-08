@@ -6,7 +6,7 @@ import com.rasterfoundry.datamodel._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class ThumbnailDaoSpec
     extends FunSuite
@@ -32,9 +32,9 @@ class ThumbnailDaoSpec
                                                            org,
                                                            platform,
                                                            scene) flatMap {
-              case (dbOrg: Organization,
-                    dbUser: User,
-                    dbPlatform: Platform,
+              case (_: Organization,
+                    _: User,
+                    _: Platform,
                     dbScene: Scene.WithRelated) => {
                 ThumbnailDao.insert(fixupThumbnail(dbScene, thumbnail))
               }
@@ -64,9 +64,9 @@ class ThumbnailDaoSpec
                                                             org,
                                                             platform,
                                                             scene) flatMap {
-              case (dbOrg: Organization,
-                    dbUser: User,
-                    dbPlatform: Platform,
+              case (_: Organization,
+                    _: User,
+                    _: Platform,
                     dbScene: Scene.WithRelated) => {
                 ThumbnailDao.insertMany(thumbnails map {
                   fixupThumbnail(dbScene, _)
@@ -93,9 +93,9 @@ class ThumbnailDaoSpec
                                                            org,
                                                            platform,
                                                            scene) flatMap {
-              case (dbOrg: Organization,
-                    dbUser: User,
-                    dbPlatform: Platform,
+              case (_: Organization,
+                    _: User,
+                    _: Platform,
                     dbScene: Scene.WithRelated) => {
                 ThumbnailDao.insert(fixupThumbnail(dbScene, insertThumbnail))
               }

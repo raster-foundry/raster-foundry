@@ -10,7 +10,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 import io.circe.syntax._
 import doobie.implicits._
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.Prop.forAll
 
 class ExportDaoSpec

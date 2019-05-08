@@ -6,7 +6,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 import com.rasterfoundry.datamodel.PageRequest
 
 class AnnotationDaoSpec
@@ -206,6 +206,7 @@ class AnnotationDaoSpec
                     updatedAnnotation.verifiedBy == Some(verifier.id) &&
                     updatedAnnotation.ownerName == dbUser.name &&
                     updatedAnnotation.ownerProfileImageUri == dbUser.profileImageUri
+                case _ => false
               }
             )
           }

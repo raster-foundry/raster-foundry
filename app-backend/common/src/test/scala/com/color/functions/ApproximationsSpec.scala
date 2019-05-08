@@ -9,8 +9,8 @@ class ApproximationsSpec extends FunSpec with Matchers {
     "Approximations.pow in SaturationAdjust should be +- 0.1 of the FastMath.pow") {
     // Chroma is a Double in the range [0.0, 1.0]. Scale factor is the same as our other gamma corrections:
     // a Double in the range [0.0, 2.0].
-    val chromas = 0d to 1d by 0.2
-    val scaleFactors = 0d to 2d by 0.2
+    val chromas = BigDecimal(0) to 1 by 0.2 map (_.toDouble)
+    val scaleFactors = BigDecimal(0) to 2 by 0.2 map (_.toDouble)
 
     for {
       chroma <- chromas
@@ -32,8 +32,8 @@ class ApproximationsSpec extends FunSpec with Matchers {
 
   it(
     "Approximations.exp in SigmoidalContrast should be +- 403 of the FastMath.exp") {
-    val alphas = 0d to 1d by 0.2
-    val betas = 0d to 10d by 0.2
+    val alphas = BigDecimal(0) to 1 by 0.2 map (_.toDouble)
+    val betas = BigDecimal(0) to 10 by 0.2 map (_.toDouble)
 
     for {
       alpha <- alphas

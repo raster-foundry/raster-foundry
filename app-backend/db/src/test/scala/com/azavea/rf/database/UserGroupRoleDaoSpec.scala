@@ -8,7 +8,7 @@ import cats.implicits._
 import com.rasterfoundry.datamodel.PageRequest
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class UserGroupRoleDaoSpec
     extends FunSuite
@@ -87,15 +87,14 @@ class UserGroupRoleDaoSpec
               // Create necessary users
               dbTestingUser <- UserDao.create(testingUser)
               dbPublicUser <- UserDao.create(publicUser)
-              dbPublicUserUpdate <- UserDao.updateUser(dbPublicUser.copy(
-                                                         visibility =
-                                                           UserVisibility.Public
-                                                       ),
-                                                       dbPublicUser.id)
+              _ <- UserDao.updateUser(dbPublicUser.copy(
+                                        visibility = UserVisibility.Public
+                                      ),
+                                      dbPublicUser.id)
               dbPrivateUser <- UserDao.create(privateUser)
 
               // Create user group roles
-              ugr1 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Platform,
@@ -104,7 +103,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr2 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Platform,
@@ -113,7 +112,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr3 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Organization,
@@ -122,7 +121,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr4 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Organization,
@@ -161,7 +160,6 @@ class UserGroupRoleDaoSpec
         (
             platform: Platform,
             mainOrg: Organization.Create,
-            altOrg: Organization.Create,
             testingUser: User.Create,
             privateUser: User.Create,
             publicUser: User.Create,
@@ -177,15 +175,14 @@ class UserGroupRoleDaoSpec
               // Create necessary users
               dbTestingUser <- UserDao.create(testingUser)
               dbPublicUser <- UserDao.create(publicUser)
-              dbPublicUserUpdate <- UserDao.updateUser(dbPublicUser.copy(
-                                                         visibility =
-                                                           UserVisibility.Public
-                                                       ),
-                                                       dbPublicUser.id)
+              _ <- UserDao.updateUser(dbPublicUser.copy(
+                                        visibility = UserVisibility.Public
+                                      ),
+                                      dbPublicUser.id)
               dbPrivateUser <- UserDao.create(privateUser)
 
               // Create user group roles
-              ugr1 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Platform,
@@ -194,7 +191,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr2 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Platform,
@@ -203,7 +200,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr3 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Organization,
@@ -212,7 +209,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr4 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Organization,
@@ -274,15 +271,14 @@ class UserGroupRoleDaoSpec
               // Create necessary users
               dbTestingUser <- UserDao.create(testingUser)
               dbPublicUser <- UserDao.create(publicUser)
-              dbPublicUserUpdate <- UserDao.updateUser(dbPublicUser.copy(
-                                                         visibility =
-                                                           UserVisibility.Public
-                                                       ),
-                                                       dbPublicUser.id)
+              _ <- UserDao.updateUser(dbPublicUser.copy(
+                                        visibility = UserVisibility.Public
+                                      ),
+                                      dbPublicUser.id)
               dbPrivateUser <- UserDao.create(privateUser)
 
               // Create user group roles
-              ugr1 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Platform,
@@ -291,7 +287,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr2 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Platform,
@@ -300,7 +296,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr3 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Organization,
@@ -309,7 +305,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr4 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Organization,
@@ -370,15 +366,14 @@ class UserGroupRoleDaoSpec
 
               // Create necessary users
               dbPublicUser <- UserDao.create(publicUser)
-              dbPublicUserUpdate <- UserDao.updateUser(dbPublicUser.copy(
-                                                         visibility =
-                                                           UserVisibility.Public
-                                                       ),
-                                                       dbPublicUser.id)
+              _ <- UserDao.updateUser(dbPublicUser.copy(
+                                        visibility = UserVisibility.Public
+                                      ),
+                                      dbPublicUser.id)
               dbPrivateUser <- UserDao.create(privateUser)
 
               // Create user group roles
-              ugr1 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Platform,
@@ -387,7 +382,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr2 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Platform,
@@ -396,7 +391,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr3 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Organization,
@@ -405,7 +400,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr4 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Organization,
@@ -414,7 +409,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr5 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPublicUser.id,
                           GroupType.Team,
@@ -423,7 +418,7 @@ class UserGroupRoleDaoSpec
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
-              ugr6 <- UserGroupRoleDao.create(
+              _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(dbPrivateUser.id,
                           GroupType.Team,
@@ -659,10 +654,7 @@ class UserGroupRoleDaoSpec
         (userCreate: User.Create,
          platform: Platform,
          orgCreate: Organization.Create,
-         teamCreate: Team.Create,
-         ugrCreatePlat: UserGroupRole.Create,
-         ugrCreateOrg: UserGroupRole.Create,
-         ugrCreateTeam: UserGroupRole.Create) =>
+         teamCreate: Team.Create) =>
           {
             val getUgrWithNameIO = for {
               userOrgPlat <- insertUserOrgPlatform(userCreate,

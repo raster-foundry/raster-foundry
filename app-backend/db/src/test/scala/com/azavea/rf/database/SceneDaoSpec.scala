@@ -6,7 +6,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class SceneDaoSpec
     extends FunSuite

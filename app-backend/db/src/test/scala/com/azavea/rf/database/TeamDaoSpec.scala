@@ -7,7 +7,7 @@ import com.rasterfoundry.database.Implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 import com.rasterfoundry.datamodel.PageRequest
 
 class TeamDaoSpec
@@ -227,7 +227,7 @@ class TeamDaoSpec
             acrToInsert = acr.copy(subjectType = SubjectType.Team,
                                    subjectId = Some(teamInsert.id.toString()))
             _ <- ProjectDao.addPermission(insertedProject.id, acrToInsert)
-            deactivateTeam <- TeamDao.deactivate(teamInsert.id)
+            _ <- TeamDao.deactivate(teamInsert.id)
             permissionAfterTeamDeactivate <- ProjectDao.getPermissions(
               insertedProject.id)
             deactivatedTeams <- TeamDao.query
