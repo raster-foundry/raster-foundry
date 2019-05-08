@@ -24,10 +24,11 @@ object OgcStyles {
       def renderImage(mbtile: MultibandTile,
                       format: OutputFormat,
                       hists: List[Histogram[Double]]): Array[Byte] = {
-        val bands = List(colorComposite.value.redBand,
-                         colorComposite.value.greenBand,
-                         colorComposite.value.blueBand)
-        val rgbHists = bands map { hists(_) }
+        val bands = Seq(colorComposite.value.redBand,
+                        colorComposite.value.greenBand,
+                        colorComposite.value.blueBand)
+        val indexedHist = hists.toIndexedSeq
+        val rgbHists = bands map { indexedHist(_) }
         val subset = mbtile.subsetBands(bands)
         val params =
           ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
@@ -56,7 +57,7 @@ object OgcStyles {
                       format: OutputFormat,
                       hists: List[Histogram[Double]]): Array[Byte] = {
         val tile = mbtile.subsetBands(singleBandParams.band)
-        val hist = List(hists(singleBandParams.band))
+        val hist = List(hists.toIndexedSeq(singleBandParams.band))
         val colored = ColorRampMosaic.colorTile(tile, hist, singleBandParams)
         toBytes(colored, format)
       }

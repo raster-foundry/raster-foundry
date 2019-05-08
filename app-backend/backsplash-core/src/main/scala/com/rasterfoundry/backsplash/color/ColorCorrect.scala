@@ -45,7 +45,8 @@ object ColorCorrect extends LazyLogging {
     def colorCorrect(tile: MultibandTile,
                      hist: Seq[Histogram[Double]],
                      nodataValue: Option[Double]): MultibandTile = {
-      val rgbHist = Array(redBand, greenBand, blueBand) map { hist(_) }
+      val indexedHist = hist.toIndexedSeq
+      val rgbHist = Seq(redBand, greenBand, blueBand) map { indexedHist(_) }
       ColorCorrect(tile, rgbHist, this, nodataValue)
     }
 
@@ -231,7 +232,7 @@ object ColorCorrect extends LazyLogging {
   }
 
   def apply(rgbTile: MultibandTile,
-            rgbHist: Array[Histogram[Double]],
+            rgbHist: Seq[Histogram[Double]],
             params: Params,
             nodataValue: Option[Double]): MultibandTile = {
     val _rgbTile = rgbTile

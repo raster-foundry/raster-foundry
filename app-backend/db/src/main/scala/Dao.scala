@@ -222,15 +222,18 @@ object Dao extends LazyLogging {
           pageRequest.copy(sort = orderClause ++ pageRequest.sort)))
           .query[T]
           .to[List]
-        (count, hasNext) <- if (doCount) {
-          (countF ++ Fragments.whereAndOpt(filters: _*))
-            .query[Int]
-            .unique map { count =>
-            (count, (pageRequest.offset * pageRequest.limit) + 1 < count)
+        (count: Int, hasNext: Boolean) <- doCount match {
+          case true => {
+            (countF ++ Fragments.whereAndOpt(filters: _*))
+              .query[Int]
+              .unique map { count =>
+              (count, (pageRequest.offset * pageRequest.limit) + 1 < count)
+            }
           }
-        } else {
-          hasNext(pageRequest) map {
-            (-1, _)
+          case false => {
+            hasNext(pageRequest) map {
+              (-1, _)
+            }
           }
         }
       } yield {

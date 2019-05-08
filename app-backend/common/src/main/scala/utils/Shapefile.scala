@@ -1,18 +1,15 @@
 package com.rasterfoundry.common.utils
 
 import com.rasterfoundry.datamodel.{Annotation, AnnotationQuality}
+import geotrellis.geotools._
+import geotrellis.proj4.{CRS, WebMercator}
+import geotrellis.vector.reproject.Reproject
+import geotrellis.vector.{Geometry, Projected, io => _}
+import io.circe.parser._
 import org.geotools.referencing.{CRS => geotoolsCRS}
 import org.opengis.feature.Property
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.referencing.crs.CoordinateReferenceSystem
-import geotrellis.vector.{Geometry, Projected, io => _}
-import geotrellis.vector.reproject.Reproject
-import geotrellis.geotools._
-import geotrellis.proj4.{CRS, WebMercator}
-import geotrellis.vector.{Geometry, Projected, io => _}
-import geotrellis.vector.reproject.Reproject
-import io.circe.parser._
-import org.geotools.referencing.{CRS => geotoolsCRS}
 
 object Shapefile {
 

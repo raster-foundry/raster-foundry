@@ -25,7 +25,7 @@ object MetricEvent {
     ProjectLayerMosaicEvent].widen or Decoder[AnalysisEvent].widen
 }
 
-case class ProjectLayerMosaicEvent(
+final case class ProjectLayerMosaicEvent(
     projectId: UUID,
     projectLayerId: UUID,
     projectOwner: String,
@@ -46,7 +46,7 @@ object ProjectLayerMosaicEvent {
     deriveEncoder
 }
 
-case class AnalysisEvent(
+final case class AnalysisEvent(
     projectId: Option[UUID],
     projectLayerId: Option[UUID],
     analysisId: UUID,
