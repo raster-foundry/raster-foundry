@@ -112,6 +112,6 @@ class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
         .getOrElse { 0.pure[ConnectionIO] }
     }).transact(xa)
 
-  private def getReferer[F[_]](req: Request[F]): String =
+  private def getReferer[T[_]](req: Request[T]): String =
     req.headers.get(Referer) map { _.value } getOrElse ""
 }

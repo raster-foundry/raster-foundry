@@ -5,9 +5,7 @@ import java.time.{Instant, LocalDate, LocalDateTime, ZoneOffset}
 import io.circe._
 import io.circe.generic.semiauto._
 
-import java.time.{Instant, LocalDateTime, LocalDate, ZoneOffset}
-
-case class Metric(
+final case class Metric(
     period: (LocalDate, LocalDate),
     metricEvent: MetricEvent,
     requester: String,

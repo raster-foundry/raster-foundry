@@ -356,13 +356,19 @@ object ExportDao extends Dao[Export] {
 
     val projectIds =
       parameters
-        .filter(_.sourceType.isInstanceOf[ProjectSrc.type])
+        .filter(_.sourceType match {
+          case _: ProjectSrc.type => true
+          case _                  => false
+        })
         .map(_.id)
         .toList
         .toNel
     val layerIds =
       parameters
-        .filter(_.sourceType.isInstanceOf[LayerSrc.type])
+        .filter(_.sourceType match {
+          case _: LayerSrc.type => true
+          case _                => false
+        })
         .map(_.id)
         .toList
         .toNel
