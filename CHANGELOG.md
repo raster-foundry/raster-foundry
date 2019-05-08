@@ -17,6 +17,7 @@
 
 - Fixed query parameter handling that listed all tool run map tokens with project map tokens [\#4928](https://github.com/raster-foundry/raster-foundry/pull/4928)
 - Fixed a bug that caused tile server interaction with the cache to be unsuccessful for reads and writes [\#4939](https://github.com/raster-foundry/raster-foundry/pull/4939)
+- Fixed compiler warnings triggered by scala 2.12 upgrade and enable fatal warning flag to fail compilation if a compiler warning or scapegoat warning is triggered [\#4929](https://github.com/raster-foundry/raster-foundry/pull/4929)
 
 ### Security
 
