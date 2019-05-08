@@ -7771,15 +7771,7 @@ definitions:
             type: string
             format: uuid
           status:
-            type: string
-            enum:
-              [
-                UNLABELED,
-                LABELING_IN_PROGRESS,
-                LABELED,
-                VALIDATION_IN_PROGRESS,
-                VALIDATED,
-              ]
+            $ref: '#/definitions/TaskStatus'
           lockedBy:
             type: string
             format: uuid
@@ -7810,15 +7802,7 @@ definitions:
             type: string
             format: uuid
           status:
-            type: string
-            enum:
-              [
-                UNLABELED,
-                LABELING_IN_PROGRESS,
-                LABELED,
-                VALIDATION_IN_PROGRESS,
-                VALIDATED,
-              ]
+            $ref: '#/definitions/TaskStatus'
       geometry:
         $ref: '#/definitions/Geometry'
 
