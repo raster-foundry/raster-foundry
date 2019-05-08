@@ -115,7 +115,7 @@ services:
       - postgres:database.service.rasterfoundry.internal
 
   backsplash:
-    image: quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
     depends_on:
       postgres:
         condition: service_healthy
@@ -139,8 +139,10 @@ services:
       - BACKSPLASH_TILE_CACHE_ENABLE=true
       - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
       - BACKSPLASH_RASTERSOURCE_CACHE_ENABLE=true
-      - BACKSPLASH_ENABLE_GDAL=false
+      - BACKSPLASH_ENABLE_GDAL=true
       - BACKSPLASH_CORE_STREAM_CONCURRENCY=16
+      - AWS_ACCESS_KEY_ID=AKIAJ4WZRS7ZQMDREADA
+      - AWS_SECRET_ACCESS_KEY=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
       - BACKSPLASH_ENABLE_REQUEST_METRICS=false
     ports:
       - "8080:8080"
