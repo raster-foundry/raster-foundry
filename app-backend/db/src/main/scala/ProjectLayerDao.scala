@@ -118,6 +118,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
     pl <- unsafeGetProjectLayerById(layerId)
     _ = pl.overviewsLocation match {
       case Some(locUrl) => ProjectDao.removeLayerOverview(layerId, locUrl)
+      case _ => ()
     }
     rowsDeleted <- query.filter(layerId).delete
   } yield rowsDeleted

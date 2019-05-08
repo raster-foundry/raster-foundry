@@ -200,6 +200,7 @@ object ProjectDao
         .map(pl => {
           pl.overviewsLocation match {
             case Some(locUrl) => removeLayerOverview(pl.id, locUrl)
+            case _ => ()
           }
         })
         .pure[ConnectionIO]
