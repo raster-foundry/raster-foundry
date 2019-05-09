@@ -4,22 +4,28 @@
 
 ### Added
 
-- Add lambda function for creating project layer overviews and reorganize project [\#4900](https://github.com/raster-foundry/raster-foundry/pull/4900)
-- Add owner name and profile URL to the return of annotation GET endpoint [\#4924](https://github.com/raster-foundry/raster-foundry/pull/4924)
-- Added request counting middleware to backsplash-server [\#4919](https://github.com/raster-foundry/raster-foundry/pull/4919)
-- Enabled getting and writing user group roles from JWT [\#4931](https://github.com/raster-foundry/raster-foundry/pull/4931)
-
 ### Changed
 
 ### Deprecated
 
 ### Fixed
 
+### Security
+
+## [1.21.0](https://github.com/raster-foundry/raster-foundry/tree/1.21.0) (2019-05-09)
+
+### Added
+
+- Add lambda function for creating project layer overviews and reorganize project [\#4900](https://github.com/raster-foundry/raster-foundry/pull/4900)
+- Add owner name and profile URL to the return of annotation GET endpoint [\#4924](https://github.com/raster-foundry/raster-foundry/pull/4924)
+- Added request counting middleware to backsplash-server [\#4919](https://github.com/raster-foundry/raster-foundry/pull/4919)
+- Enabled getting and writing user group roles from JWT [\#4931](https://github.com/raster-foundry/raster-foundry/pull/4931)
+
+### Fixed
+
 - Fixed query parameter handling that listed all tool run map tokens with project map tokens [\#4928](https://github.com/raster-foundry/raster-foundry/pull/4928)
 - Fixed a bug that caused tile server interaction with the cache to be unsuccessful for reads and writes [\#4939](https://github.com/raster-foundry/raster-foundry/pull/4939)
 - Fixed compiler warnings triggered by scala 2.12 upgrade and enable fatal warning flag to fail compilation if a compiler warning or scapegoat warning is triggered [\#4929](https://github.com/raster-foundry/raster-foundry/pull/4929)
-
-### Security
 
 ## [1.20.0](https://github.com/raster-foundry/raster-foundry/tree/1.20.0) (2019-05-01)
 
