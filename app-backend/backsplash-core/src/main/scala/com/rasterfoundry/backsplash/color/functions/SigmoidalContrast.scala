@@ -50,7 +50,7 @@ object SigmoidalContrast {
   }
 
   /**
-    * Given a singleband [[Tile]] object and the parameters alpha and
+    * Given a singleband [[geotrellis.raster.Tile]] object and the parameters alpha and
     * beta, perform the sigmoidal contrast computation and return the
     * result as a tile.
     *
@@ -71,7 +71,7 @@ object SigmoidalContrast {
     transform(cellType, alpha, beta) _
 
   /**
-    * Given a [[MultibandTile]] object and the parameters alpha and
+    * Given a [[geotrellis.raster.MultibandTile]] object and the parameters alpha and
     * beta, perform the sigmoidal contrast computation on each band
     * and return the result as a multiband tile.
     *
