@@ -27,7 +27,10 @@ import com.rasterfoundry.common.{
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneToLayerDao()
 
-object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging with AWSLambda {
+object SceneToLayerDao
+    extends Dao[SceneToLayer]
+    with LazyLogging
+    with AWSLambda {
 
   val tableName = "scenes_to_layers"
 
@@ -98,15 +101,11 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging with AWSLambda
     }
     for {
       _ <- updates.toList.sequence
-      layerDatasources <- ProjectLayerDatasourcesDao
-        .listProjectLayerDatasources(projectLayerId)
     } yield {
-      if (layerDatasources.length == 1) {
-        logger
-          .info(
-            s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
-        kickoffLayerOverviewCreate(projectId, projectLayerId)
-      }
+      logger
+        .info(
+          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+      kickoffLayerOverviewCreate(projectId, projectLayerId)
       sceneIds
     }
   }
@@ -243,7 +242,8 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging with AWSLambda
     """).update.run
   }
 
-  def getProjectsAndLayersBySceneId(sceneId: UUID): ConnectionIO[List[SceneWithProjectIdLayerId]] = {
+  def getProjectsAndLayersBySceneId(
+      sceneId: UUID): ConnectionIO[List[SceneWithProjectIdLayerId]] = {
     (fr"""
       SELECT scene_id, project_id, project_layer_id
       FROM (

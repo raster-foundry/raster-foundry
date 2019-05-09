@@ -114,15 +114,15 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   ): ConnectionIO[Option[ProjectLayer]] =
     query.filter(fr"project_id = ${projectId}").filter(layerId).selectOption
 
-  def deleteProjectLayer(layerId: UUID): ConnectionIO[Int] = for {
-    pl <- unsafeGetProjectLayerById(layerId)
-    _ = pl.overviewsLocation match {
-      case Some(locUrl) => ProjectDao.removeLayerOverview(layerId, locUrl)
-      case _ => ()
-    }
-    rowsDeleted <- query.filter(layerId).delete
-  } yield rowsDeleted
-
+  def deleteProjectLayer(layerId: UUID): ConnectionIO[Int] =
+    for {
+      pl <- unsafeGetProjectLayerById(layerId)
+      _ = pl.overviewsLocation match {
+        case Some(locUrl) => ProjectDao.removeLayerOverview(layerId, locUrl)
+        case _            => ()
+      }
+      rowsDeleted <- query.filter(layerId).delete
+    } yield rowsDeleted
 
   def updateProjectLayer(pl: ProjectLayer, plId: UUID): ConnectionIO[Int] = {
     updateProjectLayerQ(pl, plId).run

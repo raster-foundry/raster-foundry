@@ -248,19 +248,12 @@ object SceneDao
                   .getProjectsAndLayersBySceneId(scene.id)
                   .map(spls => {
                     spls.map(spl => {
-                      ProjectLayerDatasourcesDao
-                        .listProjectLayerDatasources(spl.projectLayerId)
-                        .map(datasources => {
-                          if (datasources.length == 1) {
-                            logger
-                              .info(
-                                s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}")
-                            kickoffLayerOverviewCreate(
-                              spl.projectId,
-                              spl.projectLayerId).pure[ConnectionIO]
-                          }
-
-                        })
+                      logger
+                        .info(
+                          s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}")
+                      kickoffLayerOverviewCreate(
+                        spl.projectId,
+                        spl.projectLayerId).pure[ConnectionIO]
                     })
                   })
             case _ =>

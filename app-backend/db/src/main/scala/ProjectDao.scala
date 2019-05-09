@@ -200,7 +200,7 @@ object ProjectDao
         .map(pl => {
           pl.overviewsLocation match {
             case Some(locUrl) => removeLayerOverview(pl.id, locUrl)
-            case _ => ()
+            case _            => ()
           }
         })
         .pure[ConnectionIO]
@@ -322,12 +322,10 @@ object ProjectDao
         )
       }
     } yield {
-      if (sceneIdWithDatasource.map(_._2.id).distinct.length == 1) {
-        logger
-          .info(
-            s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
-        kickoffLayerOverviewCreate(projectId, projectLayerId)
-      }
+      logger
+        .info(
+          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+      kickoffLayerOverviewCreate(projectId, projectLayerId)
       sceneToLayerInserts
     }
   }
@@ -413,7 +411,7 @@ object ProjectDao
             case _ => 0.pure[ConnectionIO]
           }
         } yield {
-          if (layerDatasources.length == 1) {
+          if (!layerDatasources.isEmpty) {
             logger
               .info(
                 s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
