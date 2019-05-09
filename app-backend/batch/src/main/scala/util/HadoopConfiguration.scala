@@ -5,7 +5,7 @@ import org.apache.hadoop.conf.Configuration
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
 /**
-  * Serializable [[Configuration]] wrapper
+  * Serializable Configuration wrapper
   * @param conf Hadoop Configuration
   */
 final case class HadoopConfiguration(var conf: Configuration)

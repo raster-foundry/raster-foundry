@@ -27,7 +27,7 @@ import scala.concurrent.ExecutionContext
   *
   * To extend this program with a new type (perhaps sourcing raster data in
   *  some way not anticipated here), add a new typeclass instance for the new
-  *  export definition, add the type in question to the [[Exports]] type below,
+  *  export definition, add the type in question to the BacksplashExport.Exports type below,
   *  and ensure that SerDe behaviors are provided as well
   */
 object BacksplashExport
@@ -37,15 +37,18 @@ object BacksplashExport
       main = {
 
         val exportDefOpt =
-          Opts.option[URI]("definition",
-                           short = "d",
-                           help = "URI of export.ExportDefinition JSON")
+          Opts.option[URI](
+            "definition",
+            short = "d",
+            help = "URI of export.ExportDefinition JSON"
+          )
 
         val compressionLevelOpt = Opts
-          .option[Int]("compression",
-                       short = "c",
-                       help =
-                         "The (deflate) compression level to apply on export")
+          .option[Int](
+            "compression",
+            short = "c",
+            help = "The (deflate) compression level to apply on export"
+          )
           .withDefault(9)
 
         (exportDefOpt, compressionLevelOpt).mapN {
@@ -64,7 +67,8 @@ object BacksplashExport
             decode[Exports](exportDefString) match {
               case Right(exportDef) =>
                 logger.info(
-                  s"Beginning tiff export to ${exportDef.exportDestination}.")
+                  s"Beginning tiff export to ${exportDef.exportDestination}."
+                )
                 val t0 = System.nanoTime()
 
                 val compression = DeflateCompression(compressionLevel)
@@ -81,7 +85,8 @@ object BacksplashExport
                     logger.info(s"Writing tif to file: ${destination.getPath}")
                     FileUtils.writeByteArrayToFile(
                       new File(destination.getPath),
-                      geotiffBytes)
+                      geotiffBytes
+                    )
                   case scheme =>
                     sys.error(s"Unable to upload tif to scheme: $scheme")
                 }
