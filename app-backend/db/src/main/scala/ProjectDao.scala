@@ -405,7 +405,7 @@ object ProjectDao
           projectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
             projectLayerId)
           _ <- projectLayer.overviewsLocation match {
-            case Some(locUrl) if layerDatasources.length == 0 =>
+            case Some(locUrl) if layerDatasources.isEmpty =>
               removeLayerOverview(projectLayerId, locUrl)
               ProjectLayerDao.updateProjectLayer(
                 projectLayer.copy(overviewsLocation = None),

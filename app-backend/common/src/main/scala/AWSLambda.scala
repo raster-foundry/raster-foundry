@@ -25,6 +25,7 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     * @param logType enum of log type: None, Tail (to include the execution log in the response)
     * @param payload the JSON provided to Lambda function as input
     */
+  @SuppressWarnings(Array("CatchException"))
   def invokeLambdaFunction(functionName: String,
                            invocationType: String,
                            logType: String,
