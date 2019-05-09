@@ -24,12 +24,14 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     * @param invocationType enum of invocation type: RequestResponse (default), Event, DryRun
     * @param logType enum of log type: None, Tail (to include the execution log in the response)
     * @param payload the JSON provided to Lambda function as input
+    * @param payloadObfuscated the JSON provided to Lambda function as input without refreshToken
     */
   @SuppressWarnings(Array("CatchException"))
   def invokeLambdaFunction(functionName: String,
                            invocationType: String,
                            logType: String,
-                           payload: String): Unit = {
+                           payload: String,
+                           payloadObfuscated: String): Unit = {
     val request: InvokeRequest = new InvokeRequest()
       .withFunctionName(functionName)
       .withInvocationType(invocationType)
@@ -46,7 +48,7 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
 
     if (runLambda) {
       logger.debug(
-        s"Trying to invoke lambda function: $functionName with overview input: $payload")
+        s"Trying to invoke lambda function: $functionName with overview input: $payloadObfuscated")
       try {
         val invokeResult: InvokeResult = lambdaClient.invoke(request);
         logger.debug(s"Invoke Lambda Function Result: $invokeResult")
@@ -60,7 +62,7 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     } else {
       logger.debug(
         s"Not invoking AWS Lambda -- not in production or staging, in ${lambdaConfig.environment}")
-      logger.debug(s"Lambda Function: $functionName -- Payload: $payload")
+      logger.debug(s"Lambda Function: $functionName -- Payload: $payloadObfuscated")
     }
 
   }
@@ -75,13 +77,20 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
         .toString()}/${layerId.toString()}-overview.tif"
     val refreshToken: String = auth0Config.systemRefreshToken
     val pixelSizeMeters: Int = 2444
-    val payload: String = OverviewInput(
+    val payloadcs: OverviewInput = OverviewInput(
       outputLocation,
       projectId,
       layerId,
       refreshToken,
       pixelSizeMeters
-    ).asJson.toString
-    invokeLambdaFunction(functionName, invocationType, logType, payload)
+    )
+    val payload: String = payloadcs.asJson.toString
+    val payloadObfuscated: String =
+      payloadcs.copy(refreshToken = "").asJson.toString
+    invokeLambdaFunction(functionName,
+                         invocationType,
+                         logType,
+                         payload,
+                         payloadObfuscated)
   }
 }
