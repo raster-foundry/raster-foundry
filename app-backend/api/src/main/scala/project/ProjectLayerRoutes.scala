@@ -1,7 +1,9 @@
 package com.rasterfoundry.api.project
 
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.color._
+import com.rasterfoundry.common._
 import com.rasterfoundry.database._
 import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
 
@@ -9,7 +11,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.effect._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.{ConnectionIO, Transactor}
 import doobie.implicits._
@@ -198,7 +200,7 @@ trait ProjectLayerRoutes
             SceneToLayerDao
               .setColorCorrectParams(layerId, sceneId, ccParams)
               .transact(xa)
-              .unsafeToFuture) { stl =>
+              .unsafeToFuture) { _ =>
             complete(StatusCodes.NoContent)
           }
         }
@@ -220,7 +222,7 @@ trait ProjectLayerRoutes
               .setColorCorrectParamsBatch(layerId, params)
               .transact(xa)
               .unsafeToFuture
-          ) { scenesToLayer =>
+          ) { _ =>
             complete(StatusCodes.NoContent)
           }
         }
@@ -245,7 +247,7 @@ trait ProjectLayerRoutes
               .setManualOrder(layerId, sceneIds)
               .transact(xa)
               .unsafeToFuture
-          ) { updatedOrder =>
+          ) { _ =>
             complete(StatusCodes.NoContent)
           }
         }

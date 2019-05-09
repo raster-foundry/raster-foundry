@@ -1,14 +1,14 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
 
 import cats.implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class ToolDaoSpec
     extends FunSuite
@@ -64,8 +64,7 @@ class ToolDaoSpec
         (userCreate: User.Create,
          orgCreate: Organization.Create,
          platform: Platform,
-         toolCreate1: Tool.Create,
-         toolCreate2: Tool.Create) =>
+         toolCreate1: Tool.Create) =>
           {
             val updateIO = for {
               (dbUser, _, _) <- insertUserOrgPlatform(userCreate,

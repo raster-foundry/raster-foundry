@@ -1,13 +1,12 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
-
+import com.rasterfoundry.common.Generators.Implicits._
 import doobie.implicits._
 import cats.implicits._
+import com.rasterfoundry.datamodel.Metric
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 import scala.util.Random
 
@@ -27,12 +26,12 @@ class MetricDaoSpec
         {
           val repetitions = getRepetitionAttempts(0)
           val metricIO = for {
-            _ <- MetricDao.increment(metric)
-            countOnce <- MetricDao.unsafeGetMetricById(metric.id)
+            _ <- MetricDao.insert(metric)
+            countOnce <- MetricDao.unsafeGetMetric(metric)
             _ <- List.fill(repetitions)(()) traverse { _ =>
-              MetricDao.increment(metric)
+              MetricDao.insert(metric)
             }
-            countAgain <- MetricDao.unsafeGetMetricById(metric.id)
+            countAgain <- MetricDao.unsafeGetMetric(metric)
           } yield { (countOnce, countAgain) }
 
           val (initial, afterUpdate) = metricIO.transact(xa).unsafeRunSync

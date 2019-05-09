@@ -12,8 +12,7 @@ import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common._
 import com.rasterfoundry.database.ExportDao
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.common.datamodel._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
+import com.rasterfoundry.datamodel._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
@@ -109,7 +108,7 @@ trait ExportRoutes
       rejectEmptyResponse {
         val exportDefinition = for {
           export <- ExportDao.query.filter(exportId).select
-          eo <- ExportDao.getExportDefinition(export, user)
+          eo <- ExportDao.getExportDefinition(export)
         } yield eo
         onSuccess(exportDefinition.transact(xa).unsafeToFuture) { eo =>
           complete { eo }
@@ -124,7 +123,7 @@ trait ExportRoutes
         case Left(df: DecodingFailure) =>
           complete(
             (StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
-        case Right(x) => {
+        case Right(_) => {
           val updatedExport =
             user.updateDefaultExportSource(newExport.toExport(user))
           onSuccess(

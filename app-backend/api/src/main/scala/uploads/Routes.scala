@@ -6,16 +6,11 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.{AuthenticationFailedRejection, Route}
 import cats.effect.IO
-import com.rasterfoundry.akkautil.{
-  Authentication,
-  CommonHandlers,
-  UserErrorHandler
-}
+import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database.UploadDao
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.common.datamodel._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
+import com.rasterfoundry.datamodel._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -101,7 +96,7 @@ trait UploadRoutes
             throw new IllegalStateException(
               "S3 upload must specify a source if no files are specified")
         }
-        case (uploadType, _) => {
+        case (_, _) => {
           if (newUpload.files.nonEmpty) newUpload
           else
             throw new IllegalStateException(

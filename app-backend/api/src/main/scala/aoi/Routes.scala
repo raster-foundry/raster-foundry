@@ -7,10 +7,10 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.server.Route
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
 import com.rasterfoundry.database.filter.Filterables._

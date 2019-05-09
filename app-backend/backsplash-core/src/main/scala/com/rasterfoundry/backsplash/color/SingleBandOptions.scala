@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.color
 
 import io.circe.Json
 import io.circe.generic.JsonCodec
+import com.rasterfoundry.datamodel.BandDataType
 
 object SingleBandOptions {
 

@@ -1,6 +1,6 @@
 package com.rasterfoundry.database.filter
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import doobie._
 import doobie.implicits._
@@ -59,13 +59,15 @@ object Filters {
 
   def imageQP(imageParams: ImageQueryParameters): List[Option[Fragment]] = {
     val f1 =
-      imageParams.minRawDataBytes.map(minBytes => fr"raw_data_bytes > minBytes")
+      imageParams.minRawDataBytes.map(minBytes =>
+        fr"raw_data_bytes > $minBytes")
     val f2 =
-      imageParams.maxRawDataBytes.map(maxBytes => fr"raw_data_bytes < maxBytes")
+      imageParams.maxRawDataBytes.map(maxBytes =>
+        fr"raw_data_bytes < $maxBytes")
     val f3 =
-      imageParams.minResolution.map(minRes => fr"resolution_meters > minRes")
+      imageParams.minResolution.map(minRes => fr"resolution_meters > $minRes")
     val f4 =
-      imageParams.maxResolution.map(maxRes => fr"resolution_meters < maxRes")
+      imageParams.maxResolution.map(maxRes => fr"resolution_meters < $maxRes")
     val f5 = imageParams.scene.toList.toNel.map(scenes => in(fr"scene", scenes))
     List(f1, f2, f3, f4, f5)
   }
@@ -117,31 +119,35 @@ object Filters {
     val requestTypeF = {
       metricQueryParams.requestType match {
         case MetricRequestType.ProjectMosaicRequest =>
-          val jsString = """{"isAnalysis":false}"""
-          Some(fr"metric_event @> $jsString :: jsonb")
+          val keyFilter = "projectOwner"
+          Some(fr"metrics.metric_event ?? $keyFilter")
         case MetricRequestType.AnalysisRequest =>
-          val jsString = """{"isAnalysis":true}"""
-          Some(fr"metric_event @> $jsString :: jsonb")
+          val keyFilter = "analysisOwner"
+          Some(fr"metrics.metric_event ?? $keyFilter")
       }
     }
     List(
       metricQueryParams.projectId map { projId =>
         {
           val jsString = s"""{"projectId":"$projId"}"""
-          fr"metric_event @> $jsString :: jsonb"
+          fr"metrics.metric_event @> $jsString :: jsonb"
         }
       },
       metricQueryParams.projectLayerId map { projLayerId =>
         val jsString = s"""{"projectLayerId":"$projLayerId"}"""
-        fr"metric_event @> $jsString :: jsonb"
+        fr"metrics.metric_event @> $jsString :: jsonb"
       },
       metricQueryParams.analysisId map { analysisId =>
         val jsString = s"""{"analysisId":"$analysisId"}"""
-        fr"metric_event @> $jsString :: jsonb"
+        fr"metrics.metric_event @> $jsString :: jsonb"
       },
       metricQueryParams.nodeId map { nodeId =>
         val jsString = s"""{"nodeId":"$nodeId"}"""
-        fr"metric_event @> $jsString :: jsonb"
+        fr"metrics.metric_event @> $jsString :: jsonb"
+      },
+      metricQueryParams.referer map { referer =>
+        val jsString = s"""{"referer":"$referer"}"""
+        fr"metrics.metric_event @> $jsString :: jsonb"
       },
       requestTypeF
     )

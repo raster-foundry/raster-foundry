@@ -15,7 +15,6 @@ final case class UploadSuccess(uploadId: UUID, platformId: UUID) {
       platformHost = platform.publicSettings.platformHost
         .getOrElse("app.rasterfoundry.com")
       upload <- UploadDao.unsafeGetUploadById(uploadId)
-      owner <- UserDao.unsafeGetUserById(upload.owner)
       uploadProject <- upload.projectId match {
         case Some(id) => ProjectDao.getProjectById(id)
         case _        => None.pure[ConnectionIO]

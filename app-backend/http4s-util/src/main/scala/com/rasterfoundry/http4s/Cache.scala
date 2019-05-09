@@ -1,6 +1,6 @@
 package com.rasterfoundry.http4s
 
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 
 import com.typesafe.scalalogging.LazyLogging
 import scalacache._

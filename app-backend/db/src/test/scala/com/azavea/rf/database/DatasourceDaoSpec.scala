@@ -1,12 +1,12 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class DatasourceDaoSpec
     extends FunSuite
@@ -172,8 +172,7 @@ class DatasourceDaoSpec
   test("isDeletable should return false if a datasource is shared") {
     check {
       forAll(
-        (userCreate: User.Create,
-         ownerCreate: User.Create,
+        (ownerCreate: User.Create,
          orgCreate: Organization.Create,
          platform: Platform,
          dsCreate: Datasource.Create) => {
@@ -203,7 +202,6 @@ class DatasourceDaoSpec
     check {
       forAll(
         (userCreate: User.Create,
-         ownerCreate: User.Create,
          orgCreate: Organization.Create,
          platform: Platform,
          dsCreate: Datasource.Create,

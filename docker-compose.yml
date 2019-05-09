@@ -75,7 +75,7 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.11/
+    working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.12/
     entrypoint: java
     command:
       - "-Dcom.sun.management.jmxremote.rmi.port=9010"
@@ -92,8 +92,8 @@ services:
     image: raster-foundry-batch
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
-      - ./app-backend/batch/target/scala-2.11/batch-assembly.jar:/opt/raster-foundry/jars/batch-assembly.jar
-      - ./app-backend/backsplash-export/target/scala-2.11/backsplash-export-assembly.jar:/opt/raster-foundry/jars/backsplash-export-assembly.jar
+      - ./app-backend/batch/target/scala-2.12/batch-assembly.jar:/opt/raster-foundry/jars/batch-assembly.jar
+      - ./app-backend/backsplash-export/target/scala-2.12/backsplash-export-assembly.jar:/opt/raster-foundry/jars/backsplash-export-assembly.jar
       - ./data/:/opt/data/
       - $HOME/.aws:/root/.aws:ro
     build:
@@ -115,7 +115,7 @@ services:
       - postgres:database.service.rasterfoundry.internal
 
   backsplash:
-    image: quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
     depends_on:
       postgres:
         condition: service_healthy
@@ -139,8 +139,9 @@ services:
       - BACKSPLASH_TILE_CACHE_ENABLE=true
       - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
       - BACKSPLASH_RASTERSOURCE_CACHE_ENABLE=true
-      - BACKSPLASH_ENABLE_GDAL=false
+      - BACKSPLASH_ENABLE_GDAL=true
       - BACKSPLASH_CORE_STREAM_CONCURRENCY=16
+      - BACKSPLASH_ENABLE_REQUEST_METRICS=false
     ports:
       - "8080:8080"
       - "9030:9030"
@@ -152,7 +153,7 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/raster-foundry/app-backend/backsplash-server/target/scala-2.11/
+    working_dir: /opt/raster-foundry/app-backend/backsplash-server/target/scala-2.12/
     entrypoint: java
     command:
       - "-Dcom.sun.management.jmxremote.rmi.port=9030"
@@ -187,3 +188,21 @@ services:
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
+
+  app-backend-migrations:
+    image: boxfuse/flyway:5.2.4
+    environment:
+      - FLYWAY_DRIVER=org.postgresql.Driver
+      - FLYWAY_URL=jdbc:postgresql://database.service.rasterfoundry.internal/
+      - FLYWAY_USER=rasterfoundry
+      - FLYWAY_PASSWORD=rasterfoundry
+      - FLYWAY_LOCATIONS=filesystem:/opt/raster-foundry/app-backend/db/src/main/resources/migrations
+      - FLYWAY_SCHEMAS=public
+      - FLYWAY_BASELINE_ON_MIGRATE=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres:database.service.rasterfoundry.internal
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/

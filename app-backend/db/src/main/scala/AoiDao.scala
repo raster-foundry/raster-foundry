@@ -4,8 +4,8 @@ import java.util.UUID
 
 import cats.implicits._
 import com.rasterfoundry.database.util._
-import com.rasterfoundry.common.datamodel._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.PageRequest
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._

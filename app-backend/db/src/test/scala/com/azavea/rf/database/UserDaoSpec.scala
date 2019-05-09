@@ -1,12 +1,12 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 import com.typesafe.scalalogging.LazyLogging
 
 class UserDaoSpec
@@ -23,7 +23,6 @@ class UserDaoSpec
       forAll(
         (user: User.Create) => {
           val insertedUserIO = for {
-            org <- rootOrgQ
             created <- UserDao.create(user)
           } yield (created)
           val insertedUser =
@@ -55,7 +54,9 @@ class UserDaoSpec
               val newUserFields =
                 jwtFields.copy(platformId = insertedPlatform.id,
                                organizationId = insertedOrg.id)
-              UserDao.createUserWithJWT(creatingUser, newUserFields)
+              UserDao.createUserWithJWT(creatingUser,
+                                        newUserFields,
+                                        GroupRole.Member)
             }
             userRoles <- UserGroupRoleDao.listByUser(newUser)
           } yield (newUser, userRoles)
@@ -78,9 +79,7 @@ class UserDaoSpec
       forAll(
         (userCreate: User.Create) => {
           val createdIdIO = for {
-            org <- rootOrgQ
-            userWithOrg = userCreate.copy()
-            inserted <- UserDao.create(userWithOrg)
+            inserted <- UserDao.create(userCreate)
             byId <- UserDao.getUserById(inserted.id)
           } yield (byId)
           userCreate.id == createdIdIO.transact(xa).unsafeRunSync.get.id
@@ -98,7 +97,6 @@ class UserDaoSpec
          dropboxCredential: Credential,
          planetCredential: Credential) => {
           val insertedUserIO = for {
-            org <- rootOrgQ
             created <- UserDao.create(user)
           } yield (created)
           val (affectedRows,
@@ -146,7 +144,6 @@ class UserDaoSpec
          visibility: UserVisibility,
          email: String) => {
           val insertedUserIO = for {
-            org <- rootOrgQ
             created <- UserDao.create(user)
           } yield (created)
           val (affectedRows, updatedUser) = (insertedUserIO flatMap {
@@ -184,7 +181,6 @@ class UserDaoSpec
       forAll(
         (user: User.Create, dropboxCredential: Credential) => {
           val insertedUserIO = for {
-            org <- rootOrgQ
             created <- UserDao.create(user)
           } yield (created)
           val (affectedRows, updatedToken) = (insertedUserIO flatMap {
@@ -214,16 +210,13 @@ class UserDaoSpec
          uc4: User.Create,
          pc1: Platform,
          pc2: Platform,
-         org1: Organization.Create,
-         org2: Organization.Create) => {
+         org1: Organization.Create) => {
           val defaultUser = uc1.toUser.copy(id = "default")
           val orgsIO = for {
             p1 <- PlatformDao.create(pc1)
             p2 <- PlatformDao.create(pc2)
             org1 <- OrganizationDao.createOrganization(
               org1.copy(platformId = p1.id))
-            org2 <- OrganizationDao.createOrganization(
-              org2.copy(platformId = p2.id))
             u1i <- UserDao.create(uc1)
             u1 = u1i.copy(visibility = UserVisibility.Private)
             u2 <- UserDao.create(uc2)

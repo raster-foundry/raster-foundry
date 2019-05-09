@@ -17,8 +17,8 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.common.datamodel._
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -31,6 +31,7 @@ import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import com.rasterfoundry.common.LayerAttribute
 
 trait SceneRoutes
     extends Authentication
@@ -141,8 +142,8 @@ trait SceneRoutes
         }
 
       val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
-        case (Some(tf), None) => tileFootprint
-        case _                => newScene.dataFootprint
+        case (Some(_), None) => tileFootprint
+        case _               => newScene.dataFootprint
       }
 
       val updatedScene = newScene.copy(dataFootprint = dataFootprint,

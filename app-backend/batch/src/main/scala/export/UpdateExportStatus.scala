@@ -10,7 +10,7 @@ import com.rasterfoundry.common.notification.Email.{
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import cats.effect.IO
 import cats.implicits._
@@ -204,7 +204,7 @@ final case class UpdateExportStatus(
       _ <- logger
         .info(s"Setting export status to ${copied.exportStatus}")
         .pure[ConnectionIO]
-      update <- ExportDao.update(copied, exportId, user)
+      _ <- ExportDao.update(copied, exportId, user)
     } yield {
       logger.info("Successfully updated export status")
     }

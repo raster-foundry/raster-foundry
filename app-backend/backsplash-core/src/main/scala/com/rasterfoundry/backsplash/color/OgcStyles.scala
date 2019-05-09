@@ -1,17 +1,17 @@
 package com.rasterfoundry.backsplash.color
 
-import com.rasterfoundry.common.datamodel.ColorComposite
-
+import com.rasterfoundry.datamodel.ColorComposite
 import geotrellis.raster._
 import geotrellis.raster.histogram._
-import geotrellis.server.ogc.{OutputFormat, OgcStyle}
+import geotrellis.server.ogc.OutputFormat.Png
+import geotrellis.server.ogc.{OgcStyle, OutputFormat}
 
 object OgcStyles {
 
   private def toBytes(mbt: MultibandTile,
                       outputFormat: OutputFormat): Array[Byte] =
     outputFormat match {
-      case OutputFormat.Png => mbt.renderPng.bytes
+      case Png(_)           => mbt.renderPng.bytes
       case OutputFormat.Jpg => mbt.renderJpg.bytes
       // Not implementable without an extent, I think
       case OutputFormat.GeoTiff => ???
@@ -24,10 +24,11 @@ object OgcStyles {
       def renderImage(mbtile: MultibandTile,
                       format: OutputFormat,
                       hists: List[Histogram[Double]]): Array[Byte] = {
-        val bands = List(colorComposite.value.redBand,
-                         colorComposite.value.greenBand,
-                         colorComposite.value.blueBand)
-        val rgbHists = bands map { hists(_) }
+        val bands = Seq(colorComposite.value.redBand,
+                        colorComposite.value.greenBand,
+                        colorComposite.value.blueBand)
+        val indexedHist = hists.toIndexedSeq
+        val rgbHists = bands map { indexedHist(_) }
         val subset = mbtile.subsetBands(bands)
         val params =
           ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
@@ -56,7 +57,7 @@ object OgcStyles {
                       format: OutputFormat,
                       hists: List[Histogram[Double]]): Array[Byte] = {
         val tile = mbtile.subsetBands(singleBandParams.band)
-        val hist = List(hists(singleBandParams.band))
+        val hist = List(hists.toIndexedSeq(singleBandParams.band))
         val colored = ColorRampMosaic.colorTile(tile, hist, singleBandParams)
         toBytes(colored, format)
       }

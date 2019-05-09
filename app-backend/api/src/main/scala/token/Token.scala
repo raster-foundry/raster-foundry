@@ -12,30 +12,20 @@ import com.rasterfoundry.api.utils.{
   Config,
   ManagementBearerToken
 }
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
+import com.rasterfoundry.datamodel.auth.{
+  AuthorizedToken,
+  DeviceCredential,
+  RefreshToken,
+  RefreshTokenRequest
+}
 import de.heikoseeberger.akkahttpcirce._
-import io.circe.generic.JsonCodec
 import io.circe.generic.auto._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
-// TODO: this sort of case class definition should live in datamodel
-@JsonCodec
-final case class RefreshToken(refresh_token: String)
-@JsonCodec
-final case class DeviceCredential(id: String, device_name: String)
-@JsonCodec
-final case class AuthorizedToken(id_token: String,
-                                 access_token: String,
-                                 expires_in: Int,
-                                 token_type: String)
-@JsonCodec
-final case class RefreshTokenRequest(grant_type: String,
-                                     client_id: String,
-                                     refresh_token: String)
 
 object TokenService extends Config with ErrorAccumulatingCirceSupport {
 
@@ -51,7 +41,7 @@ object TokenService extends Config with ErrorAccumulatingCirceSupport {
     Scaffeine()
       .expireAfterWrite(1.hour)
       .maximumSize(1)
-      .buildAsyncFuture((i: Int) => getManagementBearerToken())
+      .buildAsyncFuture((_: Int) => getManagementBearerToken())
 
   def getManagementBearerToken(): Future[ManagementBearerToken] = {
     val bearerTokenUri = Uri(s"https://$auth0Domain/oauth/token")

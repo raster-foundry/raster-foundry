@@ -1,15 +1,15 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
-
 import doobie.implicits._
 import cats.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import org.scalatestplus.scalacheck.Checkers
+import com.rasterfoundry.datamodel.PageRequest
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.Random
 
@@ -18,6 +18,7 @@ class ProjectDaoSpec
     with Matchers
     with Checkers
     with DBTestConfig
+    with LazyLogging
     with PropTestHelpers {
 
   test("insert a project") {
@@ -245,7 +246,9 @@ class ProjectDaoSpec
               dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(
                 _1 = dbGrantedUser)
               acrInsert1 = fixUpObjectAcr(acr1, dbUserGrantedTeamOrgPlat)
-              _ <- ProjectDao.addPermission(projectInsert.id, acrInsert1)
+              permissions <- ProjectDao.addPermission(projectInsert.id,
+                                                      acrInsert1)
+              _ = logger.trace(s"Access Control Rules Available: $permissions")
               acrListToInsert = acrList.map(
                 fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
               permReplaced <- ProjectDao.replacePermissions(projectInsert.id,
@@ -325,7 +328,7 @@ class ProjectDaoSpec
               dbGrantedUser <- UserDao.create(grantedUser)
               dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(
                 _1 = dbGrantedUser)
-              _ <- {
+              ugr <- {
                 UserGroupRoleDao.create(
                   UserGroupRole
                     .Create(dbGrantedUser.id,
@@ -348,6 +351,7 @@ class ProjectDaoSpec
                               GroupRole.Member)
                       .toUserGroupRole(dbUser, MembershipStatus.Approved))
               }
+              _ = logger.trace(s"Created UGR: $ugr")
               acrListToInsert = acrList.map(
                 fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
               _ <- ProjectDao.addPermissionsMany(projectInsert.id,
@@ -396,7 +400,7 @@ class ProjectDaoSpec
               dbGrantedUser = dbGrantedUserInsert.copy(isSuperuser = false)
               dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(
                 _1 = dbGrantedUser)
-              _ <- {
+              ugr <- {
                 UserGroupRoleDao.create(
                   UserGroupRole
                     .Create(dbGrantedUser.id,
@@ -419,6 +423,7 @@ class ProjectDaoSpec
                               GroupRole.Member)
                       .toUserGroupRole(dbUser, MembershipStatus.Approved))
               }
+              _ = logger.trace(s"Created UGR: $ugr")
               acrListToInsert = acrList.map(
                 fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
               _ <- ProjectDao.addPermissionsMany(projectInsert1.id,
@@ -542,8 +547,9 @@ class ProjectDaoSpec
                dbGrantedUser) = projectCreate
               acrListToInsert = acrList.map(
                 fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
-              _ <- ProjectDao.addPermissionsMany(projectInsert1.id,
-                                                 acrListToInsert)
+              acrs <- ProjectDao.addPermissionsMany(projectInsert1.id,
+                                                    acrListToInsert)
+              _ = logger.info(s"ACRS Added: $acrs")
               action = Random.shuffle(acrListToInsert.map(_.actionType)).head
               isPermitted1 <- ProjectDao.authorized(dbGrantedUser,
                                                     ObjectType.Project,

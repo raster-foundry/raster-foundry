@@ -1,6 +1,6 @@
 package com.rasterfoundry.api.user
 
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
@@ -102,7 +102,7 @@ object Auth0UserService extends Config with LazyLogging {
     Scaffeine()
       .expireAfterWrite(1.hour)
       .maximumSize(1)
-      .buildAsyncFuture((i: Int) => getManagementBearerToken())
+      .buildAsyncFuture((_: Int) => getManagementBearerToken())
 
   def getManagementBearerToken(): Future[ManagementBearerToken] = {
     val bearerTokenUri = Uri(s"https://$auth0Domain/oauth/token")
@@ -186,7 +186,7 @@ object Auth0UserService extends Config with LazyLogging {
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           Unmarshal(entity).to[Auth0User]
-        case HttpResponse(StatusCodes.ClientError(400), _, error, _) =>
+        case HttpResponse(StatusCodes.ClientError(400), _, _, _) =>
           throw new IllegalArgumentException(
             "Request must specify a valid field to update")
         case HttpResponse(StatusCodes.Unauthorized, _, error, _) =>

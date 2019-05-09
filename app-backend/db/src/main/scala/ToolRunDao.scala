@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.{
+import com.rasterfoundry.datamodel.{
   ToolRun,
   User,
   ObjectType,
@@ -18,7 +18,7 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
+import com.rasterfoundry.datamodel.{Order, PageRequest}
 import com.rasterfoundry.database.util._
 
 import java.sql.Timestamp

@@ -1,8 +1,8 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -92,7 +92,7 @@ object MapTokenDao extends Dao[MapToken] {
       analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id }).toNel map {
         Fragments.in(fr"toolrun_id", _)
       }
-      authFilterF: Fragment = Fragments.orOpt(projIdsF, analysesIdsF)
+      authFilterF: Fragment = projIdsF orElse analysesIdsF getOrElse Fragment.empty
       mapTokens <- MapTokenDao.query
         .filter(mapTokenParams)
         .filter(authFilterF)

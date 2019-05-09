@@ -1,15 +1,13 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
-
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 
 import doobie.implicits._
 import cats.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class ProjectLayerDatasourceDaoSpec
     extends FunSuite
@@ -26,8 +24,7 @@ class ProjectLayerDatasourceDaoSpec
             platform: Platform,
             project: Project.Create,
             scenes: List[Scene.Create],
-            dsCreate: Datasource.Create,
-            page: PageRequest
+            dsCreate: Datasource.Create
         ) =>
           {
             val datasourcesIO = for {

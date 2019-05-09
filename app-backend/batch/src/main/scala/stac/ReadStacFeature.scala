@@ -4,7 +4,7 @@ import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{SceneDao, UserDao}
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.typesafe.scalalogging.LazyLogging
 
 import doobie.ConnectionIO
@@ -292,7 +292,7 @@ object ReadStacFeature extends Config with LazyLogging {
         )
       )
     } catch {
-      case e: Exception =>
+      case _: Exception =>
         logger.error(
           s"Error fetching thumbnail with URI: ${link.href}, ${rootUri}"
         )

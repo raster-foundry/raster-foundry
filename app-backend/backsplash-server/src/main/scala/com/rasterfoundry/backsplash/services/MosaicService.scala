@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.common.utils.TileUtils
@@ -24,7 +24,6 @@ import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 import doobie.util.transactor.Transactor
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
-import geotrellis.vector.io._
 
 import java.util.UUID
 

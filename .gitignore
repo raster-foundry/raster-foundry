@@ -96,6 +96,8 @@ api-server/.ensime_cache/*
 /.ivy2/*
 .sbt/
 metals.lock.db
+.metals/
+.bloop/
 
 /.env
 /.envrc

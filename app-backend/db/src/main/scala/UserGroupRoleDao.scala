@@ -3,12 +3,12 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.notification.{GroupNotifier, MessageType}
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import doobie._, doobie.implicits._
 import doobie.postgres.implicits._
 import cats._, cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.rasterfoundry.datamodel.{PageRequest, Order}
 
 import java.util.UUID
 
@@ -106,10 +106,6 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           .filter(fr"group_type = ${groupType.toString} :: group_type")
           .filter(fr"is_active = true")
           .selectOption
-      }
-      roleTargetEmail <- UserDao.unsafeGetUserById(subjectId) map { _.email }
-      roleCreatorEmail <- UserDao.unsafeGetUserById(actingUser.id) map {
-        _.email
       }
       existingMembershipStatus = existingRoleO map { _.membershipStatus }
       rolesMatch = existingRoleO

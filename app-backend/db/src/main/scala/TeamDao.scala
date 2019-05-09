@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import doobie._
 import doobie.implicits._
@@ -8,7 +8,7 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import cats._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.rasterfoundry.datamodel.{PageRequest, Order}
 
 import java.util.UUID
 import java.sql.Timestamp
@@ -247,7 +247,7 @@ object TeamDao extends Dao[Team] {
   // TODO: ACR deactivation needs to be reconsidered in issue 4020
   def deactivate(teamId: UUID): ConnectionIO[Int] = {
     for {
-      roles <- UserGroupRoleDao.deactivateByGroup(GroupType.Team, teamId)
+      _ <- UserGroupRoleDao.deactivateByGroup(GroupType.Team, teamId)
       teamUpdate <- (fr"UPDATE" ++ tableF ++ fr"""SET
                       is_active = false
                       WHERE id = ${teamId}""").update.run

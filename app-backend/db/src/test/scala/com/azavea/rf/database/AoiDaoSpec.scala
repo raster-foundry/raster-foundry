@@ -1,14 +1,14 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 
 import doobie.implicits._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class AoiDaoSpec
     extends FunSuite
@@ -178,7 +178,7 @@ class AoiDaoSpec
             } yield { (dbAois1, dbProject1, dbUser) }
 
             val aoisForProject = aoisInsertWithProjectUserIO flatMap {
-              case (dbAois: List[AOI], dbProject: Project, dbUser: User) => {
+              case (dbAois: List[AOI], dbProject: Project, _: User) => {
                 AoiDao.listAOIs(dbProject.id, PageRequest(0, 1000, Map.empty)) map {
                   (dbAois, _)
                 }

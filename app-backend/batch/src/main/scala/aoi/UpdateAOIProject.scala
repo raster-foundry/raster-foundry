@@ -10,7 +10,7 @@ import com.rasterfoundry.common.notification.Email.{
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import cats.effect.IO
 import cats.implicits._

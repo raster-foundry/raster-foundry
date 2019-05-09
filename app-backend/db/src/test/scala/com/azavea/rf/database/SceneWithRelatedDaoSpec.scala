@@ -1,15 +1,15 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 
 import doobie.implicits._
 import cats.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 import java.sql.Timestamp
 import java.time.LocalDate
@@ -26,7 +26,6 @@ class SceneWithRelatedDaoSpec
       forAll {
         (user1: User.Create,
          user2: User.Create,
-         org: Organization.Create,
          pageRequest: PageRequest,
          scenes1: List[Scene.Create],
          scenes2: List[Scene.Create],

@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.backsplash.Parameters._
 
 import cats.effect.IO

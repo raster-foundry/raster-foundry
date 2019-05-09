@@ -1,0 +1,25 @@
+#!/bin/bash
+
+function logInfo()
+{
+    local GREEN='\033[32m'
+    local CLEAR='\033[0m'
+
+    echo -e "${GREEN}[RF-API]${CLEAR} ${1}"
+}
+
+function logSetup()
+{
+    local BLUE='\033[34m'
+    local CLEAR='\033[0m'
+
+    echo -e "${BLUE}[RF-API:Setup]${CLEAR} ${1}"
+}
+
+function logError()
+{
+    local RED='\033[31m'
+    local CLEAR='\033[0m'
+
+    echo -e "${RED}[RF-API:Error]${CLEAR} ${1}"
+}

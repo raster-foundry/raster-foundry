@@ -1,7 +1,7 @@
 package com.rasterfoundry.akkautil
 
 import com.rasterfoundry.database._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
@@ -136,7 +136,7 @@ trait Authentication extends Directives with LazyLogging {
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
     result match {
-      case Left(e) =>
+      case Left(_) =>
         reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
       case Right((_, jwtClaims)) => {
         val userId = jwtClaims.getStringClaim("sub")
@@ -164,12 +164,12 @@ trait Authentication extends Directives with LazyLogging {
           }
           personalInfo = defaultPersonalInfo(user, jwtClaims)
           updatedUser = (user.dropboxCredential, user.planetCredential) match {
-            case (Credential(Some(d)), Credential(Some(p))) if d.length == 0 =>
+            case (Credential(Some(d)), Credential(Some(_))) if d.length == 0 =>
               user.copy(email = email,
                         name = name,
                         profileImageUri = picture,
                         personalInfo = personalInfo)
-            case (Credential(Some(d)), Credential(Some(p))) if p.length == 0 =>
+            case (Credential(Some(_)), Credential(Some(p))) if p.length == 0 =>
               user.copy(email = email,
                         name = name,
                         profileImageUri = picture,
@@ -237,6 +237,13 @@ trait Authentication extends Directives with LazyLogging {
       }
     )
 
+    val userRole = getStringClaimOrBlank(
+      jwtClaims,
+      "https://app.rasterfoundry.com;platformRole").toUpperCase match {
+      case "ADMIN" => GroupRole.Admin
+      case _       => GroupRole.Member
+    }
+
     for {
       platform <- PlatformDao.getPlatformById(platformId)
       systemUserO <- UserDao.getUserById(auth0SystemUser)
@@ -263,7 +270,7 @@ trait Authentication extends Directives with LazyLogging {
         orgID
       )
       newUserWithRoles <- {
-        UserDao.createUserWithJWT(systemUser, jwtUser)
+        UserDao.createUserWithJWT(systemUser, jwtUser, userRole)
       }
     } yield newUserWithRoles
   }

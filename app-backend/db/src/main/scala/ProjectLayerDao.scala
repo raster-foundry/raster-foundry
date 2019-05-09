@@ -1,11 +1,11 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 import cats.implicits._
 import java.sql.Timestamp
 import java.time.temporal.IsoFields

@@ -3,8 +3,8 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.ast.MapAlgebraAST._
 import com.rasterfoundry.common.ast._
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.export._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.export._
 import com.rasterfoundry.database.Implicits._
 import geotrellis.raster._
 import geotrellis.vector.reproject.Implicits._
@@ -85,7 +85,7 @@ object ExportDao extends Dao[Export] {
       .option
   }
 
-  def getExportDefinition(export: Export, user: User): ConnectionIO[Json] = {
+  def getExportDefinition(export: Export): ConnectionIO[Json] = {
     val exportOptions = export.exportOptions.as[ExportOptions] match {
       case Left(e) =>
         throw new Exception(
@@ -228,7 +228,7 @@ object ExportDao extends Dao[Export] {
   private def stripMetadata(ast: MapAlgebraAST): MapAlgebraAST = ast match {
     case astLeaf: MapAlgebraAST.MapAlgebraLeaf =>
       astLeaf.withMetadata(NodeMetadata())
-    case astNode: MapAlgebraAST =>
+    case _: MapAlgebraAST =>
       val args = ast.args.map(stripMetadata)
       ast.withMetadata(NodeMetadata()).withArgs(args)
   }
@@ -356,13 +356,19 @@ object ExportDao extends Dao[Export] {
 
     val projectIds =
       parameters
-        .filter(_.sourceType.isInstanceOf[ProjectSrc.type])
+        .filter(_.sourceType match {
+          case _: ProjectSrc.type => true
+          case _                  => false
+        })
         .map(_.id)
         .toList
         .toNel
     val layerIds =
       parameters
-        .filter(_.sourceType.isInstanceOf[LayerSrc.type])
+        .filter(_.sourceType match {
+          case _: LayerSrc.type => true
+          case _                => false
+        })
         .map(_.id)
         .toList
         .toNel

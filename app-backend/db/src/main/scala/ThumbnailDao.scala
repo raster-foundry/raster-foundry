@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.Thumbnail
+import com.rasterfoundry.datamodel.Thumbnail
 
 import doobie._, doobie.implicits._
 import doobie.postgres.implicits._

@@ -1,11 +1,12 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.{Scene, User, _}
+import com.rasterfoundry.datamodel.{Scene, User, _}
+import com.rasterfoundry.common.SceneToLayer
 
 import cats.data._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
+import com.rasterfoundry.datamodel.{Order, PageRequest}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._

@@ -45,7 +45,7 @@ object RangeReaderUtils extends LazyLogging {
         val s3Client = new AmazonS3Client(S3().client)
         Some(S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client))
 
-      case scheme =>
+      case _ =>
         None
     }
   }

@@ -7,7 +7,7 @@ import com.rasterfoundry.common.notification.Email.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.notification.templates._
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import cats.implicits._
 import doobie.ConnectionIO
@@ -27,7 +27,7 @@ object Notify extends RollbarNotifier {
     for {
       _ <- publicSettings.emailSmtpUserName match {
         case "" => ().pure[ConnectionIO]
-        case s => {
+        case _ => {
           val preparedEmail = email.setEmail(
             EmailConfig(
               publicSettings.emailSmtpHost,
@@ -79,7 +79,7 @@ object Notify extends RollbarNotifier {
       _ <- logger
         .debug(s"Sending emails to ${recipients.length} admins")
         .pure[ConnectionIO]
-      result <- emails
+      _ <- emails
         .map(
           sendEmail(publicSettings,
                     privateSettings,

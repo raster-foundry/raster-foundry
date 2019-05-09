@@ -1,7 +1,8 @@
 package com.rasterfoundry.backsplash
 
-import com.rasterfoundry.backsplash.color._
+import java.net.URLDecoder
 
+import com.rasterfoundry.backsplash.color._
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.resample.NearestNeighbor
@@ -21,8 +22,6 @@ import scalacache.memoization._
 import scalacache.modes.sync._
 
 import scala.util.Try
-
-import java.net.URLDecoder
 
 /** An image used in a tile or export service, can be color corrected, and requested a subet of the bands from the
   * image
@@ -73,7 +72,7 @@ final case class BacksplashImage(
           .reproject(WebMercator)
           .tileToLayout(layoutDefinition, NearestNeighbor)
           .read(SpatialKey(x, y), subsetBands.toSeq) map { tile =>
-          tile.mapBands((n: Int, t: Tile) => t.toArrayTile)
+          tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
         }
       }.toOption.flatten
     }
@@ -97,10 +96,13 @@ final case class BacksplashImage(
       logger.debug(
         s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
       Try {
+
         rasterSource
           .reproject(WebMercator, NearestNeighbor)
-          .resampleToGrid(rasterExtent, NearestNeighbor)
-          .read(extent, subsetBands.toSeq)
+          .resampleToGrid(GridExtent[Long](rasterExtent.extent,
+                                           rasterExtent.cellSize),
+                          NearestNeighbor)
+          .read(extent, subsetBands)
           .map(_.tile)
       }.toOption.flatten
     }

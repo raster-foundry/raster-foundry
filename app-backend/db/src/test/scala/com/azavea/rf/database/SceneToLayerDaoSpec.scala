@@ -1,17 +1,15 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
-
-import com.lonelyplanet.akka.http.extensions.PageRequest
 
 import doobie._, doobie.implicits._
 import cats.implicits._
 import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class SceneToLayerDaoSpec
     extends FunSuite
@@ -28,9 +26,7 @@ class SceneToLayerDaoSpec
          platform: Platform,
          project: Project.Create,
          scenes: List[Scene.Create],
-         dsCreate: Datasource.Create,
-         page: PageRequest,
-         csq: CombinedSceneQueryParams) =>
+         dsCreate: Datasource.Create) =>
           {
             val acceptedSceneAndStlIO = for {
               (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
@@ -75,9 +71,7 @@ class SceneToLayerDaoSpec
          platform: Platform,
          project: Project.Create,
          scenes: List[Scene.Create],
-         dsCreate: Datasource.Create,
-         page: PageRequest,
-         csq: CombinedSceneQueryParams) =>
+         dsCreate: Datasource.Create) =>
           {
 
             val mdAndStpsIO = for {

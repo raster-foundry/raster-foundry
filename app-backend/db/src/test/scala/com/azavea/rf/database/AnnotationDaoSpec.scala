@@ -1,13 +1,13 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
-import org.scalatest.prop.Checkers
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import org.scalatestplus.scalacheck.Checkers
+import com.rasterfoundry.datamodel.PageRequest
 
 class AnnotationDaoSpec
     extends FunSuite
@@ -182,25 +182,33 @@ class AnnotationDaoSpec
                   dbUser
                 ) flatMap { (affectedRows: Int) =>
                   {
-                    AnnotationDao.unsafeGetAnnotationById(annotationId) map {
-                      (affectedRows, _, verifier)
+                    AnnotationDao.getAnnotationById(dbProject.id, annotationId) map {
+                      (affectedRows, _, verifier, dbUser)
                     }
                   }
                 }
               }
             }
 
-            val (affectedRows, updatedAnnotation, verifier) =
+            val (affectedRows, updatedAnnotationO, verifier, dbUser) =
               annotationsUpdateWithAnnotationIO.transact(xa).unsafeRunSync
 
             affectedRows == 1 &&
-            updatedAnnotation.label == annotationUpdate.label &&
-            updatedAnnotation.description == annotationUpdate.description &&
-            updatedAnnotation.machineGenerated == annotationUpdate.machineGenerated &&
-            updatedAnnotation.confidence == annotationUpdate.confidence &&
-            updatedAnnotation.quality == annotationUpdate.quality &&
-            updatedAnnotation.geometry == annotationUpdate.geometry &&
-            updatedAnnotation.verifiedBy == Some(verifier.id)
+            (
+              updatedAnnotationO match {
+                case Some(updatedAnnotation) =>
+                  updatedAnnotation.label == annotationUpdate.label &&
+                    updatedAnnotation.description == annotationUpdate.description &&
+                    updatedAnnotation.machineGenerated == annotationUpdate.machineGenerated &&
+                    updatedAnnotation.confidence == annotationUpdate.confidence &&
+                    updatedAnnotation.quality == annotationUpdate.quality &&
+                    updatedAnnotation.geometry == annotationUpdate.geometry &&
+                    updatedAnnotation.verifiedBy == Some(verifier.id) &&
+                    updatedAnnotation.ownerName == dbUser.name &&
+                    updatedAnnotation.ownerProfileImageUri == dbUser.profileImageUri
+                case _ => false
+              }
+            )
           }
       }
     }

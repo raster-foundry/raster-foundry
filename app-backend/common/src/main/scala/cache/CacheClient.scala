@@ -63,10 +63,11 @@ class CacheClient(client: => MemcachedClient)
         client.set(key, ttlSeconds, value)
       }
 
-      f.onFailure {
-        case e =>
+      f.onComplete {
+        case Failure(e) =>
           logger.error(s"Error ${e.getMessage}")
           sendError(e)
+        case Success(_) => ()
       }
     }
 
@@ -141,7 +142,7 @@ class CacheClient(client: => MemcachedClient)
           futureCached.onComplete {
             case Success(cachedValue) =>
               cachedValue match {
-                case Some(v) =>
+                case Some(_) =>
                   if (doCache) {
                     setValue(cacheKey, cachedValue)
                   }
@@ -177,12 +178,6 @@ class CacheClient(client: => MemcachedClient)
                                              doCache)
       case _ => expensiveOperation
     }
-  }
-
-  def caching[T](cacheKey: String, doCache: Boolean = true)(
-      mappingFunction: => Future[Option[T]]
-  ): Future[Option[T]] = {
-    getOrElseUpdate[T](cacheKey, mappingFunction, doCache)
   }
 
   def cachingOptionT[T](cacheKey: String, doCache: Boolean = true)(

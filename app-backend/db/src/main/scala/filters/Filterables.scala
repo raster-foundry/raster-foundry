@@ -2,7 +2,7 @@ package com.rasterfoundry.database.filter
 
 import com.rasterfoundry.database.Filterable
 import com.rasterfoundry.database.meta.RFMeta
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
@@ -189,7 +189,6 @@ trait Filterables extends RFMeta with LazyLogging {
                            statuses.map(IngestStatus.fromString(_)))
             }),
             (sceneParams.bboxPolygon, sceneParams.shape) match {
-              case (_, Some(shpId)) => None
               case (Some(bboxPolygons), _) =>
                 val fragments = bboxPolygons.map(
                   bbox =>
@@ -323,7 +322,7 @@ trait Filterables extends RFMeta with LazyLogging {
             val exportStatuses = statuses.map({ status =>
               try ExportStatus.fromString(status)
               catch {
-                case e: Exception =>
+                case _: Exception =>
                   throw new IllegalArgumentException(
                     s"Invalid Ingest Status: $status"
                   )

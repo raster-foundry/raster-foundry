@@ -14,11 +14,12 @@ import doobie.{ConnectionIO, Fragment, Fragments}
 
 import java.util.UUID
 
-final case class FindAOIProjects(implicit val xa: Transactor[IO])
+final case class FindAOIProjects(xa: Transactor[IO])
     extends Config
     with RollbarNotifier
     with AWSBatch {
   val name = FindAOIProjects.name
+  implicit val transactor = xa
 
   def run(): Unit = {
     def timeToEpoch(timeFunc: String): Fragment =
@@ -69,8 +70,7 @@ object FindAOIProjects extends Job {
     }
     RFTransactor.xaResource
       .use(xa => {
-        implicit val transactor = xa
-        val job = FindAOIProjects()
+        val job = FindAOIProjects(xa)
         IO { job.run }
       })
   }

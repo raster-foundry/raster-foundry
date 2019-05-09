@@ -6,8 +6,8 @@ import cats.implicits._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.filter.Filterables
 import com.rasterfoundry.database.util._
-import com.rasterfoundry.common.datamodel._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.{PageRequest, Order}
 import doobie.{LogHandler => _, _}
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -112,7 +112,7 @@ object Dao extends LazyLogging {
         .zip(a.map(s => "'" + s + "'"))
         .flatMap({ case (t1, t2) => List(t1, t2) })
         .mkString("")
-      logger.debug(s"""Successful Statement Execution:
+      logger.trace(s"""Successful Statement Execution:
         |
         |  ${logString}
         |
@@ -222,15 +222,18 @@ object Dao extends LazyLogging {
           pageRequest.copy(sort = orderClause ++ pageRequest.sort)))
           .query[T]
           .to[List]
-        (count, hasNext) <- if (doCount) {
-          (countF ++ Fragments.whereAndOpt(filters: _*))
-            .query[Int]
-            .unique map { count =>
-            (count, (pageRequest.offset * pageRequest.limit) + 1 < count)
+        (count: Int, hasNext: Boolean) <- doCount match {
+          case true => {
+            (countF ++ Fragments.whereAndOpt(filters: _*))
+              .query[Int]
+              .unique map { count =>
+              (count, (pageRequest.offset * pageRequest.limit) + 1 < count)
+            }
           }
-        } else {
-          hasNext(pageRequest) map {
-            (-1, _)
+          case false => {
+            hasNext(pageRequest) map {
+              (-1, _)
+            }
           }
         }
       } yield {

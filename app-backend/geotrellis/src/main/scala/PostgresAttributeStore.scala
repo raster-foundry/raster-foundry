@@ -2,7 +2,7 @@ package geotrellis.spark.io.postgres
 
 import com.rasterfoundry.common.Config
 import com.rasterfoundry.database.LayerAttributeDao
-import com.rasterfoundry.common.datamodel.LayerAttribute
+import com.rasterfoundry.common.LayerAttribute
 
 import cats.effect.IO
 import cats.implicits._

@@ -1,12 +1,14 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 
+import cats.data.{NonEmptyList => NEL}
+import cats.implicits._
 import doobie.implicits._
 import org.scalatest._
 import org.scalacheck.Prop.forAll
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID
 
@@ -24,25 +26,47 @@ class MapTokenDaoSpec
   test("Retrieve a map token for a project") {
     check {
       forAll {
-        (mapTokenCreate: MapToken.Create,
-         user: User.Create,
-         project: Project.Create) =>
+        (tokensAndProjects: NEL[(MapToken.Create, Project.Create)],
+         tokensAndToolRuns: NEL[(MapToken.Create, ToolRun.Create)],
+         user: User.Create) =>
           {
             val retrievedMapTokensIO =
               for {
                 dbUser <- UserDao.create(user)
-                dbProject <- ProjectDao.insertProject(project, dbUser)
-                dbMapToken <- MapTokenDao.insert(
-                  fixupMapToken(mapTokenCreate, dbUser, Some(dbProject), None),
-                  dbUser
-                )
-                retrievedGood <- MapTokenDao.checkProject(dbProject.id)(
-                  dbMapToken.id)
+                dbMapToken <- tokensAndProjects traverse {
+                  case (token, project) =>
+                    ProjectDao.insertProject(project, dbUser) flatMap {
+                      dbProject =>
+                        MapTokenDao.insert(
+                          fixupMapToken(token, dbUser, Some(dbProject), None),
+                          dbUser
+                        )
+                    }
+                } map { _.head }
+                _ <- tokensAndToolRuns traverse {
+                  case (token, toolRun) =>
+                    ToolRunDao.insertToolRun(toolRun, dbUser) flatMap {
+                      dbToolRun =>
+                        MapTokenDao.insert(fixupMapToken(token,
+                                                         dbUser,
+                                                         None,
+                                                         Some(dbToolRun)),
+                                           dbUser)
+                    }
+                }
+                retrievedGood <- MapTokenDao.checkProject(
+                  dbMapToken.project.get)(dbMapToken.id)
                 retrievedBad <- MapTokenDao.checkProject(UUID.randomUUID)(
                   dbMapToken.id)
-              } yield { (dbMapToken, retrievedGood, retrievedBad) }
+                listed <- MapTokenDao.listAuthorizedMapTokens(
+                  dbUser,
+                  CombinedMapTokenQueryParameters(
+                    mapTokenParams =
+                      MapTokenQueryParameters(projectId = dbMapToken.project)),
+                  PageRequest(0, 10, Map.empty))
+              } yield { (dbMapToken, retrievedGood, retrievedBad, listed) }
 
-            val (mapToken, shouldBeSome, shouldBeNone) =
+            val (mapToken, shouldBeSome, shouldBeNone, listed) =
               retrievedMapTokensIO.transact(xa).unsafeRunSync
 
             assert(
@@ -52,6 +76,10 @@ class MapTokenDaoSpec
             assert(
               shouldBeNone == None,
               "; Bogus IDs should not return a map token"
+            )
+            assert(
+              listed.results.length == 1,
+              "; Only one map token should have come back for a project"
             )
 
             true

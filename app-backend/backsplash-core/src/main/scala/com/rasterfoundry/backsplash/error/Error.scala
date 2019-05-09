@@ -47,7 +47,7 @@ class BacksplashHttpErrorHandler[F[_]](
     with Http4sDsl[F]
     with LazyLogging {
   private val handler: BacksplashException => F[Response[F]] = {
-    case t @ MetadataException(m) =>
+    case _ @MetadataException(m) =>
       InternalServerError(m)
     case UningestedScenesException(m)  => NotFound(m)
     case SingleBandOptionsException(m) => BadRequest(m)
@@ -55,7 +55,7 @@ class BacksplashHttpErrorHandler[F[_]](
     case BadAnalysisASTException(m)    => BadRequest(m)
     case RequirementFailedException(m) => BadRequest(m)
     case NoDataInRegionException       => BadRequest("No Data in Region")
-    case t @ NotAuthorizedException(_) =>
+    case _ @NotAuthorizedException(_) =>
       Forbidden(
         "Resource does not exist or user is not authorized to access this resource")
     case WrappedDoobieException(m) =>
@@ -63,7 +63,7 @@ class BacksplashHttpErrorHandler[F[_]](
     case WrappedS3Exception(_) =>
       NotFound(
         "Underlying data to produce tiles for this project appears to have moved or is no longer available")
-    case t @ UnknownException(m) =>
+    case _ @UnknownException(m) =>
       InternalServerError(m)
   }
 

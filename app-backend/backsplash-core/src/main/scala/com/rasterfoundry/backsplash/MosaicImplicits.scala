@@ -101,8 +101,8 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             .map(_.subsetBands.length)
             .compile
             .toList
-            .map(_.fold(0)(_ + _))
-          _ <- {
+            .map(_.sum)
+          _ = {
             if (bandCount == 0) {
               IO.raiseError(NoDataInRegionException)
             } else IO.unit

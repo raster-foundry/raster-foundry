@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
@@ -118,7 +118,6 @@ trait ObjectPermissions[Model] {
                          replace: Boolean = false)
     : ConnectionIO[List[Option[ObjectAccessControlRule]]] = {
     for {
-      permissions <- getPermissions(id)
       addPermissionsMany <- acrList match {
         case Nil if !replace =>
           throw new Exception(s"All permissions exist for ${tableName} ${id}")

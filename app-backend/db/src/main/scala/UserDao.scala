@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.database.Implicits._
 
@@ -76,14 +76,15 @@ object UserDao extends Dao[User] with Sanitization {
 
   def createUserWithJWT(
       creatingUser: User,
-      jwtUser: User.JwtFields): ConnectionIO[(User, List[UserGroupRole])] = {
+      jwtUser: User.JwtFields,
+      userRole: GroupRole): ConnectionIO[(User, List[UserGroupRole])] = {
     for {
       organization <- OrganizationDao.query
         .filter(jwtUser.organizationId)
         .selectOption
       createdUser <- {
         organization match {
-          case Some(o) =>
+          case Some(_) =>
             val newUser = User.Create(
               jwtUser.id,
               Viewer,
@@ -104,7 +105,7 @@ object UserDao extends Dao[User] with Sanitization {
             createdUser.id,
             GroupType.Platform,
             jwtUser.platformId,
-            GroupRole.Member
+            userRole
           )
           .toUserGroupRole(creatingUser, MembershipStatus.Approved)
       )
@@ -119,7 +120,7 @@ object UserDao extends Dao[User] with Sanitization {
                   "Tried to create a user role using a non-existent organization ID")
               )
               .id,
-            GroupRole.Member
+            userRole
           )
           .toUserGroupRole(creatingUser, MembershipStatus.Approved)
       )

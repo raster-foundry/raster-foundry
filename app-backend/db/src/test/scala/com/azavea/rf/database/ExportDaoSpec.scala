@@ -5,12 +5,12 @@ import java.util.UUID
 import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.MapAlgebraAST.{LayerRaster, ProjectRaster}
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.Generators.Implicits._
 import io.circe.syntax._
 import doobie.implicits._
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.Prop.forAll
 
 class ExportDaoSpec
@@ -56,7 +56,7 @@ class ExportDaoSpec
                                  dbUser)
               }
               exportDefinition <- {
-                ExportDao.getExportDefinition(dbExport, dbUser)
+                ExportDao.getExportDefinition(dbExport)
               }
             } yield exportDefinition
 
@@ -99,7 +99,7 @@ class ExportDaoSpec
                                  dbUser)
               }
               exportDefinition <- {
-                ExportDao.getExportDefinition(dbExport, dbUser)
+                ExportDao.getExportDefinition(dbExport)
               }
             } yield exportDefinition
 
@@ -165,8 +165,7 @@ class ExportDaoSpec
                 ExportDao.insert(export.copy(toolRunId = Some(dbToolRun.id)),
                                  dbUser)
               }
-              exportDefinition <- ExportDao.getExportDefinition(dbExport,
-                                                                dbUser)
+              exportDefinition <- ExportDao.getExportDefinition(dbExport)
             } yield exportDefinition
 
             projectInsertIO.transact(xa).unsafeRunSync

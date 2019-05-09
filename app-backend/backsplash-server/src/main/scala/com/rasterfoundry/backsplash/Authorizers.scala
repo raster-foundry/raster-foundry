@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.common.datamodel.{ActionType, ObjectType, User}
+import com.rasterfoundry.datamodel.{ActionType, ObjectType, User}
 import com.rasterfoundry.database.{
   ProjectDao,
   ProjectLayerDao,
