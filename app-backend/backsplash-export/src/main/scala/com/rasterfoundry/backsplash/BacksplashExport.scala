@@ -27,7 +27,7 @@ import scala.concurrent.ExecutionContext
   *
   * To extend this program with a new type (perhaps sourcing raster data in
   *  some way not anticipated here), add a new typeclass instance for the new
-  *  export definition, add the type in question to the [[BacksplashExport.Exports]] type below,
+  *  export definition, add the type in question to the BacksplashExport.Exports type below,
   *  and ensure that SerDe behaviors are provided as well
   */
 object BacksplashExport
