@@ -19,9 +19,7 @@ import geotrellis.raster.MultibandTile
 import geotrellis.vector.MultiPolygon
 import scalacache._
 import scalacache.memoization._
-import scalacache.modes.sync._
-
-import scala.util.Try
+import cats.effect.IO
 
 /** An image used in a tile or export service, can be color corrected, and requested a subet of the bands from the
   * image
@@ -35,68 +33,71 @@ import scala.util.Try
   * @param imageId UUID of the image (scene) in the database
   * @param projectLayerId UUID of the layer this image is a part of
   * @param uri location of the source data
-  * @param footprint extent of data the image covers
   * @param subsetBands subset of bands to be read from source
   * @param corrections description + operations for how to correct image
   * @param singleBandOptions band + options of how to color a single band
+  * @param mask geometry to limit the rendering
   */
-final case class BacksplashImage(
+final case class BacksplashGeotiff(
     imageId: UUID,
     @cacheKeyExclude projectLayerId: UUID,
     @cacheKeyExclude uri: String,
-    @cacheKeyExclude footprint: MultiPolygon,
     subsetBands: List[Int],
     @cacheKeyExclude corrections: ColorCorrect.Params,
     @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params],
     mask: Option[MultiPolygon])
-    extends LazyLogging {
+    extends LazyLogging with BacksplashImage[IO] {
 
   implicit val tileCache = Cache.tileCache
   implicit val flags = Cache.tileCacheFlags
 
-  lazy val rasterSource = BacksplashImage.getRasterSource(uri)
-
-  /** Read ZXY tile - defers to a private method to enable disable/enabling of cache **/
-  def read(z: Int, x: Int, y: Int): Option[MultibandTile] = {
-    readWithCache(z, x, y)
+  def getRasterSource: IO[RasterSource] = {
+    if (enableGDAL) {
+      logger.debug(s"Using GDAL Raster Source: ${uri}")
+      // Do not bother caching - let GDAL internals worry about that
+      IO {
+        GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+      }
+    } else {
+      memoizeSync(None) {
+        logger.debug(s"Using GeoTiffRasterSource: ${uri}")
+        IO {
+          new GeoTiffRasterSource(uri)
+        }
+      }
+    }
   }
 
-  private def readWithCache(z: Int, x: Int, y: Int)(
-      implicit @cacheKeyExclude flags: Flags): Option[MultibandTile] =
-    memoizeSync(None) {
+  def readWithCache(z: Int, x: Int, y: Int)(
+      implicit @cacheKeyExclude flags: Flags): IO[Option[MultibandTile]] =
+    memoizeF(None) {
       logger.debug(s"Reading ${z}-${x}-${y} - Image: ${imageId} at ${uri}")
-      val layoutDefinition = BacksplashImage.tmsLevels(z)
-      logger.debug(s"CELL TYPE: ${rasterSource.cellType}")
-      Try {
+      val layoutDefinition = tmsLevels(z)
+      getRasterSource.map { rasterSource =>
+        logger.debug(s"CELL TYPE: ${rasterSource.cellType}")
         rasterSource
           .reproject(WebMercator)
           .tileToLayout(layoutDefinition, NearestNeighbor)
           .read(SpatialKey(x, y), subsetBands.toSeq) map { tile =>
           tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
         }
-      }.toOption.flatten
+      }.attempt.map {
+        case Left(e)          => throw e
+        case Right(multibandTile) => multibandTile
+      }
     }
 
-  /** Read tile - defers to a private method to enable disable/enabling of cache **/
-  def read(extent: Extent, cs: CellSize): Option[MultibandTile] = {
-    implicit val flags =
-      Flags(Config.cache.tileCacheEnable, Config.cache.tileCacheEnable)
-    logger.debug(s"Tile Cache Status: ${flags}")
-    readWithCache(extent, cs)
-  }
-
-  private def readWithCache(extent: Extent, cs: CellSize)(
+  def readWithCache(extent: Extent, cs: CellSize)(
       implicit @cacheKeyExclude flags: Flags
-  ): Option[MultibandTile] = {
-    memoizeSync(None) {
+  ): IO[Option[MultibandTile]] = {
+    memoizeF(None) {
       logger.debug(
         s"Reading Extent ${extent} with CellSize ${cs} - Image: ${imageId} at ${uri}"
       )
       val rasterExtent = RasterExtent(extent, cs)
       logger.debug(
         s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
-      Try {
-
+      getRasterSource.map { rasterSource =>
         rasterSource
           .reproject(WebMercator, NearestNeighbor)
           .resampleToGrid(GridExtent[Long](rasterExtent.extent,
@@ -104,32 +105,64 @@ final case class BacksplashImage(
                           NearestNeighbor)
           .read(extent, subsetBands)
           .map(_.tile)
-      }.toOption.flatten
+      }.attempt.map {
+        case Left(e)          => throw e
+        case Right(multibandTile) => multibandTile
+      }
     }
   }
 }
 
-object BacksplashImage extends RasterSourceUtils with LazyLogging {
+// object BacksplashImage extends RasterSourceUtils with LazyLogging {
+//
+//   implicit val rasterSourceCache = Cache.rasterSourceCache
+//   implicit val flags = Cache.rasterSourceCacheFlags
+//
+//   val enableGDAL = Config.RasterSource.enableGDAL
+//
+  // def getRasterSource(uri: String): RasterSource = {
+  //   if (enableGDAL) {
+  //     logger.debug(s"Using GDAL Raster Source: ${uri}")
+  //     // Do not bother caching - let GDAL internals worry about that
+  //     GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+  //   } else {
+  //     memoizeSync(None) {
+  //       logger.debug(s"Using GeoTiffRasterSource: ${uri}")
+  //       val rs = new GeoTiffRasterSource(uri)
+  //       // access lazy vals so they are cached
+  //       rs.tiff
+  //       rs.resolutions
+  //       rs
+  //     }
+  //   }
+  // }
+// }
 
-  implicit val rasterSourceCache = Cache.rasterSourceCache
-  implicit val flags = Cache.rasterSourceCacheFlags
+trait BacksplashImage[F[_]] extends LazyLogging with RasterSourceUtils {
+  implicit val tileCache = Cache.tileCache
+  implicit val flags = Cache.tileCacheFlags
 
   val enableGDAL = Config.RasterSource.enableGDAL
 
-  def getRasterSource(uri: String): RasterSource = {
-    if (enableGDAL) {
-      logger.debug(s"Using GDAL Raster Source: ${uri}")
-      // Do not bother caching - let GDAL internals worry about that
-      GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
-    } else {
-      memoizeSync(None) {
-        logger.debug(s"Using GeoTiffRasterSource: ${uri}")
-        val rs = new GeoTiffRasterSource(uri)
-        // access lazy vals so they are cached
-        rs.tiff
-        rs.resolutions
-        rs
-      }
-    }
+  /** Read ZXY tile - defers to a private method to enable disable/enabling of cache **/
+  def read(z: Int, x: Int, y: Int): F[Option[MultibandTile]] = {
+    readWithCache(z, x, y)
   }
+
+  def readWithCache(z: Int, x: Int, y: Int)(
+      implicit @cacheKeyExclude flags: Flags): F[Option[MultibandTile]]
+
+  /** Read tile - defers to a private method to enable disable/enabling of cache **/
+  def read(extent: Extent, cs: CellSize): F[Option[MultibandTile]] = {
+    implicit val flags =
+      Flags(Config.cache.tileCacheEnable, Config.cache.tileCacheEnable)
+    logger.debug(s"Tile Cache Status: ${flags}")
+    readWithCache(extent, cs)
+  }
+
+  def readWithCache(extent: Extent, cs: CellSize)(
+      implicit @cacheKeyExclude flags: Flags
+  ): F[Option[MultibandTile]]
+
+  def getRasterSource: F[RasterSource]
 }
