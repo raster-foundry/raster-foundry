@@ -113,31 +113,6 @@ final case class BacksplashGeotiff(
   }
 }
 
-// object BacksplashImage extends RasterSourceUtils with LazyLogging {
-//
-//   implicit val rasterSourceCache = Cache.rasterSourceCache
-//   implicit val flags = Cache.rasterSourceCacheFlags
-//
-//   val enableGDAL = Config.RasterSource.enableGDAL
-//
-  // def getRasterSource(uri: String): RasterSource = {
-  //   if (enableGDAL) {
-  //     logger.debug(s"Using GDAL Raster Source: ${uri}")
-  //     // Do not bother caching - let GDAL internals worry about that
-  //     GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
-  //   } else {
-  //     memoizeSync(None) {
-  //       logger.debug(s"Using GeoTiffRasterSource: ${uri}")
-  //       val rs = new GeoTiffRasterSource(uri)
-  //       // access lazy vals so they are cached
-  //       rs.tiff
-  //       rs.resolutions
-  //       rs
-  //     }
-  //   }
-  // }
-// }
-
 trait BacksplashImage[F[_]] extends LazyLogging with RasterSourceUtils {
   implicit val tileCache = Cache.tileCache
   implicit val flags = Cache.tileCacheFlags
