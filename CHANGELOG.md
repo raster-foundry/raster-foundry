@@ -9,6 +9,7 @@
 ### Deprecated
 
 ### Fixed
+- Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
 
 ### Security
 
