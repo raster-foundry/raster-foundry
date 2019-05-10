@@ -111,7 +111,8 @@ services:
       - LOCAL_INGEST_CORES=2
       - LOCAL_INGEST_MEM_GB=4
       - EXPORT_TILE_SIZE=1024
-      - BACKSPLASH_ENABLE_GDAL=false
+      - AWS_DEFAULT_PROFILE=raster-foundry
+      - BACKSPLASH_ENABLE_GDAL=true
     command: rf
     links:
       - postgres:database.service.rasterfoundry.internal
@@ -128,8 +129,6 @@ services:
     environment:
       - RF_LOG_LEVEL=DEBUG
       - COURSIER_CACHE=/root/.coursier
-      - VSI_CACHE=TRUE
-      - GDAL_CACHEMAX=1000
       - DB_THREADPOOL_THREADS=16
       - HTTP4S_THREADPOOL_THREADS=16
       - BLAZE_THREADPOOL_THREADS=4
@@ -139,6 +138,7 @@ services:
       - RF_AUTHENTICATION_CACHE_ENABLE=true
       - BACKSPLASH_HISTOGRAM_CACHE_ENABLE=true
       - BACKSPLASH_TILE_CACHE_ENABLE=true
+      - AWS_DEFAULT_PROFILE=raster-foundry
       - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
       - BACKSPLASH_RASTERSOURCE_CACHE_ENABLE=true
       - BACKSPLASH_ENABLE_GDAL=true
