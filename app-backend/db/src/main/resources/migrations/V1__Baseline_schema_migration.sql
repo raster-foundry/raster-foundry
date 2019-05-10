@@ -605,7 +605,6 @@ ALTER TABLE public.map_tokens OWNER TO rasterfoundry;
 --
 
 CREATE TABLE public.metrics (
-    id uuid NOT NULL,
     period tsrange NOT NULL,
     metric_event jsonb NOT NULL,
     metric_value integer NOT NULL,
@@ -1078,9 +1077,8 @@ ALTER TABLE ONLY public.map_tokens
 -- Name: metrics metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: rasterfoundry
 --
 
-ALTER TABLE ONLY public.metrics
-    ADD CONSTRAINT metrics_pkey PRIMARY KEY (id);
-
+ALTER TABLE metrics ADD CONSTRAINT metric_event_period_unique
+  UNIQUE (period, metric_event, requester);
 
 --
 -- Name: organization_features organization_features_pkey; Type: CONSTRAINT; Schema: public; Owner: rasterfoundry
