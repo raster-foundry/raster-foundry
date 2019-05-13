@@ -7,6 +7,7 @@ import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel.PageRequest
 import cats.data._
 import cats.implicits._
+import cats.effect.{LiftIO, IO}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -190,20 +191,20 @@ object ProjectDao
     } yield updateProject
   }
 
-  def deleteProject(id: UUID): ConnectionIO[Int] = {
+  def deleteProject(id: UUID)(
+      implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
 
     val aoiDeleteQuery = sql"DELETE FROM aois where aois.project_id = ${id}"
     for {
       _ <- aoiDeleteQuery.update.run
       layers <- ProjectLayerDao.listProjectLayersForProjectQ(id).list
       _ <- layers
-        .map(pl => {
+        .traverse(pl => {
           pl.overviewsLocation match {
-            case Some(locUrl) => removeLayerOverview(pl.id, locUrl)
-            case _            => ()
+            case Some(locUrl) => L.liftIO(removeLayerOverview(pl.id, locUrl))
+            case _            => ().pure[ConnectionIO]
           }
         })
-        .pure[ConnectionIO]
       projectDeleteCount <- query.filter(fr"id = ${id}").delete
     } yield projectDeleteCount
   }
@@ -387,7 +388,8 @@ object ProjectDao
 
   def deleteScenesFromProject(sceneIds: List[UUID],
                               projectId: UUID,
-                              projectLayerId: UUID): ConnectionIO[Int] = {
+                              projectLayerId: UUID)(
+      implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
     val f: Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
     f match {
       case _ @Some(_) =>
@@ -404,10 +406,10 @@ object ProjectDao
             projectLayerId)
           _ <- projectLayer.overviewsLocation match {
             case Some(locUrl) if layerDatasources.isEmpty =>
-              removeLayerOverview(projectLayerId, locUrl)
-              ProjectLayerDao.updateProjectLayer(
-                projectLayer.copy(overviewsLocation = None),
-                projectLayer.id)
+              (L.liftIO(removeLayerOverview(projectLayerId, locUrl)),
+               ProjectLayerDao.updateProjectLayer(
+                 projectLayer.copy(overviewsLocation = None),
+                 projectLayer.id)).tupled
             case _ => 0.pure[ConnectionIO]
           }
         } yield {
@@ -500,7 +502,7 @@ object ProjectDao
       layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
     } yield { authProject && layerExist }
 
-  def removeLayerOverview(projectLayerId: UUID, locUrl: String): Unit = {
+  def removeLayerOverview(projectLayerId: UUID, locUrl: String): IO[Unit] = {
     logger
       .info(
         s"No scenes left in project layer $projectLayerId with overview location $locUrl")
@@ -509,16 +511,21 @@ object ProjectDao
     val bucket = URLDecoder.decode(jUri.getHost(), "UTF-8")
     val key = URLDecoder.decode(urlPath.slice(1, urlPath.size), "UTF-8")
     val s3 = S3()
-    if (s3.doesObjectExist(bucket, key)) {
-      logger
-        .info(
-          s"Found overview: $locUrl for layer $projectLayerId, deleting it...")
-      s3.deleteObject(bucket, key)
-      logger
-        .info(s"Deleted overview: $locUrl for layer $projectLayerId")
-    } else {
-      logger
-        .info(s"Not Found overview: $locUrl for layer $projectLayerId")
+    IO { s3.doesObjectExist(bucket, key) } flatMap { exist =>
+      if (exist) {
+        logger
+          .info(
+            s"Found overview: $locUrl for layer $projectLayerId, deleting it...")
+        IO { s3.deleteObject(bucket, key) } map { _ =>
+          logger
+            .info(s"Deleted overview: $locUrl for layer $projectLayerId")
+        }
+      } else {
+        IO {
+          logger
+            .info(s"Not Found overview: $locUrl for layer $projectLayerId")
+        }
+      }
     }
   }
 }

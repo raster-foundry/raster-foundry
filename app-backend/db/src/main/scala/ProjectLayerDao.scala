@@ -7,6 +7,7 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import com.rasterfoundry.datamodel.PageRequest
 import cats.implicits._
+import cats.effect.LiftIO
 import java.sql.Timestamp
 import java.time.temporal.IsoFields
 import java.time.temporal.TemporalAdjusters
@@ -114,12 +115,14 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   ): ConnectionIO[Option[ProjectLayer]] =
     query.filter(fr"project_id = ${projectId}").filter(layerId).selectOption
 
-  def deleteProjectLayer(layerId: UUID): ConnectionIO[Int] =
+  def deleteProjectLayer(layerId: UUID)(
+      implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] =
     for {
       pl <- unsafeGetProjectLayerById(layerId)
-      _ = pl.overviewsLocation match {
-        case Some(locUrl) => ProjectDao.removeLayerOverview(layerId, locUrl)
-        case _            => ()
+      _ <- pl.overviewsLocation match {
+        case Some(locUrl) =>
+          L.liftIO(ProjectDao.removeLayerOverview(layerId, locUrl))
+        case _ => ().pure[ConnectionIO]
       }
       rowsDeleted <- query.filter(layerId).delete
     } yield rowsDeleted
