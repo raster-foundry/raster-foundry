@@ -84,7 +84,7 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
       refreshToken,
       pixelSizeMeters
     )
-    val payload: String = payloadcs.asJson.toString
+    val payload: String = payloadcs.asJson.noSpaces
     val payloadObfuscated: String =
       payloadcs.copy(refreshToken = "").asJson.toString
     invokeLambdaFunction(functionName,
