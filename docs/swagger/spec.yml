@@ -3231,7 +3231,7 @@ paths:
         - $ref: '#/parameters/locked'
         - $ref: '#/parameters/lockedBy'
         - $ref: '#/parameters/actionUser'
-        - $ref: '#/parameters/actionStatus'
+        - $ref: '#/parameters/actionType'
         - $ref: '#/parameters/actionStartTime'
         - $ref: '#/parameters/actionEndTime'
         - $ref: '#/parameters/actionMinCount'
@@ -3359,7 +3359,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /projects/{projectID}/layers/{layerID}/tasks/{taskID}/lock:
-    get:
+    post:
       summary: 'Lock a task so that it cannot be updated or locked by another user'
       tags:
         - Imagery
@@ -3381,7 +3381,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /projects/{projectID}/layers/{layerID}/tasks/{taskID}/unlock:
-    get:
+    post:
       summary: 'Remove the lock from a task so that it can be update by other users'
       tags:
         - Imagery
@@ -5358,8 +5358,8 @@ parameters:
     in: query
     type: string
     required: false
-  actionStatus:
-    name: actionStatus
+  actionType:
+    name: actionType
     description: 'Filter to tasks that the specified status has at one time been applied to'
     in: query
     type: string
@@ -5379,7 +5379,7 @@ parameters:
   actionMinCount:
     name: actionMinCount
     description: >
-      Must be paired with `actionStatus`.
+      Must be paired with `actionType`.
       Filter to tasks that have at least the specified number of occurences of the specified action.
     in: query
     type: integer
@@ -5387,7 +5387,7 @@ parameters:
   actionMaxCount:
     name: actionMaxCount
     description: >
-      Must be paired with `actionStatus`.
+      Must be paired with `actionType`.
       Filter to tasks that have at most the specified number of occurences of the specified action.
     in: query
     type: integer
