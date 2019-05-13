@@ -17,30 +17,33 @@ import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 object BacksplashMosaic extends ToHistogramStoreOps {
 
   def toRasterSource(bsm: BacksplashMosaic): IO[MosaicRasterSource] = {
-    filterRelevant(bsm).compile.toList map { backsplashImages =>
+    filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>
-          MosaicRasterSource(images map { image =>
-            BacksplashImage.getRasterSource(image.uri)
-          }, images.head.rasterSource.crs)
+          images traverse { image =>
+            image.getRasterSource
+          } map { rasterSourceList =>
+            MosaicRasterSource(rasterSourceList, rasterSourceList.head.crs)
+          }
         case _ =>
-          throw NoScenesException
+          IO.raiseError(MetadataException(
+            "Cannot construct a mosaic with no scenes"))
       }
     }
   }
 
   def getRasterSourceOriginalCRS(bsm: BacksplashMosaic): IO[List[CRS]] = {
-    filterRelevant(bsm).compile.toList map { backsplashImages =>
+    filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>
-          images
-            .map(image => {
-              BacksplashImage.getRasterSource(image.uri).crs
-            })
-            .toList
-            .distinct
+          images traverse { image =>
+            image.getRasterSource
+          } map { rasterSourceList =>
+            rasterSourceList.map(_.crs).toList.distinct
+          }
         case _ =>
-          throw NoScenesException
+        IO.raiseError(MetadataException(
+          "Cannot get crs with no scenes"))
       }
     }
   }
@@ -72,7 +75,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     })
   }
 
-  def first(bsm: BacksplashMosaic): IO[Option[BacksplashImage]] = {
+  def first(bsm: BacksplashMosaic): IO[Option[BacksplashImage[IO]]] = {
     bsm
       .take(1)
       .compile

@@ -8,6 +8,7 @@ import geotrellis.raster.{io => _, _}
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
 import geotrellis.proj4.WebMercator
+import geotrellis.tiling.LayoutDefinition
 import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import java.util.UUID
@@ -17,6 +18,7 @@ import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.raster.MultibandTile
 import geotrellis.vector.MultiPolygon
+import scalacache.CatsEffect.modes._
 import scalacache._
 import scalacache.memoization._
 import cats.effect.IO
@@ -45,11 +47,13 @@ final case class BacksplashGeotiff(
     subsetBands: List[Int],
     @cacheKeyExclude corrections: ColorCorrect.Params,
     @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params],
-    mask: Option[MultiPolygon])
+    mask: Option[MultiPolygon],
+    @cacheKeyExclude footprint: MultiPolygon)
     extends LazyLogging with BacksplashImage[IO] {
 
   implicit val tileCache = Cache.tileCache
   implicit val flags = Cache.tileCacheFlags
+  implicit val rasterSourceCache = Cache.rasterSourceCache
 
   def getRasterSource: IO[RasterSource] = {
     if (enableGDAL) {
@@ -59,7 +63,7 @@ final case class BacksplashGeotiff(
         GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
       }
     } else {
-      memoizeSync(None) {
+      memoizeF(None) {
         logger.debug(s"Using GeoTiffRasterSource: ${uri}")
         IO {
           new GeoTiffRasterSource(uri)
@@ -113,9 +117,11 @@ final case class BacksplashGeotiff(
   }
 }
 
-trait BacksplashImage[F[_]] extends LazyLogging with RasterSourceUtils {
-  implicit val tileCache = Cache.tileCache
-  implicit val flags = Cache.tileCacheFlags
+sealed trait BacksplashImage[F[_]] extends LazyLogging with RasterSourceUtils {
+
+  val footprint: MultiPolygon
+  val imageId: UUID
+  val subsetBands: List[Int]
 
   val enableGDAL = Config.RasterSource.enableGDAL
 
@@ -140,4 +146,14 @@ trait BacksplashImage[F[_]] extends LazyLogging with RasterSourceUtils {
   ): F[Option[MultibandTile]]
 
   def getRasterSource: F[RasterSource]
+
+  def getRasterSource(uri: String): RasterSource =
+    throw new NotImplementedError()
+}
+
+object BacksplashImage {
+  val tmsLevels: Array[LayoutDefinition] = {
+    val scheme = ZoomedLayoutScheme(crs, 256)
+    for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
+  }.toArray
 }
