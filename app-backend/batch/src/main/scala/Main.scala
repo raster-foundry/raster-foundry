@@ -22,9 +22,6 @@ object Main {
   )
 
   def main(args: Array[String]): Unit = {
-    println(args)
-    println("lol")
-    println("omg")
     args.headOption match {
       case Some(head) => {
         modules.get(head) match {

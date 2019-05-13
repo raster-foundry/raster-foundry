@@ -25,6 +25,7 @@ object OverviewBackfill extends Job with RollbarNotifier {
       .query[Int]
       .stream map { (projectLayer, _) }
 
+  // TODO make sure that this is called synchronously
   def kickoffOverviewGeneration(projectLayer: ProjectLayer): IO[Unit] =
     IO {
       println(s"Kicking off generation for layer ${projectLayer.id}")
