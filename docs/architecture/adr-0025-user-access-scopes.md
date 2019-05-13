@@ -15,7 +15,7 @@ This ADR seeks to develop a solution to this problem.
 
 ## Solutions
 
-The solutions below all treat scopes as access reduction mechanisms. That is, full access is defined by the absence of scopes while the presence of scopes reduces the access of the user in question. There are a few reasons for this:
+The solutions below (except for the last) all treat scopes as access reduction mechanisms. That is, full access is defined by the absence of scopes while the presence of scopes reduces the access of the user in question. There are a few reasons for this:
 
 - It is assumed that a majority of users will not have any access restrictions
 - In the most common application of this system (preventing project creation), specifying what _can_ be done would require _many_ more rules than specifying what _can't_ be done
@@ -142,6 +142,51 @@ Usage at the endpoint level might look like:
 - requires a bunch of columns to be added (most likely to the `User` data-model/table)
 - will require some machinery to map `ObjectType`s to columns
 
+### The More Granular Variation
+
+This solution is similar to _The Civilized Solution_ in that it would use an absence of scopes for a certain domain to imply full access. For example, if a user has no `project` scopes, then they are granted full access to project operations. This solution differs from the others in how the scopes are treated at the endpoint level. For example, if that user instead has a scope of `project:read`, they would be allowed to interact with project read end-points. This is in contrast to the other approaches that invert the process and determine what operations are _not_ allowed using scopes.
+
+- could be implemented with a single scopes column or a column for each domain (project, scenes, etc.), where the columns would contain a list of applied scopes for that user
+- Scope types would be defined within a `ScopeType` to enforce values
+- Each API endpoint that is affected would do a lookup on the requesting user and ensure that if a scope is present for the relevant domain that the necessary scope was present
+
+Usage at the endpoint level might look like:
+
+```scala
+  def createProject: Route = authenticate { user =>
+    authorizeAsync {
+      UserDao
+        .hasScope(ObjectType.Project, ScopeType.Read)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      entity(as[Project.Create]) { newProject =>
+        onSuccess(
+          ProjectDao
+            .insertProject(newProject, user)
+            .transact(xa)
+            .unsafeToFuture) { project =>
+          complete(StatusCodes.Created, project)
+        }
+      }
+    }
+  }
+```
+
+#### Advantages
+
+- easy to add new scopes as needed
+- promotes consistency by narrowing `ScopeType` members
+- encourages a more granular approach to scoping versus larger all-encompassing scopes types such as `readOnly`
+- much more intuitive at the endpoint level
+
+#### Disadvantages
+
+- multiple scopes per domain open the possibility for conflicts but those could be avoided with sufficiently granular scopes types
+- could require a bunch of columns to be added or...
+- could alternatively require a more complex encoding/decoding process
+
 ## Decision
 
-The lack of flexibility is enough to discard _The Basic Solution_ and the need for conflict resolution is probably enough to discard _The Wild West_ solution. We should use "The Civilized Solution".
+The lack of flexibility is enough to discard _The Basic Solution_ and the need for conflict resolution is probably enough to discard _The Wild West_ solution. _The Civilized Solution_ is less clear than _The More Granular Variation_ and they both seems to require the same amount of effort to implement.
+We should go forward using _The More Granular Variation_.
