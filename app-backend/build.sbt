@@ -435,7 +435,6 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.geotrellisContribVLM,
       Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisServer,
-      Dependencies.geotrellisTiling,
       Dependencies.scalacacheCats,
       Dependencies.scalacacheCore,
       Dependencies.scalacacheCaffeine,

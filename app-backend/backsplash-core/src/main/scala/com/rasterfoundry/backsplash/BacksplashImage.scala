@@ -8,7 +8,6 @@ import geotrellis.raster.{io => _, _}
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
 import geotrellis.proj4.WebMercator
-import geotrellis.tiling.LayoutDefinition
 import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import java.util.UUID
@@ -153,7 +152,7 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging with RasterSourceUtils {
 
 object BacksplashImage {
   val tmsLevels: Array[LayoutDefinition] = {
-    val scheme = ZoomedLayoutScheme(crs, 256)
+    val scheme = ZoomedLayoutScheme(WebMercator, 256)
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
 }
