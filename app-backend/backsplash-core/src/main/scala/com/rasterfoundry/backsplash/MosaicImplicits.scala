@@ -59,7 +59,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     ) = (z: Int, x: Int, y: Int) => {
       val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
       val mosaic = {
-        val mbtIO = (BacksplashMosaic.filterRelevant(self) map { relevant =>
+        val mbtIO = (BacksplashMosaic.filterRelevant(self).parEvalMap(streamConcurrency) { relevant =>
           logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
           relevant.read(z, x, y)
         }).collect({ case Some(mbtile) => mbtile }).compile.toList
@@ -115,7 +115,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             val ioMBT = filtered
               .parEvalMap(streamConcurrency)({ relevant =>
                 for {
-                  imFiber <- IO {
+                  imFiber <- {
                     logger.debug(
                       s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
                     relevant.read(z, x, y)
@@ -159,7 +159,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               .filterRelevant(self)
               .parEvalMap(streamConcurrency) { relevant =>
                 logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
-                IO { (relevant.read(z, x, y), relevant.singleBandOptions) }
+                relevant.read(z, x, y) map {
+                  (_, relevant.singleBandOptions)
+                }
               }
               .collect({ case (Some(mbtile), Some(sbo)) => (mbtile, sbo) })
               .compile
@@ -235,7 +237,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     * @return
     */
   private def getHistogramWithCache(
-      relevant: BacksplashImage
+      relevant: BacksplashImage[IO]
   )(implicit @cacheKeyExclude flags: Flags): IO[Array[Histogram[Double]]] =
     memoizeF(None) {
       logger.debug(s"Retrieving Histograms for ${relevant.imageId} from Source")
@@ -271,10 +273,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                 .parEvalMap(streamConcurrency)({ relevant =>
                   {
                     for {
-                      imFiber <- IO {
-                        val img = relevant.read(extent, cs)
-                        img
-                      }.start
+                      imFiber <- relevant.read(extent, cs).start
                       histsFiber <- {
                         histStore.layerHistogram(relevant.imageId,
                                                  relevant.subsetBands)
@@ -316,19 +315,19 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   BacksplashMosaic
                     .filterRelevant(self)
                     .parEvalMap(streamConcurrency)({ relevant =>
-                      IO {
-                        relevant.read(extent, cs) map {
-                          ColorRampMosaic
-                            .colorTile(
-                              _,
-                              layerHist,
-                              relevant.singleBandOptions getOrElse {
-                                throw SingleBandOptionsException(
-                                  "Must specify single band options when requesting single band visualization."
-                                )
-                              }
-                            )
-                        }
+                      relevant.read(extent, cs) map {
+                        case Some(mbt) =>
+                          Some(ColorRampMosaic
+                          .colorTile(
+                            mbt,
+                            layerHist,
+                            relevant.singleBandOptions getOrElse {
+                              throw SingleBandOptionsException(
+                                "Must specify single band options when requesting single band visualization."
+                              )
+                            }
+                          ))
+                        case _ => None
                       }
                     })
                     .collect({
@@ -360,9 +359,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
           val mosaic = BacksplashMosaic
             .filterRelevant(self)
             .parEvalMap(streamConcurrency) { relevant =>
-              IO {
-                relevant.read(extent, cs)
-              }
+              relevant.read(extent, cs)
             }
             .collect({ case Some(mbTile) => mbTile })
             .compile
@@ -386,20 +383,20 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
           implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] = {
         val mosaic = BacksplashMosaic
           .filterRelevant(self)
-          .flatMap({ img =>
-            {
-              fs2.Stream.eval(BacksplashImage.getRasterExtents(img.uri) map {
-                extents =>
-                  extents map {
-                    ReprojectRasterExtent(_, img.rasterSource.crs, WebMercator)
-                  }
-              })
+          .parEvalMap(streamConcurrency)({ img =>
+            img.getRasterSource map {rs =>
+              rs.resolutions map { res =>
+                ReprojectRasterExtent(
+                  RasterExtent(res.extent, res.cellwidth, res.cellheight, res.cols.toInt, res.rows.toInt),
+                  rs.crs,
+                  WebMercator)
+              }
             }
           })
           .compile
           .toList
           .map(_.reduceLeft({
-            (nel1: NEL[RasterExtent], nel2: NEL[RasterExtent]) =>
+            (nel1: List[RasterExtent], nel2: List[RasterExtent]) =>
               val updatedExtent = nel1.head.extent combine nel2.head.extent
               val updated1 = nel1.map { re =>
                 RasterExtent(updatedExtent,
@@ -409,9 +406,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                 RasterExtent(updatedExtent,
                              CellSize(re.cellwidth, re.cellheight))
               }
-              updated1 concatNel updated2
+              updated1 ++ updated2
           }))
-        mosaic
+        mosaic.map(_.toNel.getOrElse(throw new MetadataException("Cannot get rater extent from mosaic.")))
       }
     }
 }

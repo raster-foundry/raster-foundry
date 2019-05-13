@@ -7,8 +7,8 @@ import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
+import geotrellis.spark.tiling.ZoomedLayoutScheme
 import geotrellis.proj4.WebMercator
-import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import java.util.UUID
 
@@ -75,7 +75,7 @@ final case class BacksplashGeotiff(
       implicit @cacheKeyExclude flags: Flags): IO[Option[MultibandTile]] =
     memoizeF(None) {
       logger.debug(s"Reading ${z}-${x}-${y} - Image: ${imageId} at ${uri}")
-      val layoutDefinition = tmsLevels(z)
+      val layoutDefinition = BacksplashImage.tmsLevels(z)
       getRasterSource.map { rasterSource =>
         logger.debug(s"CELL TYPE: ${rasterSource.cellType}")
         rasterSource
@@ -114,13 +114,18 @@ final case class BacksplashGeotiff(
       }
     }
   }
+
+  def selectBands(bands: List[Int]): BacksplashGeotiff = this.copy(subsetBands = bands)
 }
 
-sealed trait BacksplashImage[F[_]] extends LazyLogging with RasterSourceUtils {
+sealed trait BacksplashImage[F[_]] extends LazyLogging {
 
   val footprint: MultiPolygon
   val imageId: UUID
   val subsetBands: List[Int]
+  val corrections: ColorCorrect.Params
+  val singleBandOptions: Option[SingleBandOptions.Params]
+  val projectLayerId: UUID
 
   val enableGDAL = Config.RasterSource.enableGDAL
 
@@ -147,11 +152,13 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging with RasterSourceUtils {
   def getRasterSource: F[RasterSource]
 
   def getRasterSource(uri: String): RasterSource =
-    throw new NotImplementedError()
+    throw new NotImplementedError(uri)
+
+  def selectBands(bands: List[Int]): BacksplashImage[F]
 }
 
 object BacksplashImage {
-  val tmsLevels: Array[LayoutDefinition] = {
+  val tmsLevels = {
     val scheme = ZoomedLayoutScheme(WebMercator, 256)
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray

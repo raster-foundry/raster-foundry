@@ -14,7 +14,7 @@ import com.rasterfoundry.common.color.{
   SigmoidalContrast => RFSigmoidalContrast,
   Saturation => RFSaturation
 }
-import com.rasterfoundry.backsplash.{ProjectStore, BacksplashImage}
+import com.rasterfoundry.backsplash.{ProjectStore, BacksplashImage, BacksplashGeotiff}
 import com.rasterfoundry.backsplash.color.{
   ColorCorrect => BSColorCorrect,
   SingleBandOptions => BSSingleBandOptions,
@@ -37,7 +37,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
   @SuppressWarnings(Array("OptionGet"))
   private def mosaicDefinitionToImage(mosaicDefinition: MosaicDefinition,
                                       bandOverride: Option[BandOverride],
-                                      projId: UUID): BacksplashImage = {
+                                      projId: UUID): BacksplashGeotiff = {
     val singleBandOptions =
       mosaicDefinition.singleBandOptions flatMap {
         _.as[BSSingleBandOptions.Params].toOption
@@ -102,15 +102,15 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       )
     )
 
-    BacksplashImage(
+    BacksplashGeotiff(
       sceneId,
       projId,
       ingestLocation,
-      footprint,
       subsetBands,
       colorCorrectParameters,
       singleBandOptions,
-      mosaicDefinition.mask
+      mosaicDefinition.mask,
+      footprint
     )
   }
 
@@ -120,7 +120,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         projId: UUID, // actually a scene id, but argument names have to match
         window: Option[Projected[Polygon]],
         bandOverride: Option[BandOverride],
-        imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
+        imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage[IO]] = {
       for {
         scene <- SceneDao.streamSceneById(projId, window).transact(xa)
       } yield {
@@ -138,15 +138,15 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         } getOrElse { List(0, 1, 2) }
         val colorCorrectParams = BSColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
         logger.debug(s"Chosen color correction: ${colorCorrectParams}")
-        BacksplashImage(
+        BacksplashGeotiff(
           scene.id,
           randomProjectId,
           ingestLocation,
-          footprint,
           imageBandOverride,
           colorCorrectParams,
           None, // no single band options ever
-          None // not adding the mask here, since out of functional scope for md to image
+          None, // not adding the mask here, since out of functional scope for md to image
+          footprint
         )
       }
     }
@@ -161,7 +161,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
           projId: UUID,
           window: Option[Projected[Polygon]],
           bandOverride: Option[BandOverride],
-          imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
+          imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage[IO]] = {
         SceneToLayerDao.getMosaicDefinition(
           projId,
           window,
