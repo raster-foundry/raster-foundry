@@ -32,3 +32,11 @@
     - name: Set Environment variable for host user (used to namespace jars and other artifacts in development)
       lineinfile: dest=/etc/environment regexp=^RF_HOST_USER line="RF_HOST_USER={{ host_user }}"
       when: host_user is defined
+
+    - name: Create script to handle core dumps
+      copy: content="#!/bin/sh\nexec /bin/gzip -1 > /tmp/core.$1.$2.gz\n"
+            dest=/usr/local/sbin/handle_core owner=root group=root mode=0755
+
+    - name: Set pattern for core dump handler
+      sysctl: name="kernel.core_pattern" value="|/usr/local/sbin/handle_core %E %p"
+              sysctl_set=yes state=present reload=yes

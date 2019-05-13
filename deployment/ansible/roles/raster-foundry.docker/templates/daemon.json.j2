@@ -1,0 +1,15 @@
+{
+    "userns-remap": "{{ '' if docker_user == 'vagrant' else 'jenkins' }}",
+    "default-ulimits": {
+        "nofile": {
+            "Name": "nofile",
+            "Hard": 64000,
+            "Soft": 64000
+        },
+        "core": {
+            "Name": "core",
+            "Hard": -1,
+            "Soft": -1
+        }
+    }
+}
