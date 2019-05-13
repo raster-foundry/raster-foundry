@@ -59,10 +59,15 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     ) = (z: Int, x: Int, y: Int) => {
       val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
       val mosaic = {
-        val mbtIO = (BacksplashMosaic.filterRelevant(self).parEvalMap(streamConcurrency) { relevant =>
-          logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
-          relevant.read(z, x, y)
-        }).collect({ case Some(mbtile) => mbtile }).compile.toList
+        val mbtIO = (BacksplashMosaic
+          .filterRelevant(self)
+          .parEvalMap(streamConcurrency) { relevant =>
+            logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
+            relevant.read(z, x, y)
+          })
+          .collect({ case Some(mbtile) => mbtile })
+          .compile
+          .toList
         mbtIO.map(_.reduceOption(_ merge _) match {
           case Some(t) => Raster(t, extent)
           case _ =>
@@ -317,16 +322,17 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                     .parEvalMap(streamConcurrency)({ relevant =>
                       relevant.read(extent, cs) map {
                         case Some(mbt) =>
-                          Some(ColorRampMosaic
-                          .colorTile(
-                            mbt,
-                            layerHist,
-                            relevant.singleBandOptions getOrElse {
-                              throw SingleBandOptionsException(
-                                "Must specify single band options when requesting single band visualization."
-                              )
-                            }
-                          ))
+                          Some(
+                            ColorRampMosaic
+                              .colorTile(
+                                mbt,
+                                layerHist,
+                                relevant.singleBandOptions getOrElse {
+                                  throw SingleBandOptionsException(
+                                    "Must specify single band options when requesting single band visualization."
+                                  )
+                                }
+                              ))
                         case _ => None
                       }
                     })
@@ -384,12 +390,15 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         val mosaic = BacksplashMosaic
           .filterRelevant(self)
           .parEvalMap(streamConcurrency)({ img =>
-            img.getRasterSource map {rs =>
+            img.getRasterSource map { rs =>
               rs.resolutions map { res =>
-                ReprojectRasterExtent(
-                  RasterExtent(res.extent, res.cellwidth, res.cellheight, res.cols.toInt, res.rows.toInt),
-                  rs.crs,
-                  WebMercator)
+                ReprojectRasterExtent(RasterExtent(res.extent,
+                                                   res.cellwidth,
+                                                   res.cellheight,
+                                                   res.cols.toInt,
+                                                   res.rows.toInt),
+                                      rs.crs,
+                                      WebMercator)
               }
             }
           })
@@ -408,7 +417,8 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               }
               updated1 ++ updated2
           }))
-        mosaic.map(_.toNel.getOrElse(throw new MetadataException("Cannot get rater extent from mosaic.")))
+        mosaic.map(_.toNel.getOrElse(
+          throw new MetadataException("Cannot get rater extent from mosaic.")))
       }
     }
 }

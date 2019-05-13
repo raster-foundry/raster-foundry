@@ -14,7 +14,11 @@ import com.rasterfoundry.common.color.{
   SigmoidalContrast => RFSigmoidalContrast,
   Saturation => RFSaturation
 }
-import com.rasterfoundry.backsplash.{ProjectStore, BacksplashImage, BacksplashGeotiff}
+import com.rasterfoundry.backsplash.{
+  ProjectStore,
+  BacksplashImage,
+  BacksplashGeotiff
+}
 import com.rasterfoundry.backsplash.color.{
   ColorCorrect => BSColorCorrect,
   SingleBandOptions => BSSingleBandOptions,
@@ -156,12 +160,12 @@ class ProjectStoreImplicits(xa: Transactor[IO])
     new ProjectStore[SceneToLayerDao] {
       // projId here actually refers to a layer -- but the argument names have to
       // match the typeclass we're providing evidence for
-      def read(
-          self: SceneToLayerDao,
-          projId: UUID,
-          window: Option[Projected[Polygon]],
-          bandOverride: Option[BandOverride],
-          imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage[IO]] = {
+      def read(self: SceneToLayerDao,
+               projId: UUID,
+               window: Option[Projected[Polygon]],
+               bandOverride: Option[BandOverride],
+               imageSubset: Option[NEL[UUID]])
+        : fs2.Stream[IO, BacksplashImage[IO]] = {
         SceneToLayerDao.getMosaicDefinition(
           projId,
           window,

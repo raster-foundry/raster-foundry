@@ -48,7 +48,8 @@ final case class BacksplashGeotiff(
     @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params],
     mask: Option[MultiPolygon],
     @cacheKeyExclude footprint: MultiPolygon)
-    extends LazyLogging with BacksplashImage[IO] {
+    extends LazyLogging
+    with BacksplashImage[IO] {
 
   implicit val tileCache = Cache.tileCache
   implicit val flags = Cache.tileCacheFlags
@@ -76,18 +77,21 @@ final case class BacksplashGeotiff(
     memoizeF(None) {
       logger.debug(s"Reading ${z}-${x}-${y} - Image: ${imageId} at ${uri}")
       val layoutDefinition = BacksplashImage.tmsLevels(z)
-      getRasterSource.map { rasterSource =>
-        logger.debug(s"CELL TYPE: ${rasterSource.cellType}")
-        rasterSource
-          .reproject(WebMercator)
-          .tileToLayout(layoutDefinition, NearestNeighbor)
-          .read(SpatialKey(x, y), subsetBands.toSeq) map { tile =>
-          tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
+      getRasterSource
+        .map { rasterSource =>
+          logger.debug(s"CELL TYPE: ${rasterSource.cellType}")
+          rasterSource
+            .reproject(WebMercator)
+            .tileToLayout(layoutDefinition, NearestNeighbor)
+            .read(SpatialKey(x, y), subsetBands.toSeq) map { tile =>
+            tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
+          }
         }
-      }.attempt.map {
-        case Left(e)          => throw e
-        case Right(multibandTile) => multibandTile
-      }
+        .attempt
+        .map {
+          case Left(e)              => throw e
+          case Right(multibandTile) => multibandTile
+        }
     }
 
   def readWithCache(extent: Extent, cs: CellSize)(
@@ -100,22 +104,26 @@ final case class BacksplashGeotiff(
       val rasterExtent = RasterExtent(extent, cs)
       logger.debug(
         s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
-      getRasterSource.map { rasterSource =>
-        rasterSource
-          .reproject(WebMercator, NearestNeighbor)
-          .resampleToGrid(GridExtent[Long](rasterExtent.extent,
-                                           rasterExtent.cellSize),
-                          NearestNeighbor)
-          .read(extent, subsetBands)
-          .map(_.tile)
-      }.attempt.map {
-        case Left(e)          => throw e
-        case Right(multibandTile) => multibandTile
-      }
+      getRasterSource
+        .map { rasterSource =>
+          rasterSource
+            .reproject(WebMercator, NearestNeighbor)
+            .resampleToGrid(GridExtent[Long](rasterExtent.extent,
+                                             rasterExtent.cellSize),
+                            NearestNeighbor)
+            .read(extent, subsetBands)
+            .map(_.tile)
+        }
+        .attempt
+        .map {
+          case Left(e)              => throw e
+          case Right(multibandTile) => multibandTile
+        }
     }
   }
 
-  def selectBands(bands: List[Int]): BacksplashGeotiff = this.copy(subsetBands = bands)
+  def selectBands(bands: List[Int]): BacksplashGeotiff =
+    this.copy(subsetBands = bands)
 }
 
 sealed trait BacksplashImage[F[_]] extends LazyLogging {
