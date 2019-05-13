@@ -98,7 +98,7 @@ class SceneService[ProjStore: ProjectStore, HistStore](
             paintedMosaicExtentReification,
             cs)
           extent = footprint map { _.envelope } getOrElse {
-            throw MetadataException(s"Scene $sceneId does not have a footprint")
+            throw NoFootprintException
           }
           xSize = extent.width / thumbnailSize.width
           ySize = extent.height / thumbnailSize.height

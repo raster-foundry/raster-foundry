@@ -67,7 +67,7 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
                   (LayerExtent.identity(sl),
                    layers.getLayerHistogram(UUID.fromString(title)))
                 case _: MapAlgebraOgcLayer =>
-                  throw MetadataException(
+                  throw new MetadataException(
                     "Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
               }
               respIO <- (evalExtent(re.extent, re.cellSize), evalHistogram)

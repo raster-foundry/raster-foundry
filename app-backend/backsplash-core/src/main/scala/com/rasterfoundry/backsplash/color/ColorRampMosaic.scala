@@ -109,11 +109,11 @@ object ColorRampMosaic extends LazyLogging {
     val singleBandTile = tile.band(0)
     val hist: Histogram[Double] = histogram match {
       case Nil =>
-        throw MetadataException(
+        throw new MetadataException(
           "Received an empty list of histograms for single band color correction")
       case hist +: Nil => hist
       case _ =>
-        throw MetadataException(
+        throw new MetadataException(
           "Received too many histograms for single band color correction")
     }
     val cmap =
