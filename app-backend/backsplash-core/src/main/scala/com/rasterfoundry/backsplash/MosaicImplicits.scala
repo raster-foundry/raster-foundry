@@ -385,6 +385,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
 
   implicit val mosaicHasRasterExtents: HasRasterExtents[BacksplashMosaic] =
     new HasRasterExtents[BacksplashMosaic] {
+      @SuppressWarnings(Array("TraversableHead"))
       def rasterExtents(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] = {
         val mosaic = BacksplashMosaic
