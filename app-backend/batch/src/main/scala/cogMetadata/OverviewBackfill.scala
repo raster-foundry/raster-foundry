@@ -17,7 +17,6 @@ import scala.concurrent.duration._
 
 object OverviewBackfill extends Job with RollbarNotifier {
   val name = "backfill-layer-overviews"
-  val xa: Transactor[IO] = ???
 
   def getProjectLayerSceneCount(
       projectLayer: ProjectLayer
