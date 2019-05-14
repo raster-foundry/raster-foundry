@@ -4,12 +4,23 @@ import cats._
 import cats.data._
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.raster._
 import org.http4s._
+import org.http4s.headers._
 import org.http4s.dsl._
 
 sealed trait BacksplashException extends Exception
+
 // When there's something wrong with stored metadata for the calculations we'd like to do
-final case class MetadataException(message: String) extends BacksplashException
+class MetadataException(val message: String) extends BacksplashException
+object MetadataException {
+  def unapply(m: MetadataException): Option[String] = Some(m.message)
+}
+
+case object NoScenesException
+    extends MetadataException("Cannot construct a mosaic with no scenes")
+case object NoFootprintException
+    extends MetadataException("Scene does not have a footprint")
 // When single band options are missing for a single band project or something else is wrong with them
 final case class SingleBandOptionsException(message: String)
     extends BacksplashException
@@ -42,11 +53,18 @@ private[backsplash] final case class UnknownException(message: String)
     extends BacksplashException
 
 class BacksplashHttpErrorHandler[F[_]](
-    implicit M: MonadError[F, BacksplashException])
-    extends HttpErrorHandler[F, BacksplashException]
+    implicit M: MonadError[F, BacksplashException]
+) extends HttpErrorHandler[F, BacksplashException]
     with Http4sDsl[F]
     with LazyLogging {
+  val invisiCellType = IntUserDefinedNoDataCellType(0)
+  val invisiTile = IntUserDefinedNoDataArrayTile(Array.fill(65536)(0),
+                                                 256,
+                                                 256,
+                                                 invisiCellType)
   private val handler: BacksplashException => F[Response[F]] = {
+    case NoScenesException =>
+      Ok(invisiTile.renderPng.bytes, `Content-Type`(MediaType.image.png))
     case _ @MetadataException(m) =>
       InternalServerError(m)
     case UningestedScenesException(m)  => NotFound(m)
@@ -57,12 +75,14 @@ class BacksplashHttpErrorHandler[F[_]](
     case NoDataInRegionException       => BadRequest("No Data in Region")
     case _ @NotAuthorizedException(_) =>
       Forbidden(
-        "Resource does not exist or user is not authorized to access this resource")
+        "Resource does not exist or user is not authorized to access this resource"
+      )
     case WrappedDoobieException(m) =>
       NotFound(m)
     case WrappedS3Exception(_) =>
       NotFound(
-        "Underlying data to produce tiles for this project appears to have moved or is no longer available")
+        "Underlying data to produce tiles for this project appears to have moved or is no longer available"
+      )
     case _ @UnknownException(m) =>
       InternalServerError(m)
   }
@@ -72,8 +92,9 @@ class BacksplashHttpErrorHandler[F[_]](
 }
 
 object ServiceHttpErrorHandler {
-  def apply[F[_], E, U](service: HttpRoutes[F])(handler: E => F[Response[F]])(
-      implicit ev: ApplicativeError[F, E]): HttpRoutes[F] =
+  def apply[F[_], E, U](service: HttpRoutes[F])(
+      handler: E => F[Response[F]]
+  )(implicit ev: ApplicativeError[F, E]): HttpRoutes[F] =
     Kleisli { req: Request[F] =>
       OptionT {
         service(req).value.handleErrorWith { e =>

@@ -173,8 +173,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   firstImOption map {
                     _.projectLayerId
                   } getOrElse {
-                    throw MetadataException(
-                      "Cannot produce tiles from empty mosaics")
+                    throw NoScenesException
                   },
                   List(firstImOption flatMap {
                     _.singleBandOptions map { _.band }

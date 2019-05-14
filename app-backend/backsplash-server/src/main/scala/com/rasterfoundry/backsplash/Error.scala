@@ -48,6 +48,8 @@ class RollbarReporter[F[_]](implicit M: MonadError[F, BacksplashException])
     case e @ UningestedScenesException(_) =>
       sendError(e)
       throw e
+    case e @ NoScenesException =>
+      throw e
     case e @ MetadataException(_) =>
       sendError(e)
       throw e
