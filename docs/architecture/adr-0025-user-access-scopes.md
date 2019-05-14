@@ -182,7 +182,6 @@ Usage at the endpoint level might look like:
 
 #### Disadvantages
 
-- multiple scopes per domain open the possibility for conflicts but those could be avoided with sufficiently granular scopes types
 - could require a bunch of columns to be added or...
 - could alternatively require a more complex encoding/decoding process
 
