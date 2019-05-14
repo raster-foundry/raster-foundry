@@ -3,7 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{SceneDao, SceneToLayerDao}
+import com.rasterfoundry.database.{ProjectLayerDao, SceneDao, SceneToLayerDao}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.BandOverride
 import com.rasterfoundry.common._
@@ -25,7 +25,7 @@ import com.rasterfoundry.backsplash.color.{
   _
 }
 
-import cats.data.{NonEmptyList => NEL}
+import cats.data.{NonEmptyList => NEL, OptionT}
 import cats.effect.IO
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
@@ -156,6 +156,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         )
       }
     }
+
+    def getOverviewLocation(self: SceneDao, projId: UUID) = IO.pure { None }
   }
 
   implicit val layerStore: ProjectStore[SceneToLayerDao] =
@@ -179,5 +181,15 @@ class ProjectStoreImplicits(xa: Transactor[IO])
           mosaicDefinitionToImage(md, bandOverride, projId)
         } transact (xa)
       }
+
+      def getOverviewLocation(self: SceneToLayerDao,
+                              projId: UUID): IO[Option[String]] =
+        (for {
+          projLayer <- OptionT {
+            ProjectLayerDao.getProjectLayerById(projId).transact(xa)
+          }
+          overview <- OptionT.fromOption[IO] { projLayer.overviewsLocation }
+        } yield overview).value
     }
+
 }

@@ -24,10 +24,10 @@ import HasRasterExtents._
 import TmsReification._
 import com.typesafe.scalalogging.LazyLogging
 
-import java.util.UUID
-
-class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
-    extends ToTmsReificationOps
+class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
+    histStore: HistStore,
+    projStore: ProjStore
+) extends ToTmsReificationOps
     with ToExtentReificationOps
     with ToHasRasterExtentsOps
     with ToHistogramStoreOps
@@ -48,12 +48,6 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     256,
     invisiCellType
   )
-
-  def getProjectOverviewLocation(
-      projectId: UUID,
-      projectLayerId: UUID
-  ): String =
-    s"s3://${Config.s3.dataBucket}/lambdaOverviews/projects/$projectId/$projectLayerId-overview.tif"
 
   def getNoDataValue(cellType: CellType): Option[Double] = {
     cellType match {
@@ -249,11 +243,18 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               IO.raiseError(NoDataInRegionException)
             } else IO.unit
           }
-          overviewStream = self.take(1) map { im =>
-            im.copy(
-              imageId = im.projectLayerId,
-              uri = getProjectOverviewLocation(im.projectId, im.projectLayerId)
-            )
+          overviewStream = self zip {
+            self flatMap { (backsplashIm: BacksplashImage) =>
+              fs2.Stream.eval(
+                projStore.getOverviewLocation(backsplashIm.projectLayerId)
+              )
+            }
+          } take (1) map {
+            case (im, loc) =>
+              im.copy(
+                imageId = im.projectLayerId,
+                uri = loc getOrElse "deliberately invalid URI"
+              )
           }
           filtered = BacksplashMosaic.filterRelevant(self)
           // for single band imagery, after color correction we have RGBA, so

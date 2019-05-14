@@ -16,8 +16,9 @@ import doobie.implicits._
 
 import java.util.UUID
 
-class ToolStoreImplicits[HistStore](mosaicImplicits: MosaicImplicits[HistStore],
-                                    xa: Transactor[IO])
+class ToolStoreImplicits[HistStore](
+    mosaicImplicits: MosaicImplicits[HistStore, SceneToLayerDao],
+    xa: Transactor[IO])
     extends ProjectStoreImplicits(xa)
     with LazyLogging {
 
