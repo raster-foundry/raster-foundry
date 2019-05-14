@@ -13,6 +13,7 @@ import geotrellis.server._
 import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
+import cats.Semigroup
 import scalacache._
 import scalacache.memoization._
 import scalacache.CatsEffect.modes._
@@ -383,9 +384,12 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         }
     }
 
+  implicit val whatever: Semigroup[Extent] = new Semigroup[Extent] {
+    def combine(x: Extent, y: Extent): Extent = x.combine(y)
+  }
+
   implicit val mosaicHasRasterExtents: HasRasterExtents[BacksplashMosaic] =
     new HasRasterExtents[BacksplashMosaic] {
-      @SuppressWarnings(Array("TraversableHead"))
       def rasterExtents(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] = {
         val mosaic = BacksplashMosaic
@@ -407,19 +411,20 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
           .toList
           .map(_.reduceLeft({
             (nel1: List[RasterExtent], nel2: List[RasterExtent]) =>
-              val updatedExtent = nel1.head.extent combine nel2.head.extent
-              val updated1 = nel1.map { re =>
-                RasterExtent(updatedExtent,
-                             CellSize(re.cellwidth, re.cellheight))
-              }
-              val updated2 = nel2.map { re =>
-                RasterExtent(updatedExtent,
-                             CellSize(re.cellwidth, re.cellheight))
-              }
-              updated1 ++ updated2
+              val updatedExtentO = nel1.headOption.map(_.extent).combine(nel2.headOption.map(_.extent))
+              updatedExtentO.map(updatedExtent => {
+                val updated1 = nel1.map { re =>
+                  RasterExtent(updatedExtent,
+                               CellSize(re.cellwidth, re.cellheight))}
+                val updated2 = nel2.map { re =>
+                 RasterExtent(updatedExtent,
+                              CellSize(re.cellwidth, re.cellheight))}
+
+                updated1 ++ updated2
+              }).getOrElse(Nil)
           }))
         mosaic.map(_.toNel.getOrElse(
-          throw new MetadataException("Cannot get rater extent from mosaic.")))
+            throw new MetadataException("Cannot get raster extent from mosaic.")))
       }
     }
 }

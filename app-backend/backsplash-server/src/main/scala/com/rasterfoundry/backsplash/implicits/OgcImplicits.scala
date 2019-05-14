@@ -11,7 +11,7 @@ import com.rasterfoundry.database.{
   ProjectLayerDatasourcesDao
 }
 
-import cats.effect.IO
+import cats.effect.{IO, ContextShift}
 import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
@@ -27,7 +27,8 @@ import opengis.wms.{Name, OnlineResource, Service}
 
 import java.util.UUID
 
-class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
+class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])(
+  implicit contextShift: ContextShift[IO])
     extends ToProjectStoreOps {
 
   private def compositesToOgcStyles(

@@ -16,11 +16,12 @@ import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 
 object BacksplashMosaic extends ToHistogramStoreOps {
 
-  def toRasterSource(bsm: BacksplashMosaic): IO[MosaicRasterSource] = {
+  def toRasterSource(bsm: BacksplashMosaic)(
+    implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
     filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>
-          images traverse { image =>
+          images parTraverse { image =>
             image.getRasterSource
           } map { rasterSourceList =>
             MosaicRasterSource(rasterSourceList, rasterSourceList.head.crs)
@@ -32,11 +33,12 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     }
   }
 
-  def getRasterSourceOriginalCRS(bsm: BacksplashMosaic): IO[List[CRS]] = {
+  def getRasterSourceOriginalCRS(bsm: BacksplashMosaic)(
+    implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
     filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>
-          images traverse { image =>
+          images parTraverse { image =>
             image.getRasterSource
           } map { rasterSourceList =>
             rasterSourceList.map(_.crs).toList.distinct
@@ -102,7 +104,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
       cs: ContextShift[IO]): IO[List[Histogram[Double]]] =
     for {
       allImages <- filterRelevant(mosaic).compile.toList
-      histArrays <- allImages traverse { im =>
+      histArrays <- allImages parTraverse { im =>
         histStore.layerHistogram(im.imageId, im.subsetBands)
       }
       result <- histArrays match {
