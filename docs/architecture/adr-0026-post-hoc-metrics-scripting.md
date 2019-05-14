@@ -5,7 +5,7 @@
 [ADR 24](./adr-0024-metrics-scripting.md) answered the question of how to
 track metrics for events in Raster Foundry servers. It doesn't answer how to
 track events for requests elsewhere, for example, total logins by user, or non-events,
-like storage used for uplods. Since
+like storage used for uploads. Since
 we'd also like metrics from third party services and ongoing usage data in the database
 for querying and eventual visualization, we need to determine a strategy for either
 pushing or regularly importing those events as well.
