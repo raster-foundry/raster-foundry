@@ -14,6 +14,7 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
 
   val lambdaConfig = Config.awslambda
   val auth0Config = Config.auth0
+  val s3Config = Config.s3
 
   val lambdaClient: AwsLambda = AWSLambdaClientBuilder.standard().build()
 
@@ -73,7 +74,7 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     val invocationType: String = "Event"
     val logType: String = "Tail"
     val outputLocation: String =
-      s"s3://rasterfoundry-${lambdaConfig.environment.toLowerCase()}-data-us-east-1/lambdaOverviews/projects/${projectId
+      s"s3://${s3Config.dataBucket}/lambdaOverviews/projects/${projectId
         .toString()}/${layerId.toString()}-overview.tif"
     val refreshToken: String = auth0Config.systemRefreshToken
     val pixelSizeMeters: Int = 2444

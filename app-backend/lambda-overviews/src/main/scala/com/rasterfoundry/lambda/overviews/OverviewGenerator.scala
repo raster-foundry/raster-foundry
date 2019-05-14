@@ -9,7 +9,6 @@ import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.{CellSize, GridExtent}
 import geotrellis.spark.io.s3.S3Client
 import cats.syntax.list._
-import com.rasterfoundry.datamodel.ProjectLayer
 import com.typesafe.scalalogging.LazyLogging
 
 import com.rasterfoundry.datamodel.OverviewInput
@@ -39,7 +38,7 @@ object OverviewGenerator extends LazyLogging {
 
     rasterSources.toNel match {
       case Some(rasterSourcesList) =>
-        println(s"Generating mosaic raster source")
+        println("Generating mosaic raster source")
         val mosaicRasterSource =
           MosaicRasterSource(rasterSourcesList, WebMercator, sourceCombinedGrid)
 
@@ -71,18 +70,18 @@ object OverviewGenerator extends LazyLogging {
     ()
   }
 
-  def createOverview(overviewInput: OverviewInput): Option[ProjectLayer] = {
+  def createOverview(overviewInput: OverviewInput): Option[Int] = {
 
-    println(s"Retrieving JWT with Refresh Token")
+    println("Retrieving JWT with Refresh Token")
     val authToken = HttpClient.getSystemToken(overviewInput.refreshToken)
-    println(s"Getting project layer scenes")
+    println("Getting project layer scenes")
     val initialProjectScenes = HttpClient.getProjectLayerScenes(
       authToken,
       overviewInput.projectId,
       overviewInput.projectLayerId
     )
 
-    println(s"Creating project overview")
+    println("Creating project overview")
     val projectOverviewOption =
       OverviewGenerator.createProjectOverview(initialProjectScenes,
                                               overviewInput.pixelSizeMeters)
@@ -98,17 +97,16 @@ object OverviewGenerator extends LazyLogging {
       case (true, Some(projectOverview)) =>
         writeOverviewToS3(projectOverview, overviewInput.outputLocation)
         println("Updating project layer in API with overview")
-        val projectLayer = HttpClient.updateProjectWithOverview(
+        val layerUpdateStatus = HttpClient.updateProjectWithOverview(
           authToken,
           overviewInput.projectId,
           overviewInput.projectLayerId,
           overviewInput.outputLocation)
-        Some(projectLayer)
+        Some(layerUpdateStatus)
       case _ =>
         println(
           "Skipping adding project overview, project layer scenes have changed since overview generated")
         None
     }
-
   }
 }

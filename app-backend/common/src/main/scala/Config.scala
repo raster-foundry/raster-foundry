@@ -97,4 +97,10 @@ object Config {
     lazy val systemRefreshToken = auth0Config.getString("systemRefreshToken")
   }
 
+  object s3 {
+    private val s3Config = config.getConfig("s3")
+
+    lazy val dataBucket = s3Config.getString("dataBucket")
+  }
+
 }
