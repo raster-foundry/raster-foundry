@@ -14,15 +14,15 @@ class LambdaHandler extends RequestStreamHandler with LazyLogging {
                     out: OutputStream,
                     context: Context): Unit = {
     val inputString = scala.io.Source.fromInputStream(input).mkString("")
-    logger.info(s"Received input: $inputString")
+    println(s"Received input: $inputString")
     decode[OverviewInput](inputString) match {
       case Right(overviewInput) =>
         OverviewGenerator.createOverview(overviewInput) match {
           case Some(projectLayer) =>
-            logger.info(
+            println(
               s"Created overview and updated project layer: ${projectLayer.id}")
           case _ =>
-            logger.warn(
+            println(
               s"Did not update project layer, scenes were stale prior to writing layer")
         }
       case Left(e) => throw e

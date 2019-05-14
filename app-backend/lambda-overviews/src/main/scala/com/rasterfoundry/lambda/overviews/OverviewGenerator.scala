@@ -35,11 +35,11 @@ object OverviewGenerator extends LazyLogging {
         GridExtent[Long](combined, cs)
       })
 
-    logger.debug(s"Using ${rasterSources.length} rastersources")
+    println(s"Using ${rasterSources.length} rastersources")
 
     rasterSources.toNel match {
       case Some(rasterSourcesList) =>
-        logger.debug(s"Generating mosaic raster source")
+        println(s"Generating mosaic raster source")
         val mosaicRasterSource =
           MosaicRasterSource(rasterSourcesList, WebMercator, sourceCombinedGrid)
 
@@ -62,7 +62,7 @@ object OverviewGenerator extends LazyLogging {
   }
 
   def writeOverviewToS3(tiff: MultibandGeoTiff, uri: String): Unit = {
-    logger.debug(s"Writing tiff to $uri")
+    println(s"Writing tiff to $uri")
     val s3Uri = new AmazonS3URI(uri)
 
     S3Client.DEFAULT.putObject(s3Uri.getBucket,
@@ -73,21 +73,21 @@ object OverviewGenerator extends LazyLogging {
 
   def createOverview(overviewInput: OverviewInput): Option[ProjectLayer] = {
 
-    logger.debug(s"Retrieving JWT with Refresh Token")
+    println(s"Retrieving JWT with Refresh Token")
     val authToken = HttpClient.getSystemToken(overviewInput.refreshToken)
-    logger.debug(s"Getting project layer scenes")
+    println(s"Getting project layer scenes")
     val initialProjectScenes = HttpClient.getProjectLayerScenes(
       authToken,
       overviewInput.projectId,
       overviewInput.projectLayerId
     )
 
-    logger.debug(s"Creating project overview")
+    println(s"Creating project overview")
     val projectOverviewOption =
       OverviewGenerator.createProjectOverview(initialProjectScenes,
                                               overviewInput.pixelSizeMeters)
 
-    logger.debug(
+    println(
       "Checking if scenes have been updated or removed from project layer")
     val currentProjectScenes = HttpClient.getProjectLayerScenes(
       authToken,
@@ -97,7 +97,7 @@ object OverviewGenerator extends LazyLogging {
     (currentProjectScenes == initialProjectScenes, projectOverviewOption) match {
       case (true, Some(projectOverview)) =>
         writeOverviewToS3(projectOverview, overviewInput.outputLocation)
-        logger.debug("Updating project layer in API with overview")
+        println("Updating project layer in API with overview")
         val projectLayer = HttpClient.updateProjectWithOverview(
           authToken,
           overviewInput.projectId,
@@ -105,7 +105,7 @@ object OverviewGenerator extends LazyLogging {
           overviewInput.outputLocation)
         Some(projectLayer)
       case _ =>
-        logger.debug(
+        println(
           "Skipping adding project overview, project layer scenes have changed since overview generated")
         None
     }

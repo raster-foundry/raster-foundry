@@ -21,10 +21,10 @@ object Main extends LazyLogging {
         case Right(overviewInput) =>
           OverviewGenerator.createOverview(overviewInput) match {
             case Some(projectLayer) =>
-              logger.info(
+              println(
                 s"Created overview and updated project layer: ${projectLayer.id}")
             case _ =>
-              logger.warn(
+              println(
                 s"Did not update project layer, scenes were stale prior to writing layer")
           }
         case Left(e) => throw e
