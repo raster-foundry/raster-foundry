@@ -24,8 +24,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
             BacksplashImage.getRasterSource(image.uri)
           }, images.head.rasterSource.crs)
         case _ =>
-          throw new MetadataException(
-            "Cannot construct a mosaic with no scenes")
+          throw NoScenesException
       }
     }
   }
@@ -41,7 +40,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
             .toList
             .distinct
         case _ =>
-          throw new MetadataException("Cannot get crs with no scenes")
+          throw NoScenesException
       }
     }
   }
@@ -109,9 +108,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
           layerHistogram(filterRelevant(mosaic)) map {
             case Valid(hists) => hists.toList
             case Invalid(e) =>
-              throw MetadataException(
-                s"Could not produce histograms: $e"
-              )
+              throw new MetadataException(s"Could not produce histograms: $e")
           }
         case arrs =>
           val hists = arrs

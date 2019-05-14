@@ -49,7 +49,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       )
     }
     val footprint = mosaicDefinition.footprint getOrElse {
-      throw MetadataException(s"Scene ${sceneId} does not have a footprint")
+      throw NoFootprintException
     }
 
     val subsetBands = if (mosaicDefinition.isSingleBand) {
@@ -131,9 +131,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
             s"Scene ${scene.id} does not have an ingest location")
         }
         val footprint = scene.dataFootprint getOrElse {
-          throw MetadataException(
-            s"Scene ${scene.id} does not have a footprint"
-          )
+          throw NoFootprintException
         }
         val imageBandOverride = bandOverride map { ovr =>
           List(ovr.redBand, ovr.greenBand, ovr.blueBand)
