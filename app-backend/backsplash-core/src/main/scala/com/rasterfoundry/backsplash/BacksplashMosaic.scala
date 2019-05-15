@@ -27,8 +27,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
             MosaicRasterSource(rasterSourceList, rasterSourceList.head.crs)
           }
         case _ =>
-          IO.raiseError(
-            MetadataException("Cannot construct a mosaic with no scenes"))
+          IO.raiseError(NoScenesException)
       }
     }
   }
@@ -44,7 +43,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
             rasterSourceList.map(_.crs).toList.distinct
           }
         case _ =>
-          IO.raiseError(MetadataException("Cannot get crs with no scenes"))
+          IO.raiseError(NoScenesException)
       }
     }
   }
