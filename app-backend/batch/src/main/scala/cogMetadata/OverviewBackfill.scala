@@ -23,6 +23,10 @@ object OverviewBackfill extends Job with RollbarNotifier {
       .query[Int]
       .stream map { (projectLayer, _) }
 
+  /** We know suppressing this warning is fine, because the query for project layers
+    * explicitly filters out any that don't have a project id
+    */
+  @SuppressWarnings(Array("OptionGet"))
   def kickoffOverviewGeneration(
       projectLayer: ProjectLayer
   ): IO[Unit] = IO {
