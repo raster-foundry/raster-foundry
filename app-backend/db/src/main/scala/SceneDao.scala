@@ -13,10 +13,13 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import geotrellis.vector.{Geometry, Polygon, Projected}
 import io.circe.syntax._
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.model.ObjectMetadata
 
 import scala.concurrent.duration._
 import java.sql.Timestamp
 import java.util.{Date, UUID}
+import java.net.{URI, URLDecoder}
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneDao()
@@ -307,6 +310,18 @@ object SceneDao
           ))
       } getOrElse { Seq.empty }
     }
+  }
+
+  def getSentinelMetadata(
+      metadataUrl: String): ConnectionIO[(Array[Byte], ObjectMetadata)] = {
+    val s3Client = S3(region = Some(S3RegionEnum(Regions.EU_CENTRAL_1)))
+    val bucketAndPrefix =
+      s3Client.bucketAndPrefixFromURI(
+        new URI(URLDecoder.decode(metadataUrl, "UTF-8")))
+    val s3Object =
+      s3Client.getObject(bucketAndPrefix._1, bucketAndPrefix._2, true)
+    val metaData = S3.getObjectMetadata(s3Object)
+    (S3.getObjectBytes(s3Object), metaData).pure[ConnectionIO]
   }
 
   def authQuery(user: User,

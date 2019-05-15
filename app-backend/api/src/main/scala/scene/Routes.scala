@@ -2,7 +2,7 @@ package com.rasterfoundry.api.scene
 
 import java.util.UUID
 
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
 import cats.data._
 import cats.effect.IO
@@ -100,6 +100,13 @@ trait SceneRoutes
           } ~
           pathPrefix("datasource") {
             pathEndOrSingleSlash { getSceneDatasource(sceneId) }
+          } ~
+          pathPrefix("sentinel-metadata") {
+            pathPrefix(Segment) { metadataUrl =>
+              pathEndOrSingleSlash {
+                get { getSentinelMetadata(sceneId, metadataUrl) }
+              }
+            }
           }
       }
   }
@@ -396,4 +403,35 @@ trait SceneRoutes
       }
     }
   }
+
+  @SuppressWarnings(Array("AsInstanceOf"))
+  def getSentinelMetadata(sceneId: UUID, metadataUrl: String): Route =
+    authenticate { user =>
+      authorizeAsync {
+        val authorizedIO = for {
+          auth <- SceneDao.authorized(user,
+                                      ObjectType.Scene,
+                                      sceneId,
+                                      ActionType.View)
+          datasource <- SceneDao.getSceneDatasource(sceneId)
+        } yield {
+          auth && datasource.id == UUID.fromString(
+            "4a50cb75-815d-4fe5-8bc1-144729ce5b42")
+        }
+        authorizedIO.transact(xa).unsafeToFuture
+      } {
+        onSuccess(
+          SceneDao
+            .getSentinelMetadata(metadataUrl)
+            .transact(xa)
+            .unsafeToFuture) { (s3Object, metaData) =>
+          val s3MediaType = metaData.getContentType() match {
+            case "application/json" => ContentTypes.`application/json`
+            case "application/xml"  => ContentTypes.`text/xml(UTF-8)`
+            case _                  => throw new Exception("Unsupported media type")
+          }
+          complete(HttpResponse(entity = HttpEntity(s3MediaType, s3Object)))
+        }
+      }
+    }
 }
