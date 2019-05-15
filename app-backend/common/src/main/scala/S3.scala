@@ -271,6 +271,10 @@ final case class S3(credentialsProviderChain: AWSCredentialsProvider =
         client.listNextBatchOfObjects(listing)
       )
   }
+
+  def deleteObject(bucket: String, key: String): Unit = {
+    client.deleteObject(bucket, key)
+  }
 }
 
 object S3 {

@@ -2,6 +2,7 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.common.SceneWithProjectIdLayerId
 import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
@@ -91,7 +92,8 @@ class SceneToLayerDaoSpec
                                                  dbProject.id,
                                                  dbProject.defaultLayerId,
                                                  false)
-              _ <- SceneToLayerDao.setManualOrder(dbProject.defaultLayerId,
+              _ <- SceneToLayerDao.setManualOrder(dbProject.id,
+                                                  dbProject.defaultLayerId,
                                                   scenesInsert map { _.id })
               mds <- SceneToLayerDao
                 .getMosaicDefinition(dbProject.defaultLayerId,
@@ -125,4 +127,46 @@ class SceneToLayerDaoSpec
     }
   }
 
+  test("Get layer ID and project ID of a scene") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         platform: Platform,
+         projectCreate: Project.Create,
+         scene: Scene.Create,
+         dsCreate: Datasource.Create) =>
+          {
+            val sceneLayerProjectIO: ConnectionIO[(Scene.WithRelated,
+                                                   List[SceneWithProjectIdLayerId],
+                                                   Project)] = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    projectCreate)
+              datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
+                                                 dbUser)
+              sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser,
+                                                              datasource,
+                                                              scene),
+                                             dbUser)
+              _ <- ProjectDao.addScenesToProject(List(sceneInsert.id),
+                                                 dbProject.id,
+                                                 dbProject.defaultLayerId,
+                                                 true)
+              slp <- SceneToLayerDao.getProjectsAndLayersBySceneId(
+                sceneInsert.id)
+            } yield { (sceneInsert, slp, dbProject) }
+
+            val (sceneInsert, slp, dbProject) =
+              sceneLayerProjectIO.transact(xa).unsafeRunSync
+
+            slp.toSet == Set(
+              SceneWithProjectIdLayerId(sceneInsert.id,
+                                        dbProject.id,
+                                        dbProject.defaultLayerId))
+          }
+      }
+    }
+  }
 }

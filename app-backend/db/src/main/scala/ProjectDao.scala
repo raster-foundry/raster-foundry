@@ -1,12 +1,13 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.common.{AWSBatch, AWSLambda, S3}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel.PageRequest
 import cats.data._
 import cats.implicits._
+import cats.effect.{LiftIO, IO}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -15,6 +16,8 @@ import io.circe._
 import io.circe.syntax._
 import java.sql.Timestamp
 import java.util.UUID
+import java.net.URI
+import java.net.URLDecoder
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class ProjectDao()
@@ -22,6 +25,7 @@ final case class ProjectDao()
 object ProjectDao
     extends Dao[Project]
     with AWSBatch
+    with AWSLambda
     with ObjectPermissions[Project] {
 
   val tableName = "projects"
@@ -176,12 +180,6 @@ object ProjectDao
     for {
       // User must have access to the project by the time they get here, so it exists
       dbProject <- unsafeGetProjectById(id)
-      _ <- (project.manualOrder, dbProject.manualOrder) match {
-        case (true, false) =>
-          SceneToLayerDao.addSceneOrdering(id)
-        case _ =>
-          0.pure[ConnectionIO]
-      }
       defaultLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
         dbProject.defaultLayerId)
       _ <- ProjectLayerDao.updateProjectLayer(
@@ -193,11 +191,20 @@ object ProjectDao
     } yield updateProject
   }
 
-  def deleteProject(id: UUID): ConnectionIO[Int] = {
+  def deleteProject(id: UUID)(
+      implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
 
     val aoiDeleteQuery = sql"DELETE FROM aois where aois.project_id = ${id}"
     for {
       _ <- aoiDeleteQuery.update.run
+      layers <- ProjectLayerDao.listProjectLayersForProjectQ(id).list
+      _ <- layers
+        .traverse(pl => {
+          pl.overviewsLocation match {
+            case Some(locUrl) => L.liftIO(removeLayerOverview(pl.id, locUrl))
+            case _            => ().pure[ConnectionIO]
+          }
+        })
       projectDeleteCount <- query.filter(fr"id = ${id}").delete
     } yield projectDeleteCount
   }
@@ -315,7 +322,13 @@ object ProjectDao
           user
         )
       }
-    } yield sceneToLayerInserts
+    } yield {
+      logger
+        .info(
+          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+      kickoffLayerOverviewCreate(projectId, projectLayerId)
+      sceneToLayerInserts
+    }
   }
 
   def createScenesToLayer(sceneId: UUID,
@@ -375,7 +388,8 @@ object ProjectDao
 
   def deleteScenesFromProject(sceneIds: List[UUID],
                               projectId: UUID,
-                              projectLayerId: UUID): ConnectionIO[Int] = {
+                              projectLayerId: UUID)(
+      implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
     val f: Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
     f match {
       case _ @Some(_) =>
@@ -386,7 +400,27 @@ object ProjectDao
               f,
               Some(fr"project_layer_id = ${projectLayerId}"))).update.run
           _ <- updateProjectExtentIO(projectId)
-        } yield rowsDeleted
+          layerDatasources <- ProjectLayerDatasourcesDao
+            .listProjectLayerDatasources(projectLayerId)
+          projectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
+            projectLayerId)
+          _ <- projectLayer.overviewsLocation match {
+            case Some(locUrl) if layerDatasources.isEmpty =>
+              (L.liftIO(removeLayerOverview(projectLayerId, locUrl)),
+               ProjectLayerDao.updateProjectLayer(
+                 projectLayer.copy(overviewsLocation = None),
+                 projectLayer.id)).tupled
+            case _ => 0.pure[ConnectionIO]
+          }
+        } yield {
+          if (!layerDatasources.isEmpty) {
+            logger
+              .info(
+                s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+            kickoffLayerOverviewCreate(projectId, projectLayerId)
+          }
+          rowsDeleted
+        }
       case _ => 0.pure[ConnectionIO]
     }
   }
@@ -467,4 +501,31 @@ object ProjectDao
       authProject <- authorized(user, ObjectType.Project, projectId, actionType)
       layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
     } yield { authProject && layerExist }
+
+  def removeLayerOverview(projectLayerId: UUID, locUrl: String): IO[Unit] = {
+    logger
+      .info(
+        s"No scenes left in project layer $projectLayerId with overview location $locUrl")
+    val jUri = URI.create(locUrl)
+    val urlPath = jUri.getPath()
+    val bucket = URLDecoder.decode(jUri.getHost(), "UTF-8")
+    val key = URLDecoder.decode(urlPath.slice(1, urlPath.size), "UTF-8")
+    val s3 = S3()
+    IO { s3.doesObjectExist(bucket, key) } flatMap { exist =>
+      if (exist) {
+        logger
+          .info(
+            s"Found overview: $locUrl for layer $projectLayerId, deleting it...")
+        IO { s3.deleteObject(bucket, key) } map { _ =>
+          logger
+            .info(s"Deleted overview: $locUrl for layer $projectLayerId")
+        }
+      } else {
+        IO {
+          logger
+            .info(s"Not Found overview: $locUrl for layer $projectLayerId")
+        }
+      }
+    }
+  }
 }

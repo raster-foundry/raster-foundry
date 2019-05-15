@@ -25,7 +25,8 @@ object SceneDao
     extends Dao[Scene]
     with LazyLogging
     with ObjectPermissions[Scene]
-    with AWSBatch {
+    with AWSBatch
+    with AWSLambda {
 
   type KickoffIngest = Boolean
 
@@ -240,6 +241,21 @@ object SceneDao
               } else {
                 n.pure[ConnectionIO]
               }
+            case (previous, IngestStatus.Ingested)
+                if previous != IngestStatus.Ingested =>
+              n.pure[ConnectionIO] <*
+                SceneToLayerDao
+                  .getProjectsAndLayersBySceneId(scene.id)
+                  .map(spls => {
+                    spls.map(spl => {
+                      logger
+                        .info(
+                          s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}")
+                      kickoffLayerOverviewCreate(
+                        spl.projectId,
+                        spl.projectLayerId).pure[ConnectionIO]
+                    })
+                  })
             case _ =>
               n.pure[ConnectionIO]
           }

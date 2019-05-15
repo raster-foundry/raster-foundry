@@ -12,6 +12,7 @@ object Version {
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.535"
   val awsLambdaCore = "1.1.0"
+  val awsLambdaSdk = "1.11.535"
   val awsS3 = "1.11.535"
   val awsStsSdk = "1.11.535"
   val betterFiles = "3.4.0"
@@ -72,6 +73,7 @@ object Dependencies {
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % Version.awsLambdaCore
+  val awsLambdaSdk = "com.amazonaws" % "aws-java-sdk-lambda" % Version.awsLambdaSdk
   val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsS3
   val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsStsSdk
   val betterFiles = "com.github.pathikrit" %% "better-files" % Version.betterFiles

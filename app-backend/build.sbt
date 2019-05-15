@@ -282,6 +282,7 @@ lazy val common = project
       Dependencies.apacheCommonsEmail,
       Dependencies.scalaCheck,
       Dependencies.catsScalacheck,
+      Dependencies.awsLambdaSdk,
     )
   })
 
