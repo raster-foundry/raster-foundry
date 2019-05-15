@@ -27,10 +27,7 @@ class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
       throw RequirementFailedException(err.getMessage)
     }
     case (err: BacksplashException) =>
-      throw {
-        logger.error(err.getMessage, err)
-        err
-      }
+      throw err
     case t => {
       logger.error("An unmapped error occurred", t)
       throw UnknownException(t.getMessage)
@@ -47,6 +44,8 @@ class RollbarReporter[F[_]](implicit M: MonadError[F, BacksplashException])
   private def wrapError(t: BacksplashException): F[Response[F]] = t match {
     case e @ UningestedScenesException(_) =>
       sendError(e)
+      throw e
+    case e @ NoScenesException =>
       throw e
     case e @ MetadataException(_) =>
       sendError(e)
