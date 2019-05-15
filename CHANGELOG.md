@@ -13,7 +13,7 @@
 
 ### Security
 
-## [1.21.0](https://github.com/raster-foundry/raster-foundry/tree/1.21.0) (2019-05-09)
+## [1.21.1](https://github.com/raster-foundry/raster-foundry/tree/1.21.0) (2019-05-15)
 - Stopped returning internal server errors when requesting tiles outside a project boundary [\#4956](https://github.com/raster-foundry/raster-foundry/pull/4956)
 
 ### Fixed
