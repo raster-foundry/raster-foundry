@@ -27,10 +27,7 @@ class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
       throw RequirementFailedException(err.getMessage)
     }
     case (err: BacksplashException) =>
-      throw {
-        logger.error(err.getMessage, err)
-        err
-      }
+      throw err
     case t => {
       logger.error("An unmapped error occurred", t)
       throw UnknownException(t.getMessage)
