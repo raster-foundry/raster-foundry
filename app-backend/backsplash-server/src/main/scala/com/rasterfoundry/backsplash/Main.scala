@@ -10,10 +10,8 @@ import com.rasterfoundry.database.{
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.database.util.RFTransactor
-
 import cats.data.OptionT
 import cats.effect._
-import cats.implicits._
 import com.olegpy.meow.hierarchy._
 import org.http4s._
 import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, Timeout}

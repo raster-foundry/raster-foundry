@@ -58,6 +58,11 @@ lazy val sharedSettings = Seq(
     "org.apache.spark",
     "spark-core"
   ),
+  // Try to keep logging sane and make sure to use slf4j + logback
+  excludeDependencies ++= Seq(
+    "log4j" % "log4j",
+    "org.slf4j" % "slf4j-log4j12"
+  ),
   scalacOptions := scalaOptions,
   // https://github.com/sbt/sbt/issues/3570
   updateOptions := updateOptions.value.withGigahorse(false),
@@ -182,6 +187,13 @@ lazy val root = project
              backsplashExport,
              lambdaOverviews)
 
+lazy val loggingDependencies = Seq(
+  Dependencies.scalaLogging % Runtime,
+  Dependencies.slf4jApi % Runtime,
+  Dependencies.log4jOverslf4j % Runtime, // for any java classes looking for this
+  Dependencies.logbackClassic % Runtime
+)
+
 /**
   * API Project Settings
   */
@@ -213,7 +225,7 @@ lazy val api = project
   .settings(apiSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
-    libraryDependencies ++= apiDependencies
+    libraryDependencies ++= apiDependencies ++ loggingDependencies
   })
 
 /**
@@ -252,7 +264,7 @@ lazy val lambdaOverviews = project
       Dependencies.scalatest,
       Dependencies.clistCore,
       Dependencies.clistMacros % "provided"
-    )
+    ) ++ loggingDependencies
   })
 
 lazy val lambdaOverviewsNoScala = lambdaOverviews.settings()
@@ -271,6 +283,7 @@ lazy val common = project
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisGeotools,
       Dependencies.geotrellisVectorTestkit,
+      Dependencies.logbackClassic % Runtime,
       Dependencies.mamlJvm,
       Dependencies.sparkCore,
       Dependencies.circeCore,
@@ -283,7 +296,7 @@ lazy val common = project
       Dependencies.scalaCheck,
       Dependencies.catsScalacheck,
       Dependencies.awsLambdaSdk,
-    )
+    )  ++ loggingDependencies
   })
 
 lazy val datamodel = project
@@ -294,7 +307,6 @@ lazy val datamodel = project
       Dependencies.shapeless,
       Dependencies.catsCore,
       Dependencies.monocleCore,
-      Dependencies.scalaLogging,
       Dependencies.circeGeneric,
       Dependencies.spray,
       Dependencies.geotrellisRaster,
@@ -308,7 +320,7 @@ lazy val datamodel = project
       Dependencies.circeTest,
       Dependencies.circeGenericExtras,
       Dependencies.scalaCheck
-    )
+    ) ++ loggingDependencies
   })
 
 /**
@@ -327,7 +339,7 @@ lazy val db = project
       Dependencies.doobiePostgresCirce,
       Dependencies.scalaCheck,
       Dependencies.postgis
-    )
+    ) ++ loggingDependencies
   })
 
 /**
@@ -342,7 +354,7 @@ lazy val migrations = project
       Dependencies.scalaforklift,
       Dependencies.hikariCP % Runtime,
       Dependencies.postgres % Runtime
-    )
+    ) ++ loggingDependencies
   })
 
 /**
@@ -366,7 +378,7 @@ lazy val batch = project
       Dependencies.ficus,
       Dependencies.dropbox,
       Dependencies.scopt
-    )
+    ) ++ loggingDependencies
   })
   .settings({
     dependencyOverrides ++= Seq(
@@ -443,7 +455,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.elasticacheClient,
       Dependencies.geotrellisServerOgc,
       Dependencies.spatial4j
-    ),
+    ) ++ loggingDependencies,
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin(
       "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
@@ -475,7 +487,7 @@ lazy val backsplashExport =
         Dependencies.geotrellisSpark,
         Dependencies.scalaCheck,
         Dependencies.scalatest
-      ),
+      ) ++ loggingDependencies,
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
       addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
       addCompilerPlugin(
@@ -495,6 +507,7 @@ lazy val backsplashServer =
     .settings(fork in run := true)
     .settings({
       libraryDependencies ++= Seq(
+        "io.chrisdavenport" %% "log4cats-slf4j" % "0.3.0",
         Dependencies.catsMeow,
         Dependencies.geotrellisServer,
         Dependencies.http4sBlaze,
@@ -507,10 +520,11 @@ lazy val backsplashServer =
         Dependencies.scalacacheCore,
         Dependencies.scalacacheCats,
         Dependencies.scalacacheCaffeine
-      )
+      ) ++ loggingDependencies
     })
     .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
     .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
+
     .settings(test in assembly := {})
 
 /**
