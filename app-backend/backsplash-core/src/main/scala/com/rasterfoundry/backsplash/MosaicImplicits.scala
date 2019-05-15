@@ -93,27 +93,26 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
       .toList
 
     for {
-      firstImOption <- BacksplashMosaic.first(
-        BacksplashMosaic.filterRelevant(self))
+      firstIm <- BacksplashMosaic.first(mosaic) flatMap { imOpt =>
+        imOpt match {
+          case Some(im) => IO.pure(im)
+          case _        => IO.raiseError(NoScenesException)
+        }
+      }
       histograms <- {
-        histStore.projectLayerHistogram(
-          firstImOption map {
-            _.projectLayerId
-          } getOrElse {
-            throw NoScenesException
-          },
-          List(firstImOption flatMap {
-            _.singleBandOptions map { _.band }
-          } getOrElse {
-            throw SingleBandOptionsException(
-              "Must provide band for single band visualization")
-          })
-        )
+        firstIm.singleBandOptions map { _.band } map { bd =>
+          histStore.projectLayerHistogram(firstIm.projectLayerId, List(bd))
+        } getOrElse {
+          IO.raiseError(
+            SingleBandOptionsException(
+              "Must provide band for single band visualization"
+            )
+          )
+        }
       }
       multibandTilewithSBO <- ioMBTwithSBO
     } yield {
       val (tiles, sbos) = multibandTilewithSBO.unzip
-      logger.debug(s"Length of Histograms: ${histograms.length}")
       val combinedHistogram = histograms.reduce(_ merge _)
       tiles match {
         case tile :: Nil =>
@@ -256,10 +255,10 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
                 uri = loc getOrElse "deliberately invalid URI"
               )
           }
-          filtered = BacksplashMosaic.filterRelevant(self)
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
           mosaic <- if (bandCount == 3) {
+            val filtered = BacksplashMosaic.filterRelevant(self)
             if (z <= Config.tuning.overviewThreshold) {
               val att = renderStreamMB(overviewStream, z, x, y)
               att.recoverWith({
@@ -281,23 +280,27 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
                   logger.warn(
                     "Went looking for an overview and didn't find one"
                   )
-                  renderStreamSB(filtered, z, x, y)
+                  renderStreamSB(self, z, x, y)
               })
-            } else renderStreamSB(filtered, z, x, y)
+            } else {
+              renderStreamSB(self, z, x, y)
+            }
           }
         } yield {
           ProjectedRaster(mosaic, WebMercator)
-        }).attempt.map {
+        }).attempt.flatMap {
           case Left(NoDataInRegionException) =>
-            ProjectedRaster(
-              Raster(
-                MultibandTile(invisiTile, invisiTile, invisiTile),
-                Extent(0, 0, 256, 256)
-              ),
-              WebMercator
+            IO.pure(
+              ProjectedRaster(
+                Raster(
+                  MultibandTile(invisiTile, invisiTile, invisiTile),
+                  Extent(0, 0, 256, 256)
+                ),
+                WebMercator
+              )
             )
-          case Left(e)          => throw e
-          case Right(rasterLit) => rasterLit
+          case Left(e)          => IO.raiseError(e)
+          case Right(rasterLit) => IO.pure(rasterLit)
         }
       }
   }
@@ -393,20 +396,21 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
                   BacksplashMosaic
                     .filterRelevant(self)
                     .parEvalMap(streamConcurrency)({ relevant =>
-                      relevant.read(extent, cs) map {
-                        case Some(mbt) =>
-                          Some(
-                            ColorRampMosaic
-                              .colorTile(
-                                mbt,
-                                layerHist,
-                                relevant.singleBandOptions getOrElse {
-                                  throw SingleBandOptionsException(
-                                    "Must specify single band options when requesting single band visualization."
-                                  )
-                                }
-                              ))
-                        case _ => None
+                      relevant.singleBandOptions map { opts =>
+                        relevant.read(extent, cs) map {
+                          ColorRampMosaic
+                            .colorTile(
+                              _,
+                              layerHist,
+                              opts
+                            )
+                        }
+                      } getOrElse {
+                        IO.raiseError(
+                          SingleBandOptionsException(
+                            "Must specify single band options when requesting single band visualization."
+                          )
+                        )
                       }
                     })
                     .collect({
