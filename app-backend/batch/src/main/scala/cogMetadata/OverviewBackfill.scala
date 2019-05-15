@@ -60,7 +60,7 @@ object OverviewBackfill extends Job with RollbarNotifier {
               case (_, n) => n <= 300 && n > 0
             })
             .transact(t)
-            .parEvalMap(10)({
+            .parEvalMap(20)({
               case (projectLayer, _) =>
                 kickoffOverviewGeneration(projectLayer)
             })
