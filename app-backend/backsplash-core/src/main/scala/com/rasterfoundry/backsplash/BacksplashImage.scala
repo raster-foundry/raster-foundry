@@ -46,6 +46,7 @@ final case class BacksplashGeotiff(
     @cacheKeyExclude uri: String,
     subsetBands: List[Int],
     @cacheKeyExclude corrections: ColorCorrect.Params,
+    singleBandOptions: Option[SingleBandOptions.Params],
     mask: Option[MultiPolygon],
     @cacheKeyExclude footprint: MultiPolygon)
     extends LazyLogging
@@ -133,7 +134,9 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
   val subsetBands: List[Int]
   val corrections: ColorCorrect.Params
   val singleBandOptions: Option[SingleBandOptions.Params]
+  val projectId: UUID
   val projectLayerId: UUID
+  val mask: Option[MultiPolygon]
 
   val enableGDAL = Config.RasterSource.enableGDAL
 

@@ -165,12 +165,12 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       // projId here actually refers to a layer -- but the argument names have to
       // match the typeclass we're providing evidence for
 
-      def read(
-          self: SceneToLayerDao,
-          projId: UUID,
-          window: Option[Projected[Polygon]],
-          bandOverride: Option[BandOverride],
-          imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
+      def read(self: SceneToLayerDao,
+               projId: UUID,
+               window: Option[Projected[Polygon]],
+               bandOverride: Option[BandOverride],
+               imageSubset: Option[NEL[UUID]])
+        : fs2.Stream[IO, BacksplashImage[IO]] = {
         SceneToLayerDao.getMosaicDefinition(
           projId,
           window,

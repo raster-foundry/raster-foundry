@@ -11,7 +11,7 @@ import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
 import geotrellis.server._
 import cats.implicits._
-import cats.data.{NonEmptyList => NEL}
+import cats.data.{NonEmptyList => NEL, OptionT}
 import cats.effect._
 import cats.Semigroup
 import scalacache._
@@ -116,15 +116,13 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
       val combinedHistogram = histograms.reduce(_ merge _)
       tiles match {
         case tile :: Nil =>
-          Raster(
-            ColorRampMosaic.colorTile(tile.interpretAs(invisiCellType),
-              List(combinedHistogram),
-              sbos.head),
-            extent)
+          Raster(ColorRampMosaic.colorTile(tile.interpretAs(invisiCellType),
+                                           List(combinedHistogram),
+                                           sbos.head),
+                 extent)
         case someTiles =>
           someTiles.reduceOption(
-            _.interpretAs(invisiCellType) merge _.interpretAs(
-              invisiCellType)) match {
+            _.interpretAs(invisiCellType) merge _.interpretAs(invisiCellType)) match {
             case Some(t) =>
               Raster(
                 ColorRampMosaic.colorTile(
@@ -135,19 +133,11 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
                 extent
               )
             case _ =>
-              Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
-                extent)
+              Raster(MultibandTile(invisiTile, invisiTile, invisiTile), extent)
           }
 
       }
     }
-      .parEvalMap(streamConcurrency) { relevant =>
-        logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
-        IO { (relevant.read(z, x, y), relevant.singleBandOptions) }
-      }
-      .collect({ case (Some(mbtile), Some(sbo)) => (mbtile, sbo) })
-      .compile
-      .toList
   }
 
   @SuppressWarnings(Array("TraversableHead"))
@@ -162,8 +152,7 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
       .parEvalMap(streamConcurrency)({ relevant =>
         for {
           imFiber <- {
-            logger.debug(
-              s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
+            logger.debug(s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
             relevant.read(z, x, y)
           }.start
           histsFiber <- {
@@ -179,14 +168,13 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
               logger.debug(
                 s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}"
               )
-              relevant.corrections.colorCorrect(mbTile,
-                hists,
-                noDataValue)
+              relevant.corrections.colorCorrect(mbTile, hists, noDataValue)
             }
           }
         } yield {
           renderedTile
         }
+      })
       .collect({ case Some(tile) => tile })
       .compile
       .toList
@@ -243,17 +231,28 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
             } else IO.unit
           }
           overviewStream = self zip {
-            self flatMap { (backsplashIm: BacksplashImage) =>
+            self flatMap { (backsplashIm: BacksplashImage[IO]) =>
               fs2.Stream.eval(
                 projStore.getOverviewLocation(backsplashIm.projectLayerId)
               )
             }
-          } take (1) map {
+          } take (1) evalMap {
             case (im, loc) =>
-              im.copy(
-                imageId = im.projectLayerId,
-                uri = loc getOrElse "deliberately invalid URI"
-              )
+              loc map { uri =>
+                IO.pure(
+                  BacksplashGeotiff(im.imageId,
+                                    im.projectId,
+                                    im.projectLayerId,
+                                    uri,
+                                    im.subsetBands,
+                                    im.corrections,
+                                    im.singleBandOptions,
+                                    im.mask,
+                                    im.footprint))
+              } getOrElse {
+                IO.raiseError(
+                  new MetadataException("No overview location found"))
+              }
           }
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
@@ -395,26 +394,31 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
                   logger.debug(s"Got a layer hist: ${layerHist.length}")
                   BacksplashMosaic
                     .filterRelevant(self)
-                    .parEvalMap(streamConcurrency)({ relevant =>
-                      relevant.singleBandOptions map { opts =>
-                        relevant.read(extent, cs) map {
-                          ColorRampMosaic
-                            .colorTile(
-                              _,
-                              layerHist,
-                              opts
+                    .parEvalMap(streamConcurrency)(
+                      (relevant: BacksplashImage[IO]) => {
+                        (OptionT.fromOption[IO](relevant.singleBandOptions),
+                         OptionT(relevant.read(extent, cs))).tupled
+                          .map({
+                            case (opts, mbt) =>
+                              ColorRampMosaic
+                                .colorTile(
+                                  mbt,
+                                  layerHist,
+                                  opts
+                                )
+                          })
+                          .getOrElse(
+                            OptionT[IO, MultibandTile](
+                              IO.raiseError(
+                                SingleBandOptionsException(
+                                  "Must specify single band options when requesting single band visualization.")
+                              )
                             )
-                        }
-                      } getOrElse {
-                        IO.raiseError(
-                          SingleBandOptionsException(
-                            "Must specify single band options when requesting single band visualization."
                           )
-                        )
                       }
-                    })
+                    )
                     .collect({
-                      case Some(mbtile) => Raster(mbtile, extent)
+                      case Some(mbtile: MultibandTile) => Raster(mbtile, extent)
                     })
                     .compile
                     .toList
