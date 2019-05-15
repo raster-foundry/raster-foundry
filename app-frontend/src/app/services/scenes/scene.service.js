@@ -1,9 +1,8 @@
 /* globals BUILDCONFIG, btoa, Uint8Array */
 
-export default (app) => {
+export default app => {
     class SceneService {
-        constructor($resource, $http, APP_CONFIG,
-            authService, projectService, uuid4) {
+        constructor($resource, $http, APP_CONFIG, authService, projectService, uuid4) {
             'ngInject';
             this.$http = $http;
             this.authService = authService;
@@ -11,11 +10,14 @@ export default (app) => {
             this.uuid4 = uuid4;
 
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
+            this.apiHost = BUILDCONFIG.API_HOST;
 
             this.Scene = $resource(
-                `${BUILDCONFIG.API_HOST}/api/scenes/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/scenes/:id/`,
+                {
                     id: '@id'
-                }, {
+                },
+                {
                     query: {
                         method: 'GET',
                         cache: false
@@ -77,24 +79,26 @@ export default (app) => {
                         name: sceneName,
                         owner: user.id,
                         metadataFiles: scene.metadataFiles || [],
-                        images: [{
-                            organizationId: user.organizationId,
-                            rawDataBytes: 0,
-                            visibility: 'PRIVATE',
-                            filename: scene.location,
-                            sourceUri: scene.location,
-                            scene: sceneId,
-                            imageMetadata: {},
-                            owner: user.id,
-                            resolutionMeters: 0,
-                            metadataFiles: [],
-                            bands: datasource.bands.map(b => {
-                                const w = '' + Math.trunc(b.wavelength);
-                                return Object.assign({}, b, {
-                                    wavelength: [w, w]
-                                });
-                            })
-                        }],
+                        images: [
+                            {
+                                organizationId: user.organizationId,
+                                rawDataBytes: 0,
+                                visibility: 'PRIVATE',
+                                filename: scene.location,
+                                sourceUri: scene.location,
+                                scene: sceneId,
+                                imageMetadata: {},
+                                owner: user.id,
+                                resolutionMeters: 0,
+                                metadataFiles: [],
+                                bands: datasource.bands.map(b => {
+                                    const w = '' + Math.trunc(b.wavelength);
+                                    return Object.assign({}, b, {
+                                        wavelength: [w, w]
+                                    });
+                                })
+                            }
+                        ],
                         thumbnails: [],
                         ingestLocation: scene.location,
                         statusFields: {
@@ -108,8 +112,9 @@ export default (app) => {
                 });
                 if (scene.projectId && scene.layerId) {
                     sceneP.then(newScene => {
-                        this.projectService
-                            .addScenesToLayer(scene.projectId, scene.layerId, [newScene.id]);
+                        this.projectService.addScenesToLayer(scene.projectId, scene.layerId, [
+                            newScene.id
+                        ]);
                     });
                 } else if (scene.projectId) {
                     sceneP.then(newScene => {
@@ -122,7 +127,7 @@ export default (app) => {
         }
 
         deleteScene(scene) {
-            return this.Scene.delete({id: scene.id}).$promise;
+            return this.Scene.delete({ id: scene.id }).$promise;
         }
 
         getSceneBounds(scene) {
@@ -132,11 +137,11 @@ export default (app) => {
         }
 
         /**
-        * Generate a styled GeoJSON footprint, suitable for placing on a map.
-        * @param {Scene} scene For which to generate a GeoJSON footprint
-        *
-        * @returns {Object} GeoJSON footprint of scene.
-        */
+         * Generate a styled GeoJSON footprint, suitable for placing on a map.
+         * @param {Scene} scene For which to generate a GeoJSON footprint
+         *
+         * @returns {Object} GeoJSON footprint of scene.
+         */
         getStyledFootprint(scene) {
             let styledGeojson = Object.assign({}, scene.dataFootprint, {
                 properties: {
@@ -154,22 +159,30 @@ export default (app) => {
         }
 
         getDownloadableImages(scene) {
-            return this.Scene.download({id: scene.id}).$promise;
+            return this.Scene.download({ id: scene.id }).$promise;
         }
 
-        datasource({id}) {
-            return this.Scene.datasource({id: id}).$promise;
+        datasource({ id }) {
+            return this.Scene.datasource({ id: id }).$promise;
         }
 
         // set the default floor to 25 to brighten up images -- this was a fine value for
         // MODIS Terra scenes, but other datasources may need to pass a different parameter
-        cogThumbnail(sceneId, token, width = 128, height = 128,
-            red = 0, green = 1, blue = 2, floor = 25) {
+        cogThumbnail(
+            sceneId,
+            token,
+            width = 128,
+            height = 128,
+            red = 0,
+            green = 1,
+            blue = 2,
+            floor = 25
+        ) {
             return this.$http({
                 method: 'GET',
                 url: `${this.tileServer}/scenes/${sceneId}/thumbnail`,
                 headers: {
-                    'Authorization': 'Bearer ' + token,
+                    Authorization: 'Bearer ' + token,
                     'Content-Type': 'arraybuffer'
                 },
                 responseType: 'arraybuffer',
@@ -180,12 +193,12 @@ export default (app) => {
                     floor
                 }
             }).then(
-                (response) => {
+                response => {
                     let arr = new Uint8Array(response.data);
                     let rawString = this.uint8ToString(arr);
                     return btoa(rawString);
                 },
-                (error) => {
+                error => {
                     return error;
                 }
             );
@@ -205,6 +218,13 @@ export default (app) => {
             let queryParams = params || {};
             let formattedParams = L.Util.getParamString(queryParams);
             return `${this.tileServer}/scenes/${sceneId}/{z}/{x}/{y}/${formattedParams}`;
+        }
+
+        getSentinelMetadata(id, url) {
+            return this.$http({
+                method: 'GET',
+                url: `${this.apiHost}/api/scenes/${id}/sentinel-metadata/${encodeURIComponent(url)}`
+            });
         }
     }
 
