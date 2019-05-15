@@ -17,7 +17,7 @@ import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 object BacksplashMosaic extends ToHistogramStoreOps {
 
   def toRasterSource(bsm: BacksplashMosaic)(
-    implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
+      implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
     filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>
@@ -34,7 +34,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
   }
 
   def getRasterSourceOriginalCRS(bsm: BacksplashMosaic)(
-    implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
+      implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
     filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>

@@ -28,7 +28,7 @@ import opengis.wms.{Name, OnlineResource, Service}
 import java.util.UUID
 
 class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])(
-  implicit contextShift: ContextShift[IO])
+    implicit contextShift: ContextShift[IO])
     extends ToProjectStoreOps {
 
   private def compositesToOgcStyles(
