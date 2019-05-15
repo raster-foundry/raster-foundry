@@ -189,7 +189,7 @@ lazy val root = project
 
 lazy val loggingDependencies = Seq(
   Dependencies.scalaLogging % Runtime,
-  Dependencies.slf4jApi % Runtime,
+  Dependencies.slf4j % Runtime,
   Dependencies.log4jOverslf4j % Runtime, // for any java classes looking for this
   Dependencies.logbackClassic % Runtime
 )

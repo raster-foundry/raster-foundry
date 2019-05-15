@@ -141,7 +141,7 @@ object Dependencies {
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
   val log4jOverslf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j
-  val slf4jApi = "org.slf4j" % "slf4j-api" % Version.slf4j
+  val slf4j = "org.slf4j" % "slf4j-api" % Version.slf4j
   val sttpCore = "com.softwaremill.sttp" %% "core" % "1.5.12"
   val sttpJson = "com.softwaremill.sttp" %% "json-common" % "1.5.12"
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % "1.5.12"
