@@ -4,16 +4,20 @@
 
 ### Added
 
+- Convert BacksplashImage to a trait [\#4952](https://github.com/raster-foundry/raster-foundry/pull/4952)
+
 ### Changed
 
 ### Deprecated
 
 ### Fixed
+
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
 
 ### Security
 
 ## [1.21.1](https://github.com/raster-foundry/raster-foundry/tree/1.21.0) (2019-05-15)
+
 - Stopped returning internal server errors when requesting tiles outside a project boundary [\#4956](https://github.com/raster-foundry/raster-foundry/pull/4956)
 
 ### Fixed
@@ -26,7 +30,6 @@
 - Add owner name and profile URL to the return of annotation GET endpoint [\#4924](https://github.com/raster-foundry/raster-foundry/pull/4924)
 - Added request counting middleware to backsplash-server [\#4919](https://github.com/raster-foundry/raster-foundry/pull/4919)
 - Enabled getting and writing user group roles from JWT [\#4931](https://github.com/raster-foundry/raster-foundry/pull/4931)
-- Kickoff project layer overview generation reactively [\#4936](https://github.com/raster-foundry/raster-foundry/pull/4936)
 
 ### Fixed
 

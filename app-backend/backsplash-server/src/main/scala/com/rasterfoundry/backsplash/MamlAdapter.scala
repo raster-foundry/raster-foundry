@@ -37,7 +37,7 @@ class BacksplashMamlAdapter[HistStore, LayerStore: ProjectStore](
           } flatMap { project =>
             layerStore.read(project.defaultLayerId, None, None, None)
           } map { backsplashImage =>
-            backsplashImage.copy(subsetBands = List(bandActual))
+            backsplashImage.selectBands(List(bandActual))
           }
           Map[String, BacksplashMosaic](
             s"${projId.toString}_${bandActual}" -> mosaic
@@ -53,7 +53,7 @@ class BacksplashMamlAdapter[HistStore, LayerStore: ProjectStore](
             s"${layerId.toString}_${bandActual}" -> (
               layerStore
                 .read(layerId, None, None, None) map { backsplashIm =>
-                backsplashIm.copy(subsetBands = List(bandActual))
+                backsplashIm.selectBands(List(bandActual))
               }
             )
           )
