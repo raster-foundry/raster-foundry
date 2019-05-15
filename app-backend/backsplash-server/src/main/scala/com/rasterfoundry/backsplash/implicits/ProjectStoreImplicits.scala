@@ -108,8 +108,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
 
     BacksplashGeotiff(
       sceneId,
-      projId, // actually the layer ID
       mosaicDefinition.projectId,
+      projId, // actually the layer ID
       ingestLocation,
       subsetBands,
       colorCorrectParameters,
