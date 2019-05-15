@@ -296,7 +296,7 @@ lazy val common = project
       Dependencies.scalaCheck,
       Dependencies.catsScalacheck,
       Dependencies.awsLambdaSdk,
-    )  ++ loggingDependencies
+    ) ++ loggingDependencies
   })
 
 lazy val datamodel = project
@@ -312,7 +312,6 @@ lazy val datamodel = project
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisVector,
       Dependencies.geotrellisProj4,
-      Dependencies.slf4jApi,
       Dependencies.geotrellisVectorTestkit,
       Dependencies.circeCore,
       Dependencies.circeParser,
@@ -524,7 +523,6 @@ lazy val backsplashServer =
     })
     .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
     .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
-
     .settings(test in assembly := {})
 
 /**
