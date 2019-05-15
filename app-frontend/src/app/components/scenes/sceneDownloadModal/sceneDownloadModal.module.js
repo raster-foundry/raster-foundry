@@ -13,10 +13,12 @@ const SceneDownloadModalComponent = {
 };
 
 class SceneDownloadModalController {
-    constructor(sceneService, $timeout) {
+    constructor(sceneService, $timeout, $log, $window) {
         'ngInject';
         this.sceneService = sceneService;
         this.$timeout = $timeout;
+        this.$log = $log;
+        this.$window = $window;
     }
 
     $onInit() {
@@ -25,8 +27,9 @@ class SceneDownloadModalController {
         this.rejectionMessage = null;
         // Sentinel-2 scenes can't be downloaded unless they've been added to a project --
         // see https://github.com/raster-foundry/raster-foundry/issues/3989
-        let datasourceIngestCheck = this.resolve.scene.datasource.name !== 'Sentinel-2' ||
-            this.resolve.scene.sceneType === 'COG' && this.resolve.scene.ingestLocation;
+        let datasourceIngestCheck =
+            this.resolve.scene.datasource.name !== 'Sentinel-2' ||
+            (this.resolve.scene.sceneType === 'COG' && this.resolve.scene.ingestLocation);
         if (this.resolve.scene && datasourceIngestCheck) {
             const scene = this.resolve.scene;
             this.isLoading = true;
@@ -38,11 +41,13 @@ class SceneDownloadModalController {
                         metadata: image.metadataFiles || []
                     };
                 });
-                this.downloads = [{
-                    label: scene.name,
-                    metadata: scene.metadataFiles || [],
-                    images: imageSet
-                }];
+                this.downloads = [
+                    {
+                        label: scene.name,
+                        metadata: scene.metadataFiles || [],
+                        images: imageSet
+                    }
+                ];
 
                 this.isLoading = false;
             });
@@ -62,6 +67,39 @@ class SceneDownloadModalController {
                 delete this.copyType;
             }, 1000);
         }
+    }
+
+    onDownloadSentinelMetadata(url) {
+        const isXml = url.slice(-3).toLowerCase() === 'xml';
+        const fileName = url
+            .replace('https://', '')
+            .split('/')
+            .join('-');
+        this.sceneService
+            .getSentinelMetadata(this.resolve.scene.id, url)
+            .then(resp => {
+                let data = [];
+                let option = {};
+                if (isXml) {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(resp.data, 'application/xml');
+                    const serializer = new XMLSerializer();
+                    data = [serializer.serializeToString(xmlDoc)];
+                    option = { type: 'application/xml;charset=utf-8;' };
+                } else {
+                    data = [JSON.stringify(resp.data)];
+                    option = { type: 'application/json;charset=utf-8;' };
+                }
+                const blob = new Blob(data, option);
+                const downloadLink = angular.element('<a></a>');
+                downloadLink.attr('href', this.$window.URL.createObjectURL(blob));
+                downloadLink.attr('download', fileName);
+                downloadLink[0].click();
+            })
+            .catch(err => {
+                this.$log.error(err);
+                this.$window.alert('There was an error downloading this metadata file');
+            });
     }
 }
 
