@@ -404,7 +404,6 @@ trait SceneRoutes
     }
   }
 
-  @SuppressWarnings(Array("AsInstanceOf"))
   def getSentinelMetadata(sceneId: UUID, metadataUrl: String): Route =
     authenticate { user =>
       authorizeAsync {
