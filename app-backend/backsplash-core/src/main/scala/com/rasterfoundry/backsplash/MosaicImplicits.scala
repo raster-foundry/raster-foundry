@@ -74,7 +74,7 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
   }
 
   @SuppressWarnings(Array("TraversableHead"))
-  def renderStreamSB(
+  def renderStreamSingleBand(
       mosaic: BacksplashMosaic,
       z: Int,
       x: Int,
@@ -141,7 +141,7 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
   }
 
   @SuppressWarnings(Array("TraversableHead"))
-  def renderStreamMB(
+  def renderStreamMultiband(
       mosaic: BacksplashMosaic,
       z: Int,
       x: Int,
@@ -236,19 +236,19 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
                 projStore.getOverviewLocation(backsplashIm.projectLayerId)
               )
             }
-          } take (1) evalMap {
-            case (im, loc) =>
-              loc map { uri =>
+          } take (1) flatMap {
+            case (baseBacksplashImage, overviewLocationO) =>
+              overviewLocationO map { uri =>
                 IO.pure(
-                  BacksplashGeotiff(im.imageId,
-                                    im.projectId,
-                                    im.projectLayerId,
+                  BacksplashGeotiff(baseBacksplashImage.imageId,
+                                    baseBacksplashImage.projectId,
+                                    baseBacksplashImage.projectLayerId,
                                     uri,
-                                    im.subsetBands,
-                                    im.corrections,
-                                    im.singleBandOptions,
-                                    im.mask,
-                                    im.footprint))
+                                    baseBacksplashImage.subsetBands,
+                                    baseBacksplashImage.corrections,
+                                    baseBacksplashImage.singleBandOptions,
+                                    baseBacksplashImage.mask,
+                                    baseBacksplashImage.footprint))
               } getOrElse {
                 IO.raiseError(
                   new MetadataException("No overview location found"))
@@ -259,30 +259,30 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
           mosaic <- if (bandCount == 3) {
             val filtered = BacksplashMosaic.filterRelevant(self)
             if (z <= Config.tuning.overviewThreshold) {
-              val att = renderStreamMB(overviewStream, z, x, y)
+              val att = renderStreamMultiband(overviewStream, z, x, y)
               att.recoverWith({
-                case _ =>
+                case MetadataException("No overview location found") =>
                   logger.warn(
                     "Went looking for an overview and didn't find one"
                   )
-                  renderStreamMB(filtered, z, x, y)
+                  renderStreamMultiband(filtered, z, x, y)
               })
-            } else renderStreamMB(filtered, z, x, y)
+            } else renderStreamMultiband(filtered, z, x, y)
           } else {
             // Assume that we're in a single band case. It isn't obvious what it would
             // mean if the band count weren't 3 or 1, so just make the assumption that we
             // wouldn't do that to ourselves and don't handle the remainder
             if (z <= Config.tuning.overviewThreshold) {
-              val att = renderStreamSB(overviewStream, z, x, y)
+              val att = renderStreamSingleBand(overviewStream, z, x, y)
               att.recoverWith({
                 case _ =>
                   logger.warn(
                     "Went looking for an overview and didn't find one"
                   )
-                  renderStreamSB(self, z, x, y)
+                  renderStreamSingleBand(self, z, x, y)
               })
             } else {
-              renderStreamSB(self, z, x, y)
+              renderStreamSingleBand(self, z, x, y)
             }
           }
         } yield {

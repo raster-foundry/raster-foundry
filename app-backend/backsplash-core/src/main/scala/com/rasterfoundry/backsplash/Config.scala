@@ -42,9 +42,4 @@ object Config {
     val memcachedTimeoutMilliseconds =
       cacheConfig.getInt("core.memcachedTimeoutMilliseconds")
   }
-
-  object tuning {
-    private val tuningConfig = config.getConfig("tuning")
-    val overviewThreshold = tuningConfig.getInt("overviewThreshold")
-  }
 }
