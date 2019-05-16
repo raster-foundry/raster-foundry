@@ -13,6 +13,7 @@
 ### Fixed
 
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
+- Fixed logging configuration to respect `RF_LOG_LEVEL` environment variable [\#4972](https://github.com/raster-foundry/raster-foundry/pull/4972)
 
 ### Security
 
