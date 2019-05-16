@@ -63,7 +63,8 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     } else {
       logger.debug(
         s"Not invoking AWS Lambda -- not in production or staging, in ${lambdaConfig.environment}")
-      logger.debug(s"Lambda Function: $functionName -- Payload: $payloadObfuscated")
+      logger.debug(
+        s"Lambda Function: $functionName -- Payload: $payloadObfuscated")
     }
 
   }
