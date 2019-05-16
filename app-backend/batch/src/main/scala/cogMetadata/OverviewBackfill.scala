@@ -50,6 +50,7 @@ object OverviewBackfill extends Job with RollbarNotifier {
   val projectLayers: Stream[ConnectionIO, ProjectLayer] =
     ProjectLayerDao.query
       .filter(fr"project_id IS NOT NULL")
+      .filter(fr"overviews_location IS NULL")
       .listQ(1000000)
       .stream
   val projectLayersWithSceneCounts: Stream[ConnectionIO, (ProjectLayer, Int)] =
@@ -64,7 +65,7 @@ object OverviewBackfill extends Job with RollbarNotifier {
               case (_, n) => n <= 300 && n > 0
             })
             .transact(t)
-            .parEvalMap(20)({
+            .parEvalMap(30)({
               case (projectLayer, _) =>
                 kickoffOverviewGeneration(projectLayer)
             })
@@ -72,7 +73,8 @@ object OverviewBackfill extends Job with RollbarNotifier {
             .to[List]
       )
       .map { results =>
-        logger.info(s"Backfilled overviews for ${results.length} project layers")
+        logger.info(
+          s"Backfilled overviews for ${results.length} project layers")
       }
   }
 }
