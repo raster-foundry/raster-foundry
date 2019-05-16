@@ -12,6 +12,7 @@ trait Config {
   private val s3Config = config.getConfig("s3")
   private val tileServerConfig = config.getConfig("tileServer")
   private val dropboxConfig = config.getConfig("dropbox")
+  private val sentinel2Config = config.getConfig("sentinel2")
 
   val httpHost = httpConfig.getString("interface")
   val httpPort = httpConfig.getInt("port")
@@ -36,4 +37,6 @@ trait Config {
   val dropboxClientId = dropboxConfig.getString("appKey")
 
   val scopedUploadRoleArn = s3Config.getString("scopedUploadRoleArn")
+
+  val sentinel2DatasourceId = sentinel2Config.getString("datasourceId")
 }
