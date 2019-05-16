@@ -257,9 +257,7 @@ lazy val lambdaOverviews = project
       Dependencies.sttpCore,
       Dependencies.sttpJson,
       Dependencies.sttpCirce,
-      Dependencies.spire,
       Dependencies.circeCore,
-      Dependencies.slf4j % Runtime,
       Dependencies.circeParser,
       Dependencies.scalatest,
       Dependencies.clistCore,
@@ -506,7 +504,6 @@ lazy val backsplashServer =
     .settings(fork in run := true)
     .settings({
       libraryDependencies ++= Seq(
-        "io.chrisdavenport" %% "log4cats-slf4j" % "0.3.0",
         Dependencies.catsMeow,
         Dependencies.geotrellisServer,
         Dependencies.http4sBlaze,
