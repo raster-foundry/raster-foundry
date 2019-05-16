@@ -414,8 +414,7 @@ trait SceneRoutes
                                       ActionType.View)
           datasource <- SceneDao.getSceneDatasource(sceneId)
         } yield {
-          auth && datasource.id == UUID.fromString(
-            "4a50cb75-815d-4fe5-8bc1-144729ce5b42")
+          auth && datasource.id == UUID.fromString(sentinel2DatasourceId)
         }
         authorizedIO.transact(xa).unsafeToFuture
       } {
@@ -424,12 +423,14 @@ trait SceneRoutes
             .getSentinelMetadata(metadataUrl)
             .transact(xa)
             .unsafeToFuture) { (s3Object, metaData) =>
-          val s3MediaType = metaData.getContentType() match {
-            case "application/json" => ContentTypes.`application/json`
-            case "application/xml"  => ContentTypes.`text/xml(UTF-8)`
-            case _                  => throw new Exception("Unsupported media type")
+          metaData.getContentType() match {
+            case "application/json" =>
+              complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, s3Object)))
+            case "application/xml"  =>
+              complete(HttpResponse(entity = HttpEntity(ContentTypes.`text/xml(UTF-8)`, s3Object)))
+            case _ =>
+              complete(StatusCodes.UnsupportedMediaType)
           }
-          complete(HttpResponse(entity = HttpEntity(s3MediaType, s3Object)))
         }
       }
     }
