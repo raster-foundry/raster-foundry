@@ -43,11 +43,6 @@ object Config {
       cacheConfig.getInt("core.memcachedTimeoutMilliseconds")
   }
 
-  object s3 {
-    private val s3Config = config.getConfig("s3")
-    val dataBucket = s3Config.getString("dataBucket")
-  }
-
   object tuning {
     private val tuningConfig = config.getConfig("tuning")
     val overviewThreshold = tuningConfig.getInt("overviewThreshold")
