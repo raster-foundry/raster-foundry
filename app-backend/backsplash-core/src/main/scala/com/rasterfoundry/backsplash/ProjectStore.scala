@@ -17,8 +17,8 @@ import java.util.UUID
       imageSubset: Option[NEL[UUID]]
   ): BacksplashMosaic
 
-  @op("getOverviewLocation") def getOverviewLocation(
+  @op("getOverviewConfig") def getOverviewConfig(
       self: A,
       projId: UUID
-  ): IO[Option[String]]
+  ): IO[OverviewConfig]
 }

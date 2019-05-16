@@ -157,7 +157,9 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       }
     }
 
-    def getOverviewLocation(self: SceneDao, projId: UUID) = IO.pure { None }
+    def getOverviewConfig(self: SceneDao, projId: UUID) = IO.pure {
+      OverviewConfig.empty
+    }
   }
 
   implicit val layerStore: ProjectStore[SceneToLayerDao] =
@@ -182,14 +184,20 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         } transact (xa)
       }
 
-      def getOverviewLocation(self: SceneToLayerDao,
-                              projId: UUID): IO[Option[String]] =
+      def getOverviewConfig(self: SceneToLayerDao,
+                            projId: UUID): IO[OverviewConfig] =
         (for {
           projLayer <- OptionT {
             ProjectLayerDao.getProjectLayerById(projId).transact(xa)
           }
-          overview <- OptionT.fromOption[IO] { projLayer.overviewsLocation }
-        } yield overview).value
+          overviewLocation <- OptionT.fromOption[IO] {
+            projLayer.overviewsLocation
+          }
+          minZoom <- OptionT.fromOption[IO] { projLayer.minZoomLevel }
+        } yield
+          OverviewConfig(Some(overviewLocation), Some(minZoom))).value map {
+          case Some(conf) => conf
+          case _          => OverviewConfig.empty
+        }
     }
-
 }

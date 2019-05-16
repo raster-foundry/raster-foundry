@@ -73,6 +73,31 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
     }))
   }
 
+  def chooseStream(z: Int,
+                   baseImage: BacksplashImage[IO],
+                   config: OverviewConfig,
+                   fallbackStream: BacksplashMosaic): BacksplashMosaic =
+    config match {
+      case OverviewConfig(Some(overviewLocation), Some(minZoom))
+          if z <= minZoom =>
+        fs2.Stream.eval {
+          IO {
+            BacksplashGeotiff(
+              baseImage.imageId,
+              baseImage.projectId,
+              baseImage.projectLayerId,
+              overviewLocation,
+              baseImage.subsetBands,
+              baseImage.corrections,
+              baseImage.singleBandOptions,
+              baseImage.mask,
+              baseImage.footprint
+            )
+          }
+        }
+      case _ =>
+        BacksplashMosaic.filterRelevant(fallbackStream)
+    }
   @SuppressWarnings(Array("TraversableHead"))
   def renderStreamSingleBand(
       mosaic: BacksplashMosaic,
@@ -230,60 +255,22 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
               IO.raiseError(NoDataInRegionException)
             } else IO.unit
           }
-          overviewStream = self zip {
+          stream = self zip {
             self flatMap { (backsplashIm: BacksplashImage[IO]) =>
               fs2.Stream.eval(
-                projStore.getOverviewLocation(backsplashIm.projectLayerId)
+                projStore.getOverviewConfig(backsplashIm.projectLayerId)
               )
             }
           } take (1) flatMap {
-            case (baseBacksplashImage, overviewLocationO) =>
-              overviewLocationO map { uri =>
-                IO.pure(
-                  BacksplashGeotiff(baseBacksplashImage.imageId,
-                                    baseBacksplashImage.projectId,
-                                    baseBacksplashImage.projectLayerId,
-                                    uri,
-                                    baseBacksplashImage.subsetBands,
-                                    baseBacksplashImage.corrections,
-                                    baseBacksplashImage.singleBandOptions,
-                                    baseBacksplashImage.mask,
-                                    baseBacksplashImage.footprint))
-              } getOrElse {
-                IO.raiseError(
-                  new MetadataException("No overview location found"))
-              }
+            case (baseBacksplashImage, overviewConfig) =>
+              chooseStream(z, baseBacksplashImage, overviewConfig, self)
           }
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
           mosaic <- if (bandCount == 3) {
-            val filtered = BacksplashMosaic.filterRelevant(self)
-            if (z <= Config.tuning.overviewThreshold) {
-              val att = renderStreamMultiband(overviewStream, z, x, y)
-              att.recoverWith({
-                case MetadataException("No overview location found") =>
-                  logger.warn(
-                    "Went looking for an overview and didn't find one"
-                  )
-                  renderStreamMultiband(filtered, z, x, y)
-              })
-            } else renderStreamMultiband(filtered, z, x, y)
+            renderStreamMultiband(stream, z, x, y)
           } else {
-            // Assume that we're in a single band case. It isn't obvious what it would
-            // mean if the band count weren't 3 or 1, so just make the assumption that we
-            // wouldn't do that to ourselves and don't handle the remainder
-            if (z <= Config.tuning.overviewThreshold) {
-              val att = renderStreamSingleBand(overviewStream, z, x, y)
-              att.recoverWith({
-                case _ =>
-                  logger.warn(
-                    "Went looking for an overview and didn't find one"
-                  )
-                  renderStreamSingleBand(self, z, x, y)
-              })
-            } else {
-              renderStreamSingleBand(self, z, x, y)
-            }
+            renderStreamSingleBand(stream, z, x, y)
           }
         } yield {
           ProjectedRaster(mosaic, WebMercator)
