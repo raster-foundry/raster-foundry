@@ -425,9 +425,11 @@ trait SceneRoutes
             .unsafeToFuture) { (s3Object, metaData) =>
           metaData.getContentType() match {
             case "application/json" =>
-              complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, s3Object)))
-            case "application/xml"  =>
-              complete(HttpResponse(entity = HttpEntity(ContentTypes.`text/xml(UTF-8)`, s3Object)))
+              complete(HttpResponse(
+                entity = HttpEntity(ContentTypes.`application/json`, s3Object)))
+            case "application/xml" =>
+              complete(HttpResponse(
+                entity = HttpEntity(ContentTypes.`text/xml(UTF-8)`, s3Object)))
             case _ =>
               complete(StatusCodes.UnsupportedMediaType)
           }
