@@ -13,12 +13,13 @@ const SceneDownloadModalComponent = {
 };
 
 class SceneDownloadModalController {
-    constructor(sceneService, $timeout, $log, $window) {
+    constructor(sceneService, $timeout, $log, $window, $document) {
         'ngInject';
         this.sceneService = sceneService;
         this.$timeout = $timeout;
         this.$log = $log;
         this.$window = $window;
+        this.$document = $document;
     }
 
     $onInit() {
@@ -75,9 +76,8 @@ class SceneDownloadModalController {
             .replace('https://', '')
             .split('/')
             .join('-');
-        this.sceneService
-            .getSentinelMetadata(this.resolve.scene.id, url)
-            .then(resp => {
+        this.sceneService.getSentinelMetadata(this.resolve.scene.id, url).then(
+            resp => {
                 let data = [];
                 let option = {};
                 if (isXml) {
@@ -94,12 +94,14 @@ class SceneDownloadModalController {
                 const downloadLink = angular.element('<a></a>');
                 downloadLink.attr('href', this.$window.URL.createObjectURL(blob));
                 downloadLink.attr('download', fileName);
+                this.$document[0].body.appendChild(downloadLink[0]);
                 downloadLink[0].click();
-            })
-            .catch(err => {
+            },
+            err => {
                 this.$log.error(err);
                 this.$window.alert('There was an error downloading this metadata file');
-            });
+            }
+        );
     }
 }
 
