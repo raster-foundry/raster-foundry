@@ -265,8 +265,6 @@ lazy val lambdaOverviews = project
     ) ++ loggingDependencies
   })
 
-lazy val lambdaOverviewsNoScala = lambdaOverviews.settings()
-
 /**
   * Common Settings
   */
