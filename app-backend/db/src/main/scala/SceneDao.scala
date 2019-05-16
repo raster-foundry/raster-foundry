@@ -6,6 +6,7 @@ import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel.{Scene, User, _}
 
 import cats.implicits._
+import cats.effect.{IO, LiftIO}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -312,8 +313,8 @@ object SceneDao
     }
   }
 
-  def getSentinelMetadata(
-      metadataUrl: String): ConnectionIO[(Array[Byte], ObjectMetadata)] = {
+  def getSentinelMetadata(metadataUrl: String)(implicit L: LiftIO[ConnectionIO])
+    : ConnectionIO[(Array[Byte], ObjectMetadata)] = {
     val s3Client = S3(region = Some(S3RegionEnum(Regions.EU_CENTRAL_1)))
     val bucketAndPrefix =
       s3Client.bucketAndPrefixFromURI(
@@ -321,7 +322,9 @@ object SceneDao
     val s3Object =
       s3Client.getObject(bucketAndPrefix._1, bucketAndPrefix._2, true)
     val metaData = S3.getObjectMetadata(s3Object)
-    (S3.getObjectBytes(s3Object), metaData).pure[ConnectionIO]
+    L.liftIO(IO {
+      (S3.getObjectBytes(s3Object), metaData)
+    })
   }
 
   def authQuery(user: User,
