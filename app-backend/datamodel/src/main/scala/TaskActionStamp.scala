@@ -6,10 +6,10 @@ import io.circe.generic.semiauto._
 import java.time.Instant
 
 case class TaskActionStamp(
-  userId: String,
-  timestamp: Instant,
-  fromStatus: TaskStatus,
-  toStatus: TaskStatus
+    userId: String,
+    timestamp: Instant,
+    fromStatus: TaskStatus,
+    toStatus: TaskStatus
 )
 
 object TaskActionStamp {

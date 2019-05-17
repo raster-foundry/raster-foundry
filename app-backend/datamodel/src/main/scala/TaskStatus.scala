@@ -3,7 +3,7 @@ package com.rasterfoundry.datamodel
 import cats.implicits._
 import io.circe._
 
-sealed class TaskStatus(repr: String) {
+sealed class TaskStatus(val repr: String) {
   override def toString = repr
 }
 
@@ -15,11 +15,11 @@ object TaskStatus {
   case object Validated extends TaskStatus("VALIDATED")
 
   def fromString(s: String): TaskStatus = s.toUpperCase match {
-    case "UNLABELED" => Unlabeled
-    case "LABELING_IN_PROGRESS" => LabelingInProgress
-    case "LABELED" => Labeled
+    case "UNLABELED"              => Unlabeled
+    case "LABELING_IN_PROGRESS"   => LabelingInProgress
+    case "LABELED"                => Labeled
     case "VALIDATION_IN_PROGRESS" => ValidationInProgress
-    case "VALIDATED" => Validated
+    case "VALIDATED"              => Validated
   }
 
   implicit val taskStatusEncoder: Encoder[TaskStatus] =

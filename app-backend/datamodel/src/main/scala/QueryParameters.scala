@@ -6,6 +6,7 @@ import geotrellis.proj4._
 import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.UUID
 
 /** Case class representing all /thumbnail query parameters */
@@ -647,3 +648,16 @@ final case class MetricQueryParameters(
     referer: Option[String] = None,
     requestType: MetricRequestType
 )
+
+final case class TaskQueryParameters(
+    projectId: Option[UUID] = None,
+    projectLayerId: Option[UUID] = None,
+    status: Option[TaskStatus] = None,
+    lockedBy: Option[TaskStatus] = None,
+    lockedOnBefore: Option[Instant] = None,
+    lockedOnAfter: Option[Instant] = None,
+    bbox: Iterable[String] = Seq.empty
+) {
+  val bboxPolygon: Option[Seq[Projected[Polygon]]] =
+    BboxUtil.toBboxPolygon(bbox)
+}

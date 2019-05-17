@@ -5,6 +5,7 @@ import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
+import geotrellis.vector.{Polygon, Projected}
 import cats.implicits._
 import Fragments.in
 
@@ -152,4 +153,37 @@ object Filters {
       requestTypeF
     )
   }
+
+  def taskQP(taskQP: TaskQueryParameters)(
+      implicit putTaskStatus: Put[TaskStatus],
+      putGeom: Put[Projected[Polygon]]): List[Option[Fragment]] =
+    List(
+      taskQP.projectId map { qp =>
+        fr"project_id = $qp"
+      },
+      taskQP.projectLayerId map { qp =>
+        fr"project_layer_id = $qp "
+      },
+      taskQP.status map { qp =>
+        fr"status = $qp "
+      },
+      taskQP.lockedBy map { qp =>
+        fr"locked_by = $qp "
+      },
+      taskQP.lockedOnBefore map { qp =>
+        fr"locked_on <= $qp"
+      },
+      taskQP.lockedOnAfter map { qp =>
+        fr"locked_on >= $qp"
+      },
+      taskQP.bboxPolygon match {
+        case Some(bboxPolygons) =>
+          val fragments = bboxPolygons.map(
+            bbox =>
+              fr"(_ST_Intersects(geometry, ${bbox}) AND geometry && ${bbox})"
+          )
+          Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
+        case _ => None
+      }
+    )
 }

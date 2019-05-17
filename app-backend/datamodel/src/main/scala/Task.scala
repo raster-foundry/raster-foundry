@@ -115,14 +115,45 @@ object Task {
 
   case class TaskFeatureCollection(
       _type: String = "FeatureCollection",
-      features: List[TaskFeature]
+      features: List[TaskFeature],
   )
 
   object TaskFeatureCollection {
     implicit val encTaskFeatureCollection: Encoder[TaskFeatureCollection] =
-      Encoder.forProduct2("type", "features")(tfc => (tfc._type, tfc.features))
+      Encoder.forProduct2(
+        "type",
+        "features"
+      )(
+        tfc =>
+          (
+            tfc._type,
+            tfc.features
+        )
+      )
 
     implicit val decTaskFeatureCollection: Decoder[TaskFeatureCollection] =
-      Decoder.forProduct2("type", "features")(TaskFeatureCollection.apply _)
+      Decoder.forProduct2(
+        "type",
+        "features"
+      )(TaskFeatureCollection.apply _)
   }
+
+  case class TaskFeatureCollectionCreate(
+      _type: String = "FeatureCollection",
+      features: List[TaskFeatureCreate]
+  )
+
+  object TaskFeatureCollectionCreate {
+    implicit val decTaskFeatureCollectionCreate
+      : Decoder[TaskFeatureCollectionCreate] =
+      Decoder.forProduct2("type", "features")(
+        TaskFeatureCollectionCreate.apply _
+      )
+    implicit val encTaskFeatureCollectionCreate
+      : Encoder[TaskFeatureCollectionCreate] =
+      Encoder.forProduct2("type", "features")(
+        tfc => (tfc._type, tfc.features)
+      )
+  }
+
 }
