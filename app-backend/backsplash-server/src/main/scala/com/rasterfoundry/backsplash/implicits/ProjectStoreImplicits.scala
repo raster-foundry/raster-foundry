@@ -3,7 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{SceneDao, SceneToLayerDao}
+import com.rasterfoundry.database.{ProjectLayerDao, SceneDao, SceneToLayerDao}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.BandOverride
 import com.rasterfoundry.common._
@@ -25,7 +25,7 @@ import com.rasterfoundry.backsplash.color.{
   _
 }
 
-import cats.data.{NonEmptyList => NEL}
+import cats.data.{NonEmptyList => NEL, OptionT}
 import cats.effect.IO
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
@@ -108,7 +108,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
 
     BacksplashGeotiff(
       sceneId,
-      projId,
+      mosaicDefinition.projectId,
+      projId, // actually the layer ID
       ingestLocation,
       subsetBands,
       colorCorrectParameters,
@@ -145,6 +146,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         BacksplashGeotiff(
           scene.id,
           randomProjectId,
+          randomProjectId,
           ingestLocation,
           imageBandOverride,
           colorCorrectParams,
@@ -154,12 +156,17 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         )
       }
     }
+
+    def getOverviewConfig(self: SceneDao, projId: UUID) = IO.pure {
+      OverviewConfig.empty
+    }
   }
 
   implicit val layerStore: ProjectStore[SceneToLayerDao] =
     new ProjectStore[SceneToLayerDao] {
       // projId here actually refers to a layer -- but the argument names have to
       // match the typeclass we're providing evidence for
+
       def read(self: SceneToLayerDao,
                projId: UUID,
                window: Option[Projected[Polygon]],
@@ -176,5 +183,21 @@ class ProjectStoreImplicits(xa: Transactor[IO])
           mosaicDefinitionToImage(md, bandOverride, projId)
         } transact (xa)
       }
+
+      def getOverviewConfig(self: SceneToLayerDao,
+                            projId: UUID): IO[OverviewConfig] =
+        (for {
+          projLayer <- OptionT {
+            ProjectLayerDao.getProjectLayerById(projId).transact(xa)
+          }
+          overviewLocation <- OptionT.fromOption[IO] {
+            projLayer.overviewsLocation
+          }
+          minZoom <- OptionT.fromOption[IO] { projLayer.minZoomLevel }
+        } yield
+          OverviewConfig(Some(overviewLocation), Some(minZoom))).value map {
+          case Some(conf) => conf
+          case _          => OverviewConfig.empty
+        }
     }
 }

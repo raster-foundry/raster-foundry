@@ -29,7 +29,7 @@ import java.util.UUID
 
 class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
     layers: LayerStore,
-    mosaicImplicits: MosaicImplicits[HistStore],
+    mosaicImplicits: MosaicImplicits[HistStore, LayerStore],
     analysisManager: AnalysisManager[ToolStore, HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO]) {
 

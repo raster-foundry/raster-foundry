@@ -65,8 +65,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
   )
 
-  val projectStoreImplicits = new ProjectStoreImplicits(xa)
-
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
 
@@ -109,14 +107,25 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val authenticators = new Authenticators(xa)
 
-  val mosaicImplicits = new MosaicImplicits(LayerAttributeDao())
-  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
-  import toolStoreImplicits._
+  val projectStoreImplicits = new ProjectStoreImplicits(xa)
+  import projectStoreImplicits._
+
+  val projectLayerMosaicImplicits =
+    new MosaicImplicits(LayerAttributeDao(), SceneToLayerDao())
+  val sceneMosaicImplicits =
+    new MosaicImplicits(LayerAttributeDao(), SceneDao())
+  val toolStoreImplicits =
+    new ToolStoreImplicits(projectLayerMosaicImplicits, xa)
+  import toolStoreImplicits.toolRunDaoStore
+
   val ogcImplicits = new OgcImplicits(SceneToLayerDao(), xa)
   import ogcImplicits._
 
   val analysisManager =
-    new AnalysisManager(ToolRunDao(), mosaicImplicits, toolStoreImplicits, xa)
+    new AnalysisManager(ToolRunDao(),
+                        projectLayerMosaicImplicits,
+                        toolStoreImplicits,
+                        xa)
 
   val metricMiddleware = new MetricMiddleware(xa)
 
@@ -126,7 +135,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
         AuthedAutoSlash(
           new MosaicService(
             SceneToLayerDao(),
-            mosaicImplicits,
+            projectLayerMosaicImplicits,
             analysisManager,
             xa
           ).routes
@@ -144,7 +153,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val sceneMosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
       AuthedAutoSlash(
-        new SceneService(SceneDao(), mosaicImplicits, xa).routes
+        new SceneService(SceneDao(), sceneMosaicImplicits, xa).routes
       )
     )
 

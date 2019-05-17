@@ -29,6 +29,10 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   val selectF: Fragment =
     selectAllColsF ++ fr"from" ++ tableF
 
+  def getProjectLayerById(
+      projectLayerId: UUID): ConnectionIO[Option[ProjectLayer]] =
+    query.filter(projectLayerId).selectOption
+
   def unsafeGetProjectLayerById(
       projectLayerId: UUID): ConnectionIO[ProjectLayer] = {
     query.filter(projectLayerId).select
