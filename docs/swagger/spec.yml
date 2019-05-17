@@ -7776,6 +7776,9 @@ definitions:
   TaskFeature:
     type: object
     properties:
+      id:
+        type: string
+        format: uuid
       type:
         type: string
       properties:
@@ -7795,7 +7798,6 @@ definitions:
             $ref: '#/definitions/TaskStatus'
           lockedBy:
             type: string
-            format: uuid
           lockedOn:
             type: string
             format: date-time
