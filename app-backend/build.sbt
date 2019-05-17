@@ -335,7 +335,8 @@ lazy val db = project
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
       Dependencies.scalaCheck,
-      Dependencies.postgis
+      Dependencies.postgis,
+      "org.flywaydb" % "flyway-core" % "5.2.4" % Test
     ) ++ loggingDependencies
   })
 

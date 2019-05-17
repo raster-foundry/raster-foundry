@@ -10,9 +10,9 @@ import doobie.util.transactor.Strategy
 import doobie.free.connection.unit
 import cats.implicits._
 import org.scalatest.{Suite, BeforeAndAfterAll}
-import scala.sys.process._
 
 import java.util.UUID
+import org.flywaydb.core.Flyway
 
 // SetupTemplateDB is a singleton that is used to instantiate the template db
 // once and only once per test run
@@ -39,12 +39,16 @@ object SetupTemplateDB {
     .transact(xant)
     .unsafeRunSync
 
-  // run migrations using sbt pointed to the template db
-  Process(
-    Seq("./sbt", ";mg init;mg update;mg apply"),
-    None,
-    "POSTGRES_URL" -> s"${xantConfig.postgresUrl}${templateDbName}"
-  ).!
+  val jdbcUrl = s"${xantConfig.postgresUrl}${templateDbName}"
+
+  val flyway = Flyway
+    .configure()
+    .dataSource(jdbcUrl, xantConfig.user, xantConfig.password)
+    .locations(
+      "filesystem:/opt/raster-foundry/app-backend/db/src/main/resources/")
+    .load()
+  flyway.migrate()
+
 }
 
 trait DBTestConfig extends BeforeAndAfterAll { this: Suite =>
