@@ -18,6 +18,12 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
 
   val lambdaClient: AwsLambda = AWSLambdaClientBuilder.standard().build()
 
+  val runLambda: Boolean = {
+    lambdaConfig.environment
+      .toLowerCase() == "staging" || lambdaConfig.environment
+      .toLowerCase() == "production"
+  }
+
   /**
     * Invoke lambda function with given arguments
     *
@@ -28,11 +34,13 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     * @param payloadObfuscated the JSON provided to Lambda function as input without refreshToken
     */
   @SuppressWarnings(Array("CatchException"))
-  def invokeLambdaFunction(functionName: String,
-                           invocationType: String,
-                           logType: String,
-                           payload: String,
-                           payloadObfuscated: String): Unit = {
+  def invokeLambdaFunction(
+      functionName: String,
+      invocationType: String,
+      logType: String,
+      payload: String,
+      payloadObfuscated: String
+  ): Unit = {
     val request: InvokeRequest = new InvokeRequest()
       .withFunctionName(functionName)
       .withInvocationType(invocationType)
@@ -41,15 +49,10 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
 
     logger.debug(s"Using ${lambdaConfig.environment} in AWS Lambda")
 
-    val runLambda: Boolean = {
-      lambdaConfig.environment
-        .toLowerCase() == "staging" || lambdaConfig.environment
-        .toLowerCase() == "production"
-    }
-
     if (runLambda) {
       logger.debug(
-        s"Trying to invoke lambda function: $functionName with overview input: $payloadObfuscated")
+        s"Trying to invoke lambda function: $functionName with overview input: $payloadObfuscated"
+      )
       try {
         val invokeResult: InvokeResult = lambdaClient.invoke(request);
         logger.debug(s"Invoke Lambda Function Result: $invokeResult")
@@ -69,10 +72,13 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
 
   }
 
-  def kickoffLayerOverviewCreate(projectId: UUID, layerId: UUID): Unit = {
+  def kickoffLayerOverviewCreate(
+      projectId: UUID,
+      layerId: UUID,
+      invocationType: String = "Event"
+  ): Unit = {
     val functionName: String =
       s"func${lambdaConfig.environment}GenerateProjectLayerOverviews"
-    val invocationType: String = "Event"
     val logType: String = "Tail"
     val outputLocation: String =
       s"s3://${s3Config.dataBucket}/lambdaOverviews/projects/${projectId
@@ -89,10 +95,14 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
     val payload: String = payloadcs.asJson.noSpaces
     val payloadObfuscated: String =
       payloadcs.copy(refreshToken = "").asJson.toString
-    invokeLambdaFunction(functionName,
-                         invocationType,
-                         logType,
-                         payload,
-                         payloadObfuscated)
+    invokeLambdaFunction(
+      functionName,
+      invocationType,
+      logType,
+      payload,
+      payloadObfuscated
+    )
   }
 }
+
+object AWSLambda extends AWSLambda
