@@ -22,10 +22,10 @@ object TaskStatus {
     case "VALIDATED" => Validated
   }
 
-  implicit val ingestStatusEncoder: Encoder[TaskStatus] =
+  implicit val taskStatusEncoder: Encoder[TaskStatus] =
     Encoder.encodeString.contramap[TaskStatus](_.toString)
 
-  implicit val ingestStatusDecoder: Decoder[TaskStatus] =
+  implicit val taskStatusDecoder: Decoder[TaskStatus] =
     Decoder.decodeString.emap { str =>
       Either.catchNonFatal(fromString(str)).leftMap(_ => "TaskStatus")
     }
