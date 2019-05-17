@@ -940,6 +940,9 @@ object Generators extends ArbitraryInstances {
       requester <- nonEmptyStringGen
     } yield { Metric(period, metricEvent, requester, value) }
 
+  private def taskFeatureCreateGen: Gen[Task.TaskFeatureCreate] =
+    ???
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -1142,6 +1145,10 @@ object Generators extends ArbitraryInstances {
         h <- arbitrary[T]
         t <- arbitrary[List[T]]
       } yield { NEL(h, t) }
+    }
+
+    implicit def arbTaskFeatureCreate: Arbitrary[Task.TaskFeatureCreate] = Arbitrary {
+      taskFeatureCreateGen
     }
   }
 }
