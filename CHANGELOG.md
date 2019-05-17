@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Use flyway for running migrations and publish image for flyway migrations [\#4987](https://github.com/raster-foundry/raster-foundry/pull/4987)
+
 ### Deprecated
 
 ### Fixed

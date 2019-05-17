@@ -1,9 +1,6 @@
 import xerial.sbt.Sonatype._
 import ReleaseTransformations._
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
-import sbtassembly.AssemblyPlugin.defaultShellScript
-
-addCommandAlias("mg", "migrations/run")
 
 addCommandAlias(
   "gitSnapshots",
@@ -180,7 +177,6 @@ lazy val root = project
              db,
              common,
              datamodel,
-             migrations,
              batch,
              backsplashCore,
              backsplashServer,
@@ -335,22 +331,8 @@ lazy val db = project
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
       Dependencies.scalaCheck,
-      Dependencies.postgis
-    ) ++ loggingDependencies
-  })
-
-/**
-  * Migrations Settings
-  */
-lazy val migrations = project
-  .in(file("migrations"))
-  .settings(sharedSettings: _*)
-  .settings(noPublishSettings)
-  .settings({
-    libraryDependencies ++= Seq(
-      Dependencies.scalaforklift,
-      Dependencies.hikariCP % Runtime,
-      Dependencies.postgres % Runtime
+      Dependencies.postgis,
+      Dependencies.flyway % Test
     ) ++ loggingDependencies
   })
 

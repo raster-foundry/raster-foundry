@@ -1077,7 +1077,7 @@ ALTER TABLE ONLY public.map_tokens
 -- Name: metrics metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: rasterfoundry
 --
 
-ALTER TABLE metrics ADD CONSTRAINT metric_event_period_unique
+ALTER TABLE ONLY public.metrics ADD CONSTRAINT metric_event_period_unique
   UNIQUE (period, metric_event, requester);
 
 --

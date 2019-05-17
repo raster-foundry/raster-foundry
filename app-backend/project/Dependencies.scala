@@ -29,26 +29,24 @@ object Version {
   val dropbox = "3.0.9"
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
+  val flyway = "5.2.4"
   val geotools = "17.1"
   val geotrellisContrib = "3.13.0"
   val geotrellis = "3.0.0-M3"
   val geotrellisServer = "3.3.3"
   val hadoop = "2.8.4"
-  val hikariCP = "3.2.0"
   val http4s = "0.20.0"
   val json4s = "3.5.0"
   val jts = "1.16.0"
   val logback = "1.2.3"
   val maml = "0.3.3"
   val nimbusJose = "0.6.0"
-  val postgres = "42.1.1"
   val postgis = "2.2.1"
   val rollbar = "1.4.0"
   val scaffeine = "2.0.0"
   val scala = "2.12.8"
   val scalaCheck = "1.14.0"
   val scalacache = "0.27.0"
-  val scalaForklift = "0.3.1"
   val scalaLogging = "3.9.0"
   val scalaTest = "3.0.1"
   val scalajHttp = "2.3.0"
@@ -56,7 +54,6 @@ object Version {
   val scopt = "3.5.0"
   val decline = "0.6.0"
   val slf4j = "1.7.25"
-  val slickMigrationAPI = "0.4.0"
   val spatial4j = "0.7"
   val spark = "2.4.2"
   val spire = "0.16.0"
@@ -102,6 +99,7 @@ object Dependencies {
   val dropbox = "com.dropbox.core" % "dropbox-core-sdk" % Version.dropbox
   val elasticacheClient = "com.amazonaws" % "elasticache-java-cluster-client" % Version.elasticacheClient
   val ficus = "com.iheart" %% "ficus" % Version.ficus
+  val flyway = "org.flywaydb" % "flyway-core" % Version.flyway
   val geotrellisContribVLM = "com.azavea.geotrellis" %% "geotrellis-contrib-vlm" % Version.geotrellisContrib
   val geotrellisContribGDAL = "com.azavea.geotrellis" %% "geotrellis-contrib-gdal" % Version.geotrellisContrib
   val geotrellisGeotools = "org.locationtech.geotrellis" %% "geotrellis-geotools" % Version.geotrellis
@@ -115,7 +113,6 @@ object Dependencies {
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
   val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
   val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"
-  val hikariCP = "com.typesafe.slick" %% "slick-hikaricp" % Version.hikariCP
   val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
   val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
@@ -126,7 +123,6 @@ object Dependencies {
   val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % "1.5.1-cats"
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
-  val postgres = "org.postgresql" % "postgresql" % Version.postgres
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
   val rollbar = "com.rollbar" % "rollbar-java" % Version.rollbar
   val scaffeine = "com.github.blemale" %% "scaffeine" % Version.scaffeine
@@ -136,7 +132,6 @@ object Dependencies {
   val scalacacheMemcached = "com.github.cb372" %% "scalacache-memcached" % Version.scalacache intransitive ()
   val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck % "test"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Version.scalaLogging
-  val scalaforklift = "com.liyaos" %% "scala-forklift-slick" % Version.scalaForklift
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
@@ -147,7 +142,6 @@ object Dependencies {
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % "1.5.12"
   val spire = "org.typelevel" %% "spire" % Version.spire
   val decline = "com.monovore" %% "decline" % Version.decline
-  val slickMigrationAPI = "io.github.nafg" %% "slick-migration-api" % Version.slickMigrationAPI
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
   val sparkCore = "org.apache.spark" %% "spark-core" % Version.spark
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j

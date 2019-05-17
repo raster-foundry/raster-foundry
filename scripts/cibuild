@@ -40,25 +40,14 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend run build
 
-        echo "Building batch JAR"
+        echo "Building JARs (batch, backsplash-export)"
         docker-compose \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm --no-deps \
-            build batch/clean
-
-        docker-compose \
-            -f "${DIR}/../docker-compose.test.yml" \
-            run --rm --no-deps \
-            build batch/assembly
+            build "; batch/assembly; backsplash-export/assembly"
 
         cp "${DIR}/../app-backend/batch/target/scala-2.12/batch-assembly.jar" \
            "${DIR}/../app-tasks/jars/batch-assembly.jar"
-
-
-        docker-compose \
-            -f "${DIR}/../docker-compose.test.yml" \
-            run --rm --no-deps \
-            build backsplash-export/assembly
 
         cp "${DIR}/../app-backend/backsplash-export/target/scala-2.12/backsplash-export-assembly.jar" \
            "${DIR}/../app-tasks/jars/backsplash-export-assembly.jar"
