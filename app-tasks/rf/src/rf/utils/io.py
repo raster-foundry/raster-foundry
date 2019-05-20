@@ -164,7 +164,7 @@ def get_session():
     return session
 
 
-def upload_tifs(tifs, user_id, scene_id):
+def upload_tifs(tifs, user_id, scene_id, bucket_name=None):
     """Upload tifs to S3
 
     Args:
@@ -175,7 +175,7 @@ def upload_tifs(tifs, user_id, scene_id):
     Returns:
         list[str]: list of s3 URIs for tiffs
     """
-    bucket = os.getenv('DATA_BUCKET')
+    bucket = bucket_name or os.getenv('DATA_BUCKET')
     s3_directory = os.path.join('user-uploads', user_id, scene_id)
     s3_client = boto3.client('s3')
     s3_uris = []
