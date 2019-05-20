@@ -38,5 +38,5 @@
             dest=/usr/local/sbin/handle_core owner=root group=root mode=0755
 
     - name: Set pattern for core dump handler
-      sysctl: name="kernel.core_pattern" value="|/usr/local/sbin/handle_core %E %p"
+      sysctl: name="kernel.core_pattern" value="|/usr/local/sbin/handle_core %t %e"
               sysctl_set=yes state=present reload=yes
