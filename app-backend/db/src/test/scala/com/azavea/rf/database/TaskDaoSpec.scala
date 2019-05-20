@@ -18,6 +18,50 @@ class TaskDaoSpec
     with DBTestConfig
     with LazyLogging
     with PropTestHelpers {
+  test("listing some features") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val connIO: ConnectionIO[
+              (
+                  Task.TaskFeatureCollection,
+                  GeoJsonCodec.PaginatedGeoJsonResponse[Task.TaskFeature]
+              )
+            ] =
+              for {
+                (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                  userCreate,
+                  orgCreate,
+                  platform,
+                  projectCreate
+                )
+                collection <- TaskDao.insertTasks(
+                  fixupTaskFeaturesCollection(taskFeaturesCreate, dbProject),
+                  dbUser
+                )
+                fetched <- TaskDao.listTasks(
+                  TaskQueryParameters(),
+                  PageRequest(0, 10, Map.empty)
+                )
+              } yield { (collection, fetched) }
+
+            val (featureCollection, fetched) = connIO.transact(xa).unsafeRunSync
+            assert(
+              (featureCollection.features.toSet & fetched.features.toSet) == fetched.features.toSet,
+              "Retrieved and inserted features should be the same"
+            )
+            true
+          }
+      }
+    }
+  }
   test("insert tasks from a task feature collection") {
     check {
       forAll {
@@ -91,7 +135,9 @@ class TaskDaoSpec
     }
   }
 
-  test("updating should append actions when statuses are different") {
+  test(
+    "updating should append actions when statuses are different and delete should work"
+  ) {
     check {
       forAll {
         (
@@ -119,15 +165,19 @@ class TaskDaoSpec
               )
               update <- TaskDao.updateTask(
                 collection.features.head.id,
-                fixupTaskFeatureCreate(taskFeatureCreate2, dbProject))
-            } yield update
-            val updateResult = connIO.transact(xa).unsafeRunSync
+                fixupTaskFeatureCreate(taskFeatureCreate2, dbProject)
+              )
+              delete <- TaskDao.deleteTask(collection.features.head.id)
+            } yield (update, delete)
+            val (updateResult, deleteResult) = connIO.transact(xa).unsafeRunSync
 
             if (taskFeatureCreate1.properties.status == taskFeatureCreate2.properties.status) {
               updateResult.get.properties.actions.length should be(0)
             } else {
               updateResult.get.properties.actions.length should be(1)
             }
+
+            deleteResult should be(1)
             true
           }
       }

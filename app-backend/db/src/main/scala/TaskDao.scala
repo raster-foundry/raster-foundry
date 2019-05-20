@@ -59,9 +59,11 @@ object TaskDao extends Dao[Task] {
       id = $taskId
     """;
 
-  def appendAction(taskId: UUID,
-                   initialStatus: TaskStatus,
-                   newStatus: TaskStatus): ConnectionIO[Option[Int]] =
+  def appendAction(
+      taskId: UUID,
+      initialStatus: TaskStatus,
+      newStatus: TaskStatus
+  ): ConnectionIO[Option[Int]] =
     if (initialStatus != newStatus) {
       fr"""INSERT INTO task_actions (task_id, timestamp, from_status, to_status) VALUES (
           $taskId, now(), $initialStatus, $newStatus
@@ -107,18 +109,33 @@ object TaskDao extends Dao[Task] {
       initial <- OptionT(getTaskById(taskId))
       _ <- OptionT.liftF(updateF(taskId, updateTask).update.run)
       _ <- OptionT(
-        appendAction(taskId, initial.status, updateTask.properties.status))
+        appendAction(taskId, initial.status, updateTask.properties.status)
+      )
       withActions <- OptionT(getTaskWithActions(taskId))
     } yield withActions).value
 
-  def deleteTask(taskId: UUID): ConnectionIO[Unit] =
-    ???
+  def deleteTask(taskId: UUID): ConnectionIO[Int] =
+    query.filter(taskId).delete
 
   def listTasks(
       queryParams: TaskQueryParameters,
       pageRequest: PageRequest
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] =
-    ???
+    for {
+      paginatedResponse <- query.filter(queryParams).page(pageRequest)
+      withActions <- paginatedResponse.results.toList traverse { feat =>
+        unsafeGetTaskWithActions(feat.id)
+      }
+    } yield {
+      PaginatedGeoJsonResponse(
+        paginatedResponse.count,
+        paginatedResponse.hasPrevious,
+        paginatedResponse.hasNext,
+        paginatedResponse.page,
+        paginatedResponse.pageSize,
+        withActions
+      )
+    }
 
   def toFragment(
       tfc: Task.TaskFeatureCreate,

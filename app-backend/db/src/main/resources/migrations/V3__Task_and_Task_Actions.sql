@@ -23,8 +23,10 @@ CREATE TABLE tasks (
 );
 
 CREATE TABLE task_actions (
-  task_id uuid not null references tasks (id),
+  task_id uuid,
   timestamp timestamp without time zone not null,
   from_status task_status not null,
-  to_status task_status not null
+  to_status task_status not null,
+  CONSTRAINT tasks_actions_task_id_fkey FOREIGN KEY (task_id) REFERENCES tasks (id)
+    ON DELETE CASCADE
 );
