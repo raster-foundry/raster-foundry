@@ -20,6 +20,7 @@ class UploadTestSuite extends FunSuite with Matchers {
       Visibility.Private,
       None,
       None,
+      None,
       None
     )
     // note the id is not "foo"
@@ -43,6 +44,7 @@ class UploadTestSuite extends FunSuite with Matchers {
       ().asJson,
       Some("foo"), // proposed owner
       Visibility.Private,
+      None,
       None,
       None,
       None
@@ -69,6 +71,7 @@ class UploadTestSuite extends FunSuite with Matchers {
       Visibility.Private,
       None,
       None,
+      None,
       None
     )
     // note the id is not "foo"
@@ -91,6 +94,7 @@ class UploadTestSuite extends FunSuite with Matchers {
       ().asJson,
       Some("foo"), // proposed owner
       Visibility.Private,
+      None,
       None,
       None,
       None
