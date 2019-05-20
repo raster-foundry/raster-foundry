@@ -7101,6 +7101,11 @@ definitions:
             description: 'for uploads of type S3 and Dropbox, the location of the files to import. If files are specified, this field is ignored'
           metadata:
             $ref: '#/definitions/UploadMetadata'
+          keepInSourceBucket:
+            type: boolean
+            description: 'For S3 upload(s), use the same data bucket as source files for scene ingest location if set to true; use RF data bucket if set to false. It is false by default'
+            example: false
+
   Upload:
     allOf:
       - $ref: '#/definitions/BaseModel'
