@@ -22,11 +22,13 @@ CREATE TABLE tasks (
     ON DELETE CASCADE
 );
 
+-- task_id doesn't refer to tasks because we want to keep the references around (for audit reasons)
+-- after tasks are deleted, and they'll be super worthless without an id attached
 CREATE TABLE task_actions (
   task_id uuid,
   timestamp timestamp without time zone not null,
   from_status task_status not null,
-  to_status task_status not null,
-  CONSTRAINT tasks_actions_task_id_fkey FOREIGN KEY (task_id) REFERENCES tasks (id)
-    ON DELETE CASCADE
+  to_status task_status not null
 );
+
+CREATE INDEX task_actions_task_id_idx ON task_actions (task_id);
