@@ -8,9 +8,11 @@
 - Kickoff project layer overview generation reactively [\#4936](https://github.com/raster-foundry/raster-foundry/pull/4936)
 - Added ability to persist container service core dumps [\#4955](https://github.com/raster-foundry/raster-foundry/pull/4955)
 
+
 ### Changed
 
 - Use flyway for running migrations and publish image for flyway migrations [\#4987](https://github.com/raster-foundry/raster-foundry/pull/4987)
+- Added enum value for `NON_SPATIAL` file types to uploads [\#4993]](https://github.com/raster-foundry/raster-foundry/pull/4993)
 
 ### Deprecated
 
