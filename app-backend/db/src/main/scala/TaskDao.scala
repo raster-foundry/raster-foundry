@@ -2,7 +2,9 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 
+import cats.data.OptionT
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -31,23 +33,6 @@ object TaskDao extends Dao[Task] {
       geometry
     FROM""" ++ tableF
 
-  val geoJSONSelectF: Fragment =
-    fr"""
-      SELECT
-        id,
-        json_object_agg('id', id) ||
-            json_object_agg('createdAt', created_at) ||
-            json_object_agg('createdBy', created_by) ||
-            json_object_agg('modifiedAt', modified_at) ||
-            json_object_agg('modifiedBy', modified_by) ||
-            json_object_agg('projectId', project_id) ||
-            json_object_agg('projectLayerId', project_layer_id) ||
-            json_object_agg('status', status) ||
-            json_object_agg('lockedBy', locked_by) ||
-            json_object_agg('lockedOn', locked_on),
-        geometry
-    """ ++ tableF
-
   val insertF: Fragment =
     fr"INSERT INTO " ++ tableF ++ fr"""(
           id,
@@ -64,11 +49,76 @@ object TaskDao extends Dao[Task] {
      )
      """
 
+  def updateF(taskId: UUID, update: Task.TaskFeatureCreate): Fragment =
+    fr"UPDATE " ++ tableF ++ fr"""SET
+      project_id = ${update.properties.projectId},
+      project_layer_id = ${update.properties.projectLayerId},
+      status = ${update.properties.status},
+      geometry = ${update.geometry}
+    WHERE
+      id = $taskId
+    """;
+
+  def appendAction(taskId: UUID,
+                   initialStatus: TaskStatus,
+                   newStatus: TaskStatus): ConnectionIO[Option[Int]] =
+    if (initialStatus != newStatus) {
+      fr"""INSERT INTO task_actions (task_id, timestamp, from_status, to_status) VALUES (
+          $taskId, now(), $initialStatus, $newStatus
+          )""".update.run map { Some(_) }
+    } else {
+      Option.empty[Int].pure[ConnectionIO]
+    }
+
   def getTaskById(taskId: UUID): ConnectionIO[Option[Task]] =
     query.filter(taskId).selectOption
 
   def unsafeGetTaskById(taskId: UUID): ConnectionIO[Task] =
     query.filter(taskId).select
+
+  def getTaskActions(taskId: UUID): ConnectionIO[List[TaskActionStamp]] = {
+    Dao
+      .QueryBuilder[TaskActionStamp](
+        fr"select task_id, timestamp, from_status, to_status FROM task_actions",
+        fr"task_actions",
+        Nil
+      )
+      .filter(fr"task_id = $taskId")
+      .list
+  }
+
+  def getTaskWithActions(taskId: UUID): ConnectionIO[Option[Task.TaskFeature]] =
+    (for {
+      task <- OptionT(getTaskById(taskId))
+      actions <- OptionT.liftF(getTaskActions(task.id))
+    } yield { task.toGeoJSONFeature(actions) }).value
+
+  def unsafeGetTaskWithActions(taskId: UUID): ConnectionIO[Task.TaskFeature] =
+    for {
+      task <- unsafeGetTaskById(taskId)
+      actions <- getTaskActions(task.id)
+    } yield { task.toGeoJSONFeature(actions) }
+
+  def updateTask(
+      taskId: UUID,
+      updateTask: Task.TaskFeatureCreate
+  ): ConnectionIO[Option[Task.TaskFeature]] =
+    (for {
+      initial <- OptionT(getTaskById(taskId))
+      _ <- OptionT.liftF(updateF(taskId, updateTask).update.run)
+      _ <- OptionT(
+        appendAction(taskId, initial.status, updateTask.properties.status))
+      withActions <- OptionT(getTaskWithActions(taskId))
+    } yield withActions).value
+
+  def deleteTask(taskId: UUID): ConnectionIO[Unit] =
+    ???
+
+  def listTasks(
+      queryParams: TaskQueryParameters,
+      pageRequest: PageRequest
+  ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] =
+    ???
 
   def toFragment(
       tfc: Task.TaskFeatureCreate,
@@ -89,7 +139,7 @@ object TaskDao extends Dao[Task] {
       toFragment(_, user)
     }
     featureInserts.toNel map { inserts =>
-      (insertF ++ fr"VALUES (" ++ inserts.intercalate(fr",") ++ fr")").update
+      (insertF ++ fr"VALUES " ++ inserts.intercalate(fr",")).update
         .withGeneratedKeys[Task](
           "id",
           "created_at",
@@ -107,13 +157,15 @@ object TaskDao extends Dao[Task] {
         .toList map { (xs: List[Task]) =>
         Task.TaskFeatureCollection(
           "FeatureCollection",
-          xs.map(_.toGeoJSONFeature)
+          xs.map(_.toGeoJSONFeature(Nil))
         )
       }
     } getOrElse {
       Task
-        .TaskFeatureCollection("FeatureCollection",
-                               List.empty[Task.TaskFeature])
+        .TaskFeatureCollection(
+          "FeatureCollection",
+          List.empty[Task.TaskFeature]
+        )
         .pure[ConnectionIO]
     }
   }

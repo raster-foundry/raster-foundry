@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 
+import com.typesafe.config.ConfigFactory
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -17,6 +18,9 @@ import org.flywaydb.core.Flyway
 // SetupTemplateDB is a singleton that is used to instantiate the template db
 // once and only once per test run
 object SetupTemplateDB {
+  private val config = ConfigFactory.load()
+  private val migrations = config.getConfig("migrations")
+  val migrationsHome = migrations.getString("migrationsHome")
   val templateDbName = "testing_template";
 
   // db create/drop cannot be done with transactions
@@ -44,8 +48,7 @@ object SetupTemplateDB {
   val flyway = Flyway
     .configure()
     .dataSource(jdbcUrl, xantConfig.user, xantConfig.password)
-    .locations(
-      "filesystem:/opt/raster-foundry/app-backend/db/src/main/resources/")
+    .locations(migrationsHome)
     .load()
   flyway.migrate()
 

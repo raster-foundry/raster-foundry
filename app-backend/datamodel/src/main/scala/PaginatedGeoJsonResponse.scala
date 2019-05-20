@@ -21,13 +21,13 @@ object GeoJsonCodec {
     })
 
   @ConfiguredJsonCodec
-  final case class GeoJsonFeatureCollection[T <: GeoJSONFeature](
+  final case class GeoJsonFeatureCollection[T](
       features: Iterable[T],
       _type: String = "FeatureCollection"
   )
 
   @ConfiguredJsonCodec
-  final case class PaginatedGeoJsonResponse[T <: GeoJSONFeature](
+  final case class PaginatedGeoJsonResponse[T](
       count: Int,
       hasPrevious: Boolean,
       hasNext: Boolean,

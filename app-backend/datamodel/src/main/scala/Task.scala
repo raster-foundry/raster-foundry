@@ -16,32 +16,32 @@ case class Task(
     projectId: UUID,
     projectLayerId: UUID,
     status: TaskStatus,
-    lockedBy: String,
-    lockedOn: Instant,
-    actions: List[TaskActionStamp],
+    lockedBy: Option[String],
+    lockedOn: Option[Instant],
     geometry: Option[Projected[Geometry]]
-) extends GeoJSONSerializable[Task.TaskFeature] {
-  def toGeoJSONFeature: Task.TaskFeature = {
+) {
+  def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
       this.id,
-      this.toProperties,
+      this.toProperties(actions),
       this.geometry
     )
   }
 
-  def toProperties: Task.TaskProperties = Task.TaskProperties(
-    this.id,
-    this.createdAt,
-    this.createdBy,
-    this.modifiedAt,
-    this.modifiedBy,
-    this.projectId,
-    this.projectLayerId,
-    this.status,
-    this.lockedBy,
-    this.lockedOn,
-    this.actions
-  )
+  def toProperties(actions: List[TaskActionStamp]): Task.TaskProperties =
+    Task.TaskProperties(
+      this.id,
+      this.createdAt,
+      this.createdBy,
+      this.modifiedAt,
+      this.modifiedBy,
+      this.projectId,
+      this.projectLayerId,
+      this.status,
+      this.lockedBy,
+      this.lockedOn,
+      actions
+    )
 }
 
 object Task {
@@ -55,8 +55,8 @@ object Task {
       projectId: UUID,
       projectLayerId: UUID,
       status: TaskStatus,
-      lockedBy: String,
-      lockedOn: Instant,
+      lockedBy: Option[String],
+      lockedOn: Option[Instant],
       actions: List[TaskActionStamp]
   )
 

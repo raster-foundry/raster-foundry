@@ -3323,7 +3323,7 @@ paths:
         - $ref: '#/parameters/projectID'
         - $ref: '#/parameters/layerID'
         - $ref: '#/parameters/taskID'
-        - name: annotation
+        - name: taskUpdate
           in: body
           required: true
           schema:

@@ -18,7 +18,7 @@ class TaskDaoSpec
     with DBTestConfig
     with LazyLogging
     with PropTestHelpers {
-  test("insert a task from a task feature create") {
+  test("insert tasks from a task feature collection") {
     check {
       forAll {
         (
@@ -49,10 +49,85 @@ class TaskDaoSpec
             val (featureCollection, fetched) = connIO.transact(xa).unsafeRunSync
             assert(
               featureCollection.features.toSet == fetched
-                .map(_.toGeoJSONFeature)
+                .map(_.toGeoJSONFeature(Nil))
                 .toSet,
               "Retrieved and inserted features should be the same"
             )
+            true
+          }
+      }
+    }
+  }
+
+  test("geoJSON selection should work") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val connIO: ConnectionIO[Boolean] =
+              for {
+                (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                  userCreate,
+                  orgCreate,
+                  platform,
+                  projectCreate
+                )
+                collection <- TaskDao.insertTasks(
+                  fixupTaskFeaturesCollection(taskFeaturesCreate, dbProject),
+                  dbUser
+                )
+                _ <- TaskDao.getTaskWithActions(collection.features.head.id)
+              } yield true
+
+            connIO.transact(xa).unsafeRunSync
+          }
+      }
+    }
+  }
+
+  test("updating should append actions when statuses are different") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeatureCreate1: Task.TaskFeatureCreate,
+            taskFeatureCreate2: Task.TaskFeatureCreate
+        ) =>
+          {
+            val connIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              collection <- TaskDao.insertTasks(
+                Task.TaskFeatureCollectionCreate(
+                  features =
+                    List(fixupTaskFeatureCreate(taskFeatureCreate1, dbProject))
+                ),
+                dbUser
+              )
+              update <- TaskDao.updateTask(
+                collection.features.head.id,
+                fixupTaskFeatureCreate(taskFeatureCreate2, dbProject))
+            } yield update
+            val updateResult = connIO.transact(xa).unsafeRunSync
+
+            if (taskFeatureCreate1.properties.status == taskFeatureCreate2.properties.status) {
+              updateResult.get.properties.actions.length should be(0)
+            } else {
+              updateResult.get.properties.actions.length should be(1)
+            }
             true
           }
       }
