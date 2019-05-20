@@ -6,7 +6,6 @@ docker_compose_version: "1.23.*"
 
 shellcheck_version: "0.3.*"
 
-docker_users:
-  - "vagrant"
+docker_user: "vagrant"
 
 pyyaml_version: "3.13"

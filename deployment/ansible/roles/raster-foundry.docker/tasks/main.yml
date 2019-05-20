@@ -1,16 +1,18 @@
 ---
 - name: Install Docker Compose
-  pip: name=docker-compose version={{ docker_compose_version }}
+  pip:
+    name: docker-compose
+    version: "{{ docker_compose_version }}"
 
 - name: Add Ansible user to Docker group
-  user: name="{{ item }}"
-        groups=docker
-        append=yes
-  with_items: "{{ docker_users }}"
+  user:
+    name: "{{ docker_user }}"
+    groups: docker
+    append: yes
 
-- name: Install Docker Daemon configuration
-  copy:
-    src: daemon.json
+- name: Configure Docker daemon
+  template:
+    src: daemon.json.j2
     dest: /etc/docker/daemon.json
     owner: root
     group: root
