@@ -62,14 +62,15 @@ object TaskDao extends Dao[Task] {
   def appendAction(
       taskId: UUID,
       initialStatus: TaskStatus,
-      newStatus: TaskStatus
-  ): ConnectionIO[Option[Int]] =
+      newStatus: TaskStatus,
+      userId: String
+  ): ConnectionIO[Int] =
     if (initialStatus != newStatus) {
-      fr"""INSERT INTO task_actions (task_id, timestamp, from_status, to_status) VALUES (
-          $taskId, now(), $initialStatus, $newStatus
-          )""".update.run map { Some(_) }
+      fr"""INSERT INTO task_actions (task_id, user_id, timestamp, from_status, to_status) VALUES (
+          $taskId, $userId, now(), $initialStatus, $newStatus
+          )""".update.run
     } else {
-      Option.empty[Int].pure[ConnectionIO]
+      0.pure[ConnectionIO]
     }
 
   def getTaskById(taskId: UUID): ConnectionIO[Option[Task]] =
@@ -81,7 +82,7 @@ object TaskDao extends Dao[Task] {
   def getTaskActions(taskId: UUID): ConnectionIO[List[TaskActionStamp]] = {
     Dao
       .QueryBuilder[TaskActionStamp](
-        fr"select task_id, timestamp, from_status, to_status FROM task_actions",
+        fr"select task_id, user_id, timestamp, from_status, to_status FROM task_actions",
         fr"task_actions",
         Nil
       )
@@ -103,13 +104,19 @@ object TaskDao extends Dao[Task] {
 
   def updateTask(
       taskId: UUID,
-      updateTask: Task.TaskFeatureCreate
+      updateTask: Task.TaskFeatureCreate,
+      user: User
   ): ConnectionIO[Option[Task.TaskFeature]] =
     (for {
       initial <- OptionT(getTaskById(taskId))
       _ <- OptionT.liftF(updateF(taskId, updateTask).update.run)
-      _ <- OptionT(
-        appendAction(taskId, initial.status, updateTask.properties.status)
+      _ <- OptionT.liftF(
+        appendAction(
+          taskId,
+          initial.status,
+          updateTask.properties.status,
+          user.id
+        )
       )
       withActions <- OptionT(getTaskWithActions(taskId))
     } yield withActions).value

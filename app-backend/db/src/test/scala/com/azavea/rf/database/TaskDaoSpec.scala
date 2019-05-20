@@ -165,8 +165,11 @@ class TaskDaoSpec
               )
               update <- TaskDao.updateTask(
                 collection.features.head.id,
-                fixupTaskFeatureCreate(taskFeatureCreate2, dbProject)
+                fixupTaskFeatureCreate(taskFeatureCreate2, dbProject),
+                dbUser
               )
+              // have to delete actions on the task to be able to delete it
+              _ <- fr"TRUNCATE TABLE task_actions;".update.run
               delete <- TaskDao.deleteTask(collection.features.head.id)
             } yield (update, delete)
             val (updateResult, deleteResult) = connIO.transact(xa).unsafeRunSync
