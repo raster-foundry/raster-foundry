@@ -22,7 +22,8 @@ final case class Upload(id: UUID,
                         visibility: Visibility,
                         projectId: Option[UUID],
                         layerId: Option[UUID],
-                        source: Option[String])
+                        source: Option[String],
+                        keepInSourceBucket: Boolean)
 
 object Upload {
 
@@ -41,7 +42,8 @@ object Upload {
                           visibility: Visibility,
                           projectId: Option[UUID],
                           layerId: Option[UUID],
-                          source: Option[String]) {
+                          source: Option[String],
+                          keepInSourceBucket: Option[Boolean]) {
     def toUpload(user: User,
                  userPlatformAdmin: (UUID, Boolean),
                  ownerPlatform: Option[UUID]): Upload = {
@@ -94,7 +96,8 @@ object Upload {
         this.visibility,
         this.projectId,
         this.layerId,
-        this.source
+        this.source,
+        this.keepInSourceBucket.getOrElse(false)
       )
     }
   }

@@ -596,6 +596,7 @@ object Generators extends ArbitraryInstances {
       projectId <- Gen.const(None)
       layerId <- Gen.const(None)
       source <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
+      keepInSourceBucket <- Gen.const(None)
     } yield {
       Upload.Create(
         uploadStatus,
@@ -608,7 +609,8 @@ object Generators extends ArbitraryInstances {
         visibility,
         projectId,
         layerId,
-        source
+        source,
+        keepInSourceBucket
       )
     }
 
