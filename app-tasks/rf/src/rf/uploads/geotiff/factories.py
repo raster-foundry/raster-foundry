@@ -49,6 +49,7 @@ class GeoTiffS3SceneFactory(object):
         self.acquisitionDate = self._upload.metadata.get('acquisitionDate')
         self.cloudCover = self._upload.metadata.get('cloudCover', 0)
         self.tags = self._upload.metadata.get('tags') or ['']
+        self.keep_in_source_bucket = self._upload.keepInSourceBucket
 
     def generate_scenes(self):
         """Create a Scene and associated Image for each GeoTiff in self.s3_path
@@ -70,7 +71,10 @@ class GeoTiffS3SceneFactory(object):
                 cog.add_overviews(tmp_fname)
                 cog_path = cog.convert_to_cog(tmp_fname, tempdir)
                 scene = self.create_geotiff_scene(tmp_fname, os.path.splitext(filename)[0])
-                scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id)[0]
+                if self.keep_in_source_bucket:
+                    scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id, bucket_name)[0]
+                else:
+                    scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id)[0]
                 images = [self.create_geotiff_image(
                     tmp_fname, urllib.unquote(scene.ingestLocation), scene, cog_path
                 )]
