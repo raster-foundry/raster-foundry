@@ -7862,9 +7862,11 @@ definitions:
   TaskActionStamp:
     type: object
     properties:
-      userId:
+      taskId:
         type: string
         format: uuid
+      userId:
+        type: string
       timestamp:
         type: string
         format: date-time
