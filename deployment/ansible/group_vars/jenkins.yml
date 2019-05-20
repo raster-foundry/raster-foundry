@@ -1,7 +1,5 @@
 ---
-docker_users:
-  - "vagrant"
-  - "jenkins"
+docker_user: "jenkins"
 
 java_version: "8u191*"
 java_major_version: "8"

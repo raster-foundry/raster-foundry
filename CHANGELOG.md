@@ -9,6 +9,7 @@
 - Added job to backfill low-zoom overviews for existing project layers [\#4970](https://github.com/raster-foundry/raster-foundry/pull/4970)
 - Convert BacksplashImage to a trait [\#4952](https://github.com/raster-foundry/raster-foundry/pull/4952)
 - Kickoff project layer overview generation reactively [\#4936](https://github.com/raster-foundry/raster-foundry/pull/4936)
+- Added ability to persist container service core dumps [\#4955](https://github.com/raster-foundry/raster-foundry/pull/4955)
 
 ### Changed
 
