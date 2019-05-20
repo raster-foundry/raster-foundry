@@ -137,13 +137,15 @@ class SceneToLayerDaoSpec
          scene: Scene.Create,
          dsCreate: Datasource.Create) =>
           {
-            val sceneLayerProjectIO: ConnectionIO[(Scene.WithRelated,
-                                                   List[SceneWithProjectIdLayerId],
-                                                   Project)] = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
-                                                                    org,
-                                                                    platform,
-                                                                    projectCreate)
+            val sceneLayerProjectIO
+              : ConnectionIO[(Scene.WithRelated,
+                              List[SceneWithProjectIdLayerId],
+                              Project)] = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                projectCreate)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser,

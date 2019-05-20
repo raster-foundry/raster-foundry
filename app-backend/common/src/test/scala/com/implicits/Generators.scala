@@ -80,6 +80,13 @@ object Generators extends ArbitraryInstances {
   private def visibilityGen: Gen[Visibility] =
     Gen.oneOf(Visibility.Public, Visibility.Organization, Visibility.Private)
 
+  private def taskStatusGen: Gen[TaskStatus] =
+    Gen.oneOf(TaskStatus.Unlabeled,
+              TaskStatus.LabelingInProgress,
+              TaskStatus.Labeled,
+              TaskStatus.ValidationInProgress,
+              TaskStatus.Validated)
+
   private def userVisibilityGen: Gen[UserVisibility] =
     Gen.oneOf(UserVisibility.Public, UserVisibility.Private)
 
@@ -940,8 +947,26 @@ object Generators extends ArbitraryInstances {
       requester <- nonEmptyStringGen
     } yield { Metric(period, metricEvent, requester, value) }
 
+  private def taskPropertiesCreateGen: Gen[Task.TaskPropertiesCreate] =
+    for {
+      projectId <- uuidGen
+      projectLayerId <- uuidGen
+      status <- taskStatusGen
+    } yield { Task.TaskPropertiesCreate(projectId, projectLayerId, status) }
+
   private def taskFeatureCreateGen: Gen[Task.TaskFeatureCreate] =
-    ???
+    for {
+      properties <- taskPropertiesCreateGen
+      geometry <- Gen.const(None)
+    } yield { Task.TaskFeatureCreate(properties, geometry) }
+
+  private def taskFeatureCollectionCreateGen
+    : Gen[Task.TaskFeatureCollectionCreate] =
+    for {
+      features <- Gen.nonEmptyListOf(taskFeatureCreateGen)
+    } yield {
+      Task.TaskFeatureCollectionCreate(features = features)
+    }
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
@@ -1147,8 +1172,15 @@ object Generators extends ArbitraryInstances {
       } yield { NEL(h, t) }
     }
 
-    implicit def arbTaskFeatureCreate: Arbitrary[Task.TaskFeatureCreate] = Arbitrary {
-      taskFeatureCreateGen
-    }
+    implicit def arbTaskFeatureCreate: Arbitrary[Task.TaskFeatureCreate] =
+      Arbitrary {
+        taskFeatureCreateGen
+      }
+
+    implicit def arbTaskFeatureCollectionCreate
+      : Arbitrary[Task.TaskFeatureCollectionCreate] =
+      Arbitrary {
+        taskFeatureCollectionCreateGen
+      }
   }
 }

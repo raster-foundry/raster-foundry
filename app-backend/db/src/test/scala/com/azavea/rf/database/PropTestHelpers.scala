@@ -255,4 +255,16 @@ trait PropTestHelpers {
     mapTokenCreate.copy(project = project map { _.id }, toolRun = analysis map {
       _.id
     }, owner = Some(user.id))
+
+  def fixupTaskFeaturesCollection(tfc: Task.TaskFeatureCollectionCreate,
+                                  project: Project) =
+    tfc.copy(
+      features =
+        tfc.features map { feat =>
+          feat.copy(
+            properties = feat.properties.copy(
+              projectId = project.id,
+              projectLayerId = project.defaultLayerId
+            ))
+        })
 }

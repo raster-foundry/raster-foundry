@@ -76,7 +76,7 @@ object TaskDao extends Dao[Task] {
   ): Fragment = {
     fr"""(
         ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id},
-        ${tfc.properties.projectId}, ${tfc.properties.projectLayerId}", ${tfc.properties.status},
+        ${tfc.properties.projectId}, ${tfc.properties.projectLayerId}, ${tfc.properties.status},
         null, null, ${tfc.geometry}
     )"""
   }
