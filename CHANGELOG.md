@@ -3,8 +3,10 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
-- Added job to backfill low-zoom overviews for existing project layers [\#4970](https://github.com/raster-foundry/raster-foundry/pull/4970)
 
+- Added `ActionType` for `CREATE` [\#4992](https://github.com/raster-foundry/raster-foundry/pull/4992)
+- Added `ObjectType` for all entities [\#4992](https://github.com/raster-foundry/raster-foundry/pull/4992)
+- Added job to backfill low-zoom overviews for existing project layers [\#4970](https://github.com/raster-foundry/raster-foundry/pull/4970)
 - Convert BacksplashImage to a trait [\#4952](https://github.com/raster-foundry/raster-foundry/pull/4952)
 - Kickoff project layer overview generation reactively [\#4936](https://github.com/raster-foundry/raster-foundry/pull/4936)
 
