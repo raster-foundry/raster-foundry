@@ -7065,6 +7065,7 @@ definitions:
             enum:
               - 'GEOTIFF'
               - 'GEOTIFF_WITH_METADATA'
+              - 'NON_SPATIAL'
           datasource:
             type: string
             description: 'datasource of tiffs being uploaded'
