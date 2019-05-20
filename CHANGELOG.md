@@ -4,13 +4,14 @@
 
 ### Added
 - Added job to backfill low-zoom overviews for existing project layers [\#4970](https://github.com/raster-foundry/raster-foundry/pull/4970)
-
 - Convert BacksplashImage to a trait [\#4952](https://github.com/raster-foundry/raster-foundry/pull/4952)
 - Kickoff project layer overview generation reactively [\#4936](https://github.com/raster-foundry/raster-foundry/pull/4936)
+
 
 ### Changed
 
 - Use flyway for running migrations and publish image for flyway migrations [\#4987](https://github.com/raster-foundry/raster-foundry/pull/4987)
+- Added enum value for `NON_SPATIAL` file types to uploads [\#4993]](https://github.com/raster-foundry/raster-foundry/pull/4993)
 
 ### Deprecated
 
