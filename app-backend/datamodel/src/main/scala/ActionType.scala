@@ -15,6 +15,7 @@ object ActionType {
   case object Annotate extends ActionType("ANNOTATE")
   case object Export extends ActionType("EXPORT")
   case object Download extends ActionType("DOWNLOAD")
+  case object Create extends ActionType("CREATE")
 
   def fromString(s: String): ActionType = s.toUpperCase match {
     case "VIEW"       => View
@@ -24,6 +25,7 @@ object ActionType {
     case "ANNOTATE"   => Annotate
     case "EXPORT"     => Export
     case "DOWNLOAD"   => Download
+    case "CREATE"     => Create
     case _            => throw new Exception(s"Invalid ActionType: ${s}")
   }
 
