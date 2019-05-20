@@ -25,5 +25,3 @@ Optional. Ancillary topics, caveats, alternative strategies that didn't work out
 - Start after checking out this branch
 - Include any setup required, such as bundling scripts, restarting services, etc.
 - Include test case, and expected output
-
-Closes #XXX
