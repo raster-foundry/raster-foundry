@@ -5381,6 +5381,7 @@ parameters:
     description: >
       Must be paired with `actionType`.
       Filter to tasks that have at least the specified number of occurences of the specified action.
+      Note: CURRENTLY IGNORED.
     in: query
     type: integer
     required: false
@@ -5389,6 +5390,7 @@ parameters:
     description: >
       Must be paired with `actionType`.
       Filter to tasks that have at most the specified number of occurences of the specified action.
+      Note: CURRENTLY IGNORED.
     in: query
     type: integer
     required: false
