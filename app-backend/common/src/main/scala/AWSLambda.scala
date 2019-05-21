@@ -84,13 +84,13 @@ trait AWSLambda extends RollbarNotifier with LazyLogging {
       s"s3://${s3Config.dataBucket}/lambdaOverviews/projects/${projectId
         .toString()}/${layerId.toString()}-overview.tif"
     val refreshToken: String = auth0Config.systemRefreshToken
-    val pixelSizeMeters: Int = 2444
+    val minZoomLevel: Int = 6
     val payloadcs: OverviewInput = OverviewInput(
       outputLocation,
       projectId,
       layerId,
       refreshToken,
-      pixelSizeMeters
+      minZoomLevel
     )
     val payload: String = payloadcs.asJson.noSpaces
     val payloadObfuscated: String =

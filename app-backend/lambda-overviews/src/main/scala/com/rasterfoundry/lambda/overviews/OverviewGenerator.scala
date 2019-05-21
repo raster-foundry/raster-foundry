@@ -16,7 +16,7 @@ import com.rasterfoundry.datamodel.OverviewInput
 object OverviewGenerator extends LazyLogging {
 
   def createProjectOverview(sceneURIs: List[String],
-                            pixelSize: Int): Option[MultibandGeoTiff] = {
+                            pixelSize: Double): Option[MultibandGeoTiff] = {
 
     val rasterSources = sceneURIs.map {
       GeoTiffRasterSource(_).reproject(WebMercator)
@@ -83,8 +83,9 @@ object OverviewGenerator extends LazyLogging {
 
     println("Creating project overview")
     val projectOverviewOption =
-      OverviewGenerator.createProjectOverview(initialProjectScenes,
-                                              overviewInput.pixelSizeMeters)
+      OverviewGenerator.createProjectOverview(
+        initialProjectScenes,
+        156412 / math.pow(2, overviewInput.minZoomLevel))
 
     println(
       "Checking if scenes have been updated or removed from project layer")
@@ -97,11 +98,8 @@ object OverviewGenerator extends LazyLogging {
       case (true, Some(projectOverview)) =>
         writeOverviewToS3(projectOverview, overviewInput.outputLocation)
         println("Updating project layer in API with overview")
-        val layerUpdateStatus = HttpClient.updateProjectWithOverview(
-          authToken,
-          overviewInput.projectId,
-          overviewInput.projectLayerId,
-          overviewInput.outputLocation)
+        val layerUpdateStatus =
+          HttpClient.updateProjectWithOverview(authToken, overviewInput)
         Some(layerUpdateStatus)
       case _ =>
         println(

@@ -9,5 +9,5 @@ final case class OverviewInput(
     projectId: UUID,
     projectLayerId: UUID,
     refreshToken: String,
-    pixelSizeMeters: Int
+    minZoomLevel: Int
 )
