@@ -5583,6 +5583,9 @@ definitions:
           - 'DEACTIVATE'
           - 'DELETE'
           - 'ANNOTATE'
+          - 'EXPORT'
+          - 'DOWNLOAD'
+          - 'CREATE'
   ObjectAccessControlRule:
     $ref: '#/definitions/AccessControlRule'
   AccessControlRuleCreate:
@@ -5619,6 +5622,18 @@ definitions:
               - 'WORKSPACE'
               - 'TEMPLATE'
               - 'ANALYSIS'
+              - 'PLATFORM'
+              - 'ORGANIZATION'
+              - 'TEAM'
+              - 'USER'
+              - 'UPLOAD'
+              - 'EXPORT'
+              - 'FEED'
+              - 'MAPTOKEN'
+              - 'LICENSE'
+              - 'TOOLTAG'
+              - 'TOOLCATEGORY'
+              - 'AOI'
           objectId:
             type: string
             description: 'Id of the object this access control rule applies to'
