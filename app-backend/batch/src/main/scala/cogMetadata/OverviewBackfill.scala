@@ -8,6 +8,7 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor.xaResource
 
 import cats.effect.IO
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -53,24 +54,28 @@ object OverviewBackfill extends Job with RollbarNotifier {
       .filter(fr"overviews_location IS NULL")
       .listQ(1000000)
       .stream
-  val projectLayersWithSceneCounts: Stream[ConnectionIO, (ProjectLayer, Int)] =
-    projectLayers.flatMap(getProjectLayerSceneCount)
+
+  val projectLayersWithSceneCounts: ConnectionIO[List[(ProjectLayer, Int)]] =
+    projectLayers
+      .flatMap(getProjectLayerSceneCount)
+      .filter({
+        case (_, n) => n <= 300 && n > 0
+      })
+      .compile
+      .to[List]
 
   def runJob(args: List[String]): IO[Unit] = {
     xaResource
       .use(
         t =>
           projectLayersWithSceneCounts
-            .filter({
-              case (_, n) => n <= 300 && n > 0
-            })
             .transact(t)
-            .parEvalMap(36)({
-              case (projectLayer, _) =>
-                kickoffOverviewGeneration(projectLayer)
-            })
-            .compile
-            .to[List]
+            .flatMap { layers =>
+              layers parTraverse {
+                case (layer, _) =>
+                  kickoffOverviewGeneration(layer)
+              }
+          }
       )
       .map { results =>
         logger.info(
