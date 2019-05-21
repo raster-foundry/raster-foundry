@@ -71,10 +71,10 @@ object OverviewBackfill extends Job with RollbarNotifier {
           projectLayersWithSceneCounts
             .transact(t)
             .flatMap { layers =>
-              layers parTraverse {
+              layers.parTraverse({
                 case (layer, _) =>
-                  kickoffOverviewGeneration(layer)
-              }
+                  kickoffOverviewGeneration(layer).attempt
+              })
           }
       )
       .map { results =>
