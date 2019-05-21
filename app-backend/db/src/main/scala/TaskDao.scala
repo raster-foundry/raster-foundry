@@ -16,8 +16,10 @@ import java.util.UUID
 object TaskDao extends Dao[Task] {
 
   val tableName = "tasks"
+  val joinTableF =
+    Fragment.const("tasks join task_actions on tasks.id = task_actions.task_id")
 
-  val selectF: Fragment =
+  val cols =
     fr"""
      SELECT
       id,
@@ -31,7 +33,14 @@ object TaskDao extends Dao[Task] {
       locked_by,
       locked_on,
       geometry
-    FROM""" ++ tableF
+    FROM
+    """
+
+  val selectF: Fragment =
+    cols ++ tableF
+
+  val listF: Fragment =
+    cols ++ joinTableF
 
   val insertF: Fragment =
     fr"INSERT INTO " ++ tableF ++ fr"""(
@@ -129,7 +138,10 @@ object TaskDao extends Dao[Task] {
       pageRequest: PageRequest
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] =
     for {
-      paginatedResponse <- query.filter(queryParams).page(pageRequest)
+      paginatedResponse <- Dao
+        .QueryBuilder[Task](listF, joinTableF, Nil)
+        .filter(queryParams)
+        .page(pageRequest)
       withActions <- paginatedResponse.results.toList traverse { feat =>
         unsafeGetTaskWithActions(feat.id)
       }

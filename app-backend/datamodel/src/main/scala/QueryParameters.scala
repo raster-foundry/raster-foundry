@@ -253,7 +253,8 @@ object UserAuditQueryParameters {
 
 /** Query parameters to filter by owners */
 final case class OwnerQueryParameters(
-    owner: Iterable[String] = List.empty[String])
+    owner: Iterable[String] = List.empty[String]
+)
 
 object OwnerQueryParameters {
   implicit def encOwnerQueryParameters: Encoder[OwnerQueryParameters] =
@@ -651,12 +652,17 @@ final case class MetricQueryParameters(
 
 final case class TaskQueryParameters(
     projectId: Option[UUID] = None,
-    projectLayerId: Option[UUID] = None,
+    layerId: Option[UUID] = None,
     status: Option[TaskStatus] = None,
+    locked: Option[Boolean] = None,
     lockedBy: Option[TaskStatus] = None,
-    lockedOnBefore: Option[Instant] = None,
-    lockedOnAfter: Option[Instant] = None,
-    bbox: Iterable[String] = Seq.empty
+    bbox: Iterable[String] = Seq.empty,
+    actionUser: Option[String] = None,
+    actionType: Option[ActionType] = None,
+    actionStartTime: Option[Instant] = None,
+    actionEndTime: Option[Instant] = None,
+    actionMinCount: Option[Int] = None,
+    actionMaxCount: Option[Int] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)

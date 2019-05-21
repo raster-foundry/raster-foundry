@@ -1,6 +1,7 @@
 package com.rasterfoundry.database.filter
 
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._
 import doobie.implicits._
@@ -161,20 +162,18 @@ object Filters {
       taskQP.projectId map { qp =>
         fr"project_id = $qp"
       },
-      taskQP.projectLayerId map { qp =>
+      taskQP.layerId map { qp =>
         fr"project_layer_id = $qp "
       },
       taskQP.status map { qp =>
         fr"status = $qp "
       },
+      taskQP.locked map {
+        case true  => fr"locked_by IS NOT NULL"
+        case false => fr"locked_by IS NULL"
+      },
       taskQP.lockedBy map { qp =>
         fr"locked_by = $qp "
-      },
-      taskQP.lockedOnBefore map { qp =>
-        fr"locked_on <= $qp"
-      },
-      taskQP.lockedOnAfter map { qp =>
-        fr"locked_on >= $qp"
       },
       taskQP.bboxPolygon match {
         case Some(bboxPolygons) =>
@@ -184,6 +183,18 @@ object Filters {
           )
           Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
         case _ => None
+      },
+      taskQP.actionUser map { qp =>
+        fr"task_actions.user_id = $qp"
+      },
+      taskQP.actionType map { qp =>
+        fr"task_actions.to_status = $qp"
+      },
+      taskQP.actionStartTime map { qp =>
+        fr"task_actions.timestamp >= $qp"
+      },
+      taskQP.actionEndTime map { qp =>
+        fr"task_actions.timestamp <= $qp"
       }
     )
 }
