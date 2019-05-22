@@ -79,8 +79,14 @@ trait UploadRoutes
 
   def createUpload: Route = authenticate { user =>
     entity(as[Upload.Create]) { newUpload =>
-      val uploadToInsert = (newUpload.uploadType, newUpload.source) match {
-        case (UploadType.S3, Some(source)) => {
+      val uploadToInsert = (newUpload.uploadType, newUpload.source, newUpload.fileType) match {
+        case (UploadType.S3, None, FileType.NonSpatial) => {
+          if (newUpload.files.nonEmpty) newUpload
+          else
+            throw new IllegalStateException(
+              "S3 upload must specify a source if no files are specified")
+        }
+        case (UploadType.S3, Some(source), _) => {
           if (newUpload.files.nonEmpty) newUpload
           else {
             val files = listAllowedFilesInS3Source(source)
@@ -90,13 +96,13 @@ trait UploadRoutes
                 "No acceptable files found in the provided source")
           }
         }
-        case (UploadType.S3, None) => {
+        case (UploadType.S3, None, _) => {
           if (newUpload.files.nonEmpty) newUpload
           else
             throw new IllegalStateException(
               "S3 upload must specify a source if no files are specified")
         }
-        case (_, _) => {
+        case (_, _, _) => {
           if (newUpload.files.nonEmpty) newUpload
           else
             throw new IllegalStateException(
