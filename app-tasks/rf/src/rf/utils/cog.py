@@ -19,6 +19,25 @@ s3client = boto3.client('s3')
 logger = logging.getLogger(__name__)
 
 
+def georeference_file(file_path):
+    logger.info('Georeferencing %s', file_path)
+    with rasterio.open(file_path) as ds:
+        width = ds.width
+        height = ds.height
+
+    output_dir, source_filename = os.path.split(file_path)
+    translated_tiff = '{}.tif'.format(source_filename.split('.')[0])
+    translate_command = [
+        'gdal_translate',
+        '-a_ullr', 0, height, width, 0,
+        '-a_srs', 'epsg:3857',
+        file_path, os.path.join(output_dir, translated_tiff)
+    ]
+    logger.debug('Running translate command: %s', ' '.join(translate_command))
+    subprocess.check_call(translate_command)
+    return translated_tiff
+
+
 def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
     overviews_command = [
@@ -72,9 +91,9 @@ def merge_tifs(local_tif_paths, local_dir):
     logger.debug('The files are:\n%s', '\n'.join(local_tif_paths))
     merged_path = os.path.join(local_dir, 'merged.tif')
     merge_command = [
-        'gdal_merge.py', '-o', merged_path, '-separate', '-co', 'COMPRESS=DEFLATE',
-        '-co', 'PREDICTOR=2', '-co', 'BIGTIFF=IF_SAFER'
-    ] + local_tif_paths
+                        'gdal_merge.py', '-o', merged_path, '-separate', '-co', 'COMPRESS=DEFLATE',
+                        '-co', 'PREDICTOR=2', '-co', 'BIGTIFF=IF_SAFER'
+                    ] + local_tif_paths
     subprocess.check_call(merge_command)
     return merged_path
 

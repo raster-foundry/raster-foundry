@@ -48,6 +48,7 @@ class GeoTiffS3SceneFactory(object):
         self.datasource = self._upload.datasource
         self.acquisitionDate = self._upload.metadata.get('acquisitionDate')
         self.cloudCover = self._upload.metadata.get('cloudCover', 0)
+        self.fileType = upload.fileType
         self.tags = self._upload.metadata.get('tags') or ['']
         self.keep_in_source_bucket = self._upload.keepInSourceBucket
 
@@ -68,6 +69,10 @@ class GeoTiffS3SceneFactory(object):
             with get_tempdir() as tempdir:
                 tmp_fname = os.path.join(tempdir, filename)
                 bucket.download_file(key, tmp_fname)
+
+                if self.fileType == 'NON_SPATIAL':
+                    tmp_fname = cog.georeference_file(tmp_fname)
+
                 cog.add_overviews(tmp_fname)
                 cog_path = cog.convert_to_cog(tmp_fname, tempdir)
                 scene = self.create_geotiff_scene(tmp_fname, os.path.splitext(filename)[0])
