@@ -262,6 +262,83 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
+  /users/{userID}/scopes:
+    x-resource: Users
+    get:
+      summary: 'Get actions on objects a user can operate (a Map(ObjectType, Array[ActionType]))'
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/userID'
+      responses:
+        200:
+          description: 'User scopes found'
+          schema:
+            $ref: '#/definitions/UserScopes'
+        404:
+          description: 'User scopes not found'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: 'Create actions on objects a user can operate (a Map(ObjectType, Array[ActionType]))'
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/userID'
+        - name: UserScopes
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserScopes'
+      responses:
+        200:
+          description: 'Actions on objects a user can operate'
+          schema:
+            $ref: '#/definitions/UserScopes'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: 'Update actions on objects a user can operate (a Map(ObjectType, Array[ActionType]))'
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/userID'
+        - name: UserScopes
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserScopes'
+      responses:
+        204:
+          description: 'Update successful (No Content)'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Remove all actions on objects a user can operate (a Map(ObjectType, Array[ActionType]))'
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/userID'
+      responses:
+        204:
+          description: 'Deletion Successful (no content)'
+        404:
+          description: |
+            The UUID parameter does not refer to a user or the user does not have permission to perform this action
+          schema:
+            $ref: '#/definitions/Error'
   /organizations/search/:
     x-resource: Organizations
     get:
@@ -5402,6 +5479,47 @@ parameters:
     required: false
 
 definitions:
+  ActionTypeArray:
+    type: array
+    items:
+      $ref: '#/definitions/ActionType'
+    example:
+      - 'VIEW'
+      - 'EDIT'
+      - 'CREATE'
+  ActionType:
+    type: string
+    enum:
+      - 'VIEW'
+      - 'EDIT'
+      - 'DEACTIVATE'
+      - 'DELETE'
+      - 'ANNOTATE'
+      - 'EXPORT'
+      - 'DOWNLOAD'
+      - 'CREATE'
+  ObjectType:
+    type: string
+    enum:
+      - 'PROJECT'
+      - 'SCENE'
+      - 'DATASOURCE'
+      - 'SHAPE'
+      - 'WORKSPACE'
+      - 'TEMPLATE'
+      - 'ANALYSIS'
+      - 'PLATFORM'
+      - 'ORGANIZATION'
+      - 'TEAM'
+      - 'USER'
+      - 'UPLOAD'
+      - 'EXPORT'
+      - 'FEED'
+      - 'MAPTOKEN'
+      - 'LICENSE'
+      - 'TOOLTAG'
+      - 'TOOLCATEGORY'
+      - 'AOI'
   LayerSplitOptions:
     type: object
     properties:
@@ -5953,6 +6071,12 @@ definitions:
         properties:
           email:
             type: string
+
+  UserScopes:
+    description: a Map(ObjectType, Array[ActionType])
+    type: object
+    additionalProperties:
+      $ref: '#/definitions/ActionTypeArray'
 
   UserWithRole:
     allOf:
