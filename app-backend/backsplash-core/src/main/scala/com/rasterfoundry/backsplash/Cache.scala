@@ -73,8 +73,14 @@ object Cache extends LazyLogging {
     Flags(Config.cache.histogramCacheEnable, Config.cache.histogramCacheEnable)
   logger.info(s"Histogram Cache Status: ${histCacheFlags}")
 
-  val rasterSourceCache: Cache[GeoTiffRasterSource] =
+  val rasterSourceCache: Cache[GeoTiffRasterSource] = {
+    implicit val cacheConfig: CacheConfig = CacheConfig(
+      memoization = MemoizationConfig(
+        MethodCallToStringConverter.includeClassConstructorParams)
+    )
     CaffeineCache[GeoTiffRasterSource]
+  }
+
   val rasterSourceCacheFlags: Flags = Flags(
     Config.cache.rasterSourceCacheEnable,
     Config.cache.rasterSourceCacheEnable)
