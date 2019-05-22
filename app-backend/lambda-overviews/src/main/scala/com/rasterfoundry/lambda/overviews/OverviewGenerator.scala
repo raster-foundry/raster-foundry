@@ -82,6 +82,9 @@ object OverviewGenerator extends LazyLogging {
     )
 
     println("Creating project overview")
+    // James figured out the formula by fitting the plot of
+    // zoom level versus pixel size in meters
+    // 156412 is the pixel size on zoom level 0
     val projectOverviewOption =
       OverviewGenerator.createProjectOverview(
         initialProjectScenes,
