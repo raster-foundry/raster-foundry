@@ -29,11 +29,11 @@ def georeference_file(file_path):
     translated_tiff = '{}.tif'.format(source_filename.split('.')[0])
     translate_command = [
         'gdal_translate',
-        '-a_ullr', 0, height, width, 0,
+        '-a_ullr', '0', str(height), str(width), '0',
         '-a_srs', 'epsg:3857',
         file_path, os.path.join(output_dir, translated_tiff)
     ]
-    logger.debug('Running translate command: %s', ' '.join(translate_command))
+    logger.debug('Running translate command: %s', translate_command))
     subprocess.check_call(translate_command)
     return translated_tiff
 

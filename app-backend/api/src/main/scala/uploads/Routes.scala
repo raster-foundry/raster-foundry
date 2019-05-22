@@ -79,9 +79,11 @@ trait UploadRoutes
 
   def createUpload: Route = authenticate { user =>
     entity(as[Upload.Create]) { newUpload =>
+      logger.debug(
+        s"newUpload: ${newUpload.uploadType}, ${newUpload.source}, ${newUpload.fileType}")
       val uploadToInsert =
         (newUpload.uploadType, newUpload.source, newUpload.fileType) match {
-          case (UploadType.S3, None, FileType.NonSpatial) => {
+          case (UploadType.S3, _, FileType.NonSpatial) => {
             if (newUpload.files.nonEmpty) newUpload
             else
               throw new IllegalStateException(
