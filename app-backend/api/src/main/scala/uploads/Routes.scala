@@ -79,36 +79,37 @@ trait UploadRoutes
 
   def createUpload: Route = authenticate { user =>
     entity(as[Upload.Create]) { newUpload =>
-      val uploadToInsert = (newUpload.uploadType, newUpload.source, newUpload.fileType) match {
-        case (UploadType.S3, None, FileType.NonSpatial) => {
-          if (newUpload.files.nonEmpty) newUpload
-          else
-            throw new IllegalStateException(
-              "S3 upload must specify a source if no files are specified")
-        }
-        case (UploadType.S3, Some(source), _) => {
-          if (newUpload.files.nonEmpty) newUpload
-          else {
-            val files = listAllowedFilesInS3Source(source)
-            if (files.nonEmpty) newUpload.copy(files = files)
+      val uploadToInsert =
+        (newUpload.uploadType, newUpload.source, newUpload.fileType) match {
+          case (UploadType.S3, None, FileType.NonSpatial) => {
+            if (newUpload.files.nonEmpty) newUpload
             else
               throw new IllegalStateException(
-                "No acceptable files found in the provided source")
+                "S3 upload must specify a source if no files are specified")
+          }
+          case (UploadType.S3, Some(source), _) => {
+            if (newUpload.files.nonEmpty) newUpload
+            else {
+              val files = listAllowedFilesInS3Source(source)
+              if (files.nonEmpty) newUpload.copy(files = files)
+              else
+                throw new IllegalStateException(
+                  "No acceptable files found in the provided source")
+            }
+          }
+          case (UploadType.S3, None, _) => {
+            if (newUpload.files.nonEmpty) newUpload
+            else
+              throw new IllegalStateException(
+                "S3 upload must specify a source if no files are specified")
+          }
+          case (_, _, _) => {
+            if (newUpload.files.nonEmpty) newUpload
+            else
+              throw new IllegalStateException(
+                "Remote repository upload must specify some ids or files")
           }
         }
-        case (UploadType.S3, None, _) => {
-          if (newUpload.files.nonEmpty) newUpload
-          else
-            throw new IllegalStateException(
-              "S3 upload must specify a source if no files are specified")
-        }
-        case (_, _, _) => {
-          if (newUpload.files.nonEmpty) newUpload
-          else
-            throw new IllegalStateException(
-              "Remote repository upload must specify some ids or files")
-        }
-      }
 
       onSuccess(
         UploadDao.insert(uploadToInsert, user).transact(xa).unsafeToFuture) {
