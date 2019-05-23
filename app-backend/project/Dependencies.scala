@@ -37,6 +37,7 @@ object Version {
   val http4s = "0.20.0"
   val json4s = "3.5.0"
   val jts = "1.16.0"
+  val logback = "1.2.3"
   val maml = "0.3.3"
   val nimbusJose = "0.6.0"
   val postgres = "42.1.1"
@@ -53,6 +54,7 @@ object Version {
   val scapegoat = "1.3.7"
   val scopt = "3.5.0"
   val decline = "0.6.0"
+  val slf4j = "1.7.25"
   val slickMigrationAPI = "0.4.0"
   val spatial4j = "0.7"
   val spark = "2.4.2"
@@ -118,6 +120,7 @@ object Dependencies {
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val http4sXml = "org.http4s" %% "http4s-scala-xml" % Version.http4s
+  val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % "1.5.1-cats"
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
@@ -135,8 +138,8 @@ object Dependencies {
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
-  val slf4j = "org.slf4j" % "slf4j-simple" % "1.7.25"
-  val slf4jApi = "org.slf4j" % "slf4j-api" % "1.7.25"
+  val log4jOverslf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j
+  val slf4j = "org.slf4j" % "slf4j-api" % Version.slf4j
   val sttpCore = "com.softwaremill.sttp" %% "core" % "1.5.12"
   val sttpJson = "com.softwaremill.sttp" %% "json-common" % "1.5.12"
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % "1.5.12"
