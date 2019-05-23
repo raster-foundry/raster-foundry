@@ -193,10 +193,10 @@ object TaskDao extends Dao[Task] {
           "geometry"
         )
         .compile
-        .toList map { (xs: List[Task]) =>
+        .toList map { (tasks: List[Task]) =>
         Task.TaskFeatureCollection(
           "FeatureCollection",
-          xs.map(_.toGeoJSONFeature(Nil))
+          tasks.map(_.toGeoJSONFeature(Nil))
         )
       }
     } getOrElse {
