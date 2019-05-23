@@ -52,10 +52,10 @@ final case class BacksplashGeotiff(
     with BacksplashImage[IO] {
 
   implicit val tileCache = Cache.tileCache
-  implicit val flags = Cache.tileCacheFlags
   implicit val rasterSourceCache = Cache.rasterSourceCache
 
   def getRasterSource: IO[RasterSource] = {
+    implicit val rasterSourceCacheFlags = Cache.rasterSourceCacheFlags
     if (enableGDAL) {
       logger.debug(s"Using GDAL Raster Source: ${uri}")
       // Do not bother caching - let GDAL internals worry about that
@@ -139,6 +139,8 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
 
   /** Read ZXY tile - defers to a private method to enable disable/enabling of cache **/
   def read(z: Int, x: Int, y: Int): F[Option[MultibandTile]] = {
+    implicit val flags =
+      Flags(Config.cache.tileCacheEnable, Config.cache.tileCacheEnable)
     readWithCache(z, x, y)
   }
 

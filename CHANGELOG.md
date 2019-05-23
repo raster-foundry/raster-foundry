@@ -4,8 +4,6 @@
 
 ### Added
 
-- Convert BacksplashImage to a trait [\#4952](https://github.com/raster-foundry/raster-foundry/pull/4952)
-
 ### Changed
 
 ### Deprecated
@@ -13,11 +11,22 @@
 ### Fixed
 
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
-- Fixed logging configuration to respect `RF_LOG_LEVEL` environment variable [\#4972](https://github.com/raster-foundry/raster-foundry/pull/4972)
+- Fix Sentinel-2 metadata file download [\#4969](https://github.com/raster-foundry/raster-foundry/pull/4969)
 
 ### Security
 
-## [1.21.1](https://github.com/raster-foundry/raster-foundry/tree/1.21.0) (2019-05-15)
+## [1.21.2](https://github.com/raster-foundry/raster-foundry/tree/1.21.2) (2019-05-23)
+
+### Added
+
+- Convert BacksplashImage to a trait [\#4952](https://github.com/raster-foundry/raster-foundry/pull/4952)
+
+### Fixed
+
+- Fixed logging configuration to respect `RF_LOG_LEVEL` environment variable [\#4972](https://github.com/raster-foundry/raster-foundry/pull/4972)
+- Fixed a bug causing all raster sources to share a cache location [\#5003](https://github.com/raster-foundry/raster-foundry/pull/5003)
+
+## [1.21.1](https://github.com/raster-foundry/raster-foundry/tree/1.21.1) (2019-05-15)
 
 - Stopped returning internal server errors when requesting tiles outside a project boundary [\#4956](https://github.com/raster-foundry/raster-foundry/pull/4956)
 
