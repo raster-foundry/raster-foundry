@@ -59,4 +59,10 @@ trait CirceJsonbMeta {
 
   implicit val metricEventMeta: Meta[MetricEvent] =
     CirceJsonbMeta[MetricEvent]
+
+  implicit val taskActionStampMeta: Meta[List[TaskActionStamp]] =
+    CirceJsonbMeta[List[TaskActionStamp]]
+
+  implicit val taskFeatureMeta: Meta[List[Task.TaskFeature]] =
+    CirceJsonbMeta[List[Task.TaskFeature]]
 }

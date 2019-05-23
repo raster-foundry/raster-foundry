@@ -6,6 +6,7 @@ import geotrellis.proj4._
 import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.UUID
 
 /** Case class representing all /thumbnail query parameters */
@@ -252,7 +253,8 @@ object UserAuditQueryParameters {
 
 /** Query parameters to filter by owners */
 final case class OwnerQueryParameters(
-    owner: Iterable[String] = List.empty[String])
+    owner: Iterable[String] = List.empty[String]
+)
 
 object OwnerQueryParameters {
   implicit def encOwnerQueryParameters: Encoder[OwnerQueryParameters] =
@@ -647,3 +649,21 @@ final case class MetricQueryParameters(
     referer: Option[String] = None,
     requestType: MetricRequestType
 )
+
+final case class TaskQueryParameters(
+    projectId: Option[UUID] = None,
+    layerId: Option[UUID] = None,
+    status: Option[TaskStatus] = None,
+    locked: Option[Boolean] = None,
+    lockedBy: Option[TaskStatus] = None,
+    bbox: Iterable[String] = Seq.empty,
+    actionUser: Option[String] = None,
+    actionType: Option[TaskStatus] = None,
+    actionStartTime: Option[Instant] = None,
+    actionEndTime: Option[Instant] = None,
+    actionMinCount: Option[Int] = None,
+    actionMaxCount: Option[Int] = None
+) {
+  val bboxPolygon: Option[Seq[Projected[Polygon]]] =
+    BboxUtil.toBboxPolygon(bbox)
+}

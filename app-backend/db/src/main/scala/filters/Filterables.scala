@@ -404,6 +404,11 @@ trait Filterables extends RFMeta with LazyLogging {
     Filterable[Any, Projected[MultiPolygon]] { geom =>
       List(Some(fr"ST_Intersects(data_footprint, ${geom})"))
     }
+
+  implicit def taskQueryParamFilter: Filterable[Any, TaskQueryParameters] =
+    Filterable[Any, TaskQueryParameters] { qp =>
+      Filters.taskQP(qp)
+    }
 }
 
 object Filterables extends Filterables

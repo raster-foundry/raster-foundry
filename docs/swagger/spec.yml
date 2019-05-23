@@ -3323,7 +3323,7 @@ paths:
         - $ref: '#/parameters/projectID'
         - $ref: '#/parameters/layerID'
         - $ref: '#/parameters/taskID'
-        - name: annotation
+        - name: taskUpdate
           in: body
           required: true
           schema:
@@ -5381,6 +5381,7 @@ parameters:
     description: >
       Must be paired with `actionType`.
       Filter to tasks that have at least the specified number of occurences of the specified action.
+      Note: CURRENTLY IGNORED.
     in: query
     type: integer
     required: false
@@ -5389,6 +5390,7 @@ parameters:
     description: >
       Must be paired with `actionType`.
       Filter to tasks that have at most the specified number of occurences of the specified action.
+      Note: CURRENTLY IGNORED.
     in: query
     type: integer
     required: false
@@ -7776,6 +7778,9 @@ definitions:
   TaskFeature:
     type: object
     properties:
+      id:
+        type: string
+        format: uuid
       type:
         type: string
       properties:
@@ -7795,7 +7800,6 @@ definitions:
             $ref: '#/definitions/TaskStatus'
           lockedBy:
             type: string
-            format: uuid
           lockedOn:
             type: string
             format: date-time
@@ -7808,6 +7812,10 @@ definitions:
 
   TaskFeatureCreate:
     type: object
+    required:
+      - type
+      - properties
+      - geometry
     properties:
       type:
         type: string
@@ -7860,9 +7868,11 @@ definitions:
   TaskActionStamp:
     type: object
     properties:
-      userId:
+      taskId:
         type: string
         format: uuid
+      userId:
+        type: string
       timestamp:
         type: string
         format: date-time
