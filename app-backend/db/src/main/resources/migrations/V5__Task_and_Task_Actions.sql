@@ -23,8 +23,6 @@ CREATE TABLE tasks (
     ON DELETE CASCADE
 );
 
--- task_id doesn't refer to tasks because we want to keep the references around (for audit reasons)
--- after tasks are deleted, and they'll be super worthless without an id attached
 CREATE TABLE task_actions (
   task_id uuid references tasks (id) NOT NULL,
   user_id text references users (id) NOT NULL,
