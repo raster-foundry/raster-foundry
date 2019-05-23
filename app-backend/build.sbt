@@ -498,6 +498,11 @@ lazy val backsplashServer =
         Dependencies.scalacacheCaffeine
       ) ++ loggingDependencies
     })
+    .settings({
+      dependencyOverrides ++= Seq(
+        "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882"
+      )
+    })
     .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
     .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
     .settings(test in assembly := {})
