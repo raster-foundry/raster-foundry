@@ -7812,6 +7812,10 @@ definitions:
 
   TaskFeatureCreate:
     type: object
+    required:
+      - type
+      - properties
+      - geometry
     properties:
       type:
         type: string

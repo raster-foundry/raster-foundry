@@ -13,12 +13,13 @@ case class Task(
     createdBy: String,
     modifiedAt: Instant,
     modifiedBy: String,
+    owner: String,
     projectId: UUID,
     projectLayerId: UUID,
     status: TaskStatus,
     lockedBy: Option[String],
     lockedOn: Option[Instant],
-    geometry: Option[Projected[Geometry]]
+    geometry: Projected[Geometry]
 ) {
   def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
@@ -35,6 +36,7 @@ case class Task(
       this.createdBy,
       this.modifiedAt,
       this.modifiedBy,
+      this.owner,
       this.projectId,
       this.projectLayerId,
       this.status,
@@ -52,6 +54,7 @@ object Task {
       createdBy: String,
       modifiedAt: Instant,
       modifiedBy: String,
+      owner: String,
       projectId: UUID,
       projectLayerId: UUID,
       status: TaskStatus,
@@ -81,9 +84,9 @@ object Task {
   case class TaskFeature(
       id: UUID,
       properties: TaskProperties,
-      geometry: Option[Projected[Geometry]],
+      geometry: Projected[Geometry],
       _type: String = "Feature"
-  ) extends GeoJSONFeature
+  )
 
   object TaskFeature {
     implicit val encTaskFeature: Encoder[TaskFeature] =
@@ -98,7 +101,7 @@ object Task {
 
   case class TaskFeatureCreate(
       properties: TaskPropertiesCreate,
-      geometry: Option[Projected[Geometry]],
+      geometry: Projected[Geometry],
       _type: String = "Feature"
   )
 

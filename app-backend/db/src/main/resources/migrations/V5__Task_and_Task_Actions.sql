@@ -10,12 +10,13 @@ CREATE TABLE tasks (
   created_by text not null references users (id),
   modified_at timestamp without time zone not null,
   modified_by text not null,
+  owner text not null references users (id),
   project_id uuid not null,
   project_layer_id uuid not null,
   status task_status not null,
   locked_by text references users (id),
   locked_on timestamp without time zone,
-  geometry geometry(Geometry, 3857),
+  geometry geometry(Geometry, 3857) not null,
   CONSTRAINT tasks_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects (id)
     ON DELETE CASCADE,
   CONSTRAINT tasks_project_layer_id_fkey FOREIGN KEY (project_layer_id) REFERENCES project_layers(id)

@@ -27,6 +27,7 @@ object TaskDao extends Dao[Task] {
       created_by,
       modified_at,
       modified_by,
+      owner,
       project_id,
       project_layer_id,
       status,
@@ -49,6 +50,7 @@ object TaskDao extends Dao[Task] {
           created_by,
           modified_at,
           modified_by,
+          owner,
           project_id,
           project_layer_id,
           status,
@@ -161,7 +163,7 @@ object TaskDao extends Dao[Task] {
       user: User
   ): Fragment = {
     fr"""(
-        ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id},
+        ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id}, ${user.id},
         ${tfc.properties.projectId}, ${tfc.properties.projectLayerId}, ${tfc.properties.status},
         null, null, ${tfc.geometry}
     )"""
@@ -182,6 +184,7 @@ object TaskDao extends Dao[Task] {
           "created_by",
           "modified_at",
           "modified_by",
+          "owner",
           "project_id",
           "project_layer_id",
           "status",
