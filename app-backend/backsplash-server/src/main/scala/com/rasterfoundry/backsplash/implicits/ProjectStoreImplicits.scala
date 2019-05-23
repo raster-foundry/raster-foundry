@@ -166,7 +166,6 @@ class ProjectStoreImplicits(xa: Transactor[IO])
     new ProjectStore[SceneToLayerDao] {
       // projId here actually refers to a layer -- but the argument names have to
       // match the typeclass we're providing evidence for
-
       def read(self: SceneToLayerDao,
                projId: UUID,
                window: Option[Projected[Polygon]],
