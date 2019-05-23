@@ -24,6 +24,7 @@
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
 - Fixed logging configuration to respect `RF_LOG_LEVEL` environment variable [\#4972](https://github.com/raster-foundry/raster-foundry/pull/4972)
 - Fix Sentinel-2 metadata file download [\#4969](https://github.com/raster-foundry/raster-foundry/pull/4969)
+- Fixed a bug causing all raster sources to share a cache location [\#5003](https://github.com/raster-foundry/raster-foundry/pull/5003)
 
 ### Security
 
