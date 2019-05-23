@@ -1,7 +1,6 @@
 package com.rasterfoundry.database.filter
 
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database.Implicits._
 
 import doobie._
 import doobie.implicits._
@@ -188,7 +187,7 @@ object Filters {
         fr"task_actions.user_id = $qp"
       },
       taskQP.actionType map { qp =>
-        fr"task_actions.to_status = $qp"
+        fr"task_actions.to_status = $qp OR task_actions.from_status = $qp"
       },
       taskQP.actionStartTime map { qp =>
         fr"task_actions.timestamp >= $qp"

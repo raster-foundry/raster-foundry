@@ -61,7 +61,15 @@ object Task {
       lockedBy: Option[String],
       lockedOn: Option[Instant],
       actions: List[TaskActionStamp]
-  )
+  ) {
+    def toCreate: TaskPropertiesCreate = {
+      TaskPropertiesCreate(
+        this.projectId,
+        this.projectLayerId,
+        this.status
+      )
+    }
+  }
 
   object TaskProperties {
     implicit val encTaskProperties: Encoder[TaskProperties] = deriveEncoder
@@ -103,7 +111,10 @@ object Task {
       properties: TaskPropertiesCreate,
       geometry: Projected[Geometry],
       _type: String = "Feature"
-  )
+  ) {
+    def withStatus(status: TaskStatus): TaskFeatureCreate =
+      this.copy(properties = this.properties.copy(status = status))
+  }
 
   object TaskFeatureCreate {
     implicit val decTaskFeatureCreate: Decoder[TaskFeatureCreate] =

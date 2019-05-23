@@ -1,6 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.common.Generators.Implicits._
 
 import cats.implicits._
@@ -181,6 +182,65 @@ class TaskDaoSpec
             }
 
             deleteResult should be(1)
+            true
+          }
+      }
+    }
+  }
+
+  test("shouldn't list duplicates if an action is in two columns") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeatureCreate: Task.TaskFeatureCreate
+        ) =>
+          {
+            val connIO
+              : ConnectionIO[(Task.TaskFeatureCollection,
+                              PaginatedGeoJsonResponse[Task.TaskFeature])] =
+              for {
+                (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                  userCreate,
+                  orgCreate,
+                  platform,
+                  projectCreate
+                )
+                collection <- TaskDao.insertTasks(
+                  Task.TaskFeatureCollectionCreate(
+                    features = List(
+                      fixupTaskFeatureCreate(taskFeatureCreate, dbProject)
+                        .withStatus(TaskStatus.Unlabeled))
+                  ),
+                  dbUser
+                )
+                feature = collection.features.head
+                newStatus = TaskStatus.Labeled
+                _ <- TaskDao.updateTask(
+                  feature.id,
+                  Task.TaskFeatureCreate(
+                    feature.properties.copy(status = newStatus).toCreate,
+                    feature.geometry),
+                  dbUser)
+                _ <- TaskDao.updateTask(
+                  feature.id,
+                  Task.TaskFeatureCreate(feature.properties.toCreate,
+                                         feature.geometry),
+                  dbUser)
+                listed <- TaskDao.listTasks(
+                  TaskQueryParameters(actionType = Some(TaskStatus.Unlabeled)),
+                  PageRequest(0, 10, Map.empty))
+              } yield { (collection, listed) }
+
+            val (inserted, listed) = connIO.transact(xa).unsafeRunSync
+
+            assert(listed.features.toList
+                     .filter(_.id == inserted.features.head.id)
+                     .length == 1,
+                   "shouldn't have duplicates")
             true
           }
       }

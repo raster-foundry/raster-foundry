@@ -22,7 +22,7 @@ object TaskDao extends Dao[Task] {
   val cols =
     fr"""
      SELECT
-      id,
+      distinct(id),
       created_at,
       created_by,
       modified_at,

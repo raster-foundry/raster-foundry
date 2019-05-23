@@ -658,7 +658,7 @@ final case class TaskQueryParameters(
     lockedBy: Option[TaskStatus] = None,
     bbox: Iterable[String] = Seq.empty,
     actionUser: Option[String] = None,
-    actionType: Option[ActionType] = None,
+    actionType: Option[TaskStatus] = None,
     actionStartTime: Option[Instant] = None,
     actionEndTime: Option[Instant] = None,
     actionMinCount: Option[Int] = None,
