@@ -55,11 +55,9 @@ object HttpClient {
   }
 
   def updateProjectWithOverview(authToken: String,
-                                projectId: UUID,
-                                layerId: UUID,
-                                overviewLocation: String): Int = {
+                                overviewInput: OverviewInput): Int = {
     val projectLayerUri =
-      uri"$rfApiServer/api/projects/$projectId/layers/$layerId"
+      uri"$rfApiServer/api/projects/${overviewInput.projectId}/layers/${overviewInput.projectLayerId}"
     println("Getting project layer by ID")
     val projectLayerResponse = client
       .headers(Map("Authorization" -> s"Bearer $authToken"))
@@ -71,16 +69,20 @@ object HttpClient {
       case Right(pl) => pl
     }
     println("Updating project layer with new overview location")
-    val layerUpdateStatus = client
-      .headers(Map("Authorization" -> s"Bearer $authToken"))
-      .put(projectLayerUri)
-      .body(projectLayer.copy(overviewsLocation = Some(overviewLocation)))
-      .send()
-      .code match {
-      case StatusCodes.NoContent => 204
-      case StatusCodes.NotFound  => 404
-      case _                     => 0
-    }
+    val layerUpdateStatus =
+      client
+        .headers(Map("Authorization" -> s"Bearer $authToken"))
+        .put(projectLayerUri)
+        .body(
+          projectLayer.copy(overviewsLocation =
+                              Some(overviewInput.outputLocation),
+                            minZoomLevel = Some(overviewInput.minZoomLevel)))
+        .send()
+        .code match {
+        case StatusCodes.NoContent => 204
+        case StatusCodes.NotFound  => 404
+        case _                     => 0
+      }
     layerUpdateStatus
   }
 
