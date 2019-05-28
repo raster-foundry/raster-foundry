@@ -206,7 +206,7 @@ paths:
   /users/me/scopes:
     x-resource: Users
     get:
-      summary: 'Get actions on objects a logged-in user can operate'
+      summary: 'Get object action scopes for a logged-in user'
       tags:
         - Users
       responses:
@@ -284,7 +284,7 @@ paths:
   /users/{userID}/scopes:
     x-resource: Users
     get:
-      summary: 'Get actions on objects an user can operate'
+      summary: 'Get object action scopes for a user'
       tags:
         - Users
       parameters:
@@ -303,7 +303,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     post:
-      summary: 'Create actions on objects an user can operate'
+      summary: 'Create object action scopes for a user'
       tags:
         - Users
       parameters:
@@ -315,7 +315,7 @@ paths:
             $ref: '#/definitions/UserScopes'
       responses:
         200:
-          description: 'Actions on objects an user can operate'
+          description: 'Actions on objects a user can operate'
           schema:
             $ref: '#/definitions/UserScopes'
         default:
@@ -323,7 +323,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     put:
-      summary: 'Update actions on objects an user can operate'
+      summary: 'Update object action scopes for a user'
       tags:
         - Users
       parameters:
@@ -345,7 +345,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     delete:
-      summary: 'Remove all actions on objects an user can operate'
+      summary: 'Remove all object action scopes for a user'
       tags:
         - Users
       parameters:
@@ -355,7 +355,7 @@ paths:
           description: 'Deletion Successful (no content)'
         404:
           description: |
-            The UUID parameter does not refer to an user or the user does not have permission to perform this action
+            The UUID parameter does not refer to a user or the user does not have permission to perform this action
           schema:
             $ref: '#/definitions/Error'
   /organizations/search/:
@@ -6092,7 +6092,7 @@ definitions:
             type: string
 
   UserScopes:
-    description: A map from API resource/object types to allowed actions for an user
+    description: A map from API resource/object types to allowed actions for a user
     type: object
     additionalProperties:
       $ref: '#/definitions/ActionTypeArray'
