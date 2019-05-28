@@ -26,7 +26,7 @@ def georeference_file(file_path):
         height = ds.height
 
     output_dir, source_filename = os.path.split(file_path)
-    translated_tiff = os.path.join(output_dir, '{}.tif'.format(source_filename.split('.')[0]))
+    translated_tiff = os.path.join(output_dir, '{}-referenced.tif'.format(source_filename.split('.')[0]))
     translate_command = [
         'gdal_translate',
         '-a_ullr', '0', str(height), str(width), '0',
