@@ -158,12 +158,6 @@ object Filters {
       implicit putTaskStatus: Put[TaskStatus],
       putGeom: Put[Projected[Polygon]]): List[Option[Fragment]] =
     List(
-      taskQP.projectId map { qp =>
-        fr"project_id = $qp"
-      },
-      taskQP.layerId map { qp =>
-        fr"project_layer_id = $qp "
-      },
       taskQP.status map { qp =>
         fr"status = $qp "
       },

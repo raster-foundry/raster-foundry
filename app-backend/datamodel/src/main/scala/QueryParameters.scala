@@ -6,7 +6,6 @@ import geotrellis.proj4._
 import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 import java.sql.Timestamp
-import java.time.Instant
 import java.util.UUID
 
 /** Case class representing all /thumbnail query parameters */
@@ -651,16 +650,14 @@ final case class MetricQueryParameters(
 )
 
 final case class TaskQueryParameters(
-    projectId: Option[UUID] = None,
-    layerId: Option[UUID] = None,
     status: Option[TaskStatus] = None,
     locked: Option[Boolean] = None,
     lockedBy: Option[TaskStatus] = None,
     bbox: Iterable[String] = Seq.empty,
     actionUser: Option[String] = None,
     actionType: Option[TaskStatus] = None,
-    actionStartTime: Option[Instant] = None,
-    actionEndTime: Option[Instant] = None,
+    actionStartTime: Option[Timestamp] = None,
+    actionEndTime: Option[Timestamp] = None,
     actionMinCount: Option[Int] = None,
     actionMaxCount: Option[Int] = None
 ) {
