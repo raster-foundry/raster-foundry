@@ -15,11 +15,12 @@
 - Add spec for user scopes CRUD [\#5002](https://github.com/raster-foundry/raster-foundry/pull/5002)
 - Use zoom level in OverviewInput for lambda function to generate layer overviews [\#4998](https://github.com/raster-foundry/raster-foundry/pull/4998)
 - Added endpoints for project layer "tasks" [\#5008](https://github.com/raster-foundry/raster-foundry/pull/5008)
+- Add user scope migration and data model [\#5009](https://github.com/raster-foundry/raster-foundry/pull/5009)
 
 ### Changed
 
 - Use flyway for running migrations and publish image for flyway migrations [\#4987](https://github.com/raster-foundry/raster-foundry/pull/4987)
-- Added support for uploading non-spatial data [\#4993]](https://github.com/raster-foundry/raster-foundry/pull/4993)[\#5001]](https://github.com/raster-foundry/raster-foundry/pull/5001)
+- Added support for uploading non-spatial data [\#4993](https://github.com/raster-foundry/raster-foundry/pull/4993)[\#5001](https://github.com/raster-foundry/raster-foundry/pull/5001)
 
 ### Deprecated
 

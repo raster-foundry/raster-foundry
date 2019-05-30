@@ -58,4 +58,15 @@ object ObjectType {
     Decoder.decodeString.emap { s =>
       Either.catchNonFatal(fromString(s)).leftMap(_ => "ObjectType")
     }
+
+  implicit val objectTypeKeyDecoder: KeyDecoder[ObjectType] =
+    new KeyDecoder[ObjectType] {
+      override def apply(key: String): Option[ObjectType] =
+        Some(ObjectType.fromString(key))
+    }
+
+  implicit val objectTypeKeyEncoder: KeyEncoder[ObjectType] =
+    new KeyEncoder[ObjectType] {
+      override def apply(objectType: ObjectType): String = objectType.toString
+    }
 }

@@ -228,3 +228,7 @@ object User {
     }
   }
 }
+
+@JsonCodec
+final case class UserWithScopes(user: User,
+                                scopes: Map[ObjectType, List[ActionType]])
