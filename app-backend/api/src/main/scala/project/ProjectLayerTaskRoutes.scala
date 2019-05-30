@@ -133,7 +133,7 @@ trait ProjectLayerTaskRoutes
 
   def updateTask(projectId: UUID, layerId: UUID, taskId: UUID): Route =
     authenticate { user =>
-      authorizeAsync {
+      (authorizeAsync {
         ProjectDao
           .authProjectLayerExist(
             projectId,
@@ -143,7 +143,12 @@ trait ProjectLayerTaskRoutes
           )
           .transact(xa)
           .unsafeToFuture
-      } {
+      } & authorizeAsync {
+        TaskDao
+          .isLockingUserOrUnlocked(taskId, user)
+          .transact(xa)
+          .unsafeToFuture
+      }) {
         entity(as[Task.TaskFeatureCreate]) { tfc =>
           complete {
             TaskDao.updateTask(taskId, tfc, user).transact(xa) map {
