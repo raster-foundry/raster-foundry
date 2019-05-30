@@ -28,12 +28,8 @@ import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
-import io.circe.generic.JsonCodec
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.common._
-
-@JsonCodec
-final case class BulkAcceptParams(sceneIds: List[UUID])
 
 trait ProjectRoutes
     extends Authentication
@@ -51,6 +47,7 @@ trait ProjectRoutes
     with ProjectAnnotationRoutes
     with ProjectLayerRoutes
     with ProjectLayerAnnotationRoutes
+    with ProjectLayerTaskRoutes
     with ProjectAuthorizationDirectives {
 
   val xa: Transactor[IO]
@@ -289,6 +286,36 @@ trait ProjectRoutes
                         listLayerDatasources(projectId, layerId)
                       }
                     }
+                  } ~
+                  pathPrefix("tasks") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listLayerTasks(projectId, layerId)
+                      } ~ post {
+                        createLayerTask(projectId, layerId)
+                      } ~ delete {
+                        deleteLayerTasks(projectId, layerId)
+                      }
+                    } ~
+                      pathPrefix(JavaUUID) { taskId =>
+                        pathEndOrSingleSlash {
+                          get {
+                            getTask(projectId, layerId, taskId)
+                          } ~ put {
+                            updateTask(projectId, layerId, taskId)
+                          } ~ delete {
+                            deleteTask(projectId, layerId, taskId)
+                          }
+                        } ~ pathPrefix("lock") {
+                          pathEndOrSingleSlash {
+                            post {
+                              lockTask(projectId, layerId, taskId)
+                            } ~ delete {
+                              unlockTask(projectId, layerId, taskId)
+                            }
+                          }
+                        }
+                      }
                   }
               }
           } ~

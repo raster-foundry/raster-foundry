@@ -49,6 +49,8 @@ class TaskDaoSpec
                 )
                 fetched <- TaskDao.listTasks(
                   TaskQueryParameters(),
+                  dbProject.id,
+                  dbProject.defaultLayerId,
                   PageRequest(0, 10, Map.empty)
                 )
               } yield { (collection, fetched) }
@@ -199,9 +201,12 @@ class TaskDaoSpec
             taskFeatureCreate: Task.TaskFeatureCreate
         ) =>
           {
-            val connIO
-              : ConnectionIO[(Task.TaskFeatureCollection,
-                              PaginatedGeoJsonResponse[Task.TaskFeature])] =
+            val connIO: ConnectionIO[
+              (
+                  Task.TaskFeatureCollection,
+                  PaginatedGeoJsonResponse[Task.TaskFeature]
+              )
+            ] =
               for {
                 (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
                   userCreate,
@@ -213,7 +218,8 @@ class TaskDaoSpec
                   Task.TaskFeatureCollectionCreate(
                     features = List(
                       fixupTaskFeatureCreate(taskFeatureCreate, dbProject)
-                        .withStatus(TaskStatus.Unlabeled))
+                        .withStatus(TaskStatus.Unlabeled)
+                    )
                   ),
                   dbUser
                 )
@@ -223,27 +229,107 @@ class TaskDaoSpec
                   feature.id,
                   Task.TaskFeatureCreate(
                     feature.properties.copy(status = newStatus).toCreate,
-                    feature.geometry),
-                  dbUser)
+                    feature.geometry
+                  ),
+                  dbUser
+                )
                 _ <- TaskDao.updateTask(
                   feature.id,
-                  Task.TaskFeatureCreate(feature.properties.toCreate,
-                                         feature.geometry),
-                  dbUser)
+                  Task.TaskFeatureCreate(
+                    feature.properties.toCreate,
+                    feature.geometry
+                  ),
+                  dbUser
+                )
                 listed <- TaskDao.listTasks(
                   TaskQueryParameters(actionType = Some(TaskStatus.Unlabeled)),
-                  PageRequest(0, 10, Map.empty))
+                  dbProject.id,
+                  dbProject.defaultLayerId,
+                  PageRequest(0, 10, Map.empty)
+                )
               } yield { (collection, listed) }
 
             val (inserted, listed) = connIO.transact(xa).unsafeRunSync
 
-            assert(listed.features.toList
-                     .filter(_.id == inserted.features.head.id)
-                     .length == 1,
-                   "shouldn't have duplicates")
+            assert(
+              listed.features.toList
+                .filter(_.id == inserted.features.head.id)
+                .length == 1,
+              "shouldn't have duplicates"
+            )
             true
           }
       }
     }
+  }
+
+  test(
+    "locking and unlocking update tasks appropriately"
+  ) {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeatureCreate: Task.TaskFeatureCreate
+        ) =>
+          {
+            val connIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              collection <- TaskDao.insertTasks(
+                Task.TaskFeatureCollectionCreate(
+                  features = List(
+                    fixupTaskFeatureCreate(taskFeatureCreate, dbProject)
+                      .withStatus(TaskStatus.Unlabeled)
+                  )
+                ),
+                dbUser
+              )
+              dbUser2 <- UserDao.create(User.Create("a different user"))
+              feature = collection.features.head
+              // No one has locked this task yet, so this should be `true`
+              authCheck1 <- TaskDao.isLockingUserOrUnlocked(feature.id, dbUser)
+              locked <- TaskDao.lockTask(feature.id)(dbUser)
+              // This user just locked this task, so it should still be `true`
+              authCheck2 <- TaskDao.isLockingUserOrUnlocked(feature.id, dbUser)
+              // but dbUser2 didn't lock it, so this should be `false`
+              authCheck3 <- TaskDao.isLockingUserOrUnlocked(feature.id, dbUser2)
+              unlocked <- TaskDao.unlockTask(feature.id)
+              // We unlocked it, so this should also be `true`
+              authCheck4 <- TaskDao.isLockingUserOrUnlocked(feature.id, dbUser)
+            } yield {
+              (authCheck1,
+               authCheck2,
+               authCheck3,
+               authCheck4,
+               locked,
+               unlocked,
+               dbUser)
+            }
+
+            val (check1, check2, check3, check4, locked, unlocked, user) =
+              connIO.transact(xa).unsafeRunSync
+
+            // Check auth results
+            check1 should be(true)
+            check2 should be(true)
+            check3 should be(false)
+            check4 should be(true)
+
+            locked.get.properties.lockedBy should be(Some(user.id))
+            unlocked.get.properties.lockedBy should be(None)
+
+            true
+          }
+      }
+    }
+
   }
 }

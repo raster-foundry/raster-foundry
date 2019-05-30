@@ -16,4 +16,5 @@ trait ProjectSceneQueryParameterDirective extends QueryParametersCommon {
       'accepted.as[Boolean].?
     )
   ).as(ProjectSceneQueryParameters.apply _)
+
 }

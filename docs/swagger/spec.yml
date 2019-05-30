@@ -3378,7 +3378,7 @@ paths:
         - $ref: '#/parameters/projectID'
         - $ref: '#/parameters/layerID'
       responses:
-        201:
+        204:
           description: 'Tasks Deleted'
         403:
           description: 'Insufficient permissions for resource or resource does not exist'
@@ -3476,8 +3476,7 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
-  /projects/{projectID}/layers/{layerID}/tasks/{taskID}/unlock:
-    post:
+    delete:
       summary: 'Remove the lock from a task so that it can be update by other users'
       tags:
         - Imagery

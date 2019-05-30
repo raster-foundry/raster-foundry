@@ -70,6 +70,18 @@ object TaskDao extends Dao[Task] {
       id = $taskId
     """;
 
+  def setLockF(taskId: UUID, user: User): Fragment =
+    fr"UPDATE " ++ tableF ++ fr"""SET
+      locked_by = ${user.id},
+      locked_on = now()
+      where id = $taskId"""
+
+  def deleteLockF(taskId: UUID): Fragment =
+    fr"UPDATE " ++ tableF ++ fr"""SET
+      locked_by = null,
+      locked_on = null
+      where id = $taskId"""
+
   def appendAction(
       taskId: UUID,
       initialStatus: TaskStatus,
@@ -135,15 +147,29 @@ object TaskDao extends Dao[Task] {
   def deleteTask(taskId: UUID): ConnectionIO[Int] =
     query.filter(taskId).delete
 
+  def tasksForProjectAndLayerQB(
+      queryParams: TaskQueryParameters,
+      projectId: UUID,
+      layerId: UUID
+  ): Dao.QueryBuilder[Task] =
+    Dao
+      .QueryBuilder[Task](listF, joinTableF, Nil)
+      .filter(queryParams)
+      .filter(fr"project_id = $projectId")
+      .filter(fr"project_layer_id = $layerId")
+
   def listTasks(
       queryParams: TaskQueryParameters,
+      projectId: UUID,
+      layerId: UUID,
       pageRequest: PageRequest
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] =
     for {
-      paginatedResponse <- Dao
-        .QueryBuilder[Task](listF, joinTableF, Nil)
-        .filter(queryParams)
-        .page(pageRequest)
+      paginatedResponse <- tasksForProjectAndLayerQB(
+        queryParams,
+        projectId,
+        layerId
+      ).page(pageRequest)
       withActions <- paginatedResponse.results.toList traverse { feat =>
         unsafeGetTaskWithActions(feat.id)
       }
@@ -208,4 +234,22 @@ object TaskDao extends Dao[Task] {
         .pure[ConnectionIO]
     }
   }
+
+  def isLockingUserOrUnlocked(taskId: UUID, user: User): ConnectionIO[Boolean] =
+    OptionT(getTaskById(taskId))
+      .flatMap({ task =>
+        OptionT.fromOption(task.lockedBy map { _ == user.id })
+      })
+      .value map {
+      case Some(test) => test
+      case _          => true
+    }
+
+  def lockTask(
+      taskId: UUID
+  )(user: User): ConnectionIO[Option[Task.TaskFeature]] =
+    setLockF(taskId, user).update.run *> getTaskWithActions(taskId)
+
+  def unlockTask(taskId: UUID): ConnectionIO[Option[Task.TaskFeature]] =
+    deleteLockF(taskId).update.run *> getTaskWithActions(taskId)
 }
