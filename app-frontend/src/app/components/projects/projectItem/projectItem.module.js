@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 import angular from 'angular';
 import { get } from 'lodash';
 
@@ -42,6 +43,7 @@ class ProjectItemController {
     }
 
     $onInit() {
+        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
         this.isSelectable = this.$attrs.hasOwnProperty('selectable');
         this.$scope.$watch(
             () => this.selected({ project: this.item }),
@@ -81,7 +83,8 @@ class ProjectItemController {
         const layer = L.tileLayer(
             this.projectService.getProjectTileURL(this.item, {
                 token: this.authService.token()
-            })
+            }),
+            {maxZoom: this.backsplashTileMaxZoom}
         );
 
         this.getMap().then(m => {

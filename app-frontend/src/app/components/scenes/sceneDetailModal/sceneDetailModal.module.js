@@ -1,4 +1,4 @@
-/* global L */
+/* global L, BUILDCONFIG */
 import angular from 'angular';
 import sceneDetailModalTpl from './sceneDetailModal.html';
 require('./sceneDetailModal.scss');
@@ -30,6 +30,7 @@ class SceneDetailModalController {
         });
         this.scene = this.resolve.scene;
         this.repository = this.resolve.repository;
+        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
     }
 
     $postLink() {
@@ -71,7 +72,7 @@ class SceneDetailModalController {
                         blueBand: rgbBands.BLUE
                     }
                 ),
-                {maxZoom: 30}
+                {maxZoom: this.backsplashTileMaxZoom}
               ),
               true
             );
