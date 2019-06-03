@@ -30,6 +30,7 @@ class ProjectsEditController {
         this.projectId = this.$state.params.projectid;
         this.initialCenter = BUILDCONFIG.MAP_CENTER || [0, 0];
         this.initialZoom = BUILDCONFIG.MAP_ZOOM || 2;
+        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
 
         if (!this.project) {
             if (this.projectId) {
@@ -142,7 +143,7 @@ class ProjectsEditController {
             {token: this.authService.token()}
         );
         let layer = L.tileLayer(url, {
-            maxZoom: 30
+            maxZoom: this.backsplashTileMaxZoom
         });
 
         this.getMap().then(m => {

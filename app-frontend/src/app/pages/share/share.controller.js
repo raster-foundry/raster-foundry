@@ -18,6 +18,7 @@ export default class ShareController {
         this.projectId = this.$state.params.projectid;
         this.testNoAuth = false;
         this.sceneList = [];
+        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
 
         if (this.projectId) {
             this.loadProject();
@@ -52,7 +53,7 @@ export default class ShareController {
         let token = this.authService.token();
         let queryParameters = token ? {token: token} : null;
         let url = this.projectService.getProjectTileURL(this.project, queryParameters);
-        let layer = L.tileLayer(url, {maxZoom: 30});
+        let layer = L.tileLayer(url, {maxZoom: this.backsplashTileMaxZoom});
 
         this.getMap().then(m => {
             m.addLayer('share-layer', layer);

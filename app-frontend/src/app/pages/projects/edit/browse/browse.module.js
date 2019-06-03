@@ -45,7 +45,7 @@ class ProjectsSceneBrowserController {
         this.sceneCount = null;
         this.planetThumbnailUrls = new Map();
         this.scenesBeingAdded = [];
-
+        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
         this.setBboxParam = _.debounce((bbox) => {
             this.$location.search('bbox', bbox).replace();
         }, 500);
@@ -232,7 +232,7 @@ class ProjectsSceneBrowserController {
                         blueBand: rgbBands.BLUE
                     }
                 ),
-                {maxZoom: 30})
+                {maxZoom: this.backsplashTileMaxZoom})
             );
         });
     }

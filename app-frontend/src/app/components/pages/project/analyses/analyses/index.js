@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 import tpl from './index.html';
 import { colorStopsToRange, createRenderDefinition } from '_redux/histogram-utils';
 import { nodesFromAst, astFromNodes } from '_redux/node-utils';
@@ -29,6 +30,7 @@ class AnalysesListController {
         this.visible = new Set();
         this.selected = new Map();
         this.itemActions = new Map();
+        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
         this.syncMapLayersToVisible();
         this.fetchPage().then(() => {
             if (get(this, 'itemList.length')) {
@@ -218,7 +220,7 @@ class AnalysesListController {
             .then(this.autoGenerateRenderDef.bind(this))
             .then(() => {
                 const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
-                return L.tileLayer(tileUrl, { maxZoom: 30 });
+                return L.tileLayer(tileUrl, { maxZoom: this.backsplashTileMaxZoom });
             });
     }
 
