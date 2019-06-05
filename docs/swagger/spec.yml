@@ -3497,7 +3497,30 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
-
+  /projects/{projectID}/layers/{layerID}/tasks/grid:
+    post:
+      summary: 'Create a task grid for the specified project layer. Does not overwrite existing tasks.'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - name: taskGridCreate
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TaskGridCreate'
+      responses:
+        204:
+          description: 'Task grid was successfully created'
+        400:
+          description: 'Task grid could not be created. The provided parameters were likely invalid'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
   /areas-of-interest/:
     get:
       summary: 'Get a list of areas of interest'
@@ -8054,3 +8077,18 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TaskFeatureCreate'
+  TaskGridCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        properties:
+          xSizeMeters:
+            type: integer
+            description: length of task along the x-axis in meters
+          ySizeMeters:
+            type: integer
+            description: length of task along the y-axis in meters
+      geometry:
+        $ref: '#/definitions/Geometry'
