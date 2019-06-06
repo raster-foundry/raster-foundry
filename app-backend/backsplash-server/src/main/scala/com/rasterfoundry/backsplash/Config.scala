@@ -31,4 +31,10 @@ object Config {
     private val metricsConfig = config.getConfig("metrics")
     val enableMetrics = metricsConfig.getBoolean("enableMetrics")
   }
+
+  object healthcheck {
+    private val healthcheckConfig = config.getConfig("healthcheck")
+    val tiffBucket = healthcheckConfig.getString("tiffBucket")
+    val tiffKey = healthcheckConfig.getString("tiffKey")
+  }
 }
