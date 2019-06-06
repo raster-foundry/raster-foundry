@@ -325,7 +325,7 @@ class AnnotationDaoSpec
             userCreate: User.Create,
             orgCreate: Organization.Create,
             platform: Platform,
-            projectCreate: Project.Create,
+            (projectAgGroupCreate): (Project.Create, AnnotationGroup.Create),
             annoAndTaskFeatureCreate: (Task.TaskFeatureCreate,
                                        List[Annotation.Create]),
             labelValidateTeamCreate: (Team.Create, Team.Create),
@@ -335,6 +335,7 @@ class AnnotationDaoSpec
           {
             val (taskFeatureCreate, annotationsCreate) =
               annoAndTaskFeatureCreate
+            val (projectCreate, annotationGroupCreate) = projectAgGroupCreate
             val labelName = "Car"
             val labelId = UUID.randomUUID()
             val labelGroupId = UUID.randomUUID()
@@ -365,11 +366,16 @@ class AnnotationDaoSpec
                 dbUser
               )
               feature = collection.features.head
+              annotationGroup <- AnnotationGroupDao.createAnnotationGroup(
+                dbProject.id,
+                annotationGroupCreate.copy(name = "label"),
+                dbUser)
               updatedAnnotationsCreate = annotationsCreate.map(annoCreate => {
                 annoCreate.copy(
                   label = labelId.toString(),
                   geometry = Some(feature.geometry),
-                  taskId = Some(feature.id)
+                  taskId = Some(feature.id),
+                  annotationGroup = Some(annotationGroup.id)
                 )
               })
               insertedAnnotations <- AnnotationDao.insertAnnotations(
@@ -399,7 +405,7 @@ class AnnotationDaoSpec
       forAll {
         (
             userOrgPlat: (User.Create, Organization.Create, Platform),
-            projectCreate: Project.Create,
+           (projectAgGroupCreate): (Project.Create, AnnotationGroup.Create),
             annotationCreates: (Annotation.Create, Annotation.Create),
             taskFeatureCreates: (Task.TaskFeatureCreate, Task.TaskFeatureCreate),
             labelValidateTeamCreate: (Team.Create, Team.Create),
@@ -411,6 +417,7 @@ class AnnotationDaoSpec
             val (taskFeatureCreateOne, taskFeatureCreateTwo) =
               taskFeatureCreates
             val (annotationCreateOne, annotationCreateTwo) = annotationCreates
+            val (projectCreate, annotationGroupCreate) = projectAgGroupCreate
             val labelNameOne = "Finished"
             val labelIdOne = UUID.randomUUID()
             val labelNameTwo = "Partial"
@@ -467,17 +474,23 @@ class AnnotationDaoSpec
               )
               taskOne = taskCollectionOne.features.head
               taskTwo = taskCollectionTwo.features.head
+              annotationGroup <- AnnotationGroupDao.createAnnotationGroup(
+                dbProject.id,
+                annotationGroupCreate.copy(name = "label"),
+                dbUser)
               _ <- AnnotationDao.insertAnnotations(
                 List(
                   annotationCreateOne.copy(
                     label = s"${labelIdOne} ${labelIdTwo}",
                     geometry = Some(taskOne.geometry),
-                    taskId = Some(taskOne.id)
+                    taskId = Some(taskOne.id),
+                    annotationGroup = Some(annotationGroup.id)
                   ),
                   annotationCreateTwo.copy(
                     label = s"${labelIdOne} ${labelIdTwo}",
                     geometry = Some(taskTwo.geometry),
-                    taskId = Some(taskTwo.id)
+                    taskId = Some(taskTwo.id),
+                    annotationGroup = Some(annotationGroup.id)
                   )
                 ),
                 dbProject.id,

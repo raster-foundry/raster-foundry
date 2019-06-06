@@ -255,7 +255,9 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
       splitOptions: SplitOptions): ConnectionIO[List[ProjectLayer]] = {
     for {
       layer <- unsafeGetProjectLayerById(layerId)
-      scenes <- ProjectLayerScenesDao.listLayerScenesRaw(layerId, splitOptions)
+      scenes <- ProjectLayerScenesDao
+        .listLayerScenesRaw(layerId, Some(splitOptions))
+        .flatMap(ProjectLayerScenesDao.scenesToProjectScenes(_, layerId))
       groupedScenes = scenes.groupBy(groupScenesBySplitOptions(splitOptions))
       newLayers <- batchCreateLayers(groupedScenes, layer, splitOptions)
       _ <- splitOptions.removeFromLayer match {

@@ -451,4 +451,31 @@ object TaskDao extends Dao[Task] {
       .filter(taskStatusF)
       .list
   }
+
+  def createUnionedGeomExtent(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[Option[UnionedGeomExtent]] = {
+    val taskStatusF: Fragment =
+      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
+        case Some(taskStatusNel) =>
+          fr"AND" ++ Fragments.in(fr"status", taskStatusNel)
+        case _ => fr""
+      }
+    (fr"""
+      SELECT
+        ST_Transform(ST_Collect(geometry), 4326) AS geometry,
+        ST_XMin(ST_Extent(ST_Transform(geometry, 4326))) AS x_min,
+        ST_YMin(ST_Extent(ST_Transform(geometry, 4326))) AS y_min,
+        ST_XMax(ST_Extent(ST_Transform(geometry, 4326))) AS x_max,
+        ST_YMax(ST_Extent(ST_Transform(geometry, 4326))) AS y_max
+      FROM tasks
+      WHERE
+        project_id = ${projectId}
+        AND project_layer_id = ${layerId}
+      """ ++ taskStatusF)
+      .query[UnionedGeomExtent]
+      .option
+  }
 }
