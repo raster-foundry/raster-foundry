@@ -7,6 +7,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.vector.{Geometry, Projected, io => _}
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras._
+import io.circe.Encoder
 
 @JsonCodec
 final case class AnnotationFeatureCollectionCreate(
@@ -271,3 +272,65 @@ final case class AnnotationWithOwnerInfoProperties(
     projectLayerId: UUID,
     ownerName: String,
     ownerProfileImageUri: String)
+
+final case class StacLabelItem(
+    property: List[String],
+    classes: StacLabelItem.StacLabelItemClasses,
+    datetime: Timestamp,
+    description: String,
+    title: Option[String] = None,
+    _type: Option[List[String]] = None,
+    method: Option[List[String]] = None,
+    version: Option[String] = None,
+    summary: Option[StacLabelItem.StacLabelSummary] = None
+)
+
+object StacLabelItem {
+  implicit val encodeStacLabelItem: Encoder[StacLabelItem] =
+    Encoder.forProduct9(
+      "label:property",
+      "label:classes",
+      "label:datetime",
+      "label:description",
+      "label:title",
+      "label:type",
+      "label:method",
+      "label:version",
+      "label:summary"
+    )(
+      item =>
+        (item.property,
+         item.classes,
+         item.datetime,
+         item.description,
+         item.title,
+         item._type,
+         item.method,
+         item.version,
+         item.summary))
+
+  @JsonCodec
+  final case class StacLabelItemClasses(
+      name: String,
+      classes: List[String]
+  )
+
+  @JsonCodec
+  final case class StacLabelSummary(
+      propertyKey: String,
+      counts: Option[List[Count]] = None,
+      statistics: Option[List[Statistics]] = None
+  )
+
+  @JsonCodec
+  final case class Count(
+      className: String,
+      count: Int
+  )
+
+  @JsonCodec
+  final case class Statistics(
+      statName: String,
+      value: Double
+  )
+}
