@@ -278,6 +278,7 @@ final case class StacLabelItemProperties(
     classes: StacLabelItemProperties.StacLabelItemClasses,
     description: String,
     _type: String,
+    datetime: Timestamp,
     title: Option[String] = None,
     task: Option[List[String]] = None,
     method: Option[List[String]] = None,
@@ -287,12 +288,13 @@ final case class StacLabelItemProperties(
 
 object StacLabelItemProperties {
   implicit val encodeStacLabelItemProperties: Encoder[StacLabelItemProperties] =
-    Encoder.forProduct9(
+    Encoder.forProduct10(
       "label:property",
       "label:classes",
       "label:description",
       "label:type",
-      "label:title",
+      "datetime",
+      "title",
       "label:task",
       "label:method",
       "label:version",
@@ -303,6 +305,7 @@ object StacLabelItemProperties {
          item.classes,
          item.description,
          item._type,
+         item.datetime,
          item.title,
          item.task,
          item.method,
