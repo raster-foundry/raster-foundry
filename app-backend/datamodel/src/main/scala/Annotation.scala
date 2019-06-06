@@ -273,27 +273,27 @@ final case class AnnotationWithOwnerInfoProperties(
     ownerName: String,
     ownerProfileImageUri: String)
 
-final case class StacLabelItem(
+final case class StacLabelItemProperties(
     property: List[String],
-    classes: StacLabelItem.StacLabelItemClasses,
-    datetime: Timestamp,
+    classes: StacLabelItemProperties.StacLabelItemClasses,
     description: String,
+    _type: String,
     title: Option[String] = None,
-    _type: Option[List[String]] = None,
+    task: Option[List[String]] = None,
     method: Option[List[String]] = None,
     version: Option[String] = None,
-    summary: Option[StacLabelItem.StacLabelSummary] = None
+    summary: Option[StacLabelItemProperties.StacLabelSummary] = None
 )
 
-object StacLabelItem {
-  implicit val encodeStacLabelItem: Encoder[StacLabelItem] =
+object StacLabelItemProperties {
+  implicit val encodeStacLabelItemProperties: Encoder[StacLabelItemProperties] =
     Encoder.forProduct9(
       "label:property",
       "label:classes",
-      "label:datetime",
       "label:description",
-      "label:title",
       "label:type",
+      "label:title",
+      "label:task",
       "label:method",
       "label:version",
       "label:summary"
@@ -301,10 +301,10 @@ object StacLabelItem {
       item =>
         (item.property,
          item.classes,
-         item.datetime,
          item.description,
-         item.title,
          item._type,
+         item.title,
+         item.task,
          item.method,
          item.version,
          item.summary))
