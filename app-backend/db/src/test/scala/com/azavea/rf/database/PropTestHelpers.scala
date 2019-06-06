@@ -381,4 +381,16 @@ trait PropTestHelpers {
       updatedDbProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
     } yield updatedDbProject
   }
+
+  def fixupStacExportCreate(
+      stacExportCreate: StacExport.Create,
+      user: User,
+      project: Project
+  ): StacExport.Create =
+    stacExportCreate.copy(
+      layerDefinitions = List(
+        StacExport.LayerDefinition(project.id, project.defaultLayerId)
+      ),
+      owner = Some(user.id)
+    )
 }

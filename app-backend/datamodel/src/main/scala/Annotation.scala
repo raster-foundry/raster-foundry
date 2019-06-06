@@ -7,6 +7,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.vector.{Geometry, Projected, io => _}
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras._
+import io.circe.Encoder
 
 @JsonCodec
 final case class AnnotationFeatureCollectionCreate(
@@ -285,5 +286,69 @@ final case class AnnotationWithOwnerInfoProperties(
     projectLayerId: UUID,
     taskId: Option[UUID] = None,
     ownerName: String,
-    ownerProfileImageUri: String
+    ownerProfileImageUri: String)
+
+final case class StacLabelItemProperties(
+    property: List[String],
+    classes: StacLabelItemProperties.StacLabelItemClasses,
+    description: String,
+    _type: String,
+    datetime: Timestamp,
+    title: Option[String] = None,
+    task: Option[List[String]] = None,
+    method: Option[List[String]] = None,
+    version: Option[String] = None,
+    summary: Option[StacLabelItemProperties.StacLabelSummary] = None
 )
+
+object StacLabelItemProperties {
+  implicit val encodeStacLabelItemProperties: Encoder[StacLabelItemProperties] =
+    Encoder.forProduct10(
+      "label:property",
+      "label:classes",
+      "label:description",
+      "label:type",
+      "datetime",
+      "title",
+      "label:task",
+      "label:method",
+      "label:version",
+      "label:summary"
+    )(
+      item =>
+        (item.property,
+         item.classes,
+         item.description,
+         item._type,
+         item.datetime,
+         item.title,
+         item.task,
+         item.method,
+         item.version,
+         item.summary))
+
+  @JsonCodec
+  final case class StacLabelItemClasses(
+      name: String,
+      classes: List[String]
+  )
+
+  @JsonCodec
+  final case class StacLabelSummary(
+      propertyKey: String,
+      counts: Option[List[Count]] = None,
+      statistics: Option[List[Statistics]] = None
+  )
+
+  @JsonCodec
+  final case class Count(
+      className: String,
+      count: Int
+  )
+
+  @JsonCodec
+  final case class Statistics(
+      statName: String,
+      value: Double
+  )
+}

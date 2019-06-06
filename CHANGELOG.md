@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Add STAC async export endpoint [\#5061](https://github.com/raster-foundry/raster-foundry/pull/5061)
 
 ### Changed
 
