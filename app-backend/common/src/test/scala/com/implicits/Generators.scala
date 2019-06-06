@@ -996,6 +996,37 @@ object Generators extends ArbitraryInstances {
       Task.TaskGridFeatureCreate(properties, geometry)
     }
 
+  private def taskStatusListGen: Gen[List[TaskStatus]] =
+    Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
+
+  private def layerDefinitionGen: Gen[StacExport.LayerDefinition] =
+    for {
+      projectId <- uuidGen
+      layerId <- uuidGen
+    } yield {
+      StacExport.LayerDefinition(projectId, layerId)
+    }
+
+  private def stacExportCreateGen: Gen[StacExport.Create] =
+    for {
+      name <- nonEmptyStringGen
+      owner <- Gen.const(None)
+      layerDefinition <- layerDefinitionGen
+      isUnion <- Gen.oneOf(true, false)
+      taskStatuses <- taskStatusListGen
+    } yield {
+      StacExport.Create(
+        name,
+        owner,
+        List(layerDefinition),
+        isUnion,
+        taskStatuses
+      )
+    }
+
+  private def stacExportQueryParametersGen: Gen[StacExportQueryParameters] =
+    Gen.const(StacExportQueryParameters())
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -1220,6 +1251,16 @@ object Generators extends ArbitraryInstances {
     implicit def arbTaskPropertiesCreate: Arbitrary[Task.TaskPropertiesCreate] =
       Arbitrary {
         taskPropertiesCreateGen
+      }
+
+    implicit def arbStacExportCreate: Arbitrary[StacExport.Create] =
+      Arbitrary {
+        stacExportCreateGen
+      }
+
+    implicit def arbStacExportQueryParameters: Arbitrary[StacExportQueryParameters] =
+      Arbitrary {
+        stacExportQueryParametersGen
       }
   }
 }
