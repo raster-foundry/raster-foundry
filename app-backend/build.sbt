@@ -519,7 +519,7 @@ lazy val backsplashServer =
     })
     .settings({
       dependencyOverrides ++= Seq(
-        "com.azavea.gdal" % "gdal-warp-bindings" % "33.92f1773"
+        "com.azavea.gdal" % "gdal-warp-bindings" % "33.6cc58d3"
       )
     })
     .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
