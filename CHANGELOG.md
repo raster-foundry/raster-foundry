@@ -16,7 +16,9 @@
 - Use zoom level in OverviewInput for lambda function to generate layer overviews [\#4998](https://github.com/raster-foundry/raster-foundry/pull/4998)
 - Added endpoints for project layer "tasks" [\#5008](https://github.com/raster-foundry/raster-foundry/pull/5008)
 - Add user scope migration and data model [\#5009](https://github.com/raster-foundry/raster-foundry/pull/5009)
+- Updated healthcheck to include loading tile metadata [\#5017](https://github.com/raster-foundry/raster-foundry/pull/5017)
 - Added task grid endpoint [\#5021](https://github.com/raster-foundry/raster-foundry/pull/5021)
+
 ### Changed
 
 - Use flyway for running migrations and publish image for flyway migrations [\#4987](https://github.com/raster-foundry/raster-foundry/pull/4987)
@@ -30,6 +32,11 @@
 - Fix Sentinel-2 metadata file download [\#4969](https://github.com/raster-foundry/raster-foundry/pull/4969)
 
 ### Security
+
+## [1.21.3](https://github.com/raster-foundry/raster-foundry/tree/1.21.3) (2019-06-06)
+
+### Added
+- Updated healthcheck to include loading tile metadata [\#5017](https://github.com/raster-foundry/raster-foundry/pull/5017)
 
 ## [1.21.2](https://github.com/raster-foundry/raster-foundry/tree/1.21.2) (2019-05-23)
 
