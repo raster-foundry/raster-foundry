@@ -310,7 +310,12 @@ trait PropTestHelpers {
       project: Project
   ): Task.TaskFeatureCreate =
     tfc.copy(
-      properties = tfc.properties
-        .copy(projectId = project.id, projectLayerId = project.defaultLayerId)
+      properties = fixupTaskPropertiesCreate(tfc.properties, project)
     )
+
+  def fixupTaskPropertiesCreate(
+      tpc: Task.TaskPropertiesCreate,
+      project: Project
+  ): Task.TaskPropertiesCreate =
+    tpc.copy(projectId = project.id, projectLayerId = project.defaultLayerId)
 }

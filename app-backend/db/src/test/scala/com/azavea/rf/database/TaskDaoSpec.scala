@@ -106,6 +106,45 @@ class TaskDaoSpec
     }
   }
 
+  test("insert tasks from a set of grid parameters") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskPropertiesCreate: Task.TaskPropertiesCreate,
+            taskGridFeatureCreate: Task.TaskGridFeatureCreate
+        ) =>
+          {
+            val connIO: ConnectionIO[Int] =
+              for {
+                (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                  userCreate,
+                  orgCreate,
+                  platform,
+                  projectCreate
+                )
+                taskCount <- TaskDao.insertTasksByGrid(
+                  fixupTaskPropertiesCreate(taskPropertiesCreate, dbProject),
+                  taskGridFeatureCreate,
+                  dbUser
+                )
+              } yield { taskCount }
+
+            val taskCount = connIO.transact(xa).unsafeRunSync
+
+            assert(
+              taskCount > 0,
+              "Task grid generation resulted in at least one inserted task"
+            )
+            true
+          }
+      }
+    }
+  }
+
   test("geoJSON selection should work") {
     check {
       forAll {
@@ -305,13 +344,15 @@ class TaskDaoSpec
               // We unlocked it, so this should also be `true`
               authCheck4 <- TaskDao.isLockingUserOrUnlocked(feature.id, dbUser)
             } yield {
-              (authCheck1,
-               authCheck2,
-               authCheck3,
-               authCheck4,
-               locked,
-               unlocked,
-               dbUser)
+              (
+                authCheck1,
+                authCheck2,
+                authCheck3,
+                authCheck4,
+                locked,
+                unlocked,
+                dbUser
+              )
             }
 
             val (check1, check2, check3, check4, locked, unlocked, user) =

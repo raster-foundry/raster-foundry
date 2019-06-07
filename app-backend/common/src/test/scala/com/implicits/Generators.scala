@@ -81,11 +81,13 @@ object Generators extends ArbitraryInstances {
     Gen.oneOf(Visibility.Public, Visibility.Organization, Visibility.Private)
 
   private def taskStatusGen: Gen[TaskStatus] =
-    Gen.oneOf(TaskStatus.Unlabeled,
-              TaskStatus.LabelingInProgress,
-              TaskStatus.Labeled,
-              TaskStatus.ValidationInProgress,
-              TaskStatus.Validated)
+    Gen.oneOf(
+      TaskStatus.Unlabeled,
+      TaskStatus.LabelingInProgress,
+      TaskStatus.Labeled,
+      TaskStatus.ValidationInProgress,
+      TaskStatus.Validated
+    )
 
   private def userVisibilityGen: Gen[UserVisibility] =
     Gen.oneOf(UserVisibility.Public, UserVisibility.Private)
@@ -94,11 +96,13 @@ object Generators extends ArbitraryInstances {
     Gen.oneOf(OrgStatus.Requested, OrgStatus.Active, OrgStatus.Inactive)
 
   private def exportStatusGen: Gen[ExportStatus] =
-    Gen.oneOf(ExportStatus.Exported,
-              ExportStatus.Exporting,
-              ExportStatus.Failed,
-              ExportStatus.ToBeExported,
-              ExportStatus.NotExported)
+    Gen.oneOf(
+      ExportStatus.Exported,
+      ExportStatus.Exporting,
+      ExportStatus.Failed,
+      ExportStatus.ToBeExported,
+      ExportStatus.NotExported
+    )
 
   private def sceneTypeGen: Gen[SceneType] =
     Gen.oneOf(SceneType.Avro, SceneType.COG)
@@ -723,7 +727,7 @@ object Generators extends ArbitraryInstances {
     }
 
   private def userOrgPlatformGen
-    : Gen[(User.Create, Organization.Create, Platform)] =
+      : Gen[(User.Create, Organization.Create, Platform)] =
     for {
       platform <- platformGen
       orgCreate <- organizationCreateGen map {
@@ -814,15 +818,17 @@ object Generators extends ArbitraryInstances {
       bands <- arbitrary[Option[Seq[Int]]]
       operation <- nonEmptyStringGen
     } yield
-      ExportOptions(mask,
-                    resolution,
-                    crop,
-                    raw,
-                    bands,
-                    rasterSize,
-                    Some(3857),
-                    new URI(""),
-                    operation)
+      ExportOptions(
+        mask,
+        resolution,
+        crop,
+        raw,
+        bands,
+        rasterSize,
+        Some(3857),
+        new URI(""),
+        operation
+      )
 
   private def exportCreateGen: Gen[Export.Create] =
     for {
@@ -860,17 +866,19 @@ object Generators extends ArbitraryInstances {
       overviewsLocation <- Gen.const(None)
       minZoomLevel <- Gen.const(None)
     } yield {
-      ProjectLayer.Create(name,
-                          projectId,
-                          colorGroupHex,
-                          smartLayerId,
-                          rangeStart,
-                          rangeEnd,
-                          geometry,
-                          isSingleBand,
-                          singleBandOptions,
-                          overviewsLocation,
-                          minZoomLevel)
+      ProjectLayer.Create(
+        name,
+        projectId,
+        colorGroupHex,
+        smartLayerId,
+        rangeStart,
+        rangeEnd,
+        geometry,
+        isSingleBand,
+        singleBandOptions,
+        overviewsLocation,
+        minZoomLevel
+      )
     }
 
   private def splitOptionsGen: Gen[SplitOptions] =
@@ -884,21 +892,25 @@ object Generators extends ArbitraryInstances {
       removeFromLayer <- arbitrary[Option[Boolean]]
     } yield {
       if (t1.before(t2)) {
-        SplitOptions(name,
-                     colorGroupHex,
-                     t1,
-                     t2,
-                     period,
-                     onDatasource,
-                     removeFromLayer)
+        SplitOptions(
+          name,
+          colorGroupHex,
+          t1,
+          t2,
+          period,
+          onDatasource,
+          removeFromLayer
+        )
       } else {
-        SplitOptions(name,
-                     colorGroupHex,
-                     t2,
-                     t1,
-                     period,
-                     onDatasource,
-                     removeFromLayer)
+        SplitOptions(
+          name,
+          colorGroupHex,
+          t2,
+          t1,
+          period,
+          onDatasource,
+          removeFromLayer
+        )
       }
     }
 
@@ -932,12 +944,14 @@ object Generators extends ArbitraryInstances {
       analysisOwner <- nonEmptyStringGen
       referer <- nonEmptyStringGen
     } yield
-      AnalysisEvent(projectId,
-                    projectLayerId,
-                    analysisId,
-                    nodeId,
-                    analysisOwner,
-                    referer)
+      AnalysisEvent(
+        projectId,
+        projectLayerId,
+        analysisId,
+        nodeId,
+        analysisOwner,
+        referer
+      )
 
   private def metricGen: Gen[Metric] =
     for {
@@ -961,11 +975,27 @@ object Generators extends ArbitraryInstances {
     } yield { Task.TaskFeatureCreate(properties, geometry) }
 
   private def taskFeatureCollectionCreateGen
-    : Gen[Task.TaskFeatureCollectionCreate] =
+      : Gen[Task.TaskFeatureCollectionCreate] =
     for {
       features <- Gen.nonEmptyListOf(taskFeatureCreateGen)
     } yield {
       Task.TaskFeatureCollectionCreate(features = features)
+    }
+
+  private def taskGridCreatePropertiesGen: Gen[Task.TaskGridCreateProperties] =
+    for {
+      xSizeMeters <- Gen.const(100000)
+      ySizeMeters <- Gen.const(100000)
+    } yield {
+      Task.TaskGridCreateProperties(xSizeMeters, ySizeMeters)
+    }
+
+  private def taskGridFeatureCreateGen: Gen[Task.TaskGridFeatureCreate] =
+    for {
+      properties <- taskGridCreatePropertiesGen
+      geometry <- projectedMultiPolygonGen3857
+    } yield {
+      Task.TaskGridFeatureCreate(properties, geometry)
     }
 
   object Implicits {
@@ -978,12 +1008,12 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbCombinedSceneQueryParams
-      : Arbitrary[CombinedSceneQueryParams] = Arbitrary {
+        : Arbitrary[CombinedSceneQueryParams] = Arbitrary {
       combinedSceneQueryParamsGen
     }
 
     implicit def arbProjectsceneQueryParameters
-      : Arbitrary[ProjectSceneQueryParameters] =
+        : Arbitrary[ProjectSceneQueryParameters] =
       Arbitrary { projectSceneQueryParametersGen }
 
     implicit def arbAnnotationCreate: Arbitrary[Annotation.Create] = Arbitrary {
@@ -1096,7 +1126,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbPlatform: Arbitrary[Platform] = Arbitrary { platformGen }
 
     implicit def arbUserOrgPlatform
-      : Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
+        : Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
       userOrgPlatformGen
     }
 
@@ -1112,11 +1142,11 @@ object Generators extends ArbitraryInstances {
       Arbitrary { searchQueryParametersGen }
 
     implicit def arbObjectAccessControlRule
-      : Arbitrary[ObjectAccessControlRule] =
+        : Arbitrary[ObjectAccessControlRule] =
       Arbitrary { objectAccessControlRuleGen }
 
     implicit def arbListObjectAccessControlRule
-      : Arbitrary[List[ObjectAccessControlRule]] =
+        : Arbitrary[List[ObjectAccessControlRule]] =
       Arbitrary {
         Gen.nonEmptyListOf[ObjectAccessControlRule](
           arbitrary[ObjectAccessControlRule]
@@ -1144,7 +1174,7 @@ object Generators extends ArbitraryInstances {
       Arbitrary { projectLayerCreateGen }
 
     implicit def arbProjectLayerCreateWithScenes
-      : Arbitrary[List[(ProjectLayer.Create, List[Scene.Create])]] = {
+        : Arbitrary[List[(ProjectLayer.Create, List[Scene.Create])]] = {
       val tupGen = for {
         projectLayerCreate <- arbitrary[ProjectLayer.Create]
         sceneCreates <- arbitrary[List[Scene.Create]]
@@ -1153,7 +1183,7 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbAnnotationQueryParameters
-      : Arbitrary[AnnotationQueryParameters] = Arbitrary {
+        : Arbitrary[AnnotationQueryParameters] = Arbitrary {
       annotationQueryParametersGen
     }
 
@@ -1178,9 +1208,21 @@ object Generators extends ArbitraryInstances {
       }
 
     implicit def arbTaskFeatureCollectionCreate
-      : Arbitrary[Task.TaskFeatureCollectionCreate] =
+        : Arbitrary[Task.TaskFeatureCollectionCreate] =
       Arbitrary {
         taskFeatureCollectionCreateGen
+      }
+
+    implicit def arbTaskGridFeatureCreate
+        : Arbitrary[Task.TaskGridFeatureCreate] =
+      Arbitrary {
+        taskGridFeatureCreateGen
+      }
+
+    implicit def arbTaskPropertiesCreate
+        : Arbitrary[Task.TaskPropertiesCreate] =
+      Arbitrary {
+        taskPropertiesCreateGen
       }
   }
 }
