@@ -3511,8 +3511,11 @@ paths:
           schema:
             $ref: '#/definitions/TaskGridCreate'
       responses:
-        204:
+        201:
           description: 'Task grid was successfully created'
+          schema:
+            type: integer
+            description: Number of tasks created
         400:
           description: 'Task grid could not be created. The provided parameters were likely invalid'
           schema:
