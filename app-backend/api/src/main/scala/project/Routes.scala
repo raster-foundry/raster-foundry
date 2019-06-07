@@ -297,6 +297,11 @@ trait ProjectRoutes
                         deleteLayerTasks(projectId, layerId)
                       }
                     } ~
+                      pathPrefix("grid") {
+                        post {
+                          createLayerTaskGrid(projectId, layerId)
+                        }
+                      } ~
                       pathPrefix(JavaUUID) { taskId =>
                         pathEndOrSingleSlash {
                           get {
