@@ -17,7 +17,6 @@ object QuotaMiddleware {
     {
       val served = cache.get("requestsServed") getOrElse { 0 }
       val incremented = served + 1
-      println(s"Requests served: $incremented")
       cache.put("requestsServed")(incremented, None)
       F.empty[Response[F]]
     } <+> routes.run(req)

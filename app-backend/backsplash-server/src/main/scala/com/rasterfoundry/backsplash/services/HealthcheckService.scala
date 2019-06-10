@@ -100,7 +100,6 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
     timeoutToSick(
       {
         val served = Cache.requestCounter.get("requestsServed").getOrElse(0)
-        println(s"Served in healthcheck: $served")
         HealthCheck.liftF[IO, Tagged[String, ?]] {
           IO {
             if (served >= quota) {
