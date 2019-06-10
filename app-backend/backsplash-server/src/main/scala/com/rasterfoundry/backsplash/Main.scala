@@ -90,6 +90,12 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       )
     )
 
+  def withQuota(svc: HttpRoutes[IO]) =
+    QuotaMiddleware(svc, Cache.requestCounter)
+
+  def baseMiddleware(svc: HttpRoutes[IO]) =
+    withQuota(withCORS(withTimeout(svc)))
+
   def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
     Timeout(
       timeout,
@@ -122,10 +128,12 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   import ogcImplicits._
 
   val analysisManager =
-    new AnalysisManager(ToolRunDao(),
-                        projectLayerMosaicImplicits,
-                        toolStoreImplicits,
-                        xa)
+    new AnalysisManager(
+      ToolRunDao(),
+      projectLayerMosaicImplicits,
+      toolStoreImplicits,
+      xa
+    )
 
   val metricMiddleware = new MetricMiddleware(xa)
 
@@ -169,19 +177,29 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
   )
 
-  val httpApp = errorHandling {
-    Router(
-      "/" -> ProjectToProjectLayerMiddleware(
-        withCORS(withTimeout(mosaicService)),
-        xa
-      ),
-      "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
-      "/tools" -> withCORS(withTimeout(analysisService)),
-      "/wcs" -> withCORS(withTimeout(wcsService)),
-      "/wms" -> withCORS(withTimeout(wmsService)),
-      "/healthcheck" -> AutoSlash(new HealthcheckService(xa).routes)
-    )
-  }
+  // jitter the request limit by +/- 500
+  val requestLimitJitter =
+    scala.util.Random.nextInt % 500
+
+  def router =
+    errorHandling {
+      Router(
+        "/" -> ProjectToProjectLayerMiddleware(
+          baseMiddleware(mosaicService),
+          xa
+        ),
+        "/scenes" -> baseMiddleware(sceneMosaicService),
+        "/tools" -> baseMiddleware(analysisService),
+        "/wcs" -> baseMiddleware(wcsService),
+        "/wms" -> baseMiddleware(wmsService),
+        "/healthcheck" -> AutoSlash(
+          new HealthcheckService(
+            xa,
+            quota = Config.server.requestLimit + requestLimitJitter
+          ).routes
+        )
+      )
+    }
 
   val startupBanner =
     """|    ___                     _               _ __     _                     _
@@ -199,7 +217,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       .withBanner(startupBanner)
       .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")
-      .withHttpApp(httpApp.orNotFound)
+      .withHttpApp(router.orNotFound)
       .serve
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync

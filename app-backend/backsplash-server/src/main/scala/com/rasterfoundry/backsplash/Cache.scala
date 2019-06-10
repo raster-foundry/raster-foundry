@@ -9,6 +9,8 @@ import scalacache.caffeine._
 
 object Cache extends LazyLogging {
 
+  val requestCounter = CaffeineCache[Int]
+
   val authorizationCacheFlags = Flags(Config.cache.authorizationCacheEnable,
                                       Config.cache.authorizationCacheEnable)
   val caffeineAuthorizationCache: Cache[Boolean] =
