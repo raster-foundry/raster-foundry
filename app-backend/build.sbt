@@ -493,6 +493,8 @@ lazy val backsplashServer =
         Dependencies.http4sXml,
         Dependencies.mamlJvm,
         Dependencies.sup,
+        Dependencies.supCirce,
+        Dependencies.supHttp4s,
         Dependencies.scalacacheCore,
         Dependencies.scalacacheCats,
         Dependencies.scalacacheCaffeine

@@ -147,4 +147,6 @@ object Dependencies {
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spray = "io.spray" %% "spray-json" % Version.spray
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
+  val supCirce = "com.kubukoz" %% "sup-circe" % Version.sup
+  val supHttp4s = "com.kubukoz" %% "sup-http4s" % Version.sup
 }
