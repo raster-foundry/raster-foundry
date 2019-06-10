@@ -122,10 +122,12 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   import ogcImplicits._
 
   val analysisManager =
-    new AnalysisManager(ToolRunDao(),
-                        projectLayerMosaicImplicits,
-                        toolStoreImplicits,
-                        xa)
+    new AnalysisManager(
+      ToolRunDao(),
+      projectLayerMosaicImplicits,
+      toolStoreImplicits,
+      xa
+    )
 
   val metricMiddleware = new MetricMiddleware(xa)
 
@@ -169,19 +171,23 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
   )
 
-  val httpApp = errorHandling {
-    Router(
-      "/" -> ProjectToProjectLayerMiddleware(
-        withCORS(withTimeout(mosaicService)),
-        xa
-      ),
-      "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
-      "/tools" -> withCORS(withTimeout(analysisService)),
-      "/wcs" -> withCORS(withTimeout(wcsService)),
-      "/wms" -> withCORS(withTimeout(wmsService)),
-      "/healthcheck" -> AutoSlash(new HealthcheckService(xa).routes)
+  def router =
+    QuotaMiddleware(
+      errorHandling {
+        Router(
+          "/" -> ProjectToProjectLayerMiddleware(
+            withCORS(withTimeout(mosaicService)),
+            xa
+          ),
+          "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
+          "/tools" -> withCORS(withTimeout(analysisService)),
+          "/wcs" -> withCORS(withTimeout(wcsService)),
+          "/wms" -> withCORS(withTimeout(wmsService)),
+          "/healthcheck" -> AutoSlash(new HealthcheckService(xa, 200).routes)
+        )
+      },
+      Cache.requestCounter
     )
-  }
 
   val startupBanner =
     """|    ___                     _               _ __     _                     _
@@ -199,7 +205,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       .withBanner(startupBanner)
       .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")
-      .withHttpApp(httpApp.orNotFound)
+      .withHttpApp(router.orNotFound)
       .serve
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync

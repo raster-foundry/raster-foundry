@@ -16,9 +16,10 @@ import sup._
 
 import scala.concurrent.duration._
 
-class HealthcheckService(xa: Transactor[IO])(implicit timer: Timer[IO],
-                                             contextShift: ContextShift[IO])
-    extends Http4sDsl[IO]
+class HealthcheckService(xa: Transactor[IO], quota: Int)(
+    implicit timer: Timer[IO],
+    contextShift: ContextShift[IO],
+) extends Http4sDsl[IO]
     with LazyLogging {
 
   private def timeoutToSick(check: HealthCheck[IO, Id]): HealthCheck[IO, Id] =
@@ -31,14 +32,16 @@ class HealthcheckService(xa: Transactor[IO])(implicit timer: Timer[IO],
           }
         )
       )
-      .transform(healthIO =>
-        healthIO map {
-          case HealthResult(eitherK) =>
-            eitherK.run match {
-              case (Right(r)) => HealthResult.one(r)
-              case (Left(l))  => HealthResult.one(l)
-            }
-      })
+      .transform(
+        healthIO =>
+          healthIO map {
+            case HealthResult(eitherK) =>
+              eitherK.run match {
+                case (Right(r)) => HealthResult.one(r)
+                case (Left(l))  => HealthResult.one(l)
+              }
+        }
+      )
 
   private def gdalHealth = timeoutToSick(
     HealthCheck.liftF[IO, Id] {
@@ -56,7 +59,8 @@ class HealthcheckService(xa: Transactor[IO])(implicit timer: Timer[IO],
           val crs = rs.crs
           val bandCount = rs.bandCount
           logger.debug(
-            s"Read metadata for ${s3Path} (CRS: ${crs}, Band Count: ${bandCount})")
+            s"Read metadata for ${s3Path} (CRS: ${crs}, Band Count: ${bandCount})"
+          )
           IO(HealthResult.one(Health.healthy))
       }
     }
@@ -82,13 +86,29 @@ class HealthcheckService(xa: Transactor[IO])(implicit timer: Timer[IO],
           IO { tileCache.get("bogus") } map { _ =>
             HealthResult.one(Health.healthy)
           }
-        ))
+        )
+    )
+
+  private def totalRequestLimitHealth =
+    timeoutToSick(
+      HealthCheck.liftF[IO, Id] {
+        val served = Cache.requestCounter.get("requestServed").getOrElse(0)
+        IO.pure {
+          if (served > quota) {
+            HealthResult.one(Health.sick)
+          } else {
+            HealthResult.one(Health.healthy)
+          }
+        }
+      }
+    )
 
   val routes: HttpRoutes[IO] =
     HttpRoutes.of {
       case GET -> Root =>
-        val healthcheck = (dbHealth |+| cacheHealth |+| gdalHealth)
-          .through(mods.recoverToSick)
+        val healthcheck =
+          (dbHealth |+| cacheHealth |+| gdalHealth |+| totalRequestLimitHealth)
+            .through(mods.recoverToSick)
         healthcheck.check flatMap { check =>
           if (check.value.reduce.isHealthy) Ok("A-ok")
           else {
