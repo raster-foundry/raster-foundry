@@ -129,7 +129,7 @@ object Task {
 
   case class TaskFeatureCollection(
       _type: String = "FeatureCollection",
-      features: List[TaskFeature],
+      features: List[TaskFeature]
   )
 
   object TaskFeatureCollection {
@@ -142,7 +142,7 @@ object Task {
           (
             tfc._type,
             tfc.features
-        )
+          )
       )
 
     implicit val decTaskFeatureCollection: Decoder[TaskFeatureCollection] =
@@ -159,15 +159,45 @@ object Task {
 
   object TaskFeatureCollectionCreate {
     implicit val decTaskFeatureCollectionCreate
-      : Decoder[TaskFeatureCollectionCreate] =
+        : Decoder[TaskFeatureCollectionCreate] =
       Decoder.forProduct2("type", "features")(
         TaskFeatureCollectionCreate.apply _
       )
     implicit val encTaskFeatureCollectionCreate
-      : Encoder[TaskFeatureCollectionCreate] =
+        : Encoder[TaskFeatureCollectionCreate] =
       Encoder.forProduct2("type", "features")(
         tfc => (tfc._type, tfc.features)
       )
   }
 
+  final case class TaskGridCreateProperties(
+      xSizeMeters: Int,
+      ySizeMeters: Int
+  )
+
+  object TaskGridCreateProperties {
+    implicit val encTaskGridCreateProperties
+        : Encoder[TaskGridCreateProperties] =
+      deriveEncoder
+    implicit val decTaskGridCreateProperties
+        : Decoder[TaskGridCreateProperties] =
+      deriveDecoder
+  }
+
+  case class TaskGridFeatureCreate(
+      properties: TaskGridCreateProperties,
+      geometry: Projected[Geometry],
+      _type: String = "Feature"
+  )
+
+  object TaskGridFeatureCreate {
+    implicit val decTaskGridFeatureCreate: Decoder[TaskGridFeatureCreate] =
+      Decoder.forProduct3("properties", "geometry", "type")(
+        TaskGridFeatureCreate.apply _
+      )
+    implicit val encTaskGridFeatureCreate: Encoder[TaskGridFeatureCreate] =
+      Encoder.forProduct3("properties", "geometry", "type")(
+        tfc => (tfc.properties, tfc.geometry, tfc._type)
+      )
+  }
 }

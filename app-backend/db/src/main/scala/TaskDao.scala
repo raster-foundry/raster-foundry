@@ -235,6 +235,39 @@ object TaskDao extends Dao[Task] {
     }
   }
 
+  def insertTasksByGrid(
+      taskProperties: Task.TaskPropertiesCreate,
+      taskGridFeatureCreate: Task.TaskGridFeatureCreate,
+      user: User
+  ): ConnectionIO[Int] = {
+    (insertF ++ fr"""
+        SELECT
+          uuid_generate_v4(),
+          NOW(),
+          ${user.id},
+          NOW(),
+          ${user.id},
+          ${user.id},
+          ${taskProperties.projectId},
+          ${taskProperties.projectLayerId},
+          ${taskProperties.status},
+          null,
+          null,
+          cell
+        FROM (
+          SELECT (
+            ST_Dump(
+              ST_MakeGrid(
+                ${taskGridFeatureCreate.geometry},
+                ${taskGridFeatureCreate.properties.xSizeMeters},
+                ${taskGridFeatureCreate.properties.ySizeMeters}
+              )
+            )
+          ).geom AS cell
+        ) q
+    """).update.run
+  }
+
   def isLockingUserOrUnlocked(taskId: UUID, user: User): ConnectionIO[Boolean] =
     OptionT(getTaskById(taskId))
       .flatMap({ task =>

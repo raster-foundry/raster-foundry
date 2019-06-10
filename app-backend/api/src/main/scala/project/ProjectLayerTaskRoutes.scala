@@ -79,6 +79,36 @@ trait ProjectLayerTaskRoutes
       }
   }
 
+  def createLayerTaskGrid(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      {
+        authorizeAsync {
+          ProjectDao
+            .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[Task.TaskGridFeatureCreate]) { tgf =>
+            complete(
+              StatusCodes.Created,
+              TaskDao
+                .insertTasksByGrid(
+                  Task.TaskPropertiesCreate(
+                    projectId,
+                    layerId,
+                    TaskStatus.Unlabeled
+                  ),
+                  tgf,
+                  user
+                )
+                .transact(xa)
+                .unsafeToFuture
+            )
+          }
+        }
+      }
+    }
+
   def deleteLayerTasks(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
       {
