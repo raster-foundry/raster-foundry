@@ -90,6 +90,12 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       )
     )
 
+  def withQuota(svc: HttpRoutes[IO]) =
+    QuotaMiddleware(svc, Cache.requestCounter)
+
+  def baseMiddleware(svc: HttpRoutes[IO]) =
+    withQuota(withCORS(withTimeout(svc)))
+
   def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
     Timeout(
       timeout,
@@ -172,22 +178,21 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   )
 
   def router =
-    QuotaMiddleware(
-      errorHandling {
-        Router(
-          "/" -> ProjectToProjectLayerMiddleware(
-            withCORS(withTimeout(mosaicService)),
-            xa
-          ),
-          "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
-          "/tools" -> withCORS(withTimeout(analysisService)),
-          "/wcs" -> withCORS(withTimeout(wcsService)),
-          "/wms" -> withCORS(withTimeout(wmsService)),
-          "/healthcheck" -> AutoSlash(new HealthcheckService(xa, 200).routes)
+    errorHandling {
+      Router(
+        "/" -> ProjectToProjectLayerMiddleware(
+          baseMiddleware(mosaicService),
+          xa
+        ),
+        "/scenes" -> baseMiddleware(sceneMosaicService),
+        "/tools" -> baseMiddleware(analysisService),
+        "/wcs" -> baseMiddleware(wcsService),
+        "/wms" -> baseMiddleware(wmsService),
+        "/healthcheck" -> AutoSlash(
+          new HealthcheckService(xa, quota = 200).routes
         )
-      },
-      Cache.requestCounter
-    )
+      )
+    }
 
   val startupBanner =
     """|    ___                     _               _ __     _                     _

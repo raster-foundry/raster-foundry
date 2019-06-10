@@ -7,14 +7,13 @@ import doobie._
 import doobie.implicits._
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.spark.io.s3.S3Client
+import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl._
 import scalacache.modes.sync._
 import sup._
 import sup.data.{HealthReporter, Tagged}
-import sup.modules.http4s._
-import sup.modules.circe._
 
 import scala.concurrent.duration._
 
@@ -100,7 +99,8 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
   private def totalRequestLimitHealth =
     timeoutToSick(
       {
-        val served = Cache.requestCounter.get("requestServed").getOrElse(0)
+        val served = Cache.requestCounter.get("requestsServed").getOrElse(0)
+        println(s"Served in healthcheck: $served")
         HealthCheck.liftF[IO, Tagged[String, ?]] {
           IO {
             if (served > quota) {
@@ -124,6 +124,28 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
             gdalHealth,
             totalRequestLimitHealth
           )
-        healthCheckResponse(healthcheck)
+        healthcheck.check flatMap { result =>
+          val report = result.value
+          // Make all of these `Map[String, Json]` for consistent response shapes
+          // There's a sup-http4s module that should do this, but it's on http4s-0.20.0-M4,
+          // and there appears to be a binary compatibility issue
+          if (report.health == Health.sick) {
+            ServiceUnavailable(
+              Map(
+                "result" -> "Unhealthy".asJson,
+                "errors" -> (report.checks
+                  .filter(_.health == Health.sick)
+                  .map {
+                    _.tag
+                  })
+                  .asJson
+              ).asJson
+            )
+          } else {
+            Ok(
+              Map("result" -> "A-ok".asJson,
+                  "errors" -> List.empty[String].asJson))
+          }
+        }
     }
 }
