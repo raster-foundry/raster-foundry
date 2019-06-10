@@ -103,8 +103,11 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
         println(s"Served in healthcheck: $served")
         HealthCheck.liftF[IO, Tagged[String, ?]] {
           IO {
-            if (served > quota) {
-              HealthResult.tagged("Request count too high", Health.sick)
+            if (served >= quota) {
+              HealthResult.tagged(
+                s"Request count too high -- limit: $quota, counted: $served",
+                Health.sick
+              )
             } else {
               HealthResult.tagged("Healthy", Health.healthy)
             }
@@ -143,8 +146,11 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
             )
           } else {
             Ok(
-              Map("result" -> "A-ok".asJson,
-                  "errors" -> List.empty[String].asJson))
+              Map(
+                "result" -> "A-ok".asJson,
+                "errors" -> List.empty[String].asJson
+              )
+            )
           }
         }
     }
