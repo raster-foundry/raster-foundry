@@ -18,6 +18,7 @@
 - Add user scope migration and data model [\#5009](https://github.com/raster-foundry/raster-foundry/pull/5009)
 - Updated healthcheck to include loading tile metadata [\#5017](https://github.com/raster-foundry/raster-foundry/pull/5017)
 - Added task grid endpoint [\#5021](https://github.com/raster-foundry/raster-foundry/pull/5021)
+- Made tile server report that it's sick after it serves a number of requests [\#5024](https://github.com/raster-foundry/raster-foundry/pull/5024)
 
 ### Changed
 
