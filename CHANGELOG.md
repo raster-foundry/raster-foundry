@@ -4,6 +4,8 @@
 
 ### Added
 
+- Limited max zoom level for backsplash tiles to 23 on frontend [\#5013](https://github.com/raster-foundry/raster-foundry/pull/5013)
+
 ### Changed
 
 ### Deprecated
