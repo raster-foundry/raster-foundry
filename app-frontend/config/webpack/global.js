@@ -323,7 +323,7 @@ module.exports = function (_path) {
                     MAP_ZOOM: 5,
                     PLATFORM_USERS: PLATFORM_USERS,
                     EMBED_URI: JSON.stringify(''),
-                    BACKSPLASH_TILE_MAX_ZOOM: 23
+                    TILES_MAX_ZOOM: 23
                 },
                 'HELPCONFIG': {
                     API_DOCS_URL: JSON.stringify('https://app.swaggerhub.com/apis/raster-foundry/raster-foundry/'),

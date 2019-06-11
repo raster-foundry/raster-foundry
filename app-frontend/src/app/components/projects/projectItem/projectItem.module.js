@@ -43,7 +43,6 @@ class ProjectItemController {
     }
 
     $onInit() {
-        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
         this.isSelectable = this.$attrs.hasOwnProperty('selectable');
         this.$scope.$watch(
             () => this.selected({ project: this.item }),
@@ -84,7 +83,7 @@ class ProjectItemController {
             this.projectService.getProjectTileURL(this.item, {
                 token: this.authService.token()
             }),
-            {maxZoom: this.backsplashTileMaxZoom}
+            {maxZoom: BUILDCONFIG.TILES_MAX_ZOOM}
         );
 
         this.getMap().then(m => {

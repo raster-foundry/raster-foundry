@@ -28,7 +28,6 @@ class LabAnalysisController {
         this.tileServer = `${this.APP_CONFIG.tileServerLocation}`;
         this.showDiagram = true;
         this.analysisId = this.$state.params.analysisid;
-        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
         let unsubscribe = this.$ngRedux.connect(
             this.mapStateToThis,
             Object.assign({}, LabActions, NodeActions)
@@ -255,7 +254,7 @@ class LabAnalysisController {
     }
 
     createPreviewLayers() {
-        const layerOptions = {maxZoom: this.backsplashTileMaxZoom};
+        const layerOptions = {maxZoom: BUILDCONFIG.TILES_MAX_ZOOM};
         if (this.previewLayers) {
             this.previewLayers.forEach(l => l.remove());
         }

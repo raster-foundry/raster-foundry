@@ -29,7 +29,6 @@ class AnalysesVisualizeController {
         this.analysesMap = new Map();
         this.projectId = this.$state.params.projectId;
         this.layerColorHex = {};
-        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
         this.analyses = this.getAnalysisIds().map(analysisId => {
             // create a trackId for each analysis to enable displaying
             // same analysis multiple times especially for map layers
@@ -109,7 +108,7 @@ class AnalysesVisualizeController {
                     statistics,
                     analysisTile: {
                         analysis,
-                        mapTile: L.tileLayer(tileUrl, { maxZoom: this.backsplashTileMaxZoom })
+                        mapTile: L.tileLayer(tileUrl, { maxZoom: BUILDCONFIG.TILES_MAX_ZOOM })
                     }
                 };
             })

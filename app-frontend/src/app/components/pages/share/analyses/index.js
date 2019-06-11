@@ -22,7 +22,6 @@ class ShareProjectAnalysesController {
         this.visible = new Set();
         this.tileUrls = new Map();
         this.copyTemplate = 'Copy tile URL';
-        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
         this.$q
             .all({
                 project: this.projectPromise,
@@ -156,7 +155,7 @@ class ShareProjectAnalysesController {
                     mapToken: this.token
                 }
             );
-            return L.tileLayer(tileUrl, { maxZoom: this.backsplashTileMaxZoom });
+            return L.tileLayer(tileUrl, { maxZoom: BUILDCONFIG.TILES_MAX_ZOOM });
         });
         this.getMap().then(map => {
             map.setLayer('Analyses', mapLayers, true);

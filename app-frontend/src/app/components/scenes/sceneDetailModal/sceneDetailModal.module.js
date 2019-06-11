@@ -16,8 +16,14 @@ const SceneDetailModalComponent = {
 
 class SceneDetailModalController {
     constructor(
-        $log, $state, modalService, $scope, $rootScope,
-        moment, sceneService, mapService,
+        $log,
+        $state,
+        modalService,
+        $scope,
+        $rootScope,
+        moment,
+        sceneService,
+        mapService,
         authService
     ) {
         'ngInject';
@@ -30,7 +36,6 @@ class SceneDetailModalController {
         });
         this.scene = this.resolve.scene;
         this.repository = this.resolve.repository;
-        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
     }
 
     $postLink() {
@@ -52,7 +57,7 @@ class SceneDetailModalController {
             if (this.scene.sceneType === 'COG') {
                 this.setCOGThumbnail(mapWrapper);
             } else {
-                mapWrapper.setThumbnail(this.scene, this.repository, {persist: true});
+                mapWrapper.setThumbnail(this.scene, this.repository, { persist: true });
             }
             mapWrapper.map.fitBounds(this.getSceneBounds());
         });
@@ -61,20 +66,17 @@ class SceneDetailModalController {
     setCOGThumbnail(mapWrapper) {
         this.repository.service.getDatasourceBands(this.scene).then(rgbBands => {
             mapWrapper.setLayer(
-              'Browse Scene',
-              L.tileLayer(
-                this.sceneService.getSceneLayerURL(
-                    this.scene,
-                    {
+                'Browse Scene',
+                L.tileLayer(
+                    this.sceneService.getSceneLayerURL(this.scene, {
                         token: this.authService.token(),
                         redBand: rgbBands.RED,
                         greenBand: rgbBands.GREEN,
                         blueBand: rgbBands.BLUE
-                    }
+                    }),
+                    { maxZoom: BUILDCONFIG.TILES_MAX_ZOOM }
                 ),
-                {maxZoom: this.backsplashTileMaxZoom}
-              ),
-              true
+                true
             );
         });
     }
@@ -84,12 +86,14 @@ class SceneDetailModalController {
     }
 
     openDownloadModal() {
-        this.modalService.open({
-            component: 'rfSceneDownloadModal',
-            resolve: {
-                scene: () => this.scene
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfSceneDownloadModal',
+                resolve: {
+                    scene: () => this.scene
+                }
+            })
+            .result.catch(() => {});
     }
 
     getSceneBounds() {
@@ -98,7 +102,7 @@ class SceneDetailModalController {
     }
 
     closeWithData(data) {
-        this.close({$value: data});
+        this.close({ $value: data });
     }
 
     cancelEditing() {
@@ -107,14 +111,17 @@ class SceneDetailModalController {
 
     startEditing() {
         if (!this.sources) {
-            this.repository.service.getSources().then((sources) => {
-                this.sources = sources;
-                this.selectedDatasource = this.datasource;
-                this.editingMetadata = true;
-            }, (err) => {
-                this.selectedDatasource = this.datasource;
-                this.datasourceError = err;
-            });
+            this.repository.service.getSources().then(
+                sources => {
+                    this.sources = sources;
+                    this.selectedDatasource = this.datasource;
+                    this.editingMetadata = true;
+                },
+                err => {
+                    this.selectedDatasource = this.datasource;
+                    this.datasourceError = err;
+                }
+            );
         } else {
             this.selectedDatasource = this.datasource;
             this.editingMetadata = true;
@@ -127,9 +134,9 @@ class SceneDetailModalController {
     }
 
     setAccDateDisplay() {
-        return this.scene.filterFields && this.scene.filterFields.acquisitionDate ?
-            this.formatAcqDate(this.scene.filterFields.acquisitionDate) :
-            'MM/DD/YYYY';
+        return this.scene.filterFields && this.scene.filterFields.acquisitionDate
+            ? this.formatAcqDate(this.scene.filterFields.acquisitionDate)
+            : 'MM/DD/YYYY';
     }
 
     updateMetadata() {
@@ -140,10 +147,10 @@ class SceneDetailModalController {
         }
         this.scene = Object.assign(this.scene, {
             datasource: this.selectedDatasource.id,
-            'modifiedAt': this.moment().toISOString(),
-            'modifiedBy': this.scene.owner,
-            'sceneMetadata': this.newSceneMetadata,
-            'filterFields': this.newFilterFields
+            modifiedAt: this.moment().toISOString(),
+            modifiedBy: this.scene.owner,
+            sceneMetadata: this.newSceneMetadata,
+            filterFields: this.newFilterFields
         });
         this.datasource = this.selectedDatasource;
         this.sceneService.update(this.scene).then(
@@ -161,17 +168,24 @@ class SceneDetailModalController {
     }
 
     openDatePickerModal(date) {
-        this.modalService.open({
-            component: 'rfDatePickerModal',
-            windowClass: 'auto-width-modal',
-            resolve: {
-                config: () => Object({
-                    selectedDay: this.moment(date)
-                })
-            }
-        }, false).result.then(selectedDay => {
-            this.updateAcquisitionDate(selectedDay);
-        }).catch(() => {});
+        this.modalService
+            .open(
+                {
+                    component: 'rfDatePickerModal',
+                    windowClass: 'auto-width-modal',
+                    resolve: {
+                        config: () =>
+                            Object({
+                                selectedDay: this.moment(date)
+                            })
+                    }
+                },
+                false
+            )
+            .result.then(selectedDay => {
+                this.updateAcquisitionDate(selectedDay);
+            })
+            .catch(() => {});
     }
 
     updateAcquisitionDate(selectedDay) {
@@ -183,10 +197,14 @@ class SceneDetailModalController {
 
     getMaxBound(field) {
         switch (field) {
-        case 'cloudCover': return 100;
-        case 'sunAzimuth': return 360;
-        case 'sunElevation': return 180;
-        default: throw new Error(`Tried to fetch max bound for invalid field: ${field}`);
+            case 'cloudCover':
+                return 100;
+            case 'sunAzimuth':
+                return 360;
+            case 'sunElevation':
+                return 180;
+            default:
+                throw new Error(`Tried to fetch max bound for invalid field: ${field}`);
         }
     }
 
