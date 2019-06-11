@@ -30,7 +30,6 @@ class AnalysesListController {
         this.visible = new Set();
         this.selected = new Map();
         this.itemActions = new Map();
-        this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
         this.syncMapLayersToVisible();
         this.fetchPage().then(() => {
             if (get(this, 'itemList.length')) {
@@ -220,7 +219,7 @@ class AnalysesListController {
             .then(this.autoGenerateRenderDef.bind(this))
             .then(() => {
                 const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
-                return L.tileLayer(tileUrl, { maxZoom: this.backsplashTileMaxZoom });
+                return L.tileLayer(tileUrl, { maxZoom: BUILDCONFIG.TILES_MAX_ZOOM });
             });
     }
 

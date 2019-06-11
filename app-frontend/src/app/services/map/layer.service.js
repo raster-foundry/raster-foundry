@@ -41,7 +41,6 @@ export default (app) => {
             this.projectId = projectId;
             this._sceneTiles = null;
             this._mosaicTiles = null;
-            this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
 
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
         }
@@ -89,7 +88,7 @@ export default (app) => {
                 });
             }
             return this.getMosaicLayerURL().then((url) => {
-                let options = {bounds: this.bounds, maxZoom: this.backsplashTileMaxZoom};
+                let options = {bounds: this.bounds, maxZoom: BUILDCONFIG.TILES_MAX_ZOOM};
                 this._mosaicTiles = L.tileLayer(url, options);
                 return this._mosaicTiles;
             });

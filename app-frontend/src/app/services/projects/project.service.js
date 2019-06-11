@@ -66,7 +66,6 @@ export default app => {
             this.availableProcessingOptionsThin = this.availableProcessingOptions.slice(0, 2);
 
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
-            this.backsplashTileMaxZoom = BUILDCONFIG.BACKSPLASH_TILE_MAX_ZOOM;
 
             this.Project = $resource(
                 `${BUILDCONFIG.API_HOST}/api/projects/:id/`,
@@ -849,7 +848,7 @@ export default app => {
         mapLayerFromLayer(project, layer, params) {
             let url = this.getProjectLayerTileUrl(project, layer, params);
             let mapLayer = L.tileLayer(url, {
-                maxZoom: this.backsplashTileMaxZoom
+                maxZoom: BUILDCONFIG.TILES_MAX_ZOOM
             });
             return mapLayer;
         }
