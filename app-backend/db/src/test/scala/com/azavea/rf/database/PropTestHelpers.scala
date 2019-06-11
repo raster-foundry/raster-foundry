@@ -14,16 +14,19 @@ import java.util.UUID
 
 trait PropTestHelpers {
 
-  def insertUserOrgPlatform(user: User.Create,
-                            org: Organization.Create,
-                            platform: Platform,
-                            doUserGroupRole: Boolean = true)
-    : ConnectionIO[(User, Organization, Platform)] =
+  def insertUserOrgPlatform(
+      user: User.Create,
+      org: Organization.Create,
+      platform: Platform,
+      doUserGroupRole: Boolean = true
+  ): ConnectionIO[(User, Organization, Platform)] =
     for {
       dbPlatform <- PlatformDao.create(platform)
-      orgAndUser <- insertUserAndOrg(user,
-                                     org.copy(platformId = dbPlatform.id),
-                                     false)
+      orgAndUser <- insertUserAndOrg(
+        user,
+        org.copy(platformId = dbPlatform.id),
+        false
+      )
       (dbOrg, dbUser) = orgAndUser
       _ <- if (doUserGroupRole)
         UserGroupRoleDao.create(
@@ -39,40 +42,50 @@ trait PropTestHelpers {
       else ().pure[ConnectionIO]
     } yield { (dbUser, dbOrg, dbPlatform) }
 
-  def insertUserOrgPlatProject(user: User.Create,
-                               org: Organization.Create,
-                               platform: Platform,
-                               proj: Project.Create)
-    : ConnectionIO[(User, Organization, Platform, Project)] =
+  def insertUserOrgPlatProject(
+      user: User.Create,
+      org: Organization.Create,
+      platform: Platform,
+      proj: Project.Create
+  ): ConnectionIO[(User, Organization, Platform, Project)] =
     for {
       userOrgPlatform <- insertUserOrgPlatform(user, org, platform)
       (dbUser, dbOrg, dbPlatform) = userOrgPlatform
-      dbProject <- ProjectDao.insertProject(fixupProjectCreate(dbUser, proj),
-                                            dbUser)
+      dbProject <- ProjectDao.insertProject(
+        fixupProjectCreate(dbUser, proj),
+        dbUser
+      )
     } yield (dbUser, dbOrg, dbPlatform, dbProject)
 
-  def insertUserProject(user: User.Create,
-                        org: Organization,
-                        platform: Platform,
-                        proj: Project.Create): ConnectionIO[(User, Project)] =
+  def insertUserProject(
+      user: User.Create,
+      org: Organization,
+      platform: Platform,
+      proj: Project.Create
+  ): ConnectionIO[(User, Project)] =
     for {
       dbUser <- UserDao.create(user)
       _ <- UserGroupRoleDao.create(
         UserGroupRole
           .Create(dbUser.id, GroupType.Organization, org.id, GroupRole.Member)
-          .toUserGroupRole(dbUser, MembershipStatus.Approved))
+          .toUserGroupRole(dbUser, MembershipStatus.Approved)
+      )
       _ <- UserGroupRoleDao.create(
         UserGroupRole
           .Create(dbUser.id, GroupType.Platform, platform.id, GroupRole.Member)
-          .toUserGroupRole(dbUser, MembershipStatus.Approved))
-      dbProject <- ProjectDao.insertProject(fixupProjectCreate(dbUser, proj),
-                                            dbUser)
+          .toUserGroupRole(dbUser, MembershipStatus.Approved)
+      )
+      dbProject <- ProjectDao.insertProject(
+        fixupProjectCreate(dbUser, proj),
+        dbUser
+      )
     } yield (dbUser, dbProject)
 
   def insertUserAndOrg(
       user: User.Create,
       org: Organization.Create,
-      doUserGroupRole: Boolean = true): ConnectionIO[(Organization, User)] = {
+      doUserGroupRole: Boolean = true
+  ): ConnectionIO[(Organization, User)] = {
     for {
       orgInsert <- OrganizationDao.createOrganization(org)
       userInsert <- UserDao.create(user)
@@ -85,20 +98,25 @@ trait PropTestHelpers {
               orgInsert.id,
               GroupRole.Member
             )
-            .toUserGroupRole(userInsert, MembershipStatus.Approved))
+            .toUserGroupRole(userInsert, MembershipStatus.Approved)
+        )
       else ().pure[ConnectionIO]
     } yield (orgInsert, userInsert)
   }
 
-  def insertUserOrgPlatScene(user: User.Create,
-                             org: Organization.Create,
-                             platform: Platform,
-                             scene: Scene.Create) = {
+  def insertUserOrgPlatScene(
+      user: User.Create,
+      org: Organization.Create,
+      platform: Platform,
+      scene: Scene.Create
+  ) = {
     for {
       (dbUser, dbOrg, dbPlatform) <- insertUserOrgPlatform(user, org, platform)
       dbDatasource <- unsafeGetRandomDatasource
-      scene <- SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
-                               dbUser)
+      scene <- SceneDao.insert(
+        fixupSceneCreate(dbUser, dbDatasource, scene),
+        dbUser
+      )
     } yield (dbOrg, dbUser, dbPlatform, scene)
   }
 
@@ -109,9 +127,11 @@ trait PropTestHelpers {
     proj.copy(owner = Some(user.id))
 
   // We assume the Scene.Create has an id, since otherwise thumbnails have no idea what scene id to use
-  def fixupSceneCreate(user: User,
-                       datasource: Datasource,
-                       sceneCreate: Scene.Create): Scene.Create = {
+  def fixupSceneCreate(
+      user: User,
+      datasource: Datasource,
+      sceneCreate: Scene.Create
+  ): Scene.Create = {
     sceneCreate.copy(
       owner = Some(user.id),
       datasource = datasource.id,
@@ -134,9 +154,11 @@ trait PropTestHelpers {
   def fixupShapeCreate(user: User, shapeCreate: Shape.Create): Shape.Create =
     shapeCreate.copy(owner = Some(user.id))
 
-  def fixupShapeGeoJSON(user: User,
-                        shape: Shape,
-                        shapeGeoJSON: Shape.GeoJSON): Shape.GeoJSON =
+  def fixupShapeGeoJSON(
+      user: User,
+      shape: Shape,
+      shapeGeoJSON: Shape.GeoJSON
+  ): Shape.GeoJSON =
     shapeGeoJSON.copy(
       id = shape.id,
       properties = shapeGeoJSON.properties.copy(
@@ -146,26 +168,34 @@ trait PropTestHelpers {
       )
     )
 
-  def fixupImageBanded(ownerId: String,
-                       sceneId: UUID,
-                       image: Image.Banded): Image.Banded =
+  def fixupImageBanded(
+      ownerId: String,
+      sceneId: UUID,
+      image: Image.Banded
+  ): Image.Banded =
     image.copy(owner = Some(ownerId), scene = sceneId)
 
   def fixupImage(ownerId: String, sceneId: UUID, image: Image): Image =
     image.copy(createdBy = ownerId, owner = ownerId, scene = sceneId)
 
-  def fixupDatasource(dsCreate: Datasource.Create,
-                      user: User): ConnectionIO[Datasource] =
+  def fixupDatasource(
+      dsCreate: Datasource.Create,
+      user: User
+  ): ConnectionIO[Datasource] =
     DatasourceDao.createDatasource(dsCreate.copy(owner = Some(user.id)), user)
 
-  def fixupThumbnail(scene: Scene.WithRelated,
-                     thumbnail: Thumbnail): Thumbnail =
+  def fixupThumbnail(
+      scene: Scene.WithRelated,
+      thumbnail: Thumbnail
+  ): Thumbnail =
     thumbnail.copy(sceneId = scene.id)
 
-  def fixupUploadCreate(user: User,
-                        project: Project,
-                        datasource: Datasource,
-                        upload: Upload.Create): Upload.Create = {
+  def fixupUploadCreate(
+      user: User,
+      project: Project,
+      datasource: Datasource,
+      upload: Upload.Create
+  ): Upload.Create = {
     val withoutProjectFixup =
       upload.copy(owner = Some(user.id), datasource = datasource.id)
     upload.projectId match {
@@ -174,10 +204,12 @@ trait PropTestHelpers {
     }
   }
 
-  def fixupAoiCreate(user: User,
-                     project: Project,
-                     aoiCreate: AOI.Create,
-                     shape: Shape): AOI =
+  def fixupAoiCreate(
+      user: User,
+      project: Project,
+      aoiCreate: AOI.Create,
+      shape: Shape
+  ): AOI =
     aoiCreate
       .copy(owner = Some(user.id), shape = shape.id)
       .toAOI(project.id, user)
@@ -194,7 +226,8 @@ trait PropTestHelpers {
       organization: Organization,
       team: Team,
       platform: Platform,
-      ugrCreate: UserGroupRole.Create): UserGroupRole.Create = {
+      ugrCreate: UserGroupRole.Create
+  ): UserGroupRole.Create = {
     ugrCreate.groupType match {
       case GroupType.Platform =>
         ugrCreate.copy(groupId = platform.id, userId = user.id)
@@ -204,8 +237,10 @@ trait PropTestHelpers {
     }
   }
 
-  def fixTeamName(teamCreate: Team.Create,
-                  searchParams: SearchQueryParameters): Team.Create =
+  def fixTeamName(
+      teamCreate: Team.Create,
+      searchParams: SearchQueryParameters
+  ): Team.Create =
     searchParams.search match {
       case Some(teamName) if teamName.length != 0 =>
         teamCreate.copy(name = teamName)
@@ -237,22 +272,50 @@ trait PropTestHelpers {
       dbUser <- UserDao.create(user)
       dbPlatform <- PlatformDao.create(platform)
       orgInsert <- OrganizationDao.createOrganization(
-        org.copy(platformId = dbPlatform.id))
+        org.copy(platformId = dbPlatform.id)
+      )
       dbOrg = orgInsert.copy(platformId = dbPlatform.id)
       dbTeam <- TeamDao.create(
-        team.copy(organizationId = dbOrg.id).toTeam(dbUser))
+        team.copy(organizationId = dbOrg.id).toTeam(dbUser)
+      )
       projectInsert <- ProjectDao.insertProject(
         fixupProjectCreate(dbUser, project),
-        dbUser)
+        dbUser
+      )
       dbUserTeamOrgPlat = (dbUser, dbTeam, dbOrg, dbPlatform)
     } yield { (projectInsert, dbUserTeamOrgPlat) }
   }
 
-  def fixupMapToken(mapTokenCreate: MapToken.Create,
-                    user: User,
-                    project: Option[Project],
-                    analysis: Option[ToolRun]): MapToken.Create =
+  def fixupMapToken(
+      mapTokenCreate: MapToken.Create,
+      user: User,
+      project: Option[Project],
+      analysis: Option[ToolRun]
+  ): MapToken.Create =
     mapTokenCreate.copy(project = project map { _.id }, toolRun = analysis map {
       _.id
     }, owner = Some(user.id))
+
+  def fixupTaskFeaturesCollection(
+      tfc: Task.TaskFeatureCollectionCreate,
+      project: Project
+  ) =
+    tfc.copy(
+      features =
+        tfc.features map { fixupTaskFeatureCreate(_, project) }
+    )
+
+  def fixupTaskFeatureCreate(
+      tfc: Task.TaskFeatureCreate,
+      project: Project
+  ): Task.TaskFeatureCreate =
+    tfc.copy(
+      properties = fixupTaskPropertiesCreate(tfc.properties, project)
+    )
+
+  def fixupTaskPropertiesCreate(
+      tpc: Task.TaskPropertiesCreate,
+      project: Project
+  ): Task.TaskPropertiesCreate =
+    tpc.copy(projectId = project.id, projectLayerId = project.defaultLayerId)
 }

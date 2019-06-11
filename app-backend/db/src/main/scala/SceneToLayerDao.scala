@@ -19,13 +19,18 @@ import com.rasterfoundry.common.{
   MosaicDefinition,
   ProjectColorModeParams,
   SceneToLayer,
-  SceneToLayerWithSceneType
+  SceneToLayerWithSceneType,
+  SceneWithProjectIdLayerId,
+  AWSLambda
 }
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneToLayerDao()
 
-object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
+object SceneToLayerDao
+    extends Dao[SceneToLayer]
+    with LazyLogging
+    with AWSLambda {
 
   val tableName = "scenes_to_layers"
 
@@ -81,7 +86,8 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     """).update.run
   }
 
-  def setManualOrder(projectLayerId: UUID,
+  def setManualOrder(projectId: UUID,
+                     projectLayerId: UUID,
                      sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
     val updates = for {
       i <- sceneIds.indices
@@ -95,7 +101,13 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     }
     for {
       _ <- updates.toList.sequence
-    } yield sceneIds
+    } yield {
+      logger
+        .info(
+          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+      kickoffLayerOverviewCreate(projectId, projectLayerId)
+      sceneIds
+    }
   }
 
   def getMosaicDefinition(projectLayerId: UUID,
@@ -142,6 +154,7 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
           case (r, g, b) =>
             MosaicDefinition(
               stp.sceneId,
+              stp.projectId,
               stp.colorCorrectParams.copy(
                 redBand = r,
                 greenBand = g,
@@ -157,6 +170,7 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
         } getOrElse {
           MosaicDefinition(
             stp.sceneId,
+            stp.projectId,
             stp.colorCorrectParams,
             stp.sceneType,
             stp.ingestLocation,
@@ -228,5 +242,23 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
       )
     WHERE project_layer_id = ${projectLayerId}
     """).update.run
+  }
+
+  def getProjectsAndLayersBySceneId(
+      sceneId: UUID): ConnectionIO[List[SceneWithProjectIdLayerId]] = {
+    (fr"""
+      SELECT scene_id, project_id, project_layer_id
+      FROM (
+        scenes_to_layers
+      LEFT JOIN
+        scenes
+      ON scenes.id = scenes_to_layers.scene_id
+      ) scenes_stl
+      LEFT JOIN
+        project_layers
+      ON
+        scenes_stl.project_layer_id = project_layers.id
+      WHERE scene_id = $sceneId
+    """).query[SceneWithProjectIdLayerId].to[List]
   }
 }

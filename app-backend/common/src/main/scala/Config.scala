@@ -85,4 +85,22 @@ object Config {
         TimeUnit.NANOSECONDS)
   }
 
+  object awslambda {
+    private val awsLambdaConfig = config.getConfig("awslambda")
+
+    val environment = awsLambdaConfig.getString("environment")
+  }
+
+  object auth0 {
+    private val auth0Config = config.getConfig("auth0")
+
+    lazy val systemRefreshToken = auth0Config.getString("systemRefreshToken")
+  }
+
+  object s3 {
+    private val s3Config = config.getConfig("s3")
+
+    lazy val dataBucket = s3Config.getString("dataBucket")
+  }
+
 }

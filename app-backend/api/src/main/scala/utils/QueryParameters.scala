@@ -28,6 +28,11 @@ trait QueryParameterDeserializers {
       GroupType.fromString(s)
     }
 
+  implicit val deserializerTaskStatus: Unmarshaller[String, TaskStatus] =
+    Unmarshaller.strict[String, TaskStatus] { s =>
+      TaskStatus.fromString(s)
+    }
+
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
@@ -111,7 +116,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
           'annotationGroup.as[UUID].?,
           'bbox.as[String].*,
           'withOwnerInfo.as[Boolean].?
-        ))).as(AnnotationQueryParameters.apply _)
+        )
+      )).as(AnnotationQueryParameters.apply _)
 
   def shapeQueryParams =
     (
@@ -157,4 +163,18 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     parameters(
       'exportAll.as[Boolean].?
     ).as(AnnotationExportQueryParameters.apply _)
+
+  def taskQueryParameters =
+    parameters(
+      'status.as[TaskStatus].?,
+      'locked.as[Boolean].?,
+      'lockedBy.as[TaskStatus].?,
+      'bbox.as[String].*,
+      'actionUser.as[String].?,
+      'actionType.as[TaskStatus].?,
+      'actionStartTime.as(deserializerTimestamp).?,
+      'actionEndTime.as(deserializerTimestamp).?,
+      'actionMinCount.as[Int].?,
+      'actionMaxCount.as[Int].?
+    ).as(TaskQueryParameters.apply _)
 }

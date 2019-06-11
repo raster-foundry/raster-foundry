@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 
+import com.typesafe.config.ConfigFactory
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -10,13 +11,16 @@ import doobie.util.transactor.Strategy
 import doobie.free.connection.unit
 import cats.implicits._
 import org.scalatest.{Suite, BeforeAndAfterAll}
-import scala.sys.process._
 
 import java.util.UUID
+import org.flywaydb.core.Flyway
 
 // SetupTemplateDB is a singleton that is used to instantiate the template db
 // once and only once per test run
 object SetupTemplateDB {
+  private val config = ConfigFactory.load()
+  private val migrations = config.getConfig("migrations")
+  val migrationsHome = migrations.getString("migrationsHome")
   val templateDbName = "testing_template";
 
   // db create/drop cannot be done with transactions
@@ -39,12 +43,15 @@ object SetupTemplateDB {
     .transact(xant)
     .unsafeRunSync
 
-  // run migrations using sbt pointed to the template db
-  Process(
-    Seq("./sbt", ";mg init;mg update;mg apply"),
-    None,
-    "POSTGRES_URL" -> s"${xantConfig.postgresUrl}${templateDbName}"
-  ).!
+  val jdbcUrl = s"${xantConfig.postgresUrl}${templateDbName}"
+
+  val flyway = Flyway
+    .configure()
+    .dataSource(jdbcUrl, xantConfig.user, xantConfig.password)
+    .locations(migrationsHome)
+    .load()
+  flyway.migrate()
+
 }
 
 trait DBTestConfig extends BeforeAndAfterAll { this: Suite =>

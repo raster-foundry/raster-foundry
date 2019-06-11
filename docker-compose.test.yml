@@ -45,8 +45,8 @@ services:
   app-migrations:
     image: raster-foundry-app-migrations:${GIT_COMMIT:-latest}
     build:
-      context: ./app-backend
-      dockerfile: Dockerfile
+      context: ./app-backend/db
+      dockerfile: Dockerfile.migrations
     volumes:
       - $HOME/.coursier-cache:/root/.coursier-cache
 

@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: Raster Foundry
   description: An application to find, view, and analyze geospatial data at any scale
-  version: "1.21.3"
+  version: "1.22.0"
 
 host: app.rasterfoundry.com
 
@@ -18,11 +18,11 @@ consumes:
   - application/json
 
 securityDefinitions:
-   # X-API-Key: abcdef12345
-   APIKeyHeader:
-     type: apiKey
-     in: header
-     name: Authorization
+  # X-API-Key: abcdef12345
+  APIKeyHeader:
+    type: apiKey
+    in: header
+    name: Authorization
 
 security:
   - APIKeyHeader: []
@@ -102,7 +102,6 @@ x-resources:
     description: |
       Platforms, Organizations, and Teams can be used to manage users and visibility of projects, analyses, and scenes. Most of these functions will only be available to uses who are administrating groups.
 
-
 tags:
   - name: Users
     description: 'Operations involving users and organizations'
@@ -127,10 +126,10 @@ paths:
       tags:
         - Users
       parameters:
-          - name: DropboxAuthRequest
-            in: body
-            schema:
-              $ref: '#/definitions/DropboxAuthRequest'
+        - name: DropboxAuthRequest
+          in: body
+          schema:
+            $ref: '#/definitions/DropboxAuthRequest'
       responses:
         200:
           description: 'Dropbox access token successfully fetched'
@@ -204,6 +203,25 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
+  /users/me/scopes:
+    x-resource: Users
+    get:
+      summary: 'Get object action scopes for a logged-in user'
+      tags:
+        - Users
+      responses:
+        200:
+          description: 'User scopes found'
+          schema:
+            $ref: '#/definitions/UserScopes'
+        404:
+          description: 'User scopes not found'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
   /users/search/:
     x-resource: Users
     get:
@@ -261,6 +279,83 @@ paths:
             $ref: '#/definitions/Error'
         default:
           description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+  /users/{userID}/scopes:
+    x-resource: Users
+    get:
+      summary: 'Get object action scopes for a user'
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/userID'
+      responses:
+        200:
+          description: 'User scopes found'
+          schema:
+            $ref: '#/definitions/UserScopes'
+        404:
+          description: 'User scopes not found'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: 'Create object action scopes for a user'
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/userID'
+        - name: UserScopes
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserScopes'
+      responses:
+        200:
+          description: 'Actions on objects a user can operate'
+          schema:
+            $ref: '#/definitions/UserScopes'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: 'Update object action scopes for a user'
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/userID'
+        - name: UserScopes
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserScopes'
+      responses:
+        204:
+          description: 'Update successful (No Content)'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Remove all object action scopes for a user'
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/userID'
+      responses:
+        204:
+          description: 'Deletion Successful (no content)'
+        404:
+          description: |
+            The UUID parameter does not refer to a user or the user does not have permission to perform this action
           schema:
             $ref: '#/definitions/Error'
   /organizations/search/:
@@ -716,7 +811,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /platforms/{platformID}/organizations/{organizationID}/teams/{teamID}/members/:
-    x-resource: Admin
     get:
       summary: 'Fetch team members'
       tags:
@@ -762,7 +856,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /platforms/{platformID}/organizations/{organizationID}/teams/{teamID}/members/{userID}:
-    x-resource: Admin
     delete:
       summary: 'Remove team member'
       tags:
@@ -1453,7 +1546,7 @@ paths:
     x-resource: Projects
     get:
       summary: 'Get a paginated list of projects'
-      description:  |
+      description: |
         Get a paginated list of all the projects which a user has permission to view.
       tags:
         - Imagery
@@ -1900,7 +1993,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-
   /projects/{projectID}/annotations/{annotationID}:
     x-resouce: Projects
     get:
@@ -1966,7 +2058,6 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
-
 
   /projects/{projectID}/areas-of-interest/:
     x-resource: Projects
@@ -2189,7 +2280,6 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
-
 
   /projects/{projectID}/scenes/bulk-add-from-query/:
     x-resource: Projects
@@ -2440,7 +2530,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-
   /projects/{projectID}/actions/:
     get:
       summary: 'List actions a user is allowed to perform on this project'
@@ -2464,7 +2553,6 @@ paths:
                 - 'DELETE'
                 - 'ANNOTATE'
                 - '*'
-
 
   /projects/{projectID}/layers/:
     x-resource: Projects
@@ -2493,7 +2581,7 @@ paths:
   /projects/{projectID}/layers/stats:
     x-resource: Projects
     get:
-      summary: "Count scenes in each layer of this project"
+      summary: 'Count scenes in each layer of this project'
       tags:
         - Imagery
       parameters:
@@ -2898,6 +2986,7 @@ paths:
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/withOwnerInfo'
         - $ref: '#/parameters/annotationGroup'
+        - $ref: '#/parameters/task'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project layer'
@@ -3224,6 +3313,217 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /projects/{projectID}/layers/{layerID}/tasks/:
+    get:
+      summary: 'Get tasks belonging to a project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/bbox'
+        - $ref: '#/parameters/locked'
+        - $ref: '#/parameters/lockedBy'
+        - $ref: '#/parameters/actionUser'
+        - $ref: '#/parameters/actionType'
+        - $ref: '#/parameters/actionStartTime'
+        - $ref: '#/parameters/actionEndTime'
+        - $ref: '#/parameters/actionMinCount'
+        - $ref: '#/parameters/actionMaxCount'
+      responses:
+        200:
+          description: 'Paginated geoJSON feature collection containing tasks for this project layer'
+          schema:
+            $ref: '#/definitions/TaskFeatureCollectionPaginated'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: 'Create tasks for a project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - name: tasks
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TaskFeatureCollectionCreate'
+      responses:
+        201:
+          description: 'Tasks successfully created'
+          schema:
+            $ref: '#/definitions/TaskFeatureCollection'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Delete all tasks from a project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+      responses:
+        204:
+          description: 'Tasks Deleted'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+
+  /projects/{projectID}/layers/{layerID}/tasks/{taskID}/:
+    get:
+      summary: 'Get a task belonging to a project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+      responses:
+        200:
+          description: 'GeoJSON feature containing one task from this project layer'
+          schema:
+            $ref: '#/definitions/TaskFeature'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: 'Update a task of this project layer'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+        - name: taskUpdate
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TaskFeatureUpdate'
+      responses:
+        204:
+          description: 'No content, update successful'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Delete a task'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+      responses:
+        204:
+          description: 'Deletion successful.'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+  /projects/{projectID}/layers/{layerID}/tasks/{taskID}/lock:
+    post:
+      summary: 'Lock a task so that it cannot be updated or locked by another user'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+      responses:
+        200:
+          description: 'GeoJSON feature containing the locked task'
+          schema:
+            $ref: '#/definitions/TaskFeature'
+        403:
+          description: 'Task already locked, insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Remove the lock from a task so that it can be update by other users'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/taskID'
+      responses:
+        200:
+          description: 'GeoJSON feature containing the unlocked task'
+          schema:
+            $ref: '#/definitions/TaskFeature'
+        403:
+          description: 'Task locked by another user, insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+  /projects/{projectID}/layers/{layerID}/tasks/grid:
+    post:
+      summary: 'Create a task grid for the specified project layer. Does not overwrite existing tasks.'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - name: taskGridCreate
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TaskGridCreate'
+      responses:
+        201:
+          description: 'Task grid was successfully created'
+          schema:
+            type: integer
+            description: Number of tasks created
+        400:
+          description: 'Task grid could not be created. The provided parameters were likely invalid'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
   /areas-of-interest/:
     get:
       summary: 'Get a list of areas of interest'
@@ -4471,18 +4771,17 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-
 parameters:
   projectLayer:
     name: projectLayerId
-    description: "Filter by project layer this analysis was created with"
+    description: 'Filter by project layer this analysis was created with'
     in: query
     type: string
     format: uuid
     required: false
   templateId:
     name: templateId
-    description: "Filter by template this analysis was created with"
+    description: 'Filter by template this analysis was created with'
     in: query
     type: string
     format: uuid
@@ -4752,6 +5051,12 @@ parameters:
     in: path
     required: true
     type: string
+  taskID:
+    name: taskID
+    description: 'A specific task UUID'
+    in: path
+    type: string
+    required: true
   slugLabel:
     name: slugLabel
     description: 'A url-safe slug label'
@@ -5091,7 +5396,7 @@ parameters:
     required: false
   template:
     name: templateId
-    description: "Filter by template this analysis was created from"
+    description: 'Filter by template this analysis was created from'
     in: query
     type: string
     format: uuid
@@ -5155,8 +5460,110 @@ parameters:
     in: query
     type: boolean
     required: false
+  locked:
+    name: locked
+    description: >
+      Filter to tasks that have or don't have a lock applied'
+    in: query
+    type: boolean
+    required: false
+  lockedBy:
+    name: lockedBy
+    description: 'Filter to tasks that are currently locked by the specified user'
+    in: query
+    type: string
+    required: false
+  actionUser:
+    name: actionUser
+    description: 'Filter to tasks that the specified user has participated in'
+    in: query
+    type: string
+    required: false
+  actionType:
+    name: actionType
+    description: 'Filter to tasks that the specified status has at one time been applied to'
+    in: query
+    type: string
+    required: false
+  actionStartTime:
+    name: actionStartTime
+    description: 'Filter to tasks that have actions occurring after this time'
+    in: query
+    type: string
+    required: false
+  actionEndTime:
+    name: actionEndTime
+    description: 'Filter to tasks that have actions occurring before this time'
+    in: query
+    type: string
+    required: false
+  actionMinCount:
+    name: actionMinCount
+    description: >
+      Must be paired with `actionType`.
+      Filter to tasks that have at least the specified number of occurences of the specified action.
+      Note: CURRENTLY IGNORED.
+    in: query
+    type: integer
+    required: false
+  actionMaxCount:
+    name: actionMaxCount
+    description: >
+      Must be paired with `actionType`.
+      Filter to tasks that have at most the specified number of occurences of the specified action.
+      Note: CURRENTLY IGNORED.
+    in: query
+    type: integer
+    required: false
+  task:
+    name: task
+    description: 'Filter to annotations belonging to the specified task'
+    in: query
+    type: string
+    required: false
 
 definitions:
+  ActionTypeArray:
+    type: array
+    items:
+      $ref: '#/definitions/ActionType'
+    example:
+      - 'VIEW'
+      - 'EDIT'
+      - 'CREATE'
+  ActionType:
+    type: string
+    enum:
+      - 'VIEW'
+      - 'EDIT'
+      - 'DEACTIVATE'
+      - 'DELETE'
+      - 'ANNOTATE'
+      - 'EXPORT'
+      - 'DOWNLOAD'
+      - 'CREATE'
+  ObjectType:
+    type: string
+    enum:
+      - 'PROJECT'
+      - 'SCENE'
+      - 'DATASOURCE'
+      - 'SHAPE'
+      - 'WORKSPACE'
+      - 'TEMPLATE'
+      - 'ANALYSIS'
+      - 'PLATFORM'
+      - 'ORGANIZATION'
+      - 'TEAM'
+      - 'USER'
+      - 'UPLOAD'
+      - 'EXPORT'
+      - 'FEED'
+      - 'MAPTOKEN'
+      - 'LICENSE'
+      - 'TOOLTAG'
+      - 'TOOLCATEGORY'
+      - 'AOI'
   LayerSplitOptions:
     type: object
     properties:
@@ -5189,39 +5596,39 @@ definitions:
 
   ProjectLayer:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/TimeModelMixin'
-    - type: object
-      properties:
-        type:
-          type: string
-        geometry:
-          $ref: '#/definitions/Geometry'
-        name:
-          type: string
-          description: Display name for a layer
-        projectId:
-          type: string
-          format: uuid
-        colorGroupHex:
-          type: string
-          description: Color hex code for visually identifying layers are related and filtering
-        smartLayerId:
-          type: string
-          format: uuid
-        rangeStart:
-          type: string
-          format: datetime
-          description: Start date for scene matching when associated with a smart layer
-        rangeEnd:
-          type: string
-          format: datetime
-          description: End date for scene matching when associated with a smart layer
-        isSingleBand:
-          type: boolean
-          description: 'Use single band options to render instead of bands'
-        singleBandOptions:
-          $ref: '#/definitions/SingleBandOptions'
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/TimeModelMixin'
+      - type: object
+        properties:
+          type:
+            type: string
+          geometry:
+            $ref: '#/definitions/Geometry'
+          name:
+            type: string
+            description: Display name for a layer
+          projectId:
+            type: string
+            format: uuid
+          colorGroupHex:
+            type: string
+            description: Color hex code for visually identifying layers are related and filtering
+          smartLayerId:
+            type: string
+            format: uuid
+          rangeStart:
+            type: string
+            format: datetime
+            description: Start date for scene matching when associated with a smart layer
+          rangeEnd:
+            type: string
+            format: datetime
+            description: End date for scene matching when associated with a smart layer
+          isSingleBand:
+            type: boolean
+            description: 'Use single band options to render instead of bands'
+          singleBandOptions:
+            $ref: '#/definitions/SingleBandOptions'
 
   ProjectLayerPaginated:
     type: object
@@ -5243,17 +5650,17 @@ definitions:
     required:
       - type
     externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1
+      url: https://tools.ietf.org/html/rfc7946#section-3.1
     properties:
       type:
         type: string
         enum:
-        - Point
-        - LineString
-        - Polygon
-        - MultiPoint
-        - MultiLineString
-        - MultiPolygon
+          - Point
+          - LineString
+          - Polygon
+          - MultiPoint
+          - MultiLineString
+          - MultiPolygon
         description: the geometry type
 
   Point2D:
@@ -5269,7 +5676,7 @@ definitions:
     externalDocs:
       url: https://tools.ietf.org/html/rfc7946#section-3.1.6
     allOf:
-      - $ref: "#/definitions/Geometry"
+      - $ref: '#/definitions/Geometry'
       - properties:
           coordinates:
             type: array
@@ -5284,7 +5691,7 @@ definitions:
     externalDocs:
       url: https://tools.ietf.org/html/rfc7946#section-3.1.7
     allOf:
-      - $ref: "#/definitions/Geometry"
+      - $ref: '#/definitions/Geometry'
       - properties:
           coordinates:
             type: array
@@ -5340,16 +5747,19 @@ definitions:
           - 'DEACTIVATE'
           - 'DELETE'
           - 'ANNOTATE'
+          - 'EXPORT'
+          - 'DOWNLOAD'
+          - 'CREATE'
   ObjectAccessControlRule:
     $ref: '#/definitions/AccessControlRule'
   AccessControlRuleCreate:
     allOf:
-    - $ref: '#/definitions/AccessControlRuleBase'
-    - type: object
-      properties:
-        isActive:
-          type: boolean
-          description: 'Whether this access control rule is active'
+      - $ref: '#/definitions/AccessControlRuleBase'
+      - type: object
+        properties:
+          isActive:
+            type: boolean
+            description: 'Whether this access control rule is active'
   AccessControlRule:
     allOf:
       - $ref: '#/definitions/AccessControlRuleCreate'
@@ -5376,35 +5786,47 @@ definitions:
               - 'WORKSPACE'
               - 'TEMPLATE'
               - 'ANALYSIS'
+              - 'PLATFORM'
+              - 'ORGANIZATION'
+              - 'TEAM'
+              - 'USER'
+              - 'UPLOAD'
+              - 'EXPORT'
+              - 'FEED'
+              - 'MAPTOKEN'
+              - 'LICENSE'
+              - 'TOOLTAG'
+              - 'TOOLCATEGORY'
+              - 'AOI'
           objectId:
             type: string
             description: 'Id of the object this access control rule applies to'
             format: uuid
   MapToken:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/TimeModelMixin'
-    - $ref: '#/definitions/UserTrackingMixin'
-    - type: object
-      properties:
-        name:
-          type: string
-          description: 'Human friendly label for map token'
-        project:
-          type: string
-          format: UUID
-        toolRun:
-          type: string
-          format: UUID
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/TimeModelMixin'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          name:
+            type: string
+            description: 'Human friendly label for map token'
+          project:
+            type: string
+            format: UUID
+          toolRun:
+            type: string
+            format: UUID
   MapTokenPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/MapToken'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/MapToken'
   MosaicDefinition:
     type: object
     properties:
@@ -5554,83 +5976,83 @@ definitions:
 
   User:
     allOf:
-    - $ref: '#/definitions/TimeModelMixin'
-    - type: object
-      required:
-        - id
-        - role
-      properties:
-        id:
-          type: string
-          description: 'User ID for Raster Foundry'
-        role:
-          type: string
-          description: 'User role in organization'
-          enum:
-            - 'USER'
-            - 'VIEWER'
-            - 'OWNER'
-        dropboxCredential:
-          type: string
-          description: "Contains the user's dropbox credential if a connection has been configured"
-        planetCredential:
-          type: string
-          description: "Contains the user's planet credential if a connection has been configured"
-        emailNotifications:
-          type: boolean
-          description: 'An opt-in (defaults to false) setting to receive email notifications'
+      - $ref: '#/definitions/TimeModelMixin'
+      - type: object
+        required:
+          - id
+          - role
+        properties:
+          id:
+            type: string
+            description: 'User ID for Raster Foundry'
+          role:
+            type: string
+            description: 'User role in organization'
+            enum:
+              - 'USER'
+              - 'VIEWER'
+              - 'OWNER'
+          dropboxCredential:
+            type: string
+            description: "Contains the user's dropbox credential if a connection has been configured"
+          planetCredential:
+            type: string
+            description: "Contains the user's planet credential if a connection has been configured"
+          emailNotifications:
+            type: boolean
+            description: 'An opt-in (defaults to false) setting to receive email notifications'
 
   UserSelf:
     allOf:
-    - $ref: '#/definitions/TimeModelMixin'
-    - type: object
-      required:
-      - id
-      - role
-      properties:
-        id:
-          type: string
-          description: 'User ID for Raster Foundry'
-        role:
-          type: string
-          description: 'User role in organization'
-          enum:
-            - 'USER'
-            - 'VIEWER'
-            - 'OWNER'
-        dropboxCredential:
-          type: string
-          description: "Contains the user's dropbox credential if a connection has been configured"
-        planetCredential:
-          type: string
-          description: "Contains the user's planet credential if a connection has been configured"
-        emailNotifications:
-          type: boolean
-          description: 'An opt-in (defaults to false) setting to receive email notifications to login email address'
-        email:
-          type: string
-          description: "Login email"
-        name:
-          type: string
-          description: "User's name"
-        profileImageUri:
-          type: string
-          description: "Link to user's avatar image"
-        isSuperuser:
-          type: boolean
-          description: "User is a superuser or not. Default to false."
-        isActive:
-          type: boolean
-          description: "User is an active user or not. Default to true."
-        visibility:
-          type: string
-          description: "User's visibility. Default to 'PRIVATE'"
-          enum:
-            - 'PUBLIC'
-            - 'PRIVATE'
-        personalInfo:
-          type: object
-          $ref: '#/definitions/UserPersonalInfo'
+      - $ref: '#/definitions/TimeModelMixin'
+      - type: object
+        required:
+          - id
+          - role
+        properties:
+          id:
+            type: string
+            description: 'User ID for Raster Foundry'
+          role:
+            type: string
+            description: 'User role in organization'
+            enum:
+              - 'USER'
+              - 'VIEWER'
+              - 'OWNER'
+          dropboxCredential:
+            type: string
+            description: "Contains the user's dropbox credential if a connection has been configured"
+          planetCredential:
+            type: string
+            description: "Contains the user's planet credential if a connection has been configured"
+          emailNotifications:
+            type: boolean
+            description: 'An opt-in (defaults to false) setting to receive email notifications to login email address'
+          email:
+            type: string
+            description: 'Login email'
+          name:
+            type: string
+            description: "User's name"
+          profileImageUri:
+            type: string
+            description: "Link to user's avatar image"
+          isSuperuser:
+            type: boolean
+            description: 'User is a superuser or not. Default to false.'
+          isActive:
+            type: boolean
+            description: 'User is an active user or not. Default to true.'
+          visibility:
+            type: string
+            description: "User's visibility. Default to 'PRIVATE'"
+            enum:
+              - 'PUBLIC'
+              - 'PRIVATE'
+          personalInfo:
+            type: object
+            $ref: '#/definitions/UserPersonalInfo'
 
   UserPersonalInfo:
     type: object
@@ -5688,11 +6110,17 @@ definitions:
 
   UserSearched:
     allOf:
-    - $ref: '#/definitions/UserThin'
-    - type: object
-      properties:
-        email:
-          type: string
+      - $ref: '#/definitions/UserThin'
+      - type: object
+        properties:
+          email:
+            type: string
+
+  UserScopes:
+    description: A map from API resource/object types to allowed actions for a user
+    type: object
+    additionalProperties:
+      $ref: '#/definitions/ActionTypeArray'
 
   UserWithRole:
     allOf:
@@ -5777,43 +6205,43 @@ definitions:
       groupRole:
         type: string
         enum:
-        - 'ADMIN'
-        - 'MEMBER'
+          - 'ADMIN'
+          - 'MEMBER'
   UserGroupRole:
     type: object
     allOf:
-    - $ref: '#/definitions/TimeModelMixin'
-    - type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        isActive:
-          type: boolean
-        groupType:
-          type: string
-          enum:
-          - 'PLATFORM'
-          - 'ORGANIZATION'
-          - 'TEAM'
-        groupId:
-          type: string
-          format: uuid
-        membershipStatus:
-          type: string
-          enum:
-          - 'REQUESTED'
-          - 'INVITED'
-          - 'APPROVED'
-    - $ref: '#/definitions/UserRole'
+      - $ref: '#/definitions/TimeModelMixin'
+      - type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          isActive:
+            type: boolean
+          groupType:
+            type: string
+            enum:
+              - 'PLATFORM'
+              - 'ORGANIZATION'
+              - 'TEAM'
+          groupId:
+            type: string
+            format: uuid
+          membershipStatus:
+            type: string
+            enum:
+              - 'REQUESTED'
+              - 'INVITED'
+              - 'APPROVED'
+      - $ref: '#/definitions/UserRole'
   UserGroupRoleWithRelated:
     type: object
     allOf:
-    - $ref: '#/definitions/UserGroupRole'
-    - type: object
-      properties:
-        groupName:
-          type: string
+      - $ref: '#/definitions/UserGroupRole'
+      - type: object
+        properties:
+          groupName:
+            type: string
   PaginatedResponse:
     type: object
     required:
@@ -5843,31 +6271,31 @@ definitions:
         description: 'Number of results per page'
   UserWithRolePaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/UserWithRole'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/UserWithRole'
   UserPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/UserSearched'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/UserSearched'
   ScenePaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/Scene'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Scene'
 
   PlatformsPaginated:
     allOf:
@@ -5946,35 +6374,35 @@ definitions:
 
   OrganizationsPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/Organization'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Organization'
   Organization:
     allOf:
-    - $ref: '#/definitions/TimeModelMixin'
-    - type: object
-      properties:
-        id:
-          type: string
-          description: 'Organization Id'
-        name:
-          type: string
-          description: 'Display name for organization'
-        status:
-          type: string
-          description: 'status of organization'
-          enum:
-            - 'INACTIVE'
-            - 'REQUESTED'
-            - 'ACTIVE'
-      required:
-        - name
-        - id
-        - status
+      - $ref: '#/definitions/TimeModelMixin'
+      - type: object
+        properties:
+          id:
+            type: string
+            description: 'Organization Id'
+          name:
+            type: string
+            description: 'Display name for organization'
+          status:
+            type: string
+            description: 'status of organization'
+            enum:
+              - 'INACTIVE'
+              - 'REQUESTED'
+              - 'ACTIVE'
+        required:
+          - name
+          - id
+          - status
   OrganizationCreate:
     type: object
     properties:
@@ -5986,36 +6414,35 @@ definitions:
 
   TeamsPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/Team'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Team'
 
   Team:
     allOf:
-    - type: object
-      properties:
-        createdBy:
-          type: string
-          description: 'User who created the object'
-          readOnly: true
-        modifiedBy:
-          type: string
-          description: 'User who most recently modified the object'
-          readOnly: true
-        organizationId:
-          type: string
-          description: 'uuid for organization'
-        id:
-          type: string
-          format: UUID
-          description: Team ID
-    - $ref: '#/definitions/TimeModelMixin'
-    - $ref: '#/definitions/TeamCreate'
-
+      - type: object
+        properties:
+          createdBy:
+            type: string
+            description: 'User who created the object'
+            readOnly: true
+          modifiedBy:
+            type: string
+            description: 'User who most recently modified the object'
+            readOnly: true
+          organizationId:
+            type: string
+            description: 'uuid for organization'
+          id:
+            type: string
+            format: UUID
+            description: Team ID
+      - $ref: '#/definitions/TimeModelMixin'
+      - $ref: '#/definitions/TeamCreate'
 
   TeamCreate:
     type: object
@@ -6129,13 +6556,13 @@ definitions:
 
   DatasourcePaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/Datasource'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Datasource'
 
   License:
     type: object
@@ -6156,14 +6583,13 @@ definitions:
 
   LicensesPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/License'
-
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/License'
 
   SceneBase:
     allOf:
@@ -6275,23 +6701,23 @@ definitions:
 
   SceneBrowsePaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/SceneBrowse'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/SceneBrowse'
 
   SceneOrderedPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/SceneOrdered'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/SceneOrdered'
 
   FilterFields:
     type: object
@@ -6426,104 +6852,104 @@ definitions:
 
   Project:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/UserTrackingMixin'
-    - $ref: '#/definitions/TimeModelMixin'
-    - type: object
-      properties:
-        name:
-          type: string
-          description: 'The display name of the project'
-        slugLabel:
-          type: string
-          description: 'URL-safe version of name'
-          readOnly: true
-        description:
-          type: string
-          description: 'Long-form description of the project'
-        visibility:
-          description: 'Level of restriction on viewing'
-          type: string
-          enum: *VISIBILITY
-        tileVisibility:
-          description: 'Level of restriction on viewing'
-          type: string
-          enum: *VISIBILITY
-        isAOIProject:
-          type: boolean
-          description: 'Is true if project is an area-of-interest project'
-        aoiCadenceMillis:
-          type: number
-          format: int64
-        aoisLastChecked:
-          type: string
-          format: datetime
-        tags:
-          type: array
-          items:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - $ref: '#/definitions/TimeModelMixin'
+      - type: object
+        properties:
+          name:
             type: string
-        extent:
-          $ref: '#/definitions/Polygon'
-        manualOrder:
-          type: boolean
-          description: 'Is true if project scenes are manually ordered'
-        isSingleBand:
-          type: boolean
-          description: 'Use single band options to render instead of bands'
-        singleBandOptions:
-          $ref: '#/definitions/SingleBandOptions'
-        defaultAnnotationGroup:
-          type: string
-          format: uuid
-          description: 'Default group to add annotations to when they are created'
-        extras:
-          type: object
-          description: 'Optional additional json metadata'
-        defaultLayerId:
-          type: string
-          format: uuid
-          description: 'Default project layer to interact with'
+            description: 'The display name of the project'
+          slugLabel:
+            type: string
+            description: 'URL-safe version of name'
+            readOnly: true
+          description:
+            type: string
+            description: 'Long-form description of the project'
+          visibility:
+            description: 'Level of restriction on viewing'
+            type: string
+            enum: *VISIBILITY
+          tileVisibility:
+            description: 'Level of restriction on viewing'
+            type: string
+            enum: *VISIBILITY
+          isAOIProject:
+            type: boolean
+            description: 'Is true if project is an area-of-interest project'
+          aoiCadenceMillis:
+            type: number
+            format: int64
+          aoisLastChecked:
+            type: string
+            format: datetime
+          tags:
+            type: array
+            items:
+              type: string
+          extent:
+            $ref: '#/definitions/Polygon'
+          manualOrder:
+            type: boolean
+            description: 'Is true if project scenes are manually ordered'
+          isSingleBand:
+            type: boolean
+            description: 'Use single band options to render instead of bands'
+          singleBandOptions:
+            $ref: '#/definitions/SingleBandOptions'
+          defaultAnnotationGroup:
+            type: string
+            format: uuid
+            description: 'Default group to add annotations to when they are created'
+          extras:
+            type: object
+            description: 'Optional additional json metadata'
+          defaultLayerId:
+            type: string
+            format: uuid
+            description: 'Default project layer to interact with'
 
   Image:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/TimeModelMixin'
-    - $ref: '#/definitions/UserTrackingMixin'
-    - type: object
-      required:
-        - filename
-        - sourceUri
-      properties:
-        bands:
-          type: array
-          description: 'list of band types for image; a single band denotes a single band image, multiple bands should be listed in order (e.g if it is an RGB tiff then bands should be [red, green blue])'
-          items:
-            $ref: '#/definitions/Band'
-        filename:
-          type: string
-          description: 'The basename of the file holding this image'
-        sourceUri:
-          type: string
-          description: 'An absolute location for accessing this image somewhere in the universe'
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/TimeModelMixin'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        required:
+          - filename
+          - sourceUri
+        properties:
+          bands:
+            type: array
+            description: 'list of band types for image; a single band denotes a single band image, multiple bands should be listed in order (e.g if it is an RGB tiff then bands should be [red, green blue])'
+            items:
+              $ref: '#/definitions/Band'
+          filename:
+            type: string
+            description: 'The basename of the file holding this image'
+          sourceUri:
+            type: string
+            description: 'An absolute location for accessing this image somewhere in the universe'
 
   ImageWithDownloadUri:
     allOf:
-    - $ref: '#/definitions/Image'
-    - type: object
-      properties:
-        downloadUri:
-          type: string
-          description: 'URI to downloadable resource. This is not always the same as `sourceUri`.'
+      - $ref: '#/definitions/Image'
+      - type: object
+        properties:
+          downloadUri:
+            type: string
+            description: 'URI to downloadable resource. This is not always the same as `sourceUri`.'
 
   ProjectPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/Project'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Project'
 
   AoiPaginated:
     allOf:
@@ -6550,172 +6976,172 @@ definitions:
           type: integer
   Band:
     allOf:
-    - $ref: '#/definitions/BandCreate'
-    - $ref: '#/definitions/BaseModel'
-    - type: object
-      properties:
-        image:
-          type: string
-          format: UUID
+      - $ref: '#/definitions/BandCreate'
+      - $ref: '#/definitions/BaseModel'
+      - type: object
+        properties:
+          image:
+            type: string
+            format: UUID
   ThumbnailIdentified:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - type: object
-      properties:
-        thumbnailSize:
-          type: string
-          description: 'Summary of size'
-          enum:
-            - 'SMALL'
-            - 'LARGE'
-            - 'SQUARE'
-        widthPx:
-          type: integer
-          format: int32
-          description: 'The width of the thumbnail, in pixels'
-        heightPx:
-          type: integer
-          format: int32
-          description: 'The height of the thumbnail, in pixels'
-        sceneId:
-          type: string
-          format: uuid
-          description: 'Scene that image is associated with'
-        url:
-          type: string
-          format: uri
-          description: 'A client-accessible URL pointing to the image file'
+      - $ref: '#/definitions/BaseModel'
+      - type: object
+        properties:
+          thumbnailSize:
+            type: string
+            description: 'Summary of size'
+            enum:
+              - 'SMALL'
+              - 'LARGE'
+              - 'SQUARE'
+          widthPx:
+            type: integer
+            format: int32
+            description: 'The width of the thumbnail, in pixels'
+          heightPx:
+            type: integer
+            format: int32
+            description: 'The height of the thumbnail, in pixels'
+          sceneId:
+            type: string
+            format: uuid
+            description: 'Scene that image is associated with'
+          url:
+            type: string
+            format: uri
+            description: 'A client-accessible URL pointing to the image file'
 
   Thumbnail:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/TimeModelMixin'
-    - $ref: '#/definitions/ThumbnailIdentified'
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/TimeModelMixin'
+      - $ref: '#/definitions/ThumbnailIdentified'
 
   Tool:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/UserTrackingMixin'
-    - type: object
-      properties:
-        title:
-          type: string
-          description: 'Title of tool displayed to users'
-        description:
-          type: string
-          description: |
-            A long description of the tool, including is use-cases,
-            purpose, and any potential references
-        organization:
-          description: 'The owning organization of the Tool'
-          items:
-            $ref: '#/definitions/Organization'
-        requirements:
-          type: string
-          description: 'A brief description of requirements, including any relevant band requirements'
-        tags:
-          type: array
-          description: 'Tool tags associated with a tool'
-          items:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          title:
             type: string
-        categories:
-          type: array
-          description: 'Category of geoprocessing tool'
-          items:
+            description: 'Title of tool displayed to users'
+          description:
             type: string
-        license:
-          type: string
-          description: 'Usage license of tool'
-        compatibleDatasources:
-          type: array
-          description: 'Datasources that can be used with this geoprocessing tool'
-          items:
+            description: |
+              A long description of the tool, including is use-cases,
+              purpose, and any potential references
+          organization:
+            description: 'The owning organization of the Tool'
+            items:
+              $ref: '#/definitions/Organization'
+          requirements:
             type: string
-        stars:
-          type: number
-          description: 'User rating of geoprocessing tool'
-        visibility:
-          type: string
-          description: 'Level of restriction on viewing'
-          enum:
-            - 'PUBLIC'
-            - 'ORGANIZATION'
-            - 'PRIVATE'
+            description: 'A brief description of requirements, including any relevant band requirements'
+          tags:
+            type: array
+            description: 'Tool tags associated with a tool'
+            items:
+              type: string
+          categories:
+            type: array
+            description: 'Category of geoprocessing tool'
+            items:
+              type: string
+          license:
+            type: string
+            description: 'Usage license of tool'
+          compatibleDatasources:
+            type: array
+            description: 'Datasources that can be used with this geoprocessing tool'
+            items:
+              type: string
+          stars:
+            type: number
+            description: 'User rating of geoprocessing tool'
+          visibility:
+            type: string
+            description: 'Level of restriction on viewing'
+            enum:
+              - 'PUBLIC'
+              - 'ORGANIZATION'
+              - 'PRIVATE'
   ToolPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/Tool'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Tool'
   ToolTag:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/UserTrackingMixin'
-    - type: object
-      properties:
-        label:
-          type: string
-          description: 'User displayed label'
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          label:
+            type: string
+            description: 'User displayed label'
   ToolTagPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/ToolTag'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/ToolTag'
   ToolCategory:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - type: object
-      properties:
-        category:
-          type: string
-          description: 'User displayed label for category'
-        slugLabel:
-          type: string
-          description: 'Slug label for use in urls'
+      - $ref: '#/definitions/BaseModel'
+      - type: object
+        properties:
+          category:
+            type: string
+            description: 'User displayed label for category'
+          slugLabel:
+            type: string
+            description: 'Slug label for use in urls'
   ToolCategoryPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/ToolCategory'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/ToolCategory'
   ToolRun:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/UserTrackingMixin'
-    - type: object
-      properties:
-        executionParameters:
-          type: object
-          description: 'Parameters for running the tool'
-        name:
-          type: string
-        visibility:
-          type: string
-          description: 'Level of restriction on viewing'
-          enum:
-            - 'PUBLIC'
-            - 'ORGANIZATION'
-            - 'PRIVATE'
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          executionParameters:
+            type: object
+            description: 'Parameters for running the tool'
+          name:
+            type: string
+          visibility:
+            type: string
+            description: 'Level of restriction on viewing'
+            enum:
+              - 'PUBLIC'
+              - 'ORGANIZATION'
+              - 'PRIVATE'
 
   ToolRunPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/ToolRun'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/ToolRun'
 
   ToolRunWithRelated:
     allOf:
@@ -6728,7 +7154,7 @@ definitions:
           layerColorGroupHex:
             type: string
           layerGeometry:
-            $ref: "#/definitions/Geometry"
+            $ref: '#/definitions/Geometry'
 
   ToolRunWithRelatedPaginated:
     allOf:
@@ -6789,74 +7215,80 @@ definitions:
   UploadCreate:
     type: object
     allOf:
-    - $ref: '#/definitions/BaseCreate'
-    - type: object
-      properties:
-        uploadStatus:
-          type: string
-          description: 'Status of upload'
-          enum:
-            - 'CREATED'
-            - 'UPLOADING'
-            - 'UPLOADED'
-            - 'QUEUED'
-            - 'PROCESSING'
-            - 'COMPLETE'
-            - 'FAILED'
-            - 'ABORTED'
-        files:
-          type: array
-          items:
+      - $ref: '#/definitions/BaseCreate'
+      - type: object
+        properties:
+          uploadStatus:
             type: string
-          description: 'An array of strings of file locations. If a source is provided, this can be empty'
-        uploadType:
-          type: string
-          description: 'Source of files and uploads'
-          enum:
-            - 'DROPBOX'
-            - 'S3'
-            - 'LOCAL'
-            - 'PLANET'
-            - 'MODIS_USGS'
-        fileType:
-          type: string
-          description: 'type of data being uploaded, limited to two options right now'
-          enum:
-            - 'GEOTIFF'
-            - 'GEOTIFF_WITH_METADATA'
-        datasource:
-          type: string
-          description: 'datasource of tiffs being uploaded'
-          format: uuid
-        visibility:
-          type: string
-          description: 'Level of restriction on viewing'
-          enum:
-            - 'PUBLIC'
-            - 'ORGANIZATION'
-            - 'PRIVATE'
-        projectId:
-          type: string
-          format: uuid
-          description: 'during the import process, add scenes to a project if specified'
-        source:
-          type: string
-          description: 'for uploads of type S3 and Dropbox, the location of the files to import. If files are specified, this field is ignored'
-        metadata:
-          $ref: '#/definitions/UploadMetadata'
+            description: 'Status of upload'
+            enum:
+              - 'CREATED'
+              - 'UPLOADING'
+              - 'UPLOADED'
+              - 'QUEUED'
+              - 'PROCESSING'
+              - 'COMPLETE'
+              - 'FAILED'
+              - 'ABORTED'
+          files:
+            type: array
+            items:
+              type: string
+            description: 'An array of strings of file locations. If a source is provided, this can be empty'
+          uploadType:
+            type: string
+            description: 'Source of files and uploads'
+            enum:
+              - 'DROPBOX'
+              - 'S3'
+              - 'LOCAL'
+              - 'PLANET'
+              - 'MODIS_USGS'
+          fileType:
+            type: string
+            description: 'type of data being uploaded, limited to two options right now'
+            enum:
+              - 'GEOTIFF'
+              - 'GEOTIFF_WITH_METADATA'
+              - 'NON_SPATIAL'
+          datasource:
+            type: string
+            description: 'datasource of tiffs being uploaded'
+            format: uuid
+          visibility:
+            type: string
+            description: 'Level of restriction on viewing'
+            enum:
+              - 'PUBLIC'
+              - 'ORGANIZATION'
+              - 'PRIVATE'
+          projectId:
+            type: string
+            format: uuid
+            description: 'during the import process, add scenes to a project if specified'
+          source:
+            type: string
+            description: 'for uploads of type S3 and Dropbox, the location of the files to import. If files are specified, this field is ignored'
+          metadata:
+            $ref: '#/definitions/UploadMetadata'
+          keepInSourceBucket:
+            type: boolean
+            description: 'For S3 upload(s), use the same data bucket as source files for scene ingest location if set to true; use RF data bucket if set to false. It is false by default'
+            example: false
+
   Upload:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/UserTrackingMixin'
-    - $ref: '#/definitions/UploadCreate'
-    - type: object
-      properties:
-        files:
-          type: array
-          items:
-            type: string
-        metadata:
-          type: object
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - $ref: '#/definitions/UploadCreate'
+      - type: object
+        properties:
+          files:
+            type: array
+            items:
+              type: string
+          metadata:
+            type: object
   UploadMetadata:
     type: object
     properties:
@@ -6868,20 +7300,20 @@ definitions:
         format: datetime
   UploadPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/Upload'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Upload'
   UploadCredentials:
     type: object
     properties:
       AccessKeyId:
         type: string
       SecretAccessKey:
-         type: string
+        type: string
       SessionToken:
         type: string
       Expiration:
@@ -7012,77 +7444,77 @@ definitions:
   ExportCreate:
     type: object
     allOf:
-    - $ref: '#/definitions/BaseCreate'
-    - type: object
-      properties:
-        projectId:
-          type: string
-          format: uuid
-        sceneIds:
-          type: array
-          items:
+      - $ref: '#/definitions/BaseCreate'
+      - type: object
+        properties:
+          projectId:
             type: string
             format: uuid
-        exportStatus:
-          type: string
-          description: 'Status of export'
-          enum:
-            - 'CREATED'
-            - 'EXPORTING'
-            - 'EXPORTED'
-            - 'QUEUED'
-            - 'PROCESSING'
-            - 'COMPLETE'
-            - 'FAILED'
-            - 'ABORTED'
-        exportType:
-          type: string
-          description: 'Source of exports'
-          enum:
-            - 'DROPBOX'
-            - 'S3'
-            - 'LOCAL'
-        visibility:
-          type: string
-          description: 'Level of restriction on viewing'
-          enum:
-            - 'PUBLIC'
-            - 'ORGANIZATION'
-            - 'PRIVATE'
-        toolRunId:
-          type: string
-          format: uuid
-          description: 'Optional id of a ToolRun. Specifying this will perform an RDD-AST-based export job.'
-        exportOptions:
-          $ref: '#/definitions/ExportOptions'
+          sceneIds:
+            type: array
+            items:
+              type: string
+              format: uuid
+          exportStatus:
+            type: string
+            description: 'Status of export'
+            enum:
+              - 'CREATED'
+              - 'EXPORTING'
+              - 'EXPORTED'
+              - 'QUEUED'
+              - 'PROCESSING'
+              - 'COMPLETE'
+              - 'FAILED'
+              - 'ABORTED'
+          exportType:
+            type: string
+            description: 'Source of exports'
+            enum:
+              - 'DROPBOX'
+              - 'S3'
+              - 'LOCAL'
+          visibility:
+            type: string
+            description: 'Level of restriction on viewing'
+            enum:
+              - 'PUBLIC'
+              - 'ORGANIZATION'
+              - 'PRIVATE'
+          toolRunId:
+            type: string
+            format: uuid
+            description: 'Optional id of a ToolRun. Specifying this will perform an RDD-AST-based export job.'
+          exportOptions:
+            $ref: '#/definitions/ExportOptions'
   Export:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/UserTrackingMixin'
-    - $ref: '#/definitions/ExportCreate'
-    - type: object
-      properties:
-        exportStatus:
-          type: string
-          description: 'Status of export'
-          enum:
-            - 'CREATED'
-            - 'EXPORTING'
-            - 'EXPORTED'
-            - 'QUEUED'
-            - 'PROCESSING'
-            - 'COMPLETE'
-            - 'FAILED'
-            - 'ABORTED'
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - $ref: '#/definitions/ExportCreate'
+      - type: object
+        properties:
+          exportStatus:
+            type: string
+            description: 'Status of export'
+            enum:
+              - 'CREATED'
+              - 'EXPORTING'
+              - 'EXPORTED'
+              - 'QUEUED'
+              - 'PROCESSING'
+              - 'COMPLETE'
+              - 'FAILED'
+              - 'ABORTED'
   ExportPaginated:
     allOf:
-    - $ref: '#/definitions/PaginatedResponse'
-    - type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/definitions/Export'
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Export'
   ExportOptions:
     type: object
     description: 'export params'
@@ -7205,10 +7637,10 @@ definitions:
         type: string
       properties:
         allOf:
-        - $ref: '#/definitions/BaseModel'
-        - $ref: '#/definitions/TimeModelMixin'
-        - $ref: '#/definitions/UserTrackingMixin'
-        - type: object
+          - $ref: '#/definitions/BaseModel'
+          - $ref: '#/definitions/TimeModelMixin'
+          - $ref: '#/definitions/UserTrackingMixin'
+          - type: object
         properties:
           label:
             type: string
@@ -7232,8 +7664,11 @@ definitions:
           annotationGroup:
             type: string
             format: uuid
+          taskId:
+            type: string
+            format: uuid
       geometry:
-        $ref: "#/definitions/Geometry"
+        $ref: '#/definitions/Geometry'
 
   AnnotationFeatureWithOwnerInfo:
     type: object
@@ -7242,10 +7677,10 @@ definitions:
         type: string
       properties:
         allOf:
-        - $ref: '#/definitions/BaseModel'
-        - $ref: '#/definitions/TimeModelMixin'
-        - $ref: '#/definitions/UserTrackingMixin'
-        - type: object
+          - $ref: '#/definitions/BaseModel'
+          - $ref: '#/definitions/TimeModelMixin'
+          - $ref: '#/definitions/UserTrackingMixin'
+          - type: object
         properties:
           label:
             type: string
@@ -7274,7 +7709,7 @@ definitions:
           ownerProfileImageUri:
             type: string
       geometry:
-        $ref: "#/definitions/Geometry"
+        $ref: '#/definitions/Geometry'
 
   AnnotationFeatureUpdate:
     type: object
@@ -7303,8 +7738,11 @@ definitions:
           annotationGroup:
             type: string
             format: uuid
+          taskId:
+            type: string
+            format: uuid
       geometry:
-        $ref: "#/definitions/Geometry"
+        $ref: '#/definitions/Geometry'
 
   AnnotationFeatureCreate:
     type: object
@@ -7313,8 +7751,8 @@ definitions:
         type: string
       properties:
         allOf:
-        - $ref: '#/definitions/BaseCreate'
-        - type: object
+          - $ref: '#/definitions/BaseCreate'
+          - type: object
         properties:
           label:
             type: string
@@ -7335,8 +7773,11 @@ definitions:
           annotationGroup:
             type: string
             format: uuid
+          taskId:
+            type: string
+            format: uuid
       geometry:
-        $ref: "#/definitions/Geometry"
+        $ref: '#/definitions/Geometry'
 
   AnnotationFeatureCollection:
     type: object
@@ -7377,17 +7818,17 @@ definitions:
         type: string
       properties:
         allOf:
-        - $ref: '#/definitions/BaseModel'
-        - $ref: '#/definitions/TimeModelMixin'
-        - $ref: '#/definitions/UserTrackingMixin'
-        - type: object
+          - $ref: '#/definitions/BaseModel'
+          - $ref: '#/definitions/TimeModelMixin'
+          - $ref: '#/definitions/UserTrackingMixin'
+          - type: object
         properties:
           name:
             type: string
           description:
             type: string
       geometry:
-        $ref: "#/definitions/Geometry"
+        $ref: '#/definitions/Geometry'
 
   ShapeFeatureUpdate:
     type: object
@@ -7402,7 +7843,7 @@ definitions:
           description:
             type: string
       geometry:
-        $ref: "#/definitions/Geometry"
+        $ref: '#/definitions/Geometry'
 
   ShapeFeatureCreate:
     type: object
@@ -7411,15 +7852,15 @@ definitions:
         type: string
       properties:
         allOf:
-        - $ref: '#/definitions/BaseCreate'
-        - type: object
+          - $ref: '#/definitions/BaseCreate'
+          - type: object
         properties:
           name:
             type: string
           description:
             type: string
       geometry:
-        $ref: "#/definitions/Geometry"
+        $ref: '#/definitions/Geometry'
 
   ShapeFeatureCollection:
     type: object
@@ -7470,9 +7911,9 @@ definitions:
   AnnotationGroup:
     type: object
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - $ref: '#/definitions/TimeModelMixin'
-    - $ref: '#/definitions/UserTrackingMixin'
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/TimeModelMixin'
+      - $ref: '#/definitions/UserTrackingMixin'
     properties:
       name:
         type: string
@@ -7502,3 +7943,155 @@ definitions:
         type: string
       counts:
         type: object
+  TaskFeature:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      type:
+        type: string
+      properties:
+        allOf:
+          - $ref: '#/definitions/BaseModel'
+          - $ref: '#/definitions/TimeModelMixin'
+          - $ref: '#/definitions/UserTrackingMixin'
+          - type: object
+        properties:
+          projectId:
+            type: string
+            format: uuid
+          projectLayerId:
+            type: string
+            format: uuid
+          status:
+            $ref: '#/definitions/TaskStatus'
+          lockedBy:
+            type: string
+          lockedOn:
+            type: string
+            format: date-time
+          actions:
+            type: array
+            items:
+              $ref: '#/definitions/TaskActionStamp'
+      geometry:
+        $ref: '#/definitions/Geometry'
+
+  TaskFeatureCreate:
+    type: object
+    required:
+      - type
+      - properties
+      - geometry
+    properties:
+      type:
+        type: string
+      properties:
+        allOf:
+          - $ref: '#/definitions/BaseCreate'
+          - type: object
+        properties:
+          projectId:
+            type: string
+            format: uuid
+          projectLayerId:
+            type: string
+            format: uuid
+          status:
+            $ref: '#/definitions/TaskStatus'
+      geometry:
+        $ref: '#/definitions/Geometry'
+
+  TaskFeatureUpdate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        type: object
+        properties:
+          projectId:
+            type: string
+            format: uuid
+          projectLayerId:
+            type: string
+            format: uuid
+          status:
+            $ref: '#/definitions/TaskStatus'
+      geometry:
+        $ref: '#/definitions/Geometry'
+
+  TaskStatus:
+    type: string
+    enum:
+      [
+        UNLABELED,
+        LABELING_IN_PROGRESS,
+        LABELED,
+        VALIDATION_IN_PROGRESS,
+        VALIDATED,
+      ]
+
+  TaskActionStamp:
+    type: object
+    properties:
+      taskId:
+        type: string
+        format: uuid
+      userId:
+        type: string
+      timestamp:
+        type: string
+        format: date-time
+      fromStatus:
+        $ref: '#/definitions/TaskStatus'
+      toStatus:
+        $ref: '#/definitions/TaskStatus'
+
+  TaskFeatureCollection:
+    type: object
+    properties:
+      type:
+        type: string
+      features:
+        type: array
+        items:
+          $ref: '#/definitions/TaskFeature'
+
+  TaskFeatureCollectionPaginated:
+    type: object
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          type:
+            type: string
+          features:
+            type: array
+            items:
+              $ref: '#/definitions/TaskFeature'
+  TaskFeatureCollectionCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      features:
+        type: array
+        items:
+          $ref: '#/definitions/TaskFeatureCreate'
+  TaskGridCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        properties:
+          xSizeMeters:
+            type: integer
+            description: length of task along the x-axis in meters
+          ySizeMeters:
+            type: integer
+            description: length of task along the y-axis in meters
+      geometry:
+        $ref: '#/definitions/Geometry'

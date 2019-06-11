@@ -1,7 +1,7 @@
 package com.rasterfoundry.batch
 
 import com.rasterfoundry.batch.aoi.FindAOIProjects
-import com.rasterfoundry.batch.cogMetadata.HistogramBackfill
+import com.rasterfoundry.batch.cogMetadata.{HistogramBackfill, OverviewBackfill}
 import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
 import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.aoi.UpdateAOIProject
@@ -11,13 +11,14 @@ import com.rasterfoundry.batch.notification.NotifyIngestStatus
 object Main {
   val modules = Map[String, Array[String] => Unit](
     CreateExportDef.name -> (CreateExportDef.main(_)),
-    UpdateExportStatus.name -> (UpdateExportStatus.main(_)),
     FindAOIProjects.name -> (FindAOIProjects.main(_)),
     HealthCheck.name -> (HealthCheck.main(_)),
     HistogramBackfill.name -> (HistogramBackfill.main(_)),
     NotifyIngestStatus.name -> (NotifyIngestStatus.main(_)),
+    OverviewBackfill.name -> (OverviewBackfill.main(_)),
     ReadStacFeature.name -> (ReadStacFeature.main(_)),
-    UpdateAOIProject.name -> (UpdateAOIProject.main(_))
+    UpdateAOIProject.name -> (UpdateAOIProject.main(_)),
+    UpdateExportStatus.name -> (UpdateExportStatus.main(_))
   )
 
   def main(args: Array[String]): Unit = {

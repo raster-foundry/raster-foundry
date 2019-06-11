@@ -10,10 +10,12 @@ sealed abstract class FileType(val repr: String) {
 object FileType {
   case object Geotiff extends FileType("GEOTIFF")
   case object GeotiffWithMetadata extends FileType("GEOTIFF_WITH_METADATA")
+  case object NonSpatial extends FileType("NON_SPATIAL")
 
   def fromString(s: String): FileType = s.toUpperCase match {
     case "GEOTIFF"               => Geotiff
     case "GEOTIFF_WITH_METADATA" => GeotiffWithMetadata
+    case "NON_SPATIAL"           => NonSpatial
   }
 
   implicit val fileTypeEncoder: Encoder[FileType] =

@@ -33,17 +33,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                       -f "${DIR}/../docker-compose.test.yml"\
                       build app-migrations
 
-            echo "Building application JAR"
+            echo "Building JARs (application, lambda overview, backsplash)"
             docker-compose \
                 -f "${DIR}/../docker-compose.test.yml" \
                 run --rm --no-deps \
-                build api/assembly
-
-            echo "Building backsplash JAR"
-            docker-compose \
-                -f "${DIR}/../docker-compose.test.yml" \
-                run --rm --no-deps \
-                build backsplash-server/assembly
+                build "; api/assembly; backsplash-server/assembly; lambdaOverviews/assembly"
 
             echo "Building python lambda functions"
             docker-compose -f "${DIR}/../docker-compose.test.yml" \
@@ -61,12 +55,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 "${DIR}/../app-lambda/package.zip" \
                 "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/package-${GIT_COMMIT}.zip"
             rm "${DIR}/../app-lambda/package.zip"
-
-            echo "Building Lambda Overview Jar"
-            docker-compose \
-                -f "${DIR}/../docker-compose.test.yml" \
-                run --rm --no-deps \
-                build "++ 2.12.8 lambdaOverviews/assembly"
 
             echo "Uploading Java Lambda Overview Function"
             aws s3 cp \

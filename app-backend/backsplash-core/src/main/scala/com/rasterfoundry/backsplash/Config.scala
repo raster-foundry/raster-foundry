@@ -41,6 +41,5 @@ object Config {
 
     val memcachedTimeoutMilliseconds =
       cacheConfig.getInt("core.memcachedTimeoutMilliseconds")
-
   }
 }

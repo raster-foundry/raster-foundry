@@ -10,10 +10,37 @@
 
 ### Fixed
 
+### Security
+
+## [1.22.0](https://github.com/raster-foundry/raster-foundry/tree/1.22.0) (2019-06-11)
+
+### Added
+
+- Added `ActionType` for `CREATE` [\#4992](https://github.com/raster-foundry/raster-foundry/pull/4992)
+- Added `ObjectType` for all entities [\#4992](https://github.com/raster-foundry/raster-foundry/pull/4992)
+- Added job to backfill low-zoom overviews for existing project layers [\#4970](https://github.com/raster-foundry/raster-foundry/pull/4970)
+- Convert BacksplashImage to a trait [\#4952](https://github.com/raster-foundry/raster-foundry/pull/4952)
+- Kickoff project layer overview generation reactively [\#4936](https://github.com/raster-foundry/raster-foundry/pull/4936)
+- Added ability to persist container service core dumps [\#4955](https://github.com/raster-foundry/raster-foundry/pull/4955)
+- Added database support for tasks on projects + project layers [\#4996](https://github.com/raster-foundry/raster-foundry/pull/4996)
+- Support storing processed uploads in source bucket [\#4997](https://github.com/raster-foundry/raster-foundry/pull/4997)
+- Add spec for user scopes CRUD [\#5002](https://github.com/raster-foundry/raster-foundry/pull/5002)
+- Use zoom level in OverviewInput for lambda function to generate layer overviews [\#4998](https://github.com/raster-foundry/raster-foundry/pull/4998)
+- Added endpoints for project layer "tasks" [\#5008](https://github.com/raster-foundry/raster-foundry/pull/5008)
+- Add user scope migration and data model [\#5009](https://github.com/raster-foundry/raster-foundry/pull/5009)
+- Updated healthcheck to include loading tile metadata [\#5017](https://github.com/raster-foundry/raster-foundry/pull/5017)
+- Added task grid endpoint [\#5021](https://github.com/raster-foundry/raster-foundry/pull/5021)
+- Made tile server report that it's sick after it serves a number of requests [\#5024](https://github.com/raster-foundry/raster-foundry/pull/5024)
+
+### Changed
+
+- Use flyway for running migrations and publish image for flyway migrations [\#4987](https://github.com/raster-foundry/raster-foundry/pull/4987)
+- Added support for uploading non-spatial data [\#4993](https://github.com/raster-foundry/raster-foundry/pull/4993)[\#5001](https://github.com/raster-foundry/raster-foundry/pull/5001)
+
+### Fixed
+
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
 - Fix Sentinel-2 metadata file download [\#4969](https://github.com/raster-foundry/raster-foundry/pull/4969)
-
-### Security
 
 ## [1.21.3](https://github.com/raster-foundry/raster-foundry/tree/1.21.3) (2019-06-06)
 
@@ -45,6 +72,7 @@
 - Add owner name and profile URL to the return of annotation GET endpoint [\#4924](https://github.com/raster-foundry/raster-foundry/pull/4924)
 - Added request counting middleware to backsplash-server [\#4919](https://github.com/raster-foundry/raster-foundry/pull/4919)
 - Enabled getting and writing user group roles from JWT [\#4931](https://github.com/raster-foundry/raster-foundry/pull/4931)
+- Added check for pre-generated overview tif for low zoom levels [\#4942](https://github.com/raster-foundry/raster-foundry/pull/4942)
 
 ### Fixed
 

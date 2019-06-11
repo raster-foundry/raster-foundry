@@ -16,7 +16,7 @@ import doobie.Transactor
 import doobie.implicits._
 
 class BacksplashMamlAdapter[HistStore, LayerStore: ProjectStore](
-    mosaicImplicits: MosaicImplicits[HistStore],
+    mosaicImplicits: MosaicImplicits[HistStore, LayerStore],
     layerStore: LayerStore,
     xa: Transactor[IO]) {
   import mosaicImplicits._

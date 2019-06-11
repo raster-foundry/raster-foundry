@@ -6,6 +6,7 @@ import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel.{Scene, User, _}
 
 import cats.implicits._
+import cats.effect.{IO, LiftIO}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -13,10 +14,13 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import geotrellis.vector.{Geometry, Polygon, Projected}
 import io.circe.syntax._
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.model.ObjectMetadata
 
 import scala.concurrent.duration._
 import java.sql.Timestamp
 import java.util.{Date, UUID}
+import java.net.{URI, URLDecoder}
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneDao()
@@ -25,7 +29,8 @@ object SceneDao
     extends Dao[Scene]
     with LazyLogging
     with ObjectPermissions[Scene]
-    with AWSBatch {
+    with AWSBatch
+    with AWSLambda {
 
   type KickoffIngest = Boolean
 
@@ -240,6 +245,21 @@ object SceneDao
               } else {
                 n.pure[ConnectionIO]
               }
+            case (previous, IngestStatus.Ingested)
+                if previous != IngestStatus.Ingested =>
+              n.pure[ConnectionIO] <*
+                SceneToLayerDao
+                  .getProjectsAndLayersBySceneId(scene.id)
+                  .map(spls => {
+                    spls.map(spl => {
+                      logger
+                        .info(
+                          s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}")
+                      kickoffLayerOverviewCreate(
+                        spl.projectId,
+                        spl.projectLayerId).pure[ConnectionIO]
+                    })
+                  })
             case _ =>
               n.pure[ConnectionIO]
           }
@@ -264,6 +284,7 @@ object SceneDao
         Seq(
           MosaicDefinition(
             scene.id,
+            UUID.randomUUID, // we don't have a project id here, so fake it
             ColorCorrect.Params(
               redBand,
               greenBand,
@@ -291,6 +312,20 @@ object SceneDao
           ))
       } getOrElse { Seq.empty }
     }
+  }
+
+  def getSentinelMetadata(metadataUrl: String)(implicit L: LiftIO[ConnectionIO])
+    : ConnectionIO[(Array[Byte], ObjectMetadata)] = {
+    val s3Client = S3(region = Some(S3RegionEnum(Regions.EU_CENTRAL_1)))
+    val bucketAndPrefix =
+      s3Client.bucketAndPrefixFromURI(
+        new URI(URLDecoder.decode(metadataUrl, "UTF-8")))
+    val s3Object =
+      s3Client.getObject(bucketAndPrefix._1, bucketAndPrefix._2, true)
+    val metaData = S3.getObjectMetadata(s3Object)
+    L.liftIO(IO {
+      (S3.getObjectBytes(s3Object), metaData)
+    })
   }
 
   def authQuery(user: User,

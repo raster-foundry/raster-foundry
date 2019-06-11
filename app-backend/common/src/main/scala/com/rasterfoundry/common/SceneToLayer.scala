@@ -47,3 +47,9 @@ final case class BatchParams(items: List[SceneCorrectionParams])
 final case class ProjectColorModeParams(redBand: Int,
                                         greenBand: Int,
                                         blueBand: Int)
+
+final case class SceneWithProjectIdLayerId(
+    sceneId: UUID,
+    projectId: UUID,
+    projectLayerId: UUID
+)

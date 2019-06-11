@@ -43,15 +43,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 "java -cp /opt/raster-foundry/jars/batch-assembly.jar com.rasterfoundry.batch.Main healthcheck"
         fi
 
-        echo "Updating Scala dependencies"
+        echo "Linting Scala source code and running tests"
         docker-compose \
-            run --rm --no-deps sbt \
-            update
-
-        echo "Linting Scala source code"
-        docker-compose \
-            run --rm --no-deps sbt \
-            ";scalafmtCheck;scalafmtSbtCheck;scapegoat;unusedCompileDependenciesTest"
+            run --rm sbt \
+            ";scalafmtCheck;scalafmtSbtCheck;scapegoat;unusedCompileDependenciesTest;test"
 
         echo "Validating API service spec"
         docker-compose \
@@ -64,11 +59,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend run validate-tile-spec
-
-        echo "Executing Scala test suite"
-        docker-compose \
-            run --rm sbt \
-            test
 
     fi
 fi
