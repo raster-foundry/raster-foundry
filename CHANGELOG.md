@@ -4,6 +4,18 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Fixed
+
+### Security
+
+## [1.22.0](https://github.com/raster-foundry/raster-foundry/tree/1.22.0) (2019-06-11)
+
+### Added
+
 - Added `ActionType` for `CREATE` [\#4992](https://github.com/raster-foundry/raster-foundry/pull/4992)
 - Added `ObjectType` for all entities [\#4992](https://github.com/raster-foundry/raster-foundry/pull/4992)
 - Added job to backfill low-zoom overviews for existing project layers [\#4970](https://github.com/raster-foundry/raster-foundry/pull/4970)
@@ -25,14 +37,10 @@
 - Use flyway for running migrations and publish image for flyway migrations [\#4987](https://github.com/raster-foundry/raster-foundry/pull/4987)
 - Added support for uploading non-spatial data [\#4993](https://github.com/raster-foundry/raster-foundry/pull/4993)[\#5001](https://github.com/raster-foundry/raster-foundry/pull/5001)
 
-### Deprecated
-
 ### Fixed
 
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
 - Fix Sentinel-2 metadata file download [\#4969](https://github.com/raster-foundry/raster-foundry/pull/4969)
-
-### Security
 
 ## [1.21.3](https://github.com/raster-foundry/raster-foundry/tree/1.21.3) (2019-06-06)
 
