@@ -52,7 +52,7 @@ export default class ShareController {
         let token = this.authService.token();
         let queryParameters = token ? {token: token} : null;
         let url = this.projectService.getProjectTileURL(this.project, queryParameters);
-        let layer = L.tileLayer(url, {maxZoom: BUILDCONFIG.TILES_MAX_ZOOM});
+        let layer = L.tileLayer(url, {maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM});
 
         this.getMap().then(m => {
             m.addLayer('share-layer', layer);

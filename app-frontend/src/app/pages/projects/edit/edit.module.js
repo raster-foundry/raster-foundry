@@ -142,7 +142,7 @@ class ProjectsEditController {
             {token: this.authService.token()}
         );
         let layer = L.tileLayer(url, {
-            maxZoom: BUILDCONFIG.TILES_MAX_ZOOM
+            maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM
         });
 
         this.getMap().then(m => {
