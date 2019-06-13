@@ -74,7 +74,7 @@ class SceneDetailModalController {
                         greenBand: rgbBands.GREEN,
                         blueBand: rgbBands.BLUE
                     }),
-                    { maxZoom: BUILDCONFIG.TILES_MAX_ZOOM }
+                    { maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM }
                 ),
                 true
             );

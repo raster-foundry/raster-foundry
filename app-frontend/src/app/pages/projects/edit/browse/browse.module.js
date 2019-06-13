@@ -231,7 +231,7 @@ class ProjectsSceneBrowserController {
                         blueBand: rgbBands.BLUE
                     }
                 ),
-                {maxZoom: BUILDCONFIG.TILES_MAX_ZOOM})
+                {maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM})
             );
         });
     }

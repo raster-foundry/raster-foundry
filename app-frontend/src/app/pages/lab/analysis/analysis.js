@@ -254,7 +254,7 @@ class LabAnalysisController {
     }
 
     createPreviewLayers() {
-        const layerOptions = {maxZoom: BUILDCONFIG.TILES_MAX_ZOOM};
+        const layerOptions = {maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM};
         if (this.previewLayers) {
             this.previewLayers.forEach(l => l.remove());
         }
