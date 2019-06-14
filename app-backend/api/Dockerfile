@@ -1,4 +1,4 @@
-FROM quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
+FROM openjdk:11-slim
 
 RUN \
     adduser --system --disabled-password --home /var/lib/rf --shell /sbin/nologin --disabled-password --group rf

@@ -1,4 +1,4 @@
-FROM quay.io/azavea/openjdk-gdal:3.1-jdk8-slim
+FROM quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
 # did you change the image here, possibly to upgrade gdal?
 # if so, make sure that you verify that tifs that have trouble
 # becoming COGs due to the tiling scheme can still be processed
