@@ -219,7 +219,10 @@ class AnalysesListController {
             .then(this.autoGenerateRenderDef.bind(this))
             .then(() => {
                 const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
-                return L.tileLayer(tileUrl, { maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM });
+                return L.tileLayer(tileUrl, {
+                    maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                    maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+                });
             });
     }
 
