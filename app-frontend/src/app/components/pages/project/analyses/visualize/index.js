@@ -108,7 +108,10 @@ class AnalysesVisualizeController {
                     statistics,
                     analysisTile: {
                         analysis,
-                        mapTile: L.tileLayer(tileUrl, { maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM })
+                        mapTile: L.tileLayer(tileUrl, {
+                            maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                            maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+                        })
                     }
                 };
             })

@@ -220,18 +220,21 @@ class ProjectsSceneBrowserController {
     setCOGThumbnail(scene, map) {
         this.currentRepository.service.getDatasourceBands(scene).then(rgbBands => {
             map.setLayer(
-              'Hovered Scene',
-              L.tileLayer(
-                this.sceneService.getSceneLayerURL(
-                    scene,
+                'Hovered Scene',
+                L.tileLayer(
+                    this.sceneService.getSceneLayerURL(
+                        scene,
+                        {
+                            token: this.authService.token(),
+                            redBand: rgbBands.RED,
+                            greenBand: rgbBands.GREEN,
+                            blueBand: rgbBands.BLUE
+                        }
+                    ),
                     {
-                        token: this.authService.token(),
-                        redBand: rgbBands.RED,
-                        greenBand: rgbBands.GREEN,
-                        blueBand: rgbBands.BLUE
-                    }
-                ),
-                {maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM})
+                        maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                        maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+                    })
             );
         });
     }

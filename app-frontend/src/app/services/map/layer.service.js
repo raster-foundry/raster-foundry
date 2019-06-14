@@ -88,7 +88,11 @@ export default (app) => {
                 });
             }
             return this.getMosaicLayerURL().then((url) => {
-                let options = {bounds: this.bounds, maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM};
+                let options = {
+                    bounds: this.bounds,
+                    maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                    maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+                };
                 this._mosaicTiles = L.tileLayer(url, options);
                 return this._mosaicTiles;
             });

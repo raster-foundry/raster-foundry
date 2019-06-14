@@ -155,7 +155,10 @@ class ShareProjectAnalysesController {
                     mapToken: this.token
                 }
             );
-            return L.tileLayer(tileUrl, { maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM });
+            return L.tileLayer(tileUrl, {
+                maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+            });
         });
         this.getMap().then(map => {
             map.setLayer('Analyses', mapLayers, true);

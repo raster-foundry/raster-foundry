@@ -1,3 +1,4 @@
+/* globals BUILDCONFIG */
 import angular from 'angular';
 import Map from 'es6-map';
 import staticMapTpl from './staticMap.html';
@@ -38,7 +39,7 @@ class StaticMapController {
             boxZoom: false,
             keyboard: false,
             tap: false,
-            maxZoom: 30
+            maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
         }, this.options);
     }
 

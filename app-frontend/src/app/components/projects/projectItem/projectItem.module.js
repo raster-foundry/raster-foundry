@@ -83,7 +83,10 @@ class ProjectItemController {
             this.projectService.getProjectTileURL(this.item, {
                 token: this.authService.token()
             }),
-            {maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM}
+            {
+                maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+            }
         );
 
         this.getMap().then(m => {
