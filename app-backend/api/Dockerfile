@@ -1,8 +1,7 @@
 FROM openjdk:11-slim
 
 RUN \
-      addgroup -S rf \
-      && adduser -D -S -h /var/lib/rf -s /sbin/nologin -G rf rf
+    adduser --system --disabled-password --home /var/lib/rf --shell /sbin/nologin --disabled-password --group rf
 
 COPY ./target/scala-2.12/api-assembly.jar /var/lib/rf/
 
