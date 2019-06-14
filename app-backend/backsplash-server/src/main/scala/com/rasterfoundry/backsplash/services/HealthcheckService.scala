@@ -44,7 +44,7 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
                 case (Right(r)) => HealthResult(r)
                 case (Left(l))  => HealthResult(l)
               }
-          }
+        }
       )
 
   private def gdalHealth = timeoutToSick(
