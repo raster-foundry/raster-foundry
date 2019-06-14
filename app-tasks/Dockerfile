@@ -1,4 +1,4 @@
-FROM quay.io/azavea/openjdk-gdal:2.3-jdk8-slim
+FROM quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
 
 COPY rf/requirements.txt /tmp/
 RUN set -ex \

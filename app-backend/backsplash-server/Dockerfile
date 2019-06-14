@@ -1,4 +1,4 @@
-FROM quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
+FROM quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
 
 RUN \
     adduser --home /var/lib/rf --shell /sbin/nologin --disabled-password --gecos "" rf
