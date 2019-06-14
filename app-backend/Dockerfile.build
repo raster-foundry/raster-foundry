@@ -1,4 +1,4 @@
-FROM quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
+FROM quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
 
 RUN set -ex && \
 	apt-get update && \

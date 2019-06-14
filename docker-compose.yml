@@ -168,7 +168,7 @@ services:
       - "backsplash-assembly.jar"
 
   sbt:
-    image: quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
     depends_on:
       postgres:
         condition: service_healthy
