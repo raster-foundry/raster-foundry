@@ -44,7 +44,7 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
                 case (Right(r)) => HealthResult(r)
                 case (Left(l))  => HealthResult(l)
               }
-        }
+          }
       )
 
   private def gdalHealth = timeoutToSick(
@@ -103,8 +103,11 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
         HealthCheck.liftF[IO, Tagged[String, ?]] {
           IO {
             if (served >= quota) {
+              val message =
+                s"Request quota exceeded -- limit: $quota, counted: $served"
+              logger.warn(message)
               HealthResult.tagged(
-                s"Request count too high -- limit: $quota, counted: $served",
+                message,
                 Health.sick
               )
             } else {
