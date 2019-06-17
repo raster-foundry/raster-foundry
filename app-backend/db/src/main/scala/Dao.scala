@@ -91,9 +91,10 @@ object Dao extends LazyLogging {
   final case class QueryBuilder[Model: Read: Write](
       selectF: Fragment,
       tableF: Fragment,
-      filters: List[Option[Fragment]]) {
+      filters: List[Option[Fragment]],
+      countFragment: Option[Fragment] = None) {
 
-    val countF: Fragment = fr"SELECT count(id) FROM" ++ tableF
+    val countF: Fragment = countFragment.getOrElse(fr"SELECT count(id) FROM" ++ tableF)
     val deleteF: Fragment = fr"DELETE FROM" ++ tableF
     val existF: Fragment = fr"SELECT 1 FROM" ++ tableF
 

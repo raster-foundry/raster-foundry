@@ -153,7 +153,7 @@ object TaskDao extends Dao[Task] {
       layerId: UUID
   ): Dao.QueryBuilder[Task] =
     Dao
-      .QueryBuilder[Task](listF, joinTableF, Nil)
+      .QueryBuilder[Task](listF, joinTableF, Nil, Some(fr"SELECT count(distinct id) FROM" ++ joinTableF))
       .filter(queryParams)
       .filter(fr"project_id = $projectId")
       .filter(fr"project_layer_id = $layerId")
