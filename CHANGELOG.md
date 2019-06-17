@@ -30,6 +30,7 @@
 
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
 - Fix Sentinel-2 metadata file download [\#4969](https://github.com/raster-foundry/raster-foundry/pull/4969)
+- Fix scripts/update so that it uses flyway for migrations [\#5032](https://github.com/raster-foundry/raster-foundry/pull/5032)
 
 ### Security
 
