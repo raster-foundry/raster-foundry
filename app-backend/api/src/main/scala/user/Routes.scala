@@ -135,7 +135,7 @@ trait UserRoutes
   def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate {
     user =>
       rejectEmptyResponse {
-        val authId = URLDecoder.decode(authIdEncoded, "US-ASCII")
+        val authId = URLDecoder.decode(authIdEncoded, "UTF-8")
         if (user.id == authId) {
           complete(
             UserDao.unsafeGetUserById(authId).transact(xa).unsafeToFuture())
