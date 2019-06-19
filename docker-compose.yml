@@ -7,8 +7,6 @@ services:
     env_file: .env
     expose:
       - "5432"
-    ports:
-      - 5432:5432
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 5s
@@ -141,10 +139,10 @@ services:
       - AWS_DEFAULT_PROFILE=raster-foundry
       - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
       - BACKSPLASH_RASTERSOURCE_CACHE_ENABLE=true
-      - BACKSPLASH_ENABLE_GDAL=false
+      - BACKSPLASH_ENABLE_GDAL=true
       - BACKSPLASH_CORE_STREAM_CONCURRENCY=16
       - BACKSPLASH_ENABLE_REQUEST_METRICS=false
-      - BACKSPLASH_SERVER_REQUEST_LIMIT=500
+      - BACKSPLASH_SERVER_REQUEST_LIMIT
     ports:
       - "8080:8080"
       - "9030:9030"
