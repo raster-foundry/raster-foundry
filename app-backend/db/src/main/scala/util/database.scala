@@ -23,7 +23,7 @@ object RFTransactor {
       password: String =
         Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry"),
       statementTimeout: String =
-        Properties.envOrElse("POSTGRES_STATEMENT_TIMEOUT", "30000"),
+        Properties.envOrElse("POSTGRES_STATEMENT_TIMEOUT", "15000"),
       maximumPoolSize: Int =
         Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "32").toInt,
       poolName: String = "Raster-Foundry-Hikari-Pool",
