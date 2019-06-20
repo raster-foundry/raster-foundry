@@ -1,7 +1,7 @@
 FROM quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
 
 RUN \
-    adduser --home /var/lib/rf --shell /sbin/nologin --disabled-password --gecos "" rf
+    adduser --system --disabled-password --home /var/lib/rf --shell /sbin/nologin --disabled-password --group rf
 
 COPY ./target/scala-2.12/backsplash-assembly.jar /var/lib/rf/
 
