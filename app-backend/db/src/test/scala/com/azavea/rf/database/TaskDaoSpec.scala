@@ -373,4 +373,51 @@ class TaskDaoSpec
     }
 
   }
+
+
+  test("delete all tasks in a project layer") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val fetchedAndDeletedIO =
+              for {
+                (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                  userCreate,
+                  orgCreate,
+                  platform,
+                  projectCreate
+                )
+                _ <- TaskDao.insertTasks(
+                  fixupTaskFeaturesCollection(taskFeaturesCreate, dbProject),
+                  dbUser
+                )
+                fetched <- TaskDao.listTasks(
+                  TaskQueryParameters(),
+                  dbProject.id,
+                  dbProject.defaultLayerId,
+                  PageRequest(0, 10, Map.empty)
+                )
+                deletedRowCount <- TaskDao.deleteLayerTasks(
+                  dbProject.id,
+                  dbProject.defaultLayerId
+                )
+              } yield { (fetched, deletedRowCount) }
+
+            val (tasks, deletedTaskCount) = fetchedAndDeletedIO.transact(xa).unsafeRunSync
+            assert(
+              tasks.count  == deletedTaskCount,
+              "Retrieved and deleted tasks should be the same"
+            )
+            true
+          }
+      }
+    }
+  }
 }

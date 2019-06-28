@@ -125,12 +125,10 @@ trait ProjectLayerTaskRoutes
         } {
           complete {
             TaskDao
-              .tasksForProjectAndLayerQB(
-                TaskQueryParameters(),
+              .deleteLayerTasks(
                 projectId,
                 layerId
               )
-              .delete
               .transact(xa)
               .unsafeToFuture map { _ =>
               HttpResponse(StatusCodes.NoContent)
