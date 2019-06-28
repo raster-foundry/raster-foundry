@@ -374,7 +374,6 @@ class TaskDaoSpec
 
   }
 
-
   test("delete all tasks in a project layer") {
     check {
       forAll {
@@ -410,9 +409,10 @@ class TaskDaoSpec
                 )
               } yield { (fetched, deletedRowCount) }
 
-            val (tasks, deletedTaskCount) = fetchedAndDeletedIO.transact(xa).unsafeRunSync
+            val (tasks, deletedtaskCount) =
+              fetchedAndDeletedIO.transact(xa).unsafeRunSync
             assert(
-              tasks.count  == deletedTaskCount,
+              tasks.count == deletedtaskCount,
               "Retrieved and deleted tasks should be the same"
             )
             true
