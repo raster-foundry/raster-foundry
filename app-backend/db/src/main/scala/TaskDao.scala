@@ -290,4 +290,8 @@ object TaskDao extends Dao[Task] {
 
   def unlockTask(taskId: UUID): ConnectionIO[Option[Task.TaskFeature]] =
     deleteLockF(taskId).update.run *> getTaskWithActions(taskId)
+
+  def deleteLayerTasks(projectId: UUID, layerId: UUID): ConnectionIO[Int] = {
+    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE project_id = ${projectId} and project_layer_id = ${layerId}").update.run
+  }
 }

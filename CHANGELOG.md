@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Fixed bugs in task list and delete endpoints [\#5026](https://github.com/raster-foundry/raster-foundry/pull/5026) [\#5034](https://github.com/raster-foundry/raster-foundry/pull/5034) [\#5042](https://github.com/raster-foundry/raster-foundry/pull/5042) [\#5038](https://github.com/raster-foundry/raster-foundry/pull/5038) [\#5048](https://github.com/raster-foundry/raster-foundry/pull/5048)
+
 ### Security
 
 ## [1.22.0](https://github.com/raster-foundry/raster-foundry/tree/1.22.0) (2019-06-11)
@@ -48,6 +50,7 @@
 ## [1.21.3](https://github.com/raster-foundry/raster-foundry/tree/1.21.3) (2019-06-06)
 
 ### Added
+
 - Updated healthcheck to include loading tile metadata [\#5017](https://github.com/raster-foundry/raster-foundry/pull/5017)
 
 ## [1.21.2](https://github.com/raster-foundry/raster-foundry/tree/1.21.2) (2019-05-23)
