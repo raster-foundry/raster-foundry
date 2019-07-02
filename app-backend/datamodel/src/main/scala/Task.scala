@@ -201,3 +201,17 @@ object Task {
       )
   }
 }
+
+final case class TaskUserSummary(
+    userId: String,
+    name: String,
+    profileImageUri: String,
+    labelTaskCount: Int,
+    validateTaskCount: Int,
+    avgTimeSpentSecond: Float
+)
+
+object TaskUserSummary {
+  implicit val taskUserSummrayEncoder: Encoder[TaskUserSummary] =
+    deriveEncoder[TaskUserSummary]
+}
