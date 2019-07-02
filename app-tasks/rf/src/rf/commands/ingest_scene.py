@@ -52,8 +52,10 @@ def metadata_to_postgres(scene_id):
     ]
 
     logger.debug('Bash command to store histogram: %s', ' '.join(bash_cmd))
-    running_cmd = subprocess.Popen(bash_cmd)
-    running_cmd.communicate()
+    running_process = subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
+    while running_process.poll() is None:
+        print(running_process.stdout.readline())
+    print(running_process.stdout.read())
     logger.info('Successfully completed metadata postgres write for scene %s',
                 scene_id)
     return True
@@ -71,6 +73,12 @@ def notify_for_scene_ingest_status(scene_id):
         'java', '-cp', '/opt/raster-foundry/jars/batch-assembly.jar',
         'com.rasterfoundry.batch.Main', 'notify_ingest_status', scene_id
     ]
-    running_process = subprocess.Popen(bash_cmd)
-    running_process.communicate()
+    try:
+        running_process = subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
+        while running_process.poll() is None:
+            print(running_process.stdout.readline())
+            print(running_process.stdout.read())
+    except subprocess.CalledProcessError as e:
+        print('Error notifying users about ingest status:\n', e.output)
+
     return True
