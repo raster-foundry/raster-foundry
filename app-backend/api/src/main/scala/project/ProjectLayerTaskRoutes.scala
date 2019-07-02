@@ -240,4 +240,28 @@ trait ProjectLayerTaskRoutes
         }
       }
     }
+
+  def getTaskUserSummary(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      {
+        authorizeAsync {
+          ProjectDao
+            .authProjectLayerExist(
+              projectId,
+              layerId,
+              user,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            TaskDao
+              .getTaskUserSummary(projectId, layerId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
 }

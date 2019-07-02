@@ -294,4 +294,86 @@ object TaskDao extends Dao[Task] {
   def deleteLayerTasks(projectId: UUID, layerId: UUID): ConnectionIO[Int] = {
     (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE project_id = ${projectId} and project_layer_id = ${layerId}").update.run
   }
+
+  def getTaskActionTimeF(projectId: UUID,
+                         layerId: UUID,
+                         fromStatus: TaskStatus,
+                         toStatus: TaskStatus): Fragment = fr"""
+    (SELECT task_actions.user_id, tasks.id as task_id, MAX(task_actions.timestamp) AS timestamp
+    FROM tasks
+    LEFT JOIN task_actions
+    ON task_actions.task_id = tasks.id
+    WHERE
+      project_id = uuid($projectId)
+      AND project_layer_id = uuid($layerId)
+      AND task_actions.FROM_status = $fromStatus
+      AND task_actions.to_status = $toStatus
+    GROUP BY (task_actions.user_id, tasks.id, task_actions.FROM_status, task_actions.to_status))
+  """
+
+  def getTaskCountAndTimeSpentByActionF(projectId: UUID,
+                                        layerId: UUID,
+                                        action: String): Fragment = {
+    val taskSelectF = fr"""
+      SELECT
+        a.user_id,
+        count(a.task_id) AS task_count,
+        sum(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) / count(a.task_id) AS avg_time
+      FROM
+    """
+    val joinAndGroupF = fr"""
+      ON a.user_id = b.user_id AND a.task_id = b.task_id
+      GROUP BY a.user_id
+    """
+    action match {
+      case "label" =>
+        fr"(" ++ taskSelectF ++
+          getTaskActionTimeF(projectId,
+                             layerId,
+                             TaskStatus.Unlabeled,
+                             TaskStatus.LabelingInProgress) ++
+          fr"AS a INNER JOIN " ++
+          getTaskActionTimeF(projectId,
+                             layerId,
+                             TaskStatus.LabelingInProgress,
+                             TaskStatus.Labeled) ++
+          fr"AS b" ++
+          joinAndGroupF ++ fr")"
+      case "validate" =>
+        fr"(" ++ taskSelectF ++
+          getTaskActionTimeF(projectId,
+                             layerId,
+                             TaskStatus.Labeled,
+                             TaskStatus.ValidationInProgress) ++
+          fr"AS a INNER JOIN " ++
+          getTaskActionTimeF(projectId,
+                             layerId,
+                             TaskStatus.ValidationInProgress,
+                             TaskStatus.Validated) ++
+          fr"AS b" ++
+          joinAndGroupF ++ fr")"
+    }
+  }
+
+  def getTaskUserSummary(projectId: UUID,
+                         layerId: UUID): ConnectionIO[List[TaskUserSummary]] =
+    (
+      fr"""
+      SELECT
+        aa.user_id,
+        users.name,
+        users.profile_image_uri,
+        COALESCE(aa.task_count, 0),
+        COALESCE(bb.task_count, 0),
+        CASE COALESCE(aa.task_count, 0) + COALESCE(bb.task_count, 0)
+           WHEN 0 THEN 0
+           ELSE (COALESCE(aa.task_count, 0) * COALESCE(aa.avg_time, 0) + COALESCE(bb.task_count, 0) * COALESCE(bb.avg_time, 0)) / (COALESCE(aa.task_count, 0) + COALESCE(bb.task_count, 0))
+        END AS avg_time_spent_second
+      FROM
+    """ ++
+        getTaskCountAndTimeSpentByActionF(projectId, layerId, "label") ++
+        fr"AS aa FULL OUTER JOIN" ++
+        getTaskCountAndTimeSpentByActionF(projectId, layerId, "validate") ++
+        fr"AS bb ON aa.user_id = bb.user_id INNER JOIN users ON users.id = aa.user_id"
+    ).query[TaskUserSummary].to[List]
 }

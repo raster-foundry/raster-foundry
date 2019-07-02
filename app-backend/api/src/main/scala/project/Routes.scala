@@ -302,6 +302,11 @@ trait ProjectRoutes
                           createLayerTaskGrid(projectId, layerId)
                         }
                       } ~
+                      pathPrefix("summary") {
+                        get {
+                          getTaskUserSummary(projectId, layerId)
+                        }
+                      } ~
                       pathPrefix(JavaUUID) { taskId =>
                         pathEndOrSingleSlash {
                           get {
