@@ -54,8 +54,8 @@ def metadata_to_postgres(scene_id):
     logger.debug('Bash command to store histogram: %s', ' '.join(bash_cmd))
     running_process = subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
     while running_process.poll() is None:
-        print(running_process.stdout.readline())
-    print(running_process.stdout.read())
+        logger.info(running_process.stdout.readline())
+    logger.info(running_process.stdout.read())
     logger.info('Successfully completed metadata postgres write for scene %s',
                 scene_id)
     return True
@@ -76,9 +76,9 @@ def notify_for_scene_ingest_status(scene_id):
     try:
         running_process = subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
         while running_process.poll() is None:
-            print(running_process.stdout.readline())
-            print(running_process.stdout.read())
+            logger.info(running_process.stdout.readline())
+        logger.info(running_process.stdout.read())
     except subprocess.CalledProcessError as e:
-        print('Error notifying users about ingest status:\n', e.output)
+        logger.error('Error notifying users about ingest status:\n', e.output)
 
     return True
