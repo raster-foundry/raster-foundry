@@ -420,4 +420,105 @@ class TaskDaoSpec
       }
     }
   }
+
+  test("list user actions on tasks") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeatureCreate: Task.TaskFeatureCreate
+        ) =>
+          {
+            val connIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              collection <- TaskDao.insertTasks(
+                Task.TaskFeatureCollectionCreate(
+                  features = List(
+                    fixupTaskFeatureCreate(taskFeatureCreate, dbProject)
+                      .withStatus(TaskStatus.Unlabeled)
+                  )
+                ),
+                dbUser
+              )
+              feature = collection.features.head
+              _ <- TaskDao.updateTask(
+                feature.id,
+                Task.TaskFeatureCreate(
+                  feature.properties
+                    .copy(status = TaskStatus.LabelingInProgress)
+                    .toCreate,
+                  feature.geometry
+                ),
+                dbUser
+              )
+              _ <- TaskDao.updateTask(
+                feature.id,
+                Task.TaskFeatureCreate(
+                  feature.properties.copy(status = TaskStatus.Labeled).toCreate,
+                  feature.geometry
+                ),
+                dbUser
+              )
+              _ <- TaskDao.updateTask(
+                feature.id,
+                Task.TaskFeatureCreate(
+                  feature.properties
+                    .copy(status = TaskStatus.ValidationInProgress)
+                    .toCreate,
+                  feature.geometry
+                ),
+                dbUser
+              )
+              _ <- TaskDao.updateTask(
+                feature.id,
+                Task.TaskFeatureCreate(
+                  feature.properties
+                    .copy(status = TaskStatus.Validated)
+                    .toCreate,
+                  feature.geometry
+                ),
+                dbUser
+              )
+              listed <- TaskDao.getTaskUserSummary(
+                dbProject.id,
+                dbProject.defaultLayerId,
+                UserTaskActivityParameters()
+              )
+            } yield { (dbUser, listed) }
+
+            val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
+
+            assert(
+              userTaskSummary.head.userId == user.id,
+              "should match the ID of the action user"
+            )
+            assert(
+              userTaskSummary.head.name == user.name,
+              "should match the name of the action user"
+            )
+            assert(
+              userTaskSummary.head.profileImageUri == user.profileImageUri,
+              "should match the avatar of the action user"
+            )
+            assert(
+              userTaskSummary.head.labelTaskCount == 1,
+              "action user should have 1 labeled task"
+            )
+            assert(
+              userTaskSummary.head.validateTaskCount == 1,
+              "action user should have 1 validated task"
+            )
+            true
+          }
+      }
+    }
+  }
 }
