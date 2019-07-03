@@ -664,3 +664,18 @@ final case class TaskQueryParameters(
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
 }
+
+final case class UserTaskActivityParameters(
+    actionStartTime: Option[Timestamp] = None,
+    actionEndTime: Option[Timestamp] = None,
+    actionUser: Option[String] = None
+)
+
+object UserTaskActivityParameters {
+  implicit def encUserTaskActivityParameters
+    : Encoder[UserTaskActivityParameters] =
+    deriveEncoder[UserTaskActivityParameters]
+  implicit def decUserTaskActivityParameters
+    : Decoder[UserTaskActivityParameters] =
+    deriveDecoder[UserTaskActivityParameters]
+}
