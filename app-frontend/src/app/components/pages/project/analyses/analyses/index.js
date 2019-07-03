@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 import tpl from './index.html';
 import { colorStopsToRange, createRenderDefinition } from '_redux/histogram-utils';
 import { nodesFromAst, astFromNodes } from '_redux/node-utils';
@@ -218,7 +219,10 @@ class AnalysesListController {
             .then(this.autoGenerateRenderDef.bind(this))
             .then(() => {
                 const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
-                return L.tileLayer(tileUrl, { maxZoom: 30 });
+                return L.tileLayer(tileUrl, {
+                    maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                    maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+                });
             });
     }
 

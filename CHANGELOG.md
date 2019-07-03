@@ -8,9 +8,21 @@
 
 ### Deprecated
 
+### Removed
+
 ### Fixed
 
 ### Security
+
+## [1.23.0](https://github.com/raster-foundry/raster-foundry/tree/1.23.0)
+
+### Added
+
+- Limited max zoom level for backsplash tiles to 23 on frontend [\#5013](https://github.com/raster-foundry/raster-foundry/pull/5013)
+
+### Fixed
+
+- Fixed bugs in task list and delete endpoints [\#5026](https://github.com/raster-foundry/raster-foundry/pull/5026) [\#5034](https://github.com/raster-foundry/raster-foundry/pull/5034) [\#5042](https://github.com/raster-foundry/raster-foundry/pull/5042) [\#5038](https://github.com/raster-foundry/raster-foundry/pull/5038) [\#5048](https://github.com/raster-foundry/raster-foundry/pull/5048)
 
 ## [1.22.0](https://github.com/raster-foundry/raster-foundry/tree/1.22.0) (2019-06-11)
 
@@ -41,10 +53,12 @@
 
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
 - Fix Sentinel-2 metadata file download [\#4969](https://github.com/raster-foundry/raster-foundry/pull/4969)
+- Fix scripts/update so that it uses flyway for migrations [\#5032](https://github.com/raster-foundry/raster-foundry/pull/5032)
 
 ## [1.21.3](https://github.com/raster-foundry/raster-foundry/tree/1.21.3) (2019-06-06)
 
 ### Added
+
 - Updated healthcheck to include loading tile metadata [\#5017](https://github.com/raster-foundry/raster-foundry/pull/5017)
 
 ## [1.21.2](https://github.com/raster-foundry/raster-foundry/tree/1.21.2) (2019-05-23)

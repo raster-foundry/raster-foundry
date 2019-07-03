@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 import { Map } from 'immutable';
 import { get, min, max } from 'lodash';
 
@@ -107,7 +108,10 @@ class AnalysesVisualizeController {
                     statistics,
                     analysisTile: {
                         analysis,
-                        mapTile: L.tileLayer(tileUrl, { maxZoom: 30 })
+                        mapTile: L.tileLayer(tileUrl, {
+                            maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                            maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+                        })
                     }
                 };
             })

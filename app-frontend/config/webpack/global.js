@@ -69,7 +69,8 @@ const basemaps = JSON.stringify({
                 attribution: 'Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>',
                 subdomains: '1234',
                 'app_id': HERE_APP_ID,
-                'app_code': HERE_APP_CODE
+                'app_code': HERE_APP_CODE,
+                maxZoom: 30
             }
         }
     },
@@ -322,7 +323,9 @@ module.exports = function (_path) {
                     MAP_CENTER: JSON.stringify([-6.8, 39.2]),
                     MAP_ZOOM: 5,
                     PLATFORM_USERS: PLATFORM_USERS,
-                    EMBED_URI: JSON.stringify('')
+                    EMBED_URI: JSON.stringify(''),
+                    TILES_MAX_ZOOM: 23,
+                    VISUAL_MAX_ZOOM: 30
                 },
                 'HELPCONFIG': {
                     API_DOCS_URL: JSON.stringify('https://app.swaggerhub.com/apis/raster-foundry/raster-foundry/'),

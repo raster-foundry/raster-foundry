@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 import tpl from './index.html';
 import _ from 'lodash';
 import { Map, Set } from 'immutable';
@@ -154,7 +155,10 @@ class ShareProjectAnalysesController {
                     mapToken: this.token
                 }
             );
-            return L.tileLayer(tileUrl, { maxZoom: 30 });
+            return L.tileLayer(tileUrl, {
+                maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+            });
         });
         this.getMap().then(map => {
             map.setLayer('Analyses', mapLayers, true);

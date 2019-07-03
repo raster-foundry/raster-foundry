@@ -17,7 +17,8 @@ object TaskDao extends Dao[Task] {
 
   val tableName = "tasks"
   val joinTableF =
-    Fragment.const("tasks join task_actions on tasks.id = task_actions.task_id")
+    Fragment.const(
+      "tasks left join task_actions on tasks.id = task_actions.task_id")
 
   val cols =
     fr"""
@@ -153,7 +154,11 @@ object TaskDao extends Dao[Task] {
       layerId: UUID
   ): Dao.QueryBuilder[Task] =
     Dao
-      .QueryBuilder[Task](listF, joinTableF, Nil)
+      .QueryBuilder[Task](
+        listF,
+        joinTableF,
+        Nil,
+        Some(fr"SELECT count(distinct id) FROM" ++ joinTableF))
       .filter(queryParams)
       .filter(fr"project_id = $projectId")
       .filter(fr"project_layer_id = $layerId")
@@ -285,4 +290,8 @@ object TaskDao extends Dao[Task] {
 
   def unlockTask(taskId: UUID): ConnectionIO[Option[Task.TaskFeature]] =
     deleteLockF(taskId).update.run *> getTaskWithActions(taskId)
+
+  def deleteLayerTasks(projectId: UUID, layerId: UUID): ConnectionIO[Int] = {
+    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE project_id = ${projectId} and project_layer_id = ${layerId}").update.run
+  }
 }

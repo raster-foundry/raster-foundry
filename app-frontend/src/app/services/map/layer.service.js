@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 export default (app) => {
     /**
      * Represents a layer that can be added to the map
@@ -87,7 +88,11 @@ export default (app) => {
                 });
             }
             return this.getMosaicLayerURL().then((url) => {
-                let options = {bounds: this.bounds};
+                let options = {
+                    bounds: this.bounds,
+                    maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                    maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+                };
                 this._mosaicTiles = L.tileLayer(url, options);
                 return this._mosaicTiles;
             });

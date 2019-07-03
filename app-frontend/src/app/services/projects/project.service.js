@@ -848,7 +848,8 @@ export default app => {
         mapLayerFromLayer(project, layer, params) {
             let url = this.getProjectLayerTileUrl(project, layer, params);
             let mapLayer = L.tileLayer(url, {
-                maxZoom: 30
+                maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
             });
             return mapLayer;
         }

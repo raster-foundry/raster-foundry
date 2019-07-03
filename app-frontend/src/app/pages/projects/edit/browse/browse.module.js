@@ -45,7 +45,6 @@ class ProjectsSceneBrowserController {
         this.sceneCount = null;
         this.planetThumbnailUrls = new Map();
         this.scenesBeingAdded = [];
-
         this.setBboxParam = _.debounce((bbox) => {
             this.$location.search('bbox', bbox).replace();
         }, 500);
@@ -221,18 +220,21 @@ class ProjectsSceneBrowserController {
     setCOGThumbnail(scene, map) {
         this.currentRepository.service.getDatasourceBands(scene).then(rgbBands => {
             map.setLayer(
-              'Hovered Scene',
-              L.tileLayer(
-                this.sceneService.getSceneLayerURL(
-                    scene,
+                'Hovered Scene',
+                L.tileLayer(
+                    this.sceneService.getSceneLayerURL(
+                        scene,
+                        {
+                            token: this.authService.token(),
+                            redBand: rgbBands.RED,
+                            greenBand: rgbBands.GREEN,
+                            blueBand: rgbBands.BLUE
+                        }
+                    ),
                     {
-                        token: this.authService.token(),
-                        redBand: rgbBands.RED,
-                        greenBand: rgbBands.GREEN,
-                        blueBand: rgbBands.BLUE
-                    }
-                ),
-                {maxZoom: 30})
+                        maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+                        maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+                    })
             );
         });
     }

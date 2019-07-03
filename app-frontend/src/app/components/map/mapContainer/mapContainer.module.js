@@ -125,7 +125,7 @@ class MapContainerController {
             boxZoom: !this.options.static,
             keyboard: !this.options.static,
             tap: !this.options.static,
-            maxZoom: 30
+            maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
         }).setView(
             this.initialCenter ? this.initialCenter : [0, 0],
             this.initialZoom ? this.initialZoom : 2

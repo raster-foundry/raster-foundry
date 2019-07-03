@@ -1,4 +1,4 @@
-/* global L */
+/* global L, BUILDCONFIG */
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
 import LabActions from '_redux/actions/lab-actions';
 import NodeActions from '_redux/actions/node-actions';
@@ -28,7 +28,6 @@ class LabAnalysisController {
         this.tileServer = `${this.APP_CONFIG.tileServerLocation}`;
         this.showDiagram = true;
         this.analysisId = this.$state.params.analysisid;
-
         let unsubscribe = this.$ngRedux.connect(
             this.mapStateToThis,
             Object.assign({}, LabActions, NodeActions)
@@ -255,7 +254,10 @@ class LabAnalysisController {
     }
 
     createPreviewLayers() {
-        const layerOptions = {maxZoom: 30};
+        const layerOptions = {
+            maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
+            maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+        };
         if (this.previewLayers) {
             this.previewLayers.forEach(l => l.remove());
         }
