@@ -255,11 +255,13 @@ trait ProjectLayerTaskRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
-            TaskDao
-              .getTaskUserSummary(projectId, layerId)
-              .transact(xa)
-              .unsafeToFuture
+          (userTaskActivityParameters) { userTaskActivityParams =>
+            complete {
+              TaskDao
+                .getTaskUserSummary(projectId, layerId, userTaskActivityParams)
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
       }

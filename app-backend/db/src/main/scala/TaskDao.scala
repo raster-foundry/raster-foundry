@@ -298,22 +298,38 @@ object TaskDao extends Dao[Task] {
   def getTaskActionTimeF(projectId: UUID,
                          layerId: UUID,
                          fromStatus: TaskStatus,
-                         toStatus: TaskStatus): Fragment = fr"""
-    (SELECT task_actions.user_id, tasks.id as task_id, MAX(task_actions.timestamp) AS timestamp
-    FROM tasks
-    LEFT JOIN task_actions
-    ON task_actions.task_id = tasks.id
-    WHERE
-      project_id = uuid($projectId)
-      AND project_layer_id = uuid($layerId)
-      AND task_actions.FROM_status = $fromStatus
-      AND task_actions.to_status = $toStatus
-    GROUP BY (task_actions.user_id, tasks.id, task_actions.FROM_status, task_actions.to_status))
-  """
+                         toStatus: TaskStatus,
+                         params: UserTaskActivityParameters): Fragment = {
+    val selectTaskActionF =
+      fr"SELECT task_actions.user_id, tasks.id as task_id, MAX(task_actions.timestamp) AS timestamp FROM"
+    val joinTaskActionF =
+      fr"tasks LEFT JOIN task_actions ON task_actions.task_id = tasks.id"
+    val whereClause = Fragments
+      .whereAndOpt(
+        Some(fr"project_id = uuid($projectId)"),
+        Some(fr"project_layer_id = uuid($layerId)"),
+        Some(fr"task_actions.FROM_status = $fromStatus"),
+        Some(fr"task_actions.to_status = $toStatus"),
+        params.actionStartTime map { start =>
+          fr"task_actions.timestamp >= $start"
+        },
+        params.actionEndTime map { end =>
+          fr"task_actions.timestamp <= $end"
+        },
+        params.actionUser map { userId =>
+          fr"task_actions.user_id = $userId"
+        }
+      )
+    val groupByF =
+      fr"GROUP BY (task_actions.user_id, tasks.id, task_actions.FROM_status, task_actions.to_status)"
+    fr"(" ++ selectTaskActionF ++ joinTaskActionF ++ whereClause ++ groupByF ++ fr")"
+  }
 
-  def getTaskCountAndTimeSpentByActionF(projectId: UUID,
-                                        layerId: UUID,
-                                        action: String): Fragment = {
+  def getTaskCountAndTimeSpentByActionF(
+      projectId: UUID,
+      layerId: UUID,
+      action: String,
+      params: UserTaskActivityParameters): Fragment = {
     val taskSelectF = fr"""
       SELECT
         a.user_id,
@@ -331,12 +347,14 @@ object TaskDao extends Dao[Task] {
           getTaskActionTimeF(projectId,
                              layerId,
                              TaskStatus.Unlabeled,
-                             TaskStatus.LabelingInProgress) ++
+                             TaskStatus.LabelingInProgress,
+                             params) ++
           fr"AS a INNER JOIN " ++
           getTaskActionTimeF(projectId,
                              layerId,
                              TaskStatus.LabelingInProgress,
-                             TaskStatus.Labeled) ++
+                             TaskStatus.Labeled,
+                             params) ++
           fr"AS b" ++
           joinAndGroupF ++ fr")"
       case "validate" =>
@@ -344,19 +362,23 @@ object TaskDao extends Dao[Task] {
           getTaskActionTimeF(projectId,
                              layerId,
                              TaskStatus.Labeled,
-                             TaskStatus.ValidationInProgress) ++
+                             TaskStatus.ValidationInProgress,
+                             params) ++
           fr"AS a INNER JOIN " ++
           getTaskActionTimeF(projectId,
                              layerId,
                              TaskStatus.ValidationInProgress,
-                             TaskStatus.Validated) ++
+                             TaskStatus.Validated,
+                             params) ++
           fr"AS b" ++
           joinAndGroupF ++ fr")"
     }
   }
 
-  def getTaskUserSummary(projectId: UUID,
-                         layerId: UUID): ConnectionIO[List[TaskUserSummary]] =
+  def getTaskUserSummary(
+      projectId: UUID,
+      layerId: UUID,
+      params: UserTaskActivityParameters): ConnectionIO[List[TaskUserSummary]] =
     (
       fr"""
       SELECT
@@ -371,9 +393,12 @@ object TaskDao extends Dao[Task] {
         END AS avg_time_spent_second
       FROM
     """ ++
-        getTaskCountAndTimeSpentByActionF(projectId, layerId, "label") ++
+        getTaskCountAndTimeSpentByActionF(projectId, layerId, "label", params) ++
         fr"AS aa FULL OUTER JOIN" ++
-        getTaskCountAndTimeSpentByActionF(projectId, layerId, "validate") ++
+        getTaskCountAndTimeSpentByActionF(projectId,
+                                          layerId,
+                                          "validate",
+                                          params) ++
         fr"AS bb ON aa.user_id = bb.user_id INNER JOIN users ON users.id = aa.user_id"
     ).query[TaskUserSummary].to[List]
 }
