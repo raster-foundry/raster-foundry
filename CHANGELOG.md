@@ -4,17 +4,25 @@
 
 ### Added
 
-- Limited max zoom level for backsplash tiles to 23 on frontend [\#5013](https://github.com/raster-foundry/raster-foundry/pull/5013)
-
 ### Changed
 
 ### Deprecated
 
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.23.0](https://github.com/raster-foundry/raster-foundry/tree/1.23.0)
+
+### Added
+
+- Limited max zoom level for backsplash tiles to 23 on frontend [\#5013](https://github.com/raster-foundry/raster-foundry/pull/5013)
+
 ### Fixed
 
 - Fixed bugs in task list and delete endpoints [\#5026](https://github.com/raster-foundry/raster-foundry/pull/5026) [\#5034](https://github.com/raster-foundry/raster-foundry/pull/5034) [\#5042](https://github.com/raster-foundry/raster-foundry/pull/5042) [\#5038](https://github.com/raster-foundry/raster-foundry/pull/5038) [\#5048](https://github.com/raster-foundry/raster-foundry/pull/5048)
-
-### Security
 
 ## [1.22.0](https://github.com/raster-foundry/raster-foundry/tree/1.22.0) (2019-06-11)
 
