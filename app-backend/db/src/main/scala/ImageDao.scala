@@ -17,14 +17,14 @@ object ImageDao extends Dao[Image] {
 
   val selectF: Fragment = sql"""
     SELECT
-      id, created_at, modified_at, created_by, modified_by,
+      id, created_at, modified_at, created_by,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
       image_metadata, resolution_meters, metadata_files FROM """ ++ tableF
 
   def create(image: Image, user: User): ConnectionIO[Image] = {
     val ownerId = util.Ownership.checkOwner(user, Some(image.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, created_by, modified_by,
+        (id, created_at, modified_at, created_by,
         owner, raw_data_bytes, visibility, filename, sourceuri, scene,
         image_metadata, resolution_meters, metadata_files)
       VALUES
@@ -37,7 +37,6 @@ object ImageDao extends Dao[Image] {
       "created_at",
       "modified_at",
       "created_by",
-      "modified_by",
       "owner",
       "raw_data_bytes",
       "visibility",
@@ -50,8 +49,10 @@ object ImageDao extends Dao[Image] {
     )
   }
 
-  def insertImage(imageBanded: Image.Banded,
-                  user: User): ConnectionIO[Option[Image.WithRelated]] = {
+  def insertImage(
+      imageBanded: Image.Banded,
+      user: User
+  ): ConnectionIO[Option[Image.WithRelated]] = {
     val image = imageBanded.toImage(user)
     val bands: List[Band] = (imageBanded.bands map { band: Band.Create =>
       band.toBand(image.id)

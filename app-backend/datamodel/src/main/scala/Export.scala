@@ -7,19 +7,20 @@ import io.circe._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-final case class Export(id: UUID,
-                        createdAt: Timestamp,
-                        createdBy: String,
-                        modifiedAt: Timestamp,
-                        modifiedBy: String,
-                        owner: String,
-                        projectId: Option[UUID],
-                        exportStatus: ExportStatus,
-                        exportType: ExportType,
-                        visibility: Visibility,
-                        toolRunId: Option[UUID],
-                        exportOptions: Json,
-                        projectLayerId: Option[UUID]) {
+final case class Export(
+    id: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    owner: String,
+    projectId: Option[UUID],
+    exportStatus: ExportStatus,
+    exportType: ExportType,
+    visibility: Visibility,
+    toolRunId: Option[UUID],
+    exportOptions: Json,
+    projectLayerId: Option[UUID]
+) {
   def getExportOptions: Option[ExportOptions] =
     exportOptions.as[ExportOptions].toOption
 }
@@ -31,15 +32,16 @@ object Export {
   def create = Export.apply _
 
   @JsonCodec
-  final case class Create(projectId: Option[UUID],
-                          exportStatus: ExportStatus,
-                          exportType: ExportType,
-                          visibility: Visibility,
-                          owner: Option[String],
-                          toolRunId: Option[UUID],
-                          exportOptions: Json,
-                          projectLayerId: Option[UUID])
-      extends OwnerCheck {
+  final case class Create(
+      projectId: Option[UUID],
+      exportStatus: ExportStatus,
+      exportType: ExportType,
+      visibility: Visibility,
+      owner: Option[String],
+      toolRunId: Option[UUID],
+      exportOptions: Json,
+      projectLayerId: Option[UUID]
+  ) extends OwnerCheck {
 
     def toExport(user: User): Export = {
       val id = UUID.randomUUID()
@@ -52,7 +54,6 @@ object Export {
         createdAt = now,
         createdBy = user.id,
         modifiedAt = now,
-        modifiedBy = user.id,
         owner = ownerId,
         projectId = this.projectId,
         exportStatus = this.exportStatus,

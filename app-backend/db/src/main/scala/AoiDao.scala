@@ -19,7 +19,7 @@ object AoiDao extends Dao[AOI] {
     sql"""
       SELECT
         id, created_at, modified_at,
-        created_by, modified_by, owner, shape, filters, is_active, start_time,
+        created_by, owner, shape, filters, is_active, start_time,
         approval_required, project_id
       FROM
     """ ++ tableF
@@ -33,7 +33,6 @@ object AoiDao extends Dao[AOI] {
   def updateAOI(aoi: AOI, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
-        modified_by = ${user.id},
         shape = ${aoi.shape},
         filters = ${aoi.filters},
         is_active = ${aoi.isActive},
@@ -49,7 +48,7 @@ object AoiDao extends Dao[AOI] {
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
         (id, created_at, modified_at,
-        created_by, modified_by, owner, shape, filters, is_active,
+        created_by, owner, shape, filters, is_active,
         approval_required, start_time, project_id)
       VALUES
         (${aoi.id}, NOW(), NOW(),
@@ -60,7 +59,6 @@ object AoiDao extends Dao[AOI] {
       "created_at",
       "modified_at",
       "created_by",
-      "modified_by",
       "owner",
       "shape",
       "filters",
@@ -73,22 +71,27 @@ object AoiDao extends Dao[AOI] {
   }
 
   // TODO embed shape into aoi
-  def listAOIs(projectId: UUID,
-               page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
+  def listAOIs(
+      projectId: UUID,
+      page: PageRequest
+  ): ConnectionIO[PaginatedResponse[AOI]] =
     query.filter(fr"project_id = ${projectId}").page(page)
 
   def listAuthorizedAois(
       user: User,
       aoiQueryParams: AoiQueryParameters,
-      page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
+      page: PageRequest
+  ): ConnectionIO[PaginatedResponse[AOI]] = {
     val authedProjectsIO = ProjectDao.authQuery(user, ObjectType.Project).list
     for {
       authedProjects <- authedProjectsIO
       authedProjectIdsF = (authedProjects map { _.id }).toNel map {
         Fragments.in(fr"project_id", _)
       }
-      authFilterF = Fragments.orOpt(authedProjectIdsF,
-                                    Some(fr"owner = ${user.id}"))
+      authFilterF = Fragments.orOpt(
+        authedProjectIdsF,
+        Some(fr"owner = ${user.id}")
+      )
       aois <- {
         AoiDao.query
           .filter(aoiQueryParams)
@@ -104,9 +107,11 @@ object AoiDao extends Dao[AOI] {
     ).update.run
   }
 
-  def authorize(aoiId: UUID,
-                user: User,
-                actionType: ActionType): ConnectionIO[Boolean] =
+  def authorize(
+      aoiId: UUID,
+      user: User,
+      actionType: ActionType
+  ): ConnectionIO[Boolean] =
     for {
       aoiO <- AoiDao.query.filter(aoiId).selectOption
       projectAuthed <- aoiO map { _.projectId } match {

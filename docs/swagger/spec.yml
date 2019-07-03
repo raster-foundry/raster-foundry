@@ -1201,7 +1201,6 @@ paths:
         - Imagery
       parameters:
         - $ref: '#/parameters/createdBy'
-        - $ref: '#/parameters/modifiedBy'
         - $ref: '#/parameters/minCreateDatetime'
         - $ref: '#/parameters/maxCreateDatetime'
         - $ref: '#/parameters/minModifiedDatetime'
@@ -4005,7 +4004,6 @@ paths:
         - Lab
       parameters:
         - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/modifiedBy'
         - $ref: '#/parameters/minCreateDatetime'
         - $ref: '#/parameters/maxCreateDatetime'
         - $ref: '#/parameters/minModifiedDatetime'
@@ -5407,12 +5405,6 @@ parameters:
     in: query
     type: string
     required: false
-  modifiedBy:
-    name: modifiedBy
-    description: 'Filter by user last modified by'
-    in: query
-    type: string
-    required: false
   owner:
     name: owner
     description: 'Filter by resource owner ID'
@@ -5966,10 +5958,6 @@ definitions:
         type: string
         description: 'User who created the object'
         readOnly: true
-      modifiedBy:
-        type: string
-        description: 'User who most recently modified the object'
-        readOnly: true
       owner:
         type: string
         description: 'User who owns the object'
@@ -6429,10 +6417,6 @@ definitions:
           createdBy:
             type: string
             description: 'User who created the object'
-            readOnly: true
-          modifiedBy:
-            type: string
-            description: 'User who most recently modified the object'
             readOnly: true
           organizationId:
             type: string
@@ -7190,8 +7174,6 @@ definitions:
     description: 'User parameters to filter scenes'
     properties:
       createdBy:
-        type: string
-      modifiedBy:
         type: string
       owner:
         type: string

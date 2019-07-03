@@ -295,7 +295,6 @@ class AnnotationDaoSpec
                   annotation.createdAt,
                   annotation.createdBy,
                   annotation.modifiedAt,
-                  annotation.modifiedBy,
                   annotation.owner,
                   annotation.label,
                   annotation.description,

@@ -163,7 +163,6 @@ trait PropTestHelpers {
       id = shape.id,
       properties = shapeGeoJSON.properties.copy(
         createdBy = user.id,
-        modifiedBy = user.id,
         owner = user.id
       )
     )
@@ -215,7 +214,7 @@ trait PropTestHelpers {
       .toAOI(project.id, user)
 
   def fixupAoi(user: User, aoi: AOI): AOI = {
-    aoi.copy(owner = user.id, createdBy = user.id, modifiedBy = user.id)
+    aoi.copy(owner = user.id, createdBy = user.id)
   }
 
   def fixupTeam(teamCreate: Team.Create, org: Organization, user: User): Team =

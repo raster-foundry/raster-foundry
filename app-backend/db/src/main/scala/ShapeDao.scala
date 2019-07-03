@@ -34,15 +34,17 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
   def getShapeById(shapeId: UUID): ConnectionIO[Option[Shape]] =
     query.filter(shapeId).selectOption
 
-  def insertShape(shapeCreate: Shape.Create,
-                  user: User): ConnectionIO[Shape] = {
+  def insertShape(
+      shapeCreate: Shape.Create,
+      user: User
+  ): ConnectionIO[Shape] = {
     val shape = shapeCreate.toShape(user)
     sql"""
       INSERT INTO shapes
       (id, created_at, created_by, modified_at, modified_by, owner, name, description, geometry)
       VALUES
       (
-      ${shape.id}, ${shape.createdAt}, ${shape.createdBy}, ${shape.modifiedAt}, ${shape.modifiedBy},
+      ${shape.id}, ${shape.createdAt}, ${shape.createdBy}, ${shape.modifiedAt},
       ${shape.owner}, ${shape.name}, ${shape.description}, ${shape.geometry}
       )
     """.update.withUniqueGeneratedKeys[Shape](
@@ -58,8 +60,10 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
     )
   }
 
-  def insertShapes(shapes: Seq[Shape.Create],
-                   user: User): ConnectionIO[Seq[Shape.GeoJSON]] = {
+  def insertShapes(
+      shapes: Seq[Shape.Create],
+      user: User
+  ): ConnectionIO[Seq[Shape.GeoJSON]] = {
     val insertSql =
       """
        INSERT INTO shapes
@@ -87,9 +91,11 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
 
   }
 
-  def updateShape(updatedShape: Shape.GeoJSON,
-                  id: UUID,
-                  user: User): ConnectionIO[Int] = {
+  def updateShape(
+      updatedShape: Shape.GeoJSON,
+      id: UUID,
+      user: User
+  ): ConnectionIO[Int] = {
     val updateTime = new Timestamp(new java.util.Date().getTime())
     val shape = updatedShape.toShape
 
@@ -105,30 +111,39 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
-  def authQuery(user: User,
-                objectType: ObjectType,
-                ownershipTypeO: Option[String] = None,
-                groupTypeO: Option[GroupType] = None,
-                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Shape] =
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None
+  ): Dao.QueryBuilder[Shape] =
     user.isSuperuser match {
       case true =>
         Dao.QueryBuilder[Shape](selectF, tableF, List.empty)
       case false =>
-        Dao.QueryBuilder[Shape](selectF,
-                                tableF,
-                                List(
-                                  queryObjectsF(user,
-                                                objectType,
-                                                ActionType.View,
-                                                ownershipTypeO,
-                                                groupTypeO,
-                                                groupIdO)))
+        Dao.QueryBuilder[Shape](
+          selectF,
+          tableF,
+          List(
+            queryObjectsF(
+              user,
+              objectType,
+              ActionType.View,
+              ownershipTypeO,
+              groupTypeO,
+              groupIdO
+            )
+          )
+        )
     }
 
-  def authorized(user: User,
-                 objectType: ObjectType,
-                 objectId: UUID,
-                 actionType: ActionType): ConnectionIO[Boolean] =
+  def authorized(
+      user: User,
+      objectType: ObjectType,
+      objectId: UUID,
+      actionType: ActionType
+  ): ConnectionIO[Boolean] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)

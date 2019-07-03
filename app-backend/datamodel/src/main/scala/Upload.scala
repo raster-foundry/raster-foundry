@@ -7,23 +7,24 @@ import io.circe._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-final case class Upload(id: UUID,
-                        createdAt: Timestamp,
-                        createdBy: String,
-                        modifiedAt: Timestamp,
-                        modifiedBy: String,
-                        owner: String,
-                        uploadStatus: UploadStatus,
-                        fileType: FileType,
-                        uploadType: UploadType,
-                        files: List[String],
-                        datasource: UUID,
-                        metadata: Json,
-                        visibility: Visibility,
-                        projectId: Option[UUID],
-                        layerId: Option[UUID],
-                        source: Option[String],
-                        keepInSourceBucket: Boolean)
+final case class Upload(
+    id: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    owner: String,
+    uploadStatus: UploadStatus,
+    fileType: FileType,
+    uploadType: UploadType,
+    files: List[String],
+    datasource: UUID,
+    metadata: Json,
+    visibility: Visibility,
+    projectId: Option[UUID],
+    layerId: Option[UUID],
+    source: Option[String],
+    keepInSourceBucket: Boolean
+)
 
 object Upload {
 
@@ -32,21 +33,25 @@ object Upload {
   def create = Upload.apply _
 
   @JsonCodec
-  final case class Create(uploadStatus: UploadStatus,
-                          fileType: FileType,
-                          uploadType: UploadType,
-                          files: List[String],
-                          datasource: UUID,
-                          metadata: Json,
-                          owner: Option[String],
-                          visibility: Visibility,
-                          projectId: Option[UUID],
-                          layerId: Option[UUID],
-                          source: Option[String],
-                          keepInSourceBucket: Option[Boolean]) {
-    def toUpload(user: User,
-                 userPlatformAdmin: (UUID, Boolean),
-                 ownerPlatform: Option[UUID]): Upload = {
+  final case class Create(
+      uploadStatus: UploadStatus,
+      fileType: FileType,
+      uploadType: UploadType,
+      files: List[String],
+      datasource: UUID,
+      metadata: Json,
+      owner: Option[String],
+      visibility: Visibility,
+      projectId: Option[UUID],
+      layerId: Option[UUID],
+      source: Option[String],
+      keepInSourceBucket: Option[Boolean]
+  ) {
+    def toUpload(
+        user: User,
+        userPlatformAdmin: (UUID, Boolean),
+        ownerPlatform: Option[UUID]
+    ): Upload = {
       val id = UUID.randomUUID()
       val now = new Timestamp(new java.util.Date().getTime)
       // This logic isn't in OwnerCheck because we don't know that we want to let Platform Admins set owners on
@@ -62,10 +67,12 @@ object Upload {
           user.id
         // when intendedOwner and user are different people, we check that both the two users' platforms
         // match and that the acting user is an admin of that platform
-        case (Some(intendedOwner),
-              Some(ownerPlatformId),
-              _,
-              (userPlatformId, userIsPlatformAdmin)) =>
+        case (
+            Some(intendedOwner),
+            Some(ownerPlatformId),
+            _,
+            (userPlatformId, userIsPlatformAdmin)
+            ) =>
           if (ownerPlatformId == userPlatformId && userIsPlatformAdmin) {
             intendedOwner
           } else {
@@ -85,7 +92,6 @@ object Upload {
         now, // createdAt
         user.id, // createdBy
         now, // modifiedAt
-        user.id, // modifiedBy
         ownerId, // owner
         this.uploadStatus,
         this.fileType,

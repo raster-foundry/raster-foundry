@@ -21,7 +21,7 @@ class Scene(BaseModel):
                  ingestStatus, metadataFiles, sunAzimuth=None, sunElevation=None,
                  cloudCover=None, acquisitionDate=None, id=None, thumbnails=None,
                  tileFootprint=None, dataFootprint=None, images=None, createdAt=None,
-                 modifiedAt=None, createdBy=None, modifiedBy=None, ingestLocation=None,
+                 modifiedAt=None, createdBy=None, ingestLocation=None,
                  owner=None, sceneType="AVRO"):
         """Create a new Scene
 
@@ -47,7 +47,6 @@ class Scene(BaseModel):
         """
 
         self.ingestLocation = ingestLocation
-        self.modifiedBy = modifiedBy
         self.createdBy = createdBy
         self.visibility = visibility
         self.tags = tags
@@ -102,7 +101,7 @@ class Scene(BaseModel):
             statuses.get('boundaryStatus'), statuses.get('ingestStatus'), d.get('metadataFiles'),
             filter_fields.get('sunAzimuth'), filter_fields.get('sunElevation'), filter_fields.get('cloudCover'),
             filter_fields.get('acquisitionDate'), d.get('id'), thumbnails, tile_footprint, data_footprint,
-            images, d.get('createdAt'), d.get('modifiedAt'), d.get('createdBy'), d.get('modifiedBy'),
+            images, d.get('createdAt'), d.get('modifiedAt'), d.get('createdBy'),
             d.get('ingestLocation', ''), owner=d.get('owner'), sceneType=d.get('sceneType')
         )
 
@@ -148,9 +147,6 @@ class Scene(BaseModel):
 
         if self.modifiedAt:
             scene_dict['modifiedAt'] = self.modifiedAt
-
-        if self.modifiedBy:
-            scene_dict['modifiedBy'] = self.modifiedBy
 
         if self.createdBy:
             scene_dict['createdBy'] = self.createdBy

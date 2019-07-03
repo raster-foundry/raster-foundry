@@ -6,15 +6,16 @@ import java.util.UUID
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-final case class MapToken(id: UUID,
-                          createdAt: Timestamp,
-                          createdBy: String,
-                          modifiedAt: Timestamp,
-                          modifiedBy: String,
-                          owner: String,
-                          name: String,
-                          project: Option[UUID],
-                          toolRun: Option[UUID])
+final case class MapToken(
+    id: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    owner: String,
+    name: String,
+    project: Option[UUID],
+    toolRun: Option[UUID]
+)
 
 object MapToken {
   def tupled = (MapToken.apply _).tupled
@@ -22,11 +23,12 @@ object MapToken {
   def create = Create.apply _
 
   @JsonCodec
-  final case class Create(name: String,
-                          project: Option[UUID],
-                          toolRun: Option[UUID],
-                          owner: Option[String])
-      extends OwnerCheck {
+  final case class Create(
+      name: String,
+      project: Option[UUID],
+      toolRun: Option[UUID],
+      owner: Option[String]
+  ) extends OwnerCheck {
     def toMapToken(user: User): MapToken = {
 
       val id = java.util.UUID.randomUUID()
@@ -38,7 +40,6 @@ object MapToken {
         now,
         user.id,
         now,
-        user.id,
         ownerId,
         this.name,
         this.project,

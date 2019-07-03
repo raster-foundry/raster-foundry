@@ -9,16 +9,16 @@ import io.circe.generic.JsonCodec
 import io.circe.generic.extras._
 
 @JsonCodec
-final case class Shape(id: UUID,
-                       createdAt: Timestamp,
-                       createdBy: String,
-                       modifiedAt: Timestamp,
-                       modifiedBy: String,
-                       owner: String,
-                       name: String,
-                       description: Option[String],
-                       geometry: Projected[Geometry])
-    extends GeoJSONSerializable[Shape.GeoJSON] {
+final case class Shape(
+    id: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    owner: String,
+    name: String,
+    description: Option[String],
+    geometry: Projected[Geometry]
+) extends GeoJSONSerializable[Shape.GeoJSON] {
   def toGeoJSONFeature: Shape.GeoJSON = {
     Shape.GeoJSON(
       this.id,
@@ -27,7 +27,6 @@ final case class Shape(id: UUID,
         this.createdAt,
         this.createdBy,
         this.modifiedAt,
-        this.modifiedBy,
         this.owner,
         this.name,
         this.description
@@ -37,18 +36,21 @@ final case class Shape(id: UUID,
 }
 
 @JsonCodec
-final case class ShapeProperties(createdAt: Timestamp,
-                                 createdBy: String,
-                                 modifiedAt: Timestamp,
-                                 modifiedBy: String,
-                                 owner: String,
-                                 name: String,
-                                 description: Option[String])
+final case class ShapeProperties(
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    owner: String,
+    name: String,
+    description: Option[String]
+)
 
 @JsonCodec
-final case class ShapePropertiesCreate(owner: Option[String],
-                                       name: String,
-                                       description: Option[String])
+final case class ShapePropertiesCreate(
+    owner: Option[String],
+    name: String,
+    description: Option[String]
+)
 
 object Shape {
 
@@ -61,11 +63,12 @@ object Shape {
   def tupled = (Shape.apply _).tupled
   def create = Create.apply _
   @ConfiguredJsonCodec
-  final case class GeoJSON(id: UUID,
-                           geometry: Option[Projected[Geometry]],
-                           properties: ShapeProperties,
-                           _type: String = "Feature")
-      extends GeoJSONFeature {
+  final case class GeoJSON(
+      id: UUID,
+      geometry: Option[Projected[Geometry]],
+      properties: ShapeProperties,
+      _type: String = "Feature"
+  ) extends GeoJSONFeature {
     def toShape: Shape = {
       geometry match {
         case Some(g) =>
@@ -74,7 +77,6 @@ object Shape {
             properties.createdAt,
             properties.createdBy,
             properties.modifiedAt,
-            properties.modifiedBy,
             properties.owner,
             properties.name,
             properties.description,
@@ -89,11 +91,12 @@ object Shape {
   }
 
   @JsonCodec
-  final case class Create(owner: Option[String],
-                          name: String,
-                          description: Option[String],
-                          geometry: Projected[Geometry])
-      extends OwnerCheck {
+  final case class Create(
+      owner: Option[String],
+      name: String,
+      description: Option[String],
+      geometry: Projected[Geometry]
+  ) extends OwnerCheck {
 
     def toShape(user: User): Shape = {
       val now = new Timestamp(new java.util.Date().getTime)
@@ -103,7 +106,6 @@ object Shape {
         now, // createdAt
         user.id, // createdBy
         now, // modifiedAt
-        user.id, // modifiedBy
         ownerId, // owner
         name,
         description,
@@ -113,9 +115,10 @@ object Shape {
   }
 
   @JsonCodec
-  final case class GeoJSONFeatureCreate(geometry: Projected[Geometry],
-                                        properties: ShapePropertiesCreate)
-      extends OwnerCheck {
+  final case class GeoJSONFeatureCreate(
+      geometry: Projected[Geometry],
+      properties: ShapePropertiesCreate
+  ) extends OwnerCheck {
     def toShapeCreate: Shape.Create = {
       Shape.Create(
         properties.owner,

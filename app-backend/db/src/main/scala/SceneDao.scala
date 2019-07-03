@@ -51,14 +51,13 @@ object SceneDao
     query.filter(id).selectOption
 
   def streamSceneById(sceneId: UUID, footprint: Option[Projected[Polygon]])(
-      implicit Filter: Filterable[Any, Projected[Geometry]])
-    : fs2.Stream[ConnectionIO, Scene] =
+      implicit Filter: Filterable[Any, Projected[Geometry]]
+  ): fs2.Stream[ConnectionIO, Scene] =
     (selectF ++ Fragments.whereAndOpt(
       (Some(fr"id = ${sceneId}") +: (footprint map {
         Filter.toFilters(_)
-      } getOrElse { List.empty })): _*))
-      .query[Scene]
-      .stream
+      } getOrElse { List.empty })): _*
+    )).query[Scene].stream
 
   def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select
@@ -69,8 +68,10 @@ object SceneDao
     }
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
-  def insert(sceneCreate: Scene.Create,
-             user: User): ConnectionIO[Scene.WithRelated] = {
+  def insert(
+      sceneCreate: Scene.Create,
+      user: User
+  ): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail)
     val images = (sceneCreate.images map { im: Image.Banded =>
@@ -91,14 +92,15 @@ object SceneDao
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status, scene_type
       )""" ++ fr"""VALUES (
-        ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
+        ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.owner},
         ${scene.visibility}, ${scene.tags}, ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name},
         ST_MakeValid(${scene.tileFootprint}), ST_MakeValid(${scene.dataFootprint}), ${scene.metadataFiles},
         ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
         ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
-      SceneType.Avro)}
+      SceneType.Avro
+    )}
       )
     """).update.withUniqueGeneratedKeys[UUID]("id")
 
@@ -116,8 +118,9 @@ object SceneDao
       kickoffIngest = sceneWithRelated.statusFields.ingestStatus == IngestStatus.Queued
       copied = if (kickoffIngest) {
         sceneWithRelated.copy(
-          statusFields = sceneWithRelated.statusFields.copy(
-            ingestStatus = IngestStatus.ToBeIngested))
+          statusFields = sceneWithRelated.statusFields
+            .copy(ingestStatus = IngestStatus.ToBeIngested)
+        )
       } else {
         sceneWithRelated
       }
@@ -134,8 +137,10 @@ object SceneDao
   }
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
-  def insertMaybe(sceneCreate: Scene.Create,
-                  user: User): ConnectionIO[Option[Scene.WithRelated]] = {
+  def insertMaybe(
+      sceneCreate: Scene.Create,
+      user: User
+  ): ConnectionIO[Option[Scene.WithRelated]] = {
     val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail)
     val images = (sceneCreate.images map { im: Image.Banded =>
@@ -157,14 +162,15 @@ object SceneDao
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status, scene_type
       )""") ++ fr"""VALUES (
-        ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
+        ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.owner},
         ${scene.visibility}, ${scene.tags},
          ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
         ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
         ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
-      SceneType.Avro)}
+      SceneType.Avro
+    )}
       )
     """).update.run
 
@@ -223,25 +229,33 @@ object SceneDao
               n.pure[ConnectionIO]
             case (previous, IngestStatus.Queued) =>
               logger.info(
-                s"Kicking off scene ingest for scene ${id} which entered state ${IngestStatus.Queued.toString} from ${previous.toString}")
+                s"Kicking off scene ingest for scene ${id} which entered state ${IngestStatus.Queued.toString} from ${previous.toString}"
+              )
               n.pure[ConnectionIO] <*
                 kickoffSceneIngest(id).pure[ConnectionIO] <*
-                update(scene.copy(
-                         statusFields = scene.statusFields.copy(
-                           ingestStatus = IngestStatus.ToBeIngested)),
-                       id,
-                       user)
+                update(
+                  scene.copy(
+                    statusFields = scene.statusFields
+                      .copy(ingestStatus = IngestStatus.ToBeIngested)
+                  ),
+                  id,
+                  user
+                )
             case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
               if (ts.getTime < now.getTime - (24 hours).toMillis) {
                 logger.info(
-                  s"Kicking off scene ingest for scene ${id} which has been ingesting for too long")
+                  s"Kicking off scene ingest for scene ${id} which has been ingesting for too long"
+                )
                 n.pure[ConnectionIO] <*
                   kickoffSceneIngest(id).pure[ConnectionIO] <*
-                  update(scene.copy(
-                           statusFields = scene.statusFields.copy(
-                             ingestStatus = IngestStatus.ToBeIngested)),
-                         id,
-                         user)
+                  update(
+                    scene.copy(
+                      statusFields = scene.statusFields
+                        .copy(ingestStatus = IngestStatus.ToBeIngested)
+                    ),
+                    id,
+                    user
+                  )
               } else {
                 n.pure[ConnectionIO]
               }
@@ -254,10 +268,12 @@ object SceneDao
                     spls.map(spl => {
                       logger
                         .info(
-                          s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}")
+                          s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}"
+                        )
                       kickoffLayerOverviewCreate(
                         spl.projectId,
-                        spl.projectLayerId).pure[ConnectionIO]
+                        spl.projectLayerId
+                      ).pure[ConnectionIO]
                     })
                   })
             case _ =>
@@ -272,7 +288,8 @@ object SceneDao
       polygonO: Option[Projected[Polygon]],
       redBand: Int,
       greenBand: Int,
-      blueBand: Int): ConnectionIO[Seq[MosaicDefinition]] = {
+      blueBand: Int
+  ): ConnectionIO[Seq[MosaicDefinition]] = {
     val polygonF: Fragment = polygonO match {
       case Some(polygon) => fr"ST_Intersects(tile_footprint, ${polygon})"
       case _             => fr""
@@ -290,13 +307,15 @@ object SceneDao
               greenBand,
               blueBand,
               BandGamma(enabled = false, None, None, None),
-              PerBandClipping(enabled = false,
-                              None,
-                              None,
-                              None,
-                              None,
-                              None,
-                              None),
+              PerBandClipping(
+                enabled = false,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None
+              ),
               MultiBandClipping(enabled = false, None, None),
               SigmoidalContrast(enabled = false, None, None),
               Saturation(enabled = false, None),
@@ -309,17 +328,20 @@ object SceneDao
             false,
             Some(().asJson),
             None
-          ))
+          )
+        )
       } getOrElse { Seq.empty }
     }
   }
 
-  def getSentinelMetadata(metadataUrl: String)(implicit L: LiftIO[ConnectionIO])
-    : ConnectionIO[(Array[Byte], ObjectMetadata)] = {
+  def getSentinelMetadata(metadataUrl: String)(
+      implicit L: LiftIO[ConnectionIO]
+  ): ConnectionIO[(Array[Byte], ObjectMetadata)] = {
     val s3Client = S3(region = Some(S3RegionEnum(Regions.EU_CENTRAL_1)))
     val bucketAndPrefix =
       s3Client.bucketAndPrefixFromURI(
-        new URI(URLDecoder.decode(metadataUrl, "UTF-8")))
+        new URI(URLDecoder.decode(metadataUrl, "UTF-8"))
+      )
     val s3Object =
       s3Client.getObject(bucketAndPrefix._1, bucketAndPrefix._2, true)
     val metaData = S3.getObjectMetadata(s3Object)
@@ -328,30 +350,39 @@ object SceneDao
     })
   }
 
-  def authQuery(user: User,
-                objectType: ObjectType,
-                ownershipTypeO: Option[String] = None,
-                groupTypeO: Option[GroupType] = None,
-                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] =
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None
+  ): Dao.QueryBuilder[Scene] =
     user.isSuperuser match {
       case true =>
         Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
       case false =>
-        Dao.QueryBuilder[Scene](selectF,
-                                tableF,
-                                List(
-                                  queryObjectsF(user,
-                                                objectType,
-                                                ActionType.View,
-                                                ownershipTypeO,
-                                                groupTypeO,
-                                                groupIdO)))
+        Dao.QueryBuilder[Scene](
+          selectF,
+          tableF,
+          List(
+            queryObjectsF(
+              user,
+              objectType,
+              ActionType.View,
+              ownershipTypeO,
+              groupTypeO,
+              groupIdO
+            )
+          )
+        )
     }
 
-  def authorized(user: User,
-                 objectType: ObjectType,
-                 objectId: UUID,
-                 actionType: ActionType): ConnectionIO[Boolean] =
+  def authorized(
+      user: User,
+      objectType: ObjectType,
+      objectId: UUID,
+      actionType: ActionType
+  ): ConnectionIO[Boolean] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
