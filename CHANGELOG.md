@@ -4,6 +4,8 @@
 
 ### Added
 
+- Added an endpoint for listing user activity summary on tasks [\#5051](https://github.com/raster-foundry/raster-foundry/pull/5051)
+
 ### Changed
 
 ### Deprecated

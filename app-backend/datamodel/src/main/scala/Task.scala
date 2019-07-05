@@ -212,6 +212,6 @@ final case class TaskUserSummary(
 )
 
 object TaskUserSummary {
-  implicit val taskUserSummrayEncoder: Encoder[TaskUserSummary] =
+  implicit val taskUserSummaryEncoder: Encoder[TaskUserSummary] =
     deriveEncoder[TaskUserSummary]
 }

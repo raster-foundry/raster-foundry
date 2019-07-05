@@ -308,7 +308,7 @@ object TaskDao extends Dao[Task] {
       .whereAndOpt(
         Some(fr"project_id = uuid($projectId)"),
         Some(fr"project_layer_id = uuid($layerId)"),
-        Some(fr"task_actions.FROM_status = $fromStatus"),
+        Some(fr"task_actions.from_status = $fromStatus"),
         Some(fr"task_actions.to_status = $toStatus"),
         params.actionStartTime map { start =>
           fr"task_actions.timestamp >= $start"
