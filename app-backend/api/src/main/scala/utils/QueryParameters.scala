@@ -168,7 +168,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     parameters(
       'status.as[TaskStatus].?,
       'locked.as[Boolean].?,
-      'lockedBy.as[TaskStatus].?,
+      'lockedBy.as[String].?,
       'bbox.as[String].*,
       'actionUser.as[String].?,
       'actionType.as[TaskStatus].?,

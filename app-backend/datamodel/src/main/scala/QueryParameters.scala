@@ -652,7 +652,7 @@ final case class MetricQueryParameters(
 final case class TaskQueryParameters(
     status: Option[TaskStatus] = None,
     locked: Option[Boolean] = None,
-    lockedBy: Option[TaskStatus] = None,
+    lockedBy: Option[String] = None,
     bbox: Iterable[String] = Seq.empty,
     actionUser: Option[String] = None,
     actionType: Option[TaskStatus] = None,
