@@ -48,7 +48,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     case _                  => "http://localhost:8081"
   }
 
-  override protected implicit def contextShift: ContextShift[IO] =
+  override protected implicit val contextShift: ContextShift[IO] =
     IO.contextShift(
       ExecutionContext.fromExecutor(
         Executors.newFixedThreadPool(
