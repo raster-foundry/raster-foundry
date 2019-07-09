@@ -4,8 +4,6 @@
 
 ### Added
 
-- Added an endpoint for listing user activity summary on tasks [\#5051](https://github.com/raster-foundry/raster-foundry/pull/5051)
-
 ### Changed
 
 ### Deprecated
@@ -14,9 +12,17 @@
 
 ### Fixed
 
-- Removed superfluous parameter from `POST`s to `/annotation-groups` endpoints [\#5041](https://github.com/raster-foundry/raster-foundry/pull/5041) 
-
 ### Security
+
+## [1.24.0](https://github.com/raster-foundry/raster-foundry/tree/1.24.0)
+
+### Added
+
+- Added an endpoint for listing user activity summary on tasks [\#5051](https://github.com/raster-foundry/raster-foundry/pull/5051)
+
+### Fixed
+
+- Removed superfluous parameter from `POST`s to `/annotation-groups` endpoints [\#5041](https://github.com/raster-foundry/raster-foundry/pull/5041)
 
 ## [1.23.0](https://github.com/raster-foundry/raster-foundry/tree/1.23.0)
 
