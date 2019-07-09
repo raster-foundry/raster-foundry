@@ -652,7 +652,7 @@ final case class MetricQueryParameters(
 final case class TaskQueryParameters(
     status: Option[TaskStatus] = None,
     locked: Option[Boolean] = None,
-    lockedBy: Option[TaskStatus] = None,
+    lockedBy: Option[String] = None,
     bbox: Iterable[String] = Seq.empty,
     actionUser: Option[String] = None,
     actionType: Option[TaskStatus] = None,
@@ -663,4 +663,19 @@ final case class TaskQueryParameters(
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
+}
+
+final case class UserTaskActivityParameters(
+    actionStartTime: Option[Timestamp] = None,
+    actionEndTime: Option[Timestamp] = None,
+    actionUser: Option[String] = None
+)
+
+object UserTaskActivityParameters {
+  implicit def encUserTaskActivityParameters
+    : Encoder[UserTaskActivityParameters] =
+    deriveEncoder[UserTaskActivityParameters]
+  implicit def decUserTaskActivityParameters
+    : Decoder[UserTaskActivityParameters] =
+    deriveDecoder[UserTaskActivityParameters]
 }
