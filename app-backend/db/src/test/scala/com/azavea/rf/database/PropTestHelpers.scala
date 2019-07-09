@@ -326,6 +326,7 @@ trait PropTestHelpers {
   ): Task.TaskPropertiesCreate =
     tpc.copy(projectId = project.id, projectLayerId = project.defaultLayerId)
 
+<<<<<<< HEAD
   def fixupProjectExtrasUpdate(
       labelValidateTeamCreate: (Team.Create, Team.Create),
       labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create),
@@ -381,4 +382,16 @@ trait PropTestHelpers {
       updatedDbProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
     } yield updatedDbProject
   }
+
+  def fixupStacExportCreate(
+      stacExportCreate: StacExport.Create,
+      user: User,
+      project: Project
+  ): StacExport.Create =
+    stacExportCreate.copy(
+      layerDefinitions = List(
+        StacExport.LayerDefinition(project.id, project.defaultLayerId)
+      ),
+      owner = Some(user.id)
+    )
 }
