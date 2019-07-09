@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Removed superfluous parameter from `POST`s to `/annotation-groups` endpoints [\#5041](https://github.com/raster-foundry/raster-foundry/pull/5041) 
+
 ### Security
 
 ## [1.23.0](https://github.com/raster-foundry/raster-foundry/tree/1.23.0)

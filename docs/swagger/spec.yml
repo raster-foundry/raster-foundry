@@ -7928,9 +7928,6 @@ definitions:
     properties:
       name:
         type: string
-      projectId:
-        type: string
-        format: uuid
       defaultStyle:
         type: object
 
