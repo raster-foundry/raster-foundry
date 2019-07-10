@@ -40,23 +40,21 @@ import cats.effect.IO
   * @param mask geometry to limit the rendering
   */
 final case class BacksplashGeotiff(
-    imageId: UUID,
+    @cacheKeyExclude imageId: UUID,
     @cacheKeyExclude projectId: UUID,
     @cacheKeyExclude projectLayerId: UUID,
-    @cacheKeyExclude uri: String,
+    uri: String,
     subsetBands: List[Int],
     @cacheKeyExclude corrections: ColorCorrect.Params,
     singleBandOptions: Option[SingleBandOptions.Params],
     mask: Option[MultiPolygon],
-    @cacheKeyExclude footprint: MultiPolygon)
-    extends LazyLogging
+    @cacheKeyExclude footprint: MultiPolygon
+) extends LazyLogging
     with BacksplashImage[IO] {
 
   implicit val tileCache = Cache.tileCache
-  implicit val rasterSourceCache = Cache.rasterSourceCache
 
   def getRasterSource: IO[RasterSource] = {
-    implicit val rasterSourceCacheFlags = Cache.rasterSourceCacheFlags
     if (enableGDAL) {
       logger.debug(s"Using GDAL Raster Source: ${uri}")
       // Do not bother caching - let GDAL internals worry about that
@@ -64,17 +62,16 @@ final case class BacksplashGeotiff(
         GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
       }
     } else {
-      memoizeF(None) {
-        logger.debug(s"Using GeoTiffRasterSource: ${uri}")
-        IO {
-          new GeoTiffRasterSource(uri)
-        }
+      logger.debug(s"Using GeoTiffRasterSource: ${uri}")
+      IO {
+        new GeoTiffRasterSource(uri)
       }
     }
   }
 
   def readWithCache(z: Int, x: Int, y: Int)(
-      implicit @cacheKeyExclude flags: Flags): IO[Option[MultibandTile]] =
+      implicit @cacheKeyExclude flags: Flags
+  ): IO[Option[MultibandTile]] =
     memoizeF(None) {
       logger.debug(s"Reading ${z}-${x}-${y} - Image: ${imageId} at ${uri}")
       val layoutDefinition = BacksplashImage.tmsLevels(z)
@@ -104,14 +101,16 @@ final case class BacksplashGeotiff(
       )
       val rasterExtent = RasterExtent(extent, cs)
       logger.debug(
-        s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
+        s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)"
+      )
       getRasterSource
         .map { rasterSource =>
           rasterSource
             .reproject(WebMercator, NearestNeighbor)
-            .resampleToGrid(GridExtent[Long](rasterExtent.extent,
-                                             rasterExtent.cellSize),
-                            NearestNeighbor)
+            .resampleToGrid(
+              GridExtent[Long](rasterExtent.extent, rasterExtent.cellSize),
+              NearestNeighbor
+            )
             .read(extent, subsetBands)
             .map(_.tile)
         }
@@ -148,7 +147,8 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
   }
 
   def readWithCache(z: Int, x: Int, y: Int)(
-      implicit @cacheKeyExclude flags: Flags): F[Option[MultibandTile]]
+      implicit @cacheKeyExclude flags: Flags
+  ): F[Option[MultibandTile]]
 
   /** Read tile - defers to a private method to enable disable/enabling of cache **/
   def read(extent: Extent, cs: CellSize): F[Option[MultibandTile]] = {

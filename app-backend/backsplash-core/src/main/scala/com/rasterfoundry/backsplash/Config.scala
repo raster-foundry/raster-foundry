@@ -26,8 +26,6 @@ object Config {
     val histogramCacheEnable =
       cacheConfig.getBoolean("core.histogramCacheEnable")
     val tileCacheEnable = cacheConfig.getBoolean("core.tileCacheEnable")
-    val rasterSourceCacheEnable =
-      cacheConfig.getBoolean("core.rasterSourceCacheEnable")
 
     val memcachedHost = cacheConfig.getString("core.memcachedHost")
     val memcachedPort = cacheConfig.getInt("core.memcachedPort")
