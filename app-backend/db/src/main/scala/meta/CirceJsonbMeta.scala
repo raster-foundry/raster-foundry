@@ -68,4 +68,11 @@ trait CirceJsonbMeta {
 
   implicit val userScopeMeta: Meta[Map[ObjectType, List[ActionType]]] =
     CirceJsonbMeta[Map[ObjectType, List[ActionType]]]
+
+  implicit val labelStacExportLayerDefinitionMeta
+    : Meta[List[LabelStacExport.LayerDefinition]] =
+    CirceJsonbMeta[List[LabelStacExport.LayerDefinition]]
+
+  implicit val taskStatusListMeta: Meta[List[TaskStatus]] =
+    CirceJsonbMeta[List[TaskStatus]]
 }

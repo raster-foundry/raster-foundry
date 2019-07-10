@@ -37,7 +37,7 @@ object LabelStacExport {
       isUnion: Boolean,
       taskStatuses: List[TaskStatus])
       extends OwnerCheck {
-    def toLayerDefinition(user: User): LabelStacExport = {
+    def toLabelStacExport(user: User): LabelStacExport = {
       val id = UUID.randomUUID()
       val now = new Timestamp(new Date().getTime)
       val ownerId = checkOwner(user, this.owner)
