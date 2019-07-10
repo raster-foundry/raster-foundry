@@ -54,24 +54,19 @@ object RFTransactor {
       new HikariDataSource(hikariConfig)
     }
 
-    val connectionEC =
+    val connectionEC: ExecutionContext =
       ExecutionContext.fromExecutor(
-        ExecutionContext.fromExecutor(
-          Executors.newFixedThreadPool(
-            Properties.envOrElse("HIKARI_CONNECTION_THREADS", "8").toInt,
-            new ThreadFactoryBuilder().setNameFormat("db-connection-%d").build()
-          )
+        Executors.newFixedThreadPool(
+          Properties.envOrElse("HIKARI_CONNECTION_THREADS", "8").toInt,
+          new ThreadFactoryBuilder().setNameFormat("db-connection-%d").build()
         )
       )
 
-    val transactionEC =
+    val transactionEC: ExecutionContext =
       ExecutionContext.fromExecutor(
-        ExecutionContext.fromExecutor(
-          Executors.newCachedThreadPool(
-            new ThreadFactoryBuilder()
-              .setNameFormat("db-transaction-%d")
-              .build()
-          )
+        Executors.newFixedThreadPool(
+          Properties.envOrElse("HIKARI_TRANSACTION_THREADS", "8").toInt,
+          new ThreadFactoryBuilder().setNameFormat("db-transaction-%d").build()
         )
       )
   }
