@@ -5,7 +5,7 @@
 ### Added
 
 ### Changed
-- Upgraded version of GeoTrellis Server and MAML [\#5046](https://github.com/raster-foundry/raster-foundry/pull/5046)
+- Upgraded version of GeoTrellis Server and MAML [\#5046](https://github.com/raster-foundry/raster-foundry/pull/5046), [\#5063](https://github.com/raster-foundry/raster-foundry/pull/5063)
 
 ### Deprecated
 
