@@ -318,4 +318,16 @@ trait PropTestHelpers {
       project: Project
   ): Task.TaskPropertiesCreate =
     tpc.copy(projectId = project.id, projectLayerId = project.defaultLayerId)
+
+  def fixupLabelStacExportCreate(
+    labelStacExportCreate: LabelStacExport.Create,
+    user: User,
+    project: Project
+  ): LabelStacExport.Create =
+    labelStacExportCreate.copy(
+      layerDefinition = List(
+        LabelStacExport.LayerDefinition(project.id, project.defaultLayerId)
+      ),
+      owner = Some(user.id)
+    )
 }
