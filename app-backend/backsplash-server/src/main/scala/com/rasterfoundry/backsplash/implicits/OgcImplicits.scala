@@ -15,6 +15,7 @@ import cats.effect.{IO, ContextShift}
 import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
+import geotrellis.contrib.vlm.MosaicRasterSource
 import geotrellis.proj4.{LatLng, WebMercator, CRS}
 import geotrellis.raster.histogram.Histogram
 import geotrellis.server.ogc.{OgcSource, SimpleSource, OgcStyle}
@@ -28,11 +29,12 @@ import opengis.wms.{Name, OnlineResource, Service}
 import java.util.UUID
 
 class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])(
-    implicit contextShift: ContextShift[IO])
-    extends ToProjectStoreOps {
+    implicit contextShift: ContextShift[IO]
+) extends ToProjectStoreOps {
 
   private def compositesToOgcStyles(
-      composites: Map[String, ColorComposite]): List[OgcStyle] =
+      composites: Map[String, ColorComposite]
+  ): List[OgcStyle] =
     composites.values map { OgcStyles.fromColorComposite _ } toList
 
   private def getStyles(projectLayerId: UUID): IO[List[OgcStyle]] =
@@ -55,34 +57,38 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])(
     } yield { configured ++ rf }
 
   private def projectLayerToSimpleSource(
-      projectLayer: ProjectLayer): IO[(SimpleSource, List[CRS])] =
-    for {
-      rsm <- BacksplashMosaic.toRasterSource(
+      projectLayer: ProjectLayer
+  ): IO[(SimpleSource, List[CRS])] =
+    (
+      BacksplashMosaic.toRasterSource(
         layers.read(projectLayer.id, None, None, None)
-      )
-      crs <- BacksplashMosaic.getRasterSourceOriginalCRS(
+      ),
+      BacksplashMosaic.getRasterSourceOriginalCRS(
         layers.read(projectLayer.id, None, None, None)
-      )
-      ogcStyles <- getStyles(projectLayer.id)
-    } yield {
-      (
-        SimpleSource(
-          projectLayer.name,
-          projectLayer.id.toString,
-          rsm,
-          ogcStyles
-        ),
-        crs
-      )
-
-    }
+      ),
+      getStyles(projectLayer.id)
+    ).parMapN(
+      (rsm: MosaicRasterSource, crs: List[CRS], ogcStyles: List[OgcStyle]) => {
+        (
+          SimpleSource(
+            projectLayer.name,
+            projectLayer.id.toString,
+            rsm,
+            ogcStyles
+          ),
+          crs
+        )
+      }
+    )
 
   private def getSources(projectId: UUID): IO[List[(OgcSource, List[CRS])]] =
     for {
       projectLayers <- ProjectLayerDao
         .listProjectLayersWithImagery(projectId)
         .transact(xa)
-      sourcesAndCRS <- projectLayers traverse { projectLayerToSimpleSource _ }
+      sourcesAndCRS <- projectLayers parTraverse {
+        projectLayerToSimpleSource _
+      }
     } yield sourcesAndCRS
 
   implicit val projectOgcStore: OgcStore[ProjectDao] =
@@ -110,7 +116,8 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])(
             None,
             "Raster Foundry WMS Layer",
             None,
-            List(LatLng, WebMercator) ++ crs)
+            List(LatLng, WebMercator) ++ crs
+          )
           WmsModel(service, parentLayerMeta, sources)
         }
 
@@ -133,12 +140,16 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])(
           )
         }
 
-      def getLayerHistogram(self: ProjectDao,
-                            id: UUID): IO[List[Histogram[Double]]] =
+      def getLayerHistogram(
+          self: ProjectDao,
+          id: UUID
+      ): IO[List[Histogram[Double]]] =
         LayerAttributeDao().getProjectLayerHistogram(id, xa) map { histArrays =>
           histArrays map { _.toList } reduce {
-            (hists1: List[Histogram[Double]],
-             hists2: List[Histogram[Double]]) =>
+            (
+                hists1: List[Histogram[Double]],
+                hists2: List[Histogram[Double]]
+            ) =>
               hists1 zip hists2 map {
                 case (h1, h2) => h1 merge h2
               }
