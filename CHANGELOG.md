@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Capture X-Amzn-Trace-Id in Nginx access logs [\#5068](https://github.com/raster-foundry/raster-foundry/pull/5068)
 
 ### Changed
 - Upgraded version of GeoTrellis Server and MAML [\#5046](https://github.com/raster-foundry/raster-foundry/pull/5046), [\#5063](https://github.com/raster-foundry/raster-foundry/pull/5063)
