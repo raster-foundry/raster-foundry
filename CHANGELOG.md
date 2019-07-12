@@ -12,6 +12,7 @@
 ### Removed
 
 ### Fixed
+- Better error handling for ingests, no longer always fail the batch job [/#5070](https://github.com/raster-foundry/raster-foundry/pull/5070)
 
 ### Security
 
