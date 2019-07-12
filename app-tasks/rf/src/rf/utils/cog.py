@@ -69,6 +69,11 @@ def fetch_imagery(image_locations, local_dir):
 
 
 def fetch_image(location, filename, local_dir):
+    """Fetch an image an write it to a local directory
+
+    Raises:
+      ValueError: Invalid URL schema in location
+    """
     bucket, key = s3_bucket_and_key_from_url(location)
     if bucket.startswith('sentinel'):
         extra_kwargs = {'RequestPayer': 'requester'}
