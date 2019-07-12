@@ -1001,15 +1001,15 @@ object Generators extends ArbitraryInstances {
   private def taskStatusListGen: Gen[List[TaskStatus]] =
     Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
 
-  private def layerDefinitionGen: Gen[LabelStacExport.LayerDefinition] =
+  private def layerDefinitionGen: Gen[StacExport.LayerDefinition] =
     for {
       projectId <- uuidGen
       layerId <- uuidGen
     } yield {
-      LabelStacExport.LayerDefinition(projectId, layerId)
+      StacExport.LayerDefinition(projectId, layerId)
     }
 
-  private def labelStacExportCreateGen: Gen[LabelStacExport.Create] =
+  private def stacExportCreateGen: Gen[StacExport.Create] =
     for {
       name <- nonEmptyStringGen
       owner <- Gen.const(None)
@@ -1017,7 +1017,7 @@ object Generators extends ArbitraryInstances {
       isUnion <- Gen.oneOf(true, false)
       taskStatuses <- taskStatusListGen
     } yield {
-      LabelStacExport.Create(
+      StacExport.Create(
         name,
         owner,
         List(layerDefinition),
@@ -1026,8 +1026,8 @@ object Generators extends ArbitraryInstances {
       )
     }
 
-  private def labelStacExportQueryParametersGen: Gen[LabelStacExportQueryParameters] =
-    Gen.const(LabelStacExportQueryParameters())
+  private def stacExportQueryParametersGen: Gen[StacExportQueryParameters] =
+    Gen.const(StacExportQueryParameters())
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
@@ -1256,15 +1256,14 @@ object Generators extends ArbitraryInstances {
         taskPropertiesCreateGen
       }
 
-    implicit def arbLabelStacExportCreate: Arbitrary[LabelStacExport.Create] =
+    implicit def arbStacExportCreate: Arbitrary[StacExport.Create] =
       Arbitrary {
-        labelStacExportCreateGen
+        stacExportCreateGen
       }
 
-    implicit def arbLabelStacExportQueryParameters: Arbitrary[LabelStacExportQueryParameters] =
+    implicit def arbStacExportQueryParameters: Arbitrary[StacExportQueryParameters] =
       Arbitrary {
-        labelStacExportQueryParametersGen
+        stacExportQueryParametersGen
       }
-    labelStacExportQueryParametersGen
   }
 }

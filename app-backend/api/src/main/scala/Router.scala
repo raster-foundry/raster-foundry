@@ -22,6 +22,7 @@ import com.rasterfoundry.api.user.UserRoutes
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.license.LicenseRoutes
 import com.rasterfoundry.api.team.TeamRoutes
+import com.rasterfoundry.api.stac.StacRoutes
 
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
@@ -57,7 +58,8 @@ trait Router
     with ShapeRoutes
     with LicenseRoutes
     with TeamRoutes
-    with PlatformRoutes {
+    with PlatformRoutes
+    with StacRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
@@ -120,6 +122,9 @@ trait Router
           } ~
           pathPrefix("teams") {
             teamRoutes
+          } ~
+          pathPrefix("stac") {
+            stacRoutes
           }
       } ~
       pathPrefix("config") {

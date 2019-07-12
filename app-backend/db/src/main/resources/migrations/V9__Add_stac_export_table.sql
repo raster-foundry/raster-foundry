@@ -1,6 +1,6 @@
 -- Add a table for label stac export
 
-CREATE TABLE public.label_stac_exports (
+CREATE TABLE public.stac_exports (
     id uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
     created_by character varying(255) NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,

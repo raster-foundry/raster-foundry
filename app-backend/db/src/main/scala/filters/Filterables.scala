@@ -411,9 +411,9 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val labelStacExportQPFilter
-    : Filterable[Any, LabelStacExportQueryParameters] =
-    Filterable[Any, LabelStacExportQueryParameters] {
-      params: LabelStacExportQueryParameters =>
+    : Filterable[Any, StacExportQueryParameters] =
+    Filterable[Any, StacExportQueryParameters] {
+      params: StacExportQueryParameters =>
         Filters.onlyUserQP(params.onlyUserParams) ++
           Filters.ownerQP(params.ownerParams) ++
           Filters.searchQP(params.searchParams, List("name")) ++

@@ -185,7 +185,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionUser.as[String].?
     ).as(UserTaskActivityParameters.apply _)
 
-  def labelStacExportQueryParameters =
+  def stacExportQueryParameters =
     (
       userAuditQueryParameters &
         ownerQueryParameters &
@@ -193,5 +193,5 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         parameters(
           'exportStatus.as[String].?
         )
-    ).as(LabelStacExportQueryParameters.apply _)
+    ).as(StacExportQueryParameters.apply _)
 }
