@@ -15,15 +15,13 @@ final case class StacExport(id: UUID,
                             name: String,
                             exportLocation: Option[String],
                             exportStatus: ExportStatus,
-                            layerDefinition: List[StacExport.LayerDefinition],
-                            isUnion: Boolean,
+                            layerDefinitions: List[StacExport.LayerDefinition],
+                            unionAois: Boolean,
                             taskStatuses: List[String])
 
 object StacExport {
 
   def tupled = (StacExport.apply _).tupled
-
-  def create = Create.apply _
 
   @JsonCodec
   final case class LayerDefinition(projectId: UUID, layerId: UUID)
@@ -31,8 +29,8 @@ object StacExport {
   @JsonCodec
   final case class Create(name: String,
                           owner: Option[String],
-                          layerDefinition: List[StacExport.LayerDefinition],
-                          isUnion: Boolean,
+                          layerDefinitions: List[StacExport.LayerDefinition],
+                          unionAois: Boolean,
                           taskStatuses: List[TaskStatus])
       extends OwnerCheck {
     def toStacExport(user: User): StacExport = {
@@ -50,8 +48,8 @@ object StacExport {
         this.name,
         None,
         ExportStatus.NotExported,
-        this.layerDefinition,
-        this.isUnion,
+        this.layerDefinitions,
+        this.unionAois,
         this.taskStatuses.map(_.toString)
       )
     }

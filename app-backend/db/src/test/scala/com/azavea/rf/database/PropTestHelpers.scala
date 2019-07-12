@@ -325,7 +325,7 @@ trait PropTestHelpers {
       project: Project
   ): StacExport.Create =
     stacExportCreate.copy(
-      layerDefinition = List(
+      layerDefinitions = List(
         StacExport.LayerDefinition(project.id, project.defaultLayerId)
       ),
       owner = Some(user.id)

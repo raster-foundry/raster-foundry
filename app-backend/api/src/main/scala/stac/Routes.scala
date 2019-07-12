@@ -52,7 +52,7 @@ trait StacRoutes
     entity(as[StacExport.Create]) { newStacExport =>
       authorizeAsync {
         StacExportDao
-          .hasProjectViewAccess(newStacExport.layerDefinition, user)
+          .hasProjectViewAccess(newStacExport.layerDefinitions, user)
           .transact(xa)
           .unsafeToFuture
       } {
@@ -61,6 +61,7 @@ trait StacRoutes
             .create(newStacExport, user)
             .transact(xa)
             .unsafeToFuture) { stacExport =>
+          // To be implemented: kickoffStacExport(stacExport.id)
           complete((StatusCodes.Created, stacExport))
         }
       }
@@ -116,7 +117,7 @@ trait StacRoutes
           .delete(id)
           .transact(xa)
           .unsafeToFuture) { count: Int =>
-        complete((StatusCodes.OK, s"$count stac export deleted"))
+        complete((StatusCodes.NoContent, s"$count stac export deleted"))
       }
     }
   }

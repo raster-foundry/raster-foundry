@@ -101,7 +101,9 @@ x-resources:
   - name: Admin
     description: |
       Platforms, Organizations, and Teams can be used to manage users and visibility of projects, analyses, and scenes. Most of these functions will only be available to uses who are administrating groups.
-
+  - name: STAC
+    description: |
+      SpatioTemporal Asset Catalog
 tags:
   - name: Users
     description: 'Operations involving users and organizations'
@@ -117,6 +119,8 @@ tags:
     description: 'Resources relating to object-level access'
   - name: Admin
     description: 'Resources related to administration'
+  - name: STAC
+    description: 'Resources related to STAC catalog'
 
 paths:
   /users/dropbox-setup/:
@@ -4796,6 +4800,119 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
+  /stac/:
+    x-resource: STAC
+    get:
+      summary: 'Get a paginated list of STAC export records'
+      description: |
+        Get a paginated list of all the STAC export records a user owns. Super users will get a full list of all records
+      tags:
+        - STAC
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/owner'
+        - $ref: '#/parameters/createdBy'
+        - $ref: '#/parameters/modifiedBy'
+        - $ref: '#/parameters/search'
+        - $ref: '#/parameters/exportStatus'
+      responses:
+        200:
+          description: 'Paginated list of STAC export records'
+          schema:
+            $ref: '#/definitions/StacExportPaginated'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: 'Kick off an async STAC export task'
+      tags:
+        - STAC
+      parameters:
+        - name: stacExport
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/StacExportCreate'
+      responses:
+        201:
+          description: 'STAC export creation successful'
+          schema:
+            $ref: '#/definitions/StacExport'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+  /stac/{stacExportID}/:
+    x-resource: STAC
+    get:
+      summary: 'Get a STAC export record details'
+      tags:
+        - STAC
+      parameters:
+        - $ref: '#/parameters/stacExportID'
+      responses:
+        200:
+          description: 'STAC export record found'
+          schema:
+            $ref: '#/definitions/StacExport'
+        404:
+          description: 'Resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        403:
+          description: 'Insufficient permissions for resource'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: 'Perform a complete update of a STAC export record.'
+      tags:
+        - STAC
+      parameters:
+        - name: stacExport
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/StacExport'
+        - $ref: '#/parameters/stacExportID'
+      responses:
+        204:
+          description: 'Update successful (no further processing needed)'
+        404:
+          description: 'Resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        403:
+          description: 'Insufficient permissions for resource'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Delete a STAC export record'
+      tags:
+        - STAC
+      parameters:
+        - $ref: '#/parameters/stacExportID'
+      responses:
+        204:
+          description: 'Deletion successful (no content)'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
 
 parameters:
   projectLayer:
@@ -5547,6 +5664,12 @@ parameters:
     in: query
     type: string
     required: false
+  stacExportID:
+    name: stacExportID
+    in: path
+    required: true
+    type: string
+    format: uuid
 
 definitions:
   ActionTypeArray:
@@ -8134,3 +8257,76 @@ definitions:
       avgTimeSpentSecond:
         type: number
         format: float
+  LayerDefinitionItem:
+    type: object
+    properties:
+      projectId:
+        type: string
+        format: uuid
+        description: 'UUID of a project'
+      layerId:
+        type: string
+        format: uuid
+        description: "UUID of this project's layer"
+  LayerDefinitions:
+    type: array
+    items:
+      $ref: '#/definitions/LayerDefinitionItem'
+  StacExportCreate:
+    type: object
+    required:
+      - name
+      - layerDefinitions
+      - isUnion
+      - taskStatuses
+    properties:
+      name:
+        type: string
+        description: 'The display name of the STAC export record'
+      owner:
+        type: string
+        description: 'Owner of of the STAC export record'
+      layerDefinitions:
+        description: 'List of project and layers to be exported'
+        $ref: '#/definitions/LayerDefinitions'
+      isUnion:
+        type: boolean
+        description: 'Union the AOIs or not'
+      taskStatuses:
+        type: array
+        items:
+          $ref: '#/definitions/TaskStatus'
+  StacExport:
+    allOf:
+      - $ref: '#/definitions/TimeModelMixin'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - $ref: '#/definitions/StacExportCreate'
+      - type: object
+        properties:
+          id:
+            type: string
+            description: 'STAC export Id'
+          exportLocation:
+            type: string
+            description: 'The url of the exported STAC catalog'
+          exportStatus:
+            type: string
+            description: 'The url of the exported STAC catalog'
+            enum:
+              - 'CREATED'
+              - 'EXPORTING'
+              - 'EXPORTED'
+              - 'QUEUED'
+              - 'PROCESSING'
+              - 'COMPLETE'
+              - 'FAILED'
+              - 'ABORTED'
+  StacExportPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/StacExport'

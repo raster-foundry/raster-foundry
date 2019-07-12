@@ -17,7 +17,7 @@ object StacExportDao extends Dao[StacExport] {
   val selectF: Fragment = sql"""
       SELECT
         id, created_at, created_by, modified_at, modified_by, owner,
-        name, export_location, export_status, layer_definition, is_union,
+        name, export_location, export_status, layer_definitions, union_aois,
         task_statuses
       FROM
     """ ++ tableF
@@ -44,12 +44,12 @@ object StacExportDao extends Dao[StacExport] {
     val newExport = newStacExport.toStacExport(user)
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, modified_by, owner,
-      name, export_location, export_status, layer_definition, is_union,
+      name, export_location, export_status, layer_definitions, union_aois,
       task_statuses)
     VALUES
       (${newExport.id}, ${newExport.createdAt}, ${newExport.createdBy}, ${newExport.modifiedAt},
       ${newExport.modifiedBy}, ${newExport.owner}, ${newExport.name}, ${newExport.exportLocation},
-      ${newExport.exportStatus}, ${newExport.layerDefinition}, ${newExport.isUnion},
+      ${newExport.exportStatus}, ${newExport.layerDefinitions}, ${newExport.unionAois},
       ${newExport.taskStatuses})
     """).update.withUniqueGeneratedKeys[StacExport](
       "id",
@@ -61,8 +61,8 @@ object StacExportDao extends Dao[StacExport] {
       "name",
       "export_location",
       "export_status",
-      "layer_definition",
-      "is_union",
+      "layer_definitions",
+      "union_aois",
       "task_statuses"
     )
   }
@@ -96,9 +96,9 @@ object StacExportDao extends Dao[StacExport] {
       }
     }
 
-  def hasProjectViewAccess(layerDefinition: List[StacExport.LayerDefinition],
+  def hasProjectViewAccess(layerDefinitions: List[StacExport.LayerDefinition],
                            user: User): ConnectionIO[Boolean] =
-    layerDefinition traverse { ld =>
+    layerDefinitions traverse { ld =>
       ProjectDao.authProjectLayerExist(ld.projectId,
                                        ld.layerId,
                                        user,

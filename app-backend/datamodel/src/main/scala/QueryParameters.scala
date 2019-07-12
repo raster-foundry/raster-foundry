@@ -681,7 +681,7 @@ object UserTaskActivityParameters {
 }
 
 final case class StacExportQueryParameters(
-    onlyUserParams: UserAuditQueryParameters = UserAuditQueryParameters(),
+    userParams: UserAuditQueryParameters = UserAuditQueryParameters(),
     ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
     searchParams: SearchQueryParameters = SearchQueryParameters(),
     exportStatus: Option[String] = None

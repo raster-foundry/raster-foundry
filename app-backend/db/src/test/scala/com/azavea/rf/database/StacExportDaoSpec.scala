@@ -56,12 +56,12 @@ class StacExportDaoSpec
             "Inserted StacExport status should be NotExported"
           )
           assert(
-            se.layerDefinition == seCreate.layerDefinition,
+            se.layerDefinitions == seCreate.layerDefinitions,
             "Sent and inserted StacExport layer definition should be the same"
           )
           assert(
-            se.isUnion == seCreate.isUnion,
-            "Sent and inserted StacExport isUnion should be the same"
+            se.unionAois == seCreate.unionAois,
+            "Sent and inserted StacExport unionAois should be the same"
           )
           assert(
             se.taskStatuses.toSet == seCreate.taskStatuses
@@ -125,12 +125,12 @@ class StacExportDaoSpec
                 "Selected StacExport status should be NotExported"
               )
               assert(
-                se.layerDefinition == selectedSe.layerDefinition,
+                se.layerDefinitions == selectedSe.layerDefinitions,
                 "Inserted and selected StacExport layer definition should be the same"
               )
               assert(
-                se.isUnion == selectedSe.isUnion,
-                "Inserted and selected StacExport isUnion should be the same"
+                se.unionAois == selectedSe.unionAois,
+                "Inserted and selected StacExport unionAois should be the same"
               )
               assert(
                 se.taskStatuses.toSet == selectedSe.taskStatuses.toSet,
@@ -207,12 +207,12 @@ class StacExportDaoSpec
             "Selected StacExport status should be updated"
           )
           assert(
-            se.layerDefinition == selectedSe.layerDefinition,
+            se.layerDefinitions == selectedSe.layerDefinitions,
             "Inserted and selected StacExport layer definition should be the same"
           )
           assert(
-            se.isUnion == selectedSe.isUnion,
-            "Inserted and selected StacExport isUnion should be the same"
+            se.unionAois == selectedSe.unionAois,
+            "Inserted and selected StacExport unionAois should be the same"
           )
           assert(
             se.taskStatuses.toSet == selectedSe.taskStatuses.toSet,

@@ -10,7 +10,7 @@ CREATE TABLE public.stac_exports (
     name character varying(255) NOT NULL,
     export_location text,
     export_status public.export_status NOT NULL,
-    layer_definition jsonb NOT NULL,
-    is_union boolean NOT NULL DEFAULT false,
+    layer_definitions jsonb NOT NULL,
+    union_aois boolean NOT NULL DEFAULT false,
     task_statuses text[] NOT NULL DEFAULT ARRAY['VALIDATED']::text[]
 );
