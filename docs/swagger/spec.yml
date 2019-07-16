@@ -1888,6 +1888,7 @@ paths:
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/withOwnerInfo'
         - $ref: '#/parameters/annotationGroup'
+        - $ref: '#/parameters/taskID'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project default layer'
