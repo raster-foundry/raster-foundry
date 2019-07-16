@@ -90,10 +90,10 @@ final case class SceneSearchModeQueryParams(
 
 object SceneSearchModeQueryParams {
   implicit def encSceneSearchModeQueryParams
-    : Encoder[SceneSearchModeQueryParams] =
+      : Encoder[SceneSearchModeQueryParams] =
     deriveEncoder[SceneSearchModeQueryParams]
   implicit def decSceneSearchModeQueryParams
-    : Decoder[SceneSearchModeQueryParams] =
+      : Decoder[SceneSearchModeQueryParams] =
     deriveDecoder[SceneSearchModeQueryParams]
 }
 
@@ -145,7 +145,7 @@ final case class ProjectSceneQueryParameters(
 
 object ProjectSceneQueryParameters {
   implicit def encProjectSceneQueryParameters
-    : Encoder[ProjectSceneQueryParameters] =
+      : Encoder[ProjectSceneQueryParameters] =
     deriveEncoder[ProjectSceneQueryParameters]
   implicit def decProjectQueryParameters: Decoder[ProjectSceneQueryParameters] =
     deriveDecoder[ProjectSceneQueryParameters]
@@ -190,10 +190,10 @@ final case class CombinedToolQueryParameters(
 
 object CombinedToolQueryParameters {
   implicit def encCombinedToolQueryParameters
-    : Encoder[CombinedToolQueryParameters] =
+      : Encoder[CombinedToolQueryParameters] =
     deriveEncoder[CombinedToolQueryParameters]
   implicit def decCombinedToolQueryParameters
-    : Decoder[CombinedToolQueryParameters] =
+      : Decoder[CombinedToolQueryParameters] =
     deriveDecoder[CombinedToolQueryParameters]
 }
 
@@ -218,10 +218,10 @@ final case class CombinedFootprintQueryParams(
 
 object CombinedFootprintQueryParams {
   implicit def encCombinedFootprintQueryParams
-    : Encoder[CombinedFootprintQueryParams] =
+      : Encoder[CombinedFootprintQueryParams] =
     deriveEncoder[CombinedFootprintQueryParams]
   implicit def decCombinedFootprintQueryParams
-    : Decoder[CombinedFootprintQueryParams] =
+      : Decoder[CombinedFootprintQueryParams] =
     deriveDecoder[CombinedFootprintQueryParams]
 }
 
@@ -274,10 +274,10 @@ final case class OwnershipTypeQueryParameters(
 
 object OwnershipTypeQueryParameters {
   implicit def encOwnershipTypeQueryParameters
-    : Encoder[OwnershipTypeQueryParameters] =
+      : Encoder[OwnershipTypeQueryParameters] =
     deriveEncoder[OwnershipTypeQueryParameters]
   implicit def decOwnershipTypeQueryParameters
-    : Decoder[OwnershipTypeQueryParameters] =
+      : Decoder[OwnershipTypeQueryParameters] =
     deriveDecoder[OwnershipTypeQueryParameters]
 }
 
@@ -350,10 +350,10 @@ final case class CombinedToolRunQueryParameters(
 
 object CombinedToolRunQueryParameters {
   implicit def encCombinedToolRunQueryParameters
-    : Encoder[CombinedToolRunQueryParameters] =
+      : Encoder[CombinedToolRunQueryParameters] =
     deriveEncoder[CombinedToolRunQueryParameters]
   implicit def decCombinedToolRunQueryParameters
-    : Decoder[CombinedToolRunQueryParameters] =
+      : Decoder[CombinedToolRunQueryParameters] =
     deriveDecoder[CombinedToolRunQueryParameters]
 }
 
@@ -367,10 +367,10 @@ final case class DatasourceQueryParameters(
 
 object DatasourceQueryParameters {
   implicit def encDatasourceQueryParameters
-    : Encoder[DatasourceQueryParameters] =
+      : Encoder[DatasourceQueryParameters] =
     deriveEncoder[DatasourceQueryParameters]
   implicit def decDatasourceQueryParameters
-    : Decoder[DatasourceQueryParameters] =
+      : Decoder[DatasourceQueryParameters] =
     deriveDecoder[DatasourceQueryParameters]
 }
 
@@ -394,10 +394,10 @@ final case class CombinedMapTokenQueryParameters(
 
 object CombinedMapTokenQueryParameters {
   implicit def encCombinedMapTokenQueryParameters
-    : Encoder[CombinedMapTokenQueryParameters] =
+      : Encoder[CombinedMapTokenQueryParameters] =
     deriveEncoder[CombinedMapTokenQueryParameters]
   implicit def decCombinedMapTokenQueryParameters
-    : Decoder[CombinedMapTokenQueryParameters] =
+      : Decoder[CombinedMapTokenQueryParameters] =
     deriveDecoder[CombinedMapTokenQueryParameters]
 }
 
@@ -434,10 +434,10 @@ final case class DropboxAuthQueryParameters(code: Option[String] = None)
 
 object DropboxAuthQueryParameters {
   implicit def encDropboxAuthQueryParameters
-    : Encoder[DropboxAuthQueryParameters] =
+      : Encoder[DropboxAuthQueryParameters] =
     deriveEncoder[DropboxAuthQueryParameters]
   implicit def decDropboxAuthQueryParameters
-    : Decoder[DropboxAuthQueryParameters] =
+      : Decoder[DropboxAuthQueryParameters] =
     deriveDecoder[DropboxAuthQueryParameters]
 }
 
@@ -451,7 +451,8 @@ final case class AnnotationQueryParameters(
     quality: Option[String] = None,
     annotationGroup: Option[UUID] = None,
     bbox: Iterable[String] = Seq.empty[String],
-    withOwnerInfo: Option[Boolean] = None
+    withOwnerInfo: Option[Boolean] = None,
+    taskId: Option[UUID] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
@@ -459,10 +460,10 @@ final case class AnnotationQueryParameters(
 
 object AnnotationQueryParameters {
   implicit def encAnnotationQueryParameters
-    : Encoder[AnnotationQueryParameters] =
+      : Encoder[AnnotationQueryParameters] =
     deriveEncoder[AnnotationQueryParameters]
   implicit def decAnnotationQueryParameters
-    : Decoder[AnnotationQueryParameters] =
+      : Decoder[AnnotationQueryParameters] =
     deriveDecoder[AnnotationQueryParameters]
 }
 
@@ -472,10 +473,10 @@ final case class AnnotationExportQueryParameters(
 
 object AnnotationExportQueryParameters {
   implicit def encAnnotationExportQueryParameters
-    : Encoder[AnnotationExportQueryParameters] =
+      : Encoder[AnnotationExportQueryParameters] =
     deriveEncoder[AnnotationExportQueryParameters]
   implicit def decAnnotationExportQueryParameters
-    : Decoder[PlatformIdQueryParameters] =
+      : Decoder[PlatformIdQueryParameters] =
     deriveDecoder[PlatformIdQueryParameters]
 }
 
@@ -518,10 +519,10 @@ final case class ActivationQueryParameters(isActive: Option[Boolean] = None)
 
 object ActivationQueryParameters {
   implicit def encActivationQueryParameters
-    : Encoder[ActivationQueryParameters] =
+      : Encoder[ActivationQueryParameters] =
     deriveEncoder[ActivationQueryParameters]
   implicit def decActivationQueryParameters
-    : Decoder[ActivationQueryParameters] =
+      : Decoder[ActivationQueryParameters] =
     deriveDecoder[ActivationQueryParameters]
 }
 
@@ -558,10 +559,10 @@ final case class PlatformIdQueryParameters(platformId: Option[UUID] = None)
 
 object PlatformIdQueryParameters {
   implicit def encPlatformIdQueryParameters
-    : Encoder[PlatformIdQueryParameters] =
+      : Encoder[PlatformIdQueryParameters] =
     deriveEncoder[PlatformIdQueryParameters]
   implicit def decPlatformIdQueryParameters
-    : Decoder[PlatformIdQueryParameters] =
+      : Decoder[PlatformIdQueryParameters] =
     deriveDecoder[PlatformIdQueryParameters]
 }
 
@@ -574,10 +575,10 @@ final case class OrganizationQueryParameters(
 
 object OrganizationQueryParameters {
   implicit def encOrganizationQueryParameters
-    : Encoder[OrganizationQueryParameters] =
+      : Encoder[OrganizationQueryParameters] =
     deriveEncoder[OrganizationQueryParameters]
   implicit def decOrganizationQueryParameters
-    : Decoder[OrganizationQueryParameters] =
+      : Decoder[OrganizationQueryParameters] =
     deriveDecoder[OrganizationQueryParameters]
 }
 
@@ -593,10 +594,10 @@ final case class SceneThumbnailQueryParameters(
 
 object SceneThumbnailQueryParameters {
   implicit def encSceneThumbnailQueryParameters
-    : Encoder[SceneThumbnailQueryParameters] =
+      : Encoder[SceneThumbnailQueryParameters] =
     deriveEncoder[SceneThumbnailQueryParameters]
   implicit def decSceneThumbnailQueryParameters
-    : Decoder[SceneThumbnailQueryParameters] =
+      : Decoder[SceneThumbnailQueryParameters] =
     deriveDecoder[SceneThumbnailQueryParameters]
 }
 
@@ -673,9 +674,9 @@ final case class UserTaskActivityParameters(
 
 object UserTaskActivityParameters {
   implicit def encUserTaskActivityParameters
-    : Encoder[UserTaskActivityParameters] =
+      : Encoder[UserTaskActivityParameters] =
     deriveEncoder[UserTaskActivityParameters]
   implicit def decUserTaskActivityParameters
-    : Decoder[UserTaskActivityParameters] =
+      : Decoder[UserTaskActivityParameters] =
     deriveDecoder[UserTaskActivityParameters]
 }

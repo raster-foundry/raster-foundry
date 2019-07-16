@@ -14,24 +14,26 @@ final case class AnnotationFeatureCollectionCreate(
 )
 
 @JsonCodec
-final case class Annotation(id: UUID,
-                            projectId: UUID,
-                            createdAt: Timestamp,
-                            createdBy: String,
-                            modifiedAt: Timestamp,
-                            modifiedBy: String,
-                            owner: String,
-                            label: String,
-                            description: Option[String],
-                            machineGenerated: Option[Boolean],
-                            confidence: Option[Float],
-                            quality: Option[AnnotationQuality],
-                            geometry: Option[Projected[Geometry]],
-                            annotationGroup: UUID,
-                            labeledBy: Option[String],
-                            verifiedBy: Option[String],
-                            projectLayerId: UUID)
-    extends GeoJSONSerializable[Annotation.GeoJSON] {
+final case class Annotation(
+    id: UUID,
+    projectId: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    modifiedBy: String,
+    owner: String,
+    label: String,
+    description: Option[String],
+    machineGenerated: Option[Boolean],
+    confidence: Option[Float],
+    quality: Option[AnnotationQuality],
+    geometry: Option[Projected[Geometry]],
+    annotationGroup: UUID,
+    labeledBy: Option[String],
+    verifiedBy: Option[String],
+    projectLayerId: UUID,
+    taskId: Option[UUID]
+) extends GeoJSONSerializable[Annotation.GeoJSON] {
   def toGeoJSONFeature: Annotation.GeoJSON = Annotation.GeoJSON(
     this.id,
     this.geometry,
@@ -50,38 +52,45 @@ final case class Annotation(id: UUID,
       this.annotationGroup,
       this.labeledBy,
       this.verifiedBy,
-      this.projectLayerId
+      this.projectLayerId,
+      this.taskId
     )
   )
 }
 
 @JsonCodec
-final case class AnnotationProperties(projectId: UUID,
-                                      createdAt: Timestamp,
-                                      createdBy: String,
-                                      modifiedAt: Timestamp,
-                                      modifiedBy: String,
-                                      owner: String,
-                                      label: String,
-                                      description: Option[String],
-                                      machineGenerated: Option[Boolean],
-                                      confidence: Option[Float],
-                                      quality: Option[AnnotationQuality],
-                                      annotationGroup: UUID,
-                                      labeledBy: Option[String] = None,
-                                      verifiedBy: Option[String] = None,
-                                      projectLayerId: UUID)
+final case class AnnotationProperties(
+    projectId: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    modifiedBy: String,
+    owner: String,
+    label: String,
+    description: Option[String],
+    machineGenerated: Option[Boolean],
+    confidence: Option[Float],
+    quality: Option[AnnotationQuality],
+    annotationGroup: UUID,
+    labeledBy: Option[String] = None,
+    verifiedBy: Option[String] = None,
+    projectLayerId: UUID,
+    taskId: Option[UUID] = None
+)
 
 @JsonCodec
-final case class AnnotationPropertiesCreate(owner: Option[String],
-                                            label: String,
-                                            description: Option[String],
-                                            machineGenerated: Option[Boolean],
-                                            confidence: Option[Float],
-                                            quality: Option[AnnotationQuality],
-                                            annotationGroup: Option[UUID],
-                                            labeledBy: Option[String] = None,
-                                            verifiedBy: Option[String] = None)
+final case class AnnotationPropertiesCreate(
+    owner: Option[String],
+    label: String,
+    description: Option[String],
+    machineGenerated: Option[Boolean],
+    confidence: Option[Float],
+    quality: Option[AnnotationQuality],
+    annotationGroup: Option[UUID],
+    labeledBy: Option[String] = None,
+    verifiedBy: Option[String] = None,
+    taskId: Option[UUID] = None
+)
 
 object Annotation extends LazyLogging {
 
@@ -94,11 +103,12 @@ object Annotation extends LazyLogging {
   def tupled = (Annotation.apply _).tupled
   def create = Create.apply _
   @ConfiguredJsonCodec
-  final case class GeoJSON(id: UUID,
-                           geometry: Option[Projected[Geometry]],
-                           properties: AnnotationProperties,
-                           _type: String = "Feature")
-      extends GeoJSONFeature {
+  final case class GeoJSON(
+      id: UUID,
+      geometry: Option[Projected[Geometry]],
+      properties: AnnotationProperties,
+      _type: String = "Feature"
+  ) extends GeoJSONFeature {
     def toAnnotation: Annotation = {
       Annotation(
         id,
@@ -120,28 +130,33 @@ object Annotation extends LazyLogging {
         properties.annotationGroup,
         properties.labeledBy,
         properties.verifiedBy,
-        properties.projectLayerId
+        properties.projectLayerId,
+        properties.taskId
       )
     }
   }
 
   @JsonCodec
-  final case class Create(owner: Option[String],
-                          label: String,
-                          description: Option[String],
-                          machineGenerated: Option[Boolean],
-                          confidence: Option[Float],
-                          quality: Option[AnnotationQuality],
-                          geometry: Option[Projected[Geometry]],
-                          annotationGroup: Option[UUID],
-                          labeledBy: Option[String] = None,
-                          verifiedBy: Option[String] = None)
-      extends OwnerCheck {
+  final case class Create(
+      owner: Option[String],
+      label: String,
+      description: Option[String],
+      machineGenerated: Option[Boolean],
+      confidence: Option[Float],
+      quality: Option[AnnotationQuality],
+      geometry: Option[Projected[Geometry]],
+      annotationGroup: Option[UUID],
+      labeledBy: Option[String] = None,
+      verifiedBy: Option[String] = None,
+      taskId: Option[UUID] = None
+  ) extends OwnerCheck {
 
-    def toAnnotation(projectId: UUID,
-                     user: User,
-                     defaultAnnotationGroup: UUID,
-                     projectLayerId: UUID): Annotation = {
+    def toAnnotation(
+        projectId: UUID,
+        user: User,
+        defaultAnnotationGroup: UUID,
+        projectLayerId: UUID
+    ): Annotation = {
       val now = new Timestamp(new java.util.Date().getTime)
       val ownerId = checkOwner(user, this.owner)
       Annotation(
@@ -164,15 +179,17 @@ object Annotation extends LazyLogging {
         annotationGroup.getOrElse(defaultAnnotationGroup),
         labeledBy,
         verifiedBy,
-        projectLayerId
+        projectLayerId,
+        taskId
       )
     }
   }
 
   @JsonCodec
-  final case class GeoJSONFeatureCreate(geometry: Option[Projected[Geometry]],
-                                        properties: AnnotationPropertiesCreate)
-      extends OwnerCheck {
+  final case class GeoJSONFeatureCreate(
+      geometry: Option[Projected[Geometry]],
+      properties: AnnotationPropertiesCreate
+  ) extends OwnerCheck {
     def toAnnotationCreate: Annotation.Create = {
       Annotation.Create(
         properties.owner,
@@ -184,33 +201,36 @@ object Annotation extends LazyLogging {
         geometry,
         properties.annotationGroup,
         properties.labeledBy,
-        properties.verifiedBy
+        properties.verifiedBy,
+        properties.taskId
       )
     }
   }
 }
 
 @JsonCodec
-final case class AnnotationWithOwnerInfo(id: UUID,
-                                         projectId: UUID,
-                                         createdAt: Timestamp,
-                                         createdBy: String,
-                                         modifiedAt: Timestamp,
-                                         modifiedBy: String,
-                                         owner: String,
-                                         label: String,
-                                         description: Option[String],
-                                         machineGenerated: Option[Boolean],
-                                         confidence: Option[Float],
-                                         quality: Option[AnnotationQuality],
-                                         geometry: Option[Projected[Geometry]],
-                                         annotationGroup: UUID,
-                                         labeledBy: Option[String],
-                                         verifiedBy: Option[String],
-                                         projectLayerId: UUID,
-                                         ownerName: String,
-                                         ownerProfileImageUri: String)
-    extends GeoJSONSerializable[AnnotationWithOwnerInfo.GeoJSON] {
+final case class AnnotationWithOwnerInfo(
+    id: UUID,
+    projectId: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    modifiedBy: String,
+    owner: String,
+    label: String,
+    description: Option[String],
+    machineGenerated: Option[Boolean],
+    confidence: Option[Float],
+    quality: Option[AnnotationQuality],
+    geometry: Option[Projected[Geometry]],
+    annotationGroup: UUID,
+    labeledBy: Option[String],
+    verifiedBy: Option[String],
+    projectLayerId: UUID,
+    taskId: Option[UUID],
+    ownerName: String,
+    ownerProfileImageUri: String
+) extends GeoJSONSerializable[AnnotationWithOwnerInfo.GeoJSON] {
   def toGeoJSONFeature = AnnotationWithOwnerInfo.GeoJSON(
     this.id,
     this.geometry,
@@ -230,6 +250,7 @@ final case class AnnotationWithOwnerInfo(id: UUID,
       this.labeledBy,
       this.verifiedBy,
       this.projectLayerId,
+      this.taskId,
       this.ownerName,
       this.ownerProfileImageUri
     )
@@ -245,11 +266,12 @@ object AnnotationWithOwnerInfo {
     })
 
   @ConfiguredJsonCodec
-  final case class GeoJSON(id: UUID,
-                           geometry: Option[Projected[Geometry]],
-                           properties: AnnotationWithOwnerInfoProperties,
-                           _type: String = "Feature")
-      extends GeoJSONFeature
+  final case class GeoJSON(
+      id: UUID,
+      geometry: Option[Projected[Geometry]],
+      properties: AnnotationWithOwnerInfoProperties,
+      _type: String = "Feature"
+  ) extends GeoJSONFeature
 }
 
 @JsonCodec
@@ -269,5 +291,7 @@ final case class AnnotationWithOwnerInfoProperties(
     labeledBy: Option[String] = None,
     verifiedBy: Option[String] = None,
     projectLayerId: UUID,
+    taskId: Option[UUID] = None,
     ownerName: String,
-    ownerProfileImageUri: String)
+    ownerProfileImageUri: String
+)
