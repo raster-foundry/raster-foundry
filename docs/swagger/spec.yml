@@ -1888,7 +1888,7 @@ paths:
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/withOwnerInfo'
         - $ref: '#/parameters/annotationGroup'
-        - $ref: '#/parameters/taskID'
+        - $ref: '#/parameters/taskId'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project default layer'
@@ -2987,7 +2987,7 @@ paths:
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/withOwnerInfo'
         - $ref: '#/parameters/annotationGroup'
-        - $ref: '#/parameters/task'
+        - $ref: '#/parameters/taskId'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project layer'
@@ -5542,8 +5542,8 @@ parameters:
     in: query
     type: integer
     required: false
-  task:
-    name: task
+  taskId:
+    name: taskId
     description: 'Filter to annotations belonging to the specified task'
     in: query
     type: string
