@@ -9,8 +9,16 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import io.circe.syntax._
+import io.circe.generic.JsonCodec
 
 import java.util.UUID
+
+@JsonCodec
+case class ProjectExtras(annotate: ProjectExtrasAnnotate)
+
+@JsonCodec
+case class ProjectExtrasAnnotate(labelers: UUID, validators: UUID)
 
 trait PropTestHelpers {
 
@@ -318,4 +326,56 @@ trait PropTestHelpers {
       project: Project
   ): Task.TaskPropertiesCreate =
     tpc.copy(projectId = project.id, projectLayerId = project.defaultLayerId)
+
+  def fixupProjectExtrasUpdate(
+      labelValidateTeamCreate: (Team.Create, Team.Create),
+      labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create),
+      dbOrg: Organization,
+      dbUser: User,
+      dbPlatform: Platform,
+      dbProject: Project
+  ): ConnectionIO[Project] = {
+    val (labelTeamCreate, validateTeamCreate) = labelValidateTeamCreate
+    val (labelTeamUgrCreate, validateTeamUgrCreate) = labelValidateTeamUgrCreate
+    for {
+      dbLabelTeam <- TeamDao.create(
+        labelTeamCreate
+          .copy(organizationId = dbOrg.id)
+          .toTeam(dbUser))
+      dbValidateTeam <- TeamDao.create(
+        validateTeamCreate
+          .copy(organizationId = dbOrg.id)
+          .toTeam(dbUser))
+      _ <- UserGroupRoleDao.create(
+        fixupUserGroupRole(dbUser,
+                           dbOrg,
+                           dbLabelTeam,
+                           dbPlatform,
+                           labelTeamUgrCreate.copy(groupType = GroupType.Team))
+          .toUserGroupRole(dbUser, MembershipStatus.Approved)
+      )
+      _ <- UserGroupRoleDao.create(
+        fixupUserGroupRole(
+          dbUser,
+          dbOrg,
+          dbValidateTeam,
+          dbPlatform,
+          validateTeamUgrCreate.copy(groupType = GroupType.Team))
+          .toUserGroupRole(dbUser, MembershipStatus.Approved)
+      )
+      _ <- ProjectDao.updateProject(dbProject.copy(
+                                      extras = Some(
+                                        ProjectExtras(
+                                          ProjectExtrasAnnotate(
+                                            dbLabelTeam.id,
+                                            dbValidateTeam.id
+                                          )
+                                        ).asJson
+                                      )
+                                    ),
+                                    dbProject.id,
+                                    dbUser)
+      updatedDbProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
+    } yield updatedDbProject
+  }
 }
