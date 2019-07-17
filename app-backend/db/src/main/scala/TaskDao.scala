@@ -295,110 +295,108 @@ object TaskDao extends Dao[Task] {
     (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE project_id = ${projectId} and project_layer_id = ${layerId}").update.run
   }
 
-  def getTaskActionTimeF(projectId: UUID,
-                         layerId: UUID,
-                         fromStatus: TaskStatus,
-                         toStatus: TaskStatus,
-                         params: UserTaskActivityParameters): Fragment = {
-    val selectTaskActionF =
-      fr"SELECT task_actions.user_id, tasks.id as task_id, MAX(task_actions.timestamp) AS timestamp FROM"
-    val joinTaskActionF =
-      fr"tasks LEFT JOIN task_actions ON task_actions.task_id = tasks.id"
-    val whereClause = Fragments
-      .whereAndOpt(
-        Some(fr"project_id = uuid($projectId)"),
-        Some(fr"project_layer_id = uuid($layerId)"),
-        Some(fr"task_actions.from_status = $fromStatus"),
-        Some(fr"task_actions.to_status = $toStatus"),
-        params.actionStartTime map { start =>
-          fr"task_actions.timestamp >= $start"
-        },
-        params.actionEndTime map { end =>
-          fr"task_actions.timestamp <= $end"
-        },
-        params.actionUser map { userId =>
-          fr"task_actions.user_id = $userId"
-        }
+  def getTeamUsersF(projectId: UUID, params: UserTaskActivityParameters): Fragment = fr"""
+    SELECT DISTINCT ugr.user_id, users.name, users.profile_image_uri
+    FROM user_group_roles AS ugr
+    INNER JOIN (
+      SELECT
+        unnest(
+          ARRAY[
+            uuid((projects.extras->'annotate')::jsonb ->>'labelers'),
+            uuid((projects.extras->'annotate')::jsonb ->>'validators')
+          ]
+        ) AS team_id
+      FROM projects
+      WHERE id = $projectId
+    ) AS teams
+    ON ugr.group_id = teams.team_id
+    LEFT JOIN users
+    ON ugr.user_id = users.id
+    WHERE ugr.group_type='TEAM' AND ugr.is_active = true
+  """ ++ (params.actionUser match {
+    case Some(userId) => fr"AND ugr.user_id = $userId"
+    case _ => fr""
+  })
+
+  def getTaskActionTimeF(
+    projectId: UUID,
+    layerId: UUID,
+    fromStatus: TaskStatus,
+    toStatus: TaskStatus,
+    params: UserTaskActivityParameters
+  ): Fragment = fr"""
+    SELECT ta.user_id, ta.task_id, ta.from_status, ta.to_status, MAX(ta.timestamp) AS timestamp
+    FROM tasks
+    LEFT JOIN task_actions AS ta
+    ON ta.task_id = tasks.id""" ++ Fragments.whereAndOpt(
+      Some(fr"project_id = uuid($projectId)"),
+      Some(fr"project_layer_id = uuid($layerId)"),
+      Some(fr"ta.from_status = $fromStatus"),
+      Some(fr"ta.to_status = $toStatus"),
+      params.actionStartTime map { start =>
+        fr"ta.timestamp >= $start"
+      },
+      params.actionEndTime map { end =>
+        fr"ta.timestamp <= $end"
+      },
+      params.actionUser map { userId =>
+        fr"ta.user_id = $userId"
+      }
+    ) ++ fr"GROUP BY (ta.user_id, ta.task_id, ta.from_status, ta.to_status)"
+
+  def getUserTasksF(projectId: UUID, layerId: UUID, action: String, params: UserTaskActivityParameters): Fragment = {
+    val selectF = fr"""
+      SELECT
+        to_in_progress.user_id,
+        COUNT(DISTINCT to_in_progress.task_id) AS task_count,
+        SUM(EXTRACT(EPOCH FROM (to_complete.timestamp - to_in_progress.timestamp))) / COUNT(to_in_progress.task_id) AS task_avg_time
+      FROM("""
+
+    val innerJoinF = fr") AS to_in_progress INNER JOIN("
+
+    val joinTargetF = fr""") AS to_complete
+      ON
+        to_in_progress.user_id = to_complete.user_id
+        AND to_in_progress.task_id = to_complete.task_id
+      GROUP BY to_in_progress.user_id
+    """
+
+    val (inProgressTaskActionTimeF, completeTaskActionTimeF) = action match {
+      case "label" => (
+        getTaskActionTimeF(projectId, layerId, TaskStatus.Unlabeled, TaskStatus.LabelingInProgress, params),
+        getTaskActionTimeF(projectId, layerId, TaskStatus.LabelingInProgress, TaskStatus.Labeled, params)
       )
-    val groupByF =
-      fr"GROUP BY (task_actions.user_id, tasks.id, task_actions.FROM_status, task_actions.to_status)"
-    fr"(" ++ selectTaskActionF ++ joinTaskActionF ++ whereClause ++ groupByF ++ fr")"
+      case "validate" => (
+        getTaskActionTimeF(projectId, layerId, TaskStatus.Labeled, TaskStatus.ValidationInProgress, params),
+        getTaskActionTimeF(projectId, layerId, TaskStatus.ValidationInProgress, TaskStatus.Validated, params)
+      )
+    }
+
+    selectF ++ inProgressTaskActionTimeF ++ innerJoinF ++ completeTaskActionTimeF ++ joinTargetF
   }
 
-  def getTaskCountAndTimeSpentByActionF(
-      projectId: UUID,
-      layerId: UUID,
-      action: String,
-      params: UserTaskActivityParameters): Fragment = {
-    val taskSelectF = fr"""
-      SELECT
-        a.user_id,
-        count(a.task_id) AS task_count,
-        sum(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))) / count(a.task_id) AS avg_time
-      FROM
-    """
-    val joinAndGroupF = fr"""
-      ON a.user_id = b.user_id AND a.task_id = b.task_id
-      GROUP BY a.user_id
-    """
-    action match {
-      case "label" =>
-        fr"(" ++ taskSelectF ++
-          getTaskActionTimeF(projectId,
-                             layerId,
-                             TaskStatus.Unlabeled,
-                             TaskStatus.LabelingInProgress,
-                             params) ++
-          fr"AS a INNER JOIN " ++
-          getTaskActionTimeF(projectId,
-                             layerId,
-                             TaskStatus.LabelingInProgress,
-                             TaskStatus.Labeled,
-                             params) ++
-          fr"AS b" ++
-          joinAndGroupF ++ fr")"
-      case "validate" =>
-        fr"(" ++ taskSelectF ++
-          getTaskActionTimeF(projectId,
-                             layerId,
-                             TaskStatus.Labeled,
-                             TaskStatus.ValidationInProgress,
-                             params) ++
-          fr"AS a INNER JOIN " ++
-          getTaskActionTimeF(projectId,
-                             layerId,
-                             TaskStatus.ValidationInProgress,
-                             TaskStatus.Validated,
-                             params) ++
-          fr"AS b" ++
-          joinAndGroupF ++ fr")"
-    }
-  }
 
   def getTaskUserSummary(
       projectId: UUID,
       layerId: UUID,
-      params: UserTaskActivityParameters): ConnectionIO[List[TaskUserSummary]] =
-    (
-      fr"""
-      SELECT
-        aa.user_id,
-        users.name,
-        users.profile_image_uri,
-        COALESCE(aa.task_count, 0),
-        COALESCE(bb.task_count, 0),
-        CASE COALESCE(aa.task_count, 0) + COALESCE(bb.task_count, 0)
-           WHEN 0 THEN 0
-           ELSE (COALESCE(aa.task_count, 0) * COALESCE(aa.avg_time, 0) + COALESCE(bb.task_count, 0) * COALESCE(bb.avg_time, 0)) / (COALESCE(aa.task_count, 0) + COALESCE(bb.task_count, 0))
-        END AS avg_time_spent_second
-      FROM
-    """ ++
-        getTaskCountAndTimeSpentByActionF(projectId, layerId, "label", params) ++
-        fr"AS aa FULL OUTER JOIN" ++
-        getTaskCountAndTimeSpentByActionF(projectId,
-                                          layerId,
-                                          "validate",
-                                          params) ++
-        fr"AS bb ON aa.user_id = bb.user_id INNER JOIN users ON users.id = aa.user_id"
-    ).query[TaskUserSummary].to[List]
+      params: UserTaskActivityParameters): ConnectionIO[List[TaskUserSummary]] = (fr"""
+    SELECT
+      team_users.user_id,
+      team_users.name,
+      team_users.profile_image_uri,
+      COALESCE(user_labeled_tasks.task_count, 0) AS labeled_task_count,
+      COALESCE(user_labeled_tasks.task_avg_time, 0) AS labeled_task_avg_time_second,
+      COALESCE(user_validated_tasks.task_count, 0) AS validated_task_count,
+      COALESCE(user_validated_tasks.task_avg_time, 0) AS validated_task_avg_time_second
+    FROM ("""++ getTeamUsersF(projectId, params) ++ fr""") AS team_users
+    LEFT JOIN (""" ++ getUserTasksF(projectId, layerId, "label", params) ++ fr"""
+    ) AS user_labeled_tasks
+    ON
+      team_users.user_id = user_labeled_tasks.user_id
+    LEFT JOIN
+    (""" ++ getUserTasksF(projectId, layerId, "validate", params) ++ fr"""
+    ) AS user_validated_tasks
+    ON
+      team_users.user_id = user_validated_tasks.user_id
+  """).query[TaskUserSummary].to[List]
 }
