@@ -74,10 +74,13 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
                 .parMapN {
                   case (Valid(mbTile), hists) =>
                     logger.debug(s"Style: ${layer.style}, hists are: ${hists}")
+                    val invisiTile =
+                      mbTile.prototype(params.width, params.height)
+                    val fullTile = invisiTile merge mbTile
                     val tileResp = layer.style map {
-                      _.renderImage(mbTile, params.format, hists)
+                      _.renderImage(fullTile, params.format, hists)
                     } getOrElse {
-                      Render(mbTile, layer.style, params.format, hists)
+                      Render(fullTile, layer.style, params.format, hists)
                     }
                     Ok(tileResp)
                   // at least one is invalid, we don't care which, and we want all the errors
