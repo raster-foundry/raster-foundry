@@ -307,6 +307,7 @@ class AnnotationDaoSpec
                   annotation.labeledBy,
                   annotation.verifiedBy,
                   annotation.projectLayerId,
+                  annotation.taskId,
                   dbUser.name,
                   dbUser.profileImageUri
                 )
