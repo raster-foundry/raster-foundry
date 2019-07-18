@@ -4,6 +4,8 @@
 
 ### Added
 
+- added `taskId` to annotations and corresponding query paramter [\#5073](https://github.com/raster-foundry/raster-foundry/pull/5073)
+
 ### Changed
 
 ### Deprecated
