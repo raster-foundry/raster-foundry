@@ -8127,10 +8127,13 @@ definitions:
         type: string
       profileImageUri:
         type: string
-      labelTaskCount:
+      labeledTaskCount:
         type: integer
-      validateTaskCount:
+      labeledTaskAvgTimeSecond:
+        type: number
+        format: float
+      validatedTaskCount:
         type: integer
-      avgTimeSpentSecond:
+      validatedTaskAvgTimeSecond:
         type: number
         format: float

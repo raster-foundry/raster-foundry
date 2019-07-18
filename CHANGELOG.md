@@ -7,6 +7,7 @@
 
 ### Changed
 - Upgraded version of GeoTrellis Server and MAML [\#5046](https://github.com/raster-foundry/raster-foundry/pull/5046), [\#5063](https://github.com/raster-foundry/raster-foundry/pull/5063)
+- Updated user task activity endpoint [\#5078](https://github.com/raster-foundry/raster-foundry/pull/5078)
 
 ### Deprecated
 
