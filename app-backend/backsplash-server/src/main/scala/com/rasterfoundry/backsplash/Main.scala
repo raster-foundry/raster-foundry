@@ -10,11 +10,10 @@ import com.rasterfoundry.database.{
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.database.util.RFTransactor
-import cats.data.OptionT
 import cats.effect._
 import com.olegpy.meow.hierarchy._
 import org.http4s._
-import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, Timeout}
+import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
@@ -65,9 +64,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
   )
 
-  val timeout: FiniteDuration =
-    new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
-
   val backsplashErrorHandler: HttpErrorHandler[IO, BacksplashException] =
     new BacksplashHttpErrorHandler[IO]
 
@@ -94,13 +90,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     QuotaMiddleware(svc, Cache.requestCounter)
 
   def baseMiddleware(svc: HttpRoutes[IO]) =
-    withQuota(withCORS(withTimeout(svc)))
-
-  def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
-    Timeout(
-      timeout,
-      OptionT.pure[IO](Response[IO](Status.GatewayTimeout))
-    )(service)
+    withQuota(withCORS(svc))
 
   def errorHandling(service: HttpRoutes[IO]): HttpRoutes[IO] =
     backsplashErrorHandler.handle {
@@ -213,11 +203,19 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   def stream =
     BlazeServerBuilder[IO]
-      .withExecutionContext(blazeEC)
-      .withBanner(startupBanner)
-      .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")
+      .withExecutionContext(blazeEC)
+      .withIdleTimeout(new FiniteDuration(Config.server.idleTimeoutSeconds,
+                                          TimeUnit.SECONDS))
+      .withResponseHeaderTimeout(
+        new FiniteDuration(Config.server.responseHeaderTimeoutSeconds,
+                           TimeUnit.SECONDS))
+      .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
+      .withNio2(false)
+      .withWebSockets(false)
+      .enableHttp2(false)
       .withHttpApp(router.orNotFound)
+      .withBanner(startupBanner)
       .serve
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync

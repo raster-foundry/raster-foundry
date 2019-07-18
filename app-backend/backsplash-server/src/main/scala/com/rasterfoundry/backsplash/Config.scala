@@ -16,7 +16,9 @@ object Config {
 
   object server {
     private val serverConfig = config.getConfig("server")
-    val timeoutSeconds = serverConfig.getInt("timeoutSeconds")
+    val idleTimeoutSeconds = serverConfig.getInt("idleTimeoutSeconds")
+    val responseHeaderTimeoutSeconds =
+      serverConfig.getInt("responseHeaderTimeoutSeconds")
     val requestLimit = serverConfig.getInt("requestLimit")
   }
 
