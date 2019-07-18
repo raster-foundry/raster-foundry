@@ -206,9 +206,10 @@ final case class TaskUserSummary(
     userId: String,
     name: String,
     profileImageUri: String,
-    labelTaskCount: Int,
-    validateTaskCount: Int,
-    avgTimeSpentSecond: Float
+    labeledTaskCount: Int,
+    labeledTaskAvgTimeSecond: Float,
+    validatedTaskCount: Int,
+    validatedTaskAvgTimeSecond: Float
 )
 
 object TaskUserSummary {

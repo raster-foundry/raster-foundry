@@ -50,6 +50,7 @@ function load_database_backup() {
     # gosu postgres pg_dump -Fc rasterfoundry > database.pgdump
     docker-compose \
         exec -T postgres pg_restore -U rasterfoundry -Fc -d rasterfoundry /tmp/data/database.pgdump
+    ./scripts/migrate migrate
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]

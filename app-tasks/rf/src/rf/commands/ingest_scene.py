@@ -1,5 +1,7 @@
 import logging
 import subprocess
+import sys
+import copy
 
 import click
 
@@ -8,6 +10,16 @@ from ..ingest import io
 from ..utils.exception_reporting import wrap_rollbar
 
 logger = logging.getLogger(__name__)
+
+
+def execute(cmd):
+    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    for stdout_line in iter(popen.stdout.readline, ""):
+        yield stdout_line
+    popen.stdout.close()
+    return_code = popen.wait()
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, cmd)
 
 
 @click.command(name='ingest-scene')
@@ -24,18 +36,63 @@ def ingest_scene(scene_id):
 
 def ingest(scene_id):
     """Separated into another function because the Click annotation messes with calling it from other tasks"""
-    logger.info("Converting scene to COG: %s", scene_id)
-    scene = Scene.from_id(scene_id)
-    if scene.ingestStatus != 'INGESTED':
-        scene.ingestStatus = 'INGESTING'
-        scene.update()
-    image_locations = [(x.sourceUri, x.filename) for x in sorted(
-        scene.images, key=lambda x: io.sort_key(scene.datasource, x.bands[0]))]
-    io.create_cog(image_locations, scene)
-    logger.info('Cog created, writing histogram to attribute store')
-    metadata_to_postgres(scene.id)
-    logger.info('Histogram added to attribute store, notifying interested parties')
-    notify_for_scene_ingest_status(scene.id)
+    originalScene = None
+    try:
+        logger.info("Converting scene to COG: %s", scene_id)
+        try:
+            scene = Scene.from_id(scene_id)
+            originalScene = copy.deepcopy(scene)
+            # updates status
+            if scene.ingestStatus != 'INGESTED':
+                scene.ingestStatus = 'INGESTING'
+                scene.update()
+        except Exception:
+            logger.error('Error while setting scene up for ingestion')
+            raise
+        else:
+            logger.info('Fetched and set ingest status on scene to INGESTING')
+
+        image_locations = [(x.sourceUri, x.filename) for x in sorted(
+            scene.images, key=lambda x: io.sort_key(scene.datasource, x.bands[0]))]
+
+        try:
+            io.create_cog(image_locations, scene).update()
+        except Exception:
+            logger.error('There as an error converting the scene to a COG')
+            raise
+
+        logger.info('Cog created, writing histogram to attribute store')
+        try:
+            metadata_to_postgres(scene.id)
+        except Exception:
+            logger.error('error while writing metadata to postgres')
+            raise
+
+        logger.info('Histogram added to attribute store, updating scene ingest status')
+        try:
+            scene.ingestStatus = 'INGESTED'
+            scene.update()
+        except Exception as e:
+            logger.error('Error updating scene status after ingestion:\n%s', e)
+            raise
+
+        logger.info('Scene finished ingesting. Notifying interested parties')
+        try:
+            notify_for_scene_ingest_status(scene.id)
+        except subprocess.CalledProcessError as e:
+            logger.error('There was error while notifying users of ingest status, but the ingest succeeded:\n%s', e)
+
+    except Exception as e:
+        logger.error('There was an unrecoverable error during the ingest:\n%s', e)
+        if originalScene is not None:
+            try:
+                logger.info('Reverting scene and setting status to failed.')
+                originalScene.ingestStatus = 'FAILED'
+                originalScene.update()
+                logger.info('Scene status set to failed.')
+            except Exception as e:
+                logger.error('Unable to revert scene to original state with failed status:\n%s', e)
+        sys.exit('There was an unrecoverable error during scene ingestion: %s' % e)
 
 
 def metadata_to_postgres(scene_id):
@@ -52,10 +109,9 @@ def metadata_to_postgres(scene_id):
     ]
 
     logger.debug('Bash command to store histogram: %s', ' '.join(bash_cmd))
-    running_process = subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
-    while running_process.poll() is None:
-        logger.info(running_process.stdout.readline())
-    logger.info(running_process.stdout.read())
+    for output in execute(bash_cmd):
+        logger.info(output)
+
     logger.info('Successfully completed metadata postgres write for scene %s',
                 scene_id)
     return True
@@ -73,12 +129,7 @@ def notify_for_scene_ingest_status(scene_id):
         'java', '-cp', '/opt/raster-foundry/jars/batch-assembly.jar',
         'com.rasterfoundry.batch.Main', 'notify_ingest_status', scene_id
     ]
-    try:
-        running_process = subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
-        while running_process.poll() is None:
-            logger.info(running_process.stdout.readline())
-        logger.info(running_process.stdout.read())
-    except subprocess.CalledProcessError as e:
-        logger.error('Error notifying users about ingest status:\n', e.output)
 
+    for output in execute(bash_cmd):
+        logger.info(output)
     return True
