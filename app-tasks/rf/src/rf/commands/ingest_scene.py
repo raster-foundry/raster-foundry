@@ -86,11 +86,12 @@ def ingest(scene_id):
         logger.error('There was an unrecoverable error during the ingest:\n%s', e)
         if originalScene is not None:
             try:
-                logger.info('Attempting to revert scene state')
+                logger.info('Reverting scene and setting status to failed.')
+                originalScene.ingestStatus = 'FAILED'
                 originalScene.update()
-                logger.info('reverted scene state')
+                logger.info('Scene status set to failed.')
             except Exception as e:
-                logger.error('Unable to revert scene to original state:\n%s', e)
+                logger.error('Unable to revert scene to original state with failed status:\n%s', e)
         sys.exit('There was an unrecoverable error during scene ingestion: %s' % e)
 
 
