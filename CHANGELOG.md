@@ -5,6 +5,8 @@
 ### Added
 
 ### Changed
+- Add support for multiband imagery in WMS responses
+  [\#5082](https://github.com/raster-foundry/raster-foundry/pull/5082)
 
 ### Deprecated
 
