@@ -3,20 +3,31 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
-- Capture X-Amzn-Trace-Id in Nginx access logs [\#5068](https://github.com/raster-foundry/raster-foundry/pull/5068)
 
 ### Changed
-- Upgraded version of GeoTrellis Server and MAML [\#5046](https://github.com/raster-foundry/raster-foundry/pull/5046), [\#5063](https://github.com/raster-foundry/raster-foundry/pull/5063)
-- Updated user task activity endpoint [\#5078](https://github.com/raster-foundry/raster-foundry/pull/5078)
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
-- Better error handling for ingests, no longer always fail the batch job [/#5070](https://github.com/raster-foundry/raster-foundry/pull/5070)
 
 ### Security
+
+## [1.25.0](https://github.com/raster-foundry/raster-foundry/tree/1.25.0)
+
+### Added
+
+- Capture X-Amzn-Trace-Id in Nginx access logs [\#5068](https://github.com/raster-foundry/raster-foundry/pull/5068)
+
+### Changed
+
+- Upgraded version of GeoTrellis Server and MAML [\#5046](https://github.com/raster-foundry/raster-foundry/pull/5046), [\#5063](https://github.com/raster-foundry/raster-foundry/pull/5063)
+- Updated user task activity endpoint [\#5078](https://github.com/raster-foundry/raster-foundry/pull/5078)
+
+### Fixed
+
+- Better error handling for ingests, no longer always fail the batch job [/#5070](https://github.com/raster-foundry/raster-foundry/pull/5070)
 
 ## [1.24.0](https://github.com/raster-foundry/raster-foundry/tree/1.24.0)
 
