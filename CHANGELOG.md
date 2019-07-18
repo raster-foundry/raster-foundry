@@ -7,6 +7,8 @@
 - added `taskId` to annotations and corresponding query paramter [\#5073](https://github.com/raster-foundry/raster-foundry/pull/5073)
 
 ### Changed
+- Add support for multiband imagery in WMS responses
+  [\#5082](https://github.com/raster-foundry/raster-foundry/pull/5082)
 
 ### Deprecated
 
