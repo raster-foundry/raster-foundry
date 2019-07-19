@@ -13,6 +13,7 @@ import com.rasterfoundry.database.util.RFTransactor
 import cats.effect._
 import com.olegpy.meow.hierarchy._
 import org.http4s._
+import org.http4s.blaze.channel.{ChannelOptions, OptionValue}
 import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
@@ -216,6 +217,9 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       .enableHttp2(false)
       .withHttpApp(router.orNotFound)
       .withBanner(startupBanner)
+      .withChannelOptions(ChannelOptions(OptionValue[java.lang.Boolean](
+        java.net.StandardSocketOptions.TCP_NODELAY,
+        true)))
       .serve
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
