@@ -34,6 +34,10 @@ def get_tempdir(debug=False):
 
 
 def s3_bucket_and_key_from_url(s3_url):
+    """
+    Raises:
+      ValueError
+    """
     parts = urlparse(s3_url)
     # parts.path[1:] drops the leading slash that urlparse includes
     return (parts.netloc, parts.path[1:])

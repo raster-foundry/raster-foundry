@@ -31,15 +31,15 @@ object Version {
   val ficus = "1.4.0"
   val flyway = "5.2.4"
   val geotools = "17.1"
-  val geotrellisContrib = "3.13.0"
+  val geotrellisContrib = "3.16.0"
   val geotrellis = "3.0.0-M3"
-  val geotrellisServer = "3.3.3"
+  val geotrellisServer = "3.4.0"
   val hadoop = "2.8.4"
   val http4s = "0.20.0"
   val json4s = "3.5.0"
   val jts = "1.16.0"
   val logback = "1.2.3"
-  val maml = "0.3.3"
+  val maml = "0.4.0"
   val nimbusJose = "0.6.0"
   val postgis = "2.2.1"
   val rollbar = "1.4.0"
@@ -120,7 +120,7 @@ object Dependencies {
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val http4sXml = "org.http4s" %% "http4s-scala-xml" % Version.http4s
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
-  val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
+  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % "1.5.1-cats"
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis

@@ -22,7 +22,7 @@ object AnnotationDao extends Dao[Annotation] {
         id, project_id, created_at, created_by, modified_at, owner,
         label, description, machine_generated, confidence,
         quality, geometry, annotation_group, labeled_by, verified_by,
-        project_layer_id
+        project_layer_id, task_id
       FROM
     """ ++ tableF
 
@@ -64,6 +64,7 @@ object AnnotationDao extends Dao[Annotation] {
               annotation.labeledBy,
               annotation.verifiedBy,
               annotation.projectLayerId,
+              annotation.taskId,
               owner.name,
               owner.profileImageUri
             )
@@ -141,7 +142,7 @@ object AnnotationDao extends Dao[Annotation] {
       id, project_id, created_at, created_by, modified_at, owner,
       label, description, machine_generated, confidence,
       quality, geometry, annotation_group, labeled_by, verified_by,
-      project_layer_id
+      project_layer_id, task_id
     ) VALUES"""
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
@@ -182,7 +183,7 @@ object AnnotationDao extends Dao[Annotation] {
           ${annotation.modifiedAt}, ${annotation.owner}, ${annotation.label},
           ${annotation.description}, ${annotation.machineGenerated}, ${annotation.confidence}, ${annotation.quality},
           ${annotation.geometry}, ${annotation.annotationGroup}, ${annotation.labeledBy}, ${annotation.verifiedBy},
-          ${annotation.projectLayerId}
+          ${annotation.projectLayerId}, ${annotation.taskId}
         )"""
         }
       )
@@ -206,7 +207,8 @@ object AnnotationDao extends Dao[Annotation] {
                 "annotation_group",
                 "labeled_by",
                 "verified_by",
-                "project_layer_id"
+                "project_layer_id",
+                "task_id"
               )
               .compile
               .toList
@@ -231,7 +233,8 @@ object AnnotationDao extends Dao[Annotation] {
         annotation_group = ${annotation.annotationGroup},
         labeled_by = ${annotation.labeledBy},
         verified_by = ${annotation.verifiedBy},
-        project_layer_id = ${annotation.projectLayerId}
+        project_layer_id = ${annotation.projectLayerId},
+        task_id = ${annotation.taskId}
       WHERE
         id = ${annotation.id} AND project_id = ${projectId}
     """).update.run
@@ -294,6 +297,9 @@ object AnnotationDao extends Dao[Annotation] {
         queryParams.annotationGroup.map({ ag =>
           fr"a.annotation_group = $ag"
         }),
+        queryParams.taskId.map({ tid =>
+          fr"a.task_id = $tid"
+        }),
         queryParams.bboxPolygon match {
           case Some(bboxPolygons) =>
             val fragments = bboxPolygons.map(
@@ -315,7 +321,7 @@ object AnnotationDao extends Dao[Annotation] {
       SELECT a.id, a.project_id, a.created_at, a.created_by, a.modified_at,
         a.owner, a.label, a.description, a.machine_generated,
         a.confidence, a.quality, a.geometry, a.annotation_group, a.labeled_by,
-        a.verified_by, a.project_layer_id, u.name owner_name,
+        a.verified_by, a.project_layer_id, a.task_id, u.name owner_name,
         u.profile_image_uri owner_profile_image_uri
     """
 

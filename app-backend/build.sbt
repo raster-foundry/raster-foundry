@@ -62,6 +62,11 @@ lazy val sharedSettings = Seq(
   ),
   scalacOptions := scalaOptions,
   // https://github.com/sbt/sbt/issues/3570
+  scalacOptions in (Compile, console) ~= (_.filterNot(
+    _ == "-Ywarn-unused-import")
+    .filterNot(_ == "-Xfatal-warnings")
+    .filterNot(_ == "-Ywarn-unused")
+    .filterNot(_ == "-Ywarn-unused-import")),
   updateOptions := updateOptions.value.withGigahorse(false),
   externalResolvers := Seq(
     "Geotoolkit Repo" at "http://maven.geotoolkit.org",
@@ -500,7 +505,7 @@ lazy val backsplashServer =
     })
     .settings({
       dependencyOverrides ++= Seq(
-        "com.azavea.gdal" % "gdal-warp-bindings" % "33.6cc58d3"
+        "com.azavea.gdal" % "gdal-warp-bindings" % "33.58d4965"
       )
     })
     .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))

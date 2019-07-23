@@ -4,15 +4,54 @@
 
 ### Added
 
-- Limited max zoom level for backsplash tiles to 23 on frontend [\#5013](https://github.com/raster-foundry/raster-foundry/pull/5013)
+- added `taskId` to annotations and corresponding query paramter [\#5073](https://github.com/raster-foundry/raster-foundry/pull/5073)
 
 ### Changed
+- Add support for multiband imagery in WMS responses
+  [\#5082](https://github.com/raster-foundry/raster-foundry/pull/5082)
 
 ### Deprecated
+
+### Removed
 
 ### Fixed
 
 ### Security
+
+## [1.25.0](https://github.com/raster-foundry/raster-foundry/tree/1.25.0)
+
+### Added
+
+- Capture X-Amzn-Trace-Id in Nginx access logs [\#5068](https://github.com/raster-foundry/raster-foundry/pull/5068)
+
+### Changed
+
+- Upgraded version of GeoTrellis Server and MAML [\#5046](https://github.com/raster-foundry/raster-foundry/pull/5046), [\#5063](https://github.com/raster-foundry/raster-foundry/pull/5063)
+- Updated user task activity endpoint [\#5078](https://github.com/raster-foundry/raster-foundry/pull/5078)
+
+### Fixed
+
+- Better error handling for ingests, no longer always fail the batch job [/#5070](https://github.com/raster-foundry/raster-foundry/pull/5070)
+
+## [1.24.0](https://github.com/raster-foundry/raster-foundry/tree/1.24.0)
+
+### Added
+
+- Added an endpoint for listing user activity summary on tasks [\#5051](https://github.com/raster-foundry/raster-foundry/pull/5051)
+
+### Fixed
+
+- Removed superfluous parameter from `POST`s to `/annotation-groups` endpoints [\#5041](https://github.com/raster-foundry/raster-foundry/pull/5041)
+
+## [1.23.0](https://github.com/raster-foundry/raster-foundry/tree/1.23.0)
+
+### Added
+
+- Limited max zoom level for backsplash tiles to 23 on frontend [\#5013](https://github.com/raster-foundry/raster-foundry/pull/5013)
+
+### Fixed
+
+- Fixed bugs in task list and delete endpoints [\#5026](https://github.com/raster-foundry/raster-foundry/pull/5026) [\#5034](https://github.com/raster-foundry/raster-foundry/pull/5034) [\#5042](https://github.com/raster-foundry/raster-foundry/pull/5042) [\#5038](https://github.com/raster-foundry/raster-foundry/pull/5038) [\#5048](https://github.com/raster-foundry/raster-foundry/pull/5048)
 
 ## [1.22.0](https://github.com/raster-foundry/raster-foundry/tree/1.22.0) (2019-06-11)
 
@@ -43,10 +82,12 @@
 
 - Fixed usage of AWS credentials by the GDAL java bindings by using `AWS_DEFAULT_PROFILE` [\#4948](https://github.com/raster-foundry/raster-foundry/pull/4948)
 - Fix Sentinel-2 metadata file download [\#4969](https://github.com/raster-foundry/raster-foundry/pull/4969)
+- Fix scripts/update so that it uses flyway for migrations [\#5032](https://github.com/raster-foundry/raster-foundry/pull/5032)
 
 ## [1.21.3](https://github.com/raster-foundry/raster-foundry/tree/1.21.3) (2019-06-06)
 
 ### Added
+
 - Updated healthcheck to include loading tile metadata [\#5017](https://github.com/raster-foundry/raster-foundry/pull/5017)
 
 ## [1.21.2](https://github.com/raster-foundry/raster-foundry/tree/1.21.2) (2019-05-23)

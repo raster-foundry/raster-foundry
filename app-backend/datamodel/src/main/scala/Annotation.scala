@@ -30,7 +30,8 @@ final case class Annotation(
     annotationGroup: UUID,
     labeledBy: Option[String],
     verifiedBy: Option[String],
-    projectLayerId: UUID
+    projectLayerId: UUID,
+    taskId: Option[UUID]
 ) extends GeoJSONSerializable[Annotation.GeoJSON] {
   def toGeoJSONFeature: Annotation.GeoJSON = Annotation.GeoJSON(
     this.id,
@@ -49,7 +50,8 @@ final case class Annotation(
       this.annotationGroup,
       this.labeledBy,
       this.verifiedBy,
-      this.projectLayerId
+      this.projectLayerId,
+      this.taskId
     )
   )
 }
@@ -69,7 +71,8 @@ final case class AnnotationProperties(
     annotationGroup: UUID,
     labeledBy: Option[String] = None,
     verifiedBy: Option[String] = None,
-    projectLayerId: UUID
+    projectLayerId: UUID,
+    taskId: Option[UUID] = None
 )
 
 @JsonCodec
@@ -82,7 +85,8 @@ final case class AnnotationPropertiesCreate(
     quality: Option[AnnotationQuality],
     annotationGroup: Option[UUID],
     labeledBy: Option[String] = None,
-    verifiedBy: Option[String] = None
+    verifiedBy: Option[String] = None,
+    taskId: Option[UUID] = None
 )
 
 object Annotation extends LazyLogging {
@@ -122,7 +126,8 @@ object Annotation extends LazyLogging {
         properties.annotationGroup,
         properties.labeledBy,
         properties.verifiedBy,
-        properties.projectLayerId
+        properties.projectLayerId,
+        properties.taskId
       )
     }
   }
@@ -138,7 +143,8 @@ object Annotation extends LazyLogging {
       geometry: Option[Projected[Geometry]],
       annotationGroup: Option[UUID],
       labeledBy: Option[String] = None,
-      verifiedBy: Option[String] = None
+      verifiedBy: Option[String] = None,
+      taskId: Option[UUID] = None
   ) extends OwnerCheck {
 
     def toAnnotation(
@@ -168,7 +174,8 @@ object Annotation extends LazyLogging {
         annotationGroup.getOrElse(defaultAnnotationGroup),
         labeledBy,
         verifiedBy,
-        projectLayerId
+        projectLayerId,
+        taskId
       )
     }
   }
@@ -189,7 +196,8 @@ object Annotation extends LazyLogging {
         geometry,
         properties.annotationGroup,
         properties.labeledBy,
-        properties.verifiedBy
+        properties.verifiedBy,
+        properties.taskId
       )
     }
   }
@@ -213,6 +221,7 @@ final case class AnnotationWithOwnerInfo(
     labeledBy: Option[String],
     verifiedBy: Option[String],
     projectLayerId: UUID,
+    taskId: Option[UUID],
     ownerName: String,
     ownerProfileImageUri: String
 ) extends GeoJSONSerializable[AnnotationWithOwnerInfo.GeoJSON] {
@@ -234,6 +243,7 @@ final case class AnnotationWithOwnerInfo(
       this.labeledBy,
       this.verifiedBy,
       this.projectLayerId,
+      this.taskId,
       this.ownerName,
       this.ownerProfileImageUri
     )
@@ -273,6 +283,7 @@ final case class AnnotationWithOwnerInfoProperties(
     labeledBy: Option[String] = None,
     verifiedBy: Option[String] = None,
     projectLayerId: UUID,
+    taskId: Option[UUID] = None,
     ownerName: String,
     ownerProfileImageUri: String
 )

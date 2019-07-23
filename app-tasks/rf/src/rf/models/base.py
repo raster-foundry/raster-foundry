@@ -21,6 +21,11 @@ class BaseModel(object):
 
     @classmethod
     def from_id(cls, id):
+        """ Fetch a resource with the specified ID
+
+        Raises:
+            requests.exceptions.HTTPError
+        """
         url = '{HOST}{URL_PATH}{id}'.format(HOST=cls.HOST, URL_PATH=cls.URL_PATH, id=id)
         session = get_session()
         response = session.get(url)
