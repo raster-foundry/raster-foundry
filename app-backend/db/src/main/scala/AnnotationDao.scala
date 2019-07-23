@@ -217,8 +217,7 @@ object AnnotationDao extends Dao[Annotation] {
 
   def updateAnnotation(
       projectId: UUID,
-      annotation: Annotation,
-      user: User
+      annotation: Annotation
   ): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),

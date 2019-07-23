@@ -30,7 +30,7 @@ object AoiDao extends Dao[AOI] {
   def getAoiById(id: UUID): ConnectionIO[Option[AOI]] =
     query.filter(id).selectOption
 
-  def updateAOI(aoi: AOI, user: User): ConnectionIO[Int] = {
+  def updateAOI(aoi: AOI): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
         shape = ${aoi.shape},

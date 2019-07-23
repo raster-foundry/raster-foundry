@@ -68,8 +68,7 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
   def updateAnnotationGroupQ(
       projectId: UUID,
       annotationGroup: AnnotationGroup,
-      id: UUID,
-      user: User
+      id: UUID
   ): Update0 = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${id}"
@@ -171,9 +170,8 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
   def updateAnnotationGroup(
       projectId: UUID,
       ag: AnnotationGroup,
-      agId: UUID,
-      user: User
+      agId: UUID
   ): ConnectionIO[Int] = {
-    updateAnnotationGroupQ(projectId, ag, agId, user).run
+    updateAnnotationGroupQ(projectId, ag, agId).run
   }
 }

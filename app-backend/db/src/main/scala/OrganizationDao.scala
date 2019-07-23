@@ -29,13 +29,14 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     FROM
   """ ++ tableF
 
-  def createUserGroupRole
-    : (UUID,
-       User,
-       String,
-       UserGroupRole.Create,
-       UUID,
-       ConnectionIO[Boolean]) => ConnectionIO[UserGroupRole] =
+  def createUserGroupRole: (
+      UUID,
+      User,
+      String,
+      UserGroupRole.Create,
+      UUID,
+      ConnectionIO[Boolean]
+  ) => ConnectionIO[UserGroupRole] =
     UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Organization)
 
   def create(org: Organization): ConnectionIO[Organization] = {
@@ -102,8 +103,11 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         searchParams,
         actingUser,
         Some(
-          Map("ugr.membership_status" -> Order.Asc,
-              "ugr.group_role" -> Order.Asc))
+          Map(
+            "ugr.membership_status" -> Order.Asc,
+            "ugr.group_role" -> Order.Asc
+          )
+        )
       )
       maybeSanitized = if (isDefaultOrg) {
         usersPage.copy(results = usersPage.results map { _.copy(email = "") })
@@ -112,8 +116,10 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       }
     } yield { maybeSanitized }
 
-  def validatePath(platformId: UUID,
-                   organizationId: UUID): ConnectionIO[Boolean] =
+  def validatePath(
+      platformId: UUID,
+      organizationId: UUID
+  ): ConnectionIO[Boolean] =
     (fr"""
       SELECT count(o.id) > 0
       FROM """ ++ tableF ++ fr""" o
@@ -200,11 +206,13 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
   def getOrgPlatformId(organizationId: UUID): ConnectionIO[UUID] =
     unsafeGetOrganizationById(organizationId) map { _.platformId }
 
-  def addUserRole(platformId: UUID,
-                  actingUser: User,
-                  subjectId: String,
-                  organizationId: UUID,
-                  groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
+  def addUserRole(
+      platformId: UUID,
+      actingUser: User,
+      subjectId: String,
+      organizationId: UUID,
+      groupRole: GroupRole
+  ): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId,
       GroupType.Organization,
@@ -223,18 +231,19 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
   }
 
   def deactivateUserRoles(
-      actingUser: User,
       subjectId: String,
       organizationId: UUID
   ): ConnectionIO[List[UserGroupRole]] = {
     val userGroup =
       UserGroupRole.UserGroup(subjectId, GroupType.Organization, organizationId)
-    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
+    UserGroupRoleDao.deactivateUserGroupRoles(userGroup)
   }
 
-  def addLogo(logoBase64: String,
-              orgID: UUID,
-              dataBucket: String): ConnectionIO[Organization] = {
+  def addLogo(
+      logoBase64: String,
+      orgID: UUID,
+      dataBucket: String
+  ): ConnectionIO[Organization] = {
     val prefix = "org-logos"
     val key = s"${orgID.toString}.png"
     val logoByte = ApacheBase64.decodeBase64(logoBase64)
@@ -362,10 +371,14 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       .viewFilter(user)
       .filter(searchParams)
       .list(0, 5, fr"order by name")
-      .map(organizations =>
-        organizations map {
-          _.copy(planetCredential = Credential(Some("")),
-                 dropboxCredential = Credential(Some("")))
-      })
+      .map(
+        organizations =>
+          organizations map {
+            _.copy(
+              planetCredential = Credential(Some("")),
+              dropboxCredential = Credential(Some(""))
+            )
+          }
+      )
   }
 }

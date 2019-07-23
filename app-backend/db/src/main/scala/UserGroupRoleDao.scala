@@ -38,7 +38,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     """
 
   // We don't want to support changes to roles beyond deactivation and promotion
-  def updateF(ugr: UserGroupRole, id: UUID, user: User) =
+  def updateF(ugr: UserGroupRole, id: UUID) =
     fr"UPDATE" ++ tableF ++ fr"""SET
           modified_at = NOW(),
           is_active = ${ugr.isActive},
@@ -124,7 +124,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         (existingMembershipStatus, adminCheck, rolesMatch) match {
           // Only admins can change group roles, and only approved roles can have their group role changed
           case (Some(MembershipStatus.Approved), true, false) =>
-            UserGroupRoleDao.deactivate(existingRoleO.map(_.id).get, actingUser) *>
+            UserGroupRoleDao.deactivate(existingRoleO.map(_.id).get) *>
               UserGroupRoleDao.create(
                 userGroupRoleCreate
                   .toUserGroupRole(actingUser, MembershipStatus.Approved)
@@ -133,7 +133,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           // and become admins by accepting a MEMBER role by posting an ADMIN role
           case (Some(MembershipStatus.Requested), true, true) |
               (Some(MembershipStatus.Invited), _, true) =>
-            UserGroupRoleDao.deactivate(existingRoleO.map(_.id).get, actingUser) *>
+            UserGroupRoleDao.deactivate(existingRoleO.map(_.id).get) *>
               UserGroupRoleDao.create(
                 userGroupRoleCreate
                   .toUserGroupRole(actingUser, MembershipStatus.Approved)
@@ -343,10 +343,10 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   }
 
   // @TODO: ensure a user cannot demote (or promote?) themselves
-  def update(ugr: UserGroupRole, id: UUID, user: User): ConnectionIO[Int] =
-    updateF(ugr, id, user).update.run
+  def update(ugr: UserGroupRole, id: UUID): ConnectionIO[Int] =
+    updateF(ugr, id).update.run
 
-  def deactivate(id: UUID, user: User): ConnectionIO[Int] = {
+  def deactivate(id: UUID): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr""" SET
           is_active = false,
           modified_at = NOW(),
@@ -355,8 +355,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   }
 
   def deactivateUserGroupRoles(
-      ugr: UserGroupRole.UserGroup,
-      user: User
+      ugr: UserGroupRole.UserGroup
   ): ConnectionIO[List[UserGroupRole]] = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
         modified_at = NOW(),

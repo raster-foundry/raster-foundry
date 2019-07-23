@@ -56,8 +56,7 @@ object TeamDao extends Dao[Team] {
 
   def update(
       team: Team,
-      id: UUID,
-      user: User
+      id: UUID
   ): ConnectionIO[Team] = {
     val now = new Timestamp((new java.util.Date()).getTime())
     val updateQuery =
@@ -286,12 +285,11 @@ object TeamDao extends Dao[Team] {
   }
 
   def deactivateUserRoles(
-      actingUser: User,
       subjectId: String,
       teamId: UUID
   ): ConnectionIO[List[UserGroupRole]] = {
     val userGroup = UserGroupRole.UserGroup(subjectId, GroupType.Team, teamId)
-    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
+    UserGroupRoleDao.deactivateUserGroupRoles(userGroup)
   }
 
   def teamsForUser(user: User): ConnectionIO[List[Team]] = {
