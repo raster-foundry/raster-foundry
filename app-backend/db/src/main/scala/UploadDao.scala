@@ -18,7 +18,7 @@ object UploadDao extends Dao[Upload] {
 
   val selectF = sql"""
     SELECT
-       id, created_at, created_by, modified_at, modified_by,
+       id, created_at, created_by, modified_at,
        owner, upload_status, file_type, upload_type,
        files, datasource, metadata, visibility, project_id,
        layer_id, source, keep_in_source_bucket
@@ -58,7 +58,7 @@ object UploadDao extends Dao[Upload] {
       insertedUpload <- (
         sql"""
        INSERT INTO uploads
-         (id, created_at, created_by, modified_at, modified_by,
+         (id, created_at, created_by, modified_at,
           owner, upload_status, file_type, upload_type,
           files, datasource, metadata, visibility, project_id,
           layer_id, source, keep_in_source_bucket)
@@ -73,7 +73,6 @@ object UploadDao extends Dao[Upload] {
           "created_at",
           "created_by",
           "modified_at",
-          "modified_by",
           "owner",
           "upload_status",
           "file_type",
@@ -97,7 +96,6 @@ object UploadDao extends Dao[Upload] {
        UPDATE uploads
        SET
           modified_at = NOW(),
-          modified_by = ${user.id},
           upload_status = ${upload.uploadStatus},
           file_type = ${upload.fileType},
           upload_type = ${upload.uploadType},

@@ -22,7 +22,7 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, created_by, modified_by, owner, title,
+      id, created_at, modified_at, created_by, owner, title,
       description, requirements, license, visibility, compatible_data_sources, stars, definition,
       single_source
     FROM """ ++ tableF
@@ -34,11 +34,11 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
 
     sql"""
        INSERT INTO tools
-         (id, created_at, modified_at, created_by, modified_by, owner, title,
+         (id, created_at, modified_at, created_by, owner, title,
           description, requirements, license, visibility, compatible_data_sources, stars, definition,
           single_source)
        VALUES
-         (${id}, ${now}, ${now}, ${user.id}, ${user.id}, ${ownerId}, ${newTool.title},
+         (${id}, ${now}, ${now}, ${user.id}, ${ownerId}, ${newTool.title},
           ${newTool.description}, ${newTool.requirements}, ${newTool.license}, ${newTool.visibility},
           ${newTool.compatibleDataSources}, ${newTool.stars}, ${newTool.definition}, ${newTool.singleSource})
        """.update.withUniqueGeneratedKeys[Tool](
@@ -46,7 +46,6 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
       "created_at",
       "modified_at",
       "created_by",
-      "modified_by",
       "owner",
       "title",
       "description",
@@ -66,7 +65,6 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
     (sql"""
        UPDATE tools
        SET
-         modified_by = ${user.id},
          modified_at = ${updateTime},
          title = ${tool.title},
          description = ${tool.description},
@@ -80,30 +78,39 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
-  def authQuery(user: User,
-                objectType: ObjectType,
-                ownershipTypeO: Option[String] = None,
-                groupTypeO: Option[GroupType] = None,
-                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Tool] =
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None
+  ): Dao.QueryBuilder[Tool] =
     user.isSuperuser match {
       case true =>
         Dao.QueryBuilder[Tool](selectF, tableF, List.empty)
       case false =>
-        Dao.QueryBuilder[Tool](selectF,
-                               tableF,
-                               List(
-                                 queryObjectsF(user,
-                                               objectType,
-                                               ActionType.View,
-                                               ownershipTypeO,
-                                               groupTypeO,
-                                               groupIdO)))
+        Dao.QueryBuilder[Tool](
+          selectF,
+          tableF,
+          List(
+            queryObjectsF(
+              user,
+              objectType,
+              ActionType.View,
+              ownershipTypeO,
+              groupTypeO,
+              groupIdO
+            )
+          )
+        )
     }
 
-  def authorized(user: User,
-                 objectType: ObjectType,
-                 objectId: UUID,
-                 actionType: ActionType): ConnectionIO[Boolean] =
+  def authorized(
+      user: User,
+      objectType: ObjectType,
+      objectId: UUID,
+      actionType: ActionType
+  ): ConnectionIO[Boolean] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)

@@ -23,7 +23,7 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, created_by, modified_at, modified_by, owner,
+      id, created_at, created_by, modified_at, owner,
       name, description, geometry
     FROM
   """ ++ tableF
@@ -41,7 +41,7 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
     val shape = shapeCreate.toShape(user)
     sql"""
       INSERT INTO shapes
-      (id, created_at, created_by, modified_at, modified_by, owner, name, description, geometry)
+      (id, created_at, created_by, modified_at, owner, name, description, geometry)
       VALUES
       (
       ${shape.id}, ${shape.createdAt}, ${shape.createdBy}, ${shape.modifiedAt},
@@ -52,7 +52,6 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
       "created_at",
       "created_by",
       "modified_at",
-      "modified_by",
       "owner",
       "name",
       "description",
@@ -67,9 +66,9 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
     val insertSql =
       """
        INSERT INTO shapes
-         (id, created_at, created_by, modified_at, modified_by, owner,
+         (id, created_at, created_by, modified_at, owner,
          name, description, geometry)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
 
     val insertValues = shapes.map(_.toShape(user))
 
@@ -79,7 +78,6 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
         "created_at",
         "created_by",
         "modified_at",
-        "modified_by",
         "owner",
         "name",
         "description",
@@ -104,7 +102,6 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
        UPDATE shapes
        SET
          modified_at = ${updateTime},
-         modified_by = ${user.id},
          name = ${shape.name},
          description = ${shape.description},
          geometry = ${shape.geometry}

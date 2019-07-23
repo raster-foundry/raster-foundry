@@ -48,7 +48,6 @@ object ToolRun {
         now,
         user.id,
         now,
-        user.id,
         ownerId,
         visibility,
         projectId,

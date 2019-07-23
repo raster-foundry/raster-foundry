@@ -38,7 +38,7 @@ object SceneDao
 
   val selectF: Fragment = sql"""
     SELECT
-      id, created_at, created_by, modified_at, modified_by, owner,
+      id, created_at, created_by, modified_at, owner,
       visibility, tags,
       datasource, scene_metadata, name, tile_footprint,
       data_footprint, metadata_files, ingest_location, cloud_cover,
@@ -85,7 +85,7 @@ object SceneDao
     }
 
     val sceneInsertId = (fr"INSERT INTO" ++ tableF ++ fr"""(
-         id, created_at, created_by, modified_at, modified_by, owner,
+         id, created_at, created_by, modified_at, owner,
          visibility, tags,
          datasource, scene_metadata, name, tile_footprint,
          data_footprint, metadata_files, ingest_location, cloud_cover,
@@ -155,7 +155,7 @@ object SceneDao
 
     val sceneInsert = (Fragment.const(s"""
       INSERT INTO ${tableName} (
-         id, created_at, created_by, modified_at, modified_by, owner,
+         id, created_at, created_by, modified_at, owner,
          visibility, tags,
          datasource, scene_metadata, name, tile_footprint,
          data_footprint, metadata_files, ingest_location, cloud_cover,
@@ -201,7 +201,6 @@ object SceneDao
     UPDATE scenes
     SET
       modified_at = ${now},
-      modified_by = ${user.id},
       visibility = ${scene.visibility},
       tags = ${scene.tags},
       datasource = ${scene.datasource},

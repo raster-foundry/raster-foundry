@@ -29,7 +29,7 @@ object ImageDao extends Dao[Image] {
         image_metadata, resolution_meters, metadata_files)
       VALUES
         (${image.id}, ${image.createdAt}, ${image.modifiedAt},
-         ${user.id}, ${user.id}, ${ownerId}, ${image.rawDataBytes}, ${image.visibility},
+         ${user.id}, ${ownerId}, ${image.rawDataBytes}, ${image.visibility},
          ${image.filename}, ${image.sourceUri}, ${image.scene},
          ${image.imageMetadata}, ${image.resolutionMeters}, ${image.metadataFiles})
     """).update.withUniqueGeneratedKeys[Image](
@@ -68,11 +68,11 @@ object ImageDao extends Dao[Image] {
 
   def insertManyImages(images: List[Image]): ConnectionIO[Int] = {
     val insertSql = s"""INSERT INTO ${tableName}
-        (id, created_at, modified_at, created_by, modified_by,
+        (id, created_at, modified_at, created_by,
         owner, raw_data_bytes, visibility, filename, sourceuri, scene,
         image_metadata, resolution_meters, metadata_files)
       VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     Update[Image](insertSql).updateMany(images)
@@ -85,7 +85,6 @@ object ImageDao extends Dao[Image] {
       fr"UPDATE" ++ this.tableF ++ fr"SET" ++
         fr"""
           modified_at = ${now},
-          modified_by = ${user.id},
           raw_data_bytes = ${image.rawDataBytes},
           visibility = ${image.visibility},
           filename = ${image.filename},

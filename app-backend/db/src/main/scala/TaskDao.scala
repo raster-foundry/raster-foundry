@@ -17,7 +17,9 @@ object TaskDao extends Dao[Task] {
 
   val tableName = "tasks"
   val joinTableF =
-    Fragment.const("tasks left join task_actions on tasks.id = task_actions.task_id")
+    Fragment.const(
+      "tasks left join task_actions on tasks.id = task_actions.task_id"
+    )
 
   val cols =
     fr"""
@@ -26,7 +28,6 @@ object TaskDao extends Dao[Task] {
       created_at,
       created_by,
       modified_at,
-      modified_by,
       owner,
       project_id,
       project_layer_id,
@@ -49,7 +50,6 @@ object TaskDao extends Dao[Task] {
           created_at,
           created_by,
           modified_at,
-          modified_by,
           owner,
           project_id,
           project_layer_id,
@@ -209,7 +209,6 @@ object TaskDao extends Dao[Task] {
           "created_at",
           "created_by",
           "modified_at",
-          "modified_by",
           "owner",
           "project_id",
           "project_layer_id",

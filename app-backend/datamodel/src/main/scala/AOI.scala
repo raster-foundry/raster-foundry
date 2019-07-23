@@ -55,7 +55,6 @@ object AOI {
         now,
         now,
         user.id,
-        user.id,
         ownerId,
         shape,
         filters,

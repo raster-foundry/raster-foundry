@@ -33,7 +33,7 @@ object ProjectDao
   val selectF: Fragment = sql"""
     SELECT
       id, created_at, modified_at, created_by,
-      modified_by, owner, name, slug_label, description,
+      owner, name, slug_label, description,
       visibility, tile_visibility, is_aoi_project,
       aoi_cadence_millis, aois_last_checked, tags, extent,
       manual_order, is_single_band, single_band_options,
@@ -60,7 +60,8 @@ object ProjectDao
   def listProjects(
       page: PageRequest,
       params: ProjectQueryParameters,
-      user: User): ConnectionIO[PaginatedResponse[Project.WithUser]] = {
+      user: User
+  ): ConnectionIO[PaginatedResponse[Project.WithUser]] = {
     authQuery(
       user,
       ObjectType.Project,
@@ -79,8 +80,10 @@ object ProjectDao
       .exists
   }
 
-  def insertProject(newProject: Project.Create,
-                    user: User): ConnectionIO[Project] = {
+  def insertProject(
+      newProject: Project.Create,
+      user: User
+  ): ConnectionIO[Project] = {
 
     val id = UUID.randomUUID()
     val now = new Timestamp(new java.util.Date().getTime)
@@ -88,31 +91,33 @@ object ProjectDao
     val slug = Project.slugify(newProject.name)
     for {
       defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
-        ProjectLayer(UUID.randomUUID(),
-                     now,
-                     now,
-                     "Project default layer",
-                     None,
-                     "#738FFC",
-                     None,
-                     None,
-                     None,
-                     None,
-                     false,
-                     None,
-                     None,
-                     None)
+        ProjectLayer(
+          UUID.randomUUID(),
+          now,
+          now,
+          "Project default layer",
+          None,
+          "#738FFC",
+          None,
+          None,
+          None,
+          None,
+          false,
+          None,
+          None,
+          None
+        )
       )
       project <- (fr"INSERT INTO" ++ tableF ++ fr"""
           (id, created_at, modified_at, created_by,
-          modified_by, owner, name, slug_label, description,
+          owner, name, slug_label, description,
           visibility, tile_visibility, is_aoi_project,
           aoi_cadence_millis, aois_last_checked, tags, extent,
           manual_order, is_single_band, single_band_options, default_annotation_group,
           extras, default_layer_id)
         VALUES
           ($id, $now, $now, ${user.id},
-          ${user.id}, $ownerId, ${newProject.name}, $slug, ${newProject.description},
+          $ownerId, ${newProject.name}, $slug, ${newProject.description},
           ${newProject.visibility}, ${newProject.tileVisibility}, ${newProject.isAOIProject},
           ${newProject.aoiCadenceMillis}, $now, ${newProject.tags}, null,
           TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions}, null,
@@ -123,7 +128,6 @@ object ProjectDao
         "created_at",
         "modified_at",
         "created_by",
-        "modified_by",
         "owner",
         "name",
         "slug_label",
@@ -153,7 +157,6 @@ object ProjectDao
 
     val query = (fr"UPDATE" ++ tableF ++ fr"""SET
        modified_at = ${updateTime},
-       modified_by = ${user.id},
        owner = ${project.owner},
        name = ${project.name},
        description = ${project.description},
@@ -174,25 +177,31 @@ object ProjectDao
     query
   }
 
-  def updateProject(project: Project,
-                    id: UUID,
-                    user: User): ConnectionIO[Int] = {
+  def updateProject(
+      project: Project,
+      id: UUID,
+      user: User
+  ): ConnectionIO[Int] = {
     for {
       // User must have access to the project by the time they get here, so it exists
       dbProject <- unsafeGetProjectById(id)
       defaultLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
-        dbProject.defaultLayerId)
+        dbProject.defaultLayerId
+      )
       _ <- ProjectLayerDao.updateProjectLayer(
-        defaultLayer.copy(isSingleBand = project.isSingleBand,
-                          singleBandOptions = project.singleBandOptions),
+        defaultLayer.copy(
+          isSingleBand = project.isSingleBand,
+          singleBandOptions = project.singleBandOptions
+        ),
         dbProject.defaultLayerId
       )
       updateProject <- updateProjectQ(project, id, user).run
     } yield updateProject
   }
 
-  def deleteProject(id: UUID)(
-      implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
+  def deleteProject(
+      id: UUID
+  )(implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
 
     val aoiDeleteQuery = sql"DELETE FROM aois where aois.project_id = ${id}"
     for {
@@ -229,10 +238,12 @@ object ProjectDao
     updateStatusQuery.update.run
   }
 
-  def addScenesToProject(sceneIds: List[UUID],
-                         projectId: UUID,
-                         projectLayerId: UUID,
-                         isAccepted: Boolean = true): ConnectionIO[Int] = {
+  def addScenesToProject(
+      sceneIds: List[UUID],
+      projectId: UUID,
+      projectLayerId: UUID,
+      isAccepted: Boolean = true
+  ): ConnectionIO[Int] = {
     sceneIds.toNel match {
       case Some(ids) =>
         addScenesToProject(ids, projectId, projectLayerId, isAccepted)
@@ -254,15 +265,16 @@ object ProjectDao
     WHERE projects.id = ${projectId};
     """.update.run
 
-  def sceneIdWithDatasourceF(sceneIds: NonEmptyList[UUID],
-                             projectLayerId: UUID): Fragment =
+  def sceneIdWithDatasourceF(
+      sceneIds: NonEmptyList[UUID],
+      projectLayerId: UUID
+  ): Fragment =
     fr"""
       SELECT scenes.id,
             datasources.id,
             datasources.created_at,
             datasources.created_by,
             datasources.modified_at,
-            datasources.modified_by,
             datasources.owner,
             datasources.name,
             datasources.visibility,
@@ -287,10 +299,12 @@ object ProjectDao
         throw new Exception(s"Project ${project.id} does not have any layers")
     }
 
-  def addScenesToProject(sceneIds: NonEmptyList[UUID],
-                         projectId: UUID,
-                         projectLayerId: UUID,
-                         isAccepted: Boolean): ConnectionIO[Int] = {
+  def addScenesToProject(
+      sceneIds: NonEmptyList[UUID],
+      projectId: UUID,
+      projectLayerId: UUID,
+      isAccepted: Boolean
+  ): ConnectionIO[Int] = {
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       user <- UserDao.unsafeGetUserById(project.owner)
@@ -311,13 +325,16 @@ object ProjectDao
       scenesToIngest <- SceneWithRelatedDao.getScenesToIngest(projectLayerId)
       _ <- scenesToIngest traverse { (scene: Scene) =>
         logger.info(
-          s"Kicking off ingest for scene ${scene.id} with ingest status ${scene.statusFields.ingestStatus}")
+          s"Kicking off ingest for scene ${scene.id} with ingest status ${scene.statusFields.ingestStatus}"
+        )
         kickoffSceneIngest(scene.id).pure[ConnectionIO]
       }
       _ <- scenesToIngest.traverse { (scene: Scene) =>
         SceneDao.update(
-          scene.copy(statusFields =
-            scene.statusFields.copy(ingestStatus = IngestStatus.ToBeIngested)),
+          scene.copy(
+            statusFields =
+              scene.statusFields.copy(ingestStatus = IngestStatus.ToBeIngested)
+          ),
           scene.id,
           user
         )
@@ -325,21 +342,26 @@ object ProjectDao
     } yield {
       logger
         .info(
-          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId"
+        )
       kickoffLayerOverviewCreate(projectId, projectLayerId)
       sceneToLayerInserts
     }
   }
 
-  def createScenesToLayer(sceneId: UUID,
-                          projectLayerId: UUID,
-                          datasource: Datasource,
-                          isAccepted: Boolean): SceneToLayer = {
+  def createScenesToLayer(
+      sceneId: UUID,
+      projectLayerId: UUID,
+      datasource: Datasource,
+      isAccepted: Boolean
+  ): SceneToLayer = {
     val naturalComposites = datasource.composites.get("natural")
     val (redBand, greenBand, blueBand) = naturalComposites map { composite =>
-      (composite.value.redBand,
-       composite.value.greenBand,
-       composite.value.blueBand)
+      (
+        composite.value.redBand,
+        composite.value.greenBand,
+        composite.value.blueBand
+      )
     } getOrElse { (0, 1, 2) }
     (
       sceneId,
@@ -354,13 +376,15 @@ object ProjectDao
             blueBand, // Bands
             // Color corrections; everything starts out disabled (false) and null for now
             BandGamma(enabled = false, None, None, None), // Gamma
-            PerBandClipping(enabled = false,
-                            None,
-                            None,
-                            None, // Clipping Max: R,G,B
-                            None,
-                            None,
-                            None), // Clipping Min: R,G,B
+            PerBandClipping(
+              enabled = false,
+              None,
+              None,
+              None, // Clipping Max: R,G,B
+              None,
+              None,
+              None
+            ), // Clipping Min: R,G,B
             MultiBandClipping(enabled = false, None, None), // Min, Max
             SigmoidalContrast(enabled = false, None, None), // Alpha, Beta
             Saturation(enabled = false, None), // Saturation
@@ -375,21 +399,24 @@ object ProjectDao
   def replaceScenesInProject(
       sceneIds: NonEmptyList[UUID],
       projectId: UUID,
-      projectLayerId: UUID): ConnectionIO[Iterable[Scene]] =
+      projectLayerId: UUID
+  ): ConnectionIO[Iterable[Scene]] =
     for {
       _ <- ProjectDao.unsafeGetProjectById(projectId)
       _ <- sql"DELETE FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}".update.run
       _ <- addScenesToProject(sceneIds, projectId, projectLayerId, true)
       scenes <- SceneDao.query
         .filter(
-          fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId})")
+          fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId})"
+        )
         .list
     } yield scenes
 
-  def deleteScenesFromProject(sceneIds: List[UUID],
-                              projectId: UUID,
-                              projectLayerId: UUID)(
-      implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
+  def deleteScenesFromProject(
+      sceneIds: List[UUID],
+      projectId: UUID,
+      projectLayerId: UUID
+  )(implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
     val f: Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
     f match {
       case _ @Some(_) =>
@@ -398,25 +425,31 @@ object ProjectDao
           rowsDeleted <- (fr"DELETE FROM scenes_to_layers" ++
             Fragments.whereAndOpt(
               f,
-              Some(fr"project_layer_id = ${projectLayerId}"))).update.run
+              Some(fr"project_layer_id = ${projectLayerId}")
+            )).update.run
           _ <- updateProjectExtentIO(projectId)
           layerDatasources <- ProjectLayerDatasourcesDao
             .listProjectLayerDatasources(projectLayerId)
           projectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
-            projectLayerId)
+            projectLayerId
+          )
           _ <- projectLayer.overviewsLocation match {
             case Some(locUrl) if layerDatasources.isEmpty =>
-              (L.liftIO(removeLayerOverview(projectLayerId, locUrl)),
-               ProjectLayerDao.updateProjectLayer(
-                 projectLayer.copy(overviewsLocation = None),
-                 projectLayer.id)).tupled
+              (
+                L.liftIO(removeLayerOverview(projectLayerId, locUrl)),
+                ProjectLayerDao.updateProjectLayer(
+                  projectLayer.copy(overviewsLocation = None),
+                  projectLayer.id
+                )
+              ).tupled
             case _ => 0.pure[ConnectionIO]
           }
         } yield {
           if (!layerDatasources.isEmpty) {
             logger
               .info(
-                s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+                s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId"
+              )
             kickoffLayerOverviewCreate(projectId, projectLayerId)
           }
           rowsDeleted
@@ -430,8 +463,9 @@ object ProjectDao
   // throwing the exception is also safe, since the foreign key from project owners to users requires
   // that every project's owner is a key in the resulting list of users
   @SuppressWarnings(Array("TraversableHead"))
-  def projectsToProjectsWithRelated(projectsPage: PaginatedResponse[Project])
-    : ConnectionIO[PaginatedResponse[Project.WithUser]] =
+  def projectsToProjectsWithRelated(
+      projectsPage: PaginatedResponse[Project]
+  ): ConnectionIO[PaginatedResponse[Project.WithUser]] =
     projectsPage.results.toList.toNel match {
       case Some(nelProjects) =>
         val usersIO: ConnectionIO[List[User]] =
@@ -449,7 +483,8 @@ object ProjectDao
                     .getOrElse(
                       project.owner,
                       throw new Exception(
-                        "Somehow, a user id was lost to the aether")
+                        "Somehow, a user id was lost to the aether"
+                      )
                     )
                     .head
                     .withScrubbedName
@@ -464,39 +499,50 @@ object ProjectDao
           .pure[ConnectionIO]
     }
 
-  def authQuery(user: User,
-                objectType: ObjectType,
-                ownershipTypeO: Option[String] = None,
-                groupTypeO: Option[GroupType] = None,
-                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Project] =
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None
+  ): Dao.QueryBuilder[Project] =
     user.isSuperuser match {
       case true =>
         Dao.QueryBuilder[Project](selectF, tableF, List.empty)
       case false =>
-        Dao.QueryBuilder[Project](selectF,
-                                  tableF,
-                                  List(
-                                    queryObjectsF(user,
-                                                  objectType,
-                                                  ActionType.View,
-                                                  ownershipTypeO,
-                                                  groupTypeO,
-                                                  groupIdO)))
+        Dao.QueryBuilder[Project](
+          selectF,
+          tableF,
+          List(
+            queryObjectsF(
+              user,
+              objectType,
+              ActionType.View,
+              ownershipTypeO,
+              groupTypeO,
+              groupIdO
+            )
+          )
+        )
     }
 
-  def authorized(user: User,
-                 objectType: ObjectType,
-                 objectId: UUID,
-                 actionType: ActionType): ConnectionIO[Boolean] =
+  def authorized(
+      user: User,
+      objectType: ObjectType,
+      objectId: UUID,
+      actionType: ActionType
+  ): ConnectionIO[Boolean] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
       .exists
 
-  def authProjectLayerExist(projectId: UUID,
-                            layerId: UUID,
-                            user: User,
-                            actionType: ActionType): ConnectionIO[Boolean] =
+  def authProjectLayerExist(
+      projectId: UUID,
+      layerId: UUID,
+      user: User,
+      actionType: ActionType
+  ): ConnectionIO[Boolean] =
     for {
       authProject <- authorized(user, ObjectType.Project, projectId, actionType)
       layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
@@ -505,7 +551,8 @@ object ProjectDao
   def removeLayerOverview(projectLayerId: UUID, locUrl: String): IO[Unit] = {
     logger
       .info(
-        s"No scenes left in project layer $projectLayerId with overview location $locUrl")
+        s"No scenes left in project layer $projectLayerId with overview location $locUrl"
+      )
     val jUri = URI.create(locUrl)
     val urlPath = jUri.getPath()
     val bucket = URLDecoder.decode(jUri.getHost(), "UTF-8")
@@ -515,7 +562,8 @@ object ProjectDao
       if (exist) {
         logger
           .info(
-            s"Found overview: $locUrl for layer $projectLayerId, deleting it...")
+            s"Found overview: $locUrl for layer $projectLayerId, deleting it..."
+          )
         IO { s3.deleteObject(bucket, key) } map { _ =>
           logger
             .info(s"Deleted overview: $locUrl for layer $projectLayerId")

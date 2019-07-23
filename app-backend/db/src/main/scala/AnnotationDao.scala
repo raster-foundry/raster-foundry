@@ -53,6 +53,7 @@ object AnnotationDao extends Dao[Annotation] {
               annotation.createdAt,
               annotation.createdBy,
               annotation.modifiedAt,
+              owner.id,
               annotation.label,
               annotation.description,
               annotation.machineGenerated,

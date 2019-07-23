@@ -36,7 +36,6 @@ object AnnotationGroup {
         now,
         user.id,
         now,
-        Some(user.id),
         projectId,
         defaultStyle,
         projectLayerId

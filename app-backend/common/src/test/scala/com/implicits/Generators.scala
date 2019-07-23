@@ -153,7 +153,6 @@ object Generators extends ArbitraryInstances {
         userField,
         timeField,
         userField,
-        userField,
         name,
         description
       )
@@ -560,7 +559,6 @@ object Generators extends ArbitraryInstances {
         id,
         timeField,
         timeField,
-        userField,
         userField,
         userField,
         shape,
@@ -1219,8 +1217,7 @@ object Generators extends ArbitraryInstances {
         taskGridFeatureCreateGen
       }
 
-    implicit def arbTaskPropertiesCreate
-        : Arbitrary[Task.TaskPropertiesCreate] =
+    implicit def arbTaskPropertiesCreate: Arbitrary[Task.TaskPropertiesCreate] =
       Arbitrary {
         taskPropertiesCreateGen
       }

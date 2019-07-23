@@ -18,7 +18,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
     "scenes_to_layers s2l INNER JOIN scenes s ON s2l.scene_id = s.id"
   val selectF = fr"""
       SELECT
-      s.id, s.created_at, s.created_by, s.modified_at, s.modified_by, s.owner,
+      s.id, s.created_at, s.created_by, s.modified_at, s.owner,
           s.visibility, s.tags,
           s.datasource, s.scene_metadata, s.name, s.tile_footprint,
           s.data_footprint, s.metadata_files, s.ingest_location, s.cloud_cover,
@@ -34,19 +34,22 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       | FROM
       | (scenes_to_layers JOIN project_layers ON scenes_to_layers.project_layer_id = project_layers.id) s2lpl
       | JOIN projects ON s2lpl.project_id = projects.id
-      """.trim.stripMargin) ++ Fragments.whereAnd(fr"project_id = ${projectId}") ++ fr"GROUP BY project_layer_id")
+      """.trim.stripMargin
+    ) ++ Fragments.whereAnd(fr"project_id = ${projectId}") ++ fr"GROUP BY project_layer_id")
       .query[(UUID, Int)]
       .to[List]
   }
 
   def listLayerScenesRaw(
       layerId: UUID,
-      splitOptions: SplitOptions): ConnectionIO[List[Scene.ProjectScene]] = {
+      splitOptions: SplitOptions
+  ): ConnectionIO[List[Scene.ProjectScene]] = {
     val sceneParams = CombinedSceneQueryParams(
       sceneParams = SceneQueryParameters(
         minAcquisitionDatetime = Some(splitOptions.rangeStart),
         maxAcquisitionDatetime = Some(splitOptions.rangeEnd)
-      ))
+      )
+    )
     query
       .filter(fr"project_layer_id = ${layerId}")
       .filter(sceneParams)
@@ -93,7 +96,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
             pr.page,
             pr.pageSize,
             projectScenes
-        )
+          )
       )
     }
   }

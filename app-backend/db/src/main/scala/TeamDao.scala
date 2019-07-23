@@ -18,7 +18,7 @@ object TeamDao extends Dao[Team] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, created_by, modified_at, modified_by, organization_id,
+      id, created_at, created_by, modified_at, organization_id,
       name, settings, is_active
     FROM
   """ ++ tableF
@@ -36,7 +36,7 @@ object TeamDao extends Dao[Team] {
       team: Team
   ): ConnectionIO[Team] = {
     (fr"INSERT INTO" ++ tableF ++ fr"""
-      (id, created_at, created_by, modified_at, modified_by, organization_id,
+      (id, created_at, created_by, modified_at, organization_id,
       name, settings, is_active)
     VALUES
       (${team.id}, ${team.createdAt}, ${team.createdBy}, ${team.modifiedAt},
@@ -47,7 +47,6 @@ object TeamDao extends Dao[Team] {
         "created_at",
         "created_by",
         "modified_at",
-        "modified_by",
         "organization_id",
         "name",
         "settings",
@@ -65,7 +64,6 @@ object TeamDao extends Dao[Team] {
       fr"UPDATE" ++ this.tableF ++
         fr"""
       SET modified_at = ${now},
-          modified_by = ${user.id},
           name = ${team.name},
           settings = ${team.settings}
       WHERE id = ${id}"""
@@ -75,7 +73,6 @@ object TeamDao extends Dao[Team] {
         "created_at",
         "created_by",
         "modified_at",
-        "modified_by",
         "organization_id",
         "name",
         "settings",

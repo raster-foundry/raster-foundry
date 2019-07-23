@@ -19,7 +19,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     fr"""
       SELECT
         id, created_at, created_by,
-        modified_at, modified_by, is_active,
+        modified_at, is_active,
         user_id, group_type, group_id, group_role, membership_status
       FROM
     """ ++ tableF
@@ -27,7 +27,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   def createF(ugr: UserGroupRole) =
     fr"INSERT INTO" ++ tableF ++ fr"""(
         id, created_at, created_by,
-        modified_at, modified_by, is_active,
+        modified_at, is_active,
         user_id, group_type, group_id, group_role, membership_status
       ) VALUES (
           ${ugr.id}, ${ugr.createdAt}, ${ugr.createdBy},
@@ -41,7 +41,6 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   def updateF(ugr: UserGroupRole, id: UUID, user: User) =
     fr"UPDATE" ++ tableF ++ fr"""SET
           modified_at = NOW(),
-          modified_by = ${user.id},
           is_active = ${ugr.isActive},
           group_role = ${ugr.groupRole}
           where id = ${id}
@@ -72,7 +71,6 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       "created_at",
       "created_by",
       "modified_at",
-      "modified_by",
       "is_active",
       "user_id",
       "group_type",
@@ -352,7 +350,6 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     (fr"UPDATE" ++ tableF ++ fr""" SET
           is_active = false,
           modified_at = NOW(),
-          modified_by = ${user.id}
             WHERE id = ${id}
         """).update.run
   }
@@ -363,7 +360,6 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   ): ConnectionIO[List[UserGroupRole]] = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
         modified_at = NOW(),
-        modified_by = ${user.id},
         is_active = false
         """ ++ Fragments.whereAnd(
       fr"user_id = ${ugr.userId}",
@@ -376,7 +372,6 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         "created_at",
         "created_by",
         "modified_at",
-        "modified_by",
         "is_active",
         "user_id",
         "group_type",
