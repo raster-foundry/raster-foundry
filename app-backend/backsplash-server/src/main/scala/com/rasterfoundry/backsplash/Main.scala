@@ -48,7 +48,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     case _                  => "http://localhost:8081"
   }
 
-  override protected implicit def contextShift: ContextShift[IO] =
+  override protected implicit val contextShift: ContextShift[IO] =
     IO.contextShift(
       ExecutionContext.fromExecutor(
         Executors.newFixedThreadPool(
@@ -177,9 +177,9 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
   )
 
-  // jitter the request limit by +/- 500
+  // jitter the request limit by +/- 1500
   val requestLimitJitter =
-    scala.util.Random.nextInt % 500
+    scala.util.Random.nextInt % 1500
 
   def router =
     errorHandling {

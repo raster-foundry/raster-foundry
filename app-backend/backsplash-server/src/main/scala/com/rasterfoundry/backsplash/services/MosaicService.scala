@@ -5,11 +5,10 @@ import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.common.utils.TileUtils
 import com.rasterfoundry.database.ProjectLayerDao
-
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
-import com.azavea.maml.eval.BufferingInterpreter
+import com.azavea.maml.eval.ConcurrentInterpreter
 import com.azavea.maml.ast.{GeomLit, Masking, RasterVar}
 import doobie.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
@@ -24,7 +23,6 @@ import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 import doobie.util.transactor.Transactor
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
-
 import java.util.UUID
 
 class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
@@ -63,7 +61,7 @@ class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
                 layers.read(layerId, Some(polygonBbox), bandOverride, None)
               LayerTms(IO.pure(expression),
                        IO.pure(Map("mosaic" -> param)),
-                       BufferingInterpreter.DEFAULT)
+                       ConcurrentInterpreter.DEFAULT[IO])
             case _ =>
               LayerTms.identity(
                 layers.read(layerId, Some(polygonBbox), bandOverride, None)

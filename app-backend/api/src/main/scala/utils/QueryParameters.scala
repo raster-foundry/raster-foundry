@@ -114,7 +114,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
           'quality.as[String].?,
           'annotationGroup.as[UUID].?,
           'bbox.as[String].*,
-          'withOwnerInfo.as[Boolean].?
+          'withOwnerInfo.as[Boolean].?,
+          'taskId.as[UUID].?
         )
       )).as(AnnotationQueryParameters.apply _)
 
@@ -167,7 +168,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     parameters(
       'status.as[TaskStatus].?,
       'locked.as[Boolean].?,
-      'lockedBy.as[TaskStatus].?,
+      'lockedBy.as[String].?,
       'bbox.as[String].*,
       'actionUser.as[String].?,
       'actionType.as[TaskStatus].?,
@@ -176,4 +177,11 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionMinCount.as[Int].?,
       'actionMaxCount.as[Int].?
     ).as(TaskQueryParameters.apply _)
+
+  def userTaskActivityParameters =
+    parameters(
+      'actionStartTime.as(deserializerTimestamp).?,
+      'actionEndTime.as(deserializerTimestamp).?,
+      'actionUser.as[String].?
+    ).as(UserTaskActivityParameters.apply _)
 }

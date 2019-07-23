@@ -19,6 +19,17 @@ logger = logging.getLogger(__name__)
 
 
 def create_cog(image_locations, scene, same_path=False):
+    """
+    Args:
+      image_locations (List[(uri, filename)]): Used to fetch source imagery for the scene for processing
+      scene (Scene): Scene to create COG from
+      same_path (boolean): Output to the same path that it was downloaded from
+
+    Returns:
+      Scene: The mutated scene. Must call update() on it to be reflected on the API
+    Raises:
+      Exception: Any exceptions here are unrecoverable.
+    """
     with get_tempdir() as local_dir:
         dsts = [os.path.join(local_dir, fname) for _, fname in image_locations]
         cog.fetch_imagery(image_locations, local_dir)
@@ -34,8 +45,8 @@ def create_cog(image_locations, scene, same_path=False):
             )
         else:
             updated_scene = upload_tif(cog_path, scene)
-        updated_scene.update()
         os.remove(cog_path)
+        return updated_scene
 
 
 def upload_tif(tif_path, scene, key='', ingest_location=''):
@@ -50,7 +61,6 @@ def upload_tif(tif_path, scene, key='', ingest_location=''):
     logger.info('Tif uploaded successfully')
     scene.ingestLocation = s3uri if len(ingest_location) == 0 else ingestUri
     scene.sceneType = 'COG'
-    scene.ingestStatus = 'INGESTED'
     return scene
 
 

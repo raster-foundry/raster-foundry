@@ -139,7 +139,7 @@ object Task {
           (
             tfc._type,
             tfc.features
-          )
+        )
       )
 
     implicit val decTaskFeatureCollection: Decoder[TaskFeatureCollection] =
@@ -156,12 +156,12 @@ object Task {
 
   object TaskFeatureCollectionCreate {
     implicit val decTaskFeatureCollectionCreate
-        : Decoder[TaskFeatureCollectionCreate] =
+      : Decoder[TaskFeatureCollectionCreate] =
       Decoder.forProduct2("type", "features")(
         TaskFeatureCollectionCreate.apply _
       )
     implicit val encTaskFeatureCollectionCreate
-        : Encoder[TaskFeatureCollectionCreate] =
+      : Encoder[TaskFeatureCollectionCreate] =
       Encoder.forProduct2("type", "features")(
         tfc => (tfc._type, tfc.features)
       )
@@ -174,10 +174,10 @@ object Task {
 
   object TaskGridCreateProperties {
     implicit val encTaskGridCreateProperties
-        : Encoder[TaskGridCreateProperties] =
+      : Encoder[TaskGridCreateProperties] =
       deriveEncoder
     implicit val decTaskGridCreateProperties
-        : Decoder[TaskGridCreateProperties] =
+      : Decoder[TaskGridCreateProperties] =
       deriveDecoder
   }
 
@@ -197,4 +197,19 @@ object Task {
         tfc => (tfc.properties, tfc.geometry, tfc._type)
       )
   }
+}
+
+final case class TaskUserSummary(
+    userId: String,
+    name: String,
+    profileImageUri: String,
+    labeledTaskCount: Int,
+    labeledTaskAvgTimeSecond: Float,
+    validatedTaskCount: Int,
+    validatedTaskAvgTimeSecond: Float
+)
+
+object TaskUserSummary {
+  implicit val taskUserSummaryEncoder: Encoder[TaskUserSummary] =
+    deriveEncoder[TaskUserSummary]
 }

@@ -32,7 +32,7 @@ trait ExportableInstances extends LazyLogging {
           val eval =
             LayerTms.apply(IO.pure(self.source.ast),
                            IO.pure(self.source.params),
-                           BufferingInterpreter.DEFAULT)
+                           ConcurrentInterpreter.DEFAULT[IO])
 
           def next() = {
             val (x, y) = allTiles.head
