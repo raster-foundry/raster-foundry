@@ -20,8 +20,8 @@ import io.circe.syntax._
 import java.util.UUID
 
 final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
-    implicit xa: Transactor[IO])
-    extends RollbarNotifier
+    implicit xa: Transactor[IO]
+) extends RollbarNotifier
     with Config {
   val name = CreateExportDef.name
 
@@ -29,15 +29,18 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
   def s3Client = S3()
 
   @SuppressWarnings(Array("CatchThrowable"))
-  protected def writeExportDefToS3(exportDef: Json,
-                                   bucket: String,
-                                   key: String): Unit = {
+  protected def writeExportDefToS3(
+      exportDef: Json,
+      bucket: String,
+      key: String
+  ): Unit = {
     val id = {
       val cursor = exportDef.hcursor
       cursor.downField("id").as[String]
     }
     logger.info(
-      s"Uploading export definition ${id.toString} to S3 at s3://${bucket}/${key}")
+      s"Uploading export definition ${id.toString} to S3 at s3://${bucket}/${key}"
+    )
 
     try {
       s3Client.putObjectString(bucket, key, exportDef.noSpaces)
@@ -45,7 +48,8 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
     } catch {
       case e: Throwable => {
         logger.error(
-          s"Failed to put export definition ${id} => ${bucket}/${key}")
+          s"Failed to put export definition ${id} => ${bucket}/${key}"
+        )
         throw e
       }
     }
@@ -60,7 +64,7 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
         exportStatus = ExportStatus.Exporting,
         exportOptions = exportDef.asJson
       )
-      x <- ExportDao.update(updatedExport, exportId, user)
+      x <- ExportDao.update(updatedExport, exportId)
     } yield {
       logger.info(s"Writing export definition to s3")
       writeExportDefToS3(exportDef, bucket, key)
@@ -85,7 +89,8 @@ object CreateExportDef extends Job with RollbarNotifier {
             CreateExportDef(UUID.fromString(exportId), bucket, key)
           case _ =>
             throw new IllegalArgumentException(
-              "Argument could not be parsed to UUID and URI")
+              "Argument could not be parsed to UUID and URI"
+            )
         }
 
         IO { job.run() } handleErrorWith { (error: Throwable) =>

@@ -108,7 +108,7 @@ object MapTokenDao extends Dao[MapToken] {
     } yield { mapTokens }
   }
 
-  def update(mapToken: MapToken, id: UUID, user: User): ConnectionIO[Int] = {
+  def update(mapToken: MapToken, id: UUID): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${id}"
 

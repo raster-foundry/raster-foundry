@@ -79,7 +79,7 @@ object ImageDao extends Dao[Image] {
   }
 
   //update images
-  def updateImage(image: Image, id: UUID, user: User): ConnectionIO[Int] = {
+  def updateImage(image: Image, id: UUID): ConnectionIO[Int] = {
     val now = new Timestamp(new java.util.Date().getTime)
     val updateQuery: Fragment =
       fr"UPDATE" ++ this.tableF ++ fr"SET" ++

@@ -91,8 +91,7 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
 
   def updateShape(
       updatedShape: Shape.GeoJSON,
-      id: UUID,
-      user: User
+      id: UUID
   ): ConnectionIO[Int] = {
     val updateTime = new Timestamp(new java.util.Date().getTime())
     val shape = updatedShape.toShape

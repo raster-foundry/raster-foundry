@@ -43,7 +43,8 @@ final case class UpdateExportStatus(
         notifyExportOwner("EXPORTED")
       case _ =>
         logger.info(
-          s"Export ${exportId} has not yet completed: ${exportStatus}")
+          s"Export ${exportId} has not yet completed: ${exportStatus}"
+        )
     }
   }
 
@@ -70,32 +71,38 @@ final case class UpdateExportStatus(
       case (Some(projectId), None) =>
         val project =
           ProjectDao.query.filter(projectId).select.transact(xa).unsafeRunSync
-        sendExportNotification(status,
-                               user,
-                               platform,
-                               Some(project.name),
-                               project.id,
-                               "project")
+        sendExportNotification(
+          status,
+          user,
+          platform,
+          Some(project.name),
+          project.id,
+          "project"
+        )
       case (None, Some(analysisId)) =>
         val analysis =
           ToolRunDao.query.filter(analysisId).select.transact(xa).unsafeRunSync
-        sendExportNotification(status,
-                               user,
-                               platform,
-                               analysis.name,
-                               analysis.id,
-                               "analysis")
+        sendExportNotification(
+          status,
+          user,
+          platform,
+          analysis.name,
+          analysis.id,
+          "analysis"
+        )
       case _ =>
         logger.warn(s"No project or analysis found for export ${exportId}")
     }
   }
 
-  def exportEmailContent(status: String,
-                         user: User,
-                         platform: Platform,
-                         nameO: Option[String],
-                         id: UUID,
-                         exportType: String): (String, String, String) = {
+  def exportEmailContent(
+      status: String,
+      user: User,
+      platform: Platform,
+      nameO: Option[String],
+      id: UUID,
+      exportType: String
+  ): (String, String, String) = {
     val platformHost =
       platform.publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
     val (subject, content): (String, String) = status match {
@@ -107,11 +114,15 @@ final case class UpdateExportStatus(
     val targetName: String = nameO.getOrElse(id.toString)
     val (targetLink, listLink): (String, String) = exportType match {
       case eType: String if eType == "project" =>
-        (s"https://${platformHost}/projects/edit/${id}/exports",
-         s"https://${platformHost}/projects/list")
+        (
+          s"https://${platformHost}/projects/edit/${id}/exports",
+          s"https://${platformHost}/projects/list"
+        )
       case eType: String if eType == "analysis" =>
-        (s"https://${platformHost}/lab/analysis/${id}",
-         s"https://${platformHost}/lab/browse/analyses")
+        (
+          s"https://${platformHost}/lab/analysis/${id}",
+          s"https://${platformHost}/lab/browse/analyses"
+        )
     }
 
     (
@@ -136,12 +147,14 @@ final case class UpdateExportStatus(
     )
   }
 
-  def sendExportNotification(status: String,
-                             user: User,
-                             platform: Platform,
-                             name: Option[String],
-                             id: UUID,
-                             exportType: String) = {
+  def sendExportNotification(
+      status: String,
+      user: User,
+      platform: Platform,
+      name: Option[String],
+      id: UUID,
+      exportType: String
+  ) = {
     val email = new NotificationEmail
 
     (user.getEmail, platform.publicSettings.emailExportNotification) match {
@@ -150,27 +163,34 @@ final case class UpdateExportStatus(
       case ("", false) =>
         logger.warn(
           email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email
-            .platformNotSubscribedWarning(platform.id.toString()))
+            .platformNotSubscribedWarning(platform.id.toString())
+        )
       case (emailAddress, true) =>
         val (pub, pri) = (platform.publicSettings, platform.privateSettings)
-        (pub.emailSmtpHost,
-         pub.emailSmtpPort,
-         pub.emailSmtpEncryption,
-         pub.emailSmtpUserName,
-         pri.emailPassword,
-         emailAddress) match {
-          case (host: String,
-                port: Int,
-                encryption: String,
-                platSmtpUserName: String,
-                pw: String,
-                userEmail: String)
-              if email.isValidEmailSettings(host,
-                                            port,
-                                            encryption,
-                                            platSmtpUserName,
-                                            pw,
-                                            userEmail) =>
+        (
+          pub.emailSmtpHost,
+          pub.emailSmtpPort,
+          pub.emailSmtpEncryption,
+          pub.emailSmtpUserName,
+          pri.emailPassword,
+          emailAddress
+        ) match {
+          case (
+              host: String,
+              port: Int,
+              encryption: String,
+              platSmtpUserName: String,
+              pw: String,
+              userEmail: String
+              )
+              if email.isValidEmailSettings(
+                host,
+                port,
+                encryption,
+                platSmtpUserName,
+                pw,
+                userEmail
+              ) =>
             val (subject, html, plain) =
               exportEmailContent(status, user, platform, name, id, exportType)
             email
@@ -181,13 +201,14 @@ final case class UpdateExportStatus(
                 html,
                 plain,
                 pub.emailFrom,
-                pub.emailFromDisplayName)
+                pub.emailFromDisplayName
+              )
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified owner ${user.id} about export ${exportId}.")
           case _ =>
             logger.warn(
-              email.insufficientSettingsWarning(platform.id.toString(),
-                                                user.id))
+              email.insufficientSettingsWarning(platform.id.toString(), user.id)
+            )
         }
       case (_, false) =>
         logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
@@ -204,7 +225,7 @@ final case class UpdateExportStatus(
       _ <- logger
         .info(s"Setting export status to ${copied.exportStatus}")
         .pure[ConnectionIO]
-      _ <- ExportDao.update(copied, exportId, user)
+      _ <- ExportDao.update(copied, exportId)
     } yield {
       logger.info("Successfully updated export status")
     }
@@ -221,7 +242,8 @@ object UpdateExportStatus extends Job {
         val job = args match {
           case List(exportId, exportStatus) =>
             logger.info(
-              s"Updating export ${exportId} of status ${exportStatus}...")
+              s"Updating export ${exportId} of status ${exportStatus}..."
+            )
             UpdateExportStatus(
               UUID.fromString(exportId),
               ExportStatus.fromString(exportStatus)

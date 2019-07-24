@@ -81,7 +81,8 @@ trait ProjectAnnotationRoutes
             .unsafeToFuture
             .map { annotations: List[Annotation] =>
               fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](
-                annotations)
+                annotations
+              )
             }
         ) { createdAnnotation =>
           complete((StatusCodes.Created, createdAnnotation))
@@ -102,7 +103,8 @@ trait ProjectAnnotationRoutes
           AnnotationDao
             .listForProjectExport(projectId, annotationExportQP)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           case annotations @ (_: List[Annotation]) => {
             complete(
               AnnotationShapefileService
@@ -112,7 +114,9 @@ trait ProjectAnnotationRoutes
           case _ =>
             complete(
               throw new Exception(
-                "Annotations do not exist or are not accessible by this user"))
+                "Annotations do not exist or are not accessible by this user"
+              )
+            )
         }
       }
     }
@@ -150,10 +154,12 @@ trait ProjectAnnotationRoutes
       } {
         entity(as[Annotation.GeoJSON]) {
           updatedAnnotation: Annotation.GeoJSON =>
-            onSuccess(AnnotationDao
-              .updateAnnotation(projectId, updatedAnnotation.toAnnotation, user)
-              .transact(xa)
-              .unsafeToFuture) { count =>
+            onSuccess(
+              AnnotationDao
+                .updateAnnotation(projectId, updatedAnnotation.toAnnotation)
+                .transact(xa)
+                .unsafeToFuture
+            ) { count =>
               completeSingleOrNotFound(count)
             }
         }
@@ -172,7 +178,8 @@ trait ProjectAnnotationRoutes
           AnnotationDao
             .deleteById(projectId, annotationId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSingleOrNotFound
         }
       }
@@ -189,7 +196,8 @@ trait ProjectAnnotationRoutes
         AnnotationDao
           .deleteByProjectLayer(projectId)
           .transact(xa)
-          .unsafeToFuture) {
+          .unsafeToFuture
+      ) {
         completeSomeOrNotFound
       }
     }
@@ -246,22 +254,23 @@ trait ProjectAnnotationRoutes
       }
   }
 
-  def getAnnotationGroupSummary(projectId: UUID,
-                                annotationGroupId: UUID): Route = authenticate {
-    user =>
-      authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+  def getAnnotationGroupSummary(
+      projectId: UUID,
+      annotationGroupId: UUID
+  ): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao
+        .authorized(user, ObjectType.Project, projectId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      complete {
+        AnnotationGroupDao
+          .getAnnotationGroupSummary(projectId, annotationGroupId)
           .transact(xa)
           .unsafeToFuture
-      } {
-        complete {
-          AnnotationGroupDao
-            .getAnnotationGroupSummary(projectId, annotationGroupId)
-            .transact(xa)
-            .unsafeToFuture
-        }
       }
+    }
   }
 
   def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
@@ -275,7 +284,7 @@ trait ProjectAnnotationRoutes
         entity(as[AnnotationGroup]) { annotationGroup =>
           complete {
             AnnotationGroupDao
-              .updateAnnotationGroup(projectId, annotationGroup, agId, user)
+              .updateAnnotationGroup(projectId, annotationGroup, agId)
               .transact(xa)
               .unsafeToFuture
           }

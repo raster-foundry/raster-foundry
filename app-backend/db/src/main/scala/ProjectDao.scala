@@ -179,8 +179,7 @@ object ProjectDao
 
   def updateProject(
       project: Project,
-      id: UUID,
-      user: User
+      id: UUID
   ): ConnectionIO[Int] = {
     for {
       // User must have access to the project by the time they get here, so it exists

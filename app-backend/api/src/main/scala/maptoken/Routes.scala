@@ -59,23 +59,19 @@ trait MapTokenRoutes
         val authIO = (newMapToken.project, newMapToken.toolRun) match {
           case (None, None) => false.pure[ConnectionIO]
           case (Some(projectId), None) =>
-            ProjectDao.authorized(user,
-                                  ObjectType.Project,
-                                  projectId,
-                                  ActionType.Edit)
+            ProjectDao
+              .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           case (None, Some(toolRunId)) =>
-            ToolRunDao.authorized(user,
-                                  ObjectType.Analysis,
-                                  toolRunId,
-                                  ActionType.Edit)
+            ToolRunDao
+              .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
           case _ => false.pure[ConnectionIO]
         }
         authIO.transact(xa).unsafeToFuture
       } {
         onSuccess(
-          MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture) {
-          mapToken =>
-            complete((StatusCodes.Created, mapToken))
+          MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture
+        ) { mapToken =>
+          complete((StatusCodes.Created, mapToken))
         }
       }
     }
@@ -112,9 +108,10 @@ trait MapTokenRoutes
       entity(as[MapToken]) { updatedMapToken =>
         onSuccess(
           MapTokenDao
-            .update(updatedMapToken, mapTokenId, user)
+            .update(updatedMapToken, mapTokenId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSingleOrNotFound
         }
       }
@@ -133,7 +130,8 @@ trait MapTokenRoutes
           .filter(mapTokenId)
           .delete
           .transact(xa)
-          .unsafeToFuture) {
+          .unsafeToFuture
+      ) {
         completeSingleOrNotFound
       }
     }

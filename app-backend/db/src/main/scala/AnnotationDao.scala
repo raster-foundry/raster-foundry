@@ -164,8 +164,7 @@ object AnnotationDao extends Dao[Annotation] {
                 ProjectDao
                   .updateProject(
                     project.copy(defaultAnnotationGroup = Some(defaultId)),
-                    project.id,
-                    user
+                    project.id
                   )
                   .map(_ => defaultId)
             )

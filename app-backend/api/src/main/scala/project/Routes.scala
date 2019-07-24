@@ -589,7 +589,7 @@ trait ProjectRoutes
       entity(as[Project]) { updatedProject =>
         onSuccess(
           ProjectDao
-            .updateProject(updatedProject, projectId, user)
+            .updateProject(updatedProject, projectId)
             .transact(xa)
             .unsafeToFuture) {
           completeSingleOrNotFound

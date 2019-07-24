@@ -59,7 +59,7 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
     )
   }
 
-  def update(tool: Tool, id: UUID, user: User): ConnectionIO[Int] = {
+  def update(tool: Tool, id: UUID): ConnectionIO[Int] = {
     val updateTime = new Timestamp(new java.util.Date().getTime())
     val idFilter = fr"id = ${id}"
     (sql"""
