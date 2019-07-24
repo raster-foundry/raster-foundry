@@ -57,7 +57,6 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
 
   def run(): Unit = {
     val exportDefinitionWrite: ConnectionIO[Unit] = for {
-      user <- UserDao.unsafeGetUserById(systemUser)
       export <- ExportDao.query.filter(exportId).select
       exportDef <- ExportDao.getExportDefinition(export)
       updatedExport = export.copy(

@@ -217,8 +217,6 @@ final case class UpdateExportStatus(
 
   def updateExportStatus: ConnectionIO[Unit] =
     for {
-      _ <- logger.info(s"Getting user with id: $systemUser").pure[ConnectionIO]
-      user <- UserDao.unsafeGetUserById(systemUser)
       _ <- logger.info(s"Getting export with id: $exportId").pure[ConnectionIO]
       export <- ExportDao.unsafeGetExportById(exportId)
       copied = export.copy(exportStatus = this.exportStatus)
