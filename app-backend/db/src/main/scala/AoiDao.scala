@@ -52,7 +52,7 @@ object AoiDao extends Dao[AOI] {
         approval_required, start_time, project_id)
       VALUES
         (${aoi.id}, NOW(), NOW(),
-        ${user.id}, ${user.id}, ${ownerId}, ${aoi.shape}, ${aoi.filters}, ${aoi.isActive},
+        ${user.id}, ${ownerId}, ${aoi.shape}, ${aoi.filters}, ${aoi.isActive},
         ${aoi.approvalRequired}, ${aoi.startTime}, ${aoi.projectId})
     """).update.withUniqueGeneratedKeys[AOI](
       "id",
@@ -63,8 +63,8 @@ object AoiDao extends Dao[AOI] {
       "shape",
       "filters",
       "is_active",
-      "start_time",
       "approval_required",
+      "start_time",
       "project_id"
     )
     aoiCreate
