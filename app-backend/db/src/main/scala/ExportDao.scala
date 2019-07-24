@@ -46,7 +46,7 @@ object ExportDao extends Dao[Export] {
         project_id, export_status, export_type,
         visibility, toolrun_id, export_options, project_layer_id
       ) VALUES (
-        ${UUID.randomUUID}, NOW(), ${user.id}, NOW(), ${user.id}, ${ownerId},
+        ${UUID.randomUUID}, NOW(), ${user.id}, NOW(), ${ownerId},
         ${export.projectId}, ${export.exportStatus}, ${export.exportType},
         ${export.visibility}, ${export.toolRunId}, ${export.exportOptions},
         ${export.projectLayerId}

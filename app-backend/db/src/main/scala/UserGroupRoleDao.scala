@@ -195,7 +195,9 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   ): ConnectionIO[List[UserGroupRole.WithRelated]] = {
     fr"""
     SELECT
-    ugr.*,
+      ugr.id, ugr.created_at, ugr.created_by, ugr.modified_at,
+      ugr.is_active, ugr.user_id, ugr.group_type, ugr.group_id,
+      ugr.group_rol, ugr.membership_status
     CASE WHEN ugr.group_type = 'PLATFORM' THEN p.name
          WHEN ugr.group_type = 'ORGANIZATION' THEN o.name
          WHEN ugr.group_type = 'TEAM' THEN t.name
