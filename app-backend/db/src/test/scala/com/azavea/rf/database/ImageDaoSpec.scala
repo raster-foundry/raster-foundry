@@ -82,11 +82,11 @@ class ImageDaoSpec
               ImageDao.insertImage(
                 fixupImageBanded(dbUser.id, swr.id, imageBanded),
                 dbUser
-              ) map { (_, dbUser) }
+              )
             }
           }
           val imageUpdateWithUpdatedImageIO = imageInsertIO flatMap {
-            case (imageO: Option[Image.WithRelated], dbUser: User) => {
+            case imageO: Option[Image.WithRelated] => {
               val inserted = imageO.get
               val imageId = inserted.id
               val sceneId = inserted.scene
