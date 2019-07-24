@@ -7,7 +7,7 @@ import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.database.{ExportDao, UserDao}
+import com.rasterfoundry.database.{ExportDao}
 import com.rasterfoundry.datamodel._
 
 import cats.effect.IO
