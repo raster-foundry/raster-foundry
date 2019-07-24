@@ -25,7 +25,8 @@ class OrganizationDaoSpec
             newOrg <- OrganizationDao.create(
               orgCreate
                 .copy(platformId = insertedPlatform.id)
-                .toOrganization(true))
+                .toOrganization(true)
+            )
           } yield (newOrg, insertedPlatform)
           val (insertedOrg, insertedPlatform) =
             orgInsertIO.transact(xa).unsafeRunSync
@@ -45,7 +46,8 @@ class OrganizationDaoSpec
           val retrievedNameIO = for {
             dbPlatform <- PlatformDao.create(platform)
             dbOrg <- OrganizationDao.createOrganization(
-              orgCreate.copy(platformId = dbPlatform.id))
+              orgCreate.copy(platformId = dbPlatform.id)
+            )
             fetched <- OrganizationDao.getOrganizationById(dbOrg.id)
           } yield { fetched map { _.name } }
 
@@ -59,14 +61,17 @@ class OrganizationDaoSpec
   test("update an organization") {
     check {
       forAll(
-        (orgCreate: Organization.Create,
-         newName: String,
-         platform: Platform) => {
+        (
+            orgCreate: Organization.Create,
+            newName: String,
+            platform: Platform
+        ) => {
           val withoutNull = newName.filter(_ != '\u0000').mkString
           val insertAndUpdateIO = for {
             dbPlatform <- PlatformDao.create(platform)
             dbOrg <- OrganizationDao.createOrganization(
-              orgCreate.copy(platformId = dbPlatform.id))
+              orgCreate.copy(platformId = dbPlatform.id)
+            )
             affectedRows <- OrganizationDao
               .update(dbOrg.copy(name = withoutNull), dbOrg.id)
             fetched <- OrganizationDao.unsafeGetOrganizationById(dbOrg.id)
@@ -88,27 +93,32 @@ class OrganizationDaoSpec
   test("list authorized organizations") {
     check {
       forAll(
-        (uc1: User.Create,
-         uc2: User.Create,
-         uc3: User.Create,
-         pc1: Platform,
-         pc2: Platform,
-         org1: Organization.Create,
-         org2: Organization.Create,
-         org3: Organization.Create) => {
+        (
+            uc1: User.Create,
+            uc2: User.Create,
+            uc3: User.Create,
+            pc1: Platform,
+            pc2: Platform,
+            org1: Organization.Create,
+            org2: Organization.Create,
+            org3: Organization.Create
+        ) => {
           val defaultUser = uc1.toUser.copy(id = "default")
           val orgsIO = for {
             p1 <- PlatformDao.create(pc1)
             p2 <- PlatformDao.create(pc2)
             org1 <- OrganizationDao.createOrganization(
-              org1.copy(platformId = p1.id,
-                        visibility = Some(Visibility.Private)))
+              org1
+                .copy(platformId = p1.id, visibility = Some(Visibility.Private))
+            )
             org2 <- OrganizationDao.createOrganization(
-              org2.copy(platformId = p1.id,
-                        visibility = Some(Visibility.Public)))
+              org2
+                .copy(platformId = p1.id, visibility = Some(Visibility.Public))
+            )
             org3 <- OrganizationDao.createOrganization(
-              org3.copy(platformId = p2.id,
-                        visibility = Some(Visibility.Public)))
+              org3
+                .copy(platformId = p2.id, visibility = Some(Visibility.Public))
+            )
             u1 <- UserDao.create(uc1)
             u2 <- UserDao.create(uc2)
             u3 <- UserDao.create(uc3)
@@ -119,10 +129,12 @@ class OrganizationDaoSpec
             )
             _ <- UserGroupRoleDao.create(
               UserGroupRole
-                .Create(u1.id,
-                        GroupType.Organization,
-                        org1.id,
-                        GroupRole.Member)
+                .Create(
+                  u1.id,
+                  GroupType.Organization,
+                  org1.id,
+                  GroupRole.Member
+                )
                 .toUserGroupRole(defaultUser, MembershipStatus.Approved)
             )
             u2platugr <- UserGroupRoleDao.create(
@@ -132,10 +144,12 @@ class OrganizationDaoSpec
             )
             _ <- UserGroupRoleDao.create(
               UserGroupRole
-                .Create(u2.id,
-                        GroupType.Organization,
-                        org2.id,
-                        GroupRole.Member)
+                .Create(
+                  u2.id,
+                  GroupType.Organization,
+                  org2.id,
+                  GroupRole.Member
+                )
                 .toUserGroupRole(defaultUser, MembershipStatus.Approved)
             )
             _ <- UserGroupRoleDao.create(
@@ -145,37 +159,41 @@ class OrganizationDaoSpec
             )
             _ <- UserGroupRoleDao.create(
               UserGroupRole
-                .Create(u3.id,
-                        GroupType.Organization,
-                        org3.id,
-                        GroupRole.Member)
+                .Create(
+                  u3.id,
+                  GroupType.Organization,
+                  org3.id,
+                  GroupRole.Member
+                )
                 .toUserGroupRole(defaultUser, MembershipStatus.Approved)
             )
             u1VisibleOrgs <- OrganizationDao.viewFilter(u1).list
             u2VisibleOrgs <- OrganizationDao.viewFilter(u2).list
             u3VisibleOrgs <- OrganizationDao.viewFilter(u3).list
-            _ <- UserGroupRoleDao.update(
-              u2platugr.copy(groupRole = GroupRole.Admin),
-              u2platugr.id,
-              u2)
+            _ <- UserGroupRoleDao
+              .update(u2platugr.copy(groupRole = GroupRole.Admin), u2platugr.id)
             u2AdminVisibleOrgs <- OrganizationDao.viewFilter(u2).list
           } yield {
-            (org1,
-             org2,
-             org3,
-             u1VisibleOrgs,
-             u2VisibleOrgs,
-             u3VisibleOrgs,
-             u2AdminVisibleOrgs)
+            (
+              org1,
+              org2,
+              org3,
+              u1VisibleOrgs,
+              u2VisibleOrgs,
+              u3VisibleOrgs,
+              u2AdminVisibleOrgs
+            )
           }
 
-          val (hiddenOrg,
-               visibleOrg,
-               otherPlatformOrg,
-               u1orgs,
-               u2orgs,
-               u3orgs,
-               u2orgsAdmin) = orgsIO.transact(xa).unsafeRunSync
+          val (
+            hiddenOrg,
+            visibleOrg,
+            otherPlatformOrg,
+            u1orgs,
+            u2orgs,
+            u3orgs,
+            u2orgsAdmin
+          ) = orgsIO.transact(xa).unsafeRunSync
           val u1orgids = u1orgs.toSet.map { o: Organization =>
             o.id
           }
@@ -188,8 +206,10 @@ class OrganizationDaoSpec
           val u2orgidsAdmin = u2orgsAdmin.toSet.map { o: Organization =>
             o.id
           }
-          assert(u1orgids.contains(hiddenOrg.id),
-                 "; members of private orgs should be able to see it")
+          assert(
+            u1orgids.contains(hiddenOrg.id),
+            "; members of private orgs should be able to see it"
+          )
           assert(
             !u1orgids.contains(otherPlatformOrg.id) &&
               !u2orgids.contains(otherPlatformOrg.id) &&
@@ -202,8 +222,10 @@ class OrganizationDaoSpec
               u3orgids.contains(otherPlatformOrg.id),
             "; members should be able to view public orgs on their own platform"
           )
-          assert(u2orgidsAdmin.contains(hiddenOrg.id),
-                 "; platform admins should be able to see hidden orgs")
+          assert(
+            u2orgidsAdmin.contains(hiddenOrg.id),
+            "; platform admins should be able to see hidden orgs"
+          )
           true
         }
       )
@@ -213,24 +235,30 @@ class OrganizationDaoSpec
   test("add a user role") {
     check {
       forAll {
-        (platform: Platform,
-         userCreate: User.Create,
-         orgCreate: Organization.Create,
-         userRole: GroupRole) =>
+        (
+            platform: Platform,
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            userRole: GroupRole
+        ) =>
           {
             val addPlatformRoleWithPlatformIO = for {
-              (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
-                                                          orgCreate,
-                                                          platform,
-                                                          false)
+              (dbUser, dbOrg, _) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform,
+                false
+              )
               insertedUserGroupRole <- OrganizationDao.addUserRole(
                 dbOrg.platformId,
                 dbUser,
                 dbUser.id,
                 dbOrg.id,
-                userRole)
+                userRole
+              )
               byIdUserGroupRole <- UserGroupRoleDao.getOption(
-                insertedUserGroupRole.id)
+                insertedUserGroupRole.id
+              )
             } yield { (dbOrg, byIdUserGroupRole) }
 
             val (dbOrg, dbUserGroupRole) =
@@ -272,20 +300,23 @@ class OrganizationDaoSpec
         ) =>
           {
             val setPlatformRoleIO = for {
-              (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
-                                                          orgCreate,
-                                                          platform,
-                                                          false)
+              (dbUser, dbOrg, _) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform,
+                false
+              )
               originalUserGroupRole <- OrganizationDao.addUserRole(
                 dbOrg.platformId,
                 dbUser,
                 dbUser.id,
                 dbOrg.id,
-                userRole)
+                userRole
+              )
               updatedUserGroupRoles <- OrganizationDao.deactivateUserRoles(
-                dbUser,
                 dbUser.id,
-                dbOrg.id)
+                dbOrg.id
+              )
             } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
             val (dbOldUGR, dbUpdatedUGRs) =
@@ -294,16 +325,20 @@ class OrganizationDaoSpec
             assert(dbUpdatedUGRs.size === 1, "; A single UGR should be updated")
             assert(
               dbUpdatedUGRs.filter((ugr) => ugr.isActive == true).size == 0,
-              "; There should be no active UGRs")
-            assert(dbUpdatedUGRs
-                     .filter((ugr) => ugr.isActive == false)
-                     .size == dbUpdatedUGRs.size,
-                   "; The updated  UGRs should all be deactivated")
+              "; There should be no active UGRs"
+            )
+            assert(
+              dbUpdatedUGRs
+                .filter((ugr) => ugr.isActive == false)
+                .size == dbUpdatedUGRs.size,
+              "; The updated  UGRs should all be deactivated"
+            )
             assert(
               dbUpdatedUGRs
                 .filter((ugr) => ugr.id == dbOldUGR.id && ugr.isActive == false)
                 .size == 1,
-              "; The originally created UGR should be updated to be inactive")
+              "; The originally created UGR should be updated to be inactive"
+            )
             true
           }
       }

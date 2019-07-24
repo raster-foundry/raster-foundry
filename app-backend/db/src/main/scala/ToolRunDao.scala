@@ -73,8 +73,7 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
 
   def updateToolRun(
       updatedRun: ToolRun,
-      id: UUID,
-      user: User
+      id: UUID
   ): ConnectionIO[Int] = {
     val now = new Timestamp(new java.util.Date().getTime())
     val idFilter = fr"id = ${id}"

@@ -89,7 +89,7 @@ object UploadDao extends Dao[Upload] {
       )
     } yield insertedUpload
 
-  def update(upload: Upload, id: UUID, user: User): ConnectionIO[Int] = {
+  def update(upload: Upload, id: UUID): ConnectionIO[Int] = {
     val idFilter = fr"id = ${id}"
     val oldUploadIO = unsafeGetUploadById(id)
     val recordUpdateIO = (sql"""

@@ -67,7 +67,7 @@ object ExportDao extends Dao[Export] {
     )
   }
 
-  def update(export: Export, id: UUID, user: User): ConnectionIO[Int] = {
+  def update(export: Export, id: UUID): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
         export_status = ${export.exportStatus},

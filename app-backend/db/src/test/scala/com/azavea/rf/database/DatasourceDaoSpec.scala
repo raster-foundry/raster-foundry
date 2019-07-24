@@ -18,14 +18,18 @@ class DatasourceDaoSpec
   test("inserting a datasource") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         dsCreate: Datasource.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            dsCreate: Datasource.Create
+        ) => {
           val createDsIO = for {
-            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
-                                                        orgCreate,
-                                                        platform)
+            (userInsert, _, _) <- insertUserOrgPlatform(
+              userCreate,
+              orgCreate,
+              platform
+            )
             dsInsert <- fixupDatasource(dsCreate, userInsert)
           } yield dsInsert
           val createDs = createDsIO.transact(xa).unsafeRunSync
@@ -38,14 +42,18 @@ class DatasourceDaoSpec
   test("getting a datasource by id") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         dsCreate: Datasource.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            dsCreate: Datasource.Create
+        ) => {
           val getDsIO = for {
-            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
-                                                        orgCreate,
-                                                        platform)
+            (userInsert, _, _) <- insertUserOrgPlatform(
+              userCreate,
+              orgCreate,
+              platform
+            )
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsGet <- DatasourceDao.getDatasourceById(dsInsert.id)
           } yield dsGet
@@ -59,14 +67,18 @@ class DatasourceDaoSpec
   test("getting a datasource by id unsafely") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         dsCreate: Datasource.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            dsCreate: Datasource.Create
+        ) => {
           val getDsUnsafeIO = for {
-            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
-                                                        orgCreate,
-                                                        platform)
+            (userInsert, _, _) <- insertUserOrgPlatform(
+              userCreate,
+              orgCreate,
+              platform
+            )
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id)
           } yield dsGetUnsafe
@@ -80,20 +92,23 @@ class DatasourceDaoSpec
   test("updating a datasource") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         dsCreate: Datasource.Create,
-         dsUpdate: Datasource.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            dsCreate: Datasource.Create,
+            dsUpdate: Datasource.Create
+        ) => {
           val updateDsIO = for {
-            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
-                                                        orgCreate,
-                                                        platform)
+            (userInsert, _, _) <- insertUserOrgPlatform(
+              userCreate,
+              orgCreate,
+              platform
+            )
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsUpdated <- fixupDatasource(dsUpdate, userInsert)
-            rowUpdated <- DatasourceDao.updateDatasource(dsUpdated,
-                                                         dsInsert.id,
-                                                         userInsert)
+            rowUpdated <- DatasourceDao
+              .updateDatasource(dsUpdated, dsInsert.id)
           } yield (rowUpdated, dsUpdated)
           val (rowUpdated, dsUpdated) =
             updateDsIO.transact(xa).unsafeRunSync
@@ -112,14 +127,18 @@ class DatasourceDaoSpec
   test("deleting a datasource") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         dsCreate: Datasource.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            dsCreate: Datasource.Create
+        ) => {
           val deleteDsIO = for {
-            (userInsert, _, _) <- insertUserOrgPlatform(userCreate,
-                                                        orgCreate,
-                                                        platform)
+            (userInsert, _, _) <- insertUserOrgPlatform(
+              userCreate,
+              orgCreate,
+              platform
+            )
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id)
           } yield rowDeleted
@@ -138,21 +157,25 @@ class DatasourceDaoSpec
   test("only owner of a datasource can delete a datasource") {
     check {
       forAll(
-        (userCreate: User.Create,
-         ownerCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         dsCreate: Datasource.Create) => {
+        (
+            userCreate: User.Create,
+            ownerCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            dsCreate: Datasource.Create
+        ) => {
           val isDsDeletableIO = for {
-            (ownerInsert, _, _) <- insertUserOrgPlatform(ownerCreate,
-                                                         orgCreate,
-                                                         platform)
+            (ownerInsert, _, _) <- insertUserOrgPlatform(
+              ownerCreate,
+              orgCreate,
+              platform
+            )
             userInsert <- UserDao.create(userCreate)
             dsInsert <- fixupDatasource(dsCreate, ownerInsert)
-            isDeletableUser <- DatasourceDao.isDeletable(dsInsert.id,
-                                                         userInsert)
-            isDeletableOwner <- DatasourceDao.isDeletable(dsInsert.id,
-                                                          ownerInsert)
+            isDeletableUser <- DatasourceDao
+              .isDeletable(dsInsert.id, userInsert)
+            isDeletableOwner <- DatasourceDao
+              .isDeletable(dsInsert.id, ownerInsert)
           } yield { (isDeletableUser, isDeletableOwner) }
 
           val (isDeletableUser, isDeletableOwner) =
@@ -160,9 +183,12 @@ class DatasourceDaoSpec
 
           assert(
             !isDeletableUser,
-            "Non-owner of a datasource should not be able to delete a datasource")
-          assert(isDeletableOwner,
-                 "Owner of a datasource should be able to delete a datasource")
+            "Non-owner of a datasource should not be able to delete a datasource"
+          )
+          assert(
+            isDeletableOwner,
+            "Owner of a datasource should be able to delete a datasource"
+          )
           true
         }
       )
@@ -172,25 +198,32 @@ class DatasourceDaoSpec
   test("isDeletable should return false if a datasource is shared") {
     check {
       forAll(
-        (ownerCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         dsCreate: Datasource.Create) => {
+        (
+            ownerCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            dsCreate: Datasource.Create
+        ) => {
           val isDsDeletableIO = for {
-            (ownerInsert, _, _) <- insertUserOrgPlatform(ownerCreate,
-                                                         orgCreate,
-                                                         platform)
+            (ownerInsert, _, _) <- insertUserOrgPlatform(
+              ownerCreate,
+              orgCreate,
+              platform
+            )
             dsInsert <- fixupDatasource(dsCreate, ownerInsert)
             _ <- DatasourceDao.addPermission(
               dsInsert.id,
-              ObjectAccessControlRule(SubjectType.All, None, ActionType.View))
+              ObjectAccessControlRule(SubjectType.All, None, ActionType.View)
+            )
             isDeletable <- DatasourceDao.isDeletable(dsInsert.id, ownerInsert)
           } yield { isDeletable }
 
           val isDeletable =
             isDsDeletableIO.transact(xa).unsafeRunSync
-          assert(!isDeletable,
-                 "isDeletable should return false if a datasource is shared")
+          assert(
+            !isDeletable,
+            "isDeletable should return false if a datasource is shared"
+          )
           true
         }
       )
@@ -198,25 +231,31 @@ class DatasourceDaoSpec
   }
 
   test(
-    "isDeletable should return false if a datasource has an upload not completed/failed/aborted") {
+    "isDeletable should return false if a datasource has an upload not completed/failed/aborted"
+  ) {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         dsCreate: Datasource.Create,
-         project: Project.Create,
-         upload: Upload.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            dsCreate: Datasource.Create,
+            project: Project.Create,
+            upload: Upload.Create
+        ) => {
           @SuppressWarnings(Array("TraversableHead"))
           val isDsDeletableIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
-                                                                  orgCreate,
-                                                                  platform,
-                                                                  project)
+            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+              userCreate,
+              orgCreate,
+              platform,
+              project
+            )
             datasource <- fixupDatasource(dsCreate, dbUser)
             _ <- UploadDao.insert(
               fixupUploadCreate(dbUser, dbProject, datasource, upload),
-              dbUser)
+              dbUser
+            )
             isDeletable <- DatasourceDao.isDeletable(datasource.id, dbUser)
           } yield { (isDeletable, upload.uploadStatus) }
 
@@ -227,10 +266,12 @@ class DatasourceDaoSpec
             UploadStatus.Uploading,
             UploadStatus.Uploaded,
             UploadStatus.Queued,
-            UploadStatus.Processing).contains(uploadStatus) != isDeletable
+            UploadStatus.Processing
+          ).contains(uploadStatus) != isDeletable
           assert(
             ok,
-            "isDeletable should return false if a datasource has an upload not in completed/failed/aborted")
+            "isDeletable should return false if a datasource has an upload not in completed/failed/aborted"
+          )
           true
         }
       )

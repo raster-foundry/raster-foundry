@@ -49,24 +49,33 @@ class UserDaoSpec
             insertedOrg <- OrganizationDao.create(
               orgCreate
                 .copy(platformId = insertedPlatform.id)
-                .toOrganization(true))
+                .toOrganization(true)
+            )
             (newUser, _) <- {
               val newUserFields =
-                jwtFields.copy(platformId = insertedPlatform.id,
-                               organizationId = insertedOrg.id)
-              UserDao.createUserWithJWT(creatingUser,
-                                        newUserFields,
-                                        GroupRole.Member)
+                jwtFields.copy(
+                  platformId = insertedPlatform.id,
+                  organizationId = insertedOrg.id
+                )
+              UserDao.createUserWithJWT(
+                creatingUser,
+                newUserFields,
+                GroupRole.Member
+              )
             }
             userRoles <- UserGroupRoleDao.listByUser(newUser)
           } yield (newUser, userRoles)
 
           val (insertedUser, insertedUserRoles) =
             insertedUserIO.transact(xa).unsafeRunSync
-          assert(insertedUser.id == jwtFields.id,
-                 "Inserted user should have the same ID as the jwt fields")
-          assert(insertedUserRoles.length == 2,
-                 "Inserted user should have a role for the org and platform")
+          assert(
+            insertedUser.id == jwtFields.id,
+            "Inserted user should have the same ID as the jwt fields"
+          )
+          assert(
+            insertedUserRoles.length == 2,
+            "Inserted user should have a role for the org and platform"
+          )
           true
         }
       )
@@ -92,30 +101,39 @@ class UserDaoSpec
   test("update users by id") {
     check(
       forAll(
-        (user: User.Create,
-         emailNotifications: Boolean,
-         dropboxCredential: Credential,
-         planetCredential: Credential) => {
+        (
+            user: User.Create,
+            emailNotifications: Boolean,
+            dropboxCredential: Credential,
+            planetCredential: Credential
+        ) => {
           val insertedUserIO = for {
             created <- UserDao.create(user)
           } yield (created)
-          val (affectedRows,
-               updatedEmailNotifications,
-               updatedDropboxToken,
-               updatedPlanetToken) = (insertedUserIO flatMap {
+          val (
+            affectedRows,
+            updatedEmailNotifications,
+            updatedDropboxToken,
+            updatedPlanetToken
+          ) = (insertedUserIO flatMap {
             case (insertUser: User) => {
               UserDao.updateUser(
-                insertUser.copy(planetCredential = planetCredential,
-                                dropboxCredential = dropboxCredential,
-                                emailNotifications = emailNotifications),
+                insertUser.copy(
+                  planetCredential = planetCredential,
+                  dropboxCredential = dropboxCredential,
+                  emailNotifications = emailNotifications
+                ),
                 insertUser.id
               ) flatMap {
                 case (affectedRows: Int) => {
                   val updatedPlanetTokenIO = UserDao.unsafeGetUserById(
-                    insertUser.id) map { (usr: User) =>
-                    (usr.emailNotifications,
-                     usr.dropboxCredential,
-                     usr.planetCredential)
+                    insertUser.id
+                  ) map { (usr: User) =>
+                    (
+                      usr.emailNotifications,
+                      usr.dropboxCredential,
+                      usr.planetCredential
+                    )
                   }
                   updatedPlanetTokenIO map {
                     (t: (Boolean, Credential, Credential)) =>
@@ -138,11 +156,13 @@ class UserDaoSpec
   test("Updating your own user fields should only update certain ones") {
     check(
       forAll(
-        (user: User.Create,
-         planetCredential: Credential,
-         isEmail: Boolean,
-         visibility: UserVisibility,
-         email: String) => {
+        (
+            user: User.Create,
+            planetCredential: Credential,
+            isEmail: Boolean,
+            visibility: UserVisibility,
+            email: String
+        ) => {
           val insertedUserIO = for {
             created <- UserDao.create(user)
           } yield (created)
@@ -188,7 +208,8 @@ class UserDaoSpec
               UserDao.storeDropboxAccessToken(insertUser.id, dropboxCredential) flatMap {
                 case (affectedRows: Int) => {
                   val updatedDbxTokenIO = UserDao.unsafeGetUserById(
-                    insertUser.id) map { _.dropboxCredential }
+                    insertUser.id
+                  ) map { _.dropboxCredential }
                   updatedDbxTokenIO map { (affectedRows, _) }
                 }
               }
@@ -204,19 +225,22 @@ class UserDaoSpec
   test("list visibile users") {
     check {
       forAll(
-        (uc1: User.Create,
-         uc2: User.Create,
-         uc3: User.Create,
-         uc4: User.Create,
-         pc1: Platform,
-         pc2: Platform,
-         org1: Organization.Create) => {
+        (
+            uc1: User.Create,
+            uc2: User.Create,
+            uc3: User.Create,
+            uc4: User.Create,
+            pc1: Platform,
+            pc2: Platform,
+            org1: Organization.Create
+        ) => {
           val defaultUser = uc1.toUser.copy(id = "default")
           val orgsIO = for {
             p1 <- PlatformDao.create(pc1)
             p2 <- PlatformDao.create(pc2)
             org1 <- OrganizationDao.createOrganization(
-              org1.copy(platformId = p1.id))
+              org1.copy(platformId = p1.id)
+            )
             u1i <- UserDao.create(uc1)
             u1 = u1i.copy(visibility = UserVisibility.Private)
             u2 <- UserDao.create(uc2)
@@ -233,10 +257,12 @@ class UserDaoSpec
             )
             _ <- UserGroupRoleDao.create(
               UserGroupRole
-                .Create(u1.id,
-                        GroupType.Organization,
-                        org1.id,
-                        GroupRole.Member)
+                .Create(
+                  u1.id,
+                  GroupType.Organization,
+                  org1.id,
+                  GroupRole.Member
+                )
                 .toUserGroupRole(defaultUser, MembershipStatus.Approved)
             )
             _ <- UserGroupRoleDao.create(
@@ -246,10 +272,12 @@ class UserDaoSpec
             )
             _ <- UserGroupRoleDao.create(
               UserGroupRole
-                .Create(u2.id,
-                        GroupType.Organization,
-                        org1.id,
-                        GroupRole.Member)
+                .Create(
+                  u2.id,
+                  GroupType.Organization,
+                  org1.id,
+                  GroupRole.Member
+                )
                 .toUserGroupRole(defaultUser, MembershipStatus.Approved)
             )
             u3platugr <- UserGroupRoleDao.create(
@@ -265,20 +293,20 @@ class UserDaoSpec
             u1VisibleUsers <- UserDao.viewFilter(u1).list
             u2VisibleUsers <- UserDao.viewFilter(u2).list
             u3VisibleUsers <- UserDao.viewFilter(u3).list
-            _ <- UserGroupRoleDao.update(
-              u3platugr.copy(groupRole = GroupRole.Admin),
-              u3platugr.id,
-              u2)
+            _ <- UserGroupRoleDao
+              .update(u3platugr.copy(groupRole = GroupRole.Admin), u3platugr.id)
             u3AdminVisibleUsers <- UserDao.viewFilter(u3).list
           } yield {
-            (u1,
-             u2,
-             u3,
-             u4,
-             u1VisibleUsers,
-             u2VisibleUsers,
-             u3VisibleUsers,
-             u3AdminVisibleUsers)
+            (
+              u1,
+              u2,
+              u3,
+              u4,
+              u1VisibleUsers,
+              u2VisibleUsers,
+              u3VisibleUsers,
+              u3AdminVisibleUsers
+            )
           }
 
           val (u1, _, u3, u4, u1users, u2users, u3users, u3usersAdmin) =
@@ -297,19 +325,24 @@ class UserDaoSpec
           }
           assert(
             u2userids.contains(u1.id),
-            "; members of orgs should be able to see each other if they are hidden")
+            "; members of orgs should be able to see each other if they are hidden"
+          )
           assert(
             u1userids.contains(u3.id),
-            "; members should be able to see public users on the same platform")
+            "; members should be able to see public users on the same platform"
+          )
           assert(
             !u1userids.contains(u4.id),
-            "; members should not be able to see public users on other platforms")
+            "; members should not be able to see public users on other platforms"
+          )
           assert(
             !u3userids.contains(u1.id),
-            "; platform members should not see hidden users on the same platform")
+            "; platform members should not see hidden users on the same platform"
+          )
           assert(
             u3useridsAdmin.contains(u1.id),
-            "; platform admins should be able to see hidden users on their platform")
+            "; platform admins should be able to see hidden users on their platform"
+          )
           true
         }
       )
@@ -320,11 +353,13 @@ class UserDaoSpec
   test("bulk lookup users by id") {
     check {
       forAll {
-        (user1: User.Create,
-         user2: User.Create,
-         user3: User.Create,
-         org: Organization.Create,
-         platform: Platform) =>
+        (
+            user1: User.Create,
+            user2: User.Create,
+            user3: User.Create,
+            org: Organization.Create,
+            platform: Platform
+        ) =>
           {
             val outUsersIO = for {
               (dbUser1, _, _) <- insertUserOrgPlatform(user1, org, platform)
@@ -334,8 +369,10 @@ class UserDaoSpec
             } yield { listedUsers }
 
             val outUsers = outUsersIO.transact(xa).unsafeRunSync
-            assert(outUsers.map(_.id).toSet == Set(user1.id, user2.id),
-                   "Lookup by ids should return the correct set of users")
+            assert(
+              outUsers.map(_.id).toSet == Set(user1.id, user2.id),
+              "Lookup by ids should return the correct set of users"
+            )
             true
           }
       }
@@ -375,7 +412,8 @@ class UserDaoSpec
               platformsIO.transact(xa).unsafeRunSync
             assert(
               inserted == listed,
-              "Unsafe get of a user's platform should return the user's platform")
+              "Unsafe get of a user's platform should return the user's platform"
+            )
             true
           }
       }

@@ -151,7 +151,7 @@ object ProjectDao
     } yield project
   }
 
-  def updateProjectQ(project: Project, id: UUID, user: User): Update0 = {
+  def updateProjectQ(project: Project, id: UUID): Update0 = {
     val updateTime = new Timestamp(new java.util.Date().getTime)
     val idFilter = fr"id = ${id}"
 
@@ -195,7 +195,7 @@ object ProjectDao
         ),
         dbProject.defaultLayerId
       )
-      updateProject <- updateProjectQ(project, id, user).run
+      updateProject <- updateProjectQ(project, id).run
     } yield updateProject
   }
 

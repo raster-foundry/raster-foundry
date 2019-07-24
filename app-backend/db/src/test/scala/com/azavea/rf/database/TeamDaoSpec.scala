@@ -186,8 +186,7 @@ class TeamDaoSpec
             case (team: Team, org: Organization, user: User) => {
               TeamDao.update(
                 fixupTeam(teamUpdate, org, user),
-                team.id,
-                user
+                team.id
               ) map {
                 (_, org)
               }
@@ -384,7 +383,6 @@ class TeamDaoSpec
                 userRole
               )
               updatedUserGroupRoles <- TeamDao.deactivateUserRoles(
-                dbUser,
                 dbUser.id,
                 insertedTeam.id
               )

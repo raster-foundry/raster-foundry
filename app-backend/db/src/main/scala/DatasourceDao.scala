@@ -66,8 +66,7 @@ object DatasourceDao
 
   def updateDatasource(
       datasource: Datasource,
-      id: UUID,
-      user: User
+      id: UUID
   ): ConnectionIO[Int] = {
     // fetch datasource so we can check if user is allowed to update (access control)
     val now = new Timestamp(new java.util.Date().getTime)

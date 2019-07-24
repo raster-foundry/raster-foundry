@@ -207,7 +207,7 @@ class ToolRunDaoSpec
               )
               inserted1 <- ToolRunDao.insertToolRun(toolRunCreate1, dbUser)
               inserted2 <- ToolRunDao.insertToolRun(toolRunCreate2, dbUser)
-              _ <- ToolRunDao.updateToolRun(inserted2, inserted1.id, dbUser)
+              _ <- ToolRunDao.updateToolRun(inserted2, inserted1.id)
               fetched <- ToolRunDao.unsafeGetToolRunById(inserted1.id)
             } yield { (fetched, inserted2) }
 

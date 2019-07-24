@@ -581,7 +581,7 @@ class UserGroupRoleDaoSpec
                   dbPlatform,
                   ugrUpdate
                 ).toUserGroupRole(dbAdmin, MembershipStatus.Approved)
-                UserGroupRoleDao.update(fixedUpUgrUpdate, dbUgr.id, dbAdmin) flatMap {
+                UserGroupRoleDao.update(fixedUpUgrUpdate, dbUgr.id) flatMap {
                   (affectedRows: Int) =>
                     {
                       UserGroupRoleDao.unsafeGetUserGroupRoleById(
@@ -642,7 +642,7 @@ class UserGroupRoleDaoSpec
 
             val deactivateWithDeactivatedUgrIO = insertUgrWithUserIO flatMap {
               case (dbUgr: UserGroupRole, dbUser: User) => {
-                UserGroupRoleDao.deactivate(dbUgr.id, dbUser) flatMap {
+                UserGroupRoleDao.deactivate(dbUgr.id) flatMap {
                   (affectedRows: Int) =>
                     {
                       UserGroupRoleDao.unsafeGetUserGroupRoleById(
@@ -705,8 +705,7 @@ class UserGroupRoleDaoSpec
               case (dbUgr: UserGroupRole, dbUser: User) => {
                 UserGroupRoleDao.deactivateUserGroupRoles(
                   UserGroupRole
-                    .UserGroup(dbUser.id, dbUgr.groupType, dbUgr.groupId),
-                  dbUser
+                    .UserGroup(dbUser.id, dbUgr.groupType, dbUgr.groupId)
                 )
               }
             }

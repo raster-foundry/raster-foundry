@@ -178,8 +178,7 @@ class AnnotationDaoSpec
                   .copy(id = annotationId)
                 AnnotationDao.updateAnnotation(
                   dbProject.id,
-                  newAnnotation,
-                  dbUser
+                  newAnnotation
                 ) flatMap { (affectedRows: Int) =>
                   {
                     AnnotationDao.getAnnotationById(dbProject.id, annotationId) map {
