@@ -77,7 +77,7 @@ trait ToolRunRoutes
             ) {
               complete {
                 val userOQuery
-                    : Option[doobie.ConnectionIO[User]] = tokenO flatMap {
+                  : Option[doobie.ConnectionIO[User]] = tokenO flatMap {
                   token: String =>
                     verifyJWT(token.split(" ").last).toOption
                 } map {
@@ -97,7 +97,7 @@ trait ToolRunRoutes
                           runParams.ownershipTypeParams.ownershipType,
                           runParams.groupQueryParameters.groupType,
                           runParams.groupQueryParameters.groupId
-                        )
+                      )
                     )
                   case _ =>
                     ToolRunDao.listAnalysesWithRelated(
