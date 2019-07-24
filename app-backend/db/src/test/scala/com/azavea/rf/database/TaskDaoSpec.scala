@@ -431,7 +431,8 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (UserGroupRole.Create,
+                                         UserGroupRole.Create)
         ) =>
           {
             val connIO = for {
@@ -542,7 +543,8 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (UserGroupRole.Create,
+                                         UserGroupRole.Create)
         ) =>
           {
             val connIO = for {
@@ -623,7 +625,6 @@ class TaskDaoSpec
     }
   }
 
-
   test("list user actions on tasks with only validate performed") {
     check {
       forAll {
@@ -634,7 +635,8 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (UserGroupRole.Create,
+                                         UserGroupRole.Create)
         ) =>
           {
             val connIO = for {
@@ -675,7 +677,9 @@ class TaskDaoSpec
               _ <- TaskDao.updateTask(
                 feature.id,
                 Task.TaskFeatureCreate(
-                  feature.properties.copy(status = TaskStatus.Validated).toCreate,
+                  feature.properties
+                    .copy(status = TaskStatus.Validated)
+                    .toCreate,
                   feature.geometry
                 ),
                 dbUser
@@ -725,7 +729,8 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (UserGroupRole.Create,
+                                         UserGroupRole.Create)
         ) =>
           {
             val connIO = for {
