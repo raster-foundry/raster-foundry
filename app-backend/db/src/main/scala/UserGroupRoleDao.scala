@@ -197,7 +197,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     SELECT
       ugr.id, ugr.created_at, ugr.created_by, ugr.modified_at,
       ugr.is_active, ugr.user_id, ugr.group_type, ugr.group_id,
-      ugr.group_rol, ugr.membership_status
+      ugr.group_role, ugr.membership_status,
     CASE WHEN ugr.group_type = 'PLATFORM' THEN p.name
          WHEN ugr.group_type = 'ORGANIZATION' THEN o.name
          WHEN ugr.group_type = 'TEAM' THEN t.name
@@ -351,7 +351,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   def deactivate(id: UUID): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr""" SET
           is_active = false,
-          modified_at = NOW(),
+          modified_at = NOW()
             WHERE id = ${id}
         """).update.run
   }

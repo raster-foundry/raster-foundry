@@ -97,6 +97,7 @@ DROP CONSTRAINT "task_actions_user_id_fkey",
 ADD CONSTRAINT "task_actions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL NOT VALID;
 
 ALTER TABLE "tasks"
+ALTER COLUMN "modified_by" DROP NOT NULL,
 DROP CONSTRAINT "tasks_created_by_fkey",
 DROP CONSTRAINT "tasks_locked_by_fkey",
 DROP CONSTRAINT "tasks_owner_fkey",

@@ -63,8 +63,8 @@ object AoiDao extends Dao[AOI] {
       "shape",
       "filters",
       "is_active",
-      "approval_required",
       "start_time",
+      "approval_required",
       "project_id"
     )
     aoiCreate
