@@ -378,7 +378,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
               planetCredential = Credential(Some("")),
               dropboxCredential = Credential(Some(""))
             )
-          }
+        }
       )
   }
 }
