@@ -122,15 +122,16 @@ trait ExportRoutes
       newExport.exportOptions.as[ExportOptions] match {
         case Left(df: DecodingFailure) =>
           complete(
-            (StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
+            (StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}")
+          )
         case Right(_) => {
           val updatedExport =
             user.updateDefaultExportSource(newExport.toExport(user))
           onSuccess(
-            ExportDao.insert(updatedExport, user).transact(xa).unsafeToFuture) {
-            export =>
-              kickoffProjectExport(export.id)
-              complete((StatusCodes.Created, export))
+            ExportDao.insert(updatedExport, user).transact(xa).unsafeToFuture
+          ) { export =>
+            kickoffProjectExport(export.id)
+            complete((StatusCodes.Created, export))
           }
         }
       }
@@ -144,9 +145,10 @@ trait ExportRoutes
       entity(as[Export]) { updateExport =>
         onSuccess(
           ExportDao
-            .update(updateExport, exportId, user)
+            .update(updateExport, exportId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSingleOrNotFound
         }
       }
@@ -158,7 +160,8 @@ trait ExportRoutes
       ExportDao.query.ownedBy(user, exportId).exists.transact(xa).unsafeToFuture
     } {
       onSuccess(
-        ExportDao.query.filter(exportId).delete.transact(xa).unsafeToFuture) {
+        ExportDao.query.filter(exportId).delete.transact(xa).unsafeToFuture
+      ) {
         completeSingleOrNotFound
       }
     }
@@ -176,7 +179,8 @@ trait ExportRoutes
                 .filter(exportId)
                 .selectOption
                 .transact(xa)
-                .unsafeToFuture)
+                .unsafeToFuture
+            )
             list: List[String] <- OptionT.fromOption[Future] {
               export.getExportOptions.map(_.getSignedUrls(): List[String])
             }
@@ -198,7 +202,8 @@ trait ExportRoutes
                 .filter(exportId)
                 .selectOption
                 .transact(xa)
-                .unsafeToFuture)
+                .unsafeToFuture
+            )
             list: List[String] <- OptionT.fromOption[Future] {
               export.getExportOptions.map(_.getObjectKeys(): List[String])
             }
@@ -224,7 +229,8 @@ trait ExportRoutes
               .filter(exportId)
               .selectOption
               .transact(xa)
-              .unsafeToFuture).flatMap { y: Export =>
+              .unsafeToFuture
+          ).flatMap { y: Export =>
             {
               OptionT.fromOption[Future] {
                 y.getExportOptions.map(_.getSignedUrl(objectKey): Uri)

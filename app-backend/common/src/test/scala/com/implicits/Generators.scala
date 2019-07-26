@@ -153,7 +153,6 @@ object Generators extends ArbitraryInstances {
         userField,
         timeField,
         userField,
-        userField,
         name,
         description
       )
@@ -562,7 +561,6 @@ object Generators extends ArbitraryInstances {
         timeField,
         userField,
         userField,
-        userField,
         shape,
         filters,
         isActive,
@@ -727,7 +725,7 @@ object Generators extends ArbitraryInstances {
     }
 
   private def userOrgPlatformGen
-      : Gen[(User.Create, Organization.Create, Platform)] =
+    : Gen[(User.Create, Organization.Create, Platform)] =
     for {
       platform <- platformGen
       orgCreate <- organizationCreateGen map {
@@ -975,7 +973,7 @@ object Generators extends ArbitraryInstances {
     } yield { Task.TaskFeatureCreate(properties, geometry) }
 
   private def taskFeatureCollectionCreateGen
-      : Gen[Task.TaskFeatureCollectionCreate] =
+    : Gen[Task.TaskFeatureCollectionCreate] =
     for {
       features <- Gen.nonEmptyListOf(taskFeatureCreateGen)
     } yield {
@@ -1008,12 +1006,12 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbCombinedSceneQueryParams
-        : Arbitrary[CombinedSceneQueryParams] = Arbitrary {
+      : Arbitrary[CombinedSceneQueryParams] = Arbitrary {
       combinedSceneQueryParamsGen
     }
 
     implicit def arbProjectsceneQueryParameters
-        : Arbitrary[ProjectSceneQueryParameters] =
+      : Arbitrary[ProjectSceneQueryParameters] =
       Arbitrary { projectSceneQueryParametersGen }
 
     implicit def arbAnnotationCreate: Arbitrary[Annotation.Create] = Arbitrary {
@@ -1126,7 +1124,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbPlatform: Arbitrary[Platform] = Arbitrary { platformGen }
 
     implicit def arbUserOrgPlatform
-        : Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
+      : Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
       userOrgPlatformGen
     }
 
@@ -1142,11 +1140,11 @@ object Generators extends ArbitraryInstances {
       Arbitrary { searchQueryParametersGen }
 
     implicit def arbObjectAccessControlRule
-        : Arbitrary[ObjectAccessControlRule] =
+      : Arbitrary[ObjectAccessControlRule] =
       Arbitrary { objectAccessControlRuleGen }
 
     implicit def arbListObjectAccessControlRule
-        : Arbitrary[List[ObjectAccessControlRule]] =
+      : Arbitrary[List[ObjectAccessControlRule]] =
       Arbitrary {
         Gen.nonEmptyListOf[ObjectAccessControlRule](
           arbitrary[ObjectAccessControlRule]
@@ -1174,7 +1172,7 @@ object Generators extends ArbitraryInstances {
       Arbitrary { projectLayerCreateGen }
 
     implicit def arbProjectLayerCreateWithScenes
-        : Arbitrary[List[(ProjectLayer.Create, List[Scene.Create])]] = {
+      : Arbitrary[List[(ProjectLayer.Create, List[Scene.Create])]] = {
       val tupGen = for {
         projectLayerCreate <- arbitrary[ProjectLayer.Create]
         sceneCreates <- arbitrary[List[Scene.Create]]
@@ -1183,7 +1181,7 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbAnnotationQueryParameters
-        : Arbitrary[AnnotationQueryParameters] = Arbitrary {
+      : Arbitrary[AnnotationQueryParameters] = Arbitrary {
       annotationQueryParametersGen
     }
 
@@ -1208,19 +1206,18 @@ object Generators extends ArbitraryInstances {
       }
 
     implicit def arbTaskFeatureCollectionCreate
-        : Arbitrary[Task.TaskFeatureCollectionCreate] =
+      : Arbitrary[Task.TaskFeatureCollectionCreate] =
       Arbitrary {
         taskFeatureCollectionCreateGen
       }
 
     implicit def arbTaskGridFeatureCreate
-        : Arbitrary[Task.TaskGridFeatureCreate] =
+      : Arbitrary[Task.TaskGridFeatureCreate] =
       Arbitrary {
         taskGridFeatureCreateGen
       }
 
-    implicit def arbTaskPropertiesCreate
-        : Arbitrary[Task.TaskPropertiesCreate] =
+    implicit def arbTaskPropertiesCreate: Arbitrary[Task.TaskPropertiesCreate] =
       Arbitrary {
         taskPropertiesCreateGen
       }

@@ -97,7 +97,8 @@ trait ToolRunRoutes
                           runParams.ownershipTypeParams.ownershipType,
                           runParams.groupQueryParameters.groupType,
                           runParams.groupQueryParameters.groupId
-                      ))
+                      )
+                    )
                   case _ =>
                     ToolRunDao.listAnalysesWithRelated(
                       None,
@@ -117,11 +118,13 @@ trait ToolRunRoutes
           authenticate { user =>
             complete {
               ToolRunDao
-                .authQuery(user,
-                           ObjectType.Analysis,
-                           runParams.ownershipTypeParams.ownershipType,
-                           runParams.groupQueryParameters.groupType,
-                           runParams.groupQueryParameters.groupId)
+                .authQuery(
+                  user,
+                  ObjectType.Analysis,
+                  runParams.ownershipTypeParams.ownershipType,
+                  runParams.groupQueryParameters.groupType,
+                  runParams.groupQueryParameters.groupId
+                )
                 .filter(runParams)
                 .page(page)
                 .transact(xa)
@@ -135,13 +138,13 @@ trait ToolRunRoutes
   def createToolRun: Route = authenticate { user =>
     entity(as[ToolRun.Create]) { newRun =>
       onSuccess(
-        ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture) {
-        toolRun =>
-          {
-            complete {
-              (StatusCodes.Created, toolRun)
-            }
+        ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture
+      ) { toolRun =>
+        {
+          complete {
+            (StatusCodes.Created, toolRun)
           }
+        }
       }
     }
   }
@@ -159,7 +162,8 @@ trait ToolRunRoutes
             .filter(runId)
             .selectOption
             .transact(xa)
-            .unsafeToFuture)
+            .unsafeToFuture
+        )
       }
     }
   }
@@ -174,9 +178,10 @@ trait ToolRunRoutes
       entity(as[ToolRun]) { updatedRun =>
         onSuccess(
           ToolRunDao
-            .updateToolRun(updatedRun, runId, user)
+            .updateToolRun(updatedRun, runId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSingleOrNotFound
         }
       }
@@ -191,7 +196,8 @@ trait ToolRunRoutes
         .unsafeToFuture
     } {
       onSuccess(
-        ToolRunDao.query.filter(runId).delete.transact(xa).unsafeToFuture) {
+        ToolRunDao.query.filter(runId).delete.transact(xa).unsafeToFuture
+      ) {
         completeSingleOrNotFound
       }
     }
@@ -216,13 +222,17 @@ trait ToolRunRoutes
   def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ToolRunDao.authorized(user,
-                               ObjectType.Analysis,
-                               toolRunId,
-                               ActionType.Edit),
-         acrList traverse { acr =>
-           ToolRunDao.isValidPermission(acr, user)
-         } map { _.foldLeft(true)(_ && _) }).tupled
+        (
+          ToolRunDao.authorized(
+            user,
+            ObjectType.Analysis,
+            toolRunId,
+            ActionType.Edit
+          ),
+          acrList traverse { acr =>
+            ToolRunDao.isValidPermission(acr, user)
+          } map { _.foldLeft(true)(_ && _) }
+        ).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })
@@ -242,9 +252,11 @@ trait ToolRunRoutes
   def addToolRunPermission(toolRunId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ToolRunDao
-           .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit),
-         ToolRunDao.isValidPermission(acr, user)).tupled
+        (
+          ToolRunDao
+            .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit),
+          ToolRunDao.isValidPermission(acr, user)
+        ).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })

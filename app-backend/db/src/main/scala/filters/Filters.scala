@@ -24,10 +24,10 @@ object Filters {
   }
 
   def onlyUserQP(
-      onlyUserParams: UserAuditQueryParameters): List[Option[Fragment]] = {
+      onlyUserParams: UserAuditQueryParameters
+  ): List[Option[Fragment]] = {
     List(
-      onlyUserParams.createdBy.map(cb => fr"created_by = $cb"),
-      onlyUserParams.modifiedBy.map(mb => fr"modified_by = $mb")
+      onlyUserParams.createdBy.map(cb => fr"created_by = $cb")
     )
   }
 
@@ -36,35 +36,43 @@ object Filters {
       ownerParams.owner.toList.toNel
         .map({ owners =>
           Fragments.in(fr"owner", owners)
-        }))
+        })
+    )
   }
 
   def organizationQP(orgParams: OrgQueryParameters): List[Option[Fragment]] = {
-    val f1 = orgParams.organizations.toList.toNel.map(orgs =>
-      in(fr"organization_id", orgs))
+    val f1 = orgParams.organizations.toList.toNel
+      .map(orgs => in(fr"organization_id", orgs))
     List(f1)
   }
 
   def timestampQP(
-      timestampParams: TimestampQueryParameters): List[Option[Fragment]] = {
-    val f1 = timestampParams.minCreateDatetime.map(minCreate =>
-      fr"created_at > $minCreate")
-    val f2 = timestampParams.maxCreateDatetime.map(maxCreate =>
-      fr"created_at < $maxCreate")
-    val f3 = timestampParams.minModifiedDatetime.map(minMod =>
-      fr"modified_at > $minMod")
-    val f4 = timestampParams.maxModifiedDatetime.map(maxMod =>
-      fr"modified_at < $maxMod")
+      timestampParams: TimestampQueryParameters
+  ): List[Option[Fragment]] = {
+    val f1 = timestampParams.minCreateDatetime.map(
+      minCreate => fr"created_at > $minCreate"
+    )
+    val f2 = timestampParams.maxCreateDatetime.map(
+      maxCreate => fr"created_at < $maxCreate"
+    )
+    val f3 = timestampParams.minModifiedDatetime.map(
+      minMod => fr"modified_at > $minMod"
+    )
+    val f4 = timestampParams.maxModifiedDatetime.map(
+      maxMod => fr"modified_at < $maxMod"
+    )
     List(f1, f2, f3, f4)
   }
 
   def imageQP(imageParams: ImageQueryParameters): List[Option[Fragment]] = {
     val f1 =
-      imageParams.minRawDataBytes.map(minBytes =>
-        fr"raw_data_bytes > $minBytes")
+      imageParams.minRawDataBytes.map(
+        minBytes => fr"raw_data_bytes > $minBytes"
+      )
     val f2 =
-      imageParams.maxRawDataBytes.map(maxBytes =>
-        fr"raw_data_bytes < $maxBytes")
+      imageParams.maxRawDataBytes.map(
+        maxBytes => fr"raw_data_bytes < $maxBytes"
+      )
     val f3 =
       imageParams.minResolution.map(minRes => fr"resolution_meters > $minRes")
     val f4 =
@@ -74,7 +82,8 @@ object Filters {
   }
 
   def mapTokenQP(
-      mapTokenParams: MapTokenQueryParameters): List[Option[Fragment]] = {
+      mapTokenParams: MapTokenQueryParameters
+  ): List[Option[Fragment]] = {
     val f1 = mapTokenParams.name.map(name => fr"name = $name")
     val f2 =
       mapTokenParams.projectId.map(projectId => fr"project_id = $projectId")
@@ -82,14 +91,17 @@ object Filters {
   }
 
   def thumbnailQP(
-      thumbnailParams: ThumbnailQueryParameters): List[Option[Fragment]] = {
+      thumbnailParams: ThumbnailQueryParameters
+  ): List[Option[Fragment]] = {
     List(
       thumbnailParams.sceneId.map(sceneId => fr"scene_id = ${sceneId}")
     )
   }
 
-  def searchQP(searchParams: SearchQueryParameters,
-               cols: List[String]): List[Option[Fragment]] =
+  def searchQP(
+      searchParams: SearchQueryParameters,
+      cols: List[String]
+  ): List[Option[Fragment]] =
     List(
       searchParams.search.getOrElse("") match {
         case "" => None
@@ -100,23 +112,29 @@ object Filters {
           })
           Some(
             Fragment.const("(") ++ Fragments
-              .orOpt(searchF: _*) ++ Fragment.const(")"))
+              .orOpt(searchF: _*) ++ Fragment.const(")")
+          )
       }
     )
 
   def activationQP(
-      activationParams: ActivationQueryParameters): List[Option[Fragment]] = {
+      activationParams: ActivationQueryParameters
+  ): List[Option[Fragment]] = {
     List(activationParams.isActive.map(isActive => fr"is_active = ${isActive}"))
   }
 
   def platformIdQP(
-      platformIdParams: PlatformIdQueryParameters): List[Option[Fragment]] = {
-    List(platformIdParams.platformId.map(platformId =>
-      fr"platform_id = ${platformId}"))
+      platformIdParams: PlatformIdQueryParameters
+  ): List[Option[Fragment]] = {
+    List(
+      platformIdParams.platformId
+        .map(platformId => fr"platform_id = ${platformId}")
+    )
   }
 
   def metricQP(
-      metricQueryParams: MetricQueryParameters): List[Option[Fragment]] = {
+      metricQueryParams: MetricQueryParameters
+  ): List[Option[Fragment]] = {
     val requestTypeF = {
       metricQueryParams.requestType match {
         case MetricRequestType.ProjectMosaicRequest =>
@@ -156,7 +174,8 @@ object Filters {
 
   def taskQP(taskQP: TaskQueryParameters)(
       implicit putTaskStatus: Put[TaskStatus],
-      putGeom: Put[Projected[Polygon]]): List[Option[Fragment]] =
+      putGeom: Put[Projected[Polygon]]
+  ): List[Option[Fragment]] =
     List(
       taskQP.status map { qp =>
         fr"status = $qp "

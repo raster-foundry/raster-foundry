@@ -10,22 +10,25 @@ import io.circe.generic.JsonCodec
 final case class LabelSummary(label: String, counts: Json)
 
 @JsonCodec
-final case class AnnotationGroup(id: UUID,
-                                 name: String,
-                                 createdAt: Timestamp,
-                                 createdBy: String,
-                                 modifiedAt: Timestamp,
-                                 modifiedBy: String,
-                                 projectId: UUID,
-                                 defaultStyle: Option[Json],
-                                 projectLayerId: UUID)
+final case class AnnotationGroup(
+    id: UUID,
+    name: String,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    projectId: UUID,
+    defaultStyle: Option[Json],
+    projectLayerId: UUID
+)
 
 object AnnotationGroup {
   @JsonCodec
   final case class Create(name: String, defaultStyle: Option[Json]) {
-    def toAnnotationGroup(projectId: UUID,
-                          user: User,
-                          projectLayerId: UUID): AnnotationGroup = {
+    def toAnnotationGroup(
+        projectId: UUID,
+        user: User,
+        projectLayerId: UUID
+    ): AnnotationGroup = {
       val now = new Timestamp(new java.util.Date().getTime)
       AnnotationGroup(
         UUID.randomUUID,
@@ -33,7 +36,6 @@ object AnnotationGroup {
         now,
         user.id,
         now,
-        user.id,
         projectId,
         defaultStyle,
         projectLayerId

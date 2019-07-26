@@ -94,9 +94,11 @@ trait ToolRoutes
             .filter(toolId)
             .selectOption
             .transact(xa)
-            .unsafeToFuture) { maybeTool =>
+            .unsafeToFuture
+        ) { maybeTool =>
           val sources = maybeTool.map(
-            _.definition.as[MapAlgebraAST].valueOr(throw _).sources)
+            _.definition.as[MapAlgebraAST].valueOr(throw _).sources
+          )
           complete(sources)
         }
       }
@@ -141,7 +143,8 @@ trait ToolRoutes
     } {
       rejectEmptyResponse {
         complete(
-          ToolDao.query.filter(toolId).selectOption.transact(xa).unsafeToFuture)
+          ToolDao.query.filter(toolId).selectOption.transact(xa).unsafeToFuture
+        )
       }
     }
   }
@@ -156,9 +159,10 @@ trait ToolRoutes
       entity(as[Tool]) { updatedTool =>
         onSuccess(
           ToolDao
-            .update(updatedTool, toolId, user)
+            .update(updatedTool, toolId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSingleOrNotFound
         }
       }
@@ -197,10 +201,17 @@ trait ToolRoutes
   def replaceToolPermissions(toolId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ToolDao.authorized(user, ObjectType.Template, toolId, ActionType.Edit),
-         acrList traverse { acr =>
-           ToolDao.isValidPermission(acr, user)
-         } map { _.foldLeft(true)(_ && _) }).tupled
+        (
+          ToolDao.authorized(
+            user,
+            ObjectType.Template,
+            toolId,
+            ActionType.Edit
+          ),
+          acrList traverse { acr =>
+            ToolDao.isValidPermission(acr, user)
+          } map { _.foldLeft(true)(_ && _) }
+        ).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })
@@ -220,8 +231,15 @@ trait ToolRoutes
   def addToolPermission(toolId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ToolDao.authorized(user, ObjectType.Template, toolId, ActionType.Edit),
-         ToolDao.isValidPermission(acr, user)).tupled
+        (
+          ToolDao.authorized(
+            user,
+            ObjectType.Template,
+            toolId,
+            ActionType.Edit
+          ),
+          ToolDao.isValidPermission(acr, user)
+        ).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })

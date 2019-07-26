@@ -207,7 +207,6 @@ export default (app) => {
                 createdAt: scene.time_start,
                 createdBy: 'nasa',
                 modifiedAt: scene.time_start,
-                modifiedBy: 'nasa',
                 owner: 'nasa',
                 datasource: datasource,
                 sceneMetadata: scene,

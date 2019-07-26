@@ -151,7 +151,6 @@ class SceneDetailModalController {
         this.scene = Object.assign(this.scene, {
             datasource: this.selectedDatasource.id,
             modifiedAt: this.moment().toISOString(),
-            modifiedBy: this.scene.owner,
             sceneMetadata: this.newSceneMetadata,
             filterFields: this.newFilterFields
         });
@@ -200,14 +199,14 @@ class SceneDetailModalController {
 
     getMaxBound(field) {
         switch (field) {
-            case 'cloudCover':
-                return 100;
-            case 'sunAzimuth':
-                return 360;
-            case 'sunElevation':
-                return 180;
-            default:
-                throw new Error(`Tried to fetch max bound for invalid field: ${field}`);
+        case 'cloudCover':
+            return 100;
+        case 'sunAzimuth':
+            return 360;
+        case 'sunElevation':
+            return 180;
+        default:
+            throw new Error(`Tried to fetch max bound for invalid field: ${field}`);
         }
     }
 

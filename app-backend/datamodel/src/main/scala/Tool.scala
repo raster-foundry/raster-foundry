@@ -8,21 +8,22 @@ import io.circe.generic.JsonCodec
 
 /** Model Lab Tool */
 @JsonCodec
-final case class Tool(id: UUID,
-                      createdAt: Timestamp,
-                      modifiedAt: Timestamp,
-                      createdBy: String,
-                      modifiedBy: String,
-                      owner: String,
-                      title: String,
-                      description: String,
-                      requirements: String,
-                      license: Option[Int],
-                      visibility: Visibility,
-                      compatibleDataSources: List[String] = List.empty,
-                      stars: Float = 0.0f,
-                      definition: Json,
-                      singleSource: Boolean)
+final case class Tool(
+    id: UUID,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    createdBy: String,
+    owner: String,
+    title: String,
+    description: String,
+    requirements: String,
+    license: Option[Int],
+    visibility: Visibility,
+    compatibleDataSources: List[String] = List.empty,
+    stars: Float = 0.0f,
+    definition: Json,
+    singleSource: Boolean
+)
 
 /** Case class for tool creation */
 object Tool {
@@ -31,15 +32,16 @@ object Tool {
   def tupled = (Tool.apply _).tupled
 
   @JsonCodec
-  final case class Create(title: String,
-                          description: String,
-                          requirements: String,
-                          license: Option[Int],
-                          visibility: Visibility,
-                          compatibleDataSources: List[String],
-                          owner: Option[String],
-                          stars: Float,
-                          definition: Json,
-                          singleSource: Boolean)
-      extends OwnerCheck
+  final case class Create(
+      title: String,
+      description: String,
+      requirements: String,
+      license: Option[Int],
+      visibility: Visibility,
+      compatibleDataSources: List[String],
+      owner: Option[String],
+      stars: Float,
+      definition: Json,
+      singleSource: Boolean
+  ) extends OwnerCheck
 }

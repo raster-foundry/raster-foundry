@@ -51,15 +51,19 @@ class PlatformDaoSpec
   test("update a platform") {
     check {
       forAll {
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         platformUpdate: Platform) =>
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            platformUpdate: Platform
+        ) =>
           {
             val platformUpdateIO = for {
-              (_, _, dbPlatform) <- insertUserOrgPlatform(userCreate,
-                                                          orgCreate,
-                                                          platform)
+              (_, _, dbPlatform) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform
+              )
               affectedRows <- PlatformDao.update(platformUpdate, dbPlatform.id)
               fetched <- PlatformDao.unsafeGetPlatformById(dbPlatform.id)
             } yield { (affectedRows, fetched) }
@@ -106,17 +110,21 @@ class PlatformDaoSpec
         ) =>
           {
             val addPlatformRoleWithPlatformIO = for {
-              (dbUser, _, dbPlatform) <- insertUserOrgPlatform(userCreate,
-                                                               orgCreate,
-                                                               platform,
-                                                               doUserGroupRole =
-                                                                 false)
-              insertedUserGroupRole <- PlatformDao.addUserRole(dbUser,
-                                                               dbUser.id,
-                                                               dbPlatform.id,
-                                                               userRole)
+              (dbUser, _, dbPlatform) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform,
+                doUserGroupRole = false
+              )
+              insertedUserGroupRole <- PlatformDao.addUserRole(
+                dbUser,
+                dbUser.id,
+                dbPlatform.id,
+                userRole
+              )
               byIdUserGroupRole <- UserGroupRoleDao.getOption(
-                insertedUserGroupRole.id)
+                insertedUserGroupRole.id
+              )
             } yield { (dbPlatform, byIdUserGroupRole) }
 
             val (dbPlatform, dbUserGroupRole) =
@@ -124,12 +132,18 @@ class PlatformDaoSpec
             dbUserGroupRole match {
               case Some(ugr) =>
                 assert(ugr.isActive, "; Added role should be active")
-                assert(ugr.groupType == GroupType.Platform,
-                       "; Added role should be for a Platform")
-                assert(ugr.groupId == dbPlatform.id,
-                       "; Added role should be for the correct Platform")
-                assert(ugr.groupRole == userRole,
-                       "; Added role should have the correct role")
+                assert(
+                  ugr.groupType == GroupType.Platform,
+                  "; Added role should be for a Platform"
+                )
+                assert(
+                  ugr.groupId == dbPlatform.id,
+                  "; Added role should be for the correct Platform"
+                )
+                assert(
+                  ugr.groupRole == userRole,
+                  "; Added role should have the correct role"
+                )
                 true
               case _ => false
             }
@@ -153,17 +167,20 @@ class PlatformDaoSpec
                 userCreate,
                 orgCreate,
                 platform,
-                doUserGroupRole = false)
+                doUserGroupRole = false
+              )
               originalUserGroupRole <- PlatformDao.addUserRole(
                 dbUser,
                 dbUser.id,
                 insertedPlatform.id,
-                userRole)
+                userRole
+              )
               updatedUserGroupRoles <- PlatformDao.setUserRole(
                 dbUser,
                 dbUser.id,
                 insertedPlatform.id,
-                userRole)
+                userRole
+              )
             } yield {
               (insertedPlatform, originalUserGroupRole, updatedUserGroupRoles)
             }
@@ -171,16 +188,24 @@ class PlatformDaoSpec
             val (_, dbOldUGR, dbNewUGRs) =
               setPlatformRoleIO.transact(xa).unsafeRunSync
 
-            assert(dbNewUGRs.count(ugr => ugr.isActive) == 1,
-                   "; Updated UGRs should have one set to active")
-            assert(dbNewUGRs.count(ugr => !ugr.isActive) == 1,
-                   "; Updated UGRs should have one set to inactive")
-            assert(dbNewUGRs.count(ugr =>
-                     ugr.id == dbOldUGR.id && !ugr.isActive) == 1,
-                   "; Old UGR should be set to inactive")
-            assert(dbNewUGRs
-                     .count(ugr => ugr.id != dbOldUGR.id && ugr.isActive) == 1,
-                   "; New UGR should be set to active")
+            assert(
+              dbNewUGRs.count(ugr => ugr.isActive) == 1,
+              "; Updated UGRs should have one set to active"
+            )
+            assert(
+              dbNewUGRs.count(ugr => !ugr.isActive) == 1,
+              "; Updated UGRs should have one set to inactive"
+            )
+            assert(
+              dbNewUGRs
+                .count(ugr => ugr.id == dbOldUGR.id && !ugr.isActive) == 1,
+              "; Old UGR should be set to inactive"
+            )
+            assert(
+              dbNewUGRs
+                .count(ugr => ugr.id != dbOldUGR.id && ugr.isActive) == 1,
+              "; New UGR should be set to active"
+            )
             assert(dbNewUGRs.size == 2, "; Update should have old and new UGRs")
             true
           }
@@ -203,16 +228,18 @@ class PlatformDaoSpec
                 userCreate,
                 orgCreate,
                 platform,
-                doUserGroupRole = false)
+                doUserGroupRole = false
+              )
               originalUserGroupRole <- PlatformDao.addUserRole(
                 dbUser,
                 dbUser.id,
                 insertedPlatform.id,
-                userRole)
+                userRole
+              )
               updatedUserGroupRoles <- PlatformDao.deactivateUserRoles(
-                dbUser,
                 dbUser.id,
-                insertedPlatform.id)
+                insertedPlatform.id
+              )
             } yield {
               (insertedPlatform, originalUserGroupRole, updatedUserGroupRoles)
             }
@@ -220,10 +247,14 @@ class PlatformDaoSpec
             val (_, _, dbNewUGRs) =
               setPlatformRoleIO.transact(xa).unsafeRunSync
 
-            assert(dbNewUGRs.count(ugr => !ugr.isActive) == 1,
-                   "; The updated UGR should be inactive")
-            assert(dbNewUGRs.size == 1,
-                   "; There should only be a single UGR updated")
+            assert(
+              dbNewUGRs.count(ugr => !ugr.isActive) == 1,
+              "; The updated UGR should be inactive"
+            )
+            assert(
+              dbNewUGRs.size == 1,
+              "; There should only be a single UGR updated"
+            )
             true
           }
       }
@@ -245,62 +276,80 @@ class PlatformDaoSpec
         ) =>
           {
             val listOfPwuIO = for {
-              userOrgPlatProject <- insertUserOrgPlatProject(userCreate,
-                                                             orgCreate,
-                                                             platform,
-                                                             projectCreate)
+              userOrgPlatProject <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
               (dbUser, dbOrg, dbPlatform, dbProject) = userOrgPlatProject
               secondPlatform <- PlatformDao.create(platform2)
-              deactivatedRole <- PlatformDao.addUserRole(dbUser,
-                                                         dbUser.id,
-                                                         secondPlatform.id,
-                                                         GroupRole.Member)
-              _ <- UserGroupRoleDao.deactivate(deactivatedRole.id, dbUser)
-              userProjectAnother <- insertUserProject(userCreateAnother,
-                                                      dbOrg,
-                                                      dbPlatform,
-                                                      projectCreateAnother)
+              deactivatedRole <- PlatformDao.addUserRole(
+                dbUser,
+                dbUser.id,
+                secondPlatform.id,
+                GroupRole.Member
+              )
+              _ <- UserGroupRoleDao.deactivate(deactivatedRole.id)
+              userProjectAnother <- insertUserProject(
+                userCreateAnother,
+                dbOrg,
+                dbPlatform,
+                projectCreateAnother
+              )
               (dbUserAnother, dbProjectAnother) = userProjectAnother
               datasource <- unsafeGetRandomDatasource
-              sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser,
-                                                              datasource,
-                                                              sceneCreate),
-                                             dbUser)
-              _ <- ProjectDao.addScenesToProject(List(sceneInsert.id),
-                                                 dbProject.id,
-                                                 dbProject.defaultLayerId)
+              sceneInsert <- SceneDao.insert(
+                fixupSceneCreate(dbUser, datasource, sceneCreate),
+                dbUser
+              )
+              _ <- ProjectDao.addScenesToProject(
+                List(sceneInsert.id),
+                dbProject.id,
+                dbProject.defaultLayerId
+              )
               numScenesAdded <- ProjectDao.addScenesToProject(
                 List(sceneInsert.id),
                 dbProjectAnother.id,
-                dbProjectAnother.defaultLayerId)
+                dbProjectAnother.defaultLayerId
+              )
               _ = logger.trace(s"Added $numScenesAdded scenes")
               listOfUserIds = List(dbUser.id, dbUserAnother.id)
               listOfPUSP <- PlatformDao.getPlatUsersAndProjByConsumerAndSceneID(
                 listOfUserIds,
-                sceneInsert.id)
+                sceneInsert.id
+              )
             } yield
-              (dbUser,
-               dbUserAnother,
-               dbPlatform,
-               dbProject,
-               dbProjectAnother,
-               listOfPUSP)
+              (
+                dbUser,
+                dbUserAnother,
+                dbPlatform,
+                dbProject,
+                dbProjectAnother,
+                listOfPUSP
+              )
 
-            val (dbUser,
-                 dbUserAnother,
-                 dbPlatform,
-                 dbProject,
-                 dbProjectAnother,
-                 listOfPUSP) =
+            val (
+              dbUser,
+              dbUserAnother,
+              dbPlatform,
+              dbProject,
+              dbProjectAnother,
+              listOfPUSP
+            ) =
               listOfPwuIO.transact(xa).unsafeRunSync
 
             assert(listOfPUSP.length == 2, "; list of return length is not 2")
-            assert(listOfPUSP.head.platId == dbPlatform.id &&
-                     listOfPUSP(1).platId == dbPlatform.id,
-                   "; platform ID don't match")
-            assert(listOfPUSP.head.platName == dbPlatform.name &&
-                     listOfPUSP(1).platName == dbPlatform.name,
-                   "; platform name don't match")
+            assert(
+              listOfPUSP.head.platId == dbPlatform.id &&
+                listOfPUSP(1).platId == dbPlatform.id,
+              "; platform ID don't match"
+            )
+            assert(
+              listOfPUSP.head.platName == dbPlatform.name &&
+                listOfPUSP(1).platName == dbPlatform.name,
+              "; platform name don't match"
+            )
             assert(
               (listOfPUSP.head.uId == dbUser.id || listOfPUSP.head.uId == dbUserAnother.id) &&
                 (listOfPUSP(1).uId == dbUser.id || listOfPUSP(1).uId == dbUserAnother.id),
@@ -311,9 +360,11 @@ class PlatformDaoSpec
                 (listOfPUSP(1).uName == dbUser.name || listOfPUSP(1).uName == dbUserAnother.name),
               "; user name don't match"
             )
-            assert(listOfPUSP.head.pubSettings == dbPlatform.publicSettings &&
-                     listOfPUSP(1).pubSettings == dbPlatform.publicSettings,
-                   "; platform public settings don't match")
+            assert(
+              listOfPUSP.head.pubSettings == dbPlatform.publicSettings &&
+                listOfPUSP(1).pubSettings == dbPlatform.publicSettings,
+              "; platform public settings don't match"
+            )
             assert(
               listOfPUSP.head.priSettings == dbPlatform.privateSettings &&
                 listOfPUSP(1).priSettings == dbPlatform.privateSettings,
@@ -327,7 +378,8 @@ class PlatformDaoSpec
             assert(
               (listOfPUSP.head.emailNotifications == dbUser.emailNotifications || listOfPUSP.head.emailNotifications == dbUserAnother.emailNotifications) &&
                 listOfPUSP(1).emailNotifications == dbUser.emailNotifications || listOfPUSP(
-                1).emailNotifications == dbUserAnother.emailNotifications,
+                1
+              ).emailNotifications == dbUserAnother.emailNotifications,
               "; user email notification don't match"
             )
             assert(
@@ -343,7 +395,8 @@ class PlatformDaoSpec
             assert(
               (listOfPUSP.head.personalInfo == dbUser.personalInfo || listOfPUSP.head.personalInfo == dbUserAnother.personalInfo) &&
                 (listOfPUSP(1).personalInfo == dbUser.personalInfo || listOfPUSP(
-                  1).personalInfo == dbUserAnother.personalInfo),
+                  1
+                ).personalInfo == dbUserAnother.personalInfo),
               "; user personal info don't match"
             )
             true
@@ -368,36 +421,50 @@ class PlatformDaoSpec
                 userCreate,
                 orgCreate,
                 platform,
-                projectCreate)
+                projectCreate
+              )
               datasource <- unsafeGetRandomDatasource
-              sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser,
-                                                              datasource,
-                                                              sceneCreate),
-                                             dbUser)
-              _ <- ProjectDao.addScenesToProject(List(sceneInsert.id),
-                                                 dbProject.id,
-                                                 dbProject.defaultLayerId)
+              sceneInsert <- SceneDao.insert(
+                fixupSceneCreate(dbUser, datasource, sceneCreate),
+                dbUser
+              )
+              _ <- ProjectDao.addScenesToProject(
+                List(sceneInsert.id),
+                dbProject.id,
+                dbProject.defaultLayerId
+              )
               pUO <- PlatformDao.getPlatAndUsersBySceneOwnerId(
-                sceneInsert.owner)
+                sceneInsert.owner
+              )
             } yield (dbUser, dbPlatform, dbProject, pUO)
 
             val (dbUser, dbPlatform, _, pU) =
               puIO.transact(xa).unsafeRunSync
 
             assert(pU.platId == dbPlatform.id, "; platform ID don't match")
-            assert(pU.platName == dbPlatform.name,
-                   "; platform name don't match")
+            assert(
+              pU.platName == dbPlatform.name,
+              "; platform name don't match"
+            )
             assert(pU.uId == dbUser.id, "; user ID don't match")
             assert(pU.uName == dbUser.name, "; user name don't match")
-            assert(pU.pubSettings == dbPlatform.publicSettings,
-                   "; platform public settings don't match")
-            assert(pU.priSettings == dbPlatform.privateSettings,
-                   "; platform private settings don't match")
+            assert(
+              pU.pubSettings == dbPlatform.publicSettings,
+              "; platform public settings don't match"
+            )
+            assert(
+              pU.priSettings == dbPlatform.privateSettings,
+              "; platform private settings don't match"
+            )
             assert(pU.email == dbUser.email, "; user email don't match")
-            assert(pU.emailNotifications == dbUser.emailNotifications,
-                   "; user email notification don't match")
-            assert(pU.personalInfo == dbUser.personalInfo,
-                   "; user personal info don't match")
+            assert(
+              pU.emailNotifications == dbUser.emailNotifications,
+              "; user email notification don't match"
+            )
+            assert(
+              pU.personalInfo == dbUser.personalInfo,
+              "; user personal info don't match"
+            )
             true
           }
       }
@@ -405,7 +472,8 @@ class PlatformDaoSpec
   }
 
   test(
-    "list teams a platform user belongs to or can see due to organization memberships") {
+    "list teams a platform user belongs to or can see due to organization memberships"
+  ) {
     check {
       forAll {
         (
@@ -423,13 +491,14 @@ class PlatformDaoSpec
             val createAndGetTeamsIO = for {
               // Team# is in Org#
               // User belongs to Org1 and Team1
-              (user, org1, dbPlatform) <- insertUserOrgPlatform(userCreate,
-                                                                orgCreate1,
-                                                                platform)
+              (user, org1, dbPlatform) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate1,
+                platform
+              )
               teamInsert1 <- TeamDao.create(
-                fixupTeam(fixTeamName(teamCreate1, teamNamePartial),
-                          org1,
-                          user))
+                fixupTeam(fixTeamName(teamCreate1, teamNamePartial), org1, user)
+              )
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(
@@ -438,11 +507,13 @@ class PlatformDaoSpec
                     teamInsert1.id,
                     GroupRole.Member
                   )
-                  .toUserGroupRole(user, MembershipStatus.Approved))
+                  .toUserGroupRole(user, MembershipStatus.Approved)
+              )
 
               // User belongs to Org2 but not Team2
               org2 <- OrganizationDao.createOrganization(
-                orgCreate2.copy(platformId = dbPlatform.id))
+                orgCreate2.copy(platformId = dbPlatform.id)
+              )
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(
@@ -451,15 +522,16 @@ class PlatformDaoSpec
                     org2.id,
                     GroupRole.Member
                   )
-                  .toUserGroupRole(user, MembershipStatus.Approved))
+                  .toUserGroupRole(user, MembershipStatus.Approved)
+              )
               teamInsert2 <- TeamDao.create(
-                fixupTeam(fixTeamName(teamCreate2, teamNamePartial),
-                          org2,
-                          user))
+                fixupTeam(fixTeamName(teamCreate2, teamNamePartial), org2, user)
+              )
 
               // User belongs to Team3 but not Org3
               org3 <- OrganizationDao.createOrganization(
-                orgCreate3.copy(platformId = dbPlatform.id))
+                orgCreate3.copy(platformId = dbPlatform.id)
+              )
               teamInsert3 <- TeamDao.create(fixupTeam(teamCreate3, org3, user))
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
@@ -469,11 +541,13 @@ class PlatformDaoSpec
                     teamInsert3.id,
                     GroupRole.Member
                   )
-                  .toUserGroupRole(user, MembershipStatus.Approved))
+                  .toUserGroupRole(user, MembershipStatus.Approved)
+              )
 
               searchedTeams <- PlatformDao.listPlatformUserTeams(
                 user,
-                teamNamePartial)
+                teamNamePartial
+              )
 
             } yield (teamInsert1, teamInsert2, teamInsert3, searchedTeams)
 

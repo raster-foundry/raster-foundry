@@ -29,18 +29,20 @@ import java.time.Instant
 import java.util.UUID
 
 final case class UpdateAOIProject(projectId: UUID)(
-    implicit val xa: Transactor[IO])
-    extends Config
+    implicit val xa: Transactor[IO]
+) extends Config
     with RollbarNotifier {
   val name = FindAOIProjects.name
 
   type LastChecked = Timestamp
   type StartTime = Timestamp
 
-  def aoiEmailContent(project: Project,
-                      platform: Platform,
-                      user: User,
-                      sceneCount: Int): (String, String, String) = {
+  def aoiEmailContent(
+      project: Project,
+      platform: Platform,
+      user: User,
+      sceneCount: Int
+  ): (String, String, String) = {
     val platformHost =
       platform.publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
     (
@@ -66,10 +68,12 @@ final case class UpdateAOIProject(projectId: UUID)(
     )
   }
 
-  def sendAoiNotificationEmail(project: Project,
-                               platform: Platform,
-                               user: User,
-                               sceneCount: Int) = {
+  def sendAoiNotificationEmail(
+      project: Project,
+      platform: Platform,
+      user: User,
+      sceneCount: Int
+  ) = {
     val email = new NotificationEmail
 
     (user.getEmail, platform.publicSettings.emailAoiNotification) match {
@@ -78,28 +82,35 @@ final case class UpdateAOIProject(projectId: UUID)(
       case ("", false) =>
         logger.warn(
           email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email
-            .platformNotSubscribedWarning(platform.id.toString()))
+            .platformNotSubscribedWarning(platform.id.toString())
+        )
       case (userEmailAddress, true) =>
         // send emails
         val (pub, pri) = (platform.publicSettings, platform.privateSettings)
-        (pub.emailSmtpHost,
-         pub.emailSmtpPort,
-         pub.emailSmtpEncryption,
-         pub.emailSmtpUserName,
-         pri.emailPassword,
-         userEmailAddress) match {
-          case (host: String,
-                port: Int,
-                encryption: String,
-                platSmtpUserName: String,
-                pw: String,
-                userEmail: String)
-              if email.isValidEmailSettings(host,
-                                            port,
-                                            encryption,
-                                            platSmtpUserName,
-                                            pw,
-                                            userEmail) =>
+        (
+          pub.emailSmtpHost,
+          pub.emailSmtpPort,
+          pub.emailSmtpEncryption,
+          pub.emailSmtpUserName,
+          pri.emailPassword,
+          userEmailAddress
+        ) match {
+          case (
+              host: String,
+              port: Int,
+              encryption: String,
+              platSmtpUserName: String,
+              pw: String,
+              userEmail: String
+              )
+              if email.isValidEmailSettings(
+                host,
+                port,
+                encryption,
+                platSmtpUserName,
+                pw,
+                userEmail
+              ) =>
             val (subject, html, plain) =
               aoiEmailContent(project, platform, user, sceneCount)
             email
@@ -110,13 +121,14 @@ final case class UpdateAOIProject(projectId: UUID)(
                 html,
                 plain,
                 pub.emailFrom,
-                pub.emailFromDisplayName)
+                pub.emailFromDisplayName
+              )
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified project owner ${user.id} about AOI updates")
           case _ =>
             logger.warn(
-              email.insufficientSettingsWarning(platform.id.toString(),
-                                                user.id))
+              email.insufficientSettingsWarning(platform.id.toString(), user.id)
+            )
         }
       case (_, false) =>
         logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
@@ -130,7 +142,8 @@ final case class UpdateAOIProject(projectId: UUID)(
 
       if (project.owner == auth0Config.systemUser) {
         logger.warn(
-          s"Owner of project ${projId} is a system user. Email is not sent.")
+          s"Owner of project ${projId} is a system user. Email is not sent."
+        )
       } else {
         val platAndUserIO = for {
           ugr <- UserGroupRoleDao.query
@@ -146,7 +159,8 @@ final case class UpdateAOIProject(projectId: UUID)(
       }
     } else {
       logger.warn(
-        s"AOI project ${projId.toString} has no new scenes available. Project owner will not be notified.")
+        s"AOI project ${projId.toString} has no new scenes available. Project owner will not be notified."
+      )
     }
   }
 
@@ -154,11 +168,15 @@ final case class UpdateAOIProject(projectId: UUID)(
     logger.info(s"Updating project ${projectId}")
 
     /** Fetch the project, AOI area, last checked time, start time, and AOI scene query parameters */
-    def fetchBaseData: ConnectionIO[(String,
-                                     Projected[MultiPolygon],
-                                     StartTime,
-                                     LastChecked,
-                                     Result[CombinedSceneQueryParams])] = {
+    def fetchBaseData: ConnectionIO[
+      (
+          String,
+          Projected[MultiPolygon],
+          StartTime,
+          LastChecked,
+          Result[CombinedSceneQueryParams]
+      )
+    ] = {
       val base = fr"""
       SELECT
         proj_owner, geometry, start_time, aois_last_checked, filters
@@ -170,7 +188,8 @@ final case class UpdateAOIProject(projectId: UUID)(
         )
       """
       val projectIdFilter: Option[Fragment] = Some(
-        fr"proj_table_id = ${projectId}")
+        fr"proj_table_id = ${projectId}"
+      )
 
       // This could return a list probably if we ever support > 1 AOI per project
       (base ++ Fragments.whereAndOpt(projectIdFilter))
@@ -178,27 +197,32 @@ final case class UpdateAOIProject(projectId: UUID)(
         .unique
         .map(
           {
-            case (projOwner: String,
-                  g: Projected[MultiPolygon],
-                  startTime: StartTime,
-                  lastChecked: LastChecked,
-                  f: Json) =>
-              (projOwner,
-               g,
-               startTime,
-               lastChecked,
-               f.as[CombinedSceneQueryParams])
+            case (
+                projOwner: String,
+                g: Projected[MultiPolygon],
+                startTime: StartTime,
+                lastChecked: LastChecked,
+                f: Json
+                ) =>
+              (
+                projOwner,
+                g,
+                startTime,
+                lastChecked,
+                f.as[CombinedSceneQueryParams]
+              )
           }
         )
     }
 
     /** Find all the scenes that can be added to a project */
-    def fetchProjectScenes(user: User,
-                           geom: Projected[MultiPolygon],
-                           startTime: StartTime,
-                           lastChecked: LastChecked,
-                           queryParams: Option[CombinedSceneQueryParams])
-      : ConnectionIO[List[UUID]] = {
+    def fetchProjectScenes(
+        user: User,
+        geom: Projected[MultiPolygon],
+        startTime: StartTime,
+        lastChecked: LastChecked,
+        queryParams: Option[CombinedSceneQueryParams]
+    ): ConnectionIO[List[UUID]] = {
       val baseParams = queryParams.getOrElse(CombinedSceneQueryParams())
       val augmentedQueryParams =
         baseParams.copy(
@@ -225,25 +249,29 @@ final case class UpdateAOIProject(projectId: UUID)(
         (userId, g, startTime, lastChecked, qp) = baseData
         project <- ProjectDao.unsafeGetProjectById(projectId)
         user <- UserDao.unsafeGetUserById(userId)
-        sceneIds <- fetchProjectScenes(user,
-                                       g,
-                                       startTime,
-                                       lastChecked,
-                                       qp.toOption)
+        sceneIds <- fetchProjectScenes(
+          user,
+          g,
+          startTime,
+          lastChecked,
+          qp.toOption
+        )
         _ <- logger.info(s"Found ${sceneIds.length} scenes").pure[ConnectionIO]
-        _ <- updateProjectIO(user, projectId)
-        _ <- ProjectDao.addScenesToProject(sceneIds,
-                                           projectId,
-                                           project.defaultLayerId,
-                                           false)
+        _ <- updateProjectIO(projectId)
+        _ <- ProjectDao.addScenesToProject(
+          sceneIds,
+          projectId,
+          project.defaultLayerId,
+          false
+        )
       } yield { (projectId, sceneIds) }
     }
 
-    def updateProjectIO(user: User, projectId: UUID): ConnectionIO[Int] =
+    def updateProjectIO(projectId: UUID): ConnectionIO[Int] =
       for {
         proj <- ProjectDao.unsafeGetProjectById(projectId)
         newProject = proj.copy(aoisLastChecked = Timestamp.from(Instant.now))
-        affectedRows <- ProjectDao.updateProject(newProject, proj.id, user)
+        affectedRows <- ProjectDao.updateProject(newProject, proj.id)
       } yield affectedRows
 
     val (projId, numberNewScenes) =
@@ -265,7 +293,8 @@ object UpdateAOIProject extends Job {
           case List(projectId) => UpdateAOIProject(UUID.fromString(projectId))
           case _ =>
             throw new IllegalArgumentException(
-              "Argument could not be parsed to UUID")
+              "Argument could not be parsed to UUID"
+            )
         }
 
         IO { job.run } handleErrorWith {

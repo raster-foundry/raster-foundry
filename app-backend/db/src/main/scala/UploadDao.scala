@@ -18,7 +18,7 @@ object UploadDao extends Dao[Upload] {
 
   val selectF = sql"""
     SELECT
-       id, created_at, created_by, modified_at, modified_by,
+       id, created_at, created_by, modified_at,
        owner, upload_status, file_type, upload_type,
        files, datasource, metadata, visibility, project_id,
        layer_id, source, keep_in_source_bucket
@@ -50,18 +50,20 @@ object UploadDao extends Dao[Upload] {
           newUpload.copy(layerId = Some(project.defaultLayerId))
         case _ => newUpload
       }
-      upload = updatedUpload.toUpload(user,
-                                      (userPlatform.id, userPlatformAdmin),
-                                      ownerPlatform)
+      upload = updatedUpload.toUpload(
+        user,
+        (userPlatform.id, userPlatformAdmin),
+        ownerPlatform
+      )
       insertedUpload <- (
         sql"""
        INSERT INTO uploads
-         (id, created_at, created_by, modified_at, modified_by,
+         (id, created_at, created_by, modified_at,
           owner, upload_status, file_type, upload_type,
           files, datasource, metadata, visibility, project_id,
           layer_id, source, keep_in_source_bucket)
        VALUES (
-         ${upload.id}, ${upload.createdAt}, ${upload.createdBy}, ${upload.modifiedAt}, ${upload.modifiedBy},
+         ${upload.id}, ${upload.createdAt}, ${upload.createdBy}, ${upload.modifiedAt},
          ${upload.owner}, ${upload.uploadStatus}, ${upload.fileType}, ${upload.uploadType},
          ${upload.files}, ${upload.datasource}, ${upload.metadata}, ${upload.visibility}, ${upload.projectId},
          ${upload.layerId}, ${upload.source}, ${upload.keepInSourceBucket}
@@ -71,7 +73,6 @@ object UploadDao extends Dao[Upload] {
           "created_at",
           "created_by",
           "modified_at",
-          "modified_by",
           "owner",
           "upload_status",
           "file_type",
@@ -88,14 +89,13 @@ object UploadDao extends Dao[Upload] {
       )
     } yield insertedUpload
 
-  def update(upload: Upload, id: UUID, user: User): ConnectionIO[Int] = {
+  def update(upload: Upload, id: UUID): ConnectionIO[Int] = {
     val idFilter = fr"id = ${id}"
     val oldUploadIO = unsafeGetUploadById(id)
     val recordUpdateIO = (sql"""
        UPDATE uploads
        SET
           modified_at = NOW(),
-          modified_by = ${user.id},
           upload_status = ${upload.uploadStatus},
           file_type = ${upload.fileType},
           upload_type = ${upload.uploadType},
@@ -115,18 +115,23 @@ object UploadDao extends Dao[Upload] {
       userPlatform <- UserDao.unsafeGetUserPlatform(oldUpload.owner)
       owner <- UserDao.unsafeGetUserById(oldUpload.owner)
     } yield (oldUpload, newStatus, nAffected, userPlatform, owner)) flatMap {
-      case (oldUpload: Upload,
-            newStatus: UploadStatus,
-            nAffected: Int,
-            platform: Platform,
-            owner: User) => {
-        (oldUpload.uploadStatus,
-         newStatus,
-         platform.publicSettings.emailIngestNotification,
-         owner.getEmail) match {
+      case (
+          oldUpload: Upload,
+          newStatus: UploadStatus,
+          nAffected: Int,
+          platform: Platform,
+          owner: User
+          ) => {
+        (
+          oldUpload.uploadStatus,
+          newStatus,
+          platform.publicSettings.emailIngestNotification,
+          owner.getEmail
+        ) match {
           case (_, _, _, "") | (_, _, false, _) => {
             logger.info(
-              s"Upload complete, but user ${owner.id} or platform ${platform.name} has not requested email notifications")
+              s"Upload complete, but user ${owner.id} or platform ${platform.name} has not requested email notifications"
+            )
             nAffected.pure[ConnectionIO]
           }
           case (UploadStatus.Processing, UploadStatus.Failed, true, _) => {
@@ -136,13 +141,15 @@ object UploadDao extends Dao[Upload] {
           }
           case (UploadStatus.Processing, UploadStatus.Complete, true, _) => {
             logger.info(
-              s"Notifying user ${owner.id} that their upload succeeded")
+              s"Notifying user ${owner.id} that their upload succeeded"
+            )
             UploadNotifier(platform.id, id, MessageType.UploadSucceeded).send *>
               nAffected.pure[ConnectionIO]
           }
           case _ => {
             logger.debug(
-              "No need to send notifications, status transition isn't something users care about")
+              "No need to send notifications, status transition isn't something users care about"
+            )
             nAffected.pure[ConnectionIO]
           }
         }

@@ -6,13 +6,12 @@ class Upload(BaseModel):
 
     def __init__(self, uploadStatus, fileType, uploadType, files,
                  datasource, metadata, visibility, id=None, createdAt=None,
-                 createdBy=None, modifiedAt=None, modifiedBy=None, owner=None,
+                 createdBy=None, modifiedAt=None, owner=None,
                  projectId=None, layerId=None, keepInSourceBucket=None):
         self.id = id
         self.createdAt = createdAt
         self.createdBy = createdBy
         self.modifiedAt = modifiedAt
-        self.modifiedBy = modifiedBy
         self.owner = owner
         self.uploadStatus = uploadStatus
         self.fileType = fileType
@@ -31,7 +30,6 @@ class Upload(BaseModel):
             createdAt=self.createdAt,
             createdBy=self.createdBy,
             modifiedAt=self.modifiedAt,
-            modifiedBy=self.modifiedBy,
             uploadStatus=self.uploadStatus,
             fileType=self.fileType,
             uploadType=self.uploadType,
@@ -63,7 +61,6 @@ class Upload(BaseModel):
             createdAt=d.get('createdAt'),
             createdBy=d.get('createdBy'),
             modifiedAt=d.get('modifiedAt'),
-            modifiedBy=d.get('modifiedBy'),
             owner=d.get('owner'),
             projectId=d.get('projectId'),
             layerId=d.get('layerId'),

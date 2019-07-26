@@ -81,8 +81,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   def userAuditQueryParameters =
     parameters(
       (
-        'createdBy.as[String].?,
-        'modifiedBy.as[String].?
+        'createdBy.as[String].?
       )
     ).as(UserAuditQueryParameters.apply _)
 

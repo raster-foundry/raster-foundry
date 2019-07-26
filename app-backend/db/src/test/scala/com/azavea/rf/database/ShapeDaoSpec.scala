@@ -23,10 +23,12 @@ class ShapeDaoSpec
   test("insert shapes") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         shapes: Seq[Shape.Create]) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            shapes: Seq[Shape.Create]
+        ) =>
           {
             val shapeInsertIO = for {
               (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
@@ -44,11 +46,13 @@ class ShapeDaoSpec
   test("update a shape") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         shapeInsert: Shape.Create,
-         shapeUpdate: Shape.GeoJSON) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            shapeInsert: Shape.Create,
+            shapeUpdate: Shape.GeoJSON
+        ) =>
           {
             val shapeUpdateIO = for {
               (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
@@ -57,8 +61,8 @@ class ShapeDaoSpec
               }
               affectedRows <- ShapeDao.updateShape(
                 fixupShapeGeoJSON(dbUser, shape.toShape, shapeUpdate),
-                shape.id,
-                dbUser)
+                shape.id
+              )
               fetched <- ShapeDao.unsafeGetShapeById(shape.id)
             } yield { (affectedRows, fetched) }
 

@@ -17,19 +17,19 @@ object ImageDao extends Dao[Image] {
 
   val selectF: Fragment = sql"""
     SELECT
-      id, created_at, modified_at, created_by, modified_by,
+      id, created_at, modified_at, created_by,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
       image_metadata, resolution_meters, metadata_files FROM """ ++ tableF
 
   def create(image: Image, user: User): ConnectionIO[Image] = {
     val ownerId = util.Ownership.checkOwner(user, Some(image.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, created_by, modified_by,
+        (id, created_at, modified_at, created_by,
         owner, raw_data_bytes, visibility, filename, sourceuri, scene,
         image_metadata, resolution_meters, metadata_files)
       VALUES
         (${image.id}, ${image.createdAt}, ${image.modifiedAt},
-         ${user.id}, ${user.id}, ${ownerId}, ${image.rawDataBytes}, ${image.visibility},
+         ${user.id}, ${ownerId}, ${image.rawDataBytes}, ${image.visibility},
          ${image.filename}, ${image.sourceUri}, ${image.scene},
          ${image.imageMetadata}, ${image.resolutionMeters}, ${image.metadataFiles})
     """).update.withUniqueGeneratedKeys[Image](
@@ -37,7 +37,6 @@ object ImageDao extends Dao[Image] {
       "created_at",
       "modified_at",
       "created_by",
-      "modified_by",
       "owner",
       "raw_data_bytes",
       "visibility",
@@ -50,8 +49,10 @@ object ImageDao extends Dao[Image] {
     )
   }
 
-  def insertImage(imageBanded: Image.Banded,
-                  user: User): ConnectionIO[Option[Image.WithRelated]] = {
+  def insertImage(
+      imageBanded: Image.Banded,
+      user: User
+  ): ConnectionIO[Option[Image.WithRelated]] = {
     val image = imageBanded.toImage(user)
     val bands: List[Band] = (imageBanded.bands map { band: Band.Create =>
       band.toBand(image.id)
@@ -67,24 +68,23 @@ object ImageDao extends Dao[Image] {
 
   def insertManyImages(images: List[Image]): ConnectionIO[Int] = {
     val insertSql = s"""INSERT INTO ${tableName}
-        (id, created_at, modified_at, created_by, modified_by,
+        (id, created_at, modified_at, created_by,
         owner, raw_data_bytes, visibility, filename, sourceuri, scene,
         image_metadata, resolution_meters, metadata_files)
       VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     Update[Image](insertSql).updateMany(images)
   }
 
   //update images
-  def updateImage(image: Image, id: UUID, user: User): ConnectionIO[Int] = {
+  def updateImage(image: Image, id: UUID): ConnectionIO[Int] = {
     val now = new Timestamp(new java.util.Date().getTime)
     val updateQuery: Fragment =
       fr"UPDATE" ++ this.tableF ++ fr"SET" ++
         fr"""
           modified_at = ${now},
-          modified_by = ${user.id},
           raw_data_bytes = ${image.rawDataBytes},
           visibility = ${image.visibility},
           filename = ${image.filename},

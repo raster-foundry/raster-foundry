@@ -18,7 +18,7 @@ object TeamDao extends Dao[Team] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, created_by, modified_at, modified_by, organization_id,
+      id, created_at, created_by, modified_at, organization_id,
       name, settings, is_active
     FROM
   """ ++ tableF
@@ -36,18 +36,17 @@ object TeamDao extends Dao[Team] {
       team: Team
   ): ConnectionIO[Team] = {
     (fr"INSERT INTO" ++ tableF ++ fr"""
-      (id, created_at, created_by, modified_at, modified_by, organization_id,
+      (id, created_at, created_by, modified_at, organization_id,
       name, settings, is_active)
     VALUES
       (${team.id}, ${team.createdAt}, ${team.createdBy}, ${team.modifiedAt},
-      ${team.modifiedBy}, ${team.organizationId}, ${team.name}, ${team.settings}, true)
+      ${team.organizationId}, ${team.name}, ${team.settings}, true)
     """).update
       .withUniqueGeneratedKeys[Team](
         "id",
         "created_at",
         "created_by",
         "modified_at",
-        "modified_by",
         "organization_id",
         "name",
         "settings",
@@ -57,15 +56,13 @@ object TeamDao extends Dao[Team] {
 
   def update(
       team: Team,
-      id: UUID,
-      user: User
+      id: UUID
   ): ConnectionIO[Team] = {
     val now = new Timestamp((new java.util.Date()).getTime())
     val updateQuery =
       fr"UPDATE" ++ this.tableF ++
         fr"""
       SET modified_at = ${now},
-          modified_by = ${user.id},
           name = ${team.name},
           settings = ${team.settings}
       WHERE id = ${id}"""
@@ -75,7 +72,6 @@ object TeamDao extends Dao[Team] {
         "created_at",
         "created_by",
         "modified_at",
-        "modified_by",
         "organization_id",
         "name",
         "settings",
@@ -93,14 +89,16 @@ object TeamDao extends Dao[Team] {
         GroupRole.Admin
       )
       _ <- UserGroupRoleDao.create(
-        userGroupRoleCreate.toUserGroupRole(user, MembershipStatus.Approved))
+        userGroupRoleCreate.toUserGroupRole(user, MembershipStatus.Approved)
+      )
     } yield createdTeam
   }
 
   def listOrgTeams(
       organizationId: UUID,
       page: PageRequest,
-      qp: TeamQueryParameters): ConnectionIO[PaginatedResponse[Team]] = {
+      qp: TeamQueryParameters
+  ): ConnectionIO[PaginatedResponse[Team]] = {
     TeamDao.query
       .filter(fr"organization_id = ${organizationId}")
       .filter(fr"is_active = true")
@@ -112,7 +110,8 @@ object TeamDao extends Dao[Team] {
       teamId: UUID,
       page: PageRequest,
       searchParams: SearchQueryParameters,
-      actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
+      actingUser: User
+  ): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
     UserGroupRoleDao.listUsersByGroup(
       GroupType.Team,
       teamId,
@@ -120,13 +119,15 @@ object TeamDao extends Dao[Team] {
       searchParams,
       actingUser,
       Some(
-        Map("ugr.membership_status" -> Order.Asc,
-            "ugr.group_role" -> Order.Asc))
+        Map("ugr.membership_status" -> Order.Asc, "ugr.group_role" -> Order.Asc)
+      )
     )
 
-  def validatePath(platformId: UUID,
-                   organizationId: UUID,
-                   teamId: UUID): ConnectionIO[Boolean] =
+  def validatePath(
+      platformId: UUID,
+      organizationId: UUID,
+      teamId: UUID
+  ): ConnectionIO[Boolean] =
     (fr"""
       SELECT count(t.id) > 0
       FROM """ ++ tableF ++ fr""" t
@@ -254,11 +255,13 @@ object TeamDao extends Dao[Team] {
     } yield teamUpdate
   }
 
-  def addUserRole(platformId: UUID,
-                  actingUser: User,
-                  subjectId: String,
-                  teamId: UUID,
-                  groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
+  def addUserRole(
+      platformId: UUID,
+      actingUser: User,
+      subjectId: String,
+      teamId: UUID,
+      groupRole: GroupRole
+  ): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId,
       GroupType.Team,
@@ -271,25 +274,30 @@ object TeamDao extends Dao[Team] {
       userToAdd <- UserDao.unsafeGetUserById(subjectId)
       userIsOrgMember <- OrganizationDao.userIsMember(userToAdd, orgId)
     } yield { userIsOrgMember }
-    createUserGroupRole(teamId,
-                        actingUser,
-                        subjectId,
-                        userGroupRoleCreate,
-                        platformId,
-                        isSameOrgIO)
+    createUserGroupRole(
+      teamId,
+      actingUser,
+      subjectId,
+      userGroupRoleCreate,
+      platformId,
+      isSameOrgIO
+    )
   }
 
-  def deactivateUserRoles(actingUser: User,
-                          subjectId: String,
-                          teamId: UUID): ConnectionIO[List[UserGroupRole]] = {
+  def deactivateUserRoles(
+      subjectId: String,
+      teamId: UUID
+  ): ConnectionIO[List[UserGroupRole]] = {
     val userGroup = UserGroupRole.UserGroup(subjectId, GroupType.Team, teamId)
-    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
+    UserGroupRoleDao.deactivateUserGroupRoles(userGroup)
   }
 
   def teamsForUser(user: User): ConnectionIO[List[Team]] = {
     for {
-      userTeamRoles <- UserGroupRoleDao.listByUserAndGroupType(user,
-                                                               GroupType.Team)
+      userTeamRoles <- UserGroupRoleDao.listByUserAndGroupType(
+        user,
+        GroupType.Team
+      )
       teamIdsO = userTeamRoles.map(_.groupId).toNel
       teams <- teamIdsO match {
         case Some(ids) => query.filter(Fragments.in(fr"id", ids)).list

@@ -104,7 +104,8 @@ trait DatasourceRoutes
         DatasourceDao
           .createDatasource(newDatasource, user)
           .transact(xa)
-          .unsafeToFuture) { datasource =>
+          .unsafeToFuture
+      ) { datasource =>
         complete((StatusCodes.Created, datasource))
       }
     }
@@ -120,9 +121,10 @@ trait DatasourceRoutes
       entity(as[Datasource]) { updateDatasource =>
         onSuccess(
           DatasourceDao
-            .updateDatasource(updateDatasource, datasourceId, user)
+            .updateDatasource(updateDatasource, datasourceId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSingleOrNotFound
         }
       }
@@ -140,9 +142,11 @@ trait DatasourceRoutes
         DatasourceDao
           .deleteDatasourceWithRelated(datasourceId)
           .transact(xa)
-          .unsafeToFuture) { counts: List[Int] =>
+          .unsafeToFuture
+      ) { counts: List[Int] =>
         complete(
-          StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted.")
+          StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted."
+        )
       }
     }
   }
@@ -151,10 +155,12 @@ trait DatasourceRoutes
     user =>
       authorizeAsync {
         DatasourceDao
-          .authorized(user,
-                      ObjectType.Datasource,
-                      datasourceId,
-                      ActionType.View)
+          .authorized(
+            user,
+            ObjectType.Datasource,
+            datasourceId,
+            ActionType.View
+          )
           .transact(xa)
           .unsafeToFuture
       } {
@@ -171,13 +177,17 @@ trait DatasourceRoutes
     user =>
       entity(as[List[ObjectAccessControlRule]]) { acrList =>
         authorizeAsync {
-          (DatasourceDao.authorized(user,
-                                    ObjectType.Datasource,
-                                    datasourceId,
-                                    ActionType.Edit),
-           acrList traverse { acr =>
-             DatasourceDao.isValidPermission(acr, user)
-           } map { _.foldLeft(true)(_ && _) }).tupled
+          (
+            DatasourceDao.authorized(
+              user,
+              ObjectType.Datasource,
+              datasourceId,
+              ActionType.Edit
+            ),
+            acrList traverse { acr =>
+              DatasourceDao.isValidPermission(acr, user)
+            } map { _.foldLeft(true)(_ && _) }
+          ).tupled
             .map({ authTup =>
               authTup._1 && authTup._2
             })
@@ -198,11 +208,15 @@ trait DatasourceRoutes
     user =>
       entity(as[ObjectAccessControlRule]) { acr =>
         authorizeAsync {
-          (DatasourceDao.authorized(user,
-                                    ObjectType.Datasource,
-                                    datasourceId,
-                                    ActionType.Edit),
-           DatasourceDao.isValidPermission(acr, user)).tupled
+          (
+            DatasourceDao.authorized(
+              user,
+              ObjectType.Datasource,
+              datasourceId,
+              ActionType.Edit
+            ),
+            DatasourceDao.isValidPermission(acr, user)
+          ).tupled
             .map({ authTup =>
               authTup._1 && authTup._2
             })
@@ -223,10 +237,12 @@ trait DatasourceRoutes
     user =>
       authorizeAsync {
         DatasourceDao
-          .authorized(user,
-                      ObjectType.Datasource,
-                      datasourceId,
-                      ActionType.View)
+          .authorized(
+            user,
+            ObjectType.Datasource,
+            datasourceId,
+            ActionType.View
+          )
           .transact(xa)
           .unsafeToFuture
       } {
@@ -254,10 +270,12 @@ trait DatasourceRoutes
     user =>
       authorizeAsync {
         DatasourceDao
-          .authorized(user,
-                      ObjectType.Datasource,
-                      datasourceId,
-                      ActionType.Edit)
+          .authorized(
+            user,
+            ObjectType.Datasource,
+            datasourceId,
+            ActionType.Edit
+          )
           .transact(xa)
           .unsafeToFuture
       } {

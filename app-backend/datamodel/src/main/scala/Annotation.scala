@@ -20,7 +20,6 @@ final case class Annotation(
     createdAt: Timestamp,
     createdBy: String,
     modifiedAt: Timestamp,
-    modifiedBy: String,
     owner: String,
     label: String,
     description: Option[String],
@@ -42,7 +41,6 @@ final case class Annotation(
       this.createdAt,
       this.createdBy,
       this.modifiedAt,
-      this.modifiedBy,
       this.owner,
       this.label,
       this.description,
@@ -64,7 +62,6 @@ final case class AnnotationProperties(
     createdAt: Timestamp,
     createdBy: String,
     modifiedAt: Timestamp,
-    modifiedBy: String,
     owner: String,
     label: String,
     description: Option[String],
@@ -116,7 +113,6 @@ object Annotation extends LazyLogging {
         properties.createdAt,
         properties.createdBy,
         properties.modifiedAt,
-        properties.modifiedBy,
         properties.owner,
         properties.label match {
           case "" => "Unlabeled"
@@ -165,7 +161,6 @@ object Annotation extends LazyLogging {
         now, // createdAt
         user.id, // createdBy
         now, // modifiedAt
-        user.id, // modifiedBy
         ownerId, // owner
         label match {
           case "" => "Unlabeled"
@@ -215,7 +210,6 @@ final case class AnnotationWithOwnerInfo(
     createdAt: Timestamp,
     createdBy: String,
     modifiedAt: Timestamp,
-    modifiedBy: String,
     owner: String,
     label: String,
     description: Option[String],
@@ -239,7 +233,6 @@ final case class AnnotationWithOwnerInfo(
       this.createdAt,
       this.createdBy,
       this.modifiedAt,
-      this.modifiedBy,
       this.owner,
       this.label,
       this.description,
@@ -280,7 +273,6 @@ final case class AnnotationWithOwnerInfoProperties(
     createdAt: Timestamp,
     createdBy: String,
     modifiedAt: Timestamp,
-    modifiedBy: String,
     owner: String,
     label: String,
     description: Option[String],

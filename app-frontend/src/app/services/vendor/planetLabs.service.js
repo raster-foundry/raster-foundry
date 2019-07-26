@@ -86,7 +86,6 @@ export default (app) => {
                     createdAt: feature.properties.acquired,
                     createdBy: 'planet',
                     modifiedAt: feature.properties.published,
-                    modifiedBy: 'planet',
                     owner: 'planet',
                     datasource: feature.properties.item_type,
                     sceneMetadata: feature.properties,

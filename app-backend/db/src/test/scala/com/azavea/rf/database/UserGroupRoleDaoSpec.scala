@@ -24,29 +24,34 @@ class UserGroupRoleDaoSpec
   test("insert a user group role") {
     check {
       forAll {
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         teamCreate: Team.Create,
-         ugrCreate: UserGroupRole.Create) =>
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            teamCreate: Team.Create,
+            ugrCreate: UserGroupRole.Create
+        ) =>
           {
             val insertUgrIO = for {
               (insertedUser, insertedOrg, insertedPlatform) <- insertUserOrgPlatform(
                 userCreate,
                 orgCreate,
                 platform,
-                false)
+                false
+              )
               insertedTeam <- TeamDao.create(
                 teamCreate
                   .copy(organizationId = insertedOrg.id)
-                  .toTeam(insertedUser))
+                  .toTeam(insertedUser)
+              )
               insertedUgr <- UserGroupRoleDao.create(
-                fixupUserGroupRole(insertedUser,
-                                   insertedOrg,
-                                   insertedTeam,
-                                   insertedPlatform,
-                                   ugrCreate)
-                  .toUserGroupRole(insertedUser, MembershipStatus.Approved)
+                fixupUserGroupRole(
+                  insertedUser,
+                  insertedOrg,
+                  insertedTeam,
+                  insertedPlatform,
+                  ugrCreate
+                ).toUserGroupRole(insertedUser, MembershipStatus.Approved)
               )
             } yield { insertedUgr }
 
@@ -55,7 +60,6 @@ class UserGroupRoleDaoSpec
             insertedUgr.userId == userCreate.id &&
             insertedUgr.groupType == ugrCreate.groupType &&
             insertedUgr.groupRole == ugrCreate.groupRole &&
-            insertedUgr.modifiedBy == userCreate.id &&
             insertedUgr.createdBy == userCreate.id
           }
       }
@@ -63,7 +67,8 @@ class UserGroupRoleDaoSpec
   }
 
   test(
-    "list users by group: private users are not viewable by those outside of their organization") {
+    "list users by group: private users are not viewable by those outside of their organization"
+  ) {
     check {
       forAll {
         (
@@ -80,53 +85,65 @@ class UserGroupRoleDaoSpec
               // Create necessary groups
               dbPlatform <- PlatformDao.create(platform)
               dbMainOrg <- OrganizationDao.create(
-                mainOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+                mainOrg.copy(platformId = dbPlatform.id).toOrganization(true)
+              )
               dbAltOrg <- OrganizationDao.create(
-                altOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+                altOrg.copy(platformId = dbPlatform.id).toOrganization(true)
+              )
 
               // Create necessary users
               dbTestingUser <- UserDao.create(testingUser)
               dbPublicUser <- UserDao.create(publicUser)
-              _ <- UserDao.updateUser(dbPublicUser.copy(
-                                        visibility = UserVisibility.Public
-                                      ),
-                                      dbPublicUser.id)
+              _ <- UserDao.updateUser(
+                dbPublicUser.copy(
+                  visibility = UserVisibility.Public
+                ),
+                dbPublicUser.id
+              )
               dbPrivateUser <- UserDao.create(privateUser)
 
               // Create user group roles
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Platform,
-                          dbPlatform.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Platform,
+                    dbPlatform.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Platform,
-                          dbPlatform.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Platform,
+                    dbPlatform.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Organization,
-                          dbMainOrg.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Organization,
+                    dbMainOrg.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Organization,
-                          dbAltOrg.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Organization,
+                    dbAltOrg.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
@@ -154,7 +171,8 @@ class UserGroupRoleDaoSpec
   }
 
   test(
-    "list users by group: private users are viewable by those within their organization") {
+    "list users by group: private users are viewable by those within their organization"
+  ) {
     check {
       forAll {
         (
@@ -170,51 +188,62 @@ class UserGroupRoleDaoSpec
               // Create necessary groups
               dbPlatform <- PlatformDao.create(platform)
               dbMainOrg <- OrganizationDao.create(
-                mainOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+                mainOrg.copy(platformId = dbPlatform.id).toOrganization(true)
+              )
 
               // Create necessary users
               dbTestingUser <- UserDao.create(testingUser)
               dbPublicUser <- UserDao.create(publicUser)
-              _ <- UserDao.updateUser(dbPublicUser.copy(
-                                        visibility = UserVisibility.Public
-                                      ),
-                                      dbPublicUser.id)
+              _ <- UserDao.updateUser(
+                dbPublicUser.copy(
+                  visibility = UserVisibility.Public
+                ),
+                dbPublicUser.id
+              )
               dbPrivateUser <- UserDao.create(privateUser)
 
               // Create user group roles
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Platform,
-                          dbPlatform.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Platform,
+                    dbPlatform.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Platform,
-                          dbPlatform.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Platform,
+                    dbPlatform.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Organization,
-                          dbMainOrg.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Organization,
+                    dbMainOrg.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Organization,
-                          dbMainOrg.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Organization,
+                    dbMainOrg.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
@@ -242,7 +271,8 @@ class UserGroupRoleDaoSpec
   }
 
   test(
-    "list users by group: public users are viewable by those outside of their organization") {
+    "list users by group: public users are viewable by those outside of their organization"
+  ) {
     check {
       forAll {
         (
@@ -264,53 +294,65 @@ class UserGroupRoleDaoSpec
               // Create necessary groups
               dbPlatform <- PlatformDao.create(platform)
               dbMainOrg <- OrganizationDao.create(
-                mainOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+                mainOrg.copy(platformId = dbPlatform.id).toOrganization(true)
+              )
               dbAltOrg <- OrganizationDao.create(
-                altOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+                altOrg.copy(platformId = dbPlatform.id).toOrganization(true)
+              )
 
               // Create necessary users
               dbTestingUser <- UserDao.create(testingUser)
               dbPublicUser <- UserDao.create(publicUser)
-              _ <- UserDao.updateUser(dbPublicUser.copy(
-                                        visibility = UserVisibility.Public
-                                      ),
-                                      dbPublicUser.id)
+              _ <- UserDao.updateUser(
+                dbPublicUser.copy(
+                  visibility = UserVisibility.Public
+                ),
+                dbPublicUser.id
+              )
               dbPrivateUser <- UserDao.create(privateUser)
 
               // Create user group roles
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Platform,
-                          dbPlatform.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Platform,
+                    dbPlatform.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Platform,
-                          dbPlatform.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Platform,
+                    dbPlatform.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Organization,
-                          dbMainOrg.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Organization,
+                    dbMainOrg.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Organization,
-                          dbAltOrg.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Organization,
+                    dbAltOrg.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
@@ -338,7 +380,8 @@ class UserGroupRoleDaoSpec
   }
 
   test(
-    "list users by group: private users are viewable by those on the same team") {
+    "list users by group: private users are viewable by those on the same team"
+  ) {
     check {
       forAll {
         (
@@ -358,72 +401,89 @@ class UserGroupRoleDaoSpec
               // Create necessary groups
               dbPlatform <- PlatformDao.create(platform)
               dbMainOrg <- OrganizationDao.create(
-                mainOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+                mainOrg.copy(platformId = dbPlatform.id).toOrganization(true)
+              )
               dbAltOrg <- OrganizationDao.create(
-                altOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+                altOrg.copy(platformId = dbPlatform.id).toOrganization(true)
+              )
               dbTeam <- TeamDao.create(
-                team.copy(organizationId = dbMainOrg.id).toTeam(dbTestingUser))
+                team.copy(organizationId = dbMainOrg.id).toTeam(dbTestingUser)
+              )
 
               // Create necessary users
               dbPublicUser <- UserDao.create(publicUser)
-              _ <- UserDao.updateUser(dbPublicUser.copy(
-                                        visibility = UserVisibility.Public
-                                      ),
-                                      dbPublicUser.id)
+              _ <- UserDao.updateUser(
+                dbPublicUser.copy(
+                  visibility = UserVisibility.Public
+                ),
+                dbPublicUser.id
+              )
               dbPrivateUser <- UserDao.create(privateUser)
 
               // Create user group roles
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Platform,
-                          dbPlatform.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Platform,
+                    dbPlatform.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Platform,
-                          dbPlatform.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Platform,
+                    dbPlatform.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Organization,
-                          dbMainOrg.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Organization,
+                    dbMainOrg.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Organization,
-                          dbAltOrg.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Organization,
+                    dbAltOrg.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPublicUser.id,
-                          GroupType.Team,
-                          dbTeam.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPublicUser.id,
+                    GroupType.Team,
+                    dbTeam.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
-                  .Create(dbPrivateUser.id,
-                          GroupType.Team,
-                          dbTeam.id,
-                          GroupRole.Member)
+                  .Create(
+                    dbPrivateUser.id,
+                    GroupType.Team,
+                    dbTeam.id,
+                    GroupRole.Member
+                  )
                   .toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
               )
 
@@ -453,20 +513,23 @@ class UserGroupRoleDaoSpec
   test("update a user group role") {
     check {
       forAll {
-        (userCreate: User.Create,
-         manager: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         teamCreate: Team.Create,
-         ugrCreate: UserGroupRole.Create,
-         ugrUpdate: UserGroupRole.Create) =>
+        (
+            userCreate: User.Create,
+            manager: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            teamCreate: Team.Create,
+            ugrCreate: UserGroupRole.Create,
+            ugrUpdate: UserGroupRole.Create
+        ) =>
           {
             val insertUgrWithRelationsIO = for {
               (insertedUser, insertedOrg, insertedPlatform) <- insertUserOrgPlatform(
                 userCreate,
                 orgCreate,
                 platform,
-                false)
+                false
+              )
               managerUser <- UserDao.create(manager)
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
@@ -481,42 +544,50 @@ class UserGroupRoleDaoSpec
               insertedTeam <- TeamDao.create(
                 teamCreate
                   .copy(organizationId = insertedOrg.id)
-                  .toTeam(insertedUser))
+                  .toTeam(insertedUser)
+              )
               insertedUgr <- UserGroupRoleDao.create(
-                fixupUserGroupRole(insertedUser,
-                                   insertedOrg,
-                                   insertedTeam,
-                                   insertedPlatform,
-                                   ugrCreate)
-                  .toUserGroupRole(managerUser, MembershipStatus.Approved)
+                fixupUserGroupRole(
+                  insertedUser,
+                  insertedOrg,
+                  insertedTeam,
+                  insertedPlatform,
+                  ugrCreate
+                ).toUserGroupRole(managerUser, MembershipStatus.Approved)
               )
             } yield
-              (insertedUgr,
-               insertedUser,
-               managerUser,
-               insertedOrg,
-               insertedTeam,
-               insertedPlatform)
+              (
+                insertedUgr,
+                insertedUser,
+                managerUser,
+                insertedOrg,
+                insertedTeam,
+                insertedPlatform
+              )
 
             val updateUgrWithUpdatedAndAffectedRowsIO = insertUgrWithRelationsIO flatMap {
-              case (dbUgr: UserGroupRole,
-                    dbMember: User,
-                    dbAdmin: User,
-                    dbOrg: Organization,
-                    dbTeam: Team,
-                    dbPlatform: Platform) => {
-                val fixedUpUgrUpdate = fixupUserGroupRole(dbMember,
-                                                          dbOrg,
-                                                          dbTeam,
-                                                          dbPlatform,
-                                                          ugrUpdate)
-                  .toUserGroupRole(dbAdmin, MembershipStatus.Approved)
-                UserGroupRoleDao.update(fixedUpUgrUpdate, dbUgr.id, dbAdmin) flatMap {
+              case (
+                  dbUgr: UserGroupRole,
+                  dbMember: User,
+                  dbAdmin: User,
+                  dbOrg: Organization,
+                  dbTeam: Team,
+                  dbPlatform: Platform
+                  ) => {
+                val fixedUpUgrUpdate = fixupUserGroupRole(
+                  dbMember,
+                  dbOrg,
+                  dbTeam,
+                  dbPlatform,
+                  ugrUpdate
+                ).toUserGroupRole(dbAdmin, MembershipStatus.Approved)
+                UserGroupRoleDao.update(fixedUpUgrUpdate, dbUgr.id) flatMap {
                   (affectedRows: Int) =>
                     {
                       UserGroupRoleDao.unsafeGetUserGroupRoleById(
                         dbUgr.id,
-                        dbMember) map { (affectedRows, _) }
+                        dbMember
+                      ) map { (affectedRows, _) }
                     }
                 }
               }
@@ -528,7 +599,6 @@ class UserGroupRoleDaoSpec
             // to true when those are turned into UserGroupRoles
             affectedRows == 1 &&
             updatedUgr.isActive == true &&
-            updatedUgr.modifiedBy == manager.id &&
             (updatedUgr.groupType == ugrUpdate.groupType) == (ugrUpdate.groupType == ugrCreate.groupType) &&
             updatedUgr.groupRole == ugrUpdate.groupRole
           }
@@ -539,39 +609,46 @@ class UserGroupRoleDaoSpec
   test("deactivate a user group role") {
     check {
       forAll {
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         teamCreate: Team.Create,
-         ugrCreate: UserGroupRole.Create) =>
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            teamCreate: Team.Create,
+            ugrCreate: UserGroupRole.Create
+        ) =>
           {
             val insertUgrWithUserIO = for {
               (insertedUser, insertedOrg, insertedPlatform) <- insertUserOrgPlatform(
                 userCreate,
                 orgCreate,
                 platform,
-                false)
+                false
+              )
               insertedTeam <- TeamDao.create(
                 teamCreate
                   .copy(organizationId = insertedOrg.id)
-                  .toTeam(insertedUser))
+                  .toTeam(insertedUser)
+              )
               insertedUgr <- UserGroupRoleDao.create(
-                fixupUserGroupRole(insertedUser,
-                                   insertedOrg,
-                                   insertedTeam,
-                                   insertedPlatform,
-                                   ugrCreate)
-                  .toUserGroupRole(insertedUser, MembershipStatus.Approved)
+                fixupUserGroupRole(
+                  insertedUser,
+                  insertedOrg,
+                  insertedTeam,
+                  insertedPlatform,
+                  ugrCreate
+                ).toUserGroupRole(insertedUser, MembershipStatus.Approved)
               )
             } yield (insertedUgr, insertedUser)
 
             val deactivateWithDeactivatedUgrIO = insertUgrWithUserIO flatMap {
               case (dbUgr: UserGroupRole, dbUser: User) => {
-                UserGroupRoleDao.deactivate(dbUgr.id, dbUser) flatMap {
+                UserGroupRoleDao.deactivate(dbUgr.id) flatMap {
                   (affectedRows: Int) =>
                     {
-                      UserGroupRoleDao.unsafeGetUserGroupRoleById(dbUgr.id,
-                                                                  dbUser) map {
+                      UserGroupRoleDao.unsafeGetUserGroupRoleById(
+                        dbUgr.id,
+                        dbUser
+                      ) map {
                         (affectedRows, _)
                       }
                     }
@@ -583,7 +660,6 @@ class UserGroupRoleDaoSpec
               deactivateWithDeactivatedUgrIO.transact(xa).unsafeRunSync
             affectedRows == 1 &&
             updatedUgr.isActive == false &&
-            updatedUgr.modifiedBy == userCreate.id &&
             updatedUgr.groupType == ugrCreate.groupType &&
             updatedUgr.groupRole == ugrCreate.groupRole
           }
@@ -594,39 +670,42 @@ class UserGroupRoleDaoSpec
   test("deactivate a user's group roles using UserGroupRole.UserGroup") {
     check {
       forAll {
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         teamCreate: Team.Create,
-         platform: Platform,
-         ugrCreate: UserGroupRole.Create) =>
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            teamCreate: Team.Create,
+            platform: Platform,
+            ugrCreate: UserGroupRole.Create
+        ) =>
           {
             val insertUgrWithUserIO = for {
               (insertedUser, insertedOrg, insertedPlatform) <- insertUserOrgPlatform(
                 userCreate,
                 orgCreate,
                 platform,
-                false)
+                false
+              )
               insertedTeam <- TeamDao.create(
                 teamCreate
                   .copy(organizationId = insertedOrg.id)
-                  .toTeam(insertedUser))
+                  .toTeam(insertedUser)
+              )
               insertedUgr <- UserGroupRoleDao.create(
-                fixupUserGroupRole(insertedUser,
-                                   insertedOrg,
-                                   insertedTeam,
-                                   insertedPlatform,
-                                   ugrCreate)
-                  .toUserGroupRole(insertedUser, MembershipStatus.Approved)
+                fixupUserGroupRole(
+                  insertedUser,
+                  insertedOrg,
+                  insertedTeam,
+                  insertedPlatform,
+                  ugrCreate
+                ).toUserGroupRole(insertedUser, MembershipStatus.Approved)
               )
             } yield (insertedUgr, insertedUser)
 
             val deactivateWithDeactivatedUgrIO = insertUgrWithUserIO flatMap {
               case (dbUgr: UserGroupRole, dbUser: User) => {
                 UserGroupRoleDao.deactivateUserGroupRoles(
-                  UserGroupRole.UserGroup(dbUser.id,
-                                          dbUgr.groupType,
-                                          dbUgr.groupId),
-                  dbUser
+                  UserGroupRole
+                    .UserGroup(dbUser.id, dbUgr.groupType, dbUgr.groupId)
                 )
               }
             }
@@ -638,7 +717,6 @@ class UserGroupRoleDaoSpec
               .filter(
                 (ugr) =>
                   ugr.isActive == false &&
-                    ugr.modifiedBy == userCreate.id &&
                     ugr.groupType == ugrCreate.groupType &&
                     ugr.groupRole == ugrCreate.groupRole
               )
@@ -651,21 +729,26 @@ class UserGroupRoleDaoSpec
   test("Get user group roles with group names") {
     check {
       forAll {
-        (userCreate: User.Create,
-         platform: Platform,
-         orgCreate: Organization.Create,
-         teamCreate: Team.Create) =>
+        (
+            userCreate: User.Create,
+            platform: Platform,
+            orgCreate: Organization.Create,
+            teamCreate: Team.Create
+        ) =>
           {
             val getUgrWithNameIO = for {
-              userOrgPlat <- insertUserOrgPlatform(userCreate,
-                                                   orgCreate,
-                                                   platform,
-                                                   true)
+              userOrgPlat <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform,
+                true
+              )
               (dbUser, dbOrg, dbPlat) = userOrgPlat
               dbTeam <- TeamDao.create(
                 teamCreate
                   .copy(organizationId = dbOrg.id)
-                  .toTeam(dbUser))
+                  .toTeam(dbUser)
+              )
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(
@@ -697,7 +780,8 @@ class UserGroupRoleDaoSpec
 
             assert(
               realGroupNames.diff(groupNames).length == 0,
-              "Inserted UGR group names should match inserted plat, org, and team names")
+              "Inserted UGR group names should match inserted plat, org, and team names"
+            )
             true
           }
       }
