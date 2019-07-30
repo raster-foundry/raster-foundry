@@ -434,4 +434,21 @@ object TaskDao extends Dao[Task] {
     ON
       team_users.user_id = user_validated_tasks.user_id
   """).query[TaskUserSummary].to[List]
+
+  def listLayerTasksByStatus(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[List[Task]] = {
+    val taskStatusF: Fragment =
+      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
+        case Some(taskStatusNel) => Fragments.in(fr"status", taskStatusNel)
+        case _                   => fr""
+      }
+    query
+      .filter(fr"project_id = $projectId")
+      .filter(fr"project_layer_id = $layerId")
+      .filter(taskStatusF)
+      .list
+  }
 }
