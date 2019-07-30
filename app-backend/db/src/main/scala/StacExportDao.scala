@@ -67,8 +67,7 @@ object StacExportDao extends Dao[StacExport] {
   }
 
   def update(stacExport: StacExport,
-             id: UUID,
-             user: User): ConnectionIO[Int] = {
+             id: UUID): ConnectionIO[Int] = {
     val now = new Timestamp(new Date().getTime)
     (fr"UPDATE" ++ this.tableF ++ fr"SET" ++ fr"""
       modified_at = ${now},

@@ -96,7 +96,7 @@ trait StacRoutes
       entity(as[StacExport]) { updateStacExport =>
         onSuccess(
           StacExportDao
-            .update(updateStacExport, id, user)
+            .update(updateStacExport, id)
             .transact(xa)
             .unsafeToFuture) {
           completeSingleOrNotFound
