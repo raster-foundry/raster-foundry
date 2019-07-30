@@ -8,6 +8,8 @@ import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 import com.rasterfoundry.datamodel.PageRequest
+import java.util.UUID
+import io.circe.syntax._
 
 class AnnotationDaoSpec
     extends FunSuite
@@ -311,6 +313,198 @@ class AnnotationDaoSpec
                 )
               })
               .toSet == annotationsForProject.results.toSet
+          }
+      }
+    }
+  }
+
+  test("list detection annotations from a layer by task status") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            annoAndTaskFeatureCreate: (Task.TaskFeatureCreate,
+                                       List[Annotation.Create]),
+            labelValidateTeamCreate: (Team.Create, Team.Create),
+            labelValidateTeamUgrCreate: (UserGroupRole.Create,
+                                         UserGroupRole.Create)
+        ) =>
+          {
+            val (taskFeatureCreate, annotationsCreate) =
+              annoAndTaskFeatureCreate
+            val labelName = "Car"
+            val labelId = UUID.randomUUID()
+            val labelGroupId = UUID.randomUUID()
+            val connIO = for {
+              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              updatedDbProject <- fixupProjectExtrasUpdate(
+                labelValidateTeamCreate,
+                labelValidateTeamUgrCreate,
+                dbOrg,
+                dbUser,
+                dbPlatform,
+                dbProject,
+                Some(List((labelId, labelName, labelGroupId))),
+                Some(Map(labelGroupId -> "Car Group"))
+              )
+              collection <- TaskDao.insertTasks(
+                Task.TaskFeatureCollectionCreate(
+                  features = List(
+                    fixupTaskFeatureCreate(taskFeatureCreate, updatedDbProject)
+                      .withStatus(TaskStatus.Labeled)
+                  )
+                ),
+                dbUser
+              )
+              feature = collection.features.head
+              updatedAnnotationsCreate = annotationsCreate.map(annoCreate => {
+                annoCreate.copy(
+                  label = labelId.toString(),
+                  geometry = Some(feature.geometry),
+                  taskId = Some(feature.id)
+                )
+              })
+              insertedAnnotations <- AnnotationDao.insertAnnotations(
+                updatedAnnotationsCreate,
+                dbProject.id,
+                dbUser
+              )
+              listedAnnotations <- AnnotationDao
+                .listDetectionLayerAnnotationsByTaskStatus(
+                  dbProject.id,
+                  dbProject.defaultLayerId,
+                  List("LABELED")
+                )
+            } yield { (insertedAnnotations, listedAnnotations) }
+
+            val (dbAnnotations, listed) = connIO.transact(xa).unsafeRunSync
+            dbAnnotations.length == listed.length &&
+            listed.map(_.label).toSet == Set(labelName) &&
+            true
+          }
+      }
+    }
+  }
+
+  test("list classification annotations from a layer by task status") {
+    check {
+      forAll {
+        (
+            userOrgPlat: (User.Create, Organization.Create, Platform),
+            projectCreate: Project.Create,
+            annotationCreates: (Annotation.Create, Annotation.Create),
+            taskFeatureCreates: (Task.TaskFeatureCreate, Task.TaskFeatureCreate),
+            labelValidateTeamCreate: (Team.Create, Team.Create),
+            labelValidateTeamUgrCreate: (UserGroupRole.Create,
+                                         UserGroupRole.Create)
+        ) =>
+          {
+            val (userCreate, orgCreate, platform) = userOrgPlat
+            val (taskFeatureCreateOne, taskFeatureCreateTwo) =
+              taskFeatureCreates
+            val (annotationCreateOne, annotationCreateTwo) = annotationCreates
+            val labelNameOne = "Finished"
+            val labelIdOne = UUID.randomUUID()
+            val labelNameTwo = "Partial"
+            val labelIdTwo = UUID.randomUUID()
+            val labelGroupIdOne = UUID.randomUUID()
+            val labelGroupNameOne = "Building"
+            val labelGroupIdTwo = UUID.randomUUID()
+            val labelGroupNameTwo = "Road"
+
+            val connIO = for {
+              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              updatedDbProject <- fixupProjectExtrasUpdate(
+                labelValidateTeamCreate,
+                labelValidateTeamUgrCreate,
+                dbOrg,
+                dbUser,
+                dbPlatform,
+                dbProject,
+                Some(
+                  List(
+                    (labelIdOne, labelNameOne, labelGroupIdOne),
+                    (labelIdTwo, labelNameTwo, labelGroupIdTwo),
+                  )),
+                Some(
+                  Map(
+                    labelGroupIdOne -> labelGroupNameOne,
+                    labelGroupIdTwo -> labelGroupNameTwo
+                  ))
+              )
+              taskCollectionOne <- TaskDao.insertTasks(
+                Task.TaskFeatureCollectionCreate(
+                  features = List(
+                    fixupTaskFeatureCreate(taskFeatureCreateOne,
+                                           updatedDbProject)
+                      .withStatus(TaskStatus.Labeled)
+                  )
+                ),
+                dbUser
+              )
+              taskCollectionTwo <- TaskDao.insertTasks(
+                Task.TaskFeatureCollectionCreate(
+                  features = List(
+                    fixupTaskFeatureCreate(taskFeatureCreateTwo,
+                                           updatedDbProject)
+                      .withStatus(TaskStatus.Validated)
+                  )
+                ),
+                dbUser
+              )
+              taskOne = taskCollectionOne.features.head
+              taskTwo = taskCollectionTwo.features.head
+              _ <- AnnotationDao.insertAnnotations(
+                List(
+                  annotationCreateOne.copy(
+                    label = s"${labelIdOne} ${labelIdTwo}",
+                    geometry = Some(taskOne.geometry),
+                    taskId = Some(taskOne.id)
+                  ),
+                  annotationCreateTwo.copy(
+                    label = s"${labelIdOne} ${labelIdTwo}",
+                    geometry = Some(taskTwo.geometry),
+                    taskId = Some(taskTwo.id)
+                  )
+                ),
+                dbProject.id,
+                dbUser
+              )
+              listedAnnotationsFC <- AnnotationDao
+                .listClassificationLayerAnnotationsByTaskStatus(
+                  dbProject.id,
+                  dbProject.defaultLayerId,
+                  List("LABELED", "VALIDATED")
+                )
+            } yield { listedAnnotationsFC }
+
+            val listed = connIO.transact(xa).unsafeRunSync
+
+            listed.features.length == 2 &&
+            listed.`type` == "FeatureCollection" &&
+            listed.features.foldLeft(true)((acc, feature) => {
+              acc &&
+              feature.properties.asJson.hcursor
+                .get[String](labelGroupNameOne)
+                .toOption == Some(labelNameOne) &&
+              feature.properties.asJson.hcursor
+                .get[String](labelGroupNameTwo)
+                .toOption == Some(labelNameTwo)
+            }) &&
+            true
           }
       }
     }
