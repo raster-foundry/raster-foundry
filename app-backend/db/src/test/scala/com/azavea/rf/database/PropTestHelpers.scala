@@ -326,7 +326,6 @@ trait PropTestHelpers {
   ): Task.TaskPropertiesCreate =
     tpc.copy(projectId = project.id, projectLayerId = project.defaultLayerId)
 
-<<<<<<< HEAD
   def fixupProjectExtrasUpdate(
       labelValidateTeamCreate: (Team.Create, Team.Create),
       labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create),
