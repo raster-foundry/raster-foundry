@@ -135,16 +135,18 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
           // There's a sup-http4s module that should do this, but it's on http4s-0.20.0-M4,
           // and there appears to be a binary compatibility issue
           if (report.health == Health.sick) {
+            val healthcheckResults = Map(
+              "result" -> "Unhealthy".asJson,
+              "errors" -> report.checks
+                .filter(_.health == Health.sick)
+                .map {
+                  _.tag
+                }
+                .asJson
+            ).asJson
+            logger.error(s"Healthcheck Failing: $healthcheckResults")
             ServiceUnavailable(
-              Map(
-                "result" -> "Unhealthy".asJson,
-                "errors" -> (report.checks
-                  .filter(_.health == Health.sick)
-                  .map {
-                    _.tag
-                  })
-                  .asJson
-              ).asJson
+              healthcheckResults
             )
           } else {
             Ok(
