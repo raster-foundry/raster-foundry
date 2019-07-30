@@ -16,7 +16,7 @@ object StacExportDao extends Dao[StacExport] {
 
   val selectF: Fragment = sql"""
       SELECT
-        id, created_at, created_by, modified_at, modified_by, owner,
+        id, created_at, created_by, modified_at, owner,
         name, export_location, export_status, layer_definitions, union_aois,
         task_statuses
       FROM
@@ -43,20 +43,19 @@ object StacExportDao extends Dao[StacExport] {
              user: User): ConnectionIO[StacExport] = {
     val newExport = newStacExport.toStacExport(user)
     (fr"INSERT INTO" ++ tableF ++ fr"""
-      (id, created_at, created_by, modified_at, modified_by, owner,
+      (id, created_at, created_by, modified_at, owner,
       name, export_location, export_status, layer_definitions, union_aois,
       task_statuses)
     VALUES
       (${newExport.id}, ${newExport.createdAt}, ${newExport.createdBy}, ${newExport.modifiedAt},
-      ${newExport.modifiedBy}, ${newExport.owner}, ${newExport.name}, ${newExport.exportLocation},
-      ${newExport.exportStatus}, ${newExport.layerDefinitions}, ${newExport.unionAois},
+      ${newExport.owner}, ${newExport.name}, ${newExport.exportLocation},${newExport.exportStatus},
+      ${newExport.layerDefinitions}, ${newExport.unionAois},
       ${newExport.taskStatuses})
     """).update.withUniqueGeneratedKeys[StacExport](
       "id",
       "created_at",
       "created_by",
       "modified_at",
-      "modified_by",
       "owner",
       "name",
       "export_location",
@@ -73,7 +72,6 @@ object StacExportDao extends Dao[StacExport] {
     val now = new Timestamp(new Date().getTime)
     (fr"UPDATE" ++ this.tableF ++ fr"SET" ++ fr"""
       modified_at = ${now},
-      modified_by = ${user.id},
       name = ${stacExport.name},
       export_location = ${stacExport.exportLocation},
       export_status = ${stacExport.exportStatus}

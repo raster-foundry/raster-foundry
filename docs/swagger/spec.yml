@@ -4813,7 +4813,6 @@ paths:
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/owner'
         - $ref: '#/parameters/createdBy'
-        - $ref: '#/parameters/modifiedBy'
         - $ref: '#/parameters/search'
         - $ref: '#/parameters/exportStatus'
       responses:
