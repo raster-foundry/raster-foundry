@@ -10,7 +10,6 @@ final case class StacExport(id: UUID,
                             createdAt: Timestamp,
                             createdBy: String,
                             modifiedAt: Timestamp,
-                            modifiedBy: Option[String],
                             owner: String,
                             name: String,
                             exportLocation: Option[String],
@@ -43,7 +42,6 @@ object StacExport {
         now, // createdAt
         user.id, // createdBy
         now, // modifiedAt
-        Some(user.id), // modifiedBy
         ownerId, // owner
         this.name,
         None,

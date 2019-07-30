@@ -111,6 +111,8 @@ dist/
 /app-tasks/jars/rf-batch.jar
 /data
 
+.vscode
+
 # Patch files
 *.patch
 scratch/

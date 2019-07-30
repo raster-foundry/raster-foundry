@@ -364,4 +364,189 @@ object AnnotationDao extends Dao[Annotation] {
       )
     }
   }
+
+  def listDetectionLayerAnnotationsByTaskStatus(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[List[Annotation]] = {
+    val taskStatusF: Fragment =
+      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
+        case Some(taskStatusNel) =>
+          fr"AND" ++ Fragments.in(fr"tasks.status", taskStatusNel)
+        case _ => fr""
+      }
+    (fr"""
+      SELECT 
+        annotations.id,
+        annotations.project_id,
+        annotations.created_at,
+        annotations.created_by,
+        annotations.modified_at,
+        annotations.owner,
+        project_labels.name,
+        annotations.description,
+        annotations.machine_generated,
+        annotations.confidence,
+        annotations.quality,
+        annotations.geometry,
+        annotations.annotation_group,
+        annotations.labeled_by,
+        annotations.verified_by,
+        annotations.project_layer_id,
+        annotations.task_id
+      FROM annotations
+      JOIN tasks
+      ON tasks.id = annotations.task_id
+         AND tasks.project_id = ${projectId}
+         AND tasks.project_layer_id = ${layerId}
+         AND annotations.project_id = ${projectId}
+         AND annotations.project_layer_id = ${layerId}
+      """ ++ taskStatusF ++ fr"""
+      JOIN (
+        SELECT labels.id, labels.name
+        FROM
+            projects,
+            jsonb_to_recordset((projects.extras->'annotate')::jsonb ->'labels') AS labels(id uuid, name text)
+        WHERE projects.id = ${projectId}
+      ) project_labels
+      ON project_labels.id::uuid = annotations.label::uuid
+       """)
+      .query[Annotation]
+      .to[List]
+  }
+
+  /** List Chip Classification Annotations with Classes as GeoJSON FeatureCollection
+    *
+    * It filters annotations by project ID, layer ID, and by task statuses
+    * The classes in each annotation are in the below shape
+    *  {
+    *      "Building": "Mapped",
+    *      "Road": "Partially Mapped"
+    *  }
+    */
+  def listClassificationLayerAnnotationsByTaskStatus(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[AnnotationWithClassesFeatureCollection] = {
+    val taskStatusF: Fragment =
+      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
+        case Some(taskStatusNel) =>
+          fr"AND" ++ Fragments.in(fr"tasks.status", taskStatusNel)
+        case _ => fr""
+      }
+
+    // Select chip classification annotations based on project Id, layerId,
+    // and task statuses
+    val annotationTaskFilterF: Fragment = fr"""
+      SELECT annotations.*
+        FROM annotations
+        JOIN tasks
+        ON annotations.task_id = tasks.id
+        WHERE
+            tasks.project_id = ${projectId}
+            AND tasks.project_layer_id = ${layerId}
+            AND annotations.project_id = ${projectId}
+            AND annotations.project_layer_id = ${layerId}
+            """ ++ taskStatusF
+
+    // Select predefined project label names and their catagory/group ids
+    val projectLabelsF: Fragment = fr"""
+      (
+        SELECT uuid(labels.id) as id, labels.name, uuid(labels."labelGroup") AS label_group_id
+        FROM
+          projects,
+          jsonb_to_recordset((projects.extras->'annotate')::jsonb ->'labels') AS  labels(id uuid, name text, "labelGroup" uuid)
+        WHERE projects.id = ${projectId}
+      ) AS project_labels
+    """
+
+    // Select predefined project label catagory/group IDs and names
+    val projectCatagoriesF: Fragment = fr"""
+      (
+        SELECT uuid(labelGroups.key) as id, labelGroups.value AS name
+        FROM
+          projects,
+          jsonb_each_text((projects.extras->'annotate')::jsonb ->'labelGroups') as labelGroups
+        WHERE projects.id = ${projectId}
+      ) AS project_label_groups
+    """
+
+    // Select project Label name and catagry/group name
+    val projectCatagoryAndLabelF: Fragment = fr"""
+      (
+        SELECT
+          project_labels.id,
+          project_labels.name AS label_name,
+          project_label_groups.name AS group_name
+        FROM
+      """ ++
+      projectLabelsF ++
+      fr"LEFT JOIN" ++
+      projectCatagoriesF ++
+      fr"""
+          ON project_labels.label_group_id::uuid = project_label_groups.id::uuid
+        ) AS project_label_and_groups
+        """
+
+    // The last column is a JSON field in the below format:
+    // {
+    //   "Building": "Mapped",
+    //   "Road": "Partially Mapped"
+    // }
+    (fr"WITH filtered_annotation AS (" ++ annotationTaskFilterF ++ fr""")
+      SELECT
+        filtered_annotation.id,
+        filtered_annotation.project_id,
+        filtered_annotation.created_at,
+        filtered_annotation.created_by,
+        filtered_annotation.modified_at,
+        filtered_annotation.owner,
+        filtered_annotation.description,
+        filtered_annotation.machine_generated,
+        filtered_annotation.confidence,
+        filtered_annotation.quality,
+        filtered_annotation.geometry,
+        filtered_annotation.annotation_group,
+        filtered_annotation.labeled_by,
+        filtered_annotation.verified_by,
+        filtered_annotation.project_layer_id,
+        filtered_annotation.task_id,
+        jsonb_object(string_to_array(string_agg(
+          CONCAT(
+            project_label_and_groups.group_name, ',', project_label_and_groups.label_name
+          ),','),',')::text[]) as classes
+      FROM 
+        filtered_annotation,
+        unnest(string_to_array(filtered_annotation.label, ' ')) AS label(class)
+      JOIN
+      """ ++ projectCatagoryAndLabelF ++ fr"""
+      ON project_label_and_groups.id::uuid = label.class::uuid
+      GROUP BY (
+        filtered_annotation.id,
+        filtered_annotation.project_id,
+        filtered_annotation.created_at,
+        filtered_annotation.created_by,
+        filtered_annotation.modified_at,
+        filtered_annotation.owner,
+        filtered_annotation.description,
+        filtered_annotation.machine_generated,
+        filtered_annotation.confidence,
+        filtered_annotation.quality,
+        filtered_annotation.geometry,
+        filtered_annotation.annotation_group,
+        filtered_annotation.labeled_by,
+        filtered_annotation.verified_by,
+        filtered_annotation.project_layer_id,
+        filtered_annotation.task_id
+      )
+    """)
+      .query[AnnotationWithClasses]
+      .to[List]
+      .map(annoteWithClassesList => {
+        AnnotationWithClassesFeatureCollection(
+          annoteWithClassesList.map(_.toGeoJSONFeature))
+      })
+  }
 }
