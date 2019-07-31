@@ -24,7 +24,7 @@ object Main extends App with Config with Router {
   val xa = RFTransactor.buildTransactor()
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
-  println(s"Server Started (${canSelect})")
+  logger.info(s"Server Started (${canSelect})")
 
   def terminate(): Future[Terminated] = {
     system.terminate()
