@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Fixed missing logs from scala services [\#5094](https://github.com/raster-foundry/raster-foundry/pull/5094)
+
 ### Security
 
 ## [1.25.0](https://github.com/raster-foundry/raster-foundry/tree/1.25.0)
