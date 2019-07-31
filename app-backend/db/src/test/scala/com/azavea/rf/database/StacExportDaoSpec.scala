@@ -280,8 +280,8 @@ class StacExportDaoSpec
                                                                   platform,
                                                                   projectCreate)
             fixedStacExportCreate1 = fixupStacExportCreate(stacExportCreate1,
-                                                          dbUser,
-                                                          dbProject)
+                                                           dbUser,
+                                                           dbProject)
             fixedStacExportCreate2 = fixupStacExportCreate(stacExportCreate2,
                                                            dbUser,
                                                            dbProject)
@@ -295,7 +295,9 @@ class StacExportDaoSpec
               dbStacExport1.id
             )
             paginatedStacExport <- StacExportDao
-              .list(page, queryParams.copy(exportStatus = Some("Exported")), dbUser)
+              .list(page,
+                    queryParams.copy(exportStatus = Some("Exported")),
+                    dbUser)
           } yield paginatedStacExport
 
           val paginatedResp =

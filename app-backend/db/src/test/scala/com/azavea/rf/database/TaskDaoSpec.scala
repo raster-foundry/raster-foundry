@@ -791,4 +791,49 @@ class TaskDaoSpec
       }
     }
   }
+
+  test("list tasks by a list of statuses") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeaturesCreateOne: Task.TaskFeatureCollectionCreate,
+            taskFeaturesCreateTwo: Task.TaskFeatureCollectionCreate,
+        ) =>
+          {
+            val connIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              collectionOne <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(taskFeaturesCreateOne,
+                                            dbProject,
+                                            Some(TaskStatus.Labeled)),
+                dbUser
+              )
+              collectionTwo <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(taskFeaturesCreateTwo,
+                                            dbProject,
+                                            Some(TaskStatus.Validated)),
+                dbUser
+              )
+              fetched <- TaskDao.listLayerTasksByStatus(
+                dbProject.id,
+                dbProject.defaultLayerId,
+                List("LABELED", "VALIDATED")
+              )
+            } yield { (collectionOne, collectionTwo, fetched) }
+
+            val (colOne, colTwo, listed) = connIO.transact(xa).unsafeRunSync
+            colOne.features.length + colTwo.features.length == listed.length
+          }
+      }
+    }
+  }
 }
