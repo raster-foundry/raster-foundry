@@ -58,7 +58,8 @@ lazy val sharedSettings = Seq(
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
     "log4j" % "log4j",
-    "org.slf4j" % "slf4j-log4j12"
+    "org.slf4j" % "slf4j-log4j12",
+    "org.slf4j" % "slf4j-nop"
   ),
   scalacOptions := scalaOptions,
   // https://github.com/sbt/sbt/issues/3570
