@@ -103,7 +103,15 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
         val served = Cache.requestCounter.get("requestsServed").getOrElse(0)
         HealthCheck.liftF[IO, Tagged[String, ?]] {
           IO {
-            if (served >= quota) {
+            if (quota == 0) {
+              val message =
+                "Ignoring request quota check - configured value is 0"
+              logger.debug(message)
+              HealthResult.tagged(
+                message,
+                Health.Healthy
+              )
+            } else if (served >= quota) {
               val message =
                 s"Request quota exceeded -- limit: $quota, counted: $served"
               logger.warn(message)
@@ -112,7 +120,7 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
                 Health.sick
               )
             } else {
-              HealthResult.tagged("Healthy", Health.healthy)
+              HealthResult.tagged("Healthy", Health.Healthy)
             }
           }
         }

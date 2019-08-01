@@ -177,9 +177,11 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
   )
 
-  // jitter the request limit by +/- 1500
-  val requestLimitJitter =
-    scala.util.Random.nextInt % 1500
+  val requestQuota = if (Config.server.requestLimit == 0) {
+    Config.server.requestLimit
+  } else {
+    Config.server.requestLimit + scala.util.Random.nextInt % 1500
+  }
 
   def router =
     errorHandling {
@@ -195,7 +197,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
         "/healthcheck" -> AutoSlash(
           new HealthcheckService(
             xa,
-            quota = Config.server.requestLimit + requestLimitJitter
+            requestQuota
           ).routes
         )
       )
