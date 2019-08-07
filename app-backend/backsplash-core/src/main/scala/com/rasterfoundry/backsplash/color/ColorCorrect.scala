@@ -60,14 +60,17 @@ object ColorCorrect extends LazyLogging {
       oldMax: Int,
       newMin: Int,
       newMax: Int,
-      gammaOpt: Option[Double]
+      gammaOpt: Option[Double],
+      noData: Option[Double]
   ): Int = {
     if (isData(z)) {
       val dNew = newMax - newMin
       val dOld = oldMax - oldMin
 
-      // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
-      if (dOld == 0) {
+      if (noData.isDefined && z == noData.get) {
+        0
+      } else if (dOld == 0) {
+        // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
         val v = {
           if (z > newMax) newMax
           else if (z < newMin) newMin
@@ -127,10 +130,8 @@ object ColorCorrect extends LazyLogging {
     val ClipBounds(gmin, gmax) = layerNormalizeArgs(1)
     val ClipBounds(bmin, bmax) = layerNormalizeArgs(2)
 
-    val tileMin = nodataValue match {
-      case Some(0) => 1
-      case _       => 0
-    }
+    logger.info(s"No data value = $nodataValue")
+    val tileMin = 1
     val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, tileMin, 255)
     val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, tileMin, 255)
     val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, tileMin, 255)
@@ -191,7 +192,8 @@ object ColorCorrect extends LazyLogging {
                 rclipMax,
                 rnewMin,
                 rnewMax,
-                gr
+                gr,
+                nodataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
                 green.get(col, row),
@@ -199,7 +201,8 @@ object ColorCorrect extends LazyLogging {
                 gclipMax,
                 gnewMin,
                 gnewMax,
-                gg
+                gg,
+                nodataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
                 blue.get(col, row),
@@ -207,7 +210,8 @@ object ColorCorrect extends LazyLogging {
                 bclipMax,
                 bnewMin,
                 bnewMax,
-                gb
+                gb,
+                nodataValue
               )
             )
 
