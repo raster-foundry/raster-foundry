@@ -47,7 +47,7 @@ function load_database_backup() {
 
     echo "Restore database from backup"
     # Command to create database backup
-    # gosu postgres pg_dump -Fc rasterfoundry > database.pgdump
+    # pg_dump -U rasterfoundry -Fc rasterfoundry > database-new.pgdump
     docker-compose \
         exec -T postgres pg_restore -U rasterfoundry -Fc -d rasterfoundry /tmp/data/database.pgdump
     ./scripts/migrate migrate

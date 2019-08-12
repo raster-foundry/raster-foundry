@@ -60,6 +60,7 @@ final case class BacksplashGeotiff(
   def getRasterSource: IO[RasterSource] = {
     implicit val rasterSourceCacheFlags = Cache.rasterSourceCacheFlags
     if (enableGDAL) {
+      println(s"Getting Raster Source for ${imageId}")
       logger.debug(s"Using GDAL Raster Source: ${uri}")
       // Do not bother caching - let GDAL internals worry about that
       val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))

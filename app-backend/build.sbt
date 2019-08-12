@@ -30,7 +30,6 @@ val scalaOptions = Seq(
   "-Ywarn-value-discard",
   "-Ywarn-macros:after",
   "-Ywarn-unused",
-  "-Xfatal-warnings",
   "-Ywarn-unused-import",
   "-Ypartial-unification",
   "-Ybackend-parallelism",
@@ -307,9 +306,11 @@ lazy val datamodel = project
       Dependencies.monocleCore,
       Dependencies.circeGeneric,
       Dependencies.spray,
+      Dependencies.geotrellisContribVLM,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisVector,
       Dependencies.geotrellisProj4,
+      Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisVectorTestkit,
       Dependencies.circeCore,
       Dependencies.circeParser,
@@ -332,6 +333,8 @@ lazy val db = project
       Dependencies.scalatest,
       Dependencies.doobieCore,
       Dependencies.doobieHikari,
+      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisRaster,
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
       Dependencies.scalaCheck,
@@ -422,7 +425,7 @@ lazy val akkautil = project
   * Backsplash Core Settings
   */
 lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
-  .dependsOn(common)
+  .dependsOn(common, db)
   .settings(sharedSettings: _*)
   .settings(
     fork in run := true,

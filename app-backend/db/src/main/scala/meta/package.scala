@@ -1,12 +1,10 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
-
-import cats.syntax.either._
+import cats.implicits._
 import doobie._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
-
 import java.time.LocalDate
 
 package object meta {

@@ -18,22 +18,28 @@ object BacksplashMosaic extends ToHistogramStoreOps {
 
   def toRasterSource(bsm: BacksplashMosaic)(
       implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
-    filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
-      backsplashImages.toNel match {
-        case Some(images) =>
-          images parTraverse { image =>
-            image.getRasterSource
-          } map { rasterSourceList =>
-            MosaicRasterSource(rasterSourceList, rasterSourceList.head.crs)
-          }
-        case _ =>
-          IO.raiseError(NoScenesException)
+    println("Converting to Raster Source")
+    val l = filterRelevant(bsm).compile.toList
+    l flatMap { backsplashImages =>
+      {
+        println(s"Processing ${backsplashImages.length}")
+        backsplashImages.toNel match {
+          case Some(images) =>
+            images parTraverse { image =>
+              image.getRasterSource
+            } map { rasterSourceList =>
+              MosaicRasterSource(rasterSourceList, rasterSourceList.head.crs)
+            }
+          case _ =>
+            IO.raiseError(NoScenesException)
+        }
       }
     }
   }
 
   def getRasterSourceOriginalCRS(bsm: BacksplashMosaic)(
       implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
+    println("Getting Original CRSes")
     filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>

@@ -13,7 +13,7 @@ import geotrellis.raster._
 import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
-import geotrellis.server.ogc.wms.{CapabilitiesView, WmsParams}
+import geotrellis.server.ogc.wms.{CapabilitiesView, WmsModel, WmsParams}
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
@@ -21,6 +21,7 @@ import org.http4s.scalaxml._
 import com.typesafe.scalalogging.LazyLogging
 import java.net.URL
 import java.util.UUID
+import scala.collection.mutable.Map
 
 class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO])
@@ -33,7 +34,17 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
 
   private def authedReqToResponse(authedReq: AuthedRequest[IO, User],
                                   projectId: UUID,
-                                  serviceUrl: String): IO[Response[IO]] =
+                                  serviceUrl: String): IO[Response[IO]] = {
+    val modelCache = Map[UUID, WmsModel]()
+
+    def getModel(projectId: UUID): IO[WmsModel] = {
+      layers.getWmsModel(projectId)
+//      IO(
+//        modelCache.getOrElseUpdate(
+//          projectId,
+//          layers.getWmsModel(projectId).unsafeRunSync()))
+    }
+
     WmsParams(authedReq.req.multiParams) match {
       case Invalid(errors) =>
         BadRequest(s"Error parsing parameters: ${ParamError
@@ -41,15 +52,16 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
       case Valid(p) =>
         p match {
           case _: WmsParams.GetCapabilities =>
+            println("Starting Get Capabilities Request")
             for {
-              rsm <- layers.getWmsModel(projectId)
+              rsm <- getModel(projectId)
               resp <- Ok(new CapabilitiesView(rsm, new URL(serviceUrl)).toXML)
             } yield resp
           case params: WmsParams.GetMap =>
             val re =
               RasterExtent(params.boundingBox, params.width, params.height)
             for {
-              rsm <- layers.getWmsModel(projectId)
+              rsm <- getModel(projectId)
               layer = rsm.getLayer(params.crs,
                                    params.layers.headOption,
                                    params.styles.headOption) getOrElse {
@@ -109,6 +121,7 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
             BadRequest("not yet implemented")
         }
     }
+  }
 
   def routes: AuthedService[User, IO] = AuthedService[User, IO] {
     case authedReq @ GET -> Root / UUIDWrapper(projectId) as _ =>

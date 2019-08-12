@@ -53,12 +53,16 @@ object SceneDao
 
   def streamSceneById(sceneId: UUID, footprint: Option[Projected[Polygon]])(
       implicit Filter: Filterable[Any, Projected[Geometry]]
-  ): fs2.Stream[ConnectionIO, Scene] =
+  ): fs2.Stream[ConnectionIO, Scene] = {
+    println(s"Streaming Scene By ID: ${sceneId}")
     (selectF ++ Fragments.whereAndOpt(
       (Some(fr"id = ${sceneId}") +: (footprint map {
         Filter.toFilters(_)
-      } getOrElse { List.empty })): _*
+      } getOrElse {
+        List.empty
+      })): _*
     )).query[Scene].stream
+  }
 
   def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select

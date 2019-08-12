@@ -97,9 +97,11 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         window: Option[Projected[Polygon]],
         bandOverride: Option[BandOverride],
         imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage[IO]] = {
+      println(s"Reading ${projId}")
       for {
         scene <- SceneDao.streamSceneById(projId, window).transact(xa)
       } yield {
+        println(s"Reading Scene: ${scene.id}")
         // We don't actually have a project, so just make something up
         val randomProjectId = UUID.randomUUID
         val ingestLocation = scene.ingestLocation getOrElse {

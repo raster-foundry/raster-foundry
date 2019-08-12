@@ -2,8 +2,9 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.http4s.{Cache => Http4sUtilCache}
-
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.contrib.vlm.MosaicRasterSource
+import geotrellis.server.ogc.wms.WmsModel
 import scalacache._
 import scalacache.caffeine._
 
@@ -24,4 +25,5 @@ object Cache extends LazyLogging {
   logger.info(
     s"Authentication Cache Status, backsplash: ${authenticationCacheFlags}")
 
+  val wmsModelCache: Cache[WmsModel] = CaffeineCache[WmsModel]
 }
