@@ -4,7 +4,8 @@
 
 ### Added
 
-- added `taskId` to annotations and corresponding query paramter [\#5073](https://github.com/raster-foundry/raster-foundry/pull/5073)
+- Added `taskId` to annotations and corresponding query paramter [\#5073](https://github.com/raster-foundry/raster-foundry/pull/5073)
+- Added fields to track metadata for scenes to help with RasterSource construction [\#5103](https://github.com/raster-foundry/raster-foundry/pull/5103)
 
 ### Changed
 - Add support for multiband imagery in WMS responses
