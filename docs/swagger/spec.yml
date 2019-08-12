@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: Raster Foundry
   description: An application to find, view, and analyze geospatial data at any scale
-  version: "1.25.0"
+  version: "1.26.0"
 
 host: app.rasterfoundry.com
 
@@ -1201,7 +1201,6 @@ paths:
         - Imagery
       parameters:
         - $ref: '#/parameters/createdBy'
-        - $ref: '#/parameters/modifiedBy'
         - $ref: '#/parameters/minCreateDatetime'
         - $ref: '#/parameters/maxCreateDatetime'
         - $ref: '#/parameters/minModifiedDatetime'
@@ -1888,6 +1887,7 @@ paths:
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/withOwnerInfo'
         - $ref: '#/parameters/annotationGroup'
+        - $ref: '#/parameters/taskId'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project default layer'
@@ -2986,7 +2986,7 @@ paths:
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/withOwnerInfo'
         - $ref: '#/parameters/annotationGroup'
-        - $ref: '#/parameters/task'
+        - $ref: '#/parameters/taskId'
       responses:
         200:
           description: 'GeoJSON feature collection containing paginated annotations of this project layer'
@@ -4031,7 +4031,6 @@ paths:
         - Lab
       parameters:
         - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/modifiedBy'
         - $ref: '#/parameters/minCreateDatetime'
         - $ref: '#/parameters/maxCreateDatetime'
         - $ref: '#/parameters/minModifiedDatetime'
@@ -5433,12 +5432,6 @@ parameters:
     in: query
     type: string
     required: false
-  modifiedBy:
-    name: modifiedBy
-    description: 'Filter by user last modified by'
-    in: query
-    type: string
-    required: false
   owner:
     name: owner
     description: 'Filter by resource owner ID'
@@ -5541,8 +5534,8 @@ parameters:
     in: query
     type: integer
     required: false
-  task:
-    name: task
+  taskId:
+    name: taskId
     description: 'Filter to annotations belonging to the specified task'
     in: query
     type: string
@@ -5991,10 +5984,6 @@ definitions:
       createdBy:
         type: string
         description: 'User who created the object'
-        readOnly: true
-      modifiedBy:
-        type: string
-        description: 'User who most recently modified the object'
         readOnly: true
       owner:
         type: string
@@ -6455,10 +6444,6 @@ definitions:
           createdBy:
             type: string
             description: 'User who created the object'
-            readOnly: true
-          modifiedBy:
-            type: string
-            description: 'User who most recently modified the object'
             readOnly: true
           organizationId:
             type: string
@@ -7216,8 +7201,6 @@ definitions:
     description: 'User parameters to filter scenes'
     properties:
       createdBy:
-        type: string
-      modifiedBy:
         type: string
       owner:
         type: string

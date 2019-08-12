@@ -18,29 +18,30 @@ object MapTokenDao extends Dao[MapToken] {
   val selectF =
     sql"""
       SELECT
-        id, created_at, created_by, modified_at, modified_by,
+        id, created_at, created_by, modified_at,
         owner, name, project_id, toolrun_id
       FROM
     """ ++ tableF
 
-  def insert(newMapToken: MapToken.Create,
-             user: User): ConnectionIO[MapToken] = {
+  def insert(
+      newMapToken: MapToken.Create,
+      user: User
+  ): ConnectionIO[MapToken] = {
     val id = UUID.randomUUID()
     val now = new Timestamp(new java.util.Date().getTime())
     val ownerId = util.Ownership.checkOwner(user, newMapToken.owner)
 
     sql"""
        INSERT INTO map_tokens
-          (id, created_at, created_by, modified_at, modified_by, owner, name, project_id, toolrun_id)
+          (id, created_at, created_by, modified_at, owner, name, project_id, toolrun_id)
        VALUES
-          (${id}, ${now}, ${user.id}, ${now}, ${user.id}, ${ownerId}, ${newMapToken.name},
+          (${id}, ${now}, ${user.id}, ${now}, ${ownerId}, ${newMapToken.name},
            ${newMapToken.project}, ${newMapToken.toolRun})
        """.update.withUniqueGeneratedKeys[MapToken](
       "id",
       "created_at",
       "created_by",
       "modified_at",
-      "modified_by",
       "owner",
       "name",
       "project_id",
@@ -48,28 +49,34 @@ object MapTokenDao extends Dao[MapToken] {
     )
   }
 
-  def authorize(mapTokenId: UUID,
-                user: User,
-                actionType: ActionType): ConnectionIO[Boolean] =
+  def authorize(
+      mapTokenId: UUID,
+      user: User,
+      actionType: ActionType
+  ): ConnectionIO[Boolean] =
     for {
       mapTokenO <- MapTokenDao.query.filter(mapTokenId).selectOption
       projAuthed = (
         mapTokenO flatMap { _.project } map { (projectId: UUID) =>
           {
-            ProjectDao.authorized(user,
-                                  ObjectType.Project,
-                                  projectId,
-                                  actionType)
+            ProjectDao.authorized(
+              user,
+              ObjectType.Project,
+              projectId,
+              actionType
+            )
           }
         }
       ).getOrElse(false.pure[ConnectionIO])
       toolRunAuthed = (
         mapTokenO flatMap { _.toolRun } map { (toolRunId: UUID) =>
           {
-            ToolRunDao.authorized(user,
-                                  ObjectType.Analysis,
-                                  toolRunId,
-                                  actionType)
+            ToolRunDao.authorized(
+              user,
+              ObjectType.Analysis,
+              toolRunId,
+              actionType
+            )
           }
         }
       ).getOrElse(false.pure[ConnectionIO])
@@ -79,7 +86,8 @@ object MapTokenDao extends Dao[MapToken] {
   def listAuthorizedMapTokens(
       user: User,
       mapTokenParams: CombinedMapTokenQueryParameters,
-      page: PageRequest): ConnectionIO[PaginatedResponse[MapToken]] = {
+      page: PageRequest
+  ): ConnectionIO[PaginatedResponse[MapToken]] = {
     val authedProjectsIO = ProjectDao.authQuery(user, ObjectType.Project).list
     val authedAnalysesIO = ToolRunDao.authQuery(user, ObjectType.Analysis).list
 
@@ -100,7 +108,7 @@ object MapTokenDao extends Dao[MapToken] {
     } yield { mapTokens }
   }
 
-  def update(mapToken: MapToken, id: UUID, user: User): ConnectionIO[Int] = {
+  def update(mapToken: MapToken, id: UUID): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${id}"
 
@@ -108,7 +116,6 @@ object MapTokenDao extends Dao[MapToken] {
        UPDATE map_tokens
        SET
          modified_at = ${updateTime},
-         modified_by = ${user.id},
          owner = ${mapToken.owner},
          name = ${mapToken.name},
          project_id = ${mapToken.project},
@@ -128,15 +135,17 @@ object MapTokenDao extends Dao[MapToken] {
     insert(newMapToken, user)
   }
 
-  def checkProject(projectId: UUID)(
-      mapToken: UUID): ConnectionIO[Option[MapToken]] =
+  def checkProject(
+      projectId: UUID
+  )(mapToken: UUID): ConnectionIO[Option[MapToken]] =
     query
       .filter(fr"project_id=${projectId}")
       .filter(fr"id=${mapToken}")
       .selectOption
 
-  def checkAnalysis(analysisId: UUID)(
-      mapToken: UUID): ConnectionIO[Option[MapToken]] =
+  def checkAnalysis(
+      analysisId: UUID
+  )(mapToken: UUID): ConnectionIO[Option[MapToken]] =
     query
       .filter(fr"toolrun_id=${analysisId}")
       .filter(fr"id=${mapToken}")

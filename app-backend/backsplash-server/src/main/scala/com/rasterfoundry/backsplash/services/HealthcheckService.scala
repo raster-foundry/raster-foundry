@@ -11,6 +11,7 @@ import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl._
+import org.http4s.util.CaseInsensitiveString
 import scalacache.modes.sync._
 import sup._
 import sup.data.{HealthReporter, Tagged}
@@ -102,7 +103,15 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
         val served = Cache.requestCounter.get("requestsServed").getOrElse(0)
         HealthCheck.liftF[IO, Tagged[String, ?]] {
           IO {
-            if (served >= quota) {
+            if (quota == 0) {
+              val message =
+                "Ignoring request quota check - configured value is 0"
+              logger.debug(message)
+              HealthResult.tagged(
+                message,
+                Health.Healthy
+              )
+            } else if (served >= quota) {
               val message =
                 s"Request quota exceeded -- limit: $quota, counted: $served"
               logger.warn(message)
@@ -111,7 +120,7 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
                 Health.sick
               )
             } else {
-              HealthResult.tagged("Healthy", Health.healthy)
+              HealthResult.tagged("Healthy", Health.Healthy)
             }
           }
         }
@@ -121,7 +130,8 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
 
   val routes: HttpRoutes[IO] =
     HttpRoutes.of {
-      case GET -> Root =>
+      case req @ GET -> Root =>
+        val traceId = req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id"))
         val healthcheck =
           HealthReporter.fromChecks(
             dbHealth,
@@ -135,16 +145,19 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
           // There's a sup-http4s module that should do this, but it's on http4s-0.20.0-M4,
           // and there appears to be a binary compatibility issue
           if (report.health == Health.sick) {
+            val healthcheckResults = Map(
+              "result" -> "Unhealthy".asJson,
+              "errors" -> report.checks
+                .filter(_.health == Health.sick)
+                .map {
+                  _.tag
+                }
+                .asJson
+            ).asJson
+            logger.error(
+              s"Healthcheck Failing (trace_id: $traceId): $healthcheckResults")
             ServiceUnavailable(
-              Map(
-                "result" -> "Unhealthy".asJson,
-                "errors" -> (report.checks
-                  .filter(_.health == Health.sick)
-                  .map {
-                    _.tag
-                  })
-                  .asJson
-              ).asJson
+              healthcheckResults
             )
           } else {
             Ok(

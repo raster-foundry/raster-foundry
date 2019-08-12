@@ -171,7 +171,6 @@ trait PropTestHelpers {
       id = shape.id,
       properties = shapeGeoJSON.properties.copy(
         createdBy = user.id,
-        modifiedBy = user.id,
         owner = user.id
       )
     )
@@ -223,7 +222,7 @@ trait PropTestHelpers {
       .toAOI(project.id, user)
 
   def fixupAoi(user: User, aoi: AOI): AOI = {
-    aoi.copy(owner = user.id, createdBy = user.id, modifiedBy = user.id)
+    aoi.copy(owner = user.id, createdBy = user.id)
   }
 
   def fixupTeam(teamCreate: Team.Create, org: Organization, user: User): Team =
@@ -341,18 +340,21 @@ trait PropTestHelpers {
       dbLabelTeam <- TeamDao.create(
         labelTeamCreate
           .copy(organizationId = dbOrg.id)
-          .toTeam(dbUser))
+          .toTeam(dbUser)
+      )
       dbValidateTeam <- TeamDao.create(
         validateTeamCreate
           .copy(organizationId = dbOrg.id)
-          .toTeam(dbUser))
+          .toTeam(dbUser)
+      )
       _ <- UserGroupRoleDao.create(
-        fixupUserGroupRole(dbUser,
-                           dbOrg,
-                           dbLabelTeam,
-                           dbPlatform,
-                           labelTeamUgrCreate.copy(groupType = GroupType.Team))
-          .toUserGroupRole(dbUser, MembershipStatus.Approved)
+        fixupUserGroupRole(
+          dbUser,
+          dbOrg,
+          dbLabelTeam,
+          dbPlatform,
+          labelTeamUgrCreate.copy(groupType = GroupType.Team)
+        ).toUserGroupRole(dbUser, MembershipStatus.Approved)
       )
       _ <- UserGroupRoleDao.create(
         fixupUserGroupRole(
@@ -360,21 +362,22 @@ trait PropTestHelpers {
           dbOrg,
           dbValidateTeam,
           dbPlatform,
-          validateTeamUgrCreate.copy(groupType = GroupType.Team))
-          .toUserGroupRole(dbUser, MembershipStatus.Approved)
+          validateTeamUgrCreate.copy(groupType = GroupType.Team)
+        ).toUserGroupRole(dbUser, MembershipStatus.Approved)
       )
-      _ <- ProjectDao.updateProject(dbProject.copy(
-                                      extras = Some(
-                                        ProjectExtras(
-                                          ProjectExtrasAnnotate(
-                                            dbLabelTeam.id,
-                                            dbValidateTeam.id
-                                          )
-                                        ).asJson
-                                      )
-                                    ),
-                                    dbProject.id,
-                                    dbUser)
+      _ <- ProjectDao.updateProject(
+        dbProject.copy(
+          extras = Some(
+            ProjectExtras(
+              ProjectExtrasAnnotate(
+                dbLabelTeam.id,
+                dbValidateTeam.id
+              )
+            ).asJson
+          )
+        ),
+        dbProject.id
+      )
       updatedDbProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
     } yield updatedDbProject
   }

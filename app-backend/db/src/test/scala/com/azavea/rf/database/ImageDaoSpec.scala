@@ -21,11 +21,13 @@ class ImageDaoSpec
   test("insert a single image") {
     check {
       forAll(
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         scene: Scene.Create,
-         image: Image.Banded) => {
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            scene: Scene.Create,
+            image: Image.Banded
+        ) => {
           val sceneInsertIO = for {
             (insertedUser, _, _) <- insertUserOrgPlatform(user, org, platform)
             datasource <- unsafeGetRandomDatasource
@@ -59,12 +61,14 @@ class ImageDaoSpec
   test("update an image") {
     check {
       forAll(
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         scene: Scene.Create,
-         imageBanded: Image.Banded,
-         imageUpdate: Image) => {
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            scene: Scene.Create,
+            imageBanded: Image.Banded,
+            imageUpdate: Image
+        ) => {
           val sceneInsertIO = for {
             (insertedUser, _, _) <- insertUserOrgPlatform(user, org, platform)
             datasource <- unsafeGetRandomDatasource
@@ -78,11 +82,11 @@ class ImageDaoSpec
               ImageDao.insertImage(
                 fixupImageBanded(dbUser.id, swr.id, imageBanded),
                 dbUser
-              ) map { (_, dbUser) }
+              )
             }
           }
           val imageUpdateWithUpdatedImageIO = imageInsertIO flatMap {
-            case (imageO: Option[Image.WithRelated], dbUser: User) => {
+            case imageO: Option[Image.WithRelated] => {
               val inserted = imageO.get
               val imageId = inserted.id
               val sceneId = inserted.scene
@@ -90,8 +94,7 @@ class ImageDaoSpec
               val fixedUp = fixupImage(origOwner, sceneId, imageUpdate)
               ImageDao.updateImage(
                 fixedUp,
-                imageId,
-                dbUser
+                imageId
               ) flatMap { (affectedRows: Int) =>
                 {
                   val updatedImage = ImageDao.unsafeGetImage(imageId)

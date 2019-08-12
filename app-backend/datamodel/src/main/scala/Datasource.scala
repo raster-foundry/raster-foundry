@@ -9,18 +9,19 @@ import java.sql.Timestamp
 import java.util.UUID
 
 @JsonCodec
-final case class Datasource(id: UUID,
-                            createdAt: java.sql.Timestamp,
-                            createdBy: String,
-                            modifiedAt: java.sql.Timestamp,
-                            modifiedBy: String,
-                            owner: String,
-                            name: String,
-                            visibility: Visibility,
-                            composites: Map[String, ColorComposite],
-                            extras: Json,
-                            bands: Json,
-                            licenseName: Option[String]) {
+final case class Datasource(
+    id: UUID,
+    createdAt: java.sql.Timestamp,
+    createdBy: String,
+    modifiedAt: java.sql.Timestamp,
+    owner: String,
+    name: String,
+    visibility: Visibility,
+    composites: Map[String, ColorComposite],
+    extras: Json,
+    bands: Json,
+    licenseName: Option[String]
+) {
   def toThin: Datasource.Thin = Datasource.Thin(this.bands, this.name, this.id)
 
   def colorCompositeFromBands: Option[ColorComposite] = {
@@ -32,7 +33,8 @@ final case class Datasource(id: UUID,
     val blueBand = bandCreates flatMap { _.find(_.name.toLowerCase == "blue") }
     Applicative[Option].map3(redBand, greenBand, blueBand)(
       (r: Band.Create, g: Band.Create, b: Band.Create) =>
-        ColorComposite("derived", BandOverride(r.number, g.number, b.number)))
+        ColorComposite("derived", BandOverride(r.number, g.number, b.number))
+    )
   }
 
   def defaultColorComposite: Option[ColorComposite] =
@@ -55,14 +57,15 @@ object Datasource {
   final case class Thin(bands: Json, name: String, id: UUID)
 
   @JsonCodec
-  final case class Create(name: String,
-                          visibility: Visibility,
-                          owner: Option[String],
-                          composites: Map[String, ColorComposite],
-                          extras: Json,
-                          bands: Json,
-                          licenseName: Option[String])
-      extends OwnerCheck {
+  final case class Create(
+      name: String,
+      visibility: Visibility,
+      owner: Option[String],
+      composites: Map[String, ColorComposite],
+      extras: Json,
+      bands: Json,
+      licenseName: Option[String]
+  ) extends OwnerCheck {
     def toDatasource(user: User): Datasource = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp(new java.util.Date().getTime)
@@ -74,7 +77,6 @@ object Datasource {
         now, // createdAt
         user.id, // createdBy
         now, // modifiedAt
-        user.id, // modifiedBy
         ownerId, // owner
         this.name,
         this.visibility,

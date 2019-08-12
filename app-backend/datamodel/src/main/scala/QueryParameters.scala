@@ -239,8 +239,7 @@ object OrgQueryParameters {
 
 /** Query parameters to filter by only users */
 final case class UserAuditQueryParameters(
-    createdBy: Option[String] = None,
-    modifiedBy: Option[String] = None
+    createdBy: Option[String] = None
 )
 
 object UserAuditQueryParameters {
@@ -451,7 +450,8 @@ final case class AnnotationQueryParameters(
     quality: Option[String] = None,
     annotationGroup: Option[UUID] = None,
     bbox: Iterable[String] = Seq.empty[String],
-    withOwnerInfo: Option[Boolean] = None
+    withOwnerInfo: Option[Boolean] = None,
+    taskId: Option[UUID] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)

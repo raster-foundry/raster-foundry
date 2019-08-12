@@ -74,13 +74,25 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
                 .parMapN {
                   case (Valid(mbTile), hists) =>
                     logger.debug(s"Style: ${layer.style}, hists are: ${hists}")
+                    // We pad with this invisible tile to ensure tile sizes are as expected
+                    // TODO: This really shouldn't be happening and appears not to be an issue
+                    //  in gt-server itself. This resolves the issue
                     val invisiTile =
                       mbTile.prototype(params.width, params.height)
                     val fullTile = invisiTile merge mbTile
-                    val tileResp = layer.style map {
-                      _.renderImage(fullTile, params.format, hists)
-                    } getOrElse {
-                      Render(fullTile, layer.style, params.format, hists)
+                    // TODO: The default coloring in RF should be handled by the default
+                    //  color correction settings established elsewhere throughout the
+                    //  platform
+                    val tileResp = fullTile.bandCount match {
+                      case 3 =>
+                        Render.rgb(fullTile, layer.style, params.format, hists)
+                      case 4 =>
+                        Render.rgba(fullTile, layer.style, params.format, hists)
+                      case _ =>
+                        Render.singleband(fullTile,
+                                          layer.style,
+                                          params.format,
+                                          hists)
                     }
                     Ok(tileResp)
                   // at least one is invalid, we don't care which, and we want all the errors

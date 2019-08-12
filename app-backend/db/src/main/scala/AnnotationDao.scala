@@ -19,10 +19,10 @@ object AnnotationDao extends Dao[Annotation] {
   val selectF: Fragment =
     fr"""
       SELECT
-        id, project_id, created_at, created_by, modified_at, modified_by, owner,
+        id, project_id, created_at, created_by, modified_at, owner,
         label, description, machine_generated, confidence,
         quality, geometry, annotation_group, labeled_by, verified_by,
-        project_layer_id
+        project_layer_id, task_id
       FROM
     """ ++ tableF
 
@@ -31,7 +31,8 @@ object AnnotationDao extends Dao[Annotation] {
 
   def getAnnotationById(
       projectId: UUID,
-      annotationId: UUID): ConnectionIO[Option[AnnotationWithOwnerInfo]] =
+      annotationId: UUID
+  ): ConnectionIO[Option[AnnotationWithOwnerInfo]] =
     for {
       annotationO <- query
         .filter(fr"project_id = ${projectId}")
@@ -52,8 +53,7 @@ object AnnotationDao extends Dao[Annotation] {
               annotation.createdAt,
               annotation.createdBy,
               annotation.modifiedAt,
-              annotation.modifiedBy,
-              annotation.owner,
+              owner.id,
               annotation.label,
               annotation.description,
               annotation.machineGenerated,
@@ -64,15 +64,18 @@ object AnnotationDao extends Dao[Annotation] {
               annotation.labeledBy,
               annotation.verifiedBy,
               annotation.projectLayerId,
+              annotation.taskId,
               owner.name,
               owner.profileImageUri
-            ))
+            )
+          )
         case _ => None
       }
     }
 
   def listAnnotationsForProject(
-      projectId: UUID): ConnectionIO[List[Annotation]] = {
+      projectId: UUID
+  ): ConnectionIO[List[Annotation]] = {
     (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some))
       .query[Annotation]
       .stream
@@ -80,8 +83,10 @@ object AnnotationDao extends Dao[Annotation] {
       .toList
   }
 
-  def listForExport(projectF: Fragment,
-                    layerF: Fragment): ConnectionIO[List[Annotation]] =
+  def listForExport(
+      projectF: Fragment,
+      layerF: Fragment
+  ): ConnectionIO[List[Annotation]] =
     AnnotationDao.query.filter(projectF).filter(layerF).list
 
   // list default project layer annotations if exportAll is None or Some(false)
@@ -101,8 +106,10 @@ object AnnotationDao extends Dao[Annotation] {
       )
     } yield { annotations }
 
-  def listForLayerExport(projectId: UUID,
-                         layerId: UUID): ConnectionIO[List[Annotation]] =
+  def listForLayerExport(
+      projectId: UUID,
+      layerId: UUID
+  ): ConnectionIO[List[Annotation]] =
     listForExport(fr"project_id=$projectId", fr"project_layer_id=$layerId")
 
   // look for default project layer
@@ -132,10 +139,10 @@ object AnnotationDao extends Dao[Annotation] {
       projectLayerIdO: Option[UUID] = None
   ): ConnectionIO[List[Annotation]] = {
     val insertFragment: Fragment = fr"INSERT INTO" ++ tableF ++ fr"""(
-      id, project_id, created_at, created_by, modified_at, modified_by, owner,
+      id, project_id, created_at, created_by, modified_at, owner,
       label, description, machine_generated, confidence,
       quality, geometry, annotation_group, labeled_by, verified_by,
-      project_layer_id
+      project_layer_id, task_id
     ) VALUES"""
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
@@ -157,9 +164,10 @@ object AnnotationDao extends Dao[Annotation] {
                 ProjectDao
                   .updateProject(
                     project.copy(defaultAnnotationGroup = Some(defaultId)),
-                    project.id,
-                    user)
-                  .map(_ => defaultId))
+                    project.id
+                  )
+                  .map(_ => defaultId)
+            )
       }
       annotationFragments: List[Fragment] = annotations.map(
         (annotationCreate: Annotation.Create) => {
@@ -171,12 +179,13 @@ object AnnotationDao extends Dao[Annotation] {
           )
           fr"""(
           ${annotation.id}, ${annotation.projectId}, ${annotation.createdAt}, ${annotation.createdBy},
-          ${annotation.modifiedAt}, ${annotation.modifiedBy}, ${annotation.owner}, ${annotation.label},
+          ${annotation.modifiedAt}, ${annotation.owner}, ${annotation.label},
           ${annotation.description}, ${annotation.machineGenerated}, ${annotation.confidence}, ${annotation.quality},
           ${annotation.geometry}, ${annotation.annotationGroup}, ${annotation.labeledBy}, ${annotation.verifiedBy},
-          ${annotation.projectLayerId}
+          ${annotation.projectLayerId}, ${annotation.taskId}
         )"""
-        })
+        }
+      )
       insertedAnnotations <- annotationFragments.toNel
         .map(
           fragments =>
@@ -187,7 +196,6 @@ object AnnotationDao extends Dao[Annotation] {
                 "created_at",
                 "created_by",
                 "modified_at",
-                "modified_by",
                 "owner",
                 "label",
                 "description",
@@ -198,20 +206,22 @@ object AnnotationDao extends Dao[Annotation] {
                 "annotation_group",
                 "labeled_by",
                 "verified_by",
-                "project_layer_id"
+                "project_layer_id",
+                "task_id"
               )
               .compile
-              .toList)
+              .toList
+        )
         .getOrElse(List[Annotation]().pure[ConnectionIO])
     } yield insertedAnnotations
   }
 
-  def updateAnnotation(projectId: UUID,
-                       annotation: Annotation,
-                       user: User): ConnectionIO[Int] = {
+  def updateAnnotation(
+      projectId: UUID,
+      annotation: Annotation
+  ): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
-        modified_by = ${user.id},
         label = ${annotation.label},
         description = ${annotation.description},
         machine_generated = ${annotation.machineGenerated},
@@ -221,7 +231,8 @@ object AnnotationDao extends Dao[Annotation] {
         annotation_group = ${annotation.annotationGroup},
         labeled_by = ${annotation.labeledBy},
         verified_by = ${annotation.verifiedBy},
-        project_layer_id = ${annotation.projectLayerId}
+        project_layer_id = ${annotation.projectLayerId},
+        task_id = ${annotation.taskId}
       WHERE
         id = ${annotation.id} AND project_id = ${projectId}
     """).update.run
@@ -229,7 +240,8 @@ object AnnotationDao extends Dao[Annotation] {
 
   def listProjectLabels(
       projectId: UUID,
-      projectLayerIdO: Option[UUID] = None): ConnectionIO[List[String]] = {
+      projectLayerIdO: Option[UUID] = None
+  ): ConnectionIO[List[String]] = {
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
@@ -248,7 +260,8 @@ object AnnotationDao extends Dao[Annotation] {
   // if projectLayerIdO is not provided as the last param
   def deleteByProjectLayer(
       projectId: UUID,
-      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] =
+      projectLayerIdO: Option[UUID] = None
+  ): ConnectionIO[Int] =
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
@@ -282,6 +295,9 @@ object AnnotationDao extends Dao[Annotation] {
         queryParams.annotationGroup.map({ ag =>
           fr"a.annotation_group = $ag"
         }),
+        queryParams.taskId.map({ tid =>
+          fr"a.task_id = $tid"
+        }),
         queryParams.bboxPolygon match {
           case Some(bboxPolygons) =>
             val fragments = bboxPolygons.map(
@@ -301,9 +317,9 @@ object AnnotationDao extends Dao[Annotation] {
   ): ConnectionIO[PaginatedResponse[AnnotationWithOwnerInfo]] = {
     val selectF: Fragment = fr"""
       SELECT a.id, a.project_id, a.created_at, a.created_by, a.modified_at,
-        a.modified_by, a.owner, a.label, a.description, a.machine_generated,
+        a.owner, a.label, a.description, a.machine_generated,
         a.confidence, a.quality, a.geometry, a.annotation_group, a.labeled_by,
-        a.verified_by, a.project_layer_id, u.name owner_name,
+        a.verified_by, a.project_layer_id, a.task_id, u.name owner_name,
         u.profile_image_uri owner_profile_image_uri
     """
 
@@ -317,14 +333,19 @@ object AnnotationDao extends Dao[Annotation] {
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
-      filters = createAnnotateWithOwnerInfoFilters(projectId,
-                                                   projectLayerId,
-                                                   queryParams)
+      filters = createAnnotateWithOwnerInfoFilters(
+        projectId,
+        projectLayerId,
+        queryParams
+      )
       page <- (selectF ++ fromF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
         pageRequest.copy(
-          sort = pageRequest.sort ++ Map("a.modified_at" -> Order.Desc,
-                                         "a.id" -> Order.Desc))))
-        .query[AnnotationWithOwnerInfo]
+          sort = pageRequest.sort ++ Map(
+            "a.modified_at" -> Order.Desc,
+            "a.id" -> Order.Desc
+          )
+        )
+      )).query[AnnotationWithOwnerInfo]
         .to[List]
       count <- (countF ++ Fragments.whereAndOpt(filters: _*))
         .query[Int]
@@ -333,12 +354,14 @@ object AnnotationDao extends Dao[Annotation] {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
 
-      PaginatedResponse[AnnotationWithOwnerInfo](count,
-                                                 hasPrevious,
-                                                 hasNext,
-                                                 pageRequest.offset,
-                                                 pageRequest.limit,
-                                                 page)
+      PaginatedResponse[AnnotationWithOwnerInfo](
+        count,
+        hasPrevious,
+        hasNext,
+        pageRequest.offset,
+        pageRequest.limit,
+        page
+      )
     }
   }
 }

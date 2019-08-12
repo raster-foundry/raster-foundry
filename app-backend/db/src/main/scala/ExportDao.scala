@@ -26,7 +26,7 @@ object ExportDao extends Dao[Export] {
 
   val selectF: Fragment = fr"""
     SELECT
-      id, created_at, created_by, modified_at, modified_by, owner,
+      id, created_at, created_by, modified_at, owner,
       project_id, export_status, export_type,
       visibility, toolrun_id, export_options, project_layer_id
     FROM
@@ -42,11 +42,11 @@ object ExportDao extends Dao[Export] {
     val insertF: Fragment = Fragment.const(s"INSERT INTO ${tableName} (")
     val ownerId = util.Ownership.checkOwner(user, Some(export.owner))
     (insertF ++ fr"""
-        id, created_at, created_by, modified_at, modified_by, owner,
+        id, created_at, created_by, modified_at, owner,
         project_id, export_status, export_type,
         visibility, toolrun_id, export_options, project_layer_id
       ) VALUES (
-        ${UUID.randomUUID}, NOW(), ${user.id}, NOW(), ${user.id}, ${ownerId},
+        ${UUID.randomUUID}, NOW(), ${user.id}, NOW(), ${ownerId},
         ${export.projectId}, ${export.exportStatus}, ${export.exportType},
         ${export.visibility}, ${export.toolRunId}, ${export.exportOptions},
         ${export.projectLayerId}
@@ -56,7 +56,6 @@ object ExportDao extends Dao[Export] {
       "created_at",
       "created_by",
       "modified_at",
-      "modified_by",
       "owner",
       "project_id",
       "export_status",
@@ -68,18 +67,19 @@ object ExportDao extends Dao[Export] {
     )
   }
 
-  def update(export: Export, id: UUID, user: User): ConnectionIO[Int] = {
+  def update(export: Export, id: UUID): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
-        modified_by = ${user.id},
         export_status = ${export.exportStatus},
         visibility = ${export.visibility}
       WHERE id = ${id}
     """).update.run
   }
 
-  def getWithStatus(id: UUID,
-                    status: ExportStatus): ConnectionIO[Option[Export]] = {
+  def getWithStatus(
+      id: UUID,
+      status: ExportStatus
+  ): ConnectionIO[Option[Export]] = {
     (selectF ++ fr"WHERE id = ${id} AND export_status = ${status}")
       .query[Export]
       .option
@@ -89,7 +89,8 @@ object ExportDao extends Dao[Export] {
     val exportOptions = export.exportOptions.as[ExportOptions] match {
       case Left(e) =>
         throw new Exception(
-          s"Did not find options for export ${export.id}: ${e}")
+          s"Did not find options for export ${export.id}: ${e}"
+        )
       case Right(eo) => eo
     }
 
@@ -116,29 +117,36 @@ object ExportDao extends Dao[Export] {
         // Exporting a project layer
         case (Some(projectId), Some(projectLayerId), None) =>
           for {
-            isLayerInProject <- ProjectLayerDao.layerIsInProject(projectLayerId,
-                                                                 projectId)
+            isLayerInProject <- ProjectLayerDao.layerIsInProject(
+              projectLayerId,
+              projectId
+            )
             mosaicExportSourceList <- isLayerInProject match {
               case true =>
                 mosaicInput(projectLayerId, exportOptions).map(_.asJson)
               case false =>
                 throw new Exception(
-                  s"Layer ${projectLayerId} is not in project ${projectId}")
+                  s"Layer ${projectLayerId} is not in project ${projectId}"
+                )
             }
           } yield { mosaicExportSourceList }
         // Exporting a project
         case (Some(projectId), None, None) =>
           for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            mosaicExportSourceList <- mosaicInput(project.defaultLayerId,
-                                                  exportOptions).map(_.asJson)
+            mosaicExportSourceList <- mosaicInput(
+              project.defaultLayerId,
+              exportOptions
+            ).map(_.asJson)
           } yield { mosaicExportSourceList }
         case (None, Some(projectLayerId), None) =>
           throw new Exception(
-            s"Export Definitions ${export.id} does not have a project id to export layer ${projectLayerId}")
+            s"Export Definitions ${export.id} does not have a project id to export layer ${projectLayerId}"
+          )
         case (None, None, None) =>
           throw new Exception(
-            s"Export Definitions ${export.id} does not have project or ast input defined")
+            s"Export Definitions ${export.id} does not have project or ast input defined"
+          )
       }
     }
 
@@ -152,9 +160,11 @@ object ExportDao extends Dao[Export] {
       sourceDef <- exportSource
       _ <- logger.debug("Created input definition").pure[ConnectionIO]
     } yield {
-      Json.obj("id" -> export.id.asJson,
-               "src" -> sourceDef,
-               "output" -> outputDef.asJson)
+      Json.obj(
+        "id" -> export.id.asJson,
+        "src" -> sourceDef,
+        "output" -> outputDef.asJson
+      )
     }
   }
 
@@ -207,9 +217,11 @@ object ExportDao extends Dao[Export] {
       val ndOverride: Option[Double] = None
       val layers = mds.flatMap { md =>
         md.ingestLocation.map { location =>
-          (location,
-           exportOptions.bands.map(_.toList).getOrElse(List()),
-           ndOverride)
+          (
+            location,
+            exportOptions.bands.map(_.toList).getOrElse(List()),
+            ndOverride
+          )
         }
       }
       exportOptions.mask.map(_.geom.reproject(WebMercator, LatLng)) match {
@@ -233,8 +245,9 @@ object ExportDao extends Dao[Export] {
       ast.withMetadata(NodeMetadata()).withArgs(args)
   }
 
-  private def getProjectLocations(projects: NonEmptyList[UUID])
-    : ConnectionIO[Map[UUID, (List[UUID], List[String])]] = {
+  private def getProjectLocations(
+      projects: NonEmptyList[UUID]
+  ): ConnectionIO[Map[UUID, (List[UUID], List[String])]] = {
     val q =
       sql"""SELECT projects.id, array_agg(stl.scene_id), array_agg(scenes.ingest_location)
     FROM
@@ -249,7 +262,8 @@ object ExportDao extends Dao[Export] {
     stl.scene_id = scenes.id
     """ ++ Fragments.whereAndOpt(
         Some(Fragments.in(fr"projects.id", projects)),
-        Some(fr"scenes.ingest_location IS NOT null")) ++
+        Some(fr"scenes.ingest_location IS NOT null")
+      ) ++
         fr"GROUP BY projects.id"
     for {
       projectSceneLocations <- q
@@ -263,8 +277,9 @@ object ExportDao extends Dao[Export] {
     }
   }
 
-  private def getLayerLocations(layers: NonEmptyList[UUID])
-    : ConnectionIO[Map[UUID, (List[UUID], List[String])]] = {
+  private def getLayerLocations(
+      layers: NonEmptyList[UUID]
+  ): ConnectionIO[Map[UUID, (List[UUID], List[String])]] = {
     val q: Fragment =
       sql"""SELECT stl.project_layer_id, array_agg(stl.scene_id), array_agg(scenes.ingest_location)
     FROM
@@ -275,7 +290,8 @@ object ExportDao extends Dao[Export] {
     stl.scene_id = scenes.id
     """ ++ Fragments.whereAndOpt(
         Some(Fragments.in(fr"stl.project_layer_id", layers)),
-        Some(fr"scenes.ingest_location IS NOT null")) ++
+        Some(fr"scenes.ingest_location IS NOT null")
+      ) ++
         fr"GROUP BY stl.project_layer_id"
     for {
       projectLayerSceneLocations <- q
@@ -293,14 +309,17 @@ object ExportDao extends Dao[Export] {
   final case object ProjectSrc extends SourceType
   final case object LayerSrc extends SourceType
 
-  final case class Parameters(id: UUID,
-                              sourceType: SourceType,
-                              band: Int,
-                              nodataOverride: Option[Double])
+  final case class Parameters(
+      id: UUID,
+      sourceType: SourceType,
+      band: Int,
+      nodataOverride: Option[Double]
+  )
 
   // Returns ID as string and a list of location/band/ndoverride
-  private def getExportParameters(ast: MapAlgebraAST)
-    : ConnectionIO[Map[String, List[(String, Int, Option[Double])]]] = {
+  private def getExportParameters(
+      ast: MapAlgebraAST
+  ): ConnectionIO[Map[String, List[(String, Int, Option[Double])]]] = {
 
     // This really, really needs to be fixed upstream.
     def setNoDataOverride(cellType: CellType): Option[Double] = {

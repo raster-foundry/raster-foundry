@@ -21,21 +21,26 @@ class UploadDaoSpec
   test("insert an upload") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         project: Project.Create,
-         upload: Upload.Create) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            project: Project.Create,
+            upload: Upload.Create
+        ) =>
           {
             val uploadInsertIO = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
-                                                                    org,
-                                                                    platform,
-                                                                    project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
               datasource <- unsafeGetRandomDatasource
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, upload),
-                dbUser)
+                dbUser
+              )
             } yield insertedUpload
 
             val dbUpload = uploadInsertIO.transact(xa).unsafeRunSync
@@ -54,21 +59,27 @@ class UploadDaoSpec
   test("insert an upload to a project") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         project: Project.Create,
-         upload: Upload.Create) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            project: Project.Create,
+            upload: Upload.Create
+        ) =>
           {
             val uploadInsertIO = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
-                                                                    org,
-                                                                    platform,
-                                                                    project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
               datasource <- unsafeGetRandomDatasource
-              uploadToInsert = upload.copy(owner = Some(user.id),
-                                           datasource = datasource.id,
-                                           projectId = Some(dbProject.id))
+              uploadToInsert = upload.copy(
+                owner = Some(user.id),
+                datasource = datasource.id,
+                projectId = Some(dbProject.id)
+              )
               insertedUpload <- UploadDao.insert(uploadToInsert, dbUser)
             } yield (insertedUpload, dbProject)
 
@@ -91,28 +102,34 @@ class UploadDaoSpec
   test("insert an upload to a project's non-default layer") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         project: Project.Create,
-         upload: Upload.Create,
-         projectLayerCreate: ProjectLayer.Create) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            project: Project.Create,
+            upload: Upload.Create,
+            projectLayerCreate: ProjectLayer.Create
+        ) =>
           {
             val uploadInsertIO = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
-                                                                    org,
-                                                                    platform,
-                                                                    project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
               datasource <- unsafeGetRandomDatasource
               dbLayer <- ProjectLayerDao.insertProjectLayer(
                 projectLayerCreate
                   .copy(projectId = Some(dbProject.id))
                   .toProjectLayer
               )
-              uploadToInsert = upload.copy(owner = Some(user.id),
-                                           datasource = datasource.id,
-                                           projectId = Some(dbProject.id),
-                                           layerId = Some(dbLayer.id))
+              uploadToInsert = upload.copy(
+                owner = Some(user.id),
+                datasource = datasource.id,
+                projectId = Some(dbProject.id),
+                layerId = Some(dbLayer.id)
+              )
               insertedUpload <- UploadDao.insert(uploadToInsert, dbUser)
             } yield (insertedUpload, dbProject, dbLayer)
 
@@ -135,43 +152,53 @@ class UploadDaoSpec
   test("update an upload") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         project: Project.Create,
-         insertUpload: Upload.Create,
-         updateUpload: Upload.Create) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            project: Project.Create,
+            insertUpload: Upload.Create,
+            updateUpload: Upload.Create
+        ) =>
           {
             val uploadInsertWithUserOrgProjectDatasourceIO = for {
-              userOrgPlatProject <- insertUserOrgPlatProject(user,
-                                                             org,
-                                                             platform,
-                                                             project)
+              userOrgPlatProject <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
               (dbUser, dbOrg, dbPlatform, dbProject) = userOrgPlatProject
               datasource <- unsafeGetRandomDatasource
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, insertUpload),
-                dbUser)
+                dbUser
+              )
             } yield
               (insertedUpload, dbUser, dbOrg, dbPlatform, dbProject, datasource)
 
             val uploadUpdateWithUploadIO = uploadInsertWithUserOrgProjectDatasourceIO flatMap {
-              case (dbUpload: Upload,
-                    dbUser: User,
-                    _: Organization,
-                    dbPlatform: Platform,
-                    dbProject: Project,
-                    dbDatasource: Datasource) => {
+              case (
+                  dbUpload: Upload,
+                  dbUser: User,
+                  _: Organization,
+                  dbPlatform: Platform,
+                  dbProject: Project,
+                  dbDatasource: Datasource
+                  ) => {
                 val uploadId = dbUpload.id
                 val fixedUpUpdateUpload =
-                  fixupUploadCreate(dbUser,
-                                    dbProject,
-                                    dbDatasource,
-                                    updateUpload).toUpload(dbUser,
-                                                           (dbPlatform.id,
-                                                            false),
-                                                           Some(dbPlatform.id))
-                UploadDao.update(fixedUpUpdateUpload, uploadId, dbUser) flatMap {
+                  fixupUploadCreate(
+                    dbUser,
+                    dbProject,
+                    dbDatasource,
+                    updateUpload
+                  ).toUpload(
+                    dbUser,
+                    (dbPlatform.id, false),
+                    Some(dbPlatform.id)
+                  )
+                UploadDao.update(fixedUpUpdateUpload, uploadId) flatMap {
                   (affectedRows: Int) =>
                     {
                       UploadDao.unsafeGetUploadById(uploadId) map {

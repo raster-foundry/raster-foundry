@@ -54,10 +54,12 @@ trait ProjectLayerAnnotationRoutes
                 (queryParams.withOwnerInfo match {
                   case Some(true) =>
                     AnnotationDao
-                      .listByLayerWithOwnerInfo(projectId,
-                                                page,
-                                                queryParams,
-                                                Some(layerId))
+                      .listByLayerWithOwnerInfo(
+                        projectId,
+                        page,
+                        queryParams,
+                        Some(layerId)
+                      )
                       .transact(xa)
                       .unsafeToFuture
                       .map { p =>
@@ -100,15 +102,18 @@ trait ProjectLayerAnnotationRoutes
           val annotationsCreate = fc.features map { _.toAnnotationCreate }
           onSuccess(
             AnnotationDao
-              .insertAnnotations(annotationsCreate.toList,
-                                 projectId,
-                                 user,
-                                 Some(layerId))
+              .insertAnnotations(
+                annotationsCreate.toList,
+                projectId,
+                user,
+                Some(layerId)
+              )
               .transact(xa)
               .unsafeToFuture
               .map { annotations: List[Annotation] =>
                 fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](
-                  annotations)
+                  annotations
+                )
               }
           ) { createdAnnotation =>
             complete((StatusCodes.Created, createdAnnotation))
@@ -129,15 +134,18 @@ trait ProjectLayerAnnotationRoutes
           AnnotationDao
             .deleteByProjectLayer(projectId, Some(layerId))
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSomeOrNotFound
         }
       }
     }
 
-  def getLayerAnnotation(projectId: UUID,
-                         annotationId: UUID,
-                         layerId: UUID): Route = authenticate { user =>
+  def getLayerAnnotation(
+      projectId: UUID,
+      annotationId: UUID,
+      layerId: UUID
+  ): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao
         .authProjectLayerExist(projectId, layerId, user, ActionType.View)
@@ -167,19 +175,23 @@ trait ProjectLayerAnnotationRoutes
       } {
         entity(as[Annotation.GeoJSON]) {
           updatedAnnotation: Annotation.GeoJSON =>
-            onSuccess(AnnotationDao
-              .updateAnnotation(projectId, updatedAnnotation.toAnnotation, user)
-              .transact(xa)
-              .unsafeToFuture) { count =>
+            onSuccess(
+              AnnotationDao
+                .updateAnnotation(projectId, updatedAnnotation.toAnnotation)
+                .transact(xa)
+                .unsafeToFuture
+            ) { count =>
               completeSingleOrNotFound(count)
             }
         }
       }
     }
 
-  def deleteLayerAnnotation(projectId: UUID,
-                            annotationId: UUID,
-                            layerId: UUID): Route =
+  def deleteLayerAnnotation(
+      projectId: UUID,
+      annotationId: UUID,
+      layerId: UUID
+  ): Route =
     authenticate { user =>
       authorizeAsync {
         ProjectDao
@@ -191,7 +203,8 @@ trait ProjectLayerAnnotationRoutes
           AnnotationDao
             .deleteById(projectId, annotationId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSingleOrNotFound
         }
       }
@@ -209,7 +222,8 @@ trait ProjectLayerAnnotationRoutes
           AnnotationDao
             .listForLayerExport(projectId, layerId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           case annotations @ (_: List[Annotation]) => {
             complete(
               AnnotationShapefileService
@@ -219,7 +233,9 @@ trait ProjectLayerAnnotationRoutes
           case _ =>
             complete(
               throw new Exception(
-                "Annotations do not exist or are not accessible by this user"))
+                "Annotations do not exist or are not accessible by this user"
+              )
+            )
         }
       }
     }
@@ -260,9 +276,11 @@ trait ProjectLayerAnnotationRoutes
       }
     }
 
-  def getLayerAnnotationGroup(projectId: UUID,
-                              layerId: UUID,
-                              agId: UUID): Route = authenticate { user =>
+  def getLayerAnnotationGroup(
+      projectId: UUID,
+      layerId: UUID,
+      agId: UUID
+  ): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao
         .authProjectLayerExist(projectId, layerId, user, ActionType.View)
@@ -278,9 +296,11 @@ trait ProjectLayerAnnotationRoutes
     }
   }
 
-  def updateLayerAnnotationGroup(projectId: UUID,
-                                 layerId: UUID,
-                                 agId: UUID): Route =
+  def updateLayerAnnotationGroup(
+      projectId: UUID,
+      layerId: UUID,
+      agId: UUID
+  ): Route =
     authenticate { user =>
       authorizeAsync {
         ProjectDao
@@ -291,7 +311,7 @@ trait ProjectLayerAnnotationRoutes
         entity(as[AnnotationGroup]) { annotationGroup =>
           complete {
             AnnotationGroupDao
-              .updateAnnotationGroup(projectId, annotationGroup, agId, user)
+              .updateAnnotationGroup(projectId, annotationGroup, agId)
               .transact(xa)
               .unsafeToFuture
           }
@@ -299,9 +319,11 @@ trait ProjectLayerAnnotationRoutes
       }
     }
 
-  def deleteLayerAnnotationGroup(projectId: UUID,
-                                 layerId: UUID,
-                                 agId: UUID): Route =
+  def deleteLayerAnnotationGroup(
+      projectId: UUID,
+      layerId: UUID,
+      agId: UUID
+  ): Route =
     authenticate { user =>
       authorizeAsync {
         ProjectDao
@@ -318,9 +340,11 @@ trait ProjectLayerAnnotationRoutes
       }
     }
 
-  def getLayerAnnotationGroupSummary(projectId: UUID,
-                                     layerId: UUID,
-                                     annotationGroupId: UUID): Route =
+  def getLayerAnnotationGroupSummary(
+      projectId: UUID,
+      layerId: UUID,
+      annotationGroupId: UUID
+  ): Route =
     authenticate { user =>
       authorizeAsync {
         ProjectDao
@@ -330,9 +354,11 @@ trait ProjectLayerAnnotationRoutes
       } {
         complete {
           AnnotationGroupDao
-            .getAnnotationGroupSummary(projectId,
-                                       annotationGroupId,
-                                       Some(layerId))
+            .getAnnotationGroupSummary(
+              projectId,
+              annotationGroupId,
+              Some(layerId)
+            )
             .transact(xa)
             .unsafeToFuture
         }

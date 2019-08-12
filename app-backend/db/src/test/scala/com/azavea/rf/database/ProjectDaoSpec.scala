@@ -69,8 +69,7 @@ class ProjectDaoSpec
               fixedUpUpdateProject = fixupProjectCreate(dbUser, updateProject)
                 .toProject(dbUser, dbProject.defaultLayerId)
               affectedRows <- ProjectDao.updateProject(fixedUpUpdateProject,
-                                                       dbProject.id,
-                                                       dbUser)
+                                                       dbProject.id)
               fetched <- ProjectDao.unsafeGetProjectById(dbProject.id)
             } yield { (affectedRows, fetched) }
 

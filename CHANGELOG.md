@@ -14,6 +14,21 @@
 
 ### Security
 
+## [1.26.0](https://github.com/raster-foundry/raster-foundry/compare/1.25.1...1.26.0)
+
+### Added
+
+- Added `taskId` to annotations and corresponding query paramter [\#5073](https://github.com/raster-foundry/raster-foundry/pull/5073)
+- Added fields to track metadata for scenes to help with RasterSource construction [\#5103](https://github.com/raster-foundry/raster-foundry/pull/5103)
+
+### Changed
+- Add support for multiband imagery in WMS responses
+  [\#5082](https://github.com/raster-foundry/raster-foundry/pull/5082)
+
+### Fixed
+
+- Fixed missing logs from scala services [\#5094](https://github.com/raster-foundry/raster-foundry/pull/5094)
+
 ## [1.25.1](https://github.com/raster-foundry/raster-foundry/tree/1.25.1)
 
 ### Fixed

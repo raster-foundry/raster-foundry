@@ -413,7 +413,7 @@ trait PlatformRoutes
       } {
         complete {
           OrganizationDao
-            .deactivateUserRoles(user, userId, orgId)
+            .deactivateUserRoles(userId, orgId)
             .transact(xa)
             .unsafeToFuture
         }
@@ -488,7 +488,7 @@ trait PlatformRoutes
         entity(as[Team]) { updatedTeam =>
           onSuccess {
             TeamDao
-              .update(updatedTeam, teamId, user)
+              .update(updatedTeam, teamId)
               .transact(xa)
               .unsafeToFuture
           } { team =>
@@ -574,7 +574,7 @@ trait PlatformRoutes
       } {
         complete {
           TeamDao
-            .deactivateUserRoles(user, userId, teamId)
+            .deactivateUserRoles(userId, teamId)
             .transact(xa)
             .unsafeToFuture
         }
@@ -624,9 +624,11 @@ trait PlatformRoutes
       }
     }
 
-  def activateOrganization(platformId: UUID,
-                           organizationId: UUID,
-                           user: User): Route =
+  def activateOrganization(
+      platformId: UUID,
+      organizationId: UUID,
+      user: User
+  ): Route =
     authorizeAsync {
       PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {

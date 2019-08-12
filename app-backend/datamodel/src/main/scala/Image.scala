@@ -7,27 +7,27 @@ import io.circe._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-final case class Image(id: UUID,
-                       createdAt: Timestamp,
-                       modifiedAt: Timestamp,
-                       createdBy: String,
-                       modifiedBy: String,
-                       owner: String,
-                       rawDataBytes: Long,
-                       visibility: Visibility,
-                       filename: String,
-                       sourceUri: String,
-                       scene: UUID,
-                       imageMetadata: Json,
-                       resolutionMeters: Float,
-                       metadataFiles: List[String]) {
+final case class Image(
+    id: UUID,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    createdBy: String,
+    owner: String,
+    rawDataBytes: Long,
+    visibility: Visibility,
+    filename: String,
+    sourceUri: String,
+    scene: UUID,
+    imageMetadata: Json,
+    resolutionMeters: Float,
+    metadataFiles: List[String]
+) {
   def withRelatedFromComponents(bands: List[Band]): Image.WithRelated =
     Image.WithRelated(
       this.id,
       this.createdAt,
       this.modifiedAt,
       this.createdBy,
-      this.modifiedBy,
       this.owner,
       this.rawDataBytes,
       this.visibility,
@@ -48,16 +48,17 @@ object Image {
   def tupled = (Image.apply _).tupled
 
   @JsonCodec
-  final case class Create(rawDataBytes: Long,
-                          visibility: Visibility,
-                          filename: String,
-                          sourceUri: String,
-                          scene: UUID,
-                          imageMetadata: Json,
-                          owner: Option[String],
-                          resolutionMeters: Float,
-                          metadataFiles: List[String])
-      extends OwnerCheck {
+  final case class Create(
+      rawDataBytes: Long,
+      visibility: Visibility,
+      filename: String,
+      sourceUri: String,
+      scene: UUID,
+      imageMetadata: Json,
+      owner: Option[String],
+      resolutionMeters: Float,
+      metadataFiles: List[String]
+  ) extends OwnerCheck {
     def toImage(user: User): Image = {
       val now = new Timestamp((new java.util.Date).getTime)
 
@@ -68,7 +69,6 @@ object Image {
         now, // createdAt
         now, // modifiedAt
         user.id, // createdBy: String,
-        user.id, // modifiedBy: String,
         ownerId, // owner: String
         rawDataBytes,
         visibility,
@@ -84,16 +84,18 @@ object Image {
 
   /** Image class when posted with bands */
   @JsonCodec
-  final case class Banded(rawDataBytes: Long,
-                          visibility: Visibility,
-                          filename: String,
-                          sourceUri: String,
-                          owner: Option[String],
-                          scene: UUID,
-                          imageMetadata: Json,
-                          resolutionMeters: Float,
-                          metadataFiles: List[String],
-                          bands: Seq[Band.Create]) {
+  final case class Banded(
+      rawDataBytes: Long,
+      visibility: Visibility,
+      filename: String,
+      sourceUri: String,
+      owner: Option[String],
+      scene: UUID,
+      imageMetadata: Json,
+      resolutionMeters: Float,
+      metadataFiles: List[String],
+      bands: Seq[Band.Create]
+  ) {
     def toImage(user: User): Image = {
       Image
         .Create(
@@ -112,21 +114,22 @@ object Image {
   }
 
   @JsonCodec
-  final case class WithRelated(id: UUID,
-                               createdAt: Timestamp,
-                               modifiedAt: Timestamp,
-                               createdBy: String,
-                               modifiedBy: String,
-                               owner: String,
-                               rawDataBytes: Long,
-                               visibility: Visibility,
-                               filename: String,
-                               sourceUri: String,
-                               scene: UUID,
-                               imageMetadata: Json,
-                               resolutionMeters: Float,
-                               metadataFiles: List[String],
-                               bands: List[Band]) {
+  final case class WithRelated(
+      id: UUID,
+      createdAt: Timestamp,
+      modifiedAt: Timestamp,
+      createdBy: String,
+      owner: String,
+      rawDataBytes: Long,
+      visibility: Visibility,
+      filename: String,
+      sourceUri: String,
+      scene: UUID,
+      imageMetadata: Json,
+      resolutionMeters: Float,
+      metadataFiles: List[String],
+      bands: List[Band]
+  ) {
 
     /** Helper method to extract the image component only for post requests */
     def toImage: Image = Image(
@@ -134,7 +137,6 @@ object Image {
       createdAt,
       modifiedAt,
       createdBy,
-      modifiedBy,
       owner,
       rawDataBytes,
       visibility,
@@ -155,7 +157,9 @@ object Image {
   }
 
   @JsonCodec
-  final case class Downloadable(filename: String,
-                                sourceUri: String,
-                                downloadUri: String)
+  final case class Downloadable(
+      filename: String,
+      sourceUri: String,
+      downloadUri: String
+  )
 }

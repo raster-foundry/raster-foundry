@@ -124,6 +124,9 @@ trait Filterables extends RFMeta with LazyLogging {
             annotParams.annotationGroup.map({ ag =>
               fr"annotation_group = $ag"
             }),
+            annotParams.taskId.map({ tid =>
+              fr"task_id = $tid"
+            }),
             annotParams.bboxPolygon match {
               case Some(bboxPolygons) =>
                 val fragments = bboxPolygons.map(
@@ -185,8 +188,8 @@ trait Filterables extends RFMeta with LazyLogging {
               case _    => fr"ingest_status != 'INGESTED'"
             }),
             sceneParams.ingestStatus.toList.toNel.map({ statuses =>
-              Fragments.in(fr"ingest_status",
-                           statuses.map(IngestStatus.fromString(_)))
+              Fragments
+                .in(fr"ingest_status", statuses.map(IngestStatus.fromString(_)))
             }),
             (sceneParams.bboxPolygon, sceneParams.shape) match {
               case (Some(bboxPolygons), _) =>
@@ -209,8 +212,8 @@ trait Filterables extends RFMeta with LazyLogging {
           case _    => fr"ingest_status != 'INGESTED'"
         }),
         params.ingestStatus.toList.toNel.map({ statuses =>
-          Fragments.in(fr"ingest_status",
-                       statuses.map(IngestStatus.fromString(_)))
+          Fragments
+            .in(fr"ingest_status", statuses.map(IngestStatus.fromString(_)))
         })
       )
     }

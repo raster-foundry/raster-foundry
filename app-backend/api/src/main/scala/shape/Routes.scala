@@ -212,7 +212,7 @@ trait ShapeRoutes
       entity(as[Shape.GeoJSON]) { updatedShape: Shape.GeoJSON =>
         onSuccess(
           ShapeDao
-            .updateShape(updatedShape, shapeId, user)
+            .updateShape(updatedShape, shapeId)
             .transact(xa)
             .unsafeToFuture()) {
           completeSingleOrNotFound

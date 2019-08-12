@@ -81,8 +81,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   def userAuditQueryParameters =
     parameters(
       (
-        'createdBy.as[String].?,
-        'modifiedBy.as[String].?
+        'createdBy.as[String].?
       )
     ).as(UserAuditQueryParameters.apply _)
 
@@ -115,7 +114,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
           'quality.as[String].?,
           'annotationGroup.as[UUID].?,
           'bbox.as[String].*,
-          'withOwnerInfo.as[Boolean].?
+          'withOwnerInfo.as[Boolean].?,
+          'taskId.as[UUID].?
         )
       )).as(AnnotationQueryParameters.apply _)
 

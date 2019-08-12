@@ -18,7 +18,8 @@ object TaskDao extends Dao[Task] {
   val tableName = "tasks"
   val joinTableF =
     Fragment.const(
-      "tasks left join task_actions on tasks.id = task_actions.task_id")
+      "tasks left join task_actions on tasks.id = task_actions.task_id"
+    )
 
   val cols =
     fr"""
@@ -27,7 +28,6 @@ object TaskDao extends Dao[Task] {
       created_at,
       created_by,
       modified_at,
-      modified_by,
       owner,
       project_id,
       project_layer_id,
@@ -50,7 +50,6 @@ object TaskDao extends Dao[Task] {
           created_at,
           created_by,
           modified_at,
-          modified_by,
           owner,
           project_id,
           project_layer_id,
@@ -158,7 +157,8 @@ object TaskDao extends Dao[Task] {
         listF,
         joinTableF,
         Nil,
-        Some(fr"SELECT count(distinct id) FROM" ++ joinTableF))
+        Some(fr"SELECT count(distinct id) FROM" ++ joinTableF)
+      )
       .filter(queryParams)
       .filter(fr"project_id = $projectId")
       .filter(fr"project_layer_id = $layerId")
@@ -194,7 +194,7 @@ object TaskDao extends Dao[Task] {
       user: User
   ): Fragment = {
     fr"""(
-        ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id}, ${user.id},
+        ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id},
         ${tfc.properties.projectId}, ${tfc.properties.projectLayerId}, ${tfc.properties.status},
         null, null, ${tfc.geometry}
     )"""
@@ -214,7 +214,6 @@ object TaskDao extends Dao[Task] {
           "created_at",
           "created_by",
           "modified_at",
-          "modified_by",
           "owner",
           "project_id",
           "project_layer_id",
@@ -251,7 +250,6 @@ object TaskDao extends Dao[Task] {
           NOW(),
           ${user.id},
           NOW(),
-          ${user.id},
           ${user.id},
           ${taskProperties.projectId},
           ${taskProperties.projectLayerId},
@@ -295,7 +293,11 @@ object TaskDao extends Dao[Task] {
     (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE project_id = ${projectId} and project_layer_id = ${layerId}").update.run
   }
 
-  def getTeamUsersF(projectId: UUID, params: UserTaskActivityParameters): Fragment = fr"""
+  def getTeamUsersF(
+      projectId: UUID,
+      params: UserTaskActivityParameters
+  ): Fragment =
+    fr"""
     SELECT DISTINCT ugr.user_id, users.name, users.profile_image_uri
     FROM user_group_roles AS ugr
     INNER JOIN (
@@ -314,17 +316,18 @@ object TaskDao extends Dao[Task] {
     ON ugr.user_id = users.id
     WHERE ugr.group_type='TEAM' AND ugr.is_active = true
   """ ++ (params.actionUser match {
-    case Some(userId) => fr"AND ugr.user_id = $userId"
-    case _ => fr""
-  })
+      case Some(userId) => fr"AND ugr.user_id = $userId"
+      case _            => fr""
+    })
 
   def getTaskActionTimeF(
-    projectId: UUID,
-    layerId: UUID,
-    fromStatus: TaskStatus,
-    toStatus: TaskStatus,
-    params: UserTaskActivityParameters
-  ): Fragment = fr"""
+      projectId: UUID,
+      layerId: UUID,
+      fromStatus: TaskStatus,
+      toStatus: TaskStatus,
+      params: UserTaskActivityParameters
+  ): Fragment =
+    fr"""
     SELECT ta.user_id, ta.task_id, ta.from_status, ta.to_status, MAX(ta.timestamp) AS timestamp
     FROM tasks
     LEFT JOIN task_actions AS ta
@@ -344,7 +347,12 @@ object TaskDao extends Dao[Task] {
       }
     ) ++ fr"GROUP BY (ta.user_id, ta.task_id, ta.from_status, ta.to_status)"
 
-  def getUserTasksF(projectId: UUID, layerId: UUID, action: String, params: UserTaskActivityParameters): Fragment = {
+  def getUserTasksF(
+      projectId: UUID,
+      layerId: UUID,
+      action: String,
+      params: UserTaskActivityParameters
+  ): Fragment = {
     val selectF = fr"""
       SELECT
         to_in_progress.user_id,
@@ -362,24 +370,51 @@ object TaskDao extends Dao[Task] {
     """
 
     val (inProgressTaskActionTimeF, completeTaskActionTimeF) = action match {
-      case "label" => (
-        getTaskActionTimeF(projectId, layerId, TaskStatus.Unlabeled, TaskStatus.LabelingInProgress, params),
-        getTaskActionTimeF(projectId, layerId, TaskStatus.LabelingInProgress, TaskStatus.Labeled, params)
-      )
-      case "validate" => (
-        getTaskActionTimeF(projectId, layerId, TaskStatus.Labeled, TaskStatus.ValidationInProgress, params),
-        getTaskActionTimeF(projectId, layerId, TaskStatus.ValidationInProgress, TaskStatus.Validated, params)
-      )
+      case "label" =>
+        (
+          getTaskActionTimeF(
+            projectId,
+            layerId,
+            TaskStatus.Unlabeled,
+            TaskStatus.LabelingInProgress,
+            params
+          ),
+          getTaskActionTimeF(
+            projectId,
+            layerId,
+            TaskStatus.LabelingInProgress,
+            TaskStatus.Labeled,
+            params
+          )
+        )
+      case "validate" =>
+        (
+          getTaskActionTimeF(
+            projectId,
+            layerId,
+            TaskStatus.Labeled,
+            TaskStatus.ValidationInProgress,
+            params
+          ),
+          getTaskActionTimeF(
+            projectId,
+            layerId,
+            TaskStatus.ValidationInProgress,
+            TaskStatus.Validated,
+            params
+          )
+        )
     }
 
     selectF ++ inProgressTaskActionTimeF ++ innerJoinF ++ completeTaskActionTimeF ++ joinTargetF
   }
 
-
   def getTaskUserSummary(
       projectId: UUID,
       layerId: UUID,
-      params: UserTaskActivityParameters): ConnectionIO[List[TaskUserSummary]] = (fr"""
+      params: UserTaskActivityParameters
+  ): ConnectionIO[List[TaskUserSummary]] =
+    (fr"""
     SELECT
       team_users.user_id,
       team_users.name,
@@ -388,7 +423,7 @@ object TaskDao extends Dao[Task] {
       COALESCE(user_labeled_tasks.task_avg_time, 0) AS labeled_task_avg_time_second,
       COALESCE(user_validated_tasks.task_count, 0) AS validated_task_count,
       COALESCE(user_validated_tasks.task_avg_time, 0) AS validated_task_avg_time_second
-    FROM ("""++ getTeamUsersF(projectId, params) ++ fr""") AS team_users
+    FROM (""" ++ getTeamUsersF(projectId, params) ++ fr""") AS team_users
     LEFT JOIN (""" ++ getUserTasksF(projectId, layerId, "label", params) ++ fr"""
     ) AS user_labeled_tasks
     ON

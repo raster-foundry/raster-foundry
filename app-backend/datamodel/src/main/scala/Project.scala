@@ -12,28 +12,29 @@ import java.sql.Timestamp
 import java.util.UUID
 
 @JsonCodec
-final case class Project(id: UUID,
-                         createdAt: Timestamp,
-                         modifiedAt: Timestamp,
-                         createdBy: String,
-                         modifiedBy: String,
-                         owner: String,
-                         name: String,
-                         slugLabel: String,
-                         description: String,
-                         visibility: Visibility,
-                         tileVisibility: Visibility,
-                         isAOIProject: Boolean,
-                         aoiCadenceMillis: Long, /* Milliseconds */
-                         aoisLastChecked: Timestamp,
-                         tags: List[String] = List.empty,
-                         extent: Option[Projected[Geometry]] = None,
-                         manualOrder: Boolean = true,
-                         isSingleBand: Boolean = false,
-                         singleBandOptions: Option[SingleBandOptions.Params],
-                         defaultAnnotationGroup: Option[UUID],
-                         extras: Option[Json],
-                         defaultLayerId: UUID)
+final case class Project(
+    id: UUID,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    createdBy: String,
+    owner: String,
+    name: String,
+    slugLabel: String,
+    description: String,
+    visibility: Visibility,
+    tileVisibility: Visibility,
+    isAOIProject: Boolean,
+    aoiCadenceMillis: Long, /* Milliseconds */
+    aoisLastChecked: Timestamp,
+    tags: List[String] = List.empty,
+    extent: Option[Projected[Geometry]] = None,
+    manualOrder: Boolean = true,
+    isSingleBand: Boolean = false,
+    singleBandOptions: Option[SingleBandOptions.Params],
+    defaultAnnotationGroup: Option[UUID],
+    extras: Option[Json],
+    defaultLayerId: UUID
+)
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
@@ -68,18 +69,19 @@ object Project extends GeoJsonSupport {
       )
   }
 
-  final case class Create(name: String,
-                          description: String,
-                          visibility: Visibility,
-                          tileVisibility: Visibility,
-                          isAOIProject: Boolean,
-                          aoiCadenceMillis: Long,
-                          owner: Option[String],
-                          tags: List[String],
-                          isSingleBand: Boolean,
-                          singleBandOptions: Option[SingleBandOptions.Params],
-                          extras: Option[Json] = Some("{}".asJson))
-      extends OwnerCheck {
+  final case class Create(
+      name: String,
+      description: String,
+      visibility: Visibility,
+      tileVisibility: Visibility,
+      isAOIProject: Boolean,
+      aoiCadenceMillis: Long,
+      owner: Option[String],
+      tags: List[String],
+      isSingleBand: Boolean,
+      singleBandOptions: Option[SingleBandOptions.Params],
+      extras: Option[Json] = Some("{}".asJson)
+  ) extends OwnerCheck {
     def toProject(user: User, defaultLayerId: UUID): Project = {
       val now = new Timestamp(new java.util.Date().getTime)
 
@@ -90,7 +92,6 @@ object Project extends GeoJsonSupport {
         now, // createdAt
         now, // modifiedAt
         user.id, // createdBy
-        user.id, // modifiedBy
         ownerId, // owner
         name,
         slugify(name),
@@ -168,27 +169,28 @@ object Project extends GeoJsonSupport {
     implicit val enc: Encoder[Create] = deriveEncoder
   }
 
-  final case class WithUser(id: UUID,
-                            createdAt: Timestamp,
-                            modifiedAt: Timestamp,
-                            createdBy: String,
-                            modifiedBy: String,
-                            owner: User,
-                            name: String,
-                            slugLabel: String,
-                            description: String,
-                            visibility: Visibility,
-                            tileVisibility: Visibility,
-                            isAOIProject: Boolean,
-                            aoiCadenceMillis: Long, /* Milliseconds */
-                            aoisLastChecked: Timestamp,
-                            tags: List[String],
-                            extent: Option[Projected[Geometry]],
-                            manualOrder: Boolean,
-                            isSingleBand: Boolean,
-                            singleBandOptions: Option[SingleBandOptions.Params],
-                            extras: Option[Json] = Some("{}".asJson),
-                            defaultLayerId: UUID)
+  final case class WithUser(
+      id: UUID,
+      createdAt: Timestamp,
+      modifiedAt: Timestamp,
+      createdBy: String,
+      owner: User,
+      name: String,
+      slugLabel: String,
+      description: String,
+      visibility: Visibility,
+      tileVisibility: Visibility,
+      isAOIProject: Boolean,
+      aoiCadenceMillis: Long, /* Milliseconds */
+      aoisLastChecked: Timestamp,
+      tags: List[String],
+      extent: Option[Projected[Geometry]],
+      manualOrder: Boolean,
+      isSingleBand: Boolean,
+      singleBandOptions: Option[SingleBandOptions.Params],
+      extras: Option[Json] = Some("{}".asJson),
+      defaultLayerId: UUID
+  )
 
   object WithUser {
     def apply(project: Project, user: User): WithUser = {
@@ -197,7 +199,6 @@ object Project extends GeoJsonSupport {
         project.createdAt,
         project.modifiedAt,
         project.createdBy,
-        project.modifiedBy,
         user,
         project.name,
         project.slugLabel,

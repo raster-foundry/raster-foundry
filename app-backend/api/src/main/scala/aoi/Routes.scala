@@ -69,7 +69,7 @@ trait AoiRoutes
       AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
       entity(as[AOI]) { aoi =>
-        onSuccess(AoiDao.updateAOI(aoi, user).transact(xa).unsafeToFuture) {
+        onSuccess(AoiDao.updateAOI(aoi).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
