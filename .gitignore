@@ -104,6 +104,7 @@ metals.lock.db
 
 .node_modules
 dist/
+.vscode
 
 /data
 .idea

@@ -134,7 +134,7 @@ object SceneToLayerDao
     val select = fr"""
     SELECT
       scene_id, project_id, project_layer_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
-      data_footprint, is_single_band, single_band_options, geometry
+      data_footprint, is_single_band, single_band_options, geometry, no_data_value
     FROM (
       scenes_to_layers
     LEFT JOIN
@@ -165,7 +165,8 @@ object SceneToLayerDao
               stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
               stp.isSingleBand,
               stp.singleBandOptions,
-              stp.mask flatMap { _.geom.as[MultiPolygon] }
+              stp.mask flatMap { _.geom.as[MultiPolygon] },
+              stp.noDataValue
             )
         } getOrElse {
           MosaicDefinition(
@@ -177,7 +178,8 @@ object SceneToLayerDao
             stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
             stp.isSingleBand,
             stp.singleBandOptions,
-            stp.mask flatMap { _.as[MultiPolygon] }
+            stp.mask flatMap { _.as[MultiPolygon] },
+            stp.noDataValue
           )
         }
       }

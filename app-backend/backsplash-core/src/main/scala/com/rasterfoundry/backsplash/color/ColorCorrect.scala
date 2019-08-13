@@ -61,13 +61,13 @@ object ColorCorrect extends LazyLogging {
       newMin: Int,
       newMax: Int,
       gammaOpt: Option[Double],
-      noData: Option[Double]
+      nodataValue: Option[Double]
   ): Int = {
     if (isData(z)) {
       val dNew = newMax - newMin
       val dOld = oldMax - oldMin
 
-      if (noData.isDefined && z == noData.get) {
+      if (nodataValue.isDefined && z == nodataValue.get) {
         0
       } else if (dOld == 0) {
         // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
@@ -116,7 +116,7 @@ object ColorCorrect extends LazyLogging {
   )(sigmoidalContrast: SigmoidalContrast)(
       colorCorrectArgs: Map[Int, MaybeClipBounds],
       tileClipping: MultiBandClipping,
-      nodataValue: Option[Double]
+      noDataValue: Option[Double]
   ): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val (gr, gg, gb) = (gammas(0), gammas(1), gammas(2))
@@ -130,7 +130,6 @@ object ColorCorrect extends LazyLogging {
     val ClipBounds(gmin, gmax) = layerNormalizeArgs(1)
     val ClipBounds(bmin, bmax) = layerNormalizeArgs(2)
 
-    logger.info(s"No data value = $nodataValue")
     val tileMin = 1
     val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, tileMin, 255)
     val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, tileMin, 255)
@@ -193,7 +192,7 @@ object ColorCorrect extends LazyLogging {
                 rnewMin,
                 rnewMax,
                 gr,
-                nodataValue
+                noDataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
                 green.get(col, row),
@@ -202,7 +201,7 @@ object ColorCorrect extends LazyLogging {
                 gnewMin,
                 gnewMax,
                 gg,
-                nodataValue
+                noDataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
                 blue.get(col, row),
@@ -211,7 +210,7 @@ object ColorCorrect extends LazyLogging {
                 bnewMin,
                 bnewMax,
                 gb,
-                nodataValue
+                noDataValue
               )
             )
 

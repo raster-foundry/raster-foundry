@@ -43,7 +43,8 @@ object SceneDao
       datasource, scene_metadata, name, tile_footprint,
       data_footprint, metadata_files, ingest_location, cloud_cover,
       acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
-      boundary_status, ingest_status, scene_type
+      boundary_status, ingest_status, scene_type, data_path, crs,
+      band_count, grid_extent, resolutions, no_data_value
     FROM
   """ ++ tableF
 
@@ -90,7 +91,8 @@ object SceneDao
          datasource, scene_metadata, name, tile_footprint,
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
-         boundary_status, ingest_status, scene_type
+         boundary_status, ingest_status, scene_type, data_path, crs, band_count,
+         cell_type, grid_extent, resolutions, no_data_value
       )""" ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.owner},
         ${scene.visibility}, ${scene.tags}, ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name},
@@ -98,9 +100,10 @@ object SceneDao
         ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
-        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
-      SceneType.Avro
-    )}
+        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(SceneType.Avro)},
+        ${scene.metadataFields.dataPath}, ${scene.metadataFields.crs}, ${scene.metadataFields.bandCount},
+        ${scene.metadataFields.cellType}, ${scene.metadataFields.gridExtent}, ${scene.metadataFields.resolutions},
+        ${scene.metadataFields.noDataValue}
       )
     """).update.withUniqueGeneratedKeys[UUID]("id")
 
@@ -160,7 +163,8 @@ object SceneDao
          datasource, scene_metadata, name, tile_footprint,
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
-         boundary_status, ingest_status, scene_type
+         boundary_status, ingest_status, scene_type, data_path, crs, band_count,
+         cell_type, grid_extent, resolutions, no_data_value
       )""") ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.owner},
         ${scene.visibility}, ${scene.tags},
@@ -168,9 +172,9 @@ object SceneDao
         ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
-        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
-      SceneType.Avro
-    )}
+        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(SceneType.Avro)},
+        ${scene.metadataFields.dataPath}, ${scene.metadataFields.crs}, ${scene.metadataFields.bandCount},
+        ${scene.metadataFields.cellType}, ${scene.metadataFields.resolutions}, ${scene.metadataFields.noDataValue}
       )
     """).update.run
 
@@ -216,7 +220,14 @@ object SceneDao
       sun_elevation = ${scene.filterFields.sunElevation},
       thumbnail_status = ${scene.statusFields.thumbnailStatus},
       boundary_status = ${scene.statusFields.boundaryStatus},
-      ingest_status = ${scene.statusFields.ingestStatus}
+      ingest_status = ${scene.statusFields.ingestStatus},
+      data_path = ${scene.metadataFields.dataPath},
+      crs = ${scene.metadataFields.crs},
+      band_count = ${scene.metadataFields.bandCount},
+      cell_type = ${scene.metadataFields.cellType},
+      grid_extent = ${scene.metadataFields.gridExtent},
+      resolutions = ${scene.metadataFields.resolutions},
+      no_data_value = ${scene.metadataFields.noDataValue}
     """ ++ Fragments.whereAndOpt(idFilter)).update.run
 
     lastModifiedAndIngestIO flatMap {
@@ -326,7 +337,8 @@ object SceneDao
             scene.dataFootprint map { _.geom },
             false,
             Some(().asJson),
-            None
+            None,
+            scene.metadataFields.noDataValue
           )
         )
       } getOrElse { Seq.empty }

@@ -91,7 +91,8 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
               baseImage.corrections,
               baseImage.singleBandOptions,
               baseImage.mask,
-              baseImage.footprint
+              baseImage.footprint,
+              baseImage.noDataValue
             )
           }
         }
