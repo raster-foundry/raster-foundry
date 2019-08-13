@@ -44,7 +44,7 @@ object SceneDao
       data_footprint, metadata_files, ingest_location, cloud_cover,
       acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
       boundary_status, ingest_status, scene_type, data_path, crs,
-      band_count, grid_extent, resolutions, no_data_value
+      band_count, cell_type, grid_extent, resolutions, no_data_value
     FROM
   """ ++ tableF
 
