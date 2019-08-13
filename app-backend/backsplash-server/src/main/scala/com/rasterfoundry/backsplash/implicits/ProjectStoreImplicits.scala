@@ -115,7 +115,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       colorCorrectParameters,
       singleBandOptions,
       mosaicDefinition.mask,
-      footprint
+      footprint,
+      mosaicDefinition.noDataValue
     )
   }
 
@@ -152,7 +153,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
           colorCorrectParams,
           None, // no single band options ever
           None, // not adding the mask here, since out of functional scope for md to image
-          footprint
+          footprint,
+          scene.metadataFields.noDataValue
         )
       }
     }

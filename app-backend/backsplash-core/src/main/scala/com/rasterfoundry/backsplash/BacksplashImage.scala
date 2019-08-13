@@ -64,10 +64,11 @@ final case class BacksplashGeotiff(
       val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
       IO {
         noDataValue match {
-          case Some(nd) => rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+          case Some(nd) =>
+            rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
           case _ => rasterSource
         }
-        
+
       }
     } else {
       memoizeF(None) {
@@ -75,7 +76,8 @@ final case class BacksplashGeotiff(
         val rasterSource = new GeoTiffRasterSource(uri)
         IO {
           noDataValue match {
-            case Some(nd) => rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+            case Some(nd) =>
+              rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
             case _ => rasterSource
           }
         }

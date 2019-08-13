@@ -31,7 +31,7 @@ object Version {
   val ficus = "1.4.0"
   val flyway = "5.2.4"
   val geotools = "17.1"
-  val geotrellisContrib = "3.16.0"
+  val geotrellisContrib = "3.16.1-M3"
   val geotrellis = "3.0.0-M3"
   val geotrellisServer = "3.4.0"
   val hadoop = "2.8.4"
