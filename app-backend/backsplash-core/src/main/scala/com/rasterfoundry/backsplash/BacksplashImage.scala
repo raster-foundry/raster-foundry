@@ -66,7 +66,8 @@ final case class BacksplashGeotiff(
         noDataValue match {
           case Some(nd) =>
             rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
-          case _ => rasterSource
+          case _ =>
+            rasterSource
         }
 
       }
@@ -78,7 +79,8 @@ final case class BacksplashGeotiff(
           noDataValue match {
             case Some(nd) =>
               rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
-            case _ => rasterSource
+            case _ =>
+              rasterSource
           }
         }
       }

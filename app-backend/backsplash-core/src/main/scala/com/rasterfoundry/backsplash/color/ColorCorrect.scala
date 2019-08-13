@@ -237,7 +237,7 @@ object ColorCorrect extends LazyLogging {
   def apply(rgbTile: MultibandTile,
             rgbHist: Seq[Histogram[Double]],
             params: Params,
-            nodataValue: Option[Double]): MultibandTile = {
+            noDataValue: Option[Double]): MultibandTile = {
     val _rgbTile = rgbTile
     val _rgbHist = rgbHist
     val gammas = params.getGamma
@@ -294,7 +294,7 @@ object ColorCorrect extends LazyLogging {
       gammas
     )(params.sigmoidalContrast)(colorCorrectArgs,
                                 params.tileClipping,
-                                nodataValue)
+                                noDataValue)
   }
 
   @inline def clampColor(z: Int): Int = {

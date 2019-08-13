@@ -60,9 +60,9 @@ object ColorCorrect extends LazyLogging {
 
     def colorCorrect(tile: MultibandTile,
                      hist: Seq[Histogram[Double]],
-                     nodataValue: Option[Double]): MultibandTile = {
+                     noDataValue: Option[Double]): MultibandTile = {
       val (rgbTile, rgbHist) = reorderBands(tile, hist)
-      ColorCorrect(rgbTile, rgbHist, this, nodataValue)
+      ColorCorrect(rgbTile, rgbHist, this, noDataValue)
     }
   }
 

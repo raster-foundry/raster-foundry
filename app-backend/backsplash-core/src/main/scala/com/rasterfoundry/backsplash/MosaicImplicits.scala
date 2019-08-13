@@ -194,7 +194,10 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
               logger.debug(
                 s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}"
               )
-              relevant.corrections.colorCorrect(mbTile, hists, noDataValue)
+              relevant.corrections.colorCorrect(
+                mbTile,
+                hists,
+                relevant.noDataValue orElse noDataValue)
             }
           }
         } yield {
