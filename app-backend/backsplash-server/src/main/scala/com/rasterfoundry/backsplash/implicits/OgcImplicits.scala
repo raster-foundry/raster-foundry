@@ -1,9 +1,13 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.{BacksplashMosaic, OgcStore, ProjectStore}
-import com.rasterfoundry.backsplash.color.{OgcStyles, SingleBandOptions}
+import com.rasterfoundry.backsplash.color.OgcStyles
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
-import com.rasterfoundry.datamodel.{ColorComposite, ProjectLayer}
+import com.rasterfoundry.datamodel.{
+  ColorComposite,
+  ProjectLayer,
+  SingleBandOptions
+}
 import com.rasterfoundry.database.{
   LayerAttributeDao,
   ProjectDao,

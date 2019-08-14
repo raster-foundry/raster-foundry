@@ -330,9 +330,7 @@ object SceneDao
               ),
               MultiBandClipping(enabled = false, None, None),
               SigmoidalContrast(enabled = false, None, None),
-              Saturation(enabled = false, None),
-              Equalization(false),
-              AutoWhiteBalance(false)
+              Saturation(enabled = false, None)
             ),
             scene.sceneType,
             scene.ingestLocation,

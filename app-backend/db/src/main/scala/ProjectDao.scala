@@ -386,9 +386,7 @@ object ProjectDao
             ), // Clipping Min: R,G,B
             MultiBandClipping(enabled = false, None, None), // Min, Max
             SigmoidalContrast(enabled = false, None, None), // Alpha, Beta
-            Saturation(enabled = false, None), // Saturation
-            Equalization(false), // Equalize
-            AutoWhiteBalance(false) // Auto White Balance
+            Saturation(enabled = false, None) // Saturation
           )
           .asJson
       )

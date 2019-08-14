@@ -2,7 +2,8 @@ package com.rasterfoundry.backsplash
 
 import java.net.URLDecoder
 
-import com.rasterfoundry.backsplash.color._
+import com.rasterfoundry.common.color._
+import com.rasterfoundry.datamodel.SingleBandOptions
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.resample.NearestNeighbor
