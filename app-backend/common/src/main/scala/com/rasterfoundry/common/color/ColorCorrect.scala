@@ -66,7 +66,7 @@ object ColorCorrect extends LazyLogging {
       val dNew = newMax - newMin
       val dOld = oldMax - oldMin
 
-      if (noDataValue.map(_ == z).getOrElse(false)) {
+      if (noDataValue.map(nd => (nd - z).abs < 0.00000001).getOrElse(false)) {
         0
       } else if (dOld == 0) {
         // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
