@@ -6,7 +6,7 @@ import com.rasterfoundry.datamodel._
 import geotrellis.server.stac.{StacExtent => _}
 import com.rasterfoundry.batch.stacExport.{StacExtent => BatchStacExtent}
 import io.circe._
-import io.circe.parser._
+import io.circe.syntax._
 import io.circe.syntax._
 import java.util.UUID
 import java.sql.Timestamp
@@ -62,20 +62,10 @@ case class IncompleteLabelCollection(
 ) {
   @SuppressWarnings(Array("OptionGet"))
   def toStacCollection(): StacCollection = {
-    val spatial: List[Double] = this.extent.get.spatial
-    val temporal: List[String] =
-      this.extent.get.temporal.map(_.getOrElse("null"))
-    val extent: Json = parse(s"""
-      {
-        "spatial": [
-          ${spatial(0)},
-          ${spatial(1)},
-          ${spatial(2)},
-          ${spatial(3)}
-        ],
-        "temporal": [${temporal(0)}, ${temporal(1)}]
-      }
-    """).getOrElse(Json.Null)
+    val extent: Json = this.extent match {
+      case Some(ext) => ext.asJson
+      case None      => Json.Null
+    }
     StacCollection(
       this.stacVersion.get,
       this.id.get,

@@ -133,7 +133,6 @@ final case class WriteStacCatalog(exportId: UUID)(
       For each project layer:
       fetch scenes
       fetch tasks, filter by exportDefinition.taskStatuses
-      (if union option is set, union the tasks) -> this option is currently ignored
       fetch the annotations filtered by task statuses
       save the annotations as a geojson feature collection
       (map the labels of annotations according the project extras field, setting properties etc) -> already done in Daos

@@ -15,7 +15,6 @@ final case class StacExport(id: UUID,
                             exportLocation: Option[String],
                             exportStatus: ExportStatus,
                             layerDefinitions: List[StacExport.LayerDefinition],
-                            unionAois: Boolean,
                             taskStatuses: List[String])
 
 object StacExport {
@@ -29,7 +28,6 @@ object StacExport {
   final case class Create(name: String,
                           owner: Option[String],
                           layerDefinitions: List[StacExport.LayerDefinition],
-                          unionAois: Boolean,
                           taskStatuses: List[TaskStatus])
       extends OwnerCheck {
     def toStacExport(user: User): StacExport = {
@@ -47,7 +45,6 @@ object StacExport {
         None,
         ExportStatus.NotExported,
         this.layerDefinitions,
-        this.unionAois,
         this.taskStatuses.map(_.toString)
       )
     }
