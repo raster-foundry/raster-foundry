@@ -111,10 +111,10 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
       .parEvalMap(streamConcurrency) { relevant =>
         logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
         relevant.read(z, x, y) map {
-          (_, relevant.singleBandOptions)
+          (_, relevant.singleBandOptions, relevant.noDataValue)
         }
       }
-      .collect({ case (Some(mbtile), Some(sbo)) => (mbtile, sbo) })
+      .collect({ case (Some(mbtile), Some(sbo), nd) => (mbtile, sbo, nd) })
       .compile
       .toList
 
@@ -138,17 +138,19 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
       }
       multibandTilewithSBO <- ioMBTwithSBO
     } yield {
-      val (tiles, sbos) = multibandTilewithSBO.unzip
+      val (tiles, sbos, nd) = multibandTilewithSBO.unzip3
       val combinedHistogram = histograms.reduce(_ merge _)
       tiles match {
         case tile :: Nil =>
-          Raster(ColorRampMosaic.colorTile(tile.interpretAs(invisiCellType),
+          Raster(ColorRampMosaic.colorTile(interpretAsFallback(tile, nd.head),
                                            List(combinedHistogram),
                                            sbos.head),
                  extent)
         case someTiles =>
           someTiles.reduceOption(
-            _.interpretAs(invisiCellType) merge _.interpretAs(invisiCellType)) match {
+            interpretAsFallback(_, nd.head) merge interpretAsFallback(_,
+                                                                      nd.head)
+          ) match {
             case Some(t) =>
               Raster(
                 ColorRampMosaic.colorTile(
@@ -165,6 +167,16 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
       }
     }
   }
+
+  def interpretAsFallback(tile: MultibandTile,
+                          noData: Option[Double]): MultibandTile =
+    tile.interpretAs(
+      DoubleUserDefinedNoDataCellType(
+        noData
+          .orElse(getNoDataValue(tile.cellType))
+          .getOrElse(0.0)
+      )
+    )
 
   @SuppressWarnings(Array("TraversableHead"))
   def renderStreamMultiband(
@@ -197,7 +209,7 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
               relevant.corrections.colorCorrect(
                 mbTile,
                 hists,
-                relevant.noDataValue orElse noDataValue)
+                relevant.noDataValue orElse noDataValue orElse Some(0))
             }
           }
         } yield {
