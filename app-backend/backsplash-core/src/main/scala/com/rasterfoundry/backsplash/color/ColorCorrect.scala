@@ -55,26 +55,26 @@ object ColorCorrect extends LazyLogging {
   }
 
   @inline def normalizeAndClampAndGammaCorrectPerPixel(
-      z: Int,
+      z: Double,
       oldMin: Int,
       oldMax: Int,
       newMin: Int,
       newMax: Int,
       gammaOpt: Option[Double],
-      nodataValue: Option[Double]
+      noDataValue: Option[Double]
   ): Int = {
     if (isData(z)) {
       val dNew = newMax - newMin
       val dOld = oldMax - oldMin
 
-      if (nodataValue.isDefined && z == nodataValue.get) {
+      if (noDataValue.map(_ == z).getOrElse(false)) {
         0
       } else if (dOld == 0) {
         // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
         val v = {
           if (z > newMax) newMax
           else if (z < newMin) newMin
-          else z
+          else z.toInt
         }
 
         gammaOpt match {
@@ -91,7 +91,7 @@ object ColorCorrect extends LazyLogging {
 
           if (scaled > newMax) newMax
           else if (scaled < newMin) newMin
-          else scaled
+          else scaled.toInt
         }
 
         gammaOpt match {
@@ -103,7 +103,7 @@ object ColorCorrect extends LazyLogging {
             }
         }
       }
-    } else z
+    } else z.toInt
   }
 
   val rgbBand: (Option[Int], Option[Int], Int) => Some[Int] =
@@ -186,7 +186,7 @@ object ColorCorrect extends LazyLogging {
           val (r, g, b) =
             (
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
-                red.get(col, row),
+                red.getDouble(col, row),
                 rclipMin,
                 rclipMax,
                 rnewMin,
@@ -195,7 +195,7 @@ object ColorCorrect extends LazyLogging {
                 noDataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
-                green.get(col, row),
+                green.getDouble(col, row),
                 gclipMin,
                 gclipMax,
                 gnewMin,
@@ -204,7 +204,7 @@ object ColorCorrect extends LazyLogging {
                 noDataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
-                blue.get(col, row),
+                blue.getDouble(col, row),
                 bclipMin,
                 bclipMax,
                 bnewMin,
