@@ -122,7 +122,7 @@ trait Config {
   protected lazy val dropboxConfig: Dropbox = config.as[Dropbox]("dropbox")
   val jarPath =
     "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar"
-  
+
   protected lazy val s3Config = config.getConfig("s3")
   protected lazy val region = s3Config.getString("region")
   protected lazy val dataBucket = s3Config.getString("dataBucket")

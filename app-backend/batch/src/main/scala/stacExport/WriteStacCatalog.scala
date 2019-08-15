@@ -33,7 +33,9 @@ final case class WriteStacCatalog(exportId: UUID)(
 
   protected def s3Client = S3()
 
-  protected def putObjectToS3(selfLink: String, data: String, contentType: String) = {
+  protected def putObjectToS3(selfLink: String,
+                              data: String,
+                              contentType: String) = {
     val key = selfLink.replace(s"s3://${dataBucket}/", "")
     val dataByte = data.getBytes(Charset.forName("UTF-8"))
     val dataStream = new ByteArrayInputStream(dataByte)
@@ -42,7 +44,8 @@ final case class WriteStacCatalog(exportId: UUID)(
     dataMd.setContentLength(dataByte.length)
     try {
       logger.info(s"Writing ${selfLink} to S3...")
-      s3Client.putObject(new PutObjectRequest(dataBucket, key, dataStream, dataMd))
+      s3Client.putObject(
+        new PutObjectRequest(dataBucket, key, dataStream, dataMd))
       logger.info(s"Successfully wrote ${selfLink} to S3...")
     } catch {
       case e: Throwable => {
@@ -54,10 +57,12 @@ final case class WriteStacCatalog(exportId: UUID)(
     }
   }
 
-  @SuppressWarnings(Array("OptionGet"))
   protected def getStacSelfLink(stacLinks: List[StacLink]): String =
     stacLinks.find(_.rel == Self).map(_.href).get
 
+  // Use the SELF type link on each object to upload it to the correct place
+  // label items are accopanied by a geojson asset, which should be uploaded relative
+  // to the item itself
   @SuppressWarnings(Array("OptionGet"))
   protected def writeToS3(
       catalog: StacCatalog,
@@ -70,24 +75,40 @@ final case class WriteStacCatalog(exportId: UUID)(
       ]
   ) = {
     // catalog
-    putObjectToS3(getStacSelfLink(catalog.links), catalog.asJson.noSpaces, "application/json")
-    
+    putObjectToS3(getStacSelfLink(catalog.links),
+                  catalog.asJson.noSpaces,
+                  "application/json")
+
     layerSceneLabelCollectionsItemsAssets.foreach {
-      case (layerCollection, (sceneCollection, sceneItemList), (labelCollection, labelItem, (labelData, labelDataLink))) =>
+      case (layerCollection,
+            (sceneCollection, sceneItemList),
+            (labelCollection, labelItem, (labelData, labelDataLink))) =>
         // layer collection
-        putObjectToS3(getStacSelfLink(layerCollection.links), layerCollection.asJson.noSpaces, "application/json")
+        putObjectToS3(getStacSelfLink(layerCollection.links),
+                      layerCollection.asJson.noSpaces,
+                      "application/json")
         // scene collection
-        putObjectToS3(getStacSelfLink(sceneCollection.links), sceneCollection.asJson.noSpaces, "application/json")
+        putObjectToS3(getStacSelfLink(sceneCollection.links),
+                      sceneCollection.asJson.noSpaces,
+                      "application/json")
         // scene items
-        sceneItemList.foreach(sceneItem => 
-          putObjectToS3(getStacSelfLink(sceneItem.links), sceneItem.asJson.noSpaces, "application/json")
-        )
+        sceneItemList.foreach(
+          sceneItem =>
+            putObjectToS3(getStacSelfLink(sceneItem.links),
+                          sceneItem.asJson.noSpaces,
+                          "application/json"))
         // label collection
-        putObjectToS3(getStacSelfLink(labelCollection.links), labelCollection.asJson.noSpaces, "application/json")
+        putObjectToS3(getStacSelfLink(labelCollection.links),
+                      labelCollection.asJson.noSpaces,
+                      "application/json")
         // label item
-        putObjectToS3(getStacSelfLink(labelItem.links), labelItem.asJson.noSpaces, "application/json")
+        putObjectToS3(getStacSelfLink(labelItem.links),
+                      labelItem.asJson.noSpaces,
+                      "application/json")
         // label data
-        putObjectToS3(labelDataLink, labelData.get.noSpaces, "application/geo+json")
+        putObjectToS3(labelDataLink,
+                      labelData.get.noSpaces,
+                      "application/geo+json")
     }
   }
 
@@ -290,10 +311,9 @@ final case class WriteStacCatalog(exportId: UUID)(
     logger
       .info(
         s"${exportRecordCount} STAC export record for ${exportId} is updated")
-    }
-
-    
   }
+
+}
 
 object WriteStacCatalog extends Job {
   val name = "write_stac_catalog"
