@@ -1012,14 +1012,12 @@ object Generators extends ArbitraryInstances {
       name <- nonEmptyStringGen
       owner <- Gen.const(None)
       layerDefinition <- layerDefinitionGen
-      isUnion <- Gen.oneOf(true, false)
       taskStatuses <- taskStatusListGen
     } yield {
       StacExport.Create(
         name,
         owner,
         List(layerDefinition),
-        isUnion,
         taskStatuses
       )
     }

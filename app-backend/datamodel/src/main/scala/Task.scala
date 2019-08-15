@@ -3,6 +3,7 @@ package com.rasterfoundry.datamodel
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._
 import io.circe.generic.semiauto.{deriveEncoder, deriveDecoder}
+import io.circe.generic.JsonCodec
 
 import java.time.Instant
 import java.util.UUID
@@ -213,3 +214,12 @@ object TaskUserSummary {
   implicit val taskUserSummaryEncoder: Encoder[TaskUserSummary] =
     deriveEncoder[TaskUserSummary]
 }
+
+@JsonCodec
+final case class UnionedGeomExtent(
+    geometry: Projected[Geometry],
+    xMin: Double,
+    yMin: Double,
+    xMax: Double,
+    yMax: Double
+)

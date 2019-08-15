@@ -357,6 +357,7 @@ lazy val batch = project
       Dependencies.geotrellisS3,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisRaster,
+      Dependencies.geotrellisServerStac,
       Dependencies.sparkCore,
       Dependencies.ficus,
       Dependencies.dropbox,
