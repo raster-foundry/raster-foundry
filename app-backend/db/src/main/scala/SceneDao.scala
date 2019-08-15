@@ -176,7 +176,7 @@ object SceneDao
         ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
       SceneType.Avro)},
         ${scene.metadataFields.dataPath}, ${scene.metadataFields.crs}, ${scene.metadataFields.bandCount},
-        ${scene.metadataFields.cellType}, ${scene.metadataFields.resolutions}, ${scene.metadataFields.noDataValue}
+        ${scene.metadataFields.cellType}, ${scene.metadataFields.gridExtent}, ${scene.metadataFields.resolutions}, ${scene.metadataFields.noDataValue}
       )
     """).update.run
 
