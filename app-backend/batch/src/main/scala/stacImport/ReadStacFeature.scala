@@ -1,4 +1,4 @@
-package com.rasterfoundry.batch.stac
+package com.rasterfoundry.batch.stacImport
 
 import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config

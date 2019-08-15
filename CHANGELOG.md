@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+
 - Add STAC async export endpoint [\#5061](https://github.com/raster-foundry/raster-foundry/pull/5061)
 
 ### Changed
@@ -23,6 +24,7 @@
 - Added fields to track metadata for scenes to help with RasterSource construction [\#5103](https://github.com/raster-foundry/raster-foundry/pull/5103)
 
 ### Changed
+
 - Add support for multiband imagery in WMS responses
   [\#5082](https://github.com/raster-foundry/raster-foundry/pull/5082)
 

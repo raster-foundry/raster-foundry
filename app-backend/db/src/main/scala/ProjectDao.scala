@@ -575,4 +575,86 @@ object ProjectDao
       }
     }
   }
+
+  def getAnnotationProjectType(projectId: UUID): ConnectionIO[Option[String]] =
+    for {
+      projectO <- getProjectById(projectId)
+      projectType = projectO match {
+        case Some(project) =>
+          project.tags.contains("annotate") match {
+            case true =>
+              project.extras match {
+                case Some(extras) =>
+                  extras.hcursor
+                    .downField("annotate")
+                    .get[String]("projectType")
+                    .toOption
+                case _ => Some("detection")
+              }
+            case _ => None
+          }
+        case _ => None
+      }
+    } yield { projectType }
+
+  def getAnnotationProjectStacInfo(
+      projectId: UUID
+  ): ConnectionIO[Option[StacLabelItemPropertiesThin]] = {
+    val projectStacInfoF: Fragment = fr"""
+    SELECT
+      project_labels.name AS label_name,
+      project_label_groups.name AS label_group_name
+    FROM
+    (
+      SELECT labels.id, labels.name, labels."labelGroup" as label_group_id
+      FROM
+          projects,
+          jsonb_to_recordset((projects.extras->'annotate')::jsonb ->'labels') AS  labels(id uuid, name text, "labelGroup" uuid)
+      WHERE projects.id = ${projectId}
+    ) as project_labels
+    LEFT JOIN
+    (
+      SELECT labelGroups.key as id, labelGroups.value as name
+      FROM
+          projects,
+          jsonb_each_text((projects.extras->'annotate')::jsonb ->'labelGroups') as labelGroups
+      WHERE projects.id = ${projectId}
+    ) as project_label_groups
+    ON project_labels.label_group_id::uuid = project_label_groups.id::uuid;
+    """
+    projectStacInfoF
+      .query[ProjectStacInfo]
+      .to[List]
+      .map(infoList => {
+        infoList.length match {
+          case 0 => None
+          case _ =>
+            val (property, taskType): (List[String], String) =
+              infoList.traverse(_.labelGroupName) match {
+                case Some(groupNameList) =>
+                  (groupNameList.distinct, "classification")
+                case _ => (List("label"), "detection")
+              }
+            val stacClasses
+              : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
+              .groupBy(_.labelGroupName.getOrElse("label"))
+              .map {
+                case (propName, info) =>
+                  StacLabelItemProperties.StacLabelItemClasses(
+                    propName,
+                    info.traverse(_.labelName).getOrElse(List())
+                )
+            } toList)
+            Some(
+              StacLabelItemPropertiesThin(
+                property,
+                stacClasses,
+                "vector",
+                taskType
+              )
+            )
+        }
+      })
+  }
+
 }

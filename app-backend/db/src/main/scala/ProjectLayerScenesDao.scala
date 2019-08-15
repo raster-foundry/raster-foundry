@@ -42,19 +42,21 @@ object ProjectLayerScenesDao extends Dao[Scene] {
 
   def listLayerScenesRaw(
       layerId: UUID,
-      splitOptions: SplitOptions
-  ): ConnectionIO[List[Scene.ProjectScene]] = {
-    val sceneParams = CombinedSceneQueryParams(
-      sceneParams = SceneQueryParameters(
-        minAcquisitionDatetime = Some(splitOptions.rangeStart),
-        maxAcquisitionDatetime = Some(splitOptions.rangeEnd)
-      )
-    )
+      splitOptionsO: Option[SplitOptions] = None): ConnectionIO[List[Scene]] = {
+    val sceneParams = splitOptionsO match {
+      case Some(splitOptions: SplitOptions) =>
+        CombinedSceneQueryParams(
+          sceneParams = SceneQueryParameters(
+            minAcquisitionDatetime = Some(splitOptions.rangeStart),
+            maxAcquisitionDatetime = Some(splitOptions.rangeEnd)
+          )
+        )
+      case _ => CombinedSceneQueryParams()
+    }
     query
       .filter(fr"project_layer_id = ${layerId}")
       .filter(sceneParams)
       .list
-      .flatMap(scenesToProjectScenes(_, layerId))
   }
 
   def listLayerScenes(
@@ -136,4 +138,19 @@ object ProjectLayerScenesDao extends Dao[Scene] {
     }
   }
 
+  def createUnionedGeomExtent(
+      layerId: UUID
+  ): ConnectionIO[Option[UnionedGeomExtent]] =
+    (fr"""
+    SELECT
+      ST_Transform(ST_Collect(s.data_footprint), 4326) AS geometry,
+      ST_XMin(ST_Extent(ST_Transform(s.data_footprint, 4326))) AS x_min,
+      ST_YMin(ST_Extent(ST_Transform(s.data_footprint, 4326))) AS y_min,
+      ST_XMax(ST_Extent(ST_Transform(s.data_footprint, 4326))) AS x_max,
+      ST_YMax(ST_Extent(ST_Transform(s.data_footprint, 4326))) AS y_max
+    FROM scenes s
+    JOIN scenes_to_layers stl
+    ON s.id = stl.scene_id
+    WHERE stl.project_layer_id = ${layerId}
+  """).query[UnionedGeomExtent].option
 }

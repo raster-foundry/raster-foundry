@@ -291,71 +291,6 @@ final case class AnnotationWithOwnerInfoProperties(
     ownerName: String,
     ownerProfileImageUri: String)
 
-final case class StacLabelItemProperties(
-    property: List[String],
-    classes: StacLabelItemProperties.StacLabelItemClasses,
-    description: String,
-    _type: String,
-    datetime: Timestamp,
-    title: Option[String] = None,
-    task: Option[List[String]] = None,
-    method: Option[List[String]] = None,
-    version: Option[String] = None,
-    summary: Option[StacLabelItemProperties.StacLabelSummary] = None
-)
-
-object StacLabelItemProperties {
-  implicit val encodeStacLabelItemProperties: Encoder[StacLabelItemProperties] =
-    Encoder.forProduct10(
-      "label:property",
-      "label:classes",
-      "label:description",
-      "label:type",
-      "datetime",
-      "title",
-      "label:task",
-      "label:method",
-      "label:version",
-      "label:summary"
-    )(
-      item =>
-        (item.property,
-         item.classes,
-         item.description,
-         item._type,
-         item.datetime,
-         item.title,
-         item.task,
-         item.method,
-         item.version,
-         item.summary))
-
-  @JsonCodec
-  final case class StacLabelItemClasses(
-      name: String,
-      classes: List[String]
-  )
-
-  @JsonCodec
-  final case class StacLabelSummary(
-      propertyKey: String,
-      counts: Option[List[Count]] = None,
-      statistics: Option[List[Statistics]] = None
-  )
-
-  @JsonCodec
-  final case class Count(
-      className: String,
-      count: Int
-  )
-
-  @JsonCodec
-  final case class Statistics(
-      statName: String,
-      value: Double
-  )
-}
-
 @JsonCodec
 final case class AnnotationWithClasses(
     id: UUID,
@@ -410,34 +345,37 @@ object AnnotationWithClasses {
   object GeoJSON {
     implicit val annoWithClassesGeojonEncoder: Encoder[GeoJSON] =
       Encoder.forProduct4("id", "geometry", "properties", "type")(
-        geojson => (geojson.id, geojson.geometry, geojson.properties, geojson._type)
+        geojson =>
+          (geojson.id, geojson.geometry, geojson.properties, geojson._type)
       )
   }
 }
 
 final case class AnnotationWithClassesProperties(
-  projectId: UUID,
-  createdAt: Timestamp,
-  createdBy: String,
-  modifiedAt: Timestamp,
-  owner: String,
-  description: Option[String],
-  machineGenerated: Option[Boolean],
-  confidence: Option[Float],
-  quality: Option[AnnotationQuality],
-  annotationGroup: UUID,
-  labeledBy: Option[String],
-  verifiedBy: Option[String],
-  projectLayerId: UUID,
-  taskId: Option[UUID],
-  classes: Json
+    projectId: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    owner: String,
+    description: Option[String],
+    machineGenerated: Option[Boolean],
+    confidence: Option[Float],
+    quality: Option[AnnotationQuality],
+    annotationGroup: UUID,
+    labeledBy: Option[String],
+    verifiedBy: Option[String],
+    projectLayerId: UUID,
+    taskId: Option[UUID],
+    classes: Json
 )
 
 object AnnotationWithClassesProperties {
-  implicit val annotationWithClassesPropertiesEncoder: Encoder[AnnotationWithClassesProperties] =
+  implicit val annotationWithClassesPropertiesEncoder
+    : Encoder[AnnotationWithClassesProperties] =
     new Encoder[AnnotationWithClassesProperties] {
       final def apply(properties: AnnotationWithClassesProperties): Json = {
-        val classMap: Map[String, Json] = properties.classes.as[Map[String, Json]].getOrElse(Map.empty)
+        val classMap: Map[String, Json] =
+          properties.classes.as[Map[String, Json]].getOrElse(Map.empty)
         (
           Map(
             "projectId" -> properties.projectId.asJson,
@@ -452,7 +390,7 @@ object AnnotationWithClassesProperties {
             "annotationGroup" -> properties.annotationGroup.asJson,
             "labeledBy" -> properties.labeledBy.asJson,
             "verifiedBy" -> properties.verifiedBy.asJson,
-            "projectLayerId" -> properties.projectLayerId.asJson, 
+            "projectLayerId" -> properties.projectLayerId.asJson,
             "taskId" -> properties.taskId.asJson
           ) ++ classMap
         ).asJson
@@ -461,11 +399,18 @@ object AnnotationWithClassesProperties {
 }
 
 final case class AnnotationWithClassesFeatureCollection(
-  features: List[AnnotationWithClasses.GeoJSON],
-  `type`: String = "FeatureCollection"
+    features: List[AnnotationWithClasses.GeoJSON],
+    `type`: String = "FeatureCollection"
 )
 
 object AnnotationWithClassesFeatureCollection {
-  implicit val annoWithClassesFCEncoder: Encoder[AnnotationWithClassesFeatureCollection] = 
+  implicit val annoWithClassesFCEncoder
+    : Encoder[AnnotationWithClassesFeatureCollection] =
     deriveEncoder[AnnotationWithClassesFeatureCollection]
 }
+
+@JsonCodec
+final case class AnnotationFeatureCollection(
+    features: List[Annotation.GeoJSON],
+    `type`: String = "FeatureCollection"
+)

@@ -5,6 +5,8 @@ import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
+import io.circe._
+import io.circe.syntax._
 import com.rasterfoundry.datamodel.{PageRequest, Order}
 
 import com.rasterfoundry.datamodel._
@@ -377,7 +379,7 @@ object AnnotationDao extends Dao[Annotation] {
         case _ => fr""
       }
     (fr"""
-      SELECT 
+      SELECT
         annotations.id,
         annotations.project_id,
         annotations.created_at,
@@ -396,6 +398,11 @@ object AnnotationDao extends Dao[Annotation] {
         annotations.project_layer_id,
         annotations.task_id
       FROM annotations
+      JOIN annotation_groups AS ag
+      ON ag.id = annotations.annotation_group
+        AND ag.project_id = ${projectId}
+        AND ag.project_layer_id = ${layerId}
+        AND ag.name = 'label'
       JOIN tasks
       ON tasks.id = annotations.task_id
          AND tasks.project_id = ${projectId}
@@ -442,6 +449,12 @@ object AnnotationDao extends Dao[Annotation] {
     val annotationTaskFilterF: Fragment = fr"""
       SELECT annotations.*
         FROM annotations
+        JOIN annotation_groups AS ag
+        ON
+            ag.id = annotations.annotation_group
+            AND ag.project_id = ${projectId}
+            AND ag.project_layer_id = ${layerId}
+            AND ag.name = 'label'
         JOIN tasks
         ON annotations.task_id = tasks.id
         WHERE
@@ -517,7 +530,7 @@ object AnnotationDao extends Dao[Annotation] {
           CONCAT(
             project_label_and_groups.group_name, ',', project_label_and_groups.label_name
           ),','),',')::text[]) as classes
-      FROM 
+      FROM
         filtered_annotation,
         unnest(string_to_array(filtered_annotation.label, ' ')) AS label(class)
       JOIN
@@ -546,7 +559,33 @@ object AnnotationDao extends Dao[Annotation] {
       .to[List]
       .map(annoteWithClassesList => {
         AnnotationWithClassesFeatureCollection(
-          annoteWithClassesList.map(_.toGeoJSONFeature))
+          annoteWithClassesList.map(_.toGeoJSONFeature)
+        )
       })
+  }
+
+  def getLayerAnnotationJsonByTaskStatus(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String],
+      projectType: String
+  ): ConnectionIO[Option[Json]] = projectType match {
+    case "classfication" =>
+      listClassificationLayerAnnotationsByTaskStatus(
+        projectId,
+        layerId,
+        taskStatuses
+      ).map(annoFC => Some(annoFC.asJson))
+    case "detection" =>
+      listDetectionLayerAnnotationsByTaskStatus(
+        projectId,
+        layerId,
+        taskStatuses
+      ).map(annotations => {
+        Some(
+          AnnotationFeatureCollection(annotations.map(_.toGeoJSONFeature)).asJson
+        )
+      })
+    case _ => Option.empty.pure[ConnectionIO]
   }
 }

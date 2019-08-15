@@ -60,10 +60,6 @@ class StacExportDaoSpec
             "Sent and inserted StacExport layer definition should be the same"
           )
           assert(
-            se.unionAois == seCreate.unionAois,
-            "Sent and inserted StacExport unionAois should be the same"
-          )
-          assert(
             se.taskStatuses.toSet == seCreate.taskStatuses
               .map(_.toString)
               .toSet,
@@ -127,10 +123,6 @@ class StacExportDaoSpec
               assert(
                 se.layerDefinitions == selectedSe.layerDefinitions,
                 "Inserted and selected StacExport layer definition should be the same"
-              )
-              assert(
-                se.unionAois == selectedSe.unionAois,
-                "Inserted and selected StacExport unionAois should be the same"
               )
               assert(
                 se.taskStatuses.toSet == selectedSe.taskStatuses.toSet,
@@ -208,10 +200,6 @@ class StacExportDaoSpec
           assert(
             se.layerDefinitions == selectedSe.layerDefinitions,
             "Inserted and selected StacExport layer definition should be the same"
-          )
-          assert(
-            se.unionAois == selectedSe.unionAois,
-            "Inserted and selected StacExport unionAois should be the same"
           )
           assert(
             se.taskStatuses.toSet == selectedSe.taskStatuses.toSet,
