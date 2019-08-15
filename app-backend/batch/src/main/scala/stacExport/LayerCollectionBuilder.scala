@@ -186,7 +186,7 @@ class LayerCollectionBuilder[
         Some(s"Scene Collection ${sceneCollectionId}")
       ),
       StacLink(
-        rootPath,
+        sceneCollectionRootPath,
         StacRoot,
         Some(`application/json`),
         Some("Root")
@@ -232,7 +232,7 @@ class LayerCollectionBuilder[
         Some(s"Label Collection ${labelCollectionId}")
       ),
       StacLink(
-        rootPath,
+        labelCollectionRootPath,
         StacRoot,
         Some(`application/json`),
         Some("Root")
