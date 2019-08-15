@@ -1,7 +1,6 @@
 package com.rasterfoundry.batch.stacExport
 
 import geotrellis.server.stac._
-//import java.util.UUID
 import io.circe._
 import geotrellis.vector.{io => _, _}
 
