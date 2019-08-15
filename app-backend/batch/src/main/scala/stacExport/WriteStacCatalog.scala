@@ -230,8 +230,43 @@ final case class WriteStacCatalog(exportId: UUID)(
       .withContents(contentBundle)
       .build()
 
-    println(catalog.asJson)
-    println(layerSceneLabelCollectionsItemsAssets)
+    
+    layerSceneLabelCollectionsItemsAssets.map {
+      case (layerCollection, (sceneCollection, sceneItemList), (labelCollection, labelItem, (_, labelDataLink))) =>
+        val catalogSelfLink: String = catalog.links.find(_.rel == Self).map(_.href).getOrElse("")
+        println("catalogSelfLink")
+        println(catalogSelfLink)
+        println(catalog.asJson)
+
+        val layerCollectionSelfLink: String = layerCollection.links.find(_.rel == Self).map(_.href).getOrElse("")
+        println("layerCollectionSelfLink")
+        println(layerCollectionSelfLink)
+        println(layerCollection.asJson)
+        
+        val sceneCollectionSelfLink: String = sceneCollection.links.find(_.rel == Self).map(_.href).getOrElse("")
+        println("sceneCollectionSelfLink")
+        println(sceneCollectionSelfLink)
+        println(sceneCollection.asJson)
+
+        val sceneItemSelfLink: String = sceneItemList(0).links.find(_.rel == Self).map(_.href).getOrElse("")
+        println("sceneItemSelfLink")
+        println(sceneItemSelfLink)
+        println(sceneItemList(0).asJson)
+
+        val labelCollectionSelfLink: String = labelCollection.links.find(_.rel == Self).map(_.href).getOrElse("")
+        println("labelCollectionSelfLink")
+        println(labelCollectionSelfLink)
+        println(labelCollection.asJson)
+
+        val labelItemSelfLink: String = labelItem.links.find(_.rel == Self).map(_.href).head
+        println("labelItemSelfLink")
+        println(labelItemSelfLink)
+        println(labelItem.asJson)
+        
+
+        println("labelDataLink")
+        println(labelDataLink)
+    }
 
     // TODO: Write STAC catalog etc to s3
     // writeToS3(catalog, layerSceneLabelCollectionsItemsAssets)
