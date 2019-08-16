@@ -120,8 +120,8 @@ class StacCatalogBuilder[
     ev.unused
     // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>
     val absPath: String = stacCatalog.parentPath.get
-    // ../catalog.json
-    val rootPath = "../catalog.json"
+    // catalog.json
+    val rootPath = "catalog.json"
 
     val layerCollectionList: List[
       (
@@ -147,18 +147,18 @@ class StacCatalogBuilder[
           new LayerCollectionBuilder[
             LayerCollectionBuilder.CollectionBuilder.EmptyCollection
           ]()
-        val layerSelfAbsLink = s"${absPath}/catalog.json"
+        val layerSelfAbsLink = s"${layerCollectionAbsPath}/collection.json"
         val layerOwnLinks = List(
           StacLink(
             // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/catalog.json
-            layerSelfAbsLink,
+            s"${absPath}/catalog.json",
             Parent,
             Some(`application/json`),
             Some(s"Catalog ${stacCatalog.id.get}")
           ),
           StacLink(
             // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<layerCollectionId>/collection.json
-            s"${layerCollectionAbsPath}/collection.json",
+            layerSelfAbsLink,
             Self,
             Some(`application/json`),
             Some(s"Layer Collection ${layerId}")

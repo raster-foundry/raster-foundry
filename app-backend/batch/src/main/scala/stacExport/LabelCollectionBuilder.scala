@@ -203,7 +203,7 @@ class LabelCollectionBuilder[
         Some("Label Collection")
       ),
       StacLink(
-        "../rootPath",
+        s"../${rootPath}",
         StacRoot,
         Some(`application/json`),
         Some("Root")
