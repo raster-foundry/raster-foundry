@@ -61,10 +61,10 @@ final case class WriteStacCatalog(exportId: UUID)(
   @SuppressWarnings(Array("OptionGet"))
   protected def unsafeGetStacSelfLink(stacLinks: List[StacLink]): String =
     getStacSelfLink(stacLinks).get
-  
+
   protected def getStacSelfLink(stacLinks: List[StacLink]): Option[String] =
     stacLinks.find(_.rel == Self).map(_.href)
-  
+
   // Use the SELF type link on each object to upload it to the correct place
   // label items are accopanied by a geojson asset, which should be uploaded relative
   // to the item itself
@@ -109,17 +109,18 @@ final case class WriteStacCatalog(exportId: UUID)(
         putObjectToS3(unsafeGetStacSelfLink(labelItem.links),
                       labelItem.asJson.noSpaces,
                       "application/json")
-        
+
         // label data
         labelData match {
-          case Some(labels) => 
+          case Some(labels) =>
             putObjectToS3(labelDataLink,
-                      labels.noSpaces,
-                      "application/geo+json")
-          case _ => logger.warn(s"No label data to be exported for layer ${layerCollection.id}")
+                          labels.noSpaces,
+                          "application/geo+json")
+          case _ =>
+            logger.warn(
+              s"No label data to be exported for layer ${layerCollection.id}")
         }
-        
-        
+
     }
   }
 
@@ -231,7 +232,8 @@ final case class WriteStacCatalog(exportId: UUID)(
       )
     } yield (exportDefinition, layerSceneTaskAnnotation)
 
-    logger.info(s"Creating content bundle with layers, scenes, and labels for record ${exportId}...")
+    logger.info(
+      s"Creating content bundle with layers, scenes, and labels for record ${exportId}...")
     val (exportDef, layerInfo) = dbIO.transact(xa).unsafeRunSync
     val contentBundle = ContentBundle(
       exportDef,
@@ -306,14 +308,15 @@ final case class WriteStacCatalog(exportId: UUID)(
     writeToS3(catalog, layerSceneLabelCollectionsItemsAssets)
     logger.info(s"Wrote catalog to S3 for record ${exportId}...")
 
-    logger.info(s"Updating export location and status for record ${exportId}...")
+    logger.info(
+      s"Updating export location and status for record ${exportId}...")
     val exportUpdateIO = StacExportDao.update(
-        contentBundle.export.copy(
-          exportStatus = ExportStatus.Exported,
-          exportLocation = getStacSelfLink(catalog.links)
-        ),
-        contentBundle.export.id
-      )
+      contentBundle.export.copy(
+        exportStatus = ExportStatus.Exported,
+        exportLocation = getStacSelfLink(catalog.links)
+      ),
+      contentBundle.export.id
+    )
 
     val updatedExportRecordCount = exportUpdateIO.transact(xa).unsafeRunSync
 
