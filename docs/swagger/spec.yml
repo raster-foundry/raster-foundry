@@ -6776,6 +6776,8 @@ definitions:
             enum:
               - 'AVRO'
               - 'COG'
+          metadataFields:
+            $ref: '#/definitions/SceneRenderMetadataFields'
 
   Scene:
     allOf:
@@ -6902,6 +6904,23 @@ definitions:
           - 'INGESTING'
           - 'INGESTED'
           - 'FAILED'
+  SceneRenderMetadataFields:
+    type: object
+    properties:
+      data_path:
+        type: string
+      crs:
+        type: string
+      bandCount:
+        type: integer
+      cellType:
+        type: string
+      gridExtent:
+        type: object
+      resolutions:
+        type: object
+      noDataValue:
+        type: number
 
   SingleBandOptions:
     type: object

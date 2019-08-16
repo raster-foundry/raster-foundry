@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash
 
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
+import geotrellis.contrib.vlm.RasterSource
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.histogram.Histogram
 import geotrellis.vector.{MultiPolygon, Point}
@@ -73,12 +73,12 @@ object Cache extends LazyLogging {
     Flags(Config.cache.histogramCacheEnable, Config.cache.histogramCacheEnable)
   logger.info(s"Histogram Cache Status: ${histCacheFlags}")
 
-  val rasterSourceCache: Cache[GeoTiffRasterSource] = {
+  val rasterSourceCache: Cache[RasterSource] = {
     implicit val cacheConfig: CacheConfig = CacheConfig(
       memoization = MemoizationConfig(
         MethodCallToStringConverter.includeClassConstructorParams)
     )
-    CaffeineCache[GeoTiffRasterSource]
+    CaffeineCache[RasterSource]
   }
 
   val rasterSourceCacheFlags: Flags = Flags(

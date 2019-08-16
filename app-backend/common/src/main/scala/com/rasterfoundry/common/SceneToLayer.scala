@@ -34,7 +34,8 @@ final case class SceneToLayerWithSceneType(
     dataFootprint: Option[Projected[Geometry]],
     isSingleBand: Boolean,
     singleBandOptions: Option[Json],
-    mask: Option[Projected[Geometry]]
+    mask: Option[Projected[Geometry]],
+    noDataValue: Option[Double]
 )
 
 @JsonCodec

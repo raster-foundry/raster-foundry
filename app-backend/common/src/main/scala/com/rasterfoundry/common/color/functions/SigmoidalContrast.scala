@@ -1,4 +1,4 @@
-package com.rasterfoundry.backsplash.color.functions
+package com.rasterfoundry.common.color.functions
 
 import geotrellis.raster._
 import org.apache.commons.math3.util.FastMath

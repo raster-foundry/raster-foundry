@@ -5,24 +5,13 @@ import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.{ProjectLayerDao, SceneDao, SceneToLayerDao}
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.BandOverride
+import com.rasterfoundry.datamodel.{BandOverride, SingleBandOptions}
 import com.rasterfoundry.common._
-import com.rasterfoundry.common.color.{
-  BandGamma => RFBandGamma,
-  PerBandClipping => RFPerBandClipping,
-  MultiBandClipping => RFMultiBandClipping,
-  SigmoidalContrast => RFSigmoidalContrast,
-  Saturation => RFSaturation
-}
+import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.backsplash.{
   ProjectStore,
   BacksplashImage,
   BacksplashGeotiff
-}
-import com.rasterfoundry.backsplash.color.{
-  ColorCorrect => BSColorCorrect,
-  SingleBandOptions => BSSingleBandOptions,
-  _
 }
 
 import cats.data.{NonEmptyList => NEL, OptionT}
@@ -44,7 +33,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
                                       projId: UUID): BacksplashGeotiff = {
     val singleBandOptions =
       mosaicDefinition.singleBandOptions flatMap {
-        _.as[BSSingleBandOptions.Params].toOption
+        _.as[SingleBandOptions.Params].toOption
       }
     val sceneId = mosaicDefinition.sceneId
     val ingestLocation = mosaicDefinition.ingestLocation getOrElse {
@@ -76,34 +65,15 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       }
     }
 
-    val colorCorrectParameters = BSColorCorrect.Params(
+    val colorCorrectParameters = ColorCorrect.Params(
       0, // red
       1, // green
       2, // blue
-      (BandGamma.apply _)
-        .tupled(
-          RFBandGamma.unapply(mosaicDefinition.colorCorrections.gamma).get),
-      (PerBandClipping.apply _).tupled(
-        RFPerBandClipping
-          .unapply(mosaicDefinition.colorCorrections.bandClipping)
-          .get
-      ),
-      (MultiBandClipping.apply _).tupled(
-        RFMultiBandClipping
-          .unapply(mosaicDefinition.colorCorrections.tileClipping)
-          .get
-      ),
-      (SigmoidalContrast.apply _)
-        .tupled(
-          RFSigmoidalContrast
-            .unapply(mosaicDefinition.colorCorrections.sigmoidalContrast)
-            .get
-        ),
-      (Saturation.apply _).tupled(
-        RFSaturation
-          .unapply(mosaicDefinition.colorCorrections.saturation)
-          .get
-      )
+      mosaicDefinition.colorCorrections.gamma,
+      mosaicDefinition.colorCorrections.bandClipping,
+      mosaicDefinition.colorCorrections.tileClipping,
+      mosaicDefinition.colorCorrections.sigmoidalContrast,
+      mosaicDefinition.colorCorrections.saturation
     )
 
     BacksplashGeotiff(
@@ -115,7 +85,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       colorCorrectParameters,
       singleBandOptions,
       mosaicDefinition.mask,
-      footprint
+      footprint,
+      mosaicDefinition.noDataValue
     )
   }
 
@@ -141,7 +112,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         val imageBandOverride = bandOverride map { ovr =>
           List(ovr.redBand, ovr.greenBand, ovr.blueBand)
         } getOrElse { List(0, 1, 2) }
-        val colorCorrectParams = BSColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
+        val colorCorrectParams = ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
         logger.debug(s"Chosen color correction: ${colorCorrectParams}")
         BacksplashGeotiff(
           scene.id,
@@ -152,7 +123,8 @@ class ProjectStoreImplicits(xa: Transactor[IO])
           colorCorrectParams,
           None, // no single band options ever
           None, // not adding the mask here, since out of functional scope for md to image
-          footprint
+          footprint,
+          scene.metadataFields.noDataValue
         )
       }
     }

@@ -1,6 +1,5 @@
 package com.rasterfoundry.common.color
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.{ArrayTile, MultibandTile, isData}
 import io.circe.generic.JsonCodec
@@ -12,9 +11,8 @@ import spire.syntax.cfor.cfor
   * We can consider these functions usages in case of real performance issues caused by a long color correction.
   */
 object ColorCorrect extends LazyLogging {
-
-  import com.rasterfoundry.common.color.SaturationAdjust._
-  import com.rasterfoundry.common.color.SigmoidalContrastOps._
+  import functions.SaturationAdjust._
+  import functions.SigmoidalContrast._
 
   final case class LayerClipping(redMin: Int,
                                  redMax: Int,
@@ -36,54 +34,46 @@ object ColorCorrect extends LazyLogging {
                           bandClipping: PerBandClipping,
                           tileClipping: MultiBandClipping,
                           sigmoidalContrast: SigmoidalContrast,
-                          saturation: Saturation,
-                          equalize: Equalization,
-                          autoBalance: AutoWhiteBalance) {
+                          saturation: Saturation) {
     def getGamma: Map[Int, Option[Double]] = Map(
       0 -> (if (gamma.enabled) gamma.redGamma else None),
       1 -> (if (gamma.enabled) gamma.greenGamma else None),
       2 -> (if (gamma.enabled) gamma.blueGamma else None)
     )
 
-    @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
-    def reorderBands(
-        tile: MultibandTile,
-        hist: Seq[Histogram[Double]]
-    ): (MultibandTile, Array[Histogram[Double]]) = {
-      logger.debug(
-        s"RedBand: ${redBand}, GreenBand: ${greenBand}, BlueBand: ${blueBand}")
-      logger.debug(s"RedHist: ${hist(redBand).statistics()}\n GreenHist: ${hist(
-        greenBand).statistics()}\n BlueHist: ${hist(blueBand).statistics()}")
-      (tile.subsetBands(redBand, greenBand, blueBand),
-       Array(hist(redBand), hist(greenBand), hist(blueBand)))
-    }
-
     def colorCorrect(tile: MultibandTile,
                      hist: Seq[Histogram[Double]],
                      nodataValue: Option[Double]): MultibandTile = {
-      val (rgbTile, rgbHist) = reorderBands(tile, hist)
-      ColorCorrect(rgbTile, rgbHist, this, nodataValue)
+      val indexedHist = hist.toIndexedSeq
+      val rgbHist = Seq(redBand, greenBand, blueBand) map { indexedHist(_) }
+      ColorCorrect(tile, rgbHist, this, nodataValue)
     }
+
+    def withBands(red: Int, green: Int, blue: Int) =
+      this.copy(redBand = red, greenBand = green, blueBand = blue)
   }
 
   @inline def normalizeAndClampAndGammaCorrectPerPixel(
-      z: Int,
+      z: Double,
       oldMin: Int,
       oldMax: Int,
       newMin: Int,
       newMax: Int,
-      gammaOpt: Option[Double]
+      gammaOpt: Option[Double],
+      noDataValue: Option[Double]
   ): Int = {
     if (isData(z)) {
       val dNew = newMax - newMin
       val dOld = oldMax - oldMin
 
-      // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
-      if (dOld == 0) {
+      if (noDataValue.map(nd => (nd - z).abs < 0.00000001).getOrElse(false)) {
+        0
+      } else if (dOld == 0) {
+        // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
         val v = {
           if (z > newMax) newMax
           else if (z < newMin) newMin
-          else z
+          else z.toInt
         }
 
         gammaOpt match {
@@ -100,7 +90,7 @@ object ColorCorrect extends LazyLogging {
 
           if (scaled > newMax) newMax
           else if (scaled < newMin) newMin
-          else scaled
+          else scaled.toInt
         }
 
         gammaOpt match {
@@ -112,7 +102,7 @@ object ColorCorrect extends LazyLogging {
             }
         }
       }
-    } else z
+    } else z.toInt
   }
 
   val rgbBand: (Option[Int], Option[Int], Int) => Some[Int] =
@@ -125,7 +115,7 @@ object ColorCorrect extends LazyLogging {
   )(sigmoidalContrast: SigmoidalContrast)(
       colorCorrectArgs: Map[Int, MaybeClipBounds],
       tileClipping: MultiBandClipping,
-      nodataValue: Option[Double]
+      noDataValue: Option[Double]
   ): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val (gr, gg, gb) = (gammas(0), gammas(1), gammas(2))
@@ -139,10 +129,7 @@ object ColorCorrect extends LazyLogging {
     val ClipBounds(gmin, gmax) = layerNormalizeArgs(1)
     val ClipBounds(bmin, bmax) = layerNormalizeArgs(2)
 
-    val tileMin = nodataValue match {
-      case Some(0) => 1
-      case _       => 0
-    }
+    val tileMin = 1
     val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, tileMin, 255)
     val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, tileMin, 255)
     val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, tileMin, 255)
@@ -188,7 +175,7 @@ object ColorCorrect extends LazyLogging {
       )
     }
 
-    logger.debug(
+    logger.trace(
       s"Red (Clip Min: ${rclipMin}, Max: ${rclipMax}) (New Min: ${rnewMin}, ${rnewMax})")
 
     /** In this case for some reason with this func wrap it works faster ¯\_(ツ)_/¯ (it was micro benchmarked) */
@@ -198,28 +185,31 @@ object ColorCorrect extends LazyLogging {
           val (r, g, b) =
             (
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
-                red.get(col, row),
+                red.getDouble(col, row),
                 rclipMin,
                 rclipMax,
                 rnewMin,
                 rnewMax,
-                gr
+                gr,
+                noDataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
-                green.get(col, row),
+                green.getDouble(col, row),
                 gclipMin,
                 gclipMax,
                 gnewMin,
                 gnewMax,
-                gg
+                gg,
+                noDataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
-                blue.get(col, row),
+                blue.getDouble(col, row),
                 bclipMin,
                 bclipMax,
                 bnewMin,
                 bnewMax,
-                gb
+                gb,
+                noDataValue
               )
             )
 
@@ -244,17 +234,12 @@ object ColorCorrect extends LazyLogging {
   }
 
   def apply(rgbTile: MultibandTile,
-            rgbHist: Array[Histogram[Double]],
+            rgbHist: Seq[Histogram[Double]],
             params: Params,
-            nodataValue: Option[Double]): MultibandTile = {
-    var _rgbTile = rgbTile
-    var _rgbHist = rgbHist
+            noDataValue: Option[Double]): MultibandTile = {
+    val _rgbTile = rgbTile
+    val _rgbHist = rgbHist
     val gammas = params.getGamma
-    if (params.equalize.enabled) {
-      logger.debug(s"Normalizing Histograms")
-      _rgbTile = HistogramEqualization(rgbTile, rgbHist)
-      _rgbHist = _rgbTile.histogramDouble()
-    }
 
     val layerRgbClipping = {
       val range = 1 until 255
@@ -264,7 +249,7 @@ object ColorCorrect extends LazyLogging {
         val hst = _rgbHist(index)
         val imin = hst.minValue().map(_.toInt).getOrElse(0)
         val imax = hst.maxValue().map(_.toInt).getOrElse(255)
-        logger.debug(s"Histogram Min/Max: ${imin}/${imax}")
+        logger.trace(s"Histogram Min/Max: ${imin}/${imax}")
         iMaxMin(index) = (imin, imax)
         isCorrected = {
           if (range.contains(imin) && range.contains(imax)) true
@@ -301,14 +286,14 @@ object ColorCorrect extends LazyLogging {
       )
     )
 
-    logger.debug(s"ColorCorrectArgs: ${colorCorrectArgs}")
-    logger.debug(s"Layer Normalize Args: ${layerNormalizeArgs}")
+    logger.trace(s"ColorCorrectArgs: ${colorCorrectArgs}")
+    logger.trace(s"Layer Normalize Args: ${layerNormalizeArgs}")
     complexColorCorrect(_rgbTile, params.saturation)(
       layerNormalizeArgs,
       gammas
     )(params.sigmoidalContrast)(colorCorrectArgs,
                                 params.tileClipping,
-                                nodataValue)
+                                noDataValue)
   }
 
   @inline def clampColor(z: Int): Int = {
@@ -331,8 +316,6 @@ object ColorCorrect extends LazyLogging {
     PerBandClipping(false, None, None, None, None, None, None),
     MultiBandClipping(false, None, None),
     SigmoidalContrast(false, None, None),
-    Saturation(false, None),
-    Equalization(false),
-    AutoWhiteBalance(false)
+    Saturation(false, None)
   )
 }

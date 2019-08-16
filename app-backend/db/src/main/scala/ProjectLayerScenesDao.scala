@@ -17,13 +17,16 @@ object ProjectLayerScenesDao extends Dao[Scene] {
   val tableName =
     "scenes_to_layers s2l INNER JOIN scenes s ON s2l.scene_id = s.id"
   val selectF = fr"""
-      SELECT
+    SELECT
       s.id, s.created_at, s.created_by, s.modified_at, s.owner,
-          s.visibility, s.tags,
-          s.datasource, s.scene_metadata, s.name, s.tile_footprint,
-          s.data_footprint, s.metadata_files, s.ingest_location, s.cloud_cover,
-          s.acquisition_date, s.sun_azimuth, s.sun_elevation, s.thumbnail_status,
-          s.boundary_status, s.ingest_status, s.scene_type FROM""" ++ tableF
+      s.visibility, s.tags,
+      s.datasource, s.scene_metadata, s.name, s.tile_footprint,
+      s.data_footprint, s.metadata_files, s.ingest_location, s.cloud_cover,
+      s.acquisition_date, s.sun_azimuth, s.sun_elevation, s.thumbnail_status,
+      s.boundary_status, s.ingest_status, s.scene_type, s.data_path, s.crs,
+      s.band_count, s.cell_type, s.grid_extent, s.resolutions, s.no_data_value
+    FROM
+  """ ++ tableF
 
   def countLayerScenes(
       projectId: UUID
