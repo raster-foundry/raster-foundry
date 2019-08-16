@@ -59,13 +59,15 @@ final case class WriteStacCatalog(exportId: UUID)(
   }
 
   @SuppressWarnings(Array("OptionGet"))
-  protected def getStacSelfLink(stacLinks: List[StacLink]): String =
-    stacLinks.find(_.rel == Self).map(_.href).get
-
+  protected def unsafeGetStacSelfLink(stacLinks: List[StacLink]): String =
+    getStacSelfLink(stacLinks).get
+  
+  protected def getStacSelfLink(stacLinks: List[StacLink]): Option[String] =
+    stacLinks.find(_.rel == Self).map(_.href)
+  
   // Use the SELF type link on each object to upload it to the correct place
   // label items are accopanied by a geojson asset, which should be uploaded relative
   // to the item itself
-  @SuppressWarnings(Array("OptionGet"))
   protected def writeToS3(
       catalog: StacCatalog,
       layerSceneLabelCollectionsItemsAssets: List[
@@ -77,7 +79,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       ]
   ) = {
     // catalog
-    putObjectToS3(getStacSelfLink(catalog.links),
+    putObjectToS3(unsafeGetStacSelfLink(catalog.links),
                   catalog.asJson.noSpaces,
                   "application/json")
 
@@ -86,44 +88,39 @@ final case class WriteStacCatalog(exportId: UUID)(
             (sceneCollection, sceneItemList),
             (labelCollection, labelItem, (labelData, labelDataLink))) =>
         // layer collection
-        putObjectToS3(getStacSelfLink(layerCollection.links),
+        putObjectToS3(unsafeGetStacSelfLink(layerCollection.links),
                       layerCollection.asJson.noSpaces,
                       "application/json")
         // scene collection
-        putObjectToS3(getStacSelfLink(sceneCollection.links),
+        putObjectToS3(unsafeGetStacSelfLink(sceneCollection.links),
                       sceneCollection.asJson.noSpaces,
                       "application/json")
         // scene items
         sceneItemList.foreach(
           sceneItem =>
-            putObjectToS3(getStacSelfLink(sceneItem.links),
+            putObjectToS3(unsafeGetStacSelfLink(sceneItem.links),
                           sceneItem.asJson.noSpaces,
                           "application/json"))
         // label collection
-        putObjectToS3(getStacSelfLink(labelCollection.links),
+        putObjectToS3(unsafeGetStacSelfLink(labelCollection.links),
                       labelCollection.asJson.noSpaces,
                       "application/json")
         // label item
-        putObjectToS3(getStacSelfLink(labelItem.links),
+        putObjectToS3(unsafeGetStacSelfLink(labelItem.links),
                       labelItem.asJson.noSpaces,
                       "application/json")
+        
         // label data
-        putObjectToS3(labelDataLink,
-                      labelData.get.noSpaces,
+        labelData match {
+          case Some(labels) => 
+            putObjectToS3(labelDataLink,
+                      labels.noSpaces,
                       "application/geo+json")
+          case _ => logger.warn(s"No label data to be exported for layer ${layerCollection.id}")
+        }
+        
+        
     }
-  }
-
-  protected def setExportStatus(
-      export: StacExport,
-      status: ExportStatus
-  ): ConnectionIO[Int] = {
-    for {
-      count <- StacExportDao.update(
-        export.copy(exportStatus = status),
-        export.id
-      )
-    } yield count
   }
 
   protected def sceneTaskAnnotationforLayers(
@@ -221,25 +218,27 @@ final case class WriteStacCatalog(exportId: UUID)(
       ]
      */
 
-    // Fetch data
+    logger.info(s"Getting STAC export data for record ${exportId}...")
     val dbIO = for {
       exportDefinition <- StacExportDao.unsafeGetById(exportId)
-      _ <- setExportStatus(exportDefinition, ExportStatus.Exporting)
+      _ <- StacExportDao.update(
+        exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+        exportDefinition.id
+      )
       layerSceneTaskAnnotation <- sceneTaskAnnotationforLayers(
         exportDefinition.layerDefinitions,
         exportDefinition.taskStatuses
       )
     } yield (exportDefinition, layerSceneTaskAnnotation)
 
-    logger.info(s"Creating content bundle with layers, scenes, and labels...")
+    logger.info(s"Creating content bundle with layers, scenes, and labels for record ${exportId}...")
     val (exportDef, layerInfo) = dbIO.transact(xa).unsafeRunSync
     val contentBundle = ContentBundle(
       exportDef,
       layerInfo
     )
 
-    logger.info(s"Buidling a catalog...")
-    // Construct STAC datamodel
+    logger.info(s"Building a catalog for record ${exportId}...")
     /*
      Exported Catalog:
      |-> Layer collection
@@ -301,18 +300,26 @@ final case class WriteStacCatalog(exportId: UUID)(
       .withLinks(catalogOwnLinks)
       .withContents(contentBundle)
       .build()
+    logger.info(s"Built a catalog for record ${exportId}...")
 
+    logger.info(s"Writing catalog to S3 for record ${exportId}...")
     writeToS3(catalog, layerSceneLabelCollectionsItemsAssets)
+    logger.info(s"Wrote catalog to S3 for record ${exportId}...")
 
-    // Update StacExport in database with location of export and finished status
-    val exportStatusUpdateIO =
-      setExportStatus(contentBundle.export, ExportStatus.Exported)
+    logger.info(s"Updating export location and status for record ${exportId}...")
+    val exportUpdateIO = StacExportDao.update(
+        contentBundle.export.copy(
+          exportStatus = ExportStatus.Exported,
+          exportLocation = getStacSelfLink(catalog.links)
+        ),
+        contentBundle.export.id
+      )
 
-    val exportRecordCount = exportStatusUpdateIO.transact(xa).unsafeRunSync
+    val updatedExportRecordCount = exportUpdateIO.transact(xa).unsafeRunSync
 
     logger
       .info(
-        s"${exportRecordCount} STAC export record for ${exportId} is updated")
+        s"${updatedExportRecordCount} STAC export record for ${exportId} is updated")
   }
 
 }
