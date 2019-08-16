@@ -33,6 +33,7 @@ final case class WriteStacCatalog(exportId: UUID)(
 
   protected def s3Client = S3()
 
+  @SuppressWarnings(Array("CatchThrowable"))
   protected def putObjectToS3(selfLink: String,
                               data: String,
                               contentType: String) = {
@@ -57,6 +58,7 @@ final case class WriteStacCatalog(exportId: UUID)(
     }
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   protected def getStacSelfLink(stacLinks: List[StacLink]): String =
     stacLinks.find(_.rel == Self).map(_.href).get
 
