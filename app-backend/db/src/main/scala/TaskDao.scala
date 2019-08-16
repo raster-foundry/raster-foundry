@@ -465,7 +465,7 @@ object TaskDao extends Dao[Task] {
       }
     (fr"""
       SELECT
-        ST_Transform(ST_Collect(geometry), 4326) AS geometry,
+        ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry,
         ST_XMin(ST_Extent(ST_Transform(geometry, 4326))) AS x_min,
         ST_YMin(ST_Extent(ST_Transform(geometry, 4326))) AS y_min,
         ST_XMax(ST_Extent(ST_Transform(geometry, 4326))) AS x_max,
