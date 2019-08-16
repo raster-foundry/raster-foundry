@@ -4,7 +4,7 @@
 
 ### Added
 
-- Add STAC async export endpoint [\#5061](https://github.com/raster-foundry/raster-foundry/pull/5061)
+- Added STAC async export endpoints and export builder in batch [\#5018](https://github.com/raster-foundry/raster-foundry/pull/5018)
 
 ### Changed
 
