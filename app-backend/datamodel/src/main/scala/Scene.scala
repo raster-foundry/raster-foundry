@@ -175,7 +175,7 @@ object Scene {
       filterFields: SceneFilterFields = new SceneFilterFields(),
       statusFields: SceneStatusFields,
       sceneType: Option[SceneType] = None,
-      metadataFields: SceneMetadataFields = new SceneMetadataFields()
+      metadataFields: Option[SceneMetadataFields] = None
   ) extends OwnerCheck {
     def toScene(user: User): Scene = {
       val now = new Timestamp(new java.util.Date().getTime)
@@ -200,7 +200,7 @@ object Scene {
         filterFields,
         statusFields,
         sceneType,
-        metadataFields
+        metadataFields.getOrElse(new SceneMetadataFields)
       )
     }
   }
