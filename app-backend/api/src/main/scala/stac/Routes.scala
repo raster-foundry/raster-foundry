@@ -4,6 +4,7 @@ import com.rasterfoundry.akkautil._
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.common.AWSBatch
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
@@ -19,7 +20,8 @@ trait StacRoutes
     with PaginationDirectives
     with UserErrorHandler
     with CommonHandlers
-    with QueryParametersCommon {
+    with QueryParametersCommon
+    with AWSBatch {
   val xa: Transactor[IO]
 
   val stacRoutes: Route = handleExceptions(userExceptionHandler) {
@@ -61,7 +63,7 @@ trait StacRoutes
             .create(newStacExport, user)
             .transact(xa)
             .unsafeToFuture) { stacExport =>
-          // To be implemented: kickoffStacExport(stacExport.id)
+          kickoffStacExport(stacExport.id)
           complete((StatusCodes.Created, stacExport))
         }
       }
