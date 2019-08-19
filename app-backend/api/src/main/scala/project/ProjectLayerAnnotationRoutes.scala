@@ -282,8 +282,8 @@ trait ProjectLayerAnnotationRoutes
       agId: UUID
   ): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao
-        .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+      AnnotationGroupDao
+        .authAnnotationGroupExists(projectId, layerId, agId, user, ActionType.View)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -303,8 +303,8 @@ trait ProjectLayerAnnotationRoutes
   ): Route =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao
-          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+        AnnotationGroupDao
+          .authAnnotationGroupExists(projectId, layerId, agId, user, ActionType.Annotate)
           .transact(xa)
           .unsafeToFuture
       } {
@@ -326,8 +326,8 @@ trait ProjectLayerAnnotationRoutes
   ): Route =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao
-          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+        AnnotationGroupDao
+          .authAnnotationGroupExists(projectId, layerId, agId, user, ActionType.Annotate)
           .transact(xa)
           .unsafeToFuture
       } {
@@ -347,17 +347,15 @@ trait ProjectLayerAnnotationRoutes
   ): Route =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao
-          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+        AnnotationGroupDao
+          .authAnnotationGroupExists(projectId, layerId, annotationGroupId, user, ActionType.View)
           .transact(xa)
           .unsafeToFuture
       } {
         complete {
           AnnotationGroupDao
             .getAnnotationGroupSummary(
-              projectId,
-              annotationGroupId,
-              Some(layerId)
+              annotationGroupId
             )
             .transact(xa)
             .unsafeToFuture
