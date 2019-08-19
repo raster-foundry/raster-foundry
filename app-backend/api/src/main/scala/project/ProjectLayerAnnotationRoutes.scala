@@ -283,7 +283,11 @@ trait ProjectLayerAnnotationRoutes
   ): Route = authenticate { user =>
     authorizeAsync {
       AnnotationGroupDao
-        .authAnnotationGroupExists(projectId, layerId, agId, user, ActionType.View)
+        .authAnnotationGroupExists(projectId,
+                                   layerId,
+                                   agId,
+                                   user,
+                                   ActionType.View)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -304,7 +308,11 @@ trait ProjectLayerAnnotationRoutes
     authenticate { user =>
       authorizeAsync {
         AnnotationGroupDao
-          .authAnnotationGroupExists(projectId, layerId, agId, user, ActionType.Annotate)
+          .authAnnotationGroupExists(projectId,
+                                     layerId,
+                                     agId,
+                                     user,
+                                     ActionType.Annotate)
           .transact(xa)
           .unsafeToFuture
       } {
@@ -327,7 +335,11 @@ trait ProjectLayerAnnotationRoutes
     authenticate { user =>
       authorizeAsync {
         AnnotationGroupDao
-          .authAnnotationGroupExists(projectId, layerId, agId, user, ActionType.Annotate)
+          .authAnnotationGroupExists(projectId,
+                                     layerId,
+                                     agId,
+                                     user,
+                                     ActionType.Annotate)
           .transact(xa)
           .unsafeToFuture
       } {
@@ -348,7 +360,11 @@ trait ProjectLayerAnnotationRoutes
     authenticate { user =>
       authorizeAsync {
         AnnotationGroupDao
-          .authAnnotationGroupExists(projectId, layerId, annotationGroupId, user, ActionType.View)
+          .authAnnotationGroupExists(projectId,
+                                     layerId,
+                                     annotationGroupId,
+                                     user,
+                                     ActionType.View)
           .transact(xa)
           .unsafeToFuture
       } {
