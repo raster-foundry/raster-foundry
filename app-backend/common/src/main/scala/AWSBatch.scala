@@ -49,8 +49,10 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
           throw e
       }
     } else {
+      println(s"Not submitting AWS Batch -- not in production or staging, in ${awsbatchConfig.environment}")
       logger.debug(
         s"Not submitting AWS Batch -- not in production or staging, in ${awsbatchConfig.environment}")
+      println(s"Job Request: ${jobName} -- ${jobDefinition} -- ${parameters}")
       logger.debug(
         s"Job Request: ${jobName} -- ${jobDefinition} -- ${parameters}")
     }
@@ -90,6 +92,15 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
     submitJobRequest(jobDefinition,
                      awsbatchConfig.jobQueue,
                      Map("projectId" -> s"$projectId"),
+                     jobName)
+  }
+
+  def kickoffStacExport(exportId: UUID): Unit = {
+    val jobDefinition = awsbatchConfig.stacExportJobName
+    val jobName = s"$jobDefinition-$exportId"
+    submitJobRequest(jobDefinition,
+                     awsbatchConfig.jobQueue,
+                     Map("exportId" -> s"$exportId"),
                      jobName)
   }
 }
