@@ -5,6 +5,8 @@
 ### Added
 
 - Added STAC async export endpoints and export builder in batch [\#5018](https://github.com/raster-foundry/raster-foundry/pull/5018)
+- Enabled writing STAC exports to S3 [\#5110](https://github.com/raster-foundry/raster-foundry/pull/5110)
+- Enabled kicking off STAC export when an export record is created [\#5116](https://github.com/raster-foundry/raster-foundry/pull/5116)
 
 ### Changed
 
