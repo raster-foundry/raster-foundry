@@ -266,7 +266,7 @@ trait ProjectAnnotationRoutes
     } {
       complete {
         AnnotationGroupDao
-          .getAnnotationGroupSummary(projectId, annotationGroupId)
+          .getAnnotationGroupSummary(annotationGroupId)
           .transact(xa)
           .unsafeToFuture
       }

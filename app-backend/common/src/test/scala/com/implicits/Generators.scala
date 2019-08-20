@@ -1256,7 +1256,8 @@ object Generators extends ArbitraryInstances {
         stacExportCreateGen
       }
 
-    implicit def arbStacExportQueryParameters: Arbitrary[StacExportQueryParameters] =
+    implicit def arbStacExportQueryParameters
+      : Arbitrary[StacExportQueryParameters] =
       Arbitrary {
         stacExportQueryParametersGen
       }

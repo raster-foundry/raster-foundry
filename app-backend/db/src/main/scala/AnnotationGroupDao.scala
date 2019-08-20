@@ -104,59 +104,50 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
     query.filter(fr"project_id = $projectId").filter(agId).selectOption
 
   def getAnnotationGroupSummaryF(
-      annotationGroupId: UUID,
-      layerId: UUID
+      annotationGroupId: UUID
   ): Fragment = sql"""
     SELECT
         annots.label, jsonb_object_agg(annots.quality, coalesce(counts.count, 0)) as counts
     FROM (
         SELECT
-            DISTINCT annotation_group,
-            label,
+            distinct(label),
             vals.quality
         FROM
             annotations,
             (
                 SELECT
-                    unnest(enum_range(NULL::annotation_quality)) AS quality) AS vals
-       WHERE annotation_group = ${annotationGroupId}
-       AND project_layer_id = ${layerId}
-       ) AS annots
-        LEFT JOIN (
-            SELECT
-                annotation_group,
-                count(*),
-                label,
-                coalesce(quality, 'YES'::annotation_quality) as quality
-            FROM
-                annotations
-            WHERE
-                annotation_group = ${annotationGroupId}
-            AND project_layer_id = ${layerId}
-            GROUP BY
-                quality,
-                label,
-                annotation_group) counts ON annots.annotation_group = counts.annotation_group
-        AND counts.label = annots.label
-        AND annots.quality = counts.quality
+                    unnest(enum_range(NULL::annotation_quality)) AS quality
+            ) AS vals
+        WHERE annotation_group = ${annotationGroupId}
+    ) AS annots
+    LEFT JOIN
+    (
+        SELECT
+            count(*),
+            label,
+            coalesce(quality, 'YES'::annotation_quality) as quality
+        FROM
+            annotations
+        WHERE
+            annotation_group = ${annotationGroupId}
+        GROUP BY
+            quality,
+            label,
+            annotation_group
+    ) counts ON annots.label = counts.label
+    AND counts.label = annots.label
+    AND annots.quality = counts.quality
     GROUP BY annots.label
   """
 
   // get annotation group summary by project layer
   // if layerId not provided, look at the default project layer
   def getAnnotationGroupSummary(
-      projectId: UUID,
-      annotationGroupId: UUID,
-      layerIdO: Option[UUID] = None
-  ): ConnectionIO[List[LabelSummary]] = {
-    for {
-      project <- ProjectDao.unsafeGetProjectById(projectId)
-      layerId = ProjectDao.getProjectLayerId(layerIdO, project)
-      summary <- getAnnotationGroupSummaryF(annotationGroupId, layerId)
-        .query[LabelSummary]
-        .to[List]
-    } yield { summary }
-  }
+      annotationGroupId: UUID
+  ): ConnectionIO[List[LabelSummary]] =
+    getAnnotationGroupSummaryF(annotationGroupId)
+      .query[LabelSummary]
+      .to[List]
 
   def deleteAnnotationGroup(projectId: UUID, agId: UUID): ConnectionIO[Int] =
     for {
@@ -174,4 +165,37 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
   ): ConnectionIO[Int] = {
     updateAnnotationGroupQ(projectId, ag, agId).run
   }
+
+  def annotationGroupIsInLayer(
+      projectId: UUID,
+      layerId: UUID,
+      annotationGroupId: UUID
+  ): ConnectionIO[Boolean] =
+    this.query
+      .filter(fr"id = $annotationGroupId")
+      .filter(fr"project_id = $projectId")
+      .filter(fr"project_layer_id = $layerId")
+      .exists
+
+  def authAnnotationGroupExists(
+      projectId: UUID,
+      layerId: UUID,
+      annotationGroupId: UUID,
+      user: User,
+      actionType: ActionType
+  ): ConnectionIO[Boolean] =
+    for {
+      authProject <- ProjectDao.authorized(
+        user,
+        ObjectType.Project,
+        projectId,
+        actionType
+      )
+      layerExists <- ProjectLayerDao.layerIsInProject(layerId, projectId)
+      authAnnotationGroup <- annotationGroupIsInLayer(
+        projectId,
+        layerId,
+        annotationGroupId
+      )
+    } yield { authProject && layerExists && authAnnotationGroup }
 }

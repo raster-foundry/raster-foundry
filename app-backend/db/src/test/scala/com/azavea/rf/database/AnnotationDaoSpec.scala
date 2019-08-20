@@ -405,7 +405,7 @@ class AnnotationDaoSpec
       forAll {
         (
             userOrgPlat: (User.Create, Organization.Create, Platform),
-           (projectAgGroupCreate): (Project.Create, AnnotationGroup.Create),
+            (projectAgGroupCreate): (Project.Create, AnnotationGroup.Create),
             annotationCreates: (Annotation.Create, Annotation.Create),
             taskFeatureCreates: (Task.TaskFeatureCreate, Task.TaskFeatureCreate),
             labelValidateTeamCreate: (Team.Create, Team.Create),
