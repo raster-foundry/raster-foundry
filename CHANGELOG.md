@@ -13,6 +13,7 @@
 ### Removed
 
 ### Fixed
+- Optimized long-running annotation group summary endpoint [/#5155](https://github.com/raster-foundry/raster-foundry/pull/5155)
 
 ### Security
 
