@@ -152,7 +152,8 @@ class SceneDetailModalController {
             datasource: this.selectedDatasource.id,
             modifiedAt: this.moment().toISOString(),
             sceneMetadata: this.newSceneMetadata,
-            filterFields: this.newFilterFields
+            filterFields: this.newFilterFields,
+            metadataFields: this.newSceneRenderMetadata
         });
         this.datasource = this.selectedDatasource;
         this.sceneService.update(this.scene).then(

@@ -2,7 +2,8 @@ package com.rasterfoundry.backsplash
 
 import java.net.URLDecoder
 
-import com.rasterfoundry.backsplash.color._
+import com.rasterfoundry.common.color._
+import com.rasterfoundry.datamodel.SingleBandOptions
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.resample.NearestNeighbor
@@ -48,7 +49,8 @@ final case class BacksplashGeotiff(
     @cacheKeyExclude corrections: ColorCorrect.Params,
     singleBandOptions: Option[SingleBandOptions.Params],
     mask: Option[MultiPolygon],
-    @cacheKeyExclude footprint: MultiPolygon)
+    @cacheKeyExclude footprint: MultiPolygon,
+    noDataValue: Option[Double])
     extends LazyLogging
     with BacksplashImage[IO] {
 
@@ -60,14 +62,27 @@ final case class BacksplashGeotiff(
     if (enableGDAL) {
       logger.debug(s"Using GDAL Raster Source: ${uri}")
       // Do not bother caching - let GDAL internals worry about that
+      val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
       IO {
-        GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+        noDataValue match {
+          case Some(nd) =>
+            rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+          case _ =>
+            rasterSource
+        }
+
       }
     } else {
       memoizeF(None) {
         logger.debug(s"Using GeoTiffRasterSource: ${uri}")
+        val rasterSource = new GeoTiffRasterSource(uri)
         IO {
-          new GeoTiffRasterSource(uri)
+          noDataValue match {
+            case Some(nd) =>
+              rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+            case _ =>
+              rasterSource
+          }
         }
       }
     }
@@ -137,6 +152,7 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
   val projectId: UUID
   val projectLayerId: UUID
   val mask: Option[MultiPolygon]
+  val noDataValue: Option[Double]
 
   val enableGDAL = Config.RasterSource.enableGDAL
 

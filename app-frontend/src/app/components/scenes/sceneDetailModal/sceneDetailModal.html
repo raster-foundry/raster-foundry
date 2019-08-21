@@ -112,6 +112,26 @@
                    placeholder="{{field}}">
           </dd>
         </dl>
+        <h5 class="color-dark">Scene render overrides</h5>
+        <dl class="meta-list"  ng-if="!$ctrl.editingMetadata && $ctrl.isUploadDone">
+          <dt ng-repeat-start="(metaKey, metaVal) in $ctrl.scene.metadataFields">
+            {{metaKey}}
+          </dt>
+          <dd ng-repeat-end>{{metaVal}}</dd>
+        </dl>
+        <dl class="meta-list editing-metadata"  ng-if="$ctrl.editingMetadata">
+          <dt ng-repeat-start="(metaKey, metaVal) in $ctrl.scene.metadataFields">
+            {{metaKey}}
+          </dt>
+          <dd ng-repeat-end>
+            <input type="text"
+                   ng-model="$ctrl.newSceneRenderMetadata[metaKey]"
+                   ng-init="$ctrl.newSceneRenderMetadata[metaKey] = metaVal"
+                   class="form-control scene-detail-field"
+                   placeholder="{{field}}">
+          </dd>
+        </dl>
+
       </div>
     </div>
     <div class="scene-preview-container" ng-class="{'image-preview': !$ctrl.repository.service.previewOnMap && $ctrl.thumbnail}">

@@ -29,6 +29,17 @@ final case class SceneStatusFields(
     ingestStatus: IngestStatus
 )
 
+@JsonCodec
+final case class SceneMetadataFields(
+    dataPath: Option[String] = None,
+    crs: Option[String] = None,
+    bandCount: Option[Int] = None,
+    cellType: Option[String] = None,
+    gridExtent: Option[Json] = None,
+    resolutions: Option[Json] = None,
+    noDataValue: Option[Double] = None
+)
+
 object SceneStatusFields {
   def tupled = (SceneStatusFields.apply _).tupled
 
@@ -53,7 +64,8 @@ final case class Scene(
     ingestLocation: Option[String] = None,
     filterFields: SceneFilterFields = new SceneFilterFields(),
     statusFields: SceneStatusFields,
-    sceneType: Option[SceneType] = None
+    sceneType: Option[SceneType] = None,
+    metadataFields: SceneMetadataFields = new SceneMetadataFields()
 ) {
   def toScene: Scene = this
 
@@ -81,7 +93,8 @@ final case class Scene(
       this.ingestLocation,
       this.filterFields,
       this.statusFields,
-      this.sceneType
+      this.sceneType,
+      this.metadataFields
     )
 
   def browseFromComponents(
@@ -109,7 +122,8 @@ final case class Scene(
     this.statusFields,
     this.sceneType,
     inProject,
-    inLayer
+    inLayer,
+    this.metadataFields
   )
 
   def projectSceneFromComponents(
@@ -135,7 +149,8 @@ final case class Scene(
     this.filterFields,
     this.statusFields,
     this.sceneType,
-    sceneOrder
+    sceneOrder,
+    this.metadataFields
   )
 }
 
@@ -159,7 +174,8 @@ object Scene {
       ingestLocation: Option[String],
       filterFields: SceneFilterFields = new SceneFilterFields(),
       statusFields: SceneStatusFields,
-      sceneType: Option[SceneType] = None
+      sceneType: Option[SceneType] = None,
+      metadataFields: Option[SceneMetadataFields] = None
   ) extends OwnerCheck {
     def toScene(user: User): Scene = {
       val now = new Timestamp(new java.util.Date().getTime)
@@ -183,7 +199,8 @@ object Scene {
         ingestLocation,
         filterFields,
         statusFields,
-        sceneType
+        sceneType,
+        metadataFields.getOrElse(new SceneMetadataFields)
       )
     }
   }
@@ -208,7 +225,8 @@ object Scene {
       ingestLocation: Option[String],
       filterFields: SceneFilterFields = new SceneFilterFields(),
       statusFields: SceneStatusFields,
-      sceneType: Option[SceneType] = None
+      sceneType: Option[SceneType] = None,
+      metadataFields: SceneMetadataFields = new SceneMetadataFields(),
   ) {
     def toScene: Scene =
       Scene(
@@ -228,7 +246,8 @@ object Scene {
         ingestLocation,
         filterFields,
         statusFields,
-        sceneType
+        sceneType,
+        metadataFields
       )
   }
 
@@ -253,7 +272,8 @@ object Scene {
       statusFields: SceneStatusFields,
       sceneType: Option[SceneType] = None,
       inProject: Option[Boolean] = None,
-      inLayer: Option[Boolean] = None
+      inLayer: Option[Boolean] = None,
+      metadataFields: SceneMetadataFields = new SceneMetadataFields()
   ) {
     def toScene: Scene =
       Scene(
@@ -273,7 +293,8 @@ object Scene {
         ingestLocation,
         filterFields,
         statusFields,
-        sceneType
+        sceneType,
+        metadataFields
       )
   }
 
@@ -297,6 +318,7 @@ object Scene {
       filterFields: SceneFilterFields = new SceneFilterFields(),
       statusFields: SceneStatusFields,
       sceneType: Option[SceneType] = None,
-      sceneOrder: Option[Int]
+      sceneOrder: Option[Int],
+      metadataFields: SceneMetadataFields = new SceneMetadataFields()
   )
 }

@@ -192,7 +192,7 @@ class AnnotationGroupDaoSpec
               _ <- AnnotationGroupDao
                 .listForProject(dbProject.id)
               annotationGroupSummary <- AnnotationGroupDao
-                .getAnnotationGroupSummary(dbProject.id, annotationGroupDB.id)
+                .getAnnotationGroupSummary(annotationGroupDB.id)
             } yield (annotationGroupSummary, annotationsDB)
 
             val (annotationGroupSummary, annotationsDB) =

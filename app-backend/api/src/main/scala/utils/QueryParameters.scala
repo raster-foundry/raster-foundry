@@ -184,4 +184,14 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionEndTime.as(deserializerTimestamp).?,
       'actionUser.as[String].?
     ).as(UserTaskActivityParameters.apply _)
+
+  def stacExportQueryParameters =
+    (
+      userAuditQueryParameters &
+        ownerQueryParameters &
+        searchParams &
+        parameters(
+          'exportStatus.as[String].?
+        )
+    ).as(StacExportQueryParameters.apply _)
 }

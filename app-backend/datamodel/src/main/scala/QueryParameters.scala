@@ -679,3 +679,19 @@ object UserTaskActivityParameters {
     : Decoder[UserTaskActivityParameters] =
     deriveDecoder[UserTaskActivityParameters]
 }
+
+final case class StacExportQueryParameters(
+    userParams: UserAuditQueryParameters = UserAuditQueryParameters(),
+    ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
+    searchParams: SearchQueryParameters = SearchQueryParameters(),
+    exportStatus: Option[String] = None
+)
+
+object StacExportQueryParameters {
+  implicit def encStacExportQueryParameters
+    : Encoder[StacExportQueryParameters] =
+    deriveEncoder[StacExportQueryParameters]
+  implicit def decStacExportQueryParameters
+    : Decoder[StacExportQueryParameters] =
+    deriveDecoder[StacExportQueryParameters]
+}

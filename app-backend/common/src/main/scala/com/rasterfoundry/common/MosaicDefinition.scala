@@ -18,5 +18,6 @@ final case class MosaicDefinition(
     footprint: Option[MultiPolygon],
     isSingleBand: Boolean,
     singleBandOptions: Option[Json],
-    mask: Option[MultiPolygon]
+    mask: Option[MultiPolygon],
+    noDataValue: Option[Double]
 )

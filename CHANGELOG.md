@@ -14,6 +14,17 @@
 
 ### Security
 
+## [1.27.0](https://github.com/raster-foundry/raster-foundry/compare/1.26.0...1.27.0)
+
+### Added
+
+- Added STAC async export endpoints and export builder in batch [\#5018](https://github.com/raster-foundry/raster-foundry/pull/5018)
+- Enabled writing STAC exports to S3 [\#5110](https://github.com/raster-foundry/raster-foundry/pull/5110)
+- Enabled kicking off STAC export when an export record is created [\#5116](https://github.com/raster-foundry/raster-foundry/pull/5116)
+
+### Fixed
+- Optimized long-running annotation group summary endpoint [/#5155](https://github.com/raster-foundry/raster-foundry/pull/5155)
+
 ## [1.26.0](https://github.com/raster-foundry/raster-foundry/compare/1.25.1...1.26.0)
 
 ### Added
@@ -22,6 +33,7 @@
 - Added fields to track metadata for scenes to help with RasterSource construction [\#5103](https://github.com/raster-foundry/raster-foundry/pull/5103)
 
 ### Changed
+
 - Add support for multiband imagery in WMS responses
   [\#5082](https://github.com/raster-foundry/raster-foundry/pull/5082)
 

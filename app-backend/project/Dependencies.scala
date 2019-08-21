@@ -31,7 +31,7 @@ object Version {
   val ficus = "1.4.0"
   val flyway = "5.2.4"
   val geotools = "17.1"
-  val geotrellisContrib = "3.16.0"
+  val geotrellisContrib = "3.16.1-M3"
   val geotrellis = "3.0.0-M3"
   val geotrellisServer = "3.4.0"
   val hadoop = "2.8.4"
@@ -108,6 +108,7 @@ object Dependencies {
   val geotrellisServer = "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer
   val geotrellisProj4 = "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellis
   val geotrellisServerOgc = "com.azavea" %% "geotrellis-server-ogc" % Version.geotrellisServer
+  val geotrellisServerStac = "com.azavea" %% "geotrellis-server-stac" % Version.geotrellisServer
   val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis

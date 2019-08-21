@@ -18,7 +18,24 @@ import java.util.UUID
 case class ProjectExtras(annotate: ProjectExtrasAnnotate)
 
 @JsonCodec
-case class ProjectExtrasAnnotate(labelers: UUID, validators: UUID)
+case class ProjectExtrasAnnotate(
+    labelers: UUID,
+    validators: UUID,
+    labels: List[ProjectExtrasAnnotateLabel],
+    projectType: String,
+    preexistingTeams: Boolean,
+    overlayUrl: Option[String] = None,
+    labelGroups: Map[UUID, String]
+)
+
+@JsonCodec
+case class ProjectExtrasAnnotateLabel(
+    name: String,
+    id: UUID,
+    colorHexCode: String,
+    labelGroup: UUID,
+    default: Boolean
+)
 
 trait PropTestHelpers {
 
@@ -305,26 +322,34 @@ trait PropTestHelpers {
 
   def fixupTaskFeaturesCollection(
       tfc: Task.TaskFeatureCollectionCreate,
-      project: Project
+      project: Project,
+      statusOption: Option[TaskStatus] = None
   ) =
     tfc.copy(
       features =
-        tfc.features map { fixupTaskFeatureCreate(_, project) }
+        tfc.features map { fixupTaskFeatureCreate(_, project, statusOption) }
     )
 
   def fixupTaskFeatureCreate(
       tfc: Task.TaskFeatureCreate,
-      project: Project
+      project: Project,
+      statusOption: Option[TaskStatus] = None
   ): Task.TaskFeatureCreate =
     tfc.copy(
-      properties = fixupTaskPropertiesCreate(tfc.properties, project)
+      properties =
+        fixupTaskPropertiesCreate(tfc.properties, project, statusOption)
     )
 
   def fixupTaskPropertiesCreate(
       tpc: Task.TaskPropertiesCreate,
-      project: Project
+      project: Project,
+      statusOption: Option[TaskStatus] = None
   ): Task.TaskPropertiesCreate =
-    tpc.copy(projectId = project.id, projectLayerId = project.defaultLayerId)
+    tpc.copy(
+      projectId = project.id,
+      projectLayerId = project.defaultLayerId,
+      status = statusOption.getOrElse(tpc.status)
+    )
 
   def fixupProjectExtrasUpdate(
       labelValidateTeamCreate: (Team.Create, Team.Create),
@@ -332,7 +357,9 @@ trait PropTestHelpers {
       dbOrg: Organization,
       dbUser: User,
       dbPlatform: Platform,
-      dbProject: Project
+      dbProject: Project,
+      labelsOption: Option[List[(UUID, String, UUID)]] = None,
+      labelGroupsOption: Option[Map[UUID, String]] = None
   ): ConnectionIO[Project] = {
     val (labelTeamCreate, validateTeamCreate) = labelValidateTeamCreate
     val (labelTeamUgrCreate, validateTeamUgrCreate) = labelValidateTeamUgrCreate
@@ -368,11 +395,11 @@ trait PropTestHelpers {
       _ <- ProjectDao.updateProject(
         dbProject.copy(
           extras = Some(
-            ProjectExtras(
-              ProjectExtrasAnnotate(
-                dbLabelTeam.id,
-                dbValidateTeam.id
-              )
+            fixupProjectExtrasAnnotate(
+              dbLabelTeam.id,
+              dbValidateTeam.id,
+              labelsOption,
+              labelGroupsOption
             ).asJson
           )
         ),
@@ -381,4 +408,66 @@ trait PropTestHelpers {
       updatedDbProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
     } yield updatedDbProject
   }
+
+  def fixupProjectExtrasAnnotate(
+      labelTeamId: UUID,
+      validateTeamId: UUID,
+      labelsOption: Option[List[(UUID, String, UUID)]] = None,
+      labelGroupsOption: Option[Map[UUID, String]] = None
+  ): ProjectExtras = (labelsOption, labelGroupsOption) match {
+    case (Some(labels), Some(labelGroups)) =>
+      val createdLabels = labels.map(label => {
+        ProjectExtrasAnnotateLabel(
+          label._2,
+          label._1,
+          "red",
+          label._3,
+          false
+        )
+      })
+      ProjectExtras(
+        ProjectExtrasAnnotate(
+          labelTeamId,
+          validateTeamId,
+          createdLabels,
+          "detection",
+          true,
+          None,
+          labelGroups
+        ))
+    case _ =>
+      val defaultLabelId = UUID.randomUUID()
+      val defaultLayerGroupId = UUID.randomUUID()
+      val defaultLabels = List(
+        ProjectExtrasAnnotateLabel(
+          "Test",
+          defaultLabelId,
+          "red",
+          defaultLayerGroupId,
+          false
+        )
+      )
+      ProjectExtras(
+        ProjectExtrasAnnotate(
+          labelTeamId,
+          validateTeamId,
+          defaultLabels,
+          "detection",
+          true,
+          None,
+          Map(defaultLayerGroupId -> "Test Group")
+        ))
+  }
+
+  def fixupStacExportCreate(
+      stacExportCreate: StacExport.Create,
+      user: User,
+      project: Project
+  ): StacExport.Create =
+    stacExportCreate.copy(
+      layerDefinitions = List(
+        StacExport.LayerDefinition(project.id, project.defaultLayerId)
+      ),
+      owner = Some(user.id)
+    )
 }

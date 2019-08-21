@@ -22,6 +22,11 @@ import scala.util.Either
 
 package object batch {
 
+  @SuppressWarnings(Array("all"))
+  implicit class IdOps[A](a: A) {
+    def unused: Unit = ()
+  }
+
   implicit class HasCellSize[A <: {
     def rows: Int; def cols: Int; def extent: Extent
   }](obj: A) {

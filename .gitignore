@@ -104,12 +104,15 @@ metals.lock.db
 
 .node_modules
 dist/
+.vscode
 
 /data
 .idea
 .ensime_cache
 /app-tasks/jars/rf-batch.jar
 /data
+
+.vscode
 
 # Patch files
 *.patch

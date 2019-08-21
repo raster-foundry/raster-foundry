@@ -434,4 +434,48 @@ object TaskDao extends Dao[Task] {
     ON
       team_users.user_id = user_validated_tasks.user_id
   """).query[TaskUserSummary].to[List]
+
+  def listLayerTasksByStatus(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[List[Task]] = {
+    val taskStatusF: Fragment =
+      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
+        case Some(taskStatusNel) => Fragments.in(fr"status", taskStatusNel)
+        case _                   => fr""
+      }
+    query
+      .filter(fr"project_id = $projectId")
+      .filter(fr"project_layer_id = $layerId")
+      .filter(taskStatusF)
+      .list
+  }
+
+  def createUnionedGeomExtent(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[Option[UnionedGeomExtent]] = {
+    val taskStatusF: Fragment =
+      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
+        case Some(taskStatusNel) =>
+          fr"AND" ++ Fragments.in(fr"status", taskStatusNel)
+        case _ => fr""
+      }
+    (fr"""
+      SELECT
+        ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry,
+        ST_XMin(ST_Extent(ST_Transform(geometry, 4326))) AS x_min,
+        ST_YMin(ST_Extent(ST_Transform(geometry, 4326))) AS y_min,
+        ST_XMax(ST_Extent(ST_Transform(geometry, 4326))) AS x_max,
+        ST_YMax(ST_Extent(ST_Transform(geometry, 4326))) AS y_max
+      FROM tasks
+      WHERE
+        project_id = ${projectId}
+        AND project_layer_id = ${layerId}
+      """ ++ taskStatusF)
+      .query[UnionedGeomExtent]
+      .option
+  }
 }
