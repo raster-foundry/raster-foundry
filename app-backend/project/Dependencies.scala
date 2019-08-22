@@ -25,7 +25,7 @@ object Version {
   val circeOptics = "0.11.0"
   val commonsIO = "2.5"
   val dnsJava = "2.1.8"
-  val doobie = "0.6.0"
+  val doobie = "0.7.0"
   val dropbox = "3.0.9"
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
