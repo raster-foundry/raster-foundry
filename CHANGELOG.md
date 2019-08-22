@@ -4,6 +4,8 @@
 
 ### Added
 
+- Added an ADR for label STAC export [\#5127](https://github.com/raster-foundry/raster-foundry/pull/5127)
+
 ### Changed
 
 ### Deprecated
