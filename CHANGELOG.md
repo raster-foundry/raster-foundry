@@ -11,6 +11,7 @@
 ### Removed
 
 ### Fixed
+- Better error messages / codes when rendering tiles containing scenes which are missing histograms [/5128](https://github.com/raster-foundry/raster-foundry/pull/5128)
 
 ### Security
 

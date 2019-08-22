@@ -20,13 +20,12 @@ import java.util.UUID
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class LayerAttributeDao() extends HistogramJsonFormats {
   def getHistogram(layerId: UUID,
-                   xa: Transactor[IO]): IO[Array[Histogram[Double]]] = {
+                   xa: Transactor[IO]): IO[Option[Array[Histogram[Double]]]] = {
     LayerAttributeDao
-      .unsafeGetAttribute(LayerId(layerId.toString, 0), "histogram")
+      .getAttribute(LayerId(layerId.toString, 0), "histogram")
       .transact(xa)
-      .map({ attr =>
-        attr.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]
-      })
+      .map(_.map(attr =>
+        attr.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]))
   }
 
   def getProjectLayerHistogram(
