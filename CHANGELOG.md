@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Correctly mosaic tiles which have a no-data value other than 0 [\#5131](https://github.com/raster-foundry/raster-foundry/pull/5131)
+
 ### Security
 
 ## [1.27.0](https://github.com/raster-foundry/raster-foundry/compare/1.26.0...1.27.0)
