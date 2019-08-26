@@ -4,8 +4,6 @@
 
 ### Added
 
-- Added an ADR for label STAC export [\#5127](https://github.com/raster-foundry/raster-foundry/pull/5127)
-
 ### Changed
 
 ### Deprecated
@@ -13,11 +11,18 @@
 ### Removed
 
 ### Fixed
-- Better error messages / codes when rendering tiles containing scenes which are missing histograms [/5128](https://github.com/raster-foundry/raster-foundry/pull/5128)
-
-- Correctly mosaic tiles which have a no-data value other than 0 [\#5131](https://github.com/raster-foundry/raster-foundry/pull/5131)
 
 ### Security
+
+## [1.28.0](https://github.com/raster-foundry/raster-foundry/compare/1.27.0...1.28.0)
+
+### Added
+
+- Added an ADR for label STAC export [\#5127](https://github.com/raster-foundry/raster-foundry/pull/5127)
+
+### Fixed
+- Better error messages / codes when rendering tiles containing scenes which are missing histograms [/5128](https://github.com/raster-foundry/raster-foundry/pull/5128)
+- Correctly mosaic tiles which have a no-data value other than 0 [\#5131](https://github.com/raster-foundry/raster-foundry/pull/5131)
 
 ## [1.27.0](https://github.com/raster-foundry/raster-foundry/compare/1.26.0...1.27.0)
 
