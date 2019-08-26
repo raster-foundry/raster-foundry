@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.HistogramStore
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
+import com.rasterfoundry.backsplash.error.RequirementFailedException
 import com.rasterfoundry.database.LayerAttributeDao
 
 import cats.effect.IO
@@ -22,18 +23,26 @@ trait HistogramStoreImplicits
 
   @SuppressWarnings(Array("TraversableHead"))
   private def mergeHistsForBands(
+      projectLayerId: UUID,
       bands: List[Int],
       hists: List[Array[Histogram[Double]]]): Array[Histogram[Double]] = {
-    val combinedHistogram = hists.foldLeft(
-      Array.fill(hists.head.length)(
-        StreamingHistogram(255): Histogram[Double]))(
-      (histArr1: Array[Histogram[Double]],
-       histArr2: Array[Histogram[Double]]) => {
-        histArr1 zip histArr2 map {
-          case (h1, h2) => h1 merge h2
-        }
-      }
-    )
+    val combinedHistogram = hists.toNel match {
+      case Some(histsNel) =>
+        histsNel.foldLeft(
+          Array.fill(hists.head.length)(
+            StreamingHistogram(255): Histogram[Double]))(
+          (histArr1: Array[Histogram[Double]],
+           histArr2: Array[Histogram[Double]]) => {
+            histArr1 zip histArr2 map {
+              case (h1, h2) => h1 merge h2
+            }
+          })
+      case _ =>
+        val msg =
+          s"No histogram stored for project layer: $projectLayerId. Please re-ingest scenes."
+        logger.error(msg)
+        throw RequirementFailedException(msg)
+    }
     bands.toArray map { band =>
       combinedHistogram(band)
     }
@@ -60,10 +69,16 @@ trait HistogramStoreImplicits
                          subsetBands: List[Int]) = {
         self
           .getHistogram(layerId, xa)
-          .map({ (hists: Array[Histogram[Double]]) =>
-            subsetBands.toArray map { band =>
-              hists(band)
-            }
+          .map({
+            case Some(hists: Array[Histogram[Double]]) =>
+              subsetBands.toArray map { band =>
+                hists(band)
+              }
+            case None =>
+              val msg =
+                s"No histogram stored for scene in layer: $layerId. Please re-ingest scene."
+              logger.error(msg)
+              throw RequirementFailedException(msg)
           })
           .attempt
       } flatMap { handleBandsOutOfRange(_, layerId, subsetBands) }
@@ -76,7 +91,7 @@ trait HistogramStoreImplicits
         self
           .getProjectLayerHistogram(projectLayerId, xa)
           .map({ hists =>
-            mergeHistsForBands(subsetBands, hists)
+            mergeHistsForBands(projectLayerId, subsetBands, hists)
           })
           .attempt flatMap {
           handleBandsOutOfRange(_, projectLayerId, subsetBands)
