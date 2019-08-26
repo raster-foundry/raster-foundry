@@ -5,6 +5,7 @@ import geotrellis.raster.{ArrayTile, MultibandTile, isData}
 import io.circe.generic.JsonCodec
 import org.apache.commons.math3.util.FastMath
 import spire.syntax.cfor.cfor
+import geotrellis.raster.UByteConstantNoDataCellType
 
 /**
   * Usage of Approximations.{pow | exp} functions can allow to speed up this function on 10 - 15ms.
@@ -119,10 +120,11 @@ object ColorCorrect extends LazyLogging {
   ): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val (gr, gg, gb) = (gammas(0), gammas(1), gammas(2))
+    val tileCellType = UByteConstantNoDataCellType
     val (nred, ngreen, nblue) = (
-      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows),
-      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows),
-      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows)
+      ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows),
+      ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows),
+      ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows)
     )
 
     val ClipBounds(rmin, rmax) = layerNormalizeArgs(0)
