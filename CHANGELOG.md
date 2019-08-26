@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Upgrade doobie to 0.7.0 [\#5130](https://github.com/raster-foundry/raster-foundry/pull/5130)
+
 ### Deprecated
 
 ### Removed
