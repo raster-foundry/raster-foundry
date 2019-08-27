@@ -17,21 +17,21 @@ import cats.Semigroup
 import scalacache._
 import scalacache.memoization._
 import scalacache.CatsEffect.modes._
-import ProjectStore._
+import RenderableStore._
 import ToolStore._
 import ExtentReification._
 import HasRasterExtents._
 import TmsReification._
 import com.typesafe.scalalogging.LazyLogging
 
-class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
+class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     histStore: HistStore,
-    projStore: ProjStore
+    rendStore: RendStore
 ) extends ToTmsReificationOps
     with ToExtentReificationOps
     with ToHasRasterExtentsOps
     with ToHistogramStoreOps
-    with ToProjectStoreOps
+    with ToRenderableStoreOps
     with ToToolStoreOps
     with LazyLogging {
 
@@ -273,9 +273,8 @@ class MosaicImplicits[HistStore: HistogramStore, ProjStore: ProjectStore](
           }
           stream = self zip {
             self flatMap { (backsplashIm: BacksplashImage[IO]) =>
-              fs2.Stream.eval(
-                projStore.getOverviewConfig(backsplashIm.projectLayerId)
-              )
+              fs2.Stream.eval( // kicks off project layer query
+                rendStore.getOverviewConfig(backsplashIm.projectLayerId))
             }
           } take (1) flatMap {
             case (baseBacksplashImage, overviewConfig) =>

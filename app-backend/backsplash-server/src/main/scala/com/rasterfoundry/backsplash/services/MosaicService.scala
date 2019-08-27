@@ -25,7 +25,7 @@ import doobie.util.transactor.Transactor
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import java.util.UUID
 
-class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
+class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     layers: LayerStore,
     mosaicImplicits: MosaicImplicits[HistStore, LayerStore],
     analysisManager: AnalysisManager[ToolStore, HistStore],
@@ -47,7 +47,7 @@ class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
             bandOverride) as user =>
         val polygonBbox: Projected[Polygon] =
           TileUtils.getTileBounds(z, x, y)
-        val getEval = ProjectLayerDao
+        val getEval = ProjectLayerDao // TODO: deduplicate, fetch 1
           .unsafeGetProjectLayerById(layerId)
           .transact(xa) map { layer =>
           layer.geometry flatMap { _.geom.as[MultiPolygon] } match {
@@ -58,7 +58,7 @@ class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
                   List(GeomLit(mask.toGeoJson), RasterVar("mosaic"))
                 )
               val param =
-                layers.read(layerId, Some(polygonBbox), bandOverride, None)
+                layers.read(layerId, Some(polygonBbox), bandOverride, None) // add a signature that takes a layer instead of layer id
               LayerTms(IO.pure(expression),
                        IO.pure(Map("mosaic" -> param)),
                        ConcurrentInterpreter.DEFAULT[IO])

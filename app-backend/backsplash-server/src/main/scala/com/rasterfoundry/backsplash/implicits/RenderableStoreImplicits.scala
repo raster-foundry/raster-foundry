@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
+import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.{ProjectLayerDao, SceneDao, SceneToLayerDao}
 import com.rasterfoundry.database.Implicits._
@@ -9,7 +9,7 @@ import com.rasterfoundry.datamodel.{BandOverride, SingleBandOptions}
 import com.rasterfoundry.common._
 import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.backsplash.{
-  ProjectStore,
+  RenderableStore,
   BacksplashImage,
   BacksplashGeotiff
 }
@@ -23,14 +23,14 @@ import geotrellis.vector.{Polygon, Projected}
 
 import java.util.UUID
 
-class ProjectStoreImplicits(xa: Transactor[IO])
-    extends ToProjectStoreOps
+class RenderableStoreImplicits(xa: Transactor[IO])
+    extends ToRenderableStoreOps
     with LazyLogging {
 
   @SuppressWarnings(Array("OptionGet"))
   private def mosaicDefinitionToImage(mosaicDefinition: MosaicDefinition,
                                       bandOverride: Option[BandOverride],
-                                      projId: UUID): BacksplashGeotiff = {
+                                      layerId: UUID): BacksplashGeotiff = {
     val singleBandOptions =
       mosaicDefinition.singleBandOptions flatMap {
         _.as[SingleBandOptions.Params].toOption
@@ -79,7 +79,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
     BacksplashGeotiff(
       sceneId,
       mosaicDefinition.projectId,
-      projId, // actually the layer ID
+      layerId, // actually the layer ID
       ingestLocation,
       subsetBands,
       colorCorrectParameters,
@@ -90,76 +90,78 @@ class ProjectStoreImplicits(xa: Transactor[IO])
     )
   }
 
-  implicit val sceneStore: ProjectStore[SceneDao] = new ProjectStore[SceneDao] {
-    def read(
-        self: SceneDao,
-        projId: UUID, // actually a scene id, but argument names have to match
-        window: Option[Projected[Polygon]],
-        bandOverride: Option[BandOverride],
-        imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage[IO]] = {
-      for {
-        scene <- SceneDao.streamSceneById(projId, window).transact(xa)
-      } yield {
-        // We don't actually have a project, so just make something up
-        val randomProjectId = UUID.randomUUID
-        val ingestLocation = scene.ingestLocation getOrElse {
-          throw UningestedScenesException(
-            s"Scene ${scene.id} does not have an ingest location")
+  implicit val sceneStore: RenderableStore[SceneDao] =
+    new RenderableStore[SceneDao] {
+      def read(
+          self: SceneDao,
+          renderableId: UUID, // actually a scene id, but argument names have to match
+          window: Option[Projected[Polygon]],
+          bandOverride: Option[BandOverride],
+          imageSubset: Option[NEL[UUID]])
+        : fs2.Stream[IO, BacksplashImage[IO]] = {
+        for {
+          scene <- SceneDao.streamSceneById(renderableId, window).transact(xa)
+        } yield {
+          // We don't actually have a project, so just make something up
+          val randomProjectId = UUID.randomUUID
+          val ingestLocation = scene.ingestLocation getOrElse {
+            throw UningestedScenesException(
+              s"Scene ${scene.id} does not have an ingest location")
+          }
+          val footprint = scene.dataFootprint getOrElse {
+            throw NoFootprintException
+          }
+          val imageBandOverride = bandOverride map { ovr =>
+            List(ovr.redBand, ovr.greenBand, ovr.blueBand)
+          } getOrElse { List(0, 1, 2) }
+          val colorCorrectParams = ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
+          logger.debug(s"Chosen color correction: ${colorCorrectParams}")
+          BacksplashGeotiff(
+            scene.id,
+            randomProjectId,
+            randomProjectId,
+            ingestLocation,
+            imageBandOverride,
+            colorCorrectParams,
+            None, // no single band options ever
+            None, // not adding the mask here, since out of functional scope for md to image
+            footprint,
+            scene.metadataFields.noDataValue
+          )
         }
-        val footprint = scene.dataFootprint getOrElse {
-          throw NoFootprintException
-        }
-        val imageBandOverride = bandOverride map { ovr =>
-          List(ovr.redBand, ovr.greenBand, ovr.blueBand)
-        } getOrElse { List(0, 1, 2) }
-        val colorCorrectParams = ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
-        logger.debug(s"Chosen color correction: ${colorCorrectParams}")
-        BacksplashGeotiff(
-          scene.id,
-          randomProjectId,
-          randomProjectId,
-          ingestLocation,
-          imageBandOverride,
-          colorCorrectParams,
-          None, // no single band options ever
-          None, // not adding the mask here, since out of functional scope for md to image
-          footprint,
-          scene.metadataFields.noDataValue
-        )
+      }
+
+      def getOverviewConfig(self: SceneDao, renderableId: UUID) = IO.pure {
+        OverviewConfig.empty
       }
     }
 
-    def getOverviewConfig(self: SceneDao, projId: UUID) = IO.pure {
-      OverviewConfig.empty
-    }
-  }
-
-  implicit val layerStore: ProjectStore[SceneToLayerDao] =
-    new ProjectStore[SceneToLayerDao] {
-      // projId here actually refers to a layer -- but the argument names have to
-      // match the typeclass we're providing evidence for
+  implicit val layerStore: RenderableStore[SceneToLayerDao] =
+    new RenderableStore[SceneToLayerDao] {
       def read(self: SceneToLayerDao,
-               projId: UUID,
+               renderableId: UUID,
                window: Option[Projected[Polygon]],
                bandOverride: Option[BandOverride],
                imageSubset: Option[NEL[UUID]])
         : fs2.Stream[IO, BacksplashImage[IO]] = {
         SceneToLayerDao.getMosaicDefinition(
-          projId,
+          renderableId,
           window,
           bandOverride map { _.redBand },
           bandOverride map { _.greenBand },
           bandOverride map { _.blueBand },
           imageSubset map { _.toList } getOrElse List.empty) map { md =>
-          mosaicDefinitionToImage(md, bandOverride, projId)
+          mosaicDefinitionToImage(md, bandOverride, renderableId) // this and below duplicate the project layer fetch
         } transact (xa)
       }
 
       def getOverviewConfig(self: SceneToLayerDao,
-                            projId: UUID): IO[OverviewConfig] =
+                            renderableId: UUID): IO[OverviewConfig] = {
         (for {
           projLayer <- OptionT {
-            ProjectLayerDao.getProjectLayerById(projId).transact(xa)
+            ProjectLayerDao
+              .getProjectLayerById(renderableId)
+              .transact(xa) // TODO: deduplicate fetch 3. This request is duplicated inside thhe backsplash
           }
           overviewLocation <- OptionT.fromOption[IO] {
             projLayer.overviewsLocation
@@ -170,5 +172,6 @@ class ProjectStoreImplicits(xa: Transactor[IO])
           case Some(conf) => conf
           case _          => OverviewConfig.empty
         }
+      }
     }
 }

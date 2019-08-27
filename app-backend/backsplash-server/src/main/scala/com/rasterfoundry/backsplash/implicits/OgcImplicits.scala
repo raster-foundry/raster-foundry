@@ -1,8 +1,12 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash.{BacksplashMosaic, OgcStore, ProjectStore}
+import com.rasterfoundry.backsplash.{
+  BacksplashMosaic,
+  OgcStore,
+  RenderableStore
+}
 import com.rasterfoundry.backsplash.color.OgcStyles
-import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
+import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
 import com.rasterfoundry.datamodel.{
   ColorComposite,
   ProjectLayer,
@@ -32,9 +36,9 @@ import opengis.wms.{Name, OnlineResource, Service}
 
 import java.util.UUID
 
-class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])(
+class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
     implicit contextShift: ContextShift[IO]
-) extends ToProjectStoreOps {
+) extends ToRenderableStoreOps {
 
   private def compositesToOgcStyles(
       composites: Map[String, ColorComposite]

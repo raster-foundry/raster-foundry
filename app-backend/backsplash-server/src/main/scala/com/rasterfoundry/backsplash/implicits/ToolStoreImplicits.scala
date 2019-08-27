@@ -19,7 +19,7 @@ import java.util.UUID
 class ToolStoreImplicits[HistStore](
     mosaicImplicits: MosaicImplicits[HistStore, SceneToLayerDao],
     xa: Transactor[IO])
-    extends ProjectStoreImplicits(xa)
+    extends RenderableStoreImplicits(xa)
     with LazyLogging {
 
   import mosaicImplicits._
