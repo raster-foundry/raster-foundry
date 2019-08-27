@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.datamodel.{Scene, User}
 import com.rasterfoundry.http4s.{Cache => Http4sUtilCache}
 
 import com.typesafe.scalalogging.LazyLogging
@@ -17,6 +17,9 @@ object Cache extends LazyLogging {
     CaffeineCache[Boolean]
   logger.info(
     s"Authorization Cache Status (read/write) ${authorizationCacheFlags}")
+
+  val caffeineSceneCache: Cache[Scene] =
+    CaffeineCache[Scene]
 
   val authenticationCacheFlags = Http4sUtilCache.authenticationCacheFlags
   val caffeineAuthenticationCache: Cache[Option[User]] =

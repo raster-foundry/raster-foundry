@@ -6,7 +6,7 @@ import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.datamodel.{BandOverride, Datasource, User}
 import com.rasterfoundry.common.utils.TileUtils
-import com.rasterfoundry.database.{DatasourceDao, SceneDao}
+import com.rasterfoundry.database.DatasourceDao
 
 import cats.data.OptionT
 import cats.data.Validated._
@@ -32,6 +32,8 @@ class SceneService[ProjStore: ProjectStore, HistStore](
   import mosaicImplicits._
   implicit val tmsReification = paintedMosaicTmsReification
 
+  implicit val sceneCache = Cache.caffeineSceneCache
+
   private def getDefaultSceneBands(
       sceneId: UUID): IO[Fiber[IO, Option[BandOverride]]] = {
     (OptionT {
@@ -51,9 +53,8 @@ class SceneService[ProjStore: ProjectStore, HistStore](
 
   private def getSceneFootprint(
       sceneId: UUID): IO[Fiber[IO, Option[Projected[MultiPolygon]]]] =
-    SceneDao
-      .unsafeGetSceneById(sceneId)
-      .transact(xa)
+    Cacheable
+      .getSceneById(sceneId, xa)
       .map(scene => scene.dataFootprint orElse scene.tileFootprint)
       .start
 

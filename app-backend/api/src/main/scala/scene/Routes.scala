@@ -397,7 +397,7 @@ trait SceneRoutes
         .unsafeToFuture
     } {
       onSuccess(
-        SceneDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) {
+        DatasourceDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) {
         datasourceO =>
           complete { datasourceO }
       }
@@ -412,9 +412,11 @@ trait SceneRoutes
                                       ObjectType.Scene,
                                       sceneId,
                                       ActionType.View)
-          datasource <- SceneDao.getSceneDatasource(sceneId)
+          datasource <- DatasourceDao.getSceneDatasource(sceneId)
         } yield {
-          auth && datasource.id == UUID.fromString(sentinel2DatasourceId)
+          auth && (datasource map { (ds: Datasource) =>
+            ds.id == Some(UUID.fromString(sentinel2DatasourceId))
+          } getOrElse { false })
         }
         authorizedIO.transact(xa).unsafeToFuture
       } {
