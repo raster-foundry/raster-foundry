@@ -64,6 +64,35 @@ class DatasourceDaoSpec
     }
   }
 
+  test("getting a datasource for a scene") {
+    check {
+      forAll(
+        (userCreate: User.Create,
+         orgCreate: Organization.Create,
+         platform: Platform,
+         datasourceCreate: Datasource.Create,
+         scene: Scene.Create) => {
+          val dsFetch = for {
+            (userInsert, _, _) <- insertUserOrgPlatform(
+              userCreate,
+              orgCreate,
+              platform
+            )
+            dsInsert <- fixupDatasource(datasourceCreate, userInsert)
+            sceneInsert <- SceneDao
+              .insert(fixupSceneCreate(userInsert, dsInsert, scene), userInsert)
+            fetched <- DatasourceDao.getSceneDatasource(sceneInsert.id)
+          } yield { (fetched, dsInsert) }
+
+          val (fetched, inserted) = dsFetch.transact(xa).unsafeRunSync
+          assert(fetched.get == inserted,
+                 "Fetched datasource did not equal inserted datasource")
+          true
+        }
+      )
+    }
+  }
+
   test("getting a datasource by id unsafely") {
     check {
       forAll(

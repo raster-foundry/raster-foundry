@@ -4,10 +4,11 @@ import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.datamodel.{BandOverride, User}
+import com.rasterfoundry.datamodel.{BandOverride, Datasource, User}
 import com.rasterfoundry.common.utils.TileUtils
-import com.rasterfoundry.database.SceneDao
+import com.rasterfoundry.database.{DatasourceDao, SceneDao}
 
+import cats.data.OptionT
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
@@ -32,20 +33,20 @@ class SceneService[ProjStore: ProjectStore, HistStore](
   implicit val tmsReification = paintedMosaicTmsReification
 
   private def getDefaultSceneBands(
-      sceneId: UUID): IO[Fiber[IO, BandOverride]] = {
-    SceneDao
-      .getSceneDatasource(sceneId)
-      .transact(xa)
-      .map(
-        _.defaultColorComposite map { _.value } getOrElse {
-          // default case is we couldn't get a color composite from:
-          // a composite with natural in the name
-          // a composite with default in the name
-          // or the names of the bands on the datasource
-          BandOverride(0, 1, 2)
-        }
-      )
-      .start
+      sceneId: UUID): IO[Fiber[IO, Option[BandOverride]]] = {
+    (OptionT {
+      DatasourceDao
+        .getSceneDatasource(sceneId)
+        .transact(xa)
+    } map { (ds: Datasource) =>
+      ds.defaultColorComposite map { _.value } getOrElse {
+        // default case is we couldn't get a color composite from:
+        // a composite with natural in the name
+        // a composite with default in the name
+        // or the names of the bands on the datasource
+        BandOverride(0, 1, 2)
+      }
+    }).value.start
   }
 
   private def getSceneFootprint(
@@ -73,7 +74,7 @@ class SceneService[ProjStore: ProjectStore, HistStore](
           }
           bands <- bandsFiber.join
           eval = LayerTms.identity(
-            scenes.read(sceneId, Some(bbox), Some(bands), None))
+            scenes.read(sceneId, Some(bbox), bands, None))
           resp <- eval(z, x, y) flatMap {
             case Valid(tile) =>
               Ok(tile.renderPng.bytes, pngType)
@@ -93,8 +94,7 @@ class SceneService[ProjStore: ProjectStore, HistStore](
           }
           footprint <- footprintFiber.join
           bands <- bandsFiber.join
-          eval = LayerExtent.identity(
-            scenes.read(sceneId, None, Some(bands), None))(
+          eval = LayerExtent.identity(scenes.read(sceneId, None, bands, None))(
             paintedMosaicExtentReification,
             cs)
           extent = footprint map { _.envelope } getOrElse {

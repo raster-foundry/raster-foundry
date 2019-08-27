@@ -17,12 +17,17 @@ object DatasourceDao
 
   val tableName = "datasources"
 
-  val selectF: Fragment = sql"""
+  val select: Fragment = sql"""
       SELECT
-        id, created_at, created_by, modified_at, owner,
-        name, visibility, composites, extras, bands, license_name
+        datasources.id, datasources.created_at, datasources.created_by,
+        datasources.modified_at, datasources.owner,
+        datasources.name, datasources.visibility,
+        datasources.composites, datasources.extras, datasources.bands,
+        datasources.license_name
       FROM
-    """ ++ tableF
+"""
+
+  val selectF: Fragment = select ++ tableF
 
   def unsafeGetDatasourceById(datasourceId: UUID): ConnectionIO[Datasource] =
     query.filter(datasourceId).select
@@ -126,11 +131,24 @@ object DatasourceDao
       uDeleteCount <- UploadDao.query
         .filter(fr"datasource = ${datasourceId}")
         .delete
-      sDeleteCount <- SceneDao.query
+      sceneDeleteCount <- SceneDao.query
         .filter(fr"datasource = ${datasourceId}")
         .delete
-      dDeleteCount <- DatasourceDao.query.filter(datasourceId).delete
-    } yield { List(uDeleteCount, sDeleteCount, dDeleteCount) }
+      datasourceDeleteCount <- DatasourceDao.query.filter(datasourceId).delete
+    } yield { List(uDeleteCount, sceneDeleteCount, datasourceDeleteCount) }
+  }
+
+  def getSceneDatasource(sceneId: UUID): ConnectionIO[Option[Datasource]] = {
+    val joinTableF =
+      fr"datasources join scenes on datasources.id = scenes.datasource"
+    Dao
+      .QueryBuilder[Datasource](
+        select ++ joinTableF,
+        tableF,
+        Nil
+      )
+      .filter(fr"scenes.id = $sceneId")
+      .selectOption
   }
 
   def authQuery(

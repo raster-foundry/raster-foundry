@@ -63,11 +63,6 @@ object SceneDao
   def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select
 
-  def getSceneDatasource(sceneId: UUID): ConnectionIO[Datasource] =
-    unsafeGetSceneById(sceneId) flatMap { scene: Scene =>
-      DatasourceDao.unsafeGetDatasourceById(scene.datasource)
-    }
-
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
   def insert(
       sceneCreate: Scene.Create,
