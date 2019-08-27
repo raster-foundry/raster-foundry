@@ -1,5 +1,6 @@
 package com.rasterfoundry.backsplash.error
 
+import com.rasterfoundry.backsplash._
 import cats._
 import cats.data._
 import cats.implicits._
@@ -62,28 +63,30 @@ class BacksplashHttpErrorHandler[F[_]](
                                                  256,
                                                  256,
                                                  invisiCellType)
-  private val handler: BacksplashException => F[Response[F]] = {
-    case NoScenesException =>
+  private val handler: (Request[F], BacksplashException) => F[Response[F]] = {
+    case (_, NoScenesException) =>
       Ok(invisiTile.renderPng.bytes, `Content-Type`(MediaType.image.png))
-    case _ @MetadataException(m) =>
+    case (req, MetadataException(m)) =>
+      logger.error(
+        s"Encountered Metadata Exception for ${req.uri.path} with Trace Id ${req.traceID}: $m")
       InternalServerError(m)
-    case UningestedScenesException(m)  => NotFound(m)
-    case SingleBandOptionsException(m) => BadRequest(m)
-    case UnknownSceneTypeException(m)  => BadRequest(m)
-    case BadAnalysisASTException(m)    => BadRequest(m)
-    case RequirementFailedException(m) => BadRequest(m)
-    case NoDataInRegionException       => BadRequest("No Data in Region")
-    case _ @NotAuthorizedException(_) =>
+    case (_, UningestedScenesException(m))  => NotFound(m)
+    case (_, SingleBandOptionsException(m)) => BadRequest(m)
+    case (_, UnknownSceneTypeException(m))  => BadRequest(m)
+    case (_, BadAnalysisASTException(m))    => BadRequest(m)
+    case (_, RequirementFailedException(m)) => BadRequest(m)
+    case (_, NoDataInRegionException)       => BadRequest("No Data in Region")
+    case (_, NotAuthorizedException(_)) =>
       Forbidden(
         "Resource does not exist or user is not authorized to access this resource"
       )
-    case WrappedDoobieException(m) =>
+    case (_, WrappedDoobieException(m)) =>
       NotFound(m)
-    case WrappedS3Exception(_) =>
+    case (_, WrappedS3Exception(_)) =>
       NotFound(
         "Underlying data to produce tiles for this project appears to have moved or is no longer available"
       )
-    case _ @UnknownException(m) =>
+    case (_, UnknownException(m)) =>
       InternalServerError(m)
   }
 
@@ -93,12 +96,12 @@ class BacksplashHttpErrorHandler[F[_]](
 
 object ServiceHttpErrorHandler {
   def apply[F[_], E, U](service: HttpRoutes[F])(
-      handler: E => F[Response[F]]
+      handler: (Request[F], E) => F[Response[F]]
   )(implicit ev: ApplicativeError[F, E]): HttpRoutes[F] =
     Kleisli { req: Request[F] =>
       OptionT {
         service(req).value.handleErrorWith { e =>
-          handler(e).map(Option(_))
+          handler(req, e).map(Option(_))
         }
       }
     }

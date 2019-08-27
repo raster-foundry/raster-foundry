@@ -1,5 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
+import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Cache.tileCache
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
@@ -11,7 +12,6 @@ import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl._
-import org.http4s.util.CaseInsensitiveString
 import scalacache.modes.sync._
 import sup._
 import sup.data.{HealthReporter, Tagged}
@@ -131,7 +131,6 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
   val routes: HttpRoutes[IO] =
     HttpRoutes.of {
       case req @ GET -> Root =>
-        val traceId = req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id"))
         val healthcheck =
           HealthReporter.fromChecks(
             dbHealth,
@@ -155,7 +154,7 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
                 .asJson
             ).asJson
             logger.error(
-              s"Healthcheck Failing (trace_id: $traceId): $healthcheckResults")
+              s"Healthcheck Failing (trace_id: ${req.traceID}): $healthcheckResults")
             ServiceUnavailable(
               healthcheckResults
             )
