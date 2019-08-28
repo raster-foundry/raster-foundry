@@ -23,8 +23,8 @@ import cats.effect.IO
 import com.amazonaws.services.s3.model.{PutObjectRequest, ObjectMetadata}
 
 final case class WriteStacCatalog(exportId: UUID)(
-    implicit val xa: Transactor[IO])
-    extends Config
+    implicit val xa: Transactor[IO]
+) extends Config
     with RollbarNotifier {
 
   val name = WriteStacCatalog.name
@@ -34,9 +34,11 @@ final case class WriteStacCatalog(exportId: UUID)(
   protected def s3Client = S3()
 
   @SuppressWarnings(Array("CatchThrowable"))
-  protected def putObjectToS3(selfLink: String,
-                              data: String,
-                              contentType: String) = {
+  protected def putObjectToS3(
+      selfLink: String,
+      data: String,
+      contentType: String
+  ) = {
     val key = selfLink.replace(s"s3://${dataBucket}/", "")
     val dataByte = data.getBytes(Charset.forName("UTF-8"))
     val dataStream = new ByteArrayInputStream(dataByte)
@@ -46,7 +48,8 @@ final case class WriteStacCatalog(exportId: UUID)(
     try {
       logger.info(s"Writing ${selfLink} to S3...")
       s3Client.putObject(
-        new PutObjectRequest(dataBucket, key, dataStream, dataMd))
+        new PutObjectRequest(dataBucket, key, dataStream, dataMd)
+      )
       logger.info(s"Successfully wrote ${selfLink} to S3...")
     } catch {
       case e: Throwable => {
@@ -79,46 +82,64 @@ final case class WriteStacCatalog(exportId: UUID)(
       ]
   ) = {
     // catalog
-    putObjectToS3(unsafeGetStacSelfLink(catalog.links),
-                  catalog.asJson.noSpaces,
-                  "application/json")
+    putObjectToS3(
+      unsafeGetStacSelfLink(catalog.links),
+      catalog.asJson.noSpaces,
+      "application/json"
+    )
 
     layerSceneLabelCollectionsItemsAssets.foreach {
-      case (layerCollection,
-            (sceneCollection, sceneItemList),
-            (labelCollection, labelItem, (labelData, labelDataLink))) =>
+      case (
+          layerCollection,
+          (sceneCollection, sceneItemList),
+          (labelCollection, labelItem, (labelData, labelDataLink))
+          ) =>
         // layer collection
-        putObjectToS3(unsafeGetStacSelfLink(layerCollection.links),
-                      layerCollection.asJson.noSpaces,
-                      "application/json")
+        putObjectToS3(
+          unsafeGetStacSelfLink(layerCollection.links),
+          layerCollection.asJson.noSpaces,
+          "application/json"
+        )
         // scene collection
-        putObjectToS3(unsafeGetStacSelfLink(sceneCollection.links),
-                      sceneCollection.asJson.noSpaces,
-                      "application/json")
+        putObjectToS3(
+          unsafeGetStacSelfLink(sceneCollection.links),
+          sceneCollection.asJson.noSpaces,
+          "application/json"
+        )
         // scene items
         sceneItemList.foreach(
           sceneItem =>
-            putObjectToS3(unsafeGetStacSelfLink(sceneItem.links),
-                          sceneItem.asJson.noSpaces,
-                          "application/json"))
+            putObjectToS3(
+              unsafeGetStacSelfLink(sceneItem.links),
+              sceneItem.asJson.noSpaces,
+              "application/json"
+            )
+        )
         // label collection
-        putObjectToS3(unsafeGetStacSelfLink(labelCollection.links),
-                      labelCollection.asJson.noSpaces,
-                      "application/json")
+        putObjectToS3(
+          unsafeGetStacSelfLink(labelCollection.links),
+          labelCollection.asJson.noSpaces,
+          "application/json"
+        )
         // label item
-        putObjectToS3(unsafeGetStacSelfLink(labelItem.links),
-                      labelItem.asJson.noSpaces,
-                      "application/json")
+        putObjectToS3(
+          unsafeGetStacSelfLink(labelItem.links),
+          labelItem.asJson.noSpaces,
+          "application/json"
+        )
 
         // label data
         labelData match {
           case Some(labels) =>
-            putObjectToS3(labelDataLink,
-                          labels.noSpaces,
-                          "application/geo+json")
+            putObjectToS3(
+              labelDataLink,
+              labels.noSpaces,
+              "application/geo+json"
+            )
           case _ =>
             logger.warn(
-              s"No label data to be exported for layer ${layerCollection.id}")
+              s"No label data to be exported for layer ${layerCollection.id}"
+            )
         }
 
     }
@@ -129,12 +150,14 @@ final case class WriteStacCatalog(exportId: UUID)(
       taskStatuses: List[String]
   ): ConnectionIO[Map[
     UUID,
-    (List[Scene],
-     Option[UnionedGeomExtent],
-     List[Task],
-     Option[UnionedGeomExtent],
-     Option[Json],
-     Option[StacLabelItemPropertiesThin])
+    (
+        List[Scene],
+        Option[UnionedGeomExtent],
+        List[Task],
+        Option[UnionedGeomExtent],
+        Option[Json],
+        Option[StacLabelItemPropertiesThin]
+    )
   ]] = {
     (layerDefinitions traverse {
       case StacExport.LayerDefinition(projectId, layerId) =>
@@ -160,20 +183,24 @@ final case class WriteStacCatalog(exportId: UUID)(
       taskStatuses: List[String],
       projectType: String
   ): ConnectionIO[Option[
-    (List[Scene],
-     Option[UnionedGeomExtent],
-     List[Task],
-     Option[UnionedGeomExtent],
-     Option[Json],
-     Option[StacLabelItemPropertiesThin])
+    (
+        List[Scene],
+        Option[UnionedGeomExtent],
+        List[Task],
+        Option[UnionedGeomExtent],
+        Option[Json],
+        Option[StacLabelItemPropertiesThin]
+    )
   ]] =
     for {
       scenes <- ProjectLayerScenesDao.listLayerScenesRaw(layerId)
       scenesGeomExtent <- ProjectLayerScenesDao.createUnionedGeomExtent(layerId)
       tasks <- TaskDao.listLayerTasksByStatus(projectId, layerId, taskStatuses)
-      tasksGeomExtent <- TaskDao.createUnionedGeomExtent(projectId,
-                                                         layerId,
-                                                         taskStatuses)
+      tasksGeomExtent <- TaskDao.createUnionedGeomExtent(
+        projectId,
+        layerId,
+        taskStatuses
+      )
       annotations <- AnnotationDao.getLayerAnnotationJsonByTaskStatus(
         projectId,
         layerId,
@@ -183,12 +210,15 @@ final case class WriteStacCatalog(exportId: UUID)(
       labelItemPropsThin <- ProjectDao.getAnnotationProjectStacInfo(projectId)
     } yield {
       Some(
-        (scenes,
-         scenesGeomExtent,
-         tasks,
-         tasksGeomExtent,
-         annotations,
-         labelItemPropsThin))
+        (
+          scenes,
+          scenesGeomExtent,
+          tasks,
+          tasksGeomExtent,
+          annotations,
+          labelItemPropsThin
+        )
+      )
     }
 
   @SuppressWarnings(Array("all"))
@@ -233,7 +263,8 @@ final case class WriteStacCatalog(exportId: UUID)(
     } yield (exportDefinition, layerSceneTaskAnnotation)
 
     logger.info(
-      s"Creating content bundle with layers, scenes, and labels for record ${exportId}...")
+      s"Creating content bundle with layers, scenes, and labels for record ${exportId}..."
+    )
     val (exportDef, layerInfo) = dbIO.transact(xa).unsafeRunSync
     val contentBundle = ContentBundle(
       exportDef,
@@ -309,11 +340,13 @@ final case class WriteStacCatalog(exportId: UUID)(
     logger.info(s"Wrote catalog to S3 for record ${exportId}...")
 
     logger.info(
-      s"Updating export location and status for record ${exportId}...")
+      s"Updating export location and status for record ${exportId}..."
+    )
     val exportUpdateIO = StacExportDao.update(
       contentBundle.export.copy(
         exportStatus = ExportStatus.Exported,
-        exportLocation = getStacSelfLink(catalog.links)
+        exportLocation =
+          getStacSelfLink(catalog.links).map(_.replace("/catalog.json", ""))
       ),
       contentBundle.export.id
     )
@@ -322,7 +355,8 @@ final case class WriteStacCatalog(exportId: UUID)(
 
     logger
       .info(
-        s"${updatedExportRecordCount} STAC export record for ${exportId} is updated")
+        s"${updatedExportRecordCount} STAC export record for ${exportId} is updated"
+      )
   }
 
 }
