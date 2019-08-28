@@ -15,7 +15,6 @@ import cats.implicits._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.CellSize
-import geotrellis.vector._
 import geotrellis.server._
 import org.http4s._
 import org.http4s.dsl.io._
@@ -51,13 +50,6 @@ class SceneService[ProjStore: ProjectStore, HistStore](
     }).value.start
   }
 
-  private def getSceneFootprint(
-      sceneId: UUID): IO[Fiber[IO, Option[Projected[MultiPolygon]]]] =
-    Cacheable
-      .getSceneById(sceneId, xa)
-      .map(scene => scene.dataFootprint orElse scene.tileFootprint)
-      .start
-
   private val pngType = `Content-Type`(MediaType.image.png)
 
   val authorizers = new Authorizers(xa)
@@ -87,19 +79,22 @@ class SceneService[ProjStore: ProjectStore, HistStore](
       case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
             :? ThumbnailQueryParamDecoder(thumbnailSize) as user =>
         for {
-          authFiber <- authorizers.authScene(user, sceneId).start
+          sceneFiber <- authorizers.authScene(user, sceneId).start
           bandsFiber <- getDefaultSceneBands(sceneId)
-          footprintFiber <- getSceneFootprint(sceneId)
-          _ <- authFiber.join.handleErrorWith { error =>
-            bandsFiber.cancel *> footprintFiber.cancel *> IO.raiseError(error)
+          scene <- sceneFiber.join.handleErrorWith { error =>
+            bandsFiber.cancel *> IO.raiseError(error)
           }
-          footprint <- footprintFiber.join
           bands <- bandsFiber.join
           eval = LayerExtent.identity(scenes.read(sceneId, None, bands, None))(
             paintedMosaicExtentReification,
             cs)
-          extent = footprint map { _.envelope } getOrElse {
-            throw NoFootprintException
+          extent <- IO.pure {
+            (scene.dataFootprint orElse scene.tileFootprint) map {
+              _.envelope
+            }
+          } flatMap {
+            case Some(extent) => IO.pure { extent }
+            case None         => IO.raiseError(NoFootprintException)
           }
           xSize = extent.width / thumbnailSize.width
           ySize = extent.height / thumbnailSize.height

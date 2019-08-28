@@ -51,14 +51,14 @@ object SceneDao
   def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
     query.filter(id).selectOption
 
-  def streamSceneById(sceneId: UUID, footprint: Option[Projected[Polygon]])(
+  def getSceneById(sceneId: UUID, footprint: Option[Projected[Polygon]])(
       implicit Filter: Filterable[Any, Projected[Geometry]]
-  ): fs2.Stream[ConnectionIO, Scene] =
+  ): ConnectionIO[Option[Scene]] =
     (selectF ++ Fragments.whereAndOpt(
       (Some(fr"id = ${sceneId}") +: (footprint map {
         Filter.toFilters(_)
       } getOrElse { List.empty })): _*
-    )).query[Scene].stream
+    )).query[Scene].option
 
   def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select

@@ -4,7 +4,6 @@ import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.{ProjectLayerDao, SceneDao, SceneToLayerDao}
-import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.{BandOverride, SingleBandOptions}
 import com.rasterfoundry.common._
 import com.rasterfoundry.common.color.ColorCorrect
@@ -26,6 +25,8 @@ import java.util.UUID
 class ProjectStoreImplicits(xa: Transactor[IO])
     extends ToProjectStoreOps
     with LazyLogging {
+
+  implicit val sceneCache = Cache.caffeineSceneCache
 
   @SuppressWarnings(Array("OptionGet"))
   private def mosaicDefinitionToImage(mosaicDefinition: MosaicDefinition,
@@ -98,7 +99,9 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         bandOverride: Option[BandOverride],
         imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage[IO]] = {
       for {
-        scene <- SceneDao.streamSceneById(projId, window).transact(xa)
+        scene <- fs2.Stream.eval {
+          Cacheable.getSceneById(projId, window, xa)
+        }
       } yield {
         // We don't actually have a project, so just make something up
         val randomProjectId = UUID.randomUUID
