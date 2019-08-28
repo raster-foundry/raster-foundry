@@ -423,7 +423,7 @@ trait SceneRoutes
           datasource <- DatasourceDao.getSceneDatasource(sceneId)
         } yield {
           auth && (datasource map { (ds: Datasource) =>
-            ds.id == Some(UUID.fromString(sentinel2DatasourceId))
+            Some(ds.id) == Some(UUID.fromString(sentinel2DatasourceId))
           } getOrElse { false })
         }
         authorizedIO.transact(xa).unsafeToFuture

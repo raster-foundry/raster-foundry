@@ -23,7 +23,7 @@ import org.http4s.headers._
 
 import java.util.UUID
 
-class SceneService[ProjStore: ProjectStore, HistStore](
+class SceneService[ProjStore, HistStore](
     mosaicImplicits: MosaicImplicits[HistStore, ProjStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO])
     extends ToProjectStoreOps {
