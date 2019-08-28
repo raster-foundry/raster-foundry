@@ -40,7 +40,7 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 
   private def checkProjectAuthCached(user: User,
                                      projectId: UUID): IO[AuthResult[Project]] =
-    memoizeF[IO, AuthResult[Project]](Some(60.seconds)) {
+    memoizeF[IO, AuthResult[Project]](Some(60 seconds)) {
       logger.debug(
         s"Checking Project Auth User: ${user.id} => Project: ${projectId} with DB")
       ProjectDao
@@ -50,7 +50,7 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 
   private def checkSceneAuthCached(user: User,
                                    sceneId: UUID): IO[AuthResult[Scene]] =
-    memoizeF[IO, AuthResult[Scene]](Some(60.seconds)) {
+    memoizeF[IO, AuthResult[Scene]](Some(60 seconds)) {
       logger.debug(
         s"Checking Scene Auth User: ${user.id} => Scene: ${sceneId} with DB"
       )
@@ -61,7 +61,7 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 
   private def checkToolRunAuth(user: User,
                                toolRunId: UUID): IO[AuthResult[ToolRun]] =
-    memoizeF[IO, AuthResult[ToolRun]](Some(10.seconds)) {
+    memoizeF[IO, AuthResult[ToolRun]](Some(10 seconds)) {
       logger.debug(
         s"Checking Tool Run Auth User: ${user.id} => Project: ${toolRunId} with DB")
       ToolRunDao
@@ -71,7 +71,7 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 
   private def checkProjectLayerCached(projectID: UUID,
                                       layerID: UUID): IO[Boolean] =
-    memoizeF[IO, Boolean](Some(10.seconds)) {
+    memoizeF[IO, Boolean](Some(10 seconds)) {
       logger.debug(
         s"Checking whether layer ${layerID} is in project ${projectID}")
       ProjectLayerDao.layerIsInProject(layerID, projectID).transact(xa)
@@ -79,7 +79,7 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 
   private def checkProjectAnalysisCached(projectId: UUID,
                                          analysisId: UUID): IO[Boolean] =
-    memoizeF[IO, Boolean](Some(10.seconds)) {
+    memoizeF[IO, Boolean](Some(10 seconds)) {
       logger.debug(
         s"Checking whether analysis $analysisId references project $projectId")
       ToolRunDao.analysisReferencesProject(analysisId, projectId).transact(xa)
