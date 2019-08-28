@@ -23,6 +23,7 @@ import ExtentReification._
 import HasRasterExtents._
 import TmsReification._
 import com.typesafe.scalalogging.LazyLogging
+import com.rasterfoundry.datamodel.SingleBandOptions
 
 class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     histStore: HistStore,
@@ -73,58 +74,60 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     }))
   }
 
-  def chooseStream(z: Int,
-                   baseImage: BacksplashImage[IO],
-                   config: OverviewConfig,
-                   fallbackStream: BacksplashMosaic): BacksplashMosaic =
+  def chooseMosaic(
+      z: Int,
+      baseImage: BacksplashImage[IO],
+      config: OverviewConfig,
+      fallbackIms: NEL[BacksplashImage[IO]]): NEL[BacksplashImage[IO]] =
     config match {
       case OverviewConfig(Some(overviewLocation), Some(minZoom))
           if z <= minZoom =>
-        fs2.Stream.eval {
-          IO {
-            BacksplashGeotiff(
-              baseImage.imageId,
-              baseImage.projectId,
-              baseImage.projectLayerId,
-              overviewLocation,
-              baseImage.subsetBands,
-              baseImage.corrections,
-              baseImage.singleBandOptions,
-              baseImage.mask,
-              baseImage.footprint,
-              baseImage.noDataValue
-            )
-          }
-        }
+        NEL.of(
+          BacksplashGeotiff(
+            baseImage.imageId,
+            baseImage.projectId,
+            baseImage.projectLayerId,
+            overviewLocation,
+            baseImage.subsetBands,
+            baseImage.corrections,
+            baseImage.singleBandOptions,
+            baseImage.mask,
+            baseImage.footprint,
+            baseImage.noDataValue
+          ),
+          Nil: _*
+        )
       case _ =>
-        BacksplashMosaic.filterRelevant(fallbackStream)
+        fallbackIms
     }
   @SuppressWarnings(Array("TraversableHead"))
-  def renderStreamSingleBand(
-      mosaic: BacksplashMosaic,
+  def renderMosaicSingleBand(
+      mosaic: NEL[BacksplashImage[IO]],
       z: Int,
       x: Int,
       y: Int
   )(implicit contextShift: ContextShift[IO]): IO[Raster[MultibandTile]] = {
+    type MBTTriple = (MultibandTile, SingleBandOptions.Params, Option[Double])
     val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
-    val ioMBTwithSBO = mosaic
-      .parEvalMap(streamConcurrency) { relevant =>
-        logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
-        relevant.read(z, x, y) map {
-          (_, relevant.singleBandOptions, relevant.noDataValue)
-        }
-      }
-      .collect({ case (Some(mbtile), Some(sbo), nd) => (mbtile, sbo, nd) })
-      .compile
-      .toList
+    val ioMBTwithSBO: IO[List[MBTTriple]] =
+      mosaic
+        .parTraverse((relevant: BacksplashImage[IO]) => {
+          logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
+          relevant.read(z, x, y) map {
+            (_, relevant.singleBandOptions, relevant.noDataValue)
+          }
+        })
+        .map(nel =>
+          nel.collect({
+            case (Some(mbtile), Some(sbo), nd) => (mbtile, sbo, nd)
+          }))
 
     for {
-      firstIm <- BacksplashMosaic.first(mosaic) flatMap { imOpt =>
-        imOpt match {
-          case Some(im) => IO.pure(im)
-          case _        => IO.raiseError(NoScenesException)
-        }
+      imagesNel <- ioMBTwithSBO map { _.toNel } flatMap {
+        case Some(ims) => IO.pure(ims)
+        case None      => IO.raiseError(NoScenesException)
       }
+      firstIm = mosaic.head
       histograms <- {
         firstIm.singleBandOptions map { _.band } map { bd =>
           histStore.projectLayerHistogram(firstIm.projectLayerId, List(bd))
@@ -136,40 +139,36 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
           )
         }
       }
-      multibandTilewithSBO <- ioMBTwithSBO
     } yield {
-      val (tiles, sbos, nd) = multibandTilewithSBO.unzip3
       val combinedHistogram = histograms.reduce(_ merge _)
-      tiles match {
-        case tile :: Nil =>
-          Raster(ColorRampMosaic.colorTile(interpretAsFallback(tile, nd.head),
+      val (_, firstSbos, firstNd) = imagesNel.head
+      imagesNel.toList match {
+        case (tile, sbo, nd) :: Nil =>
+          Raster(ColorRampMosaic.colorTile(interpretAsFallback(tile, nd),
                                            List(combinedHistogram),
-                                           sbos.head),
+                                           sbo),
                  extent)
         case someTiles =>
-          someTiles.reduceOption(
-            interpretAsFallback(_, nd.head) merge interpretAsFallback(_,
-                                                                      nd.head)
-          ) match {
-            case Some(t) =>
-              Raster(
-                ColorRampMosaic.colorTile(
-                  t,
-                  List(combinedHistogram),
-                  sbos.head
-                ),
-                extent
-              )
-            case _ =>
-              Raster(MultibandTile(invisiTile, invisiTile, invisiTile), extent)
-          }
-
+          val outTile = someTiles.foldLeft(
+            MultibandTile(invisiTile, invisiTile, invisiTile))(
+            (baseTile: MultibandTile, triple2: MBTTriple) =>
+              interpretAsFallback(baseTile, firstNd) merge interpretAsFallback(
+                triple2._1,
+                firstNd))
+          Raster(
+            ColorRampMosaic.colorTile(
+              outTile,
+              List(combinedHistogram),
+              firstSbos
+            ),
+            extent
+          )
       }
     }
   }
 
-  def interpretAsFallback(tile: MultibandTile,
-                          noData: Option[Double]): MultibandTile =
+  def interpretAsFallback[T1, T2](tile: MultibandTile,
+                                  noData: Option[Double]): MultibandTile =
     tile.interpretAs(
       DoubleUserDefinedNoDataCellType(
         noData
@@ -179,15 +178,15 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     )
 
   @SuppressWarnings(Array("TraversableHead"))
-  def renderStreamMultiband(
-      mosaic: BacksplashMosaic,
+  def renderMosaicMultiband(
+      mosaic: NEL[BacksplashImage[IO]],
       z: Int,
       x: Int,
       y: Int
   )(implicit contextShift: ContextShift[IO]): IO[Raster[MultibandTile]] = {
     val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
     val ioMBT = mosaic
-      .parEvalMap(streamConcurrency)({ relevant =>
+      .parTraverse((relevant: BacksplashImage[IO]) => {
         for {
           imFiber <- {
             logger.debug(s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
@@ -216,9 +215,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
           renderedTile
         }
       })
-      .collect({ case Some(tile) => tile })
-      .compile
-      .toList
+      .map(nel => nel.collect({ case Some(tile) => tile }))
     mergeTiles(ioMBT).map {
       case Some(t) => Raster(t, extent)
       case _ =>
@@ -259,36 +256,25 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
         implicit contextShift: ContextShift[IO]
     ) =
       (z: Int, x: Int, y: Int) => {
+        val imagesIO: IO[List[BacksplashImage[IO]]] = self.compile.to[List]
         (for {
-          bandCount <- self
-            .take(1)
-            .map(_.subsetBands.length)
-            .compile
-            .toList
-            .map(_.sum)
-          _ = {
-            if (bandCount == 0) {
-              IO.raiseError(NoDataInRegionException)
-            } else IO.unit
+          imagesNel <- imagesIO map { _.toNel } flatMap {
+            case Some(ims) => IO.pure(ims)
+            case None      => IO.raiseError(NoDataInRegionException)
           }
-          stream = self zip {
-            self flatMap { (backsplashIm: BacksplashImage[IO]) =>
-              fs2.Stream.eval( // kicks off project layer query
-                rendStore.getOverviewConfig(backsplashIm.projectLayerId))
-            }
-          } take (1) flatMap {
-            case (baseBacksplashImage, overviewConfig) =>
-              chooseStream(z, baseBacksplashImage, overviewConfig, self)
-          }
+          bandCount = imagesNel.head.subsetBands.length
+          overviewConfig <- rendStore.getOverviewConfig(
+            imagesNel.head.projectLayerId)
+          mosaic = chooseMosaic(z, imagesNel.head, overviewConfig, imagesNel)
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
-          mosaic <- if (bandCount == 3) {
-            renderStreamMultiband(stream, z, x, y)
+          rendered <- if (bandCount == 3) {
+            renderMosaicMultiband(mosaic, z, x, y)
           } else {
-            renderStreamSingleBand(stream, z, x, y)
+            renderMosaicSingleBand(mosaic, z, x, y)
           }
         } yield {
-          ProjectedRaster(mosaic, WebMercator)
+          ProjectedRaster(rendered, WebMercator)
         }).attempt.flatMap {
           case Left(NoDataInRegionException) =>
             IO.pure(

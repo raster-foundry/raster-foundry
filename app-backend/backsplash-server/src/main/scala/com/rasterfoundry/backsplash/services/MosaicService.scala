@@ -4,13 +4,11 @@ import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.common.utils.TileUtils
-import com.rasterfoundry.database.ProjectLayerDao
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import com.azavea.maml.eval.ConcurrentInterpreter
 import com.azavea.maml.ast.{GeomLit, Masking, RasterVar}
-import doobie.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
@@ -32,6 +30,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     xa: Transactor[IO])(implicit cs: ContextShift[IO]) {
 
   import mosaicImplicits._
+  implicit val projectLayerCache = Cache.caffeineProjectLayerCache
 
   implicit val tmsReification = paintedMosaicTmsReification
 
@@ -47,9 +46,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             bandOverride) as user =>
         val polygonBbox: Projected[Polygon] =
           TileUtils.getTileBounds(z, x, y)
-        val getEval = ProjectLayerDao // TODO: deduplicate, fetch 1
-          .unsafeGetProjectLayerById(layerId)
-          .transact(xa) map { layer =>
+        val getEval = Cacheable.getProjectLayerById(layerId, xa) map { layer =>
           layer.geometry flatMap { _.geom.as[MultiPolygon] } match {
             case Some(mask) =>
               // Intermediate val to anchor the implicit resolution with multiple argument lists
@@ -58,7 +55,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                   List(GeomLit(mask.toGeoJson), RasterVar("mosaic"))
                 )
               val param =
-                layers.read(layerId, Some(polygonBbox), bandOverride, None) // add a signature that takes a layer instead of layer id
+                layers.read(layerId, Some(polygonBbox), bandOverride, None)
               LayerTms(IO.pure(expression),
                        IO.pure(Map("mosaic" -> param)),
                        ConcurrentInterpreter.DEFAULT[IO])

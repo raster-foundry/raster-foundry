@@ -3,7 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{ProjectLayerDao, SceneDao, SceneToLayerDao}
+import com.rasterfoundry.database.{SceneDao, SceneToLayerDao}
 import com.rasterfoundry.datamodel.{BandOverride, SingleBandOptions}
 import com.rasterfoundry.common._
 import com.rasterfoundry.common.color.ColorCorrect
@@ -13,8 +13,9 @@ import com.rasterfoundry.backsplash.{
   BacksplashGeotiff
 }
 
-import cats.data.{NonEmptyList => NEL, OptionT}
+import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
+import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -27,11 +28,12 @@ class RenderableStoreImplicits(xa: Transactor[IO])
     with LazyLogging {
 
   implicit val sceneCache = Cache.caffeineSceneCache
+  implicit val projectLayerCache = Cache.caffeineProjectLayerCache
 
   @SuppressWarnings(Array("OptionGet"))
   private def mosaicDefinitionToImage(mosaicDefinition: MosaicDefinition,
                                       bandOverride: Option[BandOverride],
-                                      layerId: UUID): BacksplashGeotiff = {
+                                      projId: UUID): BacksplashGeotiff = {
     val singleBandOptions =
       mosaicDefinition.singleBandOptions flatMap {
         _.as[SingleBandOptions.Params].toOption
@@ -80,7 +82,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])
     BacksplashGeotiff(
       sceneId,
       mosaicDefinition.projectId,
-      layerId, // actually the layer ID
+      projId, // actually the layer ID
       ingestLocation,
       subsetBands,
       colorCorrectParameters,
@@ -91,30 +93,34 @@ class RenderableStoreImplicits(xa: Transactor[IO])
     )
   }
 
-  implicit val sceneStore: ProjectStore[SceneDao] = new ProjectStore[SceneDao] {
-    def read(
-        self: SceneDao,
-        projId: UUID, // actually a scene id, but argument names have to match
-        window: Option[Projected[Polygon]],
-        bandOverride: Option[BandOverride],
-        imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage[IO]] = {
-      for {
-        scene <- fs2.Stream.eval {
-          Cacheable.getSceneById(projId, window, xa)
-        }
-      } yield {
-        // We don't actually have a project, so just make something up
-        val randomProjectId = UUID.randomUUID
-        val ingestLocation = scene.ingestLocation getOrElse {
-          throw UningestedScenesException(
-            s"Scene ${scene.id} does not have an ingest location")
-        }
-        val footprint = scene.dataFootprint getOrElse {
-          throw NoFootprintException
+  implicit val sceneStore: RenderableStore[SceneDao] =
+    new RenderableStore[SceneDao] {
+      def read(
+          self: SceneDao,
+          projId: UUID, // actually a scene id, but argument names have to match
+          window: Option[Projected[Polygon]],
+          bandOverride: Option[BandOverride],
+          imageSubset: Option[NEL[UUID]])
+        : fs2.Stream[IO, BacksplashImage[IO]] = {
+        for {
+          scene <- fs2.Stream.eval {
+            Cacheable.getSceneById(projId, window, xa)
+          }
+        } yield {
+          // We don't actually have a project, so just make something up
+          val randomProjectId = UUID.randomUUID
+          val ingestLocation = scene.ingestLocation getOrElse {
+            throw UningestedScenesException(
+              s"Scene ${scene.id} does not have an ingest location")
+          }
+          val footprint = scene.dataFootprint getOrElse {
+            throw NoFootprintException
+          }
           val imageBandOverride = bandOverride map { ovr =>
             List(ovr.redBand, ovr.greenBand, ovr.blueBand)
           } getOrElse { List(0, 1, 2) }
-          val colorCorrectParams = ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
+          val colorCorrectParams =
+            ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
           logger.debug(s"Chosen color correction: ${colorCorrectParams}")
           BacksplashGeotiff(
             scene.id,
@@ -138,40 +144,32 @@ class RenderableStoreImplicits(xa: Transactor[IO])
 
   implicit val layerStore: RenderableStore[SceneToLayerDao] =
     new RenderableStore[SceneToLayerDao] {
+      // projId here actually refers to a layer -- but the argument names have to
+      // match the typeclass we're providing evidence for
       def read(self: SceneToLayerDao,
-               renderableId: UUID,
+               projId: UUID,
                window: Option[Projected[Polygon]],
                bandOverride: Option[BandOverride],
                imageSubset: Option[NEL[UUID]])
         : fs2.Stream[IO, BacksplashImage[IO]] = {
         SceneToLayerDao.getMosaicDefinition(
-          renderableId,
+          projId,
           window,
           bandOverride map { _.redBand },
           bandOverride map { _.greenBand },
           bandOverride map { _.blueBand },
           imageSubset map { _.toList } getOrElse List.empty) map { md =>
-          mosaicDefinitionToImage(md, bandOverride, renderableId) // this and below duplicate the project layer fetch
+          mosaicDefinitionToImage(md, bandOverride, projId)
         } transact (xa)
       }
 
       def getOverviewConfig(self: SceneToLayerDao,
-                            renderableId: UUID): IO[OverviewConfig] = {
-        (for {
-          projLayer <- OptionT {
-            ProjectLayerDao
-              .getProjectLayerById(renderableId)
-              .transact(xa) // TODO: deduplicate fetch 3. This request is duplicated inside thhe backsplash
-          }
-          overviewLocation <- OptionT.fromOption[IO] {
-            projLayer.overviewsLocation
-          }
-          minZoom <- OptionT.fromOption[IO] { projLayer.minZoomLevel }
-        } yield
-          OverviewConfig(Some(overviewLocation), Some(minZoom))).value map {
-          case Some(conf) => conf
-          case _          => OverviewConfig.empty
+                            projId: UUID): IO[OverviewConfig] =
+        Cacheable.getProjectLayerById(projId, xa) map { projectLayer =>
+          (projectLayer.overviewsLocation, projectLayer.minZoomLevel).tupled map {
+            case (overviews, minZoom) =>
+              OverviewConfig(Some(overviews), Some(minZoom))
+          } getOrElse { OverviewConfig.empty }
         }
-      }
     }
 }
