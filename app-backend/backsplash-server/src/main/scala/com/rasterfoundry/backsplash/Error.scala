@@ -56,24 +56,24 @@ class RollbarReporter[F[_]](implicit M: MonadError[F, BacksplashException])
                         t: BacksplashException): F[Response[F]] = {
     t match {
       case e @ UningestedScenesException(_) =>
-        sendError(e)
+        sendError(e, r.traceID, r.uri.path)
         throw e
       case e @ NoScenesException =>
         throw e
       case e @ MetadataException(_) =>
-        sendError(e)
+        sendError(e, r.traceID, r.uri.path)
         throw e
       case e @ SingleBandOptionsException(_) =>
-        sendError(e)
+        sendError(e, r.traceID, r.uri.path)
         throw e
       case e @ UnknownSceneTypeException(_) =>
-        sendError(e)
+        sendError(e, r.traceID, r.uri.path)
         throw e
       case e @ BadAnalysisASTException(_) =>
-        sendError(e)
+        sendError(e, r.traceID, r.uri.path)
         throw e
       case e @ UnknownException(_) =>
-        sendError(e)
+        sendError(e, r.traceID, r.uri.path)
         throw e
       case e =>
         throw e
