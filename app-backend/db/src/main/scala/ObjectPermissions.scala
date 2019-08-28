@@ -20,7 +20,7 @@ trait ObjectPermissions[Model] {
   def authorized(user: User,
                  objectType: ObjectType,
                  objectId: UUID,
-                 actionType: ActionType): ConnectionIO[Boolean]
+                 actionType: ActionType): ConnectionIO[AuthResult[Model]]
 
   def isValidObject(id: UUID): ConnectionIO[Boolean] =
     (tableName match {

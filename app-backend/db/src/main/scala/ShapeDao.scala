@@ -6,7 +6,8 @@ import com.rasterfoundry.datamodel.{
   User,
   ObjectType,
   GroupType,
-  ActionType
+  ActionType,
+  AuthResult
 }
 
 import doobie._
@@ -139,9 +140,10 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
       objectType: ObjectType,
       objectId: UUID,
       actionType: ActionType
-  ): ConnectionIO[Boolean] =
+  ): ConnectionIO[AuthResult[Shape]] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
-      .exists
+      .selectOption
+      .map(AuthResult.fromOption _)
 }

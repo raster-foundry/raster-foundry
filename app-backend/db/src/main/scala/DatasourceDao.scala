@@ -183,9 +183,10 @@ object DatasourceDao
       objectType: ObjectType,
       objectId: UUID,
       actionType: ActionType
-  ): ConnectionIO[Boolean] =
+  ): ConnectionIO[AuthResult[Datasource]] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
-      .exists
+      .selectOption
+      .map(AuthResult.fromOption _)
 }

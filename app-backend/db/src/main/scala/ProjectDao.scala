@@ -528,11 +528,12 @@ object ProjectDao
       objectType: ObjectType,
       objectId: UUID,
       actionType: ActionType
-  ): ConnectionIO[Boolean] =
+  ): ConnectionIO[AuthResult[Project]] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
-      .exists
+      .selectOption
+      .map(AuthResult.fromOption _)
 
   def authProjectLayerExist(
       projectId: UUID,
@@ -543,7 +544,9 @@ object ProjectDao
     for {
       authProject <- authorized(user, ObjectType.Project, projectId, actionType)
       layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
-    } yield { authProject && layerExist }
+    } yield {
+      authProject.toBoolean && layerExist
+    }
 
   def removeLayerOverview(projectLayerId: UUID, locUrl: String): IO[Unit] = {
     logger
