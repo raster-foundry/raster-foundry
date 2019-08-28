@@ -639,7 +639,7 @@ object ProjectDao
                 case _ => (List("label"), "detection")
               }
             val stacClasses
-                : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
+              : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
               .groupBy(_.labelGroupName match {
                 case Some(groupName) if groupName.length != 0 => groupName
                 case _                                        => "label"
