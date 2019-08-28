@@ -13,8 +13,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.{ConnectionIO, Transactor}
 import doobie.implicits._
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
+import scala.concurrent.ExecutionContext
 import java.util.UUID
 
 trait ProjectLayerTaskRoutes
@@ -25,6 +24,7 @@ trait ProjectLayerTaskRoutes
     with QueryParametersCommon {
 
   implicit val xa: Transactor[IO]
+  implicit val ec: ExecutionContext
 
   def listLayerTasks(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>

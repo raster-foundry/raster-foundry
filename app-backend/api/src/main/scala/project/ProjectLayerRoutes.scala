@@ -9,8 +9,8 @@ import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
+import cats.Applicative
 import cats.effect._
-import cats.implicits._
 import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.{ConnectionIO, Transactor}
@@ -32,7 +32,7 @@ trait ProjectLayerRoutes
 
   def createProjectLayer(projectId: UUID): Route = authenticate { user =>
     entity(as[ProjectLayer.Create]) { newProjectLayer =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
@@ -68,7 +68,7 @@ trait ProjectLayerRoutes
 
   def getProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
@@ -256,7 +256,7 @@ trait ProjectLayerRoutes
 
   def listLayerScenes(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
@@ -283,10 +283,11 @@ trait ProjectLayerRoutes
                                                  projectId,
                                                  ActionType.View)
             authResult <- (authProject, projectQueryParams.analysisId) match {
-              case (false, Some(analysisId: UUID)) =>
+              case (AuthFailure(), Some(analysisId: UUID)) =>
                 ToolRunDao
                   .authorizeReferencedProject(user, analysisId, projectId)
-              case (_, _) => authProject.pure[ConnectionIO]
+              case (_, _) =>
+                Applicative[ConnectionIO].pure(authProject.toBoolean)
             }
           } yield authResult
           authorized.transact(xa).unsafeToFuture
@@ -303,7 +304,7 @@ trait ProjectLayerRoutes
 
   def getProjectLayerSceneCounts(projectId: UUID): Route =
     authenticate { user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
@@ -321,7 +322,7 @@ trait ProjectLayerRoutes
 
   def setProjectLayerColorMode(projectId: UUID, layerId: UUID) =
     authenticate { user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)

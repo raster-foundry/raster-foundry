@@ -4,6 +4,7 @@ import com.rasterfoundry.akkautil.Authentication
 import com.rasterfoundry.database.{ProjectDao, ToolRunDao, UserDao, MapTokenDao}
 import com.rasterfoundry.datamodel._
 
+import cats.Applicative
 import cats.effect.IO
 import cats.implicits._
 import akka.http.scaladsl.server._
@@ -62,9 +63,10 @@ trait ProjectAuthorizationDirectives extends Authentication with Directives {
                                                    projectId,
                                                    ActionType.View)
               authResult <- (projectAuth, analysisId) match {
-                case (false, Some(id: UUID)) =>
+                case (AuthFailure(), Some(id: UUID)) =>
                   ToolRunDao.authorizeReferencedProject(user, id, projectId)
-                case (_, _) => projectAuth.pure[ConnectionIO]
+                case (_, _) =>
+                  Applicative[ConnectionIO].pure(projectAuth.toBoolean)
               }
             } yield authResult
         } map {

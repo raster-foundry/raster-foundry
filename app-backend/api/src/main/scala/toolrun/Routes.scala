@@ -14,6 +14,7 @@ import cats.effect.IO
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
+import scala.concurrent.ExecutionContext
 import java.util.UUID
 
 trait ToolRunRoutes
@@ -26,6 +27,7 @@ trait ToolRunRoutes
     with UserErrorHandler {
 
   val xa: Transactor[IO]
+  implicit val ec: ExecutionContext
 
   val toolRunRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -150,7 +152,7 @@ trait ToolRunRoutes
   }
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.View)
         .transact(xa)
@@ -169,7 +171,7 @@ trait ToolRunRoutes
   }
 
   def updateToolRun(runId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.Edit)
         .transact(xa)
@@ -189,7 +191,7 @@ trait ToolRunRoutes
   }
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.Delete)
         .transact(xa)
@@ -204,7 +206,7 @@ trait ToolRunRoutes
   }
 
   def listToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolRunDao
         .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
         .transact(xa)
@@ -228,7 +230,7 @@ trait ToolRunRoutes
             ObjectType.Analysis,
             toolRunId,
             ActionType.Edit
-          ),
+          ) map { _.toBoolean },
           acrList traverse { acr =>
             ToolRunDao.isValidPermission(acr, user)
           } map { _.foldLeft(true)(_ && _) }
@@ -254,7 +256,9 @@ trait ToolRunRoutes
       authorizeAsync {
         (
           ToolRunDao
-            .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit),
+            .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit) map {
+            _.toBoolean
+          },
           ToolRunDao.isValidPermission(acr, user)
         ).tupled
           .map({ authTup =>
@@ -274,7 +278,7 @@ trait ToolRunRoutes
   }
 
   def listUserAnalysisActions(analysisId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolRunDao
         .authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
         .transact(xa)
@@ -306,7 +310,7 @@ trait ToolRunRoutes
   }
 
   def deleteToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolRunDao
         .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
         .transact(xa)
