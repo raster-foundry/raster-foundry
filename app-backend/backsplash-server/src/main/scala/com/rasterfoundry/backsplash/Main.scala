@@ -161,7 +161,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val sceneMosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
       AuthedAutoSlash(
-        new SceneService(SceneDao(), sceneMosaicImplicits, xa).routes
+        new SceneService(sceneMosaicImplicits, xa).routes
       )
     )
 

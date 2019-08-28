@@ -1,11 +1,11 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
+import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.datamodel.{BandOverride, Datasource, User}
-import com.rasterfoundry.common.utils.TileUtils
+import com.rasterfoundry.datamodel.{BandOverride, Datasource, Scene, User}
 import com.rasterfoundry.database.DatasourceDao
 
 import cats.data.OptionT
@@ -16,6 +16,7 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.CellSize
 import geotrellis.server._
+import geotrellis.vector.{Projected, MultiPolygon}
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
@@ -23,7 +24,6 @@ import org.http4s.headers._
 import java.util.UUID
 
 class SceneService[ProjStore: ProjectStore, HistStore](
-    scenes: ProjStore,
     mosaicImplicits: MosaicImplicits[HistStore, ProjStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO])
     extends ToProjectStoreOps {
@@ -32,6 +32,41 @@ class SceneService[ProjStore: ProjectStore, HistStore](
   implicit val tmsReification = paintedMosaicTmsReification
 
   implicit val sceneCache = Cache.caffeineSceneCache
+
+  private def sceneToBacksplashGeotiff(
+      scene: Scene,
+      bandOverride: Option[BandOverride]): IO[BacksplashImage[IO]] = {
+    val randomProjectId = UUID.randomUUID
+    val ingestLocIO: IO[String] = IO { scene.ingestLocation } flatMap {
+      case Some(loc) => IO.pure { loc }
+      case None =>
+        IO.raiseError(
+          UningestedScenesException(s"Scene ${scene.id} is not ingested"))
+    }
+    val footprintIO
+      : IO[Projected[MultiPolygon]] = IO { scene.dataFootprint } flatMap {
+      case Some(footprint) => IO.pure { footprint }
+      case None            => IO.raiseError(NoFootprintException)
+    }
+    val imageBandOverride = bandOverride map { ovr =>
+      List(ovr.redBand, ovr.greenBand, ovr.blueBand)
+    } getOrElse { List(0, 1, 2) }
+    (ingestLocIO, footprintIO).tupled map {
+      case (ingestLocation, footprint) =>
+        BacksplashGeotiff(
+          scene.id,
+          randomProjectId,
+          randomProjectId,
+          ingestLocation,
+          imageBandOverride,
+          ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
+          None, // no single band options ever
+          None, // not adding the mask here, since out of functional scope for md to image
+          footprint,
+          scene.metadataFields.noDataValue
+        )
+    }
+  }
 
   private def getDefaultSceneBands(
       sceneId: UUID): IO[Fiber[IO, Option[BandOverride]]] = {
@@ -58,16 +93,15 @@ class SceneService[ProjStore: ProjectStore, HistStore](
     AuthedService {
       case GET -> Root / UUIDWrapper(sceneId) / IntVar(z) / IntVar(x) / IntVar(
             y) as user =>
-        val bbox = TileUtils.getTileBounds(z, x, y)
         for {
-          authFiber <- authorizers.authScene(user, sceneId).start
+          sceneFiber <- authorizers.authScene(user, sceneId).start
           bandsFiber <- getDefaultSceneBands(sceneId)
-          _ <- authFiber.join.handleErrorWith { error =>
+          scene <- sceneFiber.join.handleErrorWith { error =>
             bandsFiber.cancel *> IO.raiseError(error)
           }
           bands <- bandsFiber.join
           eval = LayerTms.identity(
-            scenes.read(sceneId, Some(bbox), bands, None))
+            fs2.Stream.eval(sceneToBacksplashGeotiff(scene, bands)))
           resp <- eval(z, x, y) flatMap {
             case Valid(tile) =>
               Ok(tile.renderPng.bytes, pngType)
@@ -85,7 +119,8 @@ class SceneService[ProjStore: ProjectStore, HistStore](
             bandsFiber.cancel *> IO.raiseError(error)
           }
           bands <- bandsFiber.join
-          eval = LayerExtent.identity(scenes.read(sceneId, None, bands, None))(
+          eval = LayerExtent.identity(
+            fs2.Stream.eval(sceneToBacksplashGeotiff(scene, bands)))(
             paintedMosaicExtentReification,
             cs)
           extent <- IO.pure {
