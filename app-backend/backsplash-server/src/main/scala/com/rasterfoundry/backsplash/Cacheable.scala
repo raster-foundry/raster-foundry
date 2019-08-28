@@ -23,7 +23,7 @@ object Cacheable {
                    window: Option[Projected[Polygon]],
                    @cacheKeyExclude xa: Transactor[IO])(
       implicit cache: Cache[Scene]): IO[Scene] =
-    memoizeF(Some(3 seconds)) {
+    memoizeF(Some(60 seconds)) {
       SceneDao.getSceneById(sceneId, window).transact(xa) flatMap {
         case Some(scene) => IO.pure { scene }
         case None        => IO.raiseError(NoDataInRegionException)
