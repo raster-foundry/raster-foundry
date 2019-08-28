@@ -113,7 +113,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val authenticators = new Authenticators(xa)
 
-  val projectStoreImplicits = new ProjectStoreImplicits(xa)
+  val projectStoreImplicits = new RenderableStoreImplicits(xa)
   import projectStoreImplicits._
 
   val projectLayerMosaicImplicits =

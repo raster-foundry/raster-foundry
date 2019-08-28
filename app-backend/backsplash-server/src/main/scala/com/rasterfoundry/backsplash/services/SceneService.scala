@@ -3,7 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
+import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.datamodel.{BandOverride, Datasource, Scene, User}
 import com.rasterfoundry.database.DatasourceDao
@@ -23,10 +23,10 @@ import org.http4s.headers._
 
 import java.util.UUID
 
-class SceneService[ProjStore, HistStore](
-    mosaicImplicits: MosaicImplicits[HistStore, ProjStore],
+class SceneService[RendStore, HistStore](
+    mosaicImplicits: MosaicImplicits[HistStore, RendStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO])
-    extends ToProjectStoreOps {
+    extends ToRenderableStoreOps {
 
   import mosaicImplicits._
   implicit val tmsReification = paintedMosaicTmsReification
