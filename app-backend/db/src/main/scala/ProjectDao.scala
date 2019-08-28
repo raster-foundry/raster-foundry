@@ -631,14 +631,19 @@ object ProjectDao
           case 0 => None
           case _ =>
             val (property, taskType): (List[String], String) =
-              infoList.traverse(_.labelGroupName) match {
-                case Some(groupNameList) =>
+              infoList
+                .traverse(_.labelGroupName)
+                .map(groupNames => groupNames.filter(_.nonEmpty)) match {
+                case Some(groupNameList) if groupNameList.length != 0 =>
                   (groupNameList.distinct, "classification")
                 case _ => (List("label"), "detection")
               }
             val stacClasses
-              : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
-              .groupBy(_.labelGroupName.getOrElse("label"))
+                : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
+              .groupBy(_.labelGroupName match {
+                case Some(groupName) if groupName.length != 0 => groupName
+                case _                                        => "label"
+              })
               .map {
                 case (propName, info) =>
                   StacLabelItemProperties.StacLabelItemClasses(
