@@ -4,6 +4,8 @@
 
 ### Added
 
+- Added trace ID to exception logging for backsplash [\#5134](https://github.com/raster-foundry/raster-foundry/pull/5134)
+
 ### Changed
 
 - Upgrade doobie to 0.7.0 [\#5130](https://github.com/raster-foundry/raster-foundry/pull/5130)
