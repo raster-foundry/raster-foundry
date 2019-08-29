@@ -18,19 +18,25 @@ class StacExportDaoSpec
   test("inserting a Stac Export") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         projectCreate: Project.Create,
-         stacExportCreate: StacExport.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            stacExportCreate: StacExport.Create
+        ) => {
           val createStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
-                                                                  orgCreate,
-                                                                  platform,
-                                                                  projectCreate)
-            fixedStacExportCreate = fixupStacExportCreate(stacExportCreate,
-                                                          dbUser,
-                                                          dbProject)
+            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+              userCreate,
+              orgCreate,
+              platform,
+              projectCreate
+            )
+            fixedStacExportCreate = fixupStacExportCreate(
+              stacExportCreate,
+              dbUser,
+              dbProject
+            )
             dbStacExport <- StacExportDao.create(
               fixedStacExportCreate,
               dbUser
@@ -74,19 +80,25 @@ class StacExportDaoSpec
   test("getting a Stac Export by id") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         projectCreate: Project.Create,
-         stacExportCreate: StacExport.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            stacExportCreate: StacExport.Create
+        ) => {
           val selectStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
-                                                                  orgCreate,
-                                                                  platform,
-                                                                  projectCreate)
-            fixedStacExportCreate = fixupStacExportCreate(stacExportCreate,
-                                                          dbUser,
-                                                          dbProject)
+            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+              userCreate,
+              orgCreate,
+              platform,
+              projectCreate
+            )
+            fixedStacExportCreate = fixupStacExportCreate(
+              stacExportCreate,
+              dbUser,
+              dbProject
+            )
             dbStacExport <- StacExportDao.create(
               fixedStacExportCreate,
               dbUser
@@ -139,19 +151,25 @@ class StacExportDaoSpec
   test("updating a Stac Export") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         projectCreate: Project.Create,
-         stacExportCreate: StacExport.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            stacExportCreate: StacExport.Create
+        ) => {
           val updatetStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
-                                                                  orgCreate,
-                                                                  platform,
-                                                                  projectCreate)
-            fixedStacExportCreate = fixupStacExportCreate(stacExportCreate,
-                                                          dbUser,
-                                                          dbProject)
+            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+              userCreate,
+              orgCreate,
+              platform,
+              projectCreate
+            )
+            fixedStacExportCreate = fixupStacExportCreate(
+              stacExportCreate,
+              dbUser,
+              dbProject
+            )
             dbStacExport <- StacExportDao.create(
               fixedStacExportCreate,
               dbUser
@@ -214,19 +232,25 @@ class StacExportDaoSpec
   test("deleting a Stac Export") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         projectCreate: Project.Create,
-         stacExportCreate: StacExport.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            stacExportCreate: StacExport.Create
+        ) => {
           val deletetStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
-                                                                  orgCreate,
-                                                                  platform,
-                                                                  projectCreate)
-            fixedStacExportCreate = fixupStacExportCreate(stacExportCreate,
-                                                          dbUser,
-                                                          dbProject)
+            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+              userCreate,
+              orgCreate,
+              platform,
+              projectCreate
+            )
+            fixedStacExportCreate = fixupStacExportCreate(
+              stacExportCreate,
+              dbUser,
+              dbProject
+            )
             dbStacExport <- StacExportDao.create(fixedStacExportCreate, dbUser)
             deletedRowCount <- StacExportDao
               .delete(dbStacExport.id)
@@ -254,27 +278,35 @@ class StacExportDaoSpec
   test("listing Stac Export") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         projectCreate: Project.Create,
-         stacExportCreate1: StacExport.Create,
-         stacExportCreate2: StacExport.Create,
-         page: PageRequest,
-         queryParams: StacExportQueryParameters) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            stacExportCreate1: StacExport.Create,
+            stacExportCreate2: StacExport.Create,
+            page: PageRequest,
+            queryParams: StacExportQueryParameters
+        ) => {
           val updatetStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
-                                                                  orgCreate,
-                                                                  platform,
-                                                                  projectCreate)
-            fixedStacExportCreate1 = fixupStacExportCreate(stacExportCreate1,
-                                                           dbUser,
-                                                           dbProject)
-            fixedStacExportCreate2 = fixupStacExportCreate(stacExportCreate2,
-                                                           dbUser,
-                                                           dbProject)
-            dbStacExport1 <- StacExportDao.create(fixedStacExportCreate1,
-                                                  dbUser)
+            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+              userCreate,
+              orgCreate,
+              platform,
+              projectCreate
+            )
+            fixedStacExportCreate1 = fixupStacExportCreate(
+              stacExportCreate1,
+              dbUser,
+              dbProject
+            )
+            fixedStacExportCreate2 = fixupStacExportCreate(
+              stacExportCreate2,
+              dbUser,
+              dbProject
+            )
+            dbStacExport1 <- StacExportDao
+              .create(fixedStacExportCreate1, dbUser)
             _ <- StacExportDao.create(fixedStacExportCreate2, dbUser)
             _ <- StacExportDao.update(
               dbStacExport1.copy(
@@ -283,9 +315,15 @@ class StacExportDaoSpec
               dbStacExport1.id
             )
             paginatedStacExport <- StacExportDao
-              .list(page,
-                    queryParams.copy(exportStatus = Some("Exported")),
-                    dbUser)
+              .list(
+                page,
+                queryParams.copy(
+                  exportStatus = Some("Exported"),
+                  projectId = Some(dbProject.id),
+                  layerId = Some(dbProject.defaultLayerId)
+                ),
+                dbUser
+              )
           } yield paginatedStacExport
 
           val paginatedResp =

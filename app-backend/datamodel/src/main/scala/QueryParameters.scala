@@ -684,7 +684,9 @@ final case class StacExportQueryParameters(
     userParams: UserAuditQueryParameters = UserAuditQueryParameters(),
     ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
     searchParams: SearchQueryParameters = SearchQueryParameters(),
-    exportStatus: Option[String] = None
+    exportStatus: Option[String] = None,
+    projectId: Option[UUID] = None,
+    layerId: Option[UUID] = None,
 )
 
 object StacExportQueryParameters {

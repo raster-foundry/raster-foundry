@@ -4815,6 +4815,8 @@ paths:
         - $ref: '#/parameters/createdBy'
         - $ref: '#/parameters/search'
         - $ref: '#/parameters/exportStatus'
+        - $ref: '#/parameters/projectId'
+        - $ref: '#/parameters/layerId'
       responses:
         200:
           description: 'Paginated list of STAC export records'
@@ -5019,6 +5021,12 @@ parameters:
     name: projectId
     in: query
     description: 'UUID for project'
+    type: string
+    format: uuid
+  layerId:
+    name: layerId
+    in: query
+    description: 'UUID for project layer'
     type: string
     format: uuid
   queryAuthToken:

@@ -5,10 +5,13 @@
 ### Added
 
 - Added trace ID to exception logging for backsplash [\#5134](https://github.com/raster-foundry/raster-foundry/pull/5134)
+- Added projectId and layerId QPs to STAC export list endpoint [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
 
 ### Changed
 
 - Upgrade doobie to 0.7.0 [\#5130](https://github.com/raster-foundry/raster-foundry/pull/5130)
+- Updated STAC export location to use the S3 prefix [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
+- Updated values for label:task, label:property, and label:classes of the STAC label item [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
 
 ### Deprecated
 
