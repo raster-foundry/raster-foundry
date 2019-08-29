@@ -1,7 +1,11 @@
 package com.rasterfoundry.batch
 
 import com.rasterfoundry.batch.aoi.FindAOIProjects
-import com.rasterfoundry.batch.cogMetadata.{HistogramBackfill, OverviewBackfill}
+import com.rasterfoundry.batch.cogMetadata.{
+  HistogramBackfill,
+  OverviewBackfill,
+  RasterSourceMetadataBackfill
+}
 import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
 import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.aoi.UpdateAOIProject
@@ -15,6 +19,7 @@ object Main {
     FindAOIProjects.name -> (FindAOIProjects.main(_)),
     HealthCheck.name -> (HealthCheck.main(_)),
     HistogramBackfill.name -> (HistogramBackfill.main(_)),
+    RasterSourceMetadataBackfill.name -> (RasterSourceMetadataBackfill.main(_)),
     NotifyIngestStatus.name -> (NotifyIngestStatus.main(_)),
     OverviewBackfill.name -> (OverviewBackfill.main(_)),
     ReadStacFeature.name -> (ReadStacFeature.main(_)),

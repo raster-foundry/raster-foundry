@@ -333,7 +333,7 @@ object SceneDao
             false,
             Some(().asJson),
             None,
-            scene.metadataFields.noDataValue
+            scene.metadataFields
           )
         )
       } getOrElse { Seq.empty }

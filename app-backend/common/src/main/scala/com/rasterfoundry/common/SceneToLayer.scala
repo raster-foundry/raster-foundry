@@ -6,7 +6,7 @@ import io.circe.Json
 import java.util.UUID
 
 import com.rasterfoundry.common.color._
-import com.rasterfoundry.datamodel.SceneType
+import com.rasterfoundry.datamodel.{SceneMetadataFields, SceneType}
 
 final case class SceneToLayer(sceneId: UUID,
                               projectLayerId: UUID,
@@ -35,7 +35,7 @@ final case class SceneToLayerWithSceneType(
     isSingleBand: Boolean,
     singleBandOptions: Option[Json],
     mask: Option[Projected[Geometry]],
-    noDataValue: Option[Double]
+    metadataFields: SceneMetadataFields
 )
 
 @JsonCodec

@@ -2,15 +2,16 @@ package com.rasterfoundry.database.meta
 
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.color._
-
 import doobie._
 import doobie.postgres.circe.jsonb.implicits._
-import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
+import cats.implicits._
 
 import scala.reflect.runtime.universe.TypeTag
 import java.net.URI
+
+import geotrellis.raster.{CellSize, GridExtent}
 
 object CirceJsonbMeta {
   def apply[Type: TypeTag: Encoder: Decoder] = {
@@ -21,8 +22,35 @@ object CirceJsonbMeta {
 }
 
 trait CirceJsonbMeta {
+
+  implicit val cellSizeEncoder: Encoder[CellSize] =
+    (a: CellSize) =>
+      Json.obj(
+        ("width", a.width.asJson),
+        ("height", a.height.asJson)
+    )
+
+  implicit val cellSizeDecoder: Decoder[CellSize] = (c: HCursor) =>
+    for {
+      width <- c.downField("width").as[Double]
+      height <- c.downField("height").as[Double]
+    } yield {
+      new CellSize(width, height)
+  }
+
+  implicit val gridExtentMeta: Meta[GridExtent[Long]] =
+    CirceJsonbMeta[GridExtent[Long]]
+  implicit val gridExtentListMeta: Meta[List[GridExtent[Long]]] =
+    CirceJsonbMeta[List[GridExtent[Long]]]
+
+  implicit val mapMeta: Meta[Map[String, String]] =
+    CirceJsonbMeta[Map[String, String]]
+
   implicit val compositeMeta: Meta[Map[String, ColorComposite]] =
     CirceJsonbMeta[Map[String, ColorComposite]]
+
+  implicit val cellSizeMeta: Meta[List[CellSize]] =
+    CirceJsonbMeta[List[CellSize]]
 
   implicit val credentialMeta: Meta[Credential] =
     CirceJsonbMeta[Credential]

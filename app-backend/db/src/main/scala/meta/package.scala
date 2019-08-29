@@ -1,13 +1,14 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
-
-import cats.syntax.either._
+import cats.implicits._
 import doobie._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
-
 import java.time.LocalDate
+
+import geotrellis.proj4.CRS
+import geotrellis.raster.CellType
 
 package object meta {
   trait RFMeta
@@ -15,6 +16,12 @@ package object meta {
       with CirceJsonbMeta
       with EnumMeta
       with PermissionsMeta {
+
+    implicit val crsMeta: Meta[CRS] =
+      Meta[String].timap(CRS.fromString)(_.toProj4String)
+
+    implicit val cellTypeMeta: Meta[CellType] =
+      Meta[String].timap(CellType.fromName)(CellType.toName)
 
     implicit val timeRangeMeta: Meta[(LocalDate, LocalDate)] =
       Meta.Advanced
