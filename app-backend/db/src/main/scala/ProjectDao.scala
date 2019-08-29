@@ -630,16 +630,8 @@ object ProjectDao
         infoList.length match {
           case 0 => None
           case _ =>
-            val (property, taskType): (List[String], String) =
-              infoList
-                .traverse(_.labelGroupName)
-                .map(groupNames => groupNames.filter(_.nonEmpty)) match {
-                case Some(groupNameList) if groupNameList.nonEmpty =>
-                  (groupNameList.distinct, "classification")
-                case _ => (List("label"), "detection")
-              }
             val stacClasses
-              : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
+                : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
               .groupBy(_.labelGroupName match {
                 case Some(groupName) if groupName.nonEmpty => groupName
                 case _                                     => "label"
@@ -651,6 +643,12 @@ object ProjectDao
                     info.traverse(_.labelName).getOrElse(List())
                 )
             } toList)
+            val groupNamesDry = stacClasses.map(_.name).toSet
+            val (property, taskType) =
+              groupNamesDry.size match {
+                case 1 => (List("label"), "detection")
+                case _ => (groupNamesDry.toList, "classification")
+              }
             Some(
               StacLabelItemPropertiesThin(
                 property,
