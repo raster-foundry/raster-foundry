@@ -433,7 +433,6 @@ trait Filterables extends RFMeta with LazyLogging {
                       .LayerDefinition(projectId, layerId)
                       .asJson
                       .noSpaces
-                      .toString()
                   ) ++ fr"]'::jsonb"
                 )
               case _ => None
