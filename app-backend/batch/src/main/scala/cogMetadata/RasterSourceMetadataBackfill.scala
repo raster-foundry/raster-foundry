@@ -44,9 +44,9 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
   @SuppressWarnings(Array("OptionGet"))
   def insertRasterSourceMetadata(cogTuple: CogTuple)(
       implicit xa: Transactor[IO]): IO[RasterSourceMetadata] = {
-    println(s"Getting Raster Source: ${cogTuple._1}")
+    logger.info(s"Getting Raster Source: ${cogTuple._1}")
     val rasterSource = GDALRasterSource(URLDecoder.decode(cogTuple._2, "UTF-8"))
-    println(s"Getting Metadata: ${cogTuple._1}")
+    logger.info(s"Getting Metadata: ${cogTuple._1}")
     val rasterSourceMetadata = RasterSourceMetadata(
       rasterSource.dataPath,
       rasterSource.crs,
@@ -56,7 +56,7 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
       rasterSource.gridExtent,
       rasterSource.resolutions
     )
-    println(s"Inserting Metadata: ${cogTuple._1}")
+    logger.info(s"Inserting Metadata: ${cogTuple._1}")
     val md = RasterSourceMetadataDao
       .update(cogTuple._1, rasterSourceMetadata)
       .transact(xa)
