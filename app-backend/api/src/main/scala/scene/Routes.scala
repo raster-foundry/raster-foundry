@@ -30,7 +30,7 @@ import spray.json._
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import com.rasterfoundry.common.LayerAttribute
 
 trait SceneRoutes
@@ -42,6 +42,8 @@ trait SceneRoutes
     with AWSBatch
     with UserErrorHandler
     with HistogramJsonFormats {
+
+  implicit val ec: ExecutionContext
 
   val xa: Transactor[IO]
 
@@ -213,7 +215,7 @@ trait SceneRoutes
   }
 
   def updateScene(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       SceneDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
         .transact(xa)
@@ -232,7 +234,7 @@ trait SceneRoutes
   }
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       SceneDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Delete)
         .transact(xa)
@@ -246,7 +248,7 @@ trait SceneRoutes
   }
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       SceneWithRelatedDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Download)
         .transact(xa)
@@ -285,7 +287,7 @@ trait SceneRoutes
   }
 
   def listScenePermissions(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       SceneDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
         .transact(xa)
@@ -303,7 +305,10 @@ trait SceneRoutes
   def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (SceneDao.authorized(user, ObjectType.Scene, sceneId, ActionType.Edit),
+        (SceneDao
+           .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit) map {
+           _.toBoolean
+         },
          acrList traverse { acr =>
            SceneDao.isValidPermission(acr, user)
          } map { _.foldLeft(true)(_ && _) }).tupled
@@ -326,7 +331,10 @@ trait SceneRoutes
   def addScenePermission(sceneId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (SceneDao.authorized(user, ObjectType.Scene, sceneId, ActionType.Edit),
+        (SceneDao
+           .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit) map {
+           _.toBoolean
+         },
          SceneDao.isValidPermission(acr, user)).tupled
           .map(authTup => authTup._1 && authTup._2)
           .transact(xa)
@@ -372,7 +380,7 @@ trait SceneRoutes
   }
 
   def deleteScenePermissions(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       SceneDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
         .transact(xa)
@@ -397,7 +405,7 @@ trait SceneRoutes
         .unsafeToFuture
     } {
       onSuccess(
-        SceneDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) {
+        DatasourceDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) {
         datasourceO =>
           complete { datasourceO }
       }
@@ -411,10 +419,12 @@ trait SceneRoutes
           auth <- SceneDao.authorized(user,
                                       ObjectType.Scene,
                                       sceneId,
-                                      ActionType.View)
-          datasource <- SceneDao.getSceneDatasource(sceneId)
+                                      ActionType.View) map { _.toBoolean }
+          datasource <- DatasourceDao.getSceneDatasource(sceneId)
         } yield {
-          auth && datasource.id == UUID.fromString(sentinel2DatasourceId)
+          auth && (datasource map { (ds: Datasource) =>
+            Some(ds.id) == Some(UUID.fromString(sentinel2DatasourceId))
+          } getOrElse { false })
         }
         authorizedIO.transact(xa).unsafeToFuture
       } {

@@ -197,5 +197,5 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
         layerId,
         annotationGroupId
       )
-    } yield { authProject && layerExists && authAnnotationGroup }
+    } yield { authProject.toBoolean && layerExists && authAnnotationGroup }
 }

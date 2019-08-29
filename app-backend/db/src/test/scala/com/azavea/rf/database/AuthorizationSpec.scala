@@ -58,7 +58,7 @@ class AuthorizationSpec
                                                        ObjectType.Project,
                                                        project.id,
                                                        ActionType.View)
-            } yield (user1Authorized, user2Authorized)
+            } yield (user1Authorized.toBoolean, user2Authorized.toBoolean)
 
             val (user1Authed, user2Authed) =
               usersAuthedIO.transact(xa).unsafeRunSync
@@ -117,7 +117,7 @@ class AuthorizationSpec
                                                        ObjectType.Project,
                                                        project.id,
                                                        ActionType.View)
-            } yield { (user1Authorized, user2Authorized) }
+            } yield { (user1Authorized.toBoolean, user2Authorized.toBoolean) }
 
             val (user1Authed, user2Authed) =
               usersAuthedIO.transact(xa).unsafeRunSync
@@ -172,7 +172,7 @@ class AuthorizationSpec
                                                        ObjectType.Project,
                                                        project.id,
                                                        ActionType.View)
-            } yield { (user1Authorized, user2Authorized) }
+            } yield { (user1Authorized.toBoolean, user2Authorized.toBoolean) }
 
             val (user1Authed, user2Authed) =
               usersAuthedIO.transact(xa).unsafeRunSync

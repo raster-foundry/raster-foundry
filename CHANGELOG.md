@@ -16,6 +16,8 @@
 
 ### Fixed
 
+- Eliminated superfluous scene queries in thumbnail rendering [\#5139](https://github.com/raster-foundry/raster-foundry/pull/5139)
+
 ### Security
 
 ## [1.28.0](https://github.com/raster-foundry/raster-foundry/compare/1.27.0...1.28.0)

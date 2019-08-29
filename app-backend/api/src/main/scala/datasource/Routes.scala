@@ -10,6 +10,7 @@ import akka.http.scaladsl.model.StatusCodes
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
 
+import scala.concurrent.ExecutionContext
 import java.util.UUID
 import cats.implicits._
 import doobie._
@@ -22,6 +23,8 @@ trait DatasourceRoutes
     with UserErrorHandler
     with CommonHandlers {
   val xa: Transactor[IO]
+
+  implicit val ec: ExecutionContext
 
   val datasourceRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -81,7 +84,7 @@ trait DatasourceRoutes
   }
 
   def getDatasource(datasourceId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       DatasourceDao
         .authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
         .transact(xa)
@@ -112,7 +115,7 @@ trait DatasourceRoutes
   }
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
-    authorizeAsync(
+    authorizeAuthResultAsync(
       DatasourceDao
         .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Edit)
         .transact(xa)
@@ -153,7 +156,7 @@ trait DatasourceRoutes
 
   def listDatasourcePermissions(datasourceId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         DatasourceDao
           .authorized(
             user,
@@ -183,7 +186,7 @@ trait DatasourceRoutes
               ObjectType.Datasource,
               datasourceId,
               ActionType.Edit
-            ),
+            ) map { _.toBoolean },
             acrList traverse { acr =>
               DatasourceDao.isValidPermission(acr, user)
             } map { _.foldLeft(true)(_ && _) }
@@ -214,7 +217,7 @@ trait DatasourceRoutes
               ObjectType.Datasource,
               datasourceId,
               ActionType.Edit
-            ),
+            ) map { _.toBoolean },
             DatasourceDao.isValidPermission(acr, user)
           ).tupled
             .map({ authTup =>
@@ -235,7 +238,7 @@ trait DatasourceRoutes
 
   def listUserDatasourceActions(datasourceId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         DatasourceDao
           .authorized(
             user,
@@ -268,7 +271,7 @@ trait DatasourceRoutes
 
   def deleteDatasourcePermissions(datasourceId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         DatasourceDao
           .authorized(
             user,

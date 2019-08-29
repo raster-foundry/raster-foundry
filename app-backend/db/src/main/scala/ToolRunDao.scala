@@ -8,7 +8,8 @@ import com.rasterfoundry.datamodel.{
   GroupType,
   ActionType,
   ToolRunWithRelated,
-  PaginatedResponse
+  PaginatedResponse,
+  AuthResult
 }
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.ast._
@@ -123,11 +124,12 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
       objectType: ObjectType,
       objectId: UUID,
       actionType: ActionType
-  ): ConnectionIO[Boolean] =
+  ): ConnectionIO[AuthResult[ToolRun]] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
-      .exists
+      .selectOption
+      .map(AuthResult.fromOption _)
 
   def authorizeReferencedProject(
       user: User,
@@ -158,7 +160,7 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
       projectIds = ast.sources.collect {
         case MapAlgebraAST.ProjectRaster(_, projId, _, _, _) => projId
       }
-      result <- (toolRunAuthorized && ownerProjectAuthorization && projectIds
+      result <- (toolRunAuthorized.toBoolean && ownerProjectAuthorization.toBoolean && projectIds
         .contains(projectId))
         .pure[ConnectionIO]
     } yield result

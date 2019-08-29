@@ -17,7 +17,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.util.transactor.Transactor
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.datamodel._
-import cats.implicits._
+import cats.Applicative
 import doobie._
 import doobie.implicits._
 
@@ -57,14 +57,17 @@ trait MapTokenRoutes
     entity(as[MapToken.Create]) { newMapToken =>
       authorizeAsync {
         val authIO = (newMapToken.project, newMapToken.toolRun) match {
-          case (None, None) => false.pure[ConnectionIO]
+          case (None, None) =>
+            Applicative[ConnectionIO].pure(false)
           case (Some(projectId), None) =>
             ProjectDao
               .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+              .map(_.toBoolean)
           case (None, Some(toolRunId)) =>
             ToolRunDao
               .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
-          case _ => false.pure[ConnectionIO]
+              .map(_.toBoolean)
+          case _ => Applicative[ConnectionIO].pure(false)
         }
         authIO.transact(xa).unsafeToFuture
       } {

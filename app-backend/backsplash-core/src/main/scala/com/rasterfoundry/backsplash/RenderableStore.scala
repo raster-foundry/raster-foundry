@@ -8,10 +8,13 @@ import simulacrum._
 
 import java.util.UUID
 
-@typeclass trait ProjectStore[A] {
+// RenderableStore
+// currently scenes and layers
+//
+@typeclass trait RenderableStore[A] {
   @op("read") def read(
       self: A,
-      projId: UUID,
+      renderableId: UUID,
       window: Option[Projected[Polygon]],
       bandOverride: Option[BandOverride],
       imageSubset: Option[NEL[UUID]]
@@ -19,6 +22,6 @@ import java.util.UUID
 
   @op("getOverviewConfig") def getOverviewConfig(
       self: A,
-      projId: UUID
+      renderableId: UUID
   ): IO[OverviewConfig]
 }

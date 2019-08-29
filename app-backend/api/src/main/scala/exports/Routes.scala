@@ -19,7 +19,7 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import io.circe._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Success
 
@@ -33,6 +33,8 @@ trait ExportRoutes
     with AWSBatch {
 
   val xa: Transactor[IO]
+
+  implicit val ec: ExecutionContext
 
   val exportRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

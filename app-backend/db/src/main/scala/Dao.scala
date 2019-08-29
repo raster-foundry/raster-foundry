@@ -41,13 +41,14 @@ object Dao extends LazyLogging {
                  a: List[Any],
                  e1: FiniteDuration,
                  e2: FiniteDuration) =>
-      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val queryString =
+        s.lines.dropWhile(_.trim.isEmpty).toArray.mkString("\n  ")
       val logString = queryString
         .split("\\?", -1)
         .zip(a.map(s => "'" + s + "'"))
         .flatMap({ case (t1, t2) => List(t1, t2) })
         .mkString("")
-      logger.debug(s"""Successful Statement Execution:
+      logger.info(s"""Successful Statement Execution:
         |
         |  ${logString}
         |
@@ -56,7 +57,8 @@ object Dao extends LazyLogging {
       """.stripMargin)
 
     case ProcessingFailure(s, a, e1, e2, t) =>
-      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val queryString =
+        s.lines.dropWhile(_.trim.isEmpty).toArray.mkString("\n  ")
       val logString = queryString
         .split("\\?", -1)
         .zip(a.map(s => "'" + s + "'"))
@@ -72,11 +74,13 @@ object Dao extends LazyLogging {
       """.stripMargin)
 
     case ExecFailure(s, a, e1, t) =>
-      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val queryString =
+        s.lines.dropWhile(_.trim.isEmpty).toArray.mkString("\n  ")
       val logString = queryString
         .split("\\?", -1)
         .zip(a.map(s => "'" + s + "'"))
         .flatMap({ case (t1, t2) => List(t1, t2) })
+        .toList
         .mkString("")
       logger.error(s"""Failed Statement Execution:
         |

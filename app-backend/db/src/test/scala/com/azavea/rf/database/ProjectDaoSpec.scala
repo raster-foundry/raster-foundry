@@ -558,7 +558,12 @@ class ProjectDaoSpec
                                                     ObjectType.Project,
                                                     projectInsert2.id,
                                                     action)
-            } yield { (action, projectInsert2, isPermitted1, isPermitted2) }
+            } yield {
+              (action,
+               projectInsert2,
+               isPermitted1.toBoolean,
+               isPermitted2.toBoolean)
+            }
 
             val (action, projectInsert2, isPermitted1, isPermitted2) =
               isUserPermittedIO.transact(xa).unsafeRunSync
