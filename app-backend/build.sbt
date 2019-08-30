@@ -424,7 +424,7 @@ lazy val akkautil = project
   * Backsplash Core Settings
   */
 lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
-  .dependsOn(common, db)
+  .dependsOn(common)
   .settings(sharedSettings: _*)
   .settings(
     fork in run := true,
