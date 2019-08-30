@@ -19,5 +19,5 @@ final case class MosaicDefinition(
     isSingleBand: Boolean,
     singleBandOptions: Option[Json],
     mask: Option[MultiPolygon],
-    noDataValue: Option[Double]
+    sceneMetadataFields: SceneMetadataFields
 )

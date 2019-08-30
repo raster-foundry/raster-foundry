@@ -17,8 +17,9 @@ import geotrellis.vector._
 import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 
 import scala.util._
-
 import java.time.LocalDate
+
+import geotrellis.raster.{CellType, GridExtent}
 
 @SuppressWarnings(Array("CatchException"))
 trait JsonCodecs extends GeoJsonImplicits {
@@ -38,6 +39,37 @@ trait JsonCodecs extends GeoJsonImplicits {
         .catchNonFatal(Try(CRS.fromName(str)) getOrElse CRS.fromString(str))
         .leftMap(_ => "CRS")
     }
+
+  implicit val cellTypeEncoder: Encoder[CellType] =
+    Encoder.encodeString.contramap[CellType](CellType.toName)
+
+  implicit val cellTypeDecoder: Decoder[CellType] = Decoder.decodeString.emap {
+    str =>
+      Either
+        .catchNonFatal(CellType.fromName(str))
+        .leftMap(_ => s"Unrecognized cell type: $str")
+  }
+
+  implicit val gridExtentEncoder: Encoder[GridExtent[Long]] =
+    (a: GridExtent[Long]) =>
+      Json.obj(
+        ("extent", a.extent.asJson),
+        ("cellWidth", a.cellwidth.asJson),
+        ("cellHeight", a.cellheight.asJson),
+        ("cols", a.cols.asJson),
+        ("rows", a.rows.asJson)
+    )
+
+  implicit val gridExtentDecoder: Decoder[GridExtent[Long]] = (c: HCursor) =>
+    for {
+      extent <- c.downField("extent").as[Extent]
+      cellWidth <- c.downField("cellWidth").as[Double]
+      cellHeight <- c.downField("cellHeight").as[Double]
+      cols <- c.downField("cols").as[Long]
+      rows <- c.downField("rows").as[Long]
+    } yield {
+      new GridExtent[Long](extent, cellWidth, cellHeight, cols, rows)
+  }
 
   implicit val extentEncoder: Encoder[Extent] =
     new Encoder[Extent] {

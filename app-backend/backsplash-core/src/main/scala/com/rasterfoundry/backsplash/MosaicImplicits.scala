@@ -93,7 +93,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
             baseImage.singleBandOptions,
             baseImage.mask,
             baseImage.footprint,
-            baseImage.noDataValue
+            baseImage.metadata
           ),
           Nil: _*
         )
@@ -114,14 +114,13 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
         .parTraverse((relevant: BacksplashImage[IO]) => {
           logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
           relevant.read(z, x, y) map {
-            (_, relevant.singleBandOptions, relevant.noDataValue)
+            (_, relevant.singleBandOptions, relevant.metadata.noDataValue)
           }
         })
         .map(nel =>
           nel.collect({
             case (Some(mbtile), Some(sbo), nd) => (mbtile, sbo, nd)
           }))
-
     for {
       imagesNel <- ioMBTwithSBO map { _.toNel } flatMap {
         case Some(ims) => IO.pure(ims)
@@ -200,15 +199,17 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
           hists <- histsFiber.join
           im <- imFiber.join
           renderedTile <- IO.pure {
-            im map { mbTile =>
-              val noDataValue = getNoDataValue(mbTile.cellType)
-              logger.debug(
-                s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}"
-              )
-              relevant.corrections.colorCorrect(
-                mbTile,
-                hists,
-                relevant.noDataValue orElse noDataValue orElse Some(0))
+            im map {
+              mbTile =>
+                val noDataValue = getNoDataValue(mbTile.cellType)
+                logger.debug(
+                  s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}"
+                )
+                relevant.corrections.colorCorrect(
+                  mbTile,
+                  hists,
+                  relevant.metadata.noDataValue orElse noDataValue orElse Some(
+                    0))
             }
           }
         } yield {

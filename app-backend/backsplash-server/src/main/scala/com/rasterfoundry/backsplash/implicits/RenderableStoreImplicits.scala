@@ -89,7 +89,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])
       singleBandOptions,
       mosaicDefinition.mask,
       footprint,
-      mosaicDefinition.noDataValue
+      mosaicDefinition.sceneMetadataFields
     )
   }
 
@@ -132,7 +132,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])
             None, // no single band options ever
             None, // not adding the mask here, since out of functional scope for md to image
             footprint,
-            scene.metadataFields.noDataValue
+            scene.metadataFields
           )
         }
       }
