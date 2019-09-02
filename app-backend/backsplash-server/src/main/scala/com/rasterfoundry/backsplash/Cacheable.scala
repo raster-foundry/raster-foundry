@@ -4,18 +4,17 @@ import com.rasterfoundry.backsplash.error.NoDataInRegionException
 import com.rasterfoundry.datamodel.{ProjectLayer, Scene}
 import com.rasterfoundry.database.{ProjectLayerDao, SceneDao}
 import com.rasterfoundry.database.Implicits._
-
 import cats.effect.IO
 import doobie._
 import doobie.implicits._
-import geotrellis.vector.{Projected, Polygon}
+import geotrellis.vector.{Polygon, Projected}
 import scalacache._
 import scalacache.CatsEffect.modes._
 import scalacache.memoization._
 
 import scala.concurrent.duration._
-
 import java.util.UUID
+
 import com.rasterfoundry.backsplash.error.NoDataInRegionException
 
 object Cacheable {

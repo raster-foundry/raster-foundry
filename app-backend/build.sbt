@@ -336,6 +336,11 @@ lazy val db = project
       Dependencies.geotrellisRaster,
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
+      Dependencies.scalacacheCats,
+      Dependencies.scalacacheCore,
+      Dependencies.scalacacheMemcached,
+      "com.github.cb372" %% "scalacache-circe" % Version.scalacache,
+      Dependencies.elasticacheClient,
       Dependencies.scalaCheck,
       Dependencies.postgis,
       Dependencies.flyway % Test

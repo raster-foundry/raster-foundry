@@ -27,12 +27,13 @@ trait RollbarNotifier extends LazyLogging {
 
   def sendError(e: Throwable, traceId: String, path: String): Unit = {
     if (this.environment != "development") {
-      rollbarClient.error(e, s"Exception thrown in request $path (traceId: $traceId)")
+      rollbarClient.error(
+        e,
+        s"Exception thrown in request $path (traceId: $traceId)")
     } else {
       logger.error("What I would have sent to rollbar:", e)
     }
   }
-
 
   def sendError(e: Throwable): Unit = {
     if (this.environment != "development") {

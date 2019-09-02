@@ -20,7 +20,6 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
-import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.datamodel.{Annotation, _}
 import com.rasterfoundry.akkautil.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
@@ -570,11 +569,7 @@ trait ProjectRoutes
                                 projectQueryParams.analysisId) |
           projectIsPublic(projectId)) {
           complete {
-            ProjectDao.query
-              .filter(projectId)
-              .selectOption
-              .transact(xa)
-              .unsafeToFuture
+            ProjectDao.getProjectById(projectId).transact(xa).unsafeToFuture
           }
         }
     }

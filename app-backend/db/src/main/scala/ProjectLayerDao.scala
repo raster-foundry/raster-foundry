@@ -15,9 +15,22 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.UUID
+import com.rasterfoundry.database.util.Cache
+import scalacache._
+import scalacache.CatsEffect.modes._
+import scala.concurrent.duration._
 
 object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"
+
+  import Cache.ProjectLayerCache._
+
+  def deleteCache(id: UUID) = {
+    for {
+      _ <- remove(ProjectLayer.cacheKey(id))(projectLayerCache,
+                                             async[ConnectionIO])
+    } yield ContextShiftConnectionIO
+  }
 
   val selectAllColsF: Fragment = fr"""
     SELECT
@@ -31,12 +44,16 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
 
   def getProjectLayerById(
       projectLayerId: UUID): ConnectionIO[Option[ProjectLayer]] =
-    query.filter(projectLayerId).selectOption
+    Cache.getOptionCache(ProjectLayer.cacheKey(projectLayerId),
+                         Some(30 minutes)) {
+      query.filter(projectLayerId).selectOption
+    }
 
   def unsafeGetProjectLayerById(
-      projectLayerId: UUID): ConnectionIO[ProjectLayer] = {
-    query.filter(projectLayerId).select
-  }
+      projectLayerId: UUID): ConnectionIO[ProjectLayer] =
+    cachingF(ProjectLayer.cacheKey(projectLayerId))(Some(30 minutes)) {
+      query.filter(projectLayerId).select
+    }
 
   def listProjectLayersForProjectQ(projectId: UUID) =
     query.filter(fr"project_id = ${projectId}")
@@ -128,11 +145,15 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
           L.liftIO(ProjectDao.removeLayerOverview(layerId, locUrl))
         case _ => ().pure[ConnectionIO]
       }
+      _ <- deleteCache(layerId).attempt
       rowsDeleted <- query.filter(layerId).delete
     } yield rowsDeleted
 
   def updateProjectLayer(pl: ProjectLayer, plId: UUID): ConnectionIO[Int] = {
-    updateProjectLayerQ(pl, plId).run
+    for {
+      updateQuery <- updateProjectLayerQ(pl, plId).run
+      _ <- deleteCache(plId).attempt
+    } yield updateQuery
   }
 
   def batchCreateLayers(
@@ -260,6 +281,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
         .flatMap(ProjectLayerScenesDao.scenesToProjectScenes(_, layerId))
       groupedScenes = scenes.groupBy(groupScenesBySplitOptions(splitOptions))
       newLayers <- batchCreateLayers(groupedScenes, layer, splitOptions)
+      _ <- deleteCache(layerId).attempt
       _ <- splitOptions.removeFromLayer match {
         case Some(true) =>
           ProjectDao.deleteScenesFromProject(scenes.map(_.id),
@@ -272,7 +294,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
 
   def layerIsInProject(layerId: UUID,
                        projectID: UUID): ConnectionIO[Boolean] = {
-    query.filter(layerId).selectOption map {
+    getProjectLayerById(layerId) map {
       case Some(projectLayer) => projectLayer.projectId == Option(projectID)
       case _                  => false
     }

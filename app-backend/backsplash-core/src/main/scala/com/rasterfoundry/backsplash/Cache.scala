@@ -12,18 +12,13 @@ import scalacache.memcached._
 import scalacache.memoization._
 import scalacache.serialization.binary._
 import net.spy.memcached._
-
 import java.net.InetSocketAddress
+
+import com.rasterfoundry.common.BacksplashConnectionFactory
+
 import scala.collection.JavaConverters._
 
 object Cache extends LazyLogging {
-
-  class BacksplashConnectionFactory extends DefaultConnectionFactory() {
-    override def getClientMode: ClientMode = Config.cache.memcachedClientMode
-
-    override def getOperationTimeout: Long =
-      Config.cache.memcachedTimeoutMilliseconds
-  }
 
   class BacksplashCacheKeyBuilder extends CacheKeyBuilder {
     def toCacheKey(parts: Seq[Any]): String = {

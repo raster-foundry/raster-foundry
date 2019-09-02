@@ -111,6 +111,9 @@ final case class User(id: String,
                       isActive: Boolean,
                       visibility: UserVisibility,
                       personalInfo: User.PersonalInfo) {
+
+  lazy val cacheKey: String = s"user:$id"
+
   def getDefaultExportSource(export: Export, dataBucket: String): URI =
     new URI(
       s"s3://$dataBucket/user-exports/${URLEncoder.encode(id, "UTF-8")}/${export.id}"
@@ -139,6 +142,9 @@ final case class User(id: String,
 }
 
 object User {
+
+  def cacheKey(id: String): String = s"user:$id"
+
   def tupled = (User.apply _).tupled
 
   def create = Create.apply _
