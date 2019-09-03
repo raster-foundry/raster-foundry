@@ -339,7 +339,7 @@ lazy val db = project
       Dependencies.scalacacheCats,
       Dependencies.scalacacheCore,
       Dependencies.scalacacheMemcached,
-      "com.github.cb372" %% "scalacache-circe" % Version.scalacache,
+      Dependencies.scalacacheCirce,
       Dependencies.elasticacheClient,
       Dependencies.scalaCheck,
       Dependencies.postgis,
