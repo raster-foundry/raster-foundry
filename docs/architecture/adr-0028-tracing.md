@@ -126,7 +126,10 @@ I think, to how any OpenTracing compliant destination will work, though the part
 configuration will probably vary by target. That commit is available [here](https://github.com/jisantuc/tracing-demos/tree/e8986e32da61b0a4d01c688fa2f5c2ca5a432f6f). There's one scala warning if you compile from that point
 about how `idGenerator` is unused. I left it in to highlight that the `OpenTracingContext` doesn't let
 you choose how to generate trace IDs. However, the Jaeger UI will let you search by tags. Changes to use
-Jaeger and include `X-Amzn-Trace-Id` in the trace tags are [here](https://github.com/jisantuc/tracing-demos/tree/fa931325c55286290cebb64b6753186363f2b999). 
+Jaeger and include `X-Amzn-Trace-Id` in the trace tags are [here](https://github.com/jisantuc/tracing-demos/tree/fa931325c55286290cebb64b6753186363f2b999).
+That search interface looks like this:
+
+![Jaeger search](./images/adr-0028-search-by-tag.png)
 
 The initial implementation I wound up with is on
 [`feature/js/scala-opentracing`](https://github.com/jisantuc/tracing-demos/tree/f02408d4942c14eec84dd676199056e8e1b99add).
