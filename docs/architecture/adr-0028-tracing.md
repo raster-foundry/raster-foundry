@@ -1,12 +1,69 @@
 # Context
 
+Our tile servers are under constant load. When errors are thrown, we tend to log useful information,
+but the background noise volume is high enough that it's difficult to look at logs and see what was
+going on with a particular request. Separately, it would be nice to have some metrics for functions
+and api calls used for a request -> response transformation. The constant load makes it almost
+impossible to gather useful information outside of a highly controlled and constrained environment.
+This difficulty masks issues that only become visible in production.
+
+There are a few approaches to tracing and dumping metrics that we could use, but we don't know
+anything about any of them.  Some of the libraries available in the scala ecosystem include
+[`natchez`](https://github.com/tpolecat/natchez), [`http4s-tracer`](https://github.com/profunktor/http4s-tracer),
+and [`scala-opentracing`](https://github.com/Colisweb/scala-opentracing). Eventually, we will want to be able to dump traces to an external source, like [Jaeger](https://www.jaegertracing.io/),
+[AWS X-Ray](https://aws.amazon.com/xray/), or [Honeycomb](https://www.honeycomb.io/).
+
+We'd like to assess how difficult it would be to:
+
+- get started with a logging implementation
+- eventually hook into one of these external services
+
+# Decision
+
+We should use `scala-opentracing` for our initial implementation of tracing. There
+are several reasons why this is the case. The general risk in each of these libraries
+is that they're maintained seemingly by a single person. However, in `scala-opentracing`'s
+case, we at least know that the person maintaining it is responsible for the health of
+a production system. It's not super challenging to get started with `scala-opentracing`.
+I was able to get the logging tracer up and running in under two hours. Chris was able
+to make substantive changes to it in order to extract a header from the API under 90
+minutes after he started looking at this ADR. I was later able to configure dumping
+traces to Jaeger instead of just logging without considerable difficulty.
+
+Those are all very different from the experiences with the other two libraries. `natchez`
+is advertised as not quite ready for production, and even "hook it into `http4s`" is a
+hard problem right now. There's some [ongoing work](https://github.com/tpolecat/natchez/issues/5)
+on that front that looks close to done, but it's also been ongoing for two months, and there's
+no timeline. `http4s-tracer` uses a separate vocabulary from what's used in the
+Open Tracing spec and doesn't have an API for writing traces to external services.
+
+# Consequences
+
+We'll need to add `scala-opentracing` to backsplash. This is fairly easy. Getting
+the tracer configured will also be fairly easy as long as we're just doing a logging
+tracer to start. There's some infra work necessary once we want to add third party
+service.
+
+We'll need to choose a repository for our traces. We'd like that to be X-Ray, since
+it means we don't have to configure and deploy another service, but that may not be
+an option. We can also decide that we should just log for a while, since even that
+would be useful.
+
+We'll need to figure out what we want to trace. We could, for example, make all of
+the color correction and mosaic implicits functions take implicit trace contexts.
+I believe it's the case that if we had, e.g., Jaeger as the repository, we could
+set up the sampler to only send traces on one percent of requests, which would mean
+we could deploy some really aggressive tracing and pay whatever price we pay for
+tracing on one tile in every three or so map loads. If that's true, we should trace
+aggressively. If it's not, we should trace conservatively.
+
 # The Contenders
 
 I considered the following tracing libraries, presented in the order in which I
 tried them out. Each of them is seemingly maintained by one person, so there's
 considerable risk that development will stop someday at random on each of them.
 
-### `natchez`
+## `natchez`
 
 Natchez promises nice integration with things that we already use from the
 TypeLevel ecosystem, or at least it would, if I could figure out how to provide
@@ -34,7 +91,7 @@ anything you need to work, and I think we should take his
 The (broken) implementation I wound up with is on
 [`feature/js/natchez`](https://github.com/jisantuc/tracing-demos/tree/feature/js/natchez).
 
-### `scala-opentracing`
+## `scala-opentracing`
 
 `scala-opentracing` ties its language very closely to the [Open Tracing
 specification](https://opentracing.io/specification/). It's a library used by
@@ -58,13 +115,23 @@ it's the case that we can provide a `Tracer` from `io.opentracing` to the
 [`OpenTracingContext`](https://github.com/Colisweb/scala-opentracing/blob/e9563d6da8d921e1d4c25178ffb5131e047bd9b0/src/main/scala/com/colisweb/tracing/OpenTracingContext.scala)
 class and wrap it the same way I wrapped the `LoggingTracingContext`.
 
-DEPENDING ON TIME I MAY COME BACK AND TRY THAT but also http4s-tracer might
-Just Plain Rule :tm: so we'll see
+Because it looked the most promising, we worked on two extensions to the basic implementation.
+The first involved building a custom trace ID based on the incoming request and logging that instead
+of the randomly generated trace ID that `scala-opentracing`'s `LoggingTracerContext` will
+create on its own. That commit was added to the initial implementation [here](https://github.com/jisantuc/tracing-demos/tree/cd8b5b7aa33d35d9f57837451a93b4bdceb96417),
+and worked fine.
 
-The implementation I wound up with is on
-[`feature/js/scala-opentracing`](https://github.com/jisantuc/tracing-demos/tree/feature/js/scala-opentracing).
+The second extension involved setting up Jaeger as a destination instead of just logging. It's similar,
+I think, to how any OpenTracing compliant destination will work, though the particular methods for
+configuration will probably vary by target. That commit is available [here](https://github.com/jisantuc/tracing-demos/tree/e8986e32da61b0a4d01c688fa2f5c2ca5a432f6f). There's one scala warning if you compile from that point
+about how `idGenerator` is unused. I left it in to highlight that the `OpenTracingContext` doesn't let
+you choose how to generate trace IDs. However, the Jaeger UI will let you search by tags. Changes to use
+Jaeger and include `X-Amzn-Trace-Id` in the trace tags are [here](https://github.com/jisantuc/tracing-demos/tree/fa931325c55286290cebb64b6753186363f2b999). 
 
-### `http4s-tracer`
+The initial implementation I wound up with is on
+[`feature/js/scala-opentracing`](https://github.com/jisantuc/tracing-demos/tree/f02408d4942c14eec84dd676199056e8e1b99add).
+
+## `http4s-tracer`
 
 `http4s-tracer` is oriented around atagless final
 implementation of tracing. It requires a tracing algebra to
@@ -90,7 +157,3 @@ support is concerning, especially given the comparatively high degree of
 difficulty for implementing new tracing behaviors.
 
 I didn't implement tracing in the demos repository for `http4s-tracer`.
-
-# Decision
-
-# Consequences
