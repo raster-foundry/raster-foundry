@@ -101,49 +101,48 @@ object HistogramBackfill
   }
 
   def runJob(args: List[String]): IO[Unit] =
-    RFTransactor.xaResource.use { transactor =>
-      threadPoolResource.use { pool =>
-        implicit val xa = transactor
-        implicit val ec = ExecutionContext.fromExecutor(pool)
-        for {
-          sceneTupleChunks <- args map { UUID.fromString(_) } match {
-            // If we don't have any ids, just get all the COG scenes without histograms
-            case Nil => getScenesToBackfill
-            // If we do have some ids, go get those scenes. Assume the user has picked scenes correctly
-            case ids =>
-              ids traverse { id =>
-                {
-                  SceneDao.unsafeGetSceneById(id).transact(xa) map { scene =>
-                    (scene.id, scene.ingestLocation)
-                  }
+    threadPoolResource.use { pool =>
+      implicit val xa =
+        RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
+      implicit val ec = ExecutionContext.fromExecutor(pool)
+      for {
+        sceneTupleChunks <- args map { UUID.fromString(_) } match {
+          // If we don't have any ids, just get all the COG scenes without histograms
+          case Nil => getScenesToBackfill
+          // If we do have some ids, go get those scenes. Assume the user has picked scenes correctly
+          case ids =>
+            ids traverse { id =>
+              {
+                SceneDao.unsafeGetSceneById(id).transact(xa) map { scene =>
+                  (scene.id, scene.ingestLocation)
                 }
-              } map { List(_) }
-          }
-          ios <- IO {
-            sceneTupleChunks map { chunk =>
-              chunk traverse { idWithIngestLoc =>
-                insertHistogramLayerAttribute(idWithIngestLoc)
               }
+            } map { List(_) }
+        }
+        ios <- IO {
+          sceneTupleChunks map { chunk =>
+            chunk traverse { idWithIngestLoc =>
+              insertHistogramLayerAttribute(idWithIngestLoc)
             }
           }
-          allResults = ios flatMap {
-            _.recoverWith({
-              case t: Throwable =>
-                sendError(t)
-                logger.error(t.getMessage, t)
-                IO(List.empty[Option[LayerAttribute]])
-            }).unsafeRunSync
-          }
-          errors = allResults filter { _.isEmpty }
-          successes = allResults filter { !_.isEmpty }
-        } yield {
-          logger.info(
-            s"""
+        }
+        allResults = ios flatMap {
+          _.recoverWith({
+            case t: Throwable =>
+              sendError(t)
+              logger.error(t.getMessage, t)
+              IO(List.empty[Option[LayerAttribute]])
+          }).unsafeRunSync
+        }
+        errors = allResults filter { _.isEmpty }
+        successes = allResults filter { !_.isEmpty }
+      } yield {
+        logger.info(
+          s"""
               | Created histograms for ${successes.length} scenes.
               | Failed to create histograms for ${errors.length} scenes.
               """.trim.stripMargin
-          )
-        }
+        )
       }
     }
 }
