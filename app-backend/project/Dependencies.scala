@@ -130,6 +130,7 @@ object Dependencies {
   val scalacacheCore = "com.github.cb372" %% "scalacache-core" % Version.scalacache
   val scalacacheCats = "com.github.cb372" %% "scalacache-cats-effect" % Version.scalacache
   val scalacacheCaffeine = "com.github.cb372" %% "scalacache-caffeine" % Version.scalacache
+  val scalacacheCirce = "com.github.cb372" %% "scalacache-circe" % Version.scalacache
   val scalacacheMemcached = "com.github.cb372" %% "scalacache-memcached" % Version.scalacache intransitive ()
   val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck % "test"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Version.scalaLogging
