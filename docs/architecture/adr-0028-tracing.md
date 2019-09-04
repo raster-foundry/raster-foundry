@@ -47,7 +47,9 @@ service.
 We'll need to choose a repository for our traces. We'd like that to be X-Ray, since
 it means we don't have to configure and deploy another service, but that may not be
 an option. We can also decide that we should just log for a while, since even that
-would be useful.
+would be useful. For reference, changes necessary to add Jaeger as a repository
+for local development are in
+[this pr](https://github.com/jisantuc/tracing-demos/pull/1/files).
 
 We'll need to figure out what we want to trace. We could, for example, make all of
 the color correction and mosaic implicits functions take implicit trace contexts.
