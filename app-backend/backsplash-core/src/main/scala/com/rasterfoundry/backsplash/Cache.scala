@@ -1,6 +1,7 @@
 package com.rasterfoundry.backsplash
 
 import com.typesafe.scalalogging.LazyLogging
+import com.rasterfoundry.common.{Config => CommonConfig}
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.histogram.Histogram
@@ -43,8 +44,8 @@ object Cache extends LazyLogging {
 
   val tileCache: Cache[Option[MultibandTile]] = {
 
-    val address = new InetSocketAddress(Config.cache.memcachedHost,
-                                        Config.cache.memcachedPort)
+    val address = new InetSocketAddress(CommonConfig.memcached.host,
+                                        CommonConfig.memcached.port)
     val memcachedClient =
       new MemcachedClient(new BacksplashConnectionFactory, List(address).asJava)
 
