@@ -7,6 +7,7 @@
 - Added trace ID to exception logging for backsplash [\#5134](https://github.com/raster-foundry/raster-foundry/pull/5134)
 - Added projectId and layerId QPs to STAC export list endpoint [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
 - Added caching for selecting projects, project layers, and users by ID [\#5144](https://github.com/raster-foundry/raster-foundry/pull/5144)
+- Added documentation on choice of tracing libraries [\#5145](https://github.com/raster-foundry/raster-foundry/pull/5145)
 
 ### Changed
 
