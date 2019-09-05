@@ -22,7 +22,7 @@ class Scene(BaseModel):
                  cloudCover=None, acquisitionDate=None, id=None, thumbnails=None,
                  tileFootprint=None, dataFootprint=None, images=None, createdAt=None,
                  modifiedAt=None, createdBy=None, ingestLocation=None,
-                 owner=None, sceneType="AVRO"):
+                 owner=None, sceneType="AVRO", metadataFields=None):
         """Create a new Scene
 
         Args:
@@ -72,6 +72,7 @@ class Scene(BaseModel):
         self.images = images
         self.createdAt = createdAt
         self.modifiedAt = modifiedAt
+        self.metadataFields = metadataFields
 
     def __repr__(self):
         return '<Scene: {}>'.format(self.name)
@@ -102,7 +103,8 @@ class Scene(BaseModel):
             filter_fields.get('sunAzimuth'), filter_fields.get('sunElevation'), filter_fields.get('cloudCover'),
             filter_fields.get('acquisitionDate'), d.get('id'), thumbnails, tile_footprint, data_footprint,
             images, d.get('createdAt'), d.get('modifiedAt'), d.get('createdBy'),
-            d.get('ingestLocation', ''), owner=d.get('owner'), sceneType=d.get('sceneType')
+            d.get('ingestLocation', ''), owner=d.get('owner'), sceneType=d.get('sceneType'),
+            metadataFields=d.get('metadataFields')
         )
 
     def to_dict(self):
@@ -114,7 +116,8 @@ class Scene(BaseModel):
             visibility=self.visibility,
             tags=self.tags, datasource=self.datasource, sceneMetadata=self.sceneMetadata, filterFields=filterFields,
             name=self.name, statusFields=statusFields, metadataFiles=self.metadataFiles,
-            ingestLocation=self.ingestLocation, owner=self.owner, sceneType=self.sceneType)
+            ingestLocation=self.ingestLocation, owner=self.owner, sceneType=self.sceneType,
+            metadataFields=self.metadataFields)
 
         if self.sunAzimuth:
             filterFields['sunAzimuth'] = self.sunAzimuth

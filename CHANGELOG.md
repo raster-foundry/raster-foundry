@@ -21,6 +21,7 @@
 
 ### Fixed
 
+- Repaired python scene codec for API interaction in scene ingests [\#5148](https://github.com/raster-foundry/raster-foundry/pull/5148)
 - Eliminated superfluous scene queries in thumbnail rendering [\#5139](https://github.com/raster-foundry/raster-foundry/pull/5139)
 
 ### Security
