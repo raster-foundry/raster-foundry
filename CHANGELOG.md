@@ -8,13 +8,14 @@
 - Added projectId and layerId QPs to STAC export list endpoint [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
 - Added caching for selecting projects, project layers, and users by ID [\#5144](https://github.com/raster-foundry/raster-foundry/pull/5144)
 - Added documentation on choice of tracing libraries [\#5145](https://github.com/raster-foundry/raster-foundry/pull/5145)
+- Added a check for band counts during project exports [\#5154](https://github.com/raster-foundry/raster-foundry/pull/5154)
 
 ### Changed
 
-- Upgrade doobie to 0.7.0 [\#5130](https://github.com/raster-foundry/raster-foundry/pull/5130)
+- Upgraded doobie to 0.7.0 [\#5130](https://github.com/raster-foundry/raster-foundry/pull/5130)
 - Updated STAC export location to use the S3 prefix [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
 - Updated values for label:task, label:property, and label:classes of the STAC label item [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
-- Tune proxy_connect_timeout to make Nginx fail faster [\#5133](https://github.com/raster-foundry/raster-foundry/pull/5133)
+- Tuned proxy_connect_timeout to make Nginx fail faster [\#5133](https://github.com/raster-foundry/raster-foundry/pull/5133)
 
 ### Deprecated
 
