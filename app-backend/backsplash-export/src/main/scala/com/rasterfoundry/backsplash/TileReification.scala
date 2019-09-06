@@ -77,6 +77,11 @@ object TileReification extends LazyLogging {
                 val rs = RasterSources
                   .getOrUpdate(uri)
                   .reproject(WebMercator, NearestNeighbor)
+                if (bands.length > rs.bandCount) {
+                  val msg =
+                    s"Number of bands requested (${bands.length}) is greater than bands in Raster Source (${rs.bandCount})"
+                  throw new IllegalArgumentException(msg)
+                }
                 logger.debug(s"Raster Source Extent: ${rs.extent}")
                 if (rs.extent.intersects(extent)) {
                   rs.tileToLayout(layoutDefinition, NearestNeighbor)
