@@ -151,7 +151,7 @@ class StacCatalogBuilder[
         val layerOwnLinks = List(
           StacLink(
             // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/catalog.json
-            s"${absPath}/catalog.json",
+            "../catalog.json",
             Parent,
             Some(`application/json`),
             Some(s"Catalog ${stacCatalog.id.get}")
@@ -229,12 +229,12 @@ class StacCatalogBuilder[
         )
       })
 
-    val udpatedStacCatalog = stacCatalog
+    val updatedStacCatalog = stacCatalog
       .copy(
         links = stacCatalog.links ++ layerCollectionList.map {
-          case (_, _, _, layerSelfLink) =>
+          case (layerCollection, _, _, _) =>
             StacLink(
-              layerSelfLink,
+              s"${layerCollection.id}/collection.json",
               Child,
               Some(`application/json`),
               Some("Layer Collection")
@@ -245,6 +245,6 @@ class StacCatalogBuilder[
     val layerInfoList = layerCollectionList.map(layerInfo =>
       (layerInfo._1, layerInfo._2, layerInfo._3))
 
-    (udpatedStacCatalog, layerInfoList)
+    (updatedStacCatalog, layerInfoList)
   }
 }

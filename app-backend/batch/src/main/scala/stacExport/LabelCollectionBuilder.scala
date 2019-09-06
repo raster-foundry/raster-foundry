@@ -58,7 +58,7 @@ case class IncompleteLabelCollection(
     tasks: List[Task] = List(),
     tasksGeomExtent: Option[UnionedGeomExtent] = None,
     itemPropsThin: StacLabelItemPropertiesThin = StacLabelItemPropertiesThin(),
-    sceneItemLinks: List[(String, String)] = List()
+    sceneItemLinks: List[(String, String, String)] = List()
 ) {
   @SuppressWarnings(Array("OptionGet"))
   def toStacCollection(): StacCollection = {
@@ -152,7 +152,7 @@ class LabelCollectionBuilder[
     )
 
   def withSceneItemLinks(
-      sceneItemLinks: List[(String, String)]
+      sceneItemLinks: List[(String, String, String)]
   ): LabelCollectionBuilder[
     CollectionRequirements with CollectionSceneItemLinks
   ] =
@@ -189,6 +189,7 @@ class LabelCollectionBuilder[
     val labelItemSelfAbsPath = s"${absPath}/${labelItemId}"
     // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<layerCollectionId>/<labelCollectionId>/<labelItemId>/item.json
     val labelItemSelfAbsLink = s"${labelItemSelfAbsPath}/item.json"
+    val labelItemSelfRelLink = s"${labelItemId}/item.json"
     val labelItemLinks = List(
       StacLink(
         labelItemSelfAbsLink,
@@ -197,7 +198,7 @@ class LabelCollectionBuilder[
         Some(s"Label item ${labelItemId}")
       ),
       StacLink(
-        s"${absPath}/collection.json",
+        "../collection.json",
         Parent,
         Some(`application/json`),
         Some("Label Collection")
@@ -212,7 +213,7 @@ class LabelCollectionBuilder[
       // TODO: For the rel (the second argumetn), we need a Source type,
       // which needs to be added in gt-server
       StacLink(
-        link._1,
+        s"../${link._2}",
         VendorLinkType("Source"),
         Some(`image/cog`),
         Some("Source image STAC item for the label item")
@@ -244,15 +245,14 @@ class LabelCollectionBuilder[
         "datetime" -> labelItemProperties.datetime.asJson
       )
     )
-    // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<layerCollectionId>/<labelCollectionId>/<labelItemId>/data.geojson
-    val labelDataS3AbsLink: String = s"${labelItemSelfAbsPath}/data.geojson"
     // TODO: below should actually be `application/geo+json`
     // but StacItem from gt-server only accepts `image/cog`
     // or it will throw an exception
+    val labelDataRelLink = "./data.geojson"
     val labelAsset = Map(
       labelItemId ->
         StacAsset(
-          labelDataS3AbsLink,
+          labelDataRelLink,
           Some("Label Data Feature Collection"),
           Some(`image/cog`)
         )
@@ -272,7 +272,7 @@ class LabelCollectionBuilder[
         .copy(
           links = labelCollection.links ++ List(
             StacLink(
-              labelItemSelfAbsLink,
+              labelItemSelfRelLink,
               Item,
               Some(`application/json`),
               Some("STAC label item link")
@@ -281,7 +281,7 @@ class LabelCollectionBuilder[
         )
         .toStacCollection(),
       labelItem,
-      labelDataS3AbsLink
+      labelDataRelLink
     )
   }
 }
