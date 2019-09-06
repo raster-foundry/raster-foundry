@@ -83,6 +83,7 @@ lazy val sharedSettings = Seq(
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     "azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/",
     Resolver.bintrayRepo("naftoligug", "maven"),
+    Resolver.bintrayRepo("colisweb", "maven"),
     Classpaths.sbtPluginReleases,
     Opts.resolver.sonatypeReleases,
     Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins"),
@@ -429,7 +430,7 @@ lazy val akkautil = project
   * Backsplash Core Settings
   */
 lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
-  .dependsOn(common)
+  .dependsOn(common, http4sUtil)
   .settings(sharedSettings: _*)
   .settings(
     fork in run := true,
@@ -531,6 +532,8 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.doobieCore,
+      Dependencies.jaegerClient,
+      Dependencies.opentracing,
       Dependencies.nimbusJose,
       Dependencies.scalacacheCore,
       Dependencies.scalacacheCats,
