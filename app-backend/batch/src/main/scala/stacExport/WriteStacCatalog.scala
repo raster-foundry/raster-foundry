@@ -113,7 +113,7 @@ final case class WriteStacCatalog(exportId: UUID)(
               unsafeGetStacSelfLink(sceneItem.links),
               sceneItem.asJson.noSpaces,
               "application/json"
-            )
+          )
         )
         // label collection
         putObjectToS3(
