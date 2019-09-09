@@ -607,7 +607,9 @@ object ProjectDao
     }
   }
 
-  def getAnnotationProjectType(projectId: UUID): ConnectionIO[Option[String]] =
+  def getAnnotationProjectType(
+      projectId: UUID
+  ): ConnectionIO[Option[MLProjectType]] =
     for {
       projectO <- getProjectById(projectId)
       projectType = projectO match {
@@ -626,7 +628,7 @@ object ProjectDao
           }
         case _ => None
       }
-    } yield { projectType }
+    } yield { projectType.map(MLProjectType.fromString(_)) }
 
   def getAnnotationProjectStacInfo(
       projectId: UUID
@@ -661,7 +663,7 @@ object ProjectDao
           case 0 => None
           case _ =>
             val stacClasses
-              : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
+                : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
               .groupBy(_.labelGroupName match {
                 case Some(groupName) if groupName.nonEmpty => groupName
                 case _                                     => "label"

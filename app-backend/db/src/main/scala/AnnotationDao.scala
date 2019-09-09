@@ -568,15 +568,15 @@ object AnnotationDao extends Dao[Annotation] {
       projectId: UUID,
       layerId: UUID,
       taskStatuses: List[String],
-      projectType: String
+      projectType: MLProjectType
   ): ConnectionIO[Option[Json]] = projectType match {
-    case "classfication" =>
+    case MLProjectType.ChipClassification =>
       listClassificationLayerAnnotationsByTaskStatus(
         projectId,
         layerId,
         taskStatuses
       ).map(annoFC => Some(annoFC.asJson))
-    case "detection" =>
+    case MLProjectType.ObjectDetection =>
       listDetectionLayerAnnotationsByTaskStatus(
         projectId,
         layerId,

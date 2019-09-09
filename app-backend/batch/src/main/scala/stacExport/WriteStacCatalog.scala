@@ -113,7 +113,7 @@ final case class WriteStacCatalog(exportId: UUID)(
               unsafeGetStacSelfLink(sceneItem.links),
               sceneItem.asJson.noSpaces,
               "application/json"
-          )
+            )
         )
         // label collection
         putObjectToS3(
@@ -181,7 +181,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       projectId: UUID,
       layerId: UUID,
       taskStatuses: List[String],
-      projectType: String
+      projectType: MLProjectType
   ): ConnectionIO[Option[
     (
         List[Scene],
