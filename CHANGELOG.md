@@ -26,6 +26,7 @@
 
 - Repaired python scene codec for API interaction in scene ingests [\#5148](https://github.com/raster-foundry/raster-foundry/pull/5148)
 - Eliminated superfluous scene queries in thumbnail rendering [\#5139](https://github.com/raster-foundry/raster-foundry/pull/5139)
+- Fixed chip classification STAC data export and scene item `datetime` field for both project types [\#5158](https://github.com/raster-foundry/raster-foundry/pull/5158)
 
 ### Security
 

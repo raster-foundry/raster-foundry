@@ -607,7 +607,9 @@ object ProjectDao
     }
   }
 
-  def getAnnotationProjectType(projectId: UUID): ConnectionIO[Option[String]] =
+  def getAnnotationProjectType(
+      projectId: UUID
+  ): ConnectionIO[Option[MLProjectType]] =
     for {
       projectO <- getProjectById(projectId)
       projectType = projectO match {
@@ -626,7 +628,7 @@ object ProjectDao
           }
         case _ => None
       }
-    } yield { projectType }
+    } yield { projectType.map(MLProjectType.fromString(_)) }
 
   def getAnnotationProjectStacInfo(
       projectId: UUID

@@ -181,7 +181,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       projectId: UUID,
       layerId: UUID,
       taskStatuses: List[String],
-      projectType: String
+      projectType: MLProjectType
   ): ConnectionIO[Option[
     (
         List[Scene],

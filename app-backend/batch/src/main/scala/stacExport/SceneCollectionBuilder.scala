@@ -5,7 +5,6 @@ import geotrellis.proj4.CRS
 import com.rasterfoundry.datamodel._
 import io.circe._
 import io.circe.syntax._
-import io.circe.parser._
 import geotrellis.server.stac._
 import geotrellis.server.stac.{StacExtent => _}
 import com.rasterfoundry.batch.stacExport.{StacExtent => BatchStacExtent}
@@ -82,7 +81,8 @@ class SceneCollectionBuilder[
       version: String
   ): SceneCollectionBuilder[CollectionRequirements with CollectionStacVersion] =
     new SceneCollectionBuilder(
-      sceneCollection.copy(stacVersion = Some(version)))
+      sceneCollection.copy(stacVersion = Some(version))
+    )
 
   def withId(
       id: String
@@ -184,12 +184,13 @@ class SceneCollectionBuilder[
               Some("Root")
             )
           )
-          val sceneProperties = JsonObject(
-            (
-              "datetime",
-              parse(
-                scene.filterFields.acquisitionDate.get.toLocalDateTime.toString
-              ).getOrElse(Json.Null)
+          val sceneProperties = JsonObject.fromMap(
+            Map(
+              "datetime" -> scene.filterFields.acquisitionDate
+                .getOrElse(scene.createdAt)
+                .toLocalDateTime
+                .toString
+                .asJson
             )
           )
           val sceneAsset = Map(
