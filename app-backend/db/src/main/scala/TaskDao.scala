@@ -298,7 +298,15 @@ object TaskDao extends Dao[Task] {
       params: UserTaskActivityParameters
   ): Fragment =
     fr"""
-    SELECT DISTINCT ugr.user_id, users.name, users.profile_image_uri
+    SELECT DISTINCT
+      ugr.user_id,
+      COALESCE(
+        NULLIF(users.name, ''),
+        NULLIF(users.email, ''),
+        NULLIF(users.personal_info->>'email', ''),
+        users.id
+      ),
+      users.profile_image_uri
     FROM user_group_roles AS ugr
     INNER JOIN (
       SELECT
