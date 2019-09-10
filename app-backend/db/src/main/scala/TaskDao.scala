@@ -452,30 +452,84 @@ object TaskDao extends Dao[Task] {
       .list
   }
 
+  def taskStatusF(taskStatuses: List[String]): Fragment =
+    taskStatuses.map(TaskStatus.fromString(_)).toNel match {
+      case Some(taskStatusNel) =>
+        fr"AND" ++ Fragments.in(fr"status", taskStatusNel)
+      case _ => fr""
+    }
+
   def createUnionedGeomExtent(
       projectId: UUID,
       layerId: UUID,
       taskStatuses: List[String]
-  ): ConnectionIO[Option[UnionedGeomExtent]] = {
-    val taskStatusF: Fragment =
-      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
-        case Some(taskStatusNel) =>
-          fr"AND" ++ Fragments.in(fr"status", taskStatusNel)
-        case _ => fr""
-      }
+  ): ConnectionIO[Option[UnionedGeomExtent]] =
     (fr"""
-      SELECT
-        ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry,
-        ST_XMin(ST_Extent(ST_Transform(geometry, 4326))) AS x_min,
-        ST_YMin(ST_Extent(ST_Transform(geometry, 4326))) AS y_min,
-        ST_XMax(ST_Extent(ST_Transform(geometry, 4326))) AS x_max,
-        ST_YMax(ST_Extent(ST_Transform(geometry, 4326))) AS y_max
-      FROM tasks
-      WHERE
-        project_id = ${projectId}
-        AND project_layer_id = ${layerId}
-      """ ++ taskStatusF)
+    SELECT
+      ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry,
+      ST_XMin(ST_Extent(ST_Transform(geometry, 4326))) AS x_min,
+      ST_YMin(ST_Extent(ST_Transform(geometry, 4326))) AS y_min,
+      ST_XMax(ST_Extent(ST_Transform(geometry, 4326))) AS x_max,
+      ST_YMax(ST_Extent(ST_Transform(geometry, 4326))) AS y_max
+    FROM tasks
+    WHERE
+      project_id = ${projectId}
+      AND project_layer_id = ${layerId}
+    """ ++ taskStatusF(taskStatuses))
       .query[UnionedGeomExtent]
       .option
-  }
+
+  def listTaskGeomByStatus(
+      user: User,
+      projectId: UUID,
+      layerId: UUID
+  ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] =
+    (fr"""
+    SELECT
+      status,
+      ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry
+    FROM tasks
+    WHERE
+      project_id = ${projectId}
+      AND project_layer_id = ${layerId}
+    """ ++ taskStatusF(
+      List(
+        TaskStatus.Unlabeled.toString,
+        TaskStatus.LabelingInProgress.toString,
+        TaskStatus.Labeled.toString,
+        TaskStatus.ValidationInProgress.toString,
+        TaskStatus.Validated.toString
+      )
+    ) ++ fr"GROUP BY status")
+      .query[UnionedGeomWithStatus]
+      .to[List]
+      .map(geomWithStatusList => {
+        PaginatedGeoJsonResponse(
+          geomWithStatusList.length,
+          false,
+          false,
+          0,
+          geomWithStatusList.length,
+          geomWithStatusList.map(geomWithStatus => {
+            Task.TaskFeature(
+              UUID.randomUUID(),
+              Task.TaskProperties(
+                UUID.randomUUID(),
+                Instant.now(),
+                user.id,
+                Instant.now(),
+                user.id,
+                projectId,
+                layerId,
+                geomWithStatus.status,
+                None,
+                None,
+                List()
+              ),
+              geomWithStatus.geometry
+            )
+          })
+        )
+
+      })
 }

@@ -42,15 +42,24 @@ trait ProjectLayerTaskRoutes
         } {
           (withPagination & taskQueryParameters) { (page, taskParams) =>
             complete {
-              TaskDao
-                .listTasks(
-                  taskParams,
-                  projectId,
-                  layerId,
-                  page
-                )
-                .transact(xa)
-                .unsafeToFuture
+              (
+                taskParams.format match {
+                  case Some(format) if format.toUpperCase == "SUMMARY" =>
+                    TaskDao.listTaskGeomByStatus(
+                      user,
+                      projectId,
+                      layerId
+                    )
+                  case _ =>
+                    TaskDao
+                      .listTasks(
+                        taskParams,
+                        projectId,
+                        layerId,
+                        page
+                      )
+                }
+              ).transact(xa).unsafeToFuture
             }
           }
         }

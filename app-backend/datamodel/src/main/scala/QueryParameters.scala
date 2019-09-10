@@ -659,7 +659,8 @@ final case class TaskQueryParameters(
     actionStartTime: Option[Timestamp] = None,
     actionEndTime: Option[Timestamp] = None,
     actionMinCount: Option[Int] = None,
-    actionMaxCount: Option[Int] = None
+    actionMaxCount: Option[Int] = None,
+    format: Option[String] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
