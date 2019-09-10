@@ -178,6 +178,7 @@ class LayerCollectionBuilder[
     // ../../../catalog.json
     val sceneCollectionRootPath = s"../${rootPath}"
     val sceneCollectionAbsLink = s"${sceneCollectionAbsPath}/collection.json"
+    val sceneCollectionRelLink = s"${sceneCollectionId}/collection.json"
     val sceneCollectionOwnLinks = List(
       StacLink(
         sceneCollectionAbsLink,
@@ -192,7 +193,7 @@ class LayerCollectionBuilder[
         Some("Root")
       ),
       StacLink(
-        s"${absPath}/collection.json",
+        "../collection.json",
         Parent,
         Some(`application/json`),
         Some("Layer Collection")
@@ -201,7 +202,7 @@ class LayerCollectionBuilder[
     val (sceneCollection, sceneItems, sceneItemLinks): (
         StacCollection,
         List[StacItem],
-        List[(String, String)]
+        List[(String, String, String)]
     ) = sceneCollectionBuilder
       .withVersion(layerCollection.stacVersion.get)
       .withId(sceneCollectionId)
@@ -224,6 +225,7 @@ class LayerCollectionBuilder[
     // ../../../catalog.json
     val labelCollectionRootPath = s"../${rootPath}"
     val labelCollectionAbsLink = s"${labelCollectionAbsPath}/collection.json"
+    val labelCollectionRelLink = s"${labelCollectionId}/collection.json"
     val labelCollectionOwnLinks = List(
       StacLink(
         labelCollectionAbsLink,
@@ -238,7 +240,7 @@ class LayerCollectionBuilder[
         Some("Root")
       ),
       StacLink(
-        s"${absPath}/collection.json",
+        "../collection.json",
         Parent,
         Some(`application/json`),
         Some("Layer Collection")
@@ -286,20 +288,21 @@ class LayerCollectionBuilder[
         .withParentPath(labelCollectionAbsPath, labelCollectionRootPath)
         .withTasksGeomExtent(tasks, tasksGeomExtent)
         .withItemPropInfo(itemPropsThin.get)
-        .withSceneItemLinks(sceneItemLinks)
+        .withSceneItemLinks(sceneItemLinks.map(i =>
+          (i._1, s"../${i._2}", i._3))) // adjust relative links
         .build()
 
     val updatedLayerCollection: StacCollection = layerCollection
       .copy(
         links = layerCollection.links ++ List(
           StacLink(
-            labelCollectionAbsLink,
+            labelCollectionRelLink,
             Child,
             Some(`application/json`),
             Some("Label Collection")
           ),
           StacLink(
-            sceneCollectionAbsLink,
+            sceneCollectionRelLink,
             Child,
             Some(`application/json`),
             Some("Scene Collection")
