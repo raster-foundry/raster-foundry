@@ -9,6 +9,7 @@
 - Added caching for selecting projects, project layers, and users by ID [\#5144](https://github.com/raster-foundry/raster-foundry/pull/5144)
 - Added documentation on choice of tracing libraries [\#5145](https://github.com/raster-foundry/raster-foundry/pull/5145)
 - Added a check for band counts during project exports [\#5154](https://github.com/raster-foundry/raster-foundry/pull/5154)
+- Added a query parameter to list tasks union by status [\#5159](https://github.com/raster-foundry/raster-foundry/pull/5159)
 
 ### Changed
 
