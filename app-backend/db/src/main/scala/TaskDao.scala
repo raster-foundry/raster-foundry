@@ -482,7 +482,8 @@ object TaskDao extends Dao[Task] {
   def listTaskGeomByStatus(
       user: User,
       projectId: UUID,
-      layerId: UUID
+      layerId: UUID,
+      statusO: Option[TaskStatus]
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] =
     (fr"""
     SELECT
@@ -493,13 +494,17 @@ object TaskDao extends Dao[Task] {
       project_id = ${projectId}
       AND project_layer_id = ${layerId}
     """ ++ taskStatusF(
-      List(
-        TaskStatus.Unlabeled.toString,
-        TaskStatus.LabelingInProgress.toString,
-        TaskStatus.Labeled.toString,
-        TaskStatus.ValidationInProgress.toString,
-        TaskStatus.Validated.toString
-      )
+      statusO match {
+        case Some(status) => List(status.toString())
+        case _ =>
+          List(
+            TaskStatus.Unlabeled.toString,
+            TaskStatus.LabelingInProgress.toString,
+            TaskStatus.Labeled.toString,
+            TaskStatus.ValidationInProgress.toString,
+            TaskStatus.Validated.toString
+          )
+      }
     ) ++ fr"GROUP BY status")
       .query[UnionedGeomWithStatus]
       .to[List]

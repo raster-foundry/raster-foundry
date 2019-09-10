@@ -48,7 +48,8 @@ trait ProjectLayerTaskRoutes
                     TaskDao.listTaskGeomByStatus(
                       user,
                       projectId,
-                      layerId
+                      layerId,
+                      taskParams.status
                     )
                   case _ =>
                     TaskDao
