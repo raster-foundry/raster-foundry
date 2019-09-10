@@ -305,7 +305,7 @@ object TaskDao extends Dao[Task] {
         NULLIF(users.email, ''),
         NULLIF(users.personal_info->>'email', ''),
         users.id
-      ),
+      ) as name,
       users.profile_image_uri
     FROM user_group_roles AS ugr
     INNER JOIN (
