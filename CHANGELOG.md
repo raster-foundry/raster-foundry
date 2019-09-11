@@ -4,6 +4,20 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.29.0](https://github.com/raster-foundry/raster-foundry/compare/1.28.0...1.29.0)
+
+### Added
+
 - Added trace ID to exception logging for backsplash [\#5134](https://github.com/raster-foundry/raster-foundry/pull/5134)
 - Added projectId and layerId QPs to STAC export list endpoint [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
 - Added caching for selecting projects, project layers, and users by ID [\#5144](https://github.com/raster-foundry/raster-foundry/pull/5144)
@@ -19,17 +33,11 @@
 - Tuned proxy_connect_timeout to make Nginx fail faster [\#5133](https://github.com/raster-foundry/raster-foundry/pull/5133)
 - Change absolute links in stac export to relative, so they make sense in a local downloaded context [\#5155](https://github.com/raster-foundry/raster-foundry/pull/5155), [\#5161](https://github.com/raster-foundry/raster-foundry/pull/5161)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Repaired python scene codec for API interaction in scene ingests [\#5148](https://github.com/raster-foundry/raster-foundry/pull/5148)
 - Eliminated superfluous scene queries in thumbnail rendering [\#5139](https://github.com/raster-foundry/raster-foundry/pull/5139)
 - Fixed chip classification STAC data export and scene item `datetime` field for both project types [\#5158](https://github.com/raster-foundry/raster-foundry/pull/5158)
-
-### Security
 
 ## [1.28.0](https://github.com/raster-foundry/raster-foundry/compare/1.27.0...1.28.0)
 
