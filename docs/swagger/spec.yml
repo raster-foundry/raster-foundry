@@ -3336,6 +3336,7 @@ paths:
         - $ref: '#/parameters/actionEndTime'
         - $ref: '#/parameters/actionMinCount'
         - $ref: '#/parameters/actionMaxCount'
+        - $ref: '#/parameters/format'
       responses:
         200:
           description: 'Paginated geoJSON feature collection containing tasks for this project layer'
@@ -5657,6 +5658,12 @@ parameters:
       Note: CURRENTLY IGNORED.
     in: query
     type: integer
+    required: false
+  format:
+    name: format
+    description: 'List tasks union by status if `summary` is specified'
+    in: query
+    type: string
     required: false
   taskId:
     name: taskId

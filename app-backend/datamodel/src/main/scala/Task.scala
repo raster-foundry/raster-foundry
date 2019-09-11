@@ -223,3 +223,9 @@ final case class UnionedGeomExtent(
     xMax: Double,
     yMax: Double
 )
+
+@JsonCodec
+final case class UnionedGeomWithStatus(
+    status: TaskStatus,
+    geometry: Projected[Geometry]
+)

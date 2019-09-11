@@ -175,7 +175,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionStartTime.as(deserializerTimestamp).?,
       'actionEndTime.as(deserializerTimestamp).?,
       'actionMinCount.as[Int].?,
-      'actionMaxCount.as[Int].?
+      'actionMaxCount.as[Int].?,
+      'format.as[String].?
     ).as(TaskQueryParameters.apply _)
 
   def userTaskActivityParameters =
