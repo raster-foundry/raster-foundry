@@ -4,7 +4,6 @@ import com.rasterfoundry.backsplash.OgcStore
 import com.rasterfoundry.backsplash.OgcStore.ToOgcStoreOps
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.datamodel.User
-
 import cats.data.Validated
 import cats.effect.{ContextShift, IO}
 import geotrellis.server.ogc.wcs.params.{
@@ -18,13 +17,16 @@ import geotrellis.server.ogc.wcs.ops.{GetCoverage, Operations}
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.scalaxml._
-
 import com.typesafe.scalalogging.LazyLogging
-
 import java.util.UUID
 
+import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.rasterfoundry.http4s.{TracedHTTPRoutes, AuthedTraceRequest}
+
 class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
-    implicit contextShift: ContextShift[IO])
+    implicit contextShift: ContextShift[IO],
+    tracingContextBuilder: TracingContextBuilder[IO])
     extends ToOgcStoreOps
     with LazyLogging {
 
@@ -32,9 +34,11 @@ class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     List(urlPrefix, request.scriptName, request.pathInfo).mkString
   }
 
-  private def authedReqToResponse(authedReq: AuthedRequest[IO, User],
-                                  projectId: UUID,
-                                  serviceUrl: String): IO[Response[IO]] =
+  private def authedReqToResponse(
+      authedReq: AuthedRequest[IO, User],
+      projectId: UUID,
+      serviceUrl: String,
+      tracingContext: TracingContext[IO]): IO[Response[IO]] =
     WcsParams(authedReq.req.multiParams) match {
       case Validated.Invalid(errors) =>
         BadRequest(
@@ -44,13 +48,13 @@ class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
         p match {
           case params: GetCapabilitiesWcsParams =>
             for {
-              rsm <- layers.getWcsModel(projectId)
+              rsm <- layers.getWcsModel(projectId, tracingContext)
               resp <- Ok(Operations.getCapabilities(serviceUrl, rsm, params))
             } yield resp
 
           case params: DescribeCoverageWcsParams =>
             for {
-              rsm <- layers.getWcsModel(projectId)
+              rsm <- layers.getWcsModel(projectId, tracingContext)
               resp <- Ok(Operations.describeCoverage(rsm, params))
             } yield {
               resp
@@ -58,7 +62,7 @@ class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
 
           case params: GetCoverageWcsParams =>
             for {
-              rsm <- layers.getWcsModel(projectId)
+              rsm <- layers.getWcsModel(projectId, tracingContext)
               resp <- Ok(new GetCoverage(rsm).build(params))
             } yield resp
 
@@ -69,18 +73,22 @@ class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
 
   // Authed so we can piggyback on magic public checks from existing authenticators,
   // and so that if something _can_ provide the params we want, we can still auth
-  val routes: AuthedService[User, IO] = AuthedService[User, IO] {
-    case authedReq @ GET -> Root / UUIDWrapper(projectId) as _ =>
-      val serviceUrl = requestToServiceUrl(authedReq.req)
-      authedReqToResponse(authedReq, projectId, serviceUrl)
+  val routes = TracedHTTPRoutes[IO] {
+    case AuthedTraceRequest(authedRequest, tracingContext) => {
+      authedRequest match {
+        case authedReq @ GET -> Root / UUIDWrapper(projectId) as _ =>
+          val serviceUrl = requestToServiceUrl(authedReq.req)
+          authedReqToResponse(authedReq, projectId, serviceUrl, tracingContext)
 
-    case authedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
-          _) as _ =>
-      val serviceUrl = requestToServiceUrl(authedReq.req)
-      authedReqToResponse(authedReq, projectId, serviceUrl)
+        case authedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
+              _) as _ =>
+          val serviceUrl = requestToServiceUrl(authedReq.req)
+          authedReqToResponse(authedReq, projectId, serviceUrl, tracingContext)
 
-    case r @ _ =>
-      logger.warn(s"Unexpected request: ${r.req.pathInfo}, ${r.req.params}")
-      NotFound()
+        case r @ _ =>
+          logger.warn(s"Unexpected request: ${r.req.pathInfo}, ${r.req.params}")
+          NotFound()
+      }
+    }
   }
 }

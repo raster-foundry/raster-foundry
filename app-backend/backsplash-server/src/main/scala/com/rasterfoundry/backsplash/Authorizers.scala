@@ -3,8 +3,8 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.datamodel.{
   ActionType,
-  AuthResult,
   AuthFailure,
+  AuthResult,
   AuthSuccess,
   ObjectType,
   Project,
@@ -18,7 +18,6 @@ import com.rasterfoundry.database.{
   SceneDao,
   ToolRunDao
 }
-
 import cats.Applicative
 import cats.effect._
 import doobie.Transactor
@@ -29,6 +28,8 @@ import scalacache.CatsEffect.modes._
 
 import scala.concurrent.duration._
 import java.util.UUID
+
+import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
 
 class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 
@@ -69,13 +70,24 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
         .transact(xa)
     }
 
-  private def checkProjectLayerCached(projectID: UUID,
-                                      layerID: UUID): IO[Boolean] =
-    memoizeF[IO, Boolean](Some(10 seconds)) {
-      logger.debug(
-        s"Checking whether layer ${layerID} is in project ${projectID}")
-      ProjectLayerDao.layerIsInProject(layerID, projectID).transact(xa)
+  private def checkProjectLayerCached(
+      projectID: UUID,
+      layerID: UUID,
+      tracingContext: TracingContext[IO]): IO[Boolean] = {
+    val tags =
+      Map("projectId" -> projectID.toString, "layerID" -> layerID.toString)
+    tracingContext.childSpan("checkProjectLayerCached", tags) use {
+      childContext =>
+        {
+          memoizeF[IO, Boolean](Some(10 seconds)) {
+            logger.debug(
+              s"Checking whether layer ${layerID} is in project ${projectID}")
+            childContext.childSpan("layerIsInProject", tags) use (_ =>
+              ProjectLayerDao.layerIsInProject(layerID, projectID).transact(xa))
+          }
+        }
     }
+  }
 
   private def checkProjectAnalysisCached(projectId: UUID,
                                          analysisId: UUID): IO[Boolean] =
@@ -103,11 +115,23 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
   def authProject(user: User, projectId: UUID): IO[Project] =
     authObject(checkProjectAuthCached, user, projectId)
 
+  def authProject(user: User,
+                  projectId: UUID,
+                  tracingContext: TracingContext[IO]): IO[Project] =
+    tracingContext.childSpan(
+      "authProject",
+      Map("user" -> user.id, "projectId" -> projectId.toString)) use { _ =>
+      authObject(checkProjectAuthCached, user, projectId)
+    }
+
   def authScene(user: User, sceneId: UUID): IO[Scene] =
     authObject(checkSceneAuthCached, user, sceneId)
 
-  def authProjectLayer(projectID: UUID, layerID: UUID): IO[Unit] = {
-    checkProjectLayerCached(projectID, layerID) flatMap {
+  def authProjectLayer(projectID: UUID,
+                       layerID: UUID,
+                       tracingContext: TracingContext[IO] =
+                         NoOpTracingContext[IO]()): IO[Unit] = {
+    checkProjectLayerCached(projectID, layerID, tracingContext) flatMap {
       case false =>
         IO.raiseError(
           NotAuthorizedException(

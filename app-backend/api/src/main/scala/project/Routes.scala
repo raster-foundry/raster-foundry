@@ -885,8 +885,6 @@ trait ProjectRoutes
             project <- ProjectDao.unsafeGetProjectById(projectId)
             result <- SceneToLayerDao
               .getMosaicDefinition(project.defaultLayerId)
-              .compile
-              .to[List]
           } yield { result }
 
           getMosaicDefinitionIO

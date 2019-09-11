@@ -212,7 +212,7 @@ object ExportDao extends Dao[Export] {
       layerId: UUID,
       exportOptions: ExportOptions
   ): ConnectionIO[MosaicExportSource] = {
-    SceneToLayerDao.getMosaicDefinition(layerId).compile.toList map { mds =>
+    SceneToLayerDao.getMosaicDefinition(layerId) map { mds =>
       // we definitely need NoData but it isn't obviously available :(
       val ndOverride: Option[Double] = None
       val layers = mds.flatMap { md =>

@@ -7,7 +7,7 @@ import org.http4s.util.CaseInsensitiveString
 
 package object backsplash {
 
-  type BacksplashMosaic = fs2.Stream[IO, BacksplashImage[IO]]
+  type BacksplashMosaic = IO[List[BacksplashImage[IO]]]
 
   implicit val encodeKeyDouble: KeyEncoder[Double] = new KeyEncoder[Double] {
     def apply(key: Double): String = key.toString

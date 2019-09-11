@@ -59,8 +59,8 @@ object Version {
   val spire = "0.16.0"
   val spray = "1.3.4"
   val sup = "0.2.0"
-  val openTracing      = "0.0.6"
-  val jaegerClient     = "1.0.0"
+  val openTracing = "0.0.6"
+  val jaegerClient = "1.0.0"
 }
 
 object Dependencies {
@@ -122,12 +122,12 @@ object Dependencies {
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val http4sXml = "org.http4s" %% "http4s-scala-xml" % Version.http4s
-  val jaegerClient    = "io.jaegertracing" % "jaeger-client"        % "1.0.0"
+  val jaegerClient = "io.jaegertracing" % "jaeger-client" % "1.0.0"
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % "1.5.1-cats"
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
-  val opentracing     = "com.colisweb"     %% "scala-opentracing"   % Version.openTracing
+  val opentracing = "com.colisweb" %% "scala-opentracing" % Version.openTracing
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
   val rollbar = "com.rollbar" % "rollbar-java" % Version.rollbar
   val scaffeine = "com.github.blemale" %% "scaffeine" % Version.scaffeine
