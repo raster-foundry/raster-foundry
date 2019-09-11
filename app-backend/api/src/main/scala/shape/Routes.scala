@@ -24,7 +24,7 @@ import geotrellis.vector.Projected
 import geotrellis.vector.reproject.Reproject
 import io.circe.generic.JsonCodec
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 @JsonCodec
 final case class ShapeFeatureCollectionCreate(
@@ -40,6 +40,7 @@ trait ShapeRoutes
     with LazyLogging {
 
   val xa: Transactor[IO]
+  implicit val ec: ExecutionContext
 
   val shapeRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -172,7 +173,7 @@ trait ShapeRoutes
   }
 
   def getShape(shapeId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
         .transact(xa)
@@ -203,7 +204,7 @@ trait ShapeRoutes
   }
 
   def updateShape(shapeId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
         .transact(xa)
@@ -222,7 +223,7 @@ trait ShapeRoutes
   }
 
   def deleteShape(shapeId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Delete)
         .transact(xa)
@@ -236,7 +237,7 @@ trait ShapeRoutes
   }
 
   def listShapePermissions(shapeId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
         .transact(xa)
@@ -254,7 +255,10 @@ trait ShapeRoutes
   def replaceShapePermissions(shapeId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ShapeDao.authorized(user, ObjectType.Shape, shapeId, ActionType.Edit),
+        (ShapeDao
+           .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit) map {
+           _.toBoolean
+         },
          acrList traverse { acr =>
            ShapeDao.isValidPermission(acr, user)
          } map { _.foldLeft(true)(_ && _) }).tupled
@@ -277,7 +281,10 @@ trait ShapeRoutes
   def addShapePermission(shapeId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ShapeDao.authorized(user, ObjectType.Shape, shapeId, ActionType.Edit),
+        (ShapeDao
+           .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit) map {
+           _.toBoolean
+         },
          ShapeDao.isValidPermission(acr, user)).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
@@ -296,7 +303,7 @@ trait ShapeRoutes
   }
 
   def listUserShapeActions(shapeId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
         .transact(xa)
@@ -320,7 +327,7 @@ trait ShapeRoutes
   }
 
   def deleteShapePermissions(shapeId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
         .transact(xa)

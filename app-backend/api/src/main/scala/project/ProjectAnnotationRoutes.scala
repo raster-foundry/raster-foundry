@@ -12,7 +12,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.Transactor
 import doobie.implicits._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import java.util.UUID
 
 trait ProjectAnnotationRoutes
@@ -23,6 +23,7 @@ trait ProjectAnnotationRoutes
     with QueryParametersCommon {
 
   implicit val xa: Transactor[IO]
+  implicit val ec: ExecutionContext
 
   def listAnnotations(projectId: UUID): Route = extractTokenHeader { tokenO =>
     extractMapTokenParam { mapTokenO =>
@@ -66,7 +67,7 @@ trait ProjectAnnotationRoutes
   }
 
   def createAnnotation(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa)
@@ -93,7 +94,7 @@ trait ProjectAnnotationRoutes
 
   def exportAnnotationShapefile(projectId: UUID): Route = authenticate { user =>
     (annotationExportQueryParameters) { annotationExportQP =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
@@ -124,7 +125,7 @@ trait ProjectAnnotationRoutes
 
   def getAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
@@ -146,7 +147,7 @@ trait ProjectAnnotationRoutes
 
   def updateAnnotation(projectId: UUID): Route =
     authenticate { user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
           .transact(xa)
@@ -168,7 +169,7 @@ trait ProjectAnnotationRoutes
 
   def deleteAnnotation(projectId: UUID, annotationId: UUID): Route =
     authenticate { user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
           .transact(xa)
@@ -186,7 +187,7 @@ trait ProjectAnnotationRoutes
     }
 
   def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa)
@@ -204,7 +205,7 @@ trait ProjectAnnotationRoutes
   }
 
   def listAnnotationGroups(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
@@ -220,7 +221,7 @@ trait ProjectAnnotationRoutes
   }
 
   def createAnnotationGroup(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa)
@@ -239,7 +240,7 @@ trait ProjectAnnotationRoutes
 
   def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
@@ -258,7 +259,7 @@ trait ProjectAnnotationRoutes
       projectId: UUID,
       annotationGroupId: UUID
   ): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
@@ -275,7 +276,7 @@ trait ProjectAnnotationRoutes
 
   def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
           .transact(xa)
@@ -294,7 +295,7 @@ trait ProjectAnnotationRoutes
 
   def deleteAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
           .transact(xa)

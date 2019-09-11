@@ -25,7 +25,7 @@ object Version {
   val circeOptics = "0.11.0"
   val commonsIO = "2.5"
   val dnsJava = "2.1.8"
-  val doobie = "0.6.0"
+  val doobie = "0.7.0"
   val dropbox = "3.0.9"
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
@@ -130,6 +130,7 @@ object Dependencies {
   val scalacacheCore = "com.github.cb372" %% "scalacache-core" % Version.scalacache
   val scalacacheCats = "com.github.cb372" %% "scalacache-cats-effect" % Version.scalacache
   val scalacacheCaffeine = "com.github.cb372" %% "scalacache-caffeine" % Version.scalacache
+  val scalacacheCirce = "com.github.cb372" %% "scalacache-circe" % Version.scalacache
   val scalacacheMemcached = "com.github.cb372" %% "scalacache-memcached" % Version.scalacache intransitive ()
   val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck % "test"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Version.scalaLogging

@@ -9,7 +9,7 @@ import com.rasterfoundry.database.util.RFTransactor
 
 import doobie.implicits._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object AkkaSystem {
   implicit val system = ActorSystem("rf-system")
@@ -22,6 +22,7 @@ object Main extends App with Config with Router {
   implicit val materializer = AkkaSystem.materializer
 
   val xa = RFTransactor.buildTransactor()
+  implicit val ec = ExecutionContext.Implicits.global
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
   logger.info(s"Server Started (${canSelect})")

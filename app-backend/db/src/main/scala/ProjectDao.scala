@@ -7,7 +7,7 @@ import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel.PageRequest
 import cats.data._
 import cats.implicits._
-import cats.effect.{LiftIO, IO}
+import cats.effect.{Async, IO, LiftIO}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -19,6 +19,12 @@ import java.util.UUID
 import java.net.URI
 import java.net.URLDecoder
 
+import com.rasterfoundry.database.util.Cache
+import scalacache._
+import scalacache.CatsEffect.modes._
+
+import scala.concurrent.duration._
+
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class ProjectDao()
 
@@ -29,6 +35,15 @@ object ProjectDao
     with ObjectPermissions[Project] {
 
   val tableName = "projects"
+
+  import Cache.ProjectCache._
+
+  def deleteCache(id: UUID) = {
+    val result = for {
+      _ <- remove(Project.cacheKey(id))(projectCache, async[IO])
+    } yield ()
+    Async[ConnectionIO].liftIO(result)
+  }
 
   val selectF: Fragment = sql"""
     SELECT
@@ -46,16 +61,20 @@ object ProjectDao
 
   def projectByIdQuery(projectId: UUID): Query0[Project] = {
     val idFilter = Some(fr"id = ${projectId}")
-
     (selectF ++ Fragments.whereAndOpt(idFilter))
       .query[Project]
   }
 
   def unsafeGetProjectById(projectId: UUID): ConnectionIO[Project] =
-    projectByIdQuery(projectId).unique
+    cachingF(Project.cacheKey(projectId))(Some(30 minutes)) {
+      projectByIdQuery(projectId).unique
+    }
 
-  def getProjectById(projectId: UUID): ConnectionIO[Option[Project]] =
-    projectByIdQuery(projectId).option
+  def getProjectById(projectId: UUID): ConnectionIO[Option[Project]] = {
+    Cache.getOptionCache(Project.cacheKey(projectId), Some(30 minutes)) {
+      projectByIdQuery(projectId).option
+    }
+  }
 
   def listProjects(
       page: PageRequest,
@@ -194,6 +213,7 @@ object ProjectDao
         ),
         dbProject.defaultLayerId
       )
+      _ <- deleteCache(id).attempt
       updateProject <- updateProjectQ(project, id).run
     } yield updateProject
   }
@@ -201,7 +221,6 @@ object ProjectDao
   def deleteProject(
       id: UUID
   )(implicit L: LiftIO[ConnectionIO]): ConnectionIO[Int] = {
-
     val aoiDeleteQuery = sql"DELETE FROM aois where aois.project_id = ${id}"
     for {
       _ <- aoiDeleteQuery.update.run
@@ -214,7 +233,10 @@ object ProjectDao
           }
         })
       projectDeleteCount <- query.filter(fr"id = ${id}").delete
-    } yield projectDeleteCount
+      _ <- deleteCache(id)
+    } yield {
+      projectDeleteCount
+    }
   }
 
   def updateSceneIngestStatus(projectLayerId: UUID): ConnectionIO[Int] = {
@@ -250,7 +272,9 @@ object ProjectDao
     }
   }
 
-  def updateProjectExtentIO(projectId: UUID): ConnectionIO[Int] = sql"""
+  def updateProjectExtentIO(projectId: UUID): ConnectionIO[Int] = {
+    val updateQueryIO =
+      sql"""
     UPDATE projects
     SET extent = subquery.extent
     FROM
@@ -263,6 +287,12 @@ object ProjectDao
       GROUP BY p.id) AS subquery
     WHERE projects.id = ${projectId};
     """.update.run
+
+    for {
+      updateQuery <- updateQueryIO
+      _ <- deleteCache(projectId)
+    } yield updateQuery
+  }
 
   def sceneIdWithDatasourceF(
       sceneIds: NonEmptyList[UUID],
@@ -528,11 +558,12 @@ object ProjectDao
       objectType: ObjectType,
       objectId: UUID,
       actionType: ActionType
-  ): ConnectionIO[Boolean] =
+  ): ConnectionIO[AuthResult[Project]] =
     this.query
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
-      .exists
+      .selectOption
+      .map(AuthResult.fromOption _)
 
   def authProjectLayerExist(
       projectId: UUID,
@@ -543,7 +574,9 @@ object ProjectDao
     for {
       authProject <- authorized(user, ObjectType.Project, projectId, actionType)
       layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
-    } yield { authProject && layerExist }
+    } yield {
+      authProject.toBoolean && layerExist
+    }
 
   def removeLayerOverview(projectLayerId: UUID, locUrl: String): IO[Unit] = {
     logger
@@ -574,7 +607,9 @@ object ProjectDao
     }
   }
 
-  def getAnnotationProjectType(projectId: UUID): ConnectionIO[Option[String]] =
+  def getAnnotationProjectType(
+      projectId: UUID
+  ): ConnectionIO[Option[MLProjectType]] =
     for {
       projectO <- getProjectById(projectId)
       projectType = projectO match {
@@ -593,7 +628,7 @@ object ProjectDao
           }
         case _ => None
       }
-    } yield { projectType }
+    } yield { projectType.map(MLProjectType.fromString(_)) }
 
   def getAnnotationProjectStacInfo(
       projectId: UUID
@@ -627,15 +662,12 @@ object ProjectDao
         infoList.length match {
           case 0 => None
           case _ =>
-            val (property, taskType): (List[String], String) =
-              infoList.traverse(_.labelGroupName) match {
-                case Some(groupNameList) =>
-                  (groupNameList.distinct, "classification")
-                case _ => (List("label"), "detection")
-              }
             val stacClasses
               : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
-              .groupBy(_.labelGroupName.getOrElse("label"))
+              .groupBy(_.labelGroupName match {
+                case Some(groupName) if groupName.nonEmpty => groupName
+                case _                                     => "label"
+              })
               .map {
                 case (propName, info) =>
                   StacLabelItemProperties.StacLabelItemClasses(
@@ -643,6 +675,12 @@ object ProjectDao
                     info.traverse(_.labelName).getOrElse(List())
                 )
             } toList)
+            val groupNamesDry = stacClasses.map(_.name).toSet
+            val (property, taskType) =
+              groupNamesDry.size match {
+                case 1 => (List("label"), "detection")
+                case _ => (groupNamesDry.toList, "classification")
+              }
             Some(
               StacLabelItemPropertiesThin(
                 property,

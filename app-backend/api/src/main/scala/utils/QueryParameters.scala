@@ -175,7 +175,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionStartTime.as(deserializerTimestamp).?,
       'actionEndTime.as(deserializerTimestamp).?,
       'actionMinCount.as[Int].?,
-      'actionMaxCount.as[Int].?
+      'actionMaxCount.as[Int].?,
+      'format.as[String].?
     ).as(TaskQueryParameters.apply _)
 
   def userTaskActivityParameters =
@@ -191,7 +192,9 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         ownerQueryParameters &
         searchParams &
         parameters(
-          'exportStatus.as[String].?
+          'exportStatus.as[String].?,
+          'projectId.as[UUID].?,
+          'layerId.as[UUID].?
         )
     ).as(StacExportQueryParameters.apply _)
 }

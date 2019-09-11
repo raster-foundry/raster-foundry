@@ -15,7 +15,7 @@ import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
 
-class BacksplashMamlAdapter[HistStore, LayerStore: ProjectStore](
+class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
     mosaicImplicits: MosaicImplicits[HistStore, LayerStore],
     layerStore: LayerStore,
     xa: Transactor[IO]) {

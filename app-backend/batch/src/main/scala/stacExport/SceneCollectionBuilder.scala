@@ -5,7 +5,6 @@ import geotrellis.proj4.CRS
 import com.rasterfoundry.datamodel._
 import io.circe._
 import io.circe.syntax._
-import io.circe.parser._
 import geotrellis.server.stac._
 import geotrellis.server.stac.{StacExtent => _}
 import com.rasterfoundry.batch.stacExport.{StacExtent => BatchStacExtent}
@@ -82,7 +81,8 @@ class SceneCollectionBuilder[
       version: String
   ): SceneCollectionBuilder[CollectionRequirements with CollectionStacVersion] =
     new SceneCollectionBuilder(
-      sceneCollection.copy(stacVersion = Some(version)))
+      sceneCollection.copy(stacVersion = Some(version))
+    )
 
   def withId(
       id: String
@@ -133,14 +133,14 @@ class SceneCollectionBuilder[
   @SuppressWarnings(Array("OptionGet"))
   def build()(
       implicit ev: CollectionRequirements =:= CompleteCollection
-  ): (StacCollection, List[StacItem], List[(String, String)]) = {
+  ): (StacCollection, List[StacItem], List[(String, String, String)]) = {
     ev.unused
     // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<layerCollectionId>/<sceneCollectionID>
     val absPath = sceneCollection.parentPath.get
     // ../../../catalog.json
     val rootPath = sceneCollection.rootPath.get
 
-    val sceneItemsAndLinks: List[(StacItem, (String, String))] =
+    val sceneItemsAndLinks: List[(StacItem, (String, String, String))] =
       sceneCollection.sceneList
         .map(scene => {
           val itemBuilder =
@@ -160,17 +160,19 @@ class SceneCollectionBuilder[
           val sceneAbsPath = s"${absPath}/${scene.id}"
           // ../../../../catalog.json
           val sceneRootPath = s"../${rootPath}"
-          val itemLinkAndTitle: (String, String) =
-            (s"${sceneAbsPath}/item.json", s"Scene Item ${scene.id.toString}")
+          val itemLinksAndTitle: (String, String, String) =
+            (s"${sceneAbsPath}/item.json",
+             s"${scene.id}/item.json",
+             s"Scene Item ${scene.id.toString}")
           val sceneLinks = List(
             StacLink(
-              itemLinkAndTitle._1,
+              itemLinksAndTitle._1,
               Self,
               Some(`application/json`),
-              Some(itemLinkAndTitle._2)
+              Some(itemLinksAndTitle._3)
             ),
             StacLink(
-              s"${absPath}/collection.json",
+              "../collection.json",
               Parent,
               Some(`application/json`),
               Some("Scene Collection")
@@ -182,12 +184,13 @@ class SceneCollectionBuilder[
               Some("Root")
             )
           )
-          val sceneProperties = JsonObject(
-            (
-              "datetime",
-              parse(
-                scene.filterFields.acquisitionDate.get.toLocalDateTime.toString
-              ).getOrElse(Json.Null)
+          val sceneProperties = JsonObject.fromMap(
+            Map(
+              "datetime" -> scene.filterFields.acquisitionDate
+                .getOrElse(scene.createdAt)
+                .toLocalDateTime
+                .toString
+                .asJson
             )
           )
           val sceneAsset = Map(
@@ -208,18 +211,19 @@ class SceneCollectionBuilder[
               .withParentPath(absPath, rootPath)
               .withAssets(sceneAsset)
               .build(),
-            itemLinkAndTitle
+            itemLinksAndTitle
           )
         })
 
-    val sceneLinks: List[(String, String)] = sceneItemsAndLinks.map(_._2)
+    val sceneLinks: List[(String, String, String)] =
+      sceneItemsAndLinks.map(_._2)
 
     (
       sceneCollection
         .copy(
           links = sceneCollection.links ++ sceneLinks.map(link => {
             StacLink(
-              link._1,
+              link._2,
               Item,
               Some(`application/json`),
               Some(link._2)
@@ -228,7 +232,7 @@ class SceneCollectionBuilder[
         )
         .toStacCollection, // the scene collection
       sceneItemsAndLinks.map(_._1), // a list of scene items
-      sceneLinks // a list of (sceneItemAbsLink, sceneItemTitle)
+      sceneLinks // a list of (sceneItemAbsLink, sceneItemRelLink, sceneItemTitle)
     )
   }
 }

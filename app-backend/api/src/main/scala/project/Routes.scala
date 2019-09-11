@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import better.files.{File => ScalaFile}
+import cats.Applicative
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
@@ -19,7 +20,6 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
-import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.datamodel.{Annotation, _}
 import com.rasterfoundry.akkautil.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
@@ -569,18 +569,14 @@ trait ProjectRoutes
                                 projectQueryParams.analysisId) |
           projectIsPublic(projectId)) {
           complete {
-            ProjectDao.query
-              .filter(projectId)
-              .selectOption
-              .transact(xa)
-              .unsafeToFuture
+            ProjectDao.getProjectById(projectId).transact(xa).unsafeToFuture
           }
         }
     }
   }
 
   def updateProject(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
@@ -599,7 +595,7 @@ trait ProjectRoutes
   }
 
   def deleteProject(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Delete)
         .transact(xa)
@@ -612,7 +608,7 @@ trait ProjectRoutes
   }
 
   def listLabels(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
@@ -625,7 +621,7 @@ trait ProjectRoutes
   }
 
   def listAOIs(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
@@ -640,7 +636,7 @@ trait ProjectRoutes
   }
 
   def createAOI(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
@@ -660,7 +656,7 @@ trait ProjectRoutes
 
   def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
@@ -679,7 +675,7 @@ trait ProjectRoutes
   }
 
   def acceptScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
@@ -704,7 +700,7 @@ trait ProjectRoutes
   }
 
   def listProjectScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
@@ -735,10 +731,10 @@ trait ProjectRoutes
                                                projectId,
                                                ActionType.View)
           authResult <- (authProject, projectQueryParams.analysisId) match {
-            case (false, Some(analysisId: UUID)) =>
+            case (AuthFailure(), Some(analysisId: UUID)) =>
               ToolRunDao
                 .authorizeReferencedProject(user, analysisId, projectId)
-            case (_, _) => authProject.pure[ConnectionIO]
+            case (_, _) => Applicative[ConnectionIO].pure(authProject.toBoolean)
           }
         } yield authResult
         authorized.transact(xa).unsafeToFuture
@@ -759,7 +755,7 @@ trait ProjectRoutes
 
   /** Set the manually defined z-ordering for scenes within a given project */
   def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
@@ -787,7 +783,7 @@ trait ProjectRoutes
   /** Get the color correction paramters for a project/scene pairing */
   def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
     authenticate { user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
@@ -809,7 +805,7 @@ trait ProjectRoutes
   /** Set color correction parameters for a project/scene pairing */
   def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
     authenticate { user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
@@ -831,7 +827,7 @@ trait ProjectRoutes
     }
 
   def setProjectColorMode(projectId: UUID) = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
@@ -854,7 +850,7 @@ trait ProjectRoutes
   /** Set color correction parameters for a list of scenes */
   def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
@@ -877,7 +873,7 @@ trait ProjectRoutes
 
   /** Get the information which defines mosaicing behavior for each scene in a given project */
   def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
@@ -903,7 +899,7 @@ trait ProjectRoutes
 
   def addProjectScenes(projectId: UUID, layerIdO: Option[UUID] = None): Route =
     authenticate { user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
@@ -931,7 +927,7 @@ trait ProjectRoutes
   def updateProjectScenes(projectId: UUID,
                           layerIdO: Option[UUID] = None): Route =
     authenticate { user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
@@ -964,7 +960,7 @@ trait ProjectRoutes
   def deleteProjectScenes(projectId: UUID,
                           layerIdO: Option[UUID] = None): Route = authenticate {
     user =>
-      authorizeAsync {
+      authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
@@ -990,7 +986,7 @@ trait ProjectRoutes
   }
 
   def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
@@ -1011,7 +1007,7 @@ trait ProjectRoutes
         (ProjectDao.authorized(user,
                                ObjectType.Project,
                                projectId,
-                               ActionType.Edit),
+                               ActionType.Edit) map { _.toBoolean },
          acrList traverse { acr =>
            ProjectDao.isValidPermission(acr, user)
          } map { _.foldLeft(true)(_ && _) }).tupled
@@ -1037,7 +1033,7 @@ trait ProjectRoutes
         (ProjectDao.authorized(user,
                                ObjectType.Project,
                                projectId,
-                               ActionType.Edit),
+                               ActionType.Edit) map { _.toBoolean },
          ProjectDao.isValidPermission(acr, user)).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
@@ -1056,7 +1052,7 @@ trait ProjectRoutes
   }
 
   def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
@@ -1087,7 +1083,7 @@ trait ProjectRoutes
   }
 
   def deleteProjectPermissions(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)

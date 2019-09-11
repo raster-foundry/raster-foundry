@@ -3,16 +3,22 @@ package com.rasterfoundry.database
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.Cache
 
 import doobie._
 import doobie.implicits._
 import cats.implicits._
+import scalacache._
+import scalacache.CatsEffect.modes._
 
 import java.sql.Timestamp
+import scala.concurrent.duration._
 
 object UserDao extends Dao[User] with Sanitization {
 
   val tableName = "users"
+
+  import Cache.UserCache._
 
   val selectF = sql"""
     SELECT
@@ -46,9 +52,10 @@ object UserDao extends Dao[User] with Sanitization {
       platform <- PlatformDao.unsafeGetPlatformById(platformRole.groupId)
     } yield platform
 
-  def getUserById(id: String): ConnectionIO[Option[User]] = {
-    filterById(id).selectOption
-  }
+  def getUserById(id: String): ConnectionIO[Option[User]] =
+    Cache.getOptionCache(User.cacheKey(id), Some(30 minutes)) {
+      filterById(id).selectOption
+    }
 
   def getUsersByIds(ids: List[String]): ConnectionIO[List[User]] = {
     ids.toNel match {
@@ -132,7 +139,8 @@ object UserDao extends Dao[User] with Sanitization {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${userId}"
 
-    (sql"""
+    for {
+      query <- (sql"""
        UPDATE users
        SET
          modified_at = ${updateTime},
@@ -144,7 +152,10 @@ object UserDao extends Dao[User] with Sanitization {
          profile_image_uri = ${user.profileImageUri},
          visibility = ${user.visibility},
          personal_info = ${user.personalInfo}
-       """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
+
+        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
+      _ <- remove(user.cacheKey)(userCache, async[ConnectionIO]).attempt
+    } yield query
   }
 
   def storeDropboxAccessToken(userId: String,
@@ -260,8 +271,9 @@ object UserDao extends Dao[User] with Sanitization {
 
   def updateOwnUser(user: User): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
-    (
-      sql"""
+    for {
+      query <- (
+        sql"""
         UPDATE users
         SET
           modified_at = ${updateTime},
@@ -270,7 +282,9 @@ object UserDao extends Dao[User] with Sanitization {
           visibility = ${user.visibility},
           personal_info = ${user.personalInfo}
           """ ++
-        Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
-    ).update.run
+          Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
+      ).update.run
+      _ <- remove(user.cacheKey)(userCache, async[ConnectionIO]).attempt
+    } yield query
   }
 }

@@ -1,8 +1,9 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.datamodel.{AuthFailure, PageRequest, Project, ToolRun}
 import com.rasterfoundry.datamodel._
 
-import com.rasterfoundry.datamodel.PageRequest
+import cats.Applicative
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -67,7 +68,7 @@ object MapTokenDao extends Dao[MapToken] {
             )
           }
         }
-      ).getOrElse(false.pure[ConnectionIO])
+      ).getOrElse(Applicative[ConnectionIO].pure(AuthFailure[Project]()))
       toolRunAuthed = (
         mapTokenO flatMap { _.toolRun } map { (toolRunId: UUID) =>
           {
@@ -79,9 +80,9 @@ object MapTokenDao extends Dao[MapToken] {
             )
           }
         }
-      ).getOrElse(false.pure[ConnectionIO])
+      ).getOrElse(Applicative[ConnectionIO].pure(AuthFailure[ToolRun]()))
       authTuple <- (projAuthed, toolRunAuthed).tupled
-    } yield { authTuple._1 || authTuple._2 }
+    } yield { authTuple._1.toBoolean || authTuple._2.toBoolean }
 
   def listAuthorizedMapTokens(
       user: User,

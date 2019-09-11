@@ -4,6 +4,7 @@ import com.rasterfoundry.database.Filterable
 import com.rasterfoundry.database.meta.RFMeta
 import com.rasterfoundry.datamodel._
 
+import io.circe.syntax._
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments.in
@@ -424,6 +425,18 @@ trait Filterables extends RFMeta with LazyLogging {
             params.exportStatus map { qp =>
               fr"export_status = UPPER($qp)::public.export_status"
             },
+            (params.projectId, params.layerId) match {
+              case (Some(projectId), Some(layerId)) =>
+                Some(
+                  fr"layer_definitions @> '[" ++ Fragment.const(
+                    StacExport
+                      .LayerDefinition(projectId, layerId)
+                      .asJson
+                      .noSpaces
+                  ) ++ fr"]'::jsonb"
+                )
+              case _ => None
+            }
           )
     }
 }

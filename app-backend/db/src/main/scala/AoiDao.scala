@@ -2,6 +2,7 @@ package com.rasterfoundry.database
 
 import java.util.UUID
 
+import cats.Applicative
 import cats.implicits._
 import com.rasterfoundry.database.util._
 import com.rasterfoundry.datamodel._
@@ -117,7 +118,7 @@ object AoiDao extends Dao[AOI] {
       projectAuthed <- aoiO map { _.projectId } match {
         case Some(projectId) =>
           ProjectDao.authorized(user, ObjectType.Project, projectId, actionType)
-        case _ => false.pure[ConnectionIO]
+        case _ => Applicative[ConnectionIO].pure(AuthFailure[Project]())
       }
-    } yield { projectAuthed }
+    } yield { projectAuthed.toBoolean }
 }

@@ -4,6 +4,7 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.{Scene, User, _}
 import com.rasterfoundry.common.SceneToLayer
 
+import cats.Applicative
 import cats.data._
 import cats.implicits._
 import com.rasterfoundry.datamodel.{Order, PageRequest}
@@ -296,13 +297,22 @@ object SceneWithRelatedDao
                                                             groupIdO)))
     }
 
-  def authorized(user: User,
-                 objectType: ObjectType,
-                 objectId: UUID,
-                 actionType: ActionType): ConnectionIO[Boolean] =
-    this.query
-      .filter(authorizedF(user, objectType, actionType))
-      .filter(objectId)
-      .exists
+  def authorized(
+      user: User,
+      objectType: ObjectType,
+      objectId: UUID,
+      actionType: ActionType): ConnectionIO[AuthResult[Scene.WithRelated]] = {
+    SceneDao.authorized(user, objectType, objectId, actionType) flatMap {
+      case AuthSuccess(scene) =>
+        sceneToSceneWithRelated(scene) map { AuthSuccess[Scene.WithRelated](_) }
+      case _ =>
+        // Why summon the applicative instance?
+        // If we don't, and instead call AuthFailure().pure[ConnectionIO],
+        // the compiler gets confused and starts talking about how
+        // AuthFailure <: AuthFailure, and we might want to make Free[A]
+        // covariant in A. /shrug
+        Applicative[ConnectionIO].pure(AuthFailure[Scene.WithRelated]())
+    }
+  }
 
 }

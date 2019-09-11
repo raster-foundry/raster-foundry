@@ -659,7 +659,8 @@ final case class TaskQueryParameters(
     actionStartTime: Option[Timestamp] = None,
     actionEndTime: Option[Timestamp] = None,
     actionMinCount: Option[Int] = None,
-    actionMaxCount: Option[Int] = None
+    actionMaxCount: Option[Int] = None,
+    format: Option[String] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
@@ -684,7 +685,9 @@ final case class StacExportQueryParameters(
     userParams: UserAuditQueryParameters = UserAuditQueryParameters(),
     ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
     searchParams: SearchQueryParameters = SearchQueryParameters(),
-    exportStatus: Option[String] = None
+    exportStatus: Option[String] = None,
+    projectId: Option[UUID] = None,
+    layerId: Option[UUID] = None,
 )
 
 object StacExportQueryParameters {

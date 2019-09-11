@@ -16,6 +16,7 @@ import cats.effect.IO
 import doobie._
 import doobie.implicits._
 
+import scala.concurrent.ExecutionContext
 import java.util.UUID
 
 trait ToolRoutes
@@ -26,6 +27,7 @@ trait ToolRoutes
     with UserErrorHandler {
 
   val xa: Transactor[IO]
+  implicit val ec: ExecutionContext
 
   val toolRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -82,7 +84,7 @@ trait ToolRoutes
   }
 
   def getToolSources(toolId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.View)
         .transact(xa)
@@ -135,7 +137,7 @@ trait ToolRoutes
   }
 
   def getTool(toolId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.View)
         .transact(xa)
@@ -150,7 +152,7 @@ trait ToolRoutes
   }
 
   def updateTool(toolId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
         .transact(xa)
@@ -170,7 +172,7 @@ trait ToolRoutes
   }
 
   def deleteTool(toolId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.Delete)
         .transact(xa)
@@ -183,7 +185,7 @@ trait ToolRoutes
   }
 
   def listToolPermissions(toolId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
         .transact(xa)
@@ -207,7 +209,7 @@ trait ToolRoutes
             ObjectType.Template,
             toolId,
             ActionType.Edit
-          ),
+          ) map { _.toBoolean },
           acrList traverse { acr =>
             ToolDao.isValidPermission(acr, user)
           } map { _.foldLeft(true)(_ && _) }
@@ -237,7 +239,7 @@ trait ToolRoutes
             ObjectType.Template,
             toolId,
             ActionType.Edit
-          ),
+          ) map { _.toBoolean },
           ToolDao.isValidPermission(acr, user)
         ).tupled
           .map({ authTup =>
@@ -257,7 +259,7 @@ trait ToolRoutes
   }
 
   def listUserTemplateActions(templateId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolDao
         .authorized(user, ObjectType.Template, templateId, ActionType.View)
         .transact(xa)
@@ -285,7 +287,7 @@ trait ToolRoutes
   }
 
   def deleteToolPermissions(toolId: UUID): Route = authenticate { user =>
-    authorizeAsync {
+    authorizeAuthResultAsync {
       ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
         .transact(xa)

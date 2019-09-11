@@ -190,9 +190,7 @@ lazy val root = project
              lambdaOverviews)
 
 lazy val loggingDependencies = Seq(
-  Dependencies.scalaLogging % Runtime,
-  Dependencies.slf4j % Runtime,
-  Dependencies.log4jOverslf4j % Runtime, // for any java classes looking for this
+  Dependencies.scalaLogging,
   Dependencies.logbackClassic % Runtime
 )
 
@@ -310,6 +308,7 @@ lazy val datamodel = project
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisVector,
       Dependencies.geotrellisProj4,
+      Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisVectorTestkit,
       Dependencies.circeCore,
       Dependencies.circeParser,
@@ -332,8 +331,16 @@ lazy val db = project
       Dependencies.scalatest,
       Dependencies.doobieCore,
       Dependencies.doobieHikari,
+      Dependencies.scalaCheck,
+      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisRaster,
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
+      Dependencies.scalacacheCats,
+      Dependencies.scalacacheCore,
+      Dependencies.scalacacheMemcached,
+      Dependencies.scalacacheCirce,
+      Dependencies.elasticacheClient,
       Dependencies.scalaCheck,
       Dependencies.postgis,
       Dependencies.flyway % Test

@@ -45,6 +45,8 @@ final case class ProjectLayer(
       this.minZoomLevel
     )
   )
+
+  lazy val cacheKey: String = s"project:layer:$id"
 }
 
 @JsonCodec
@@ -64,6 +66,8 @@ final case class ProjectLayerProperties(
 )
 
 object ProjectLayer extends LazyLogging with JsonCodecs {
+
+  def cacheKey(id: UUID): String = s"project:layer:$id"
 
   final case class Create(name: String,
                           projectId: Option[UUID],

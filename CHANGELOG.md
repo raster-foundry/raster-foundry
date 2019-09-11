@@ -14,6 +14,31 @@
 
 ### Security
 
+## [1.29.0](https://github.com/raster-foundry/raster-foundry/compare/1.28.0...1.29.0)
+
+### Added
+
+- Added trace ID to exception logging for backsplash [\#5134](https://github.com/raster-foundry/raster-foundry/pull/5134)
+- Added projectId and layerId QPs to STAC export list endpoint [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
+- Added caching for selecting projects, project layers, and users by ID [\#5144](https://github.com/raster-foundry/raster-foundry/pull/5144)
+- Added documentation on choice of tracing libraries [\#5145](https://github.com/raster-foundry/raster-foundry/pull/5145)
+- Added a check for band counts during project exports [\#5154](https://github.com/raster-foundry/raster-foundry/pull/5154)
+- Added a query parameter to list tasks union by status [\#5159](https://github.com/raster-foundry/raster-foundry/pull/5159)
+
+### Changed
+
+- Upgraded doobie to 0.7.0 [\#5130](https://github.com/raster-foundry/raster-foundry/pull/5130)
+- Updated STAC export location to use the S3 prefix [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
+- Updated values for label:task, label:property, and label:classes of the STAC label item [\#5140](https://github.com/raster-foundry/raster-foundry/pull/5140)
+- Tuned proxy_connect_timeout to make Nginx fail faster [\#5133](https://github.com/raster-foundry/raster-foundry/pull/5133)
+- Change absolute links in stac export to relative, so they make sense in a local downloaded context [\#5155](https://github.com/raster-foundry/raster-foundry/pull/5155), [\#5161](https://github.com/raster-foundry/raster-foundry/pull/5161)
+
+### Fixed
+
+- Repaired python scene codec for API interaction in scene ingests [\#5148](https://github.com/raster-foundry/raster-foundry/pull/5148)
+- Eliminated superfluous scene queries in thumbnail rendering [\#5139](https://github.com/raster-foundry/raster-foundry/pull/5139)
+- Fixed chip classification STAC data export and scene item `datetime` field for both project types [\#5158](https://github.com/raster-foundry/raster-foundry/pull/5158)
+
 ## [1.28.0](https://github.com/raster-foundry/raster-foundry/compare/1.27.0...1.28.0)
 
 ### Added

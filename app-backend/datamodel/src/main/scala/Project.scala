@@ -34,7 +34,9 @@ final case class Project(
     defaultAnnotationGroup: Option[UUID],
     extras: Option[Json],
     defaultLayerId: UUID
-)
+) {
+  lazy val cacheKey: String = s"project:$id"
+}
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
@@ -55,6 +57,8 @@ object Project extends GeoJsonSupport {
   def tupled = (Project.apply _).tupled
 
   def create = Create.apply _
+
+  def cacheKey(id: UUID) = s"project:$id"
 
   def slugify(input: String): String = {
     import java.text.Normalizer
