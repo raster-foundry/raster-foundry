@@ -5661,7 +5661,7 @@ parameters:
     required: false
   format:
     name: format
-    description: "List tasks union by status if `summary` is specified"
+    description: 'List tasks union by status if `summary` is specified'
     in: query
     type: string
     required: false
