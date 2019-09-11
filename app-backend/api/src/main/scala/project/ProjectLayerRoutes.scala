@@ -157,8 +157,6 @@ trait ProjectLayerRoutes
           complete {
             SceneToLayerDao
               .getMosaicDefinition(layerId)
-              .compile
-              .to[List]
               .transact(xa)
               .unsafeToFuture
           }

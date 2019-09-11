@@ -11,8 +11,6 @@ import io.opentracing.tag.Tags._
 import org.http4s._
 import org.http4s.util.CaseInsensitiveString
 
-
-
 object TracedHTTPRoutes {
 
   def apply[F[_]: Sync](

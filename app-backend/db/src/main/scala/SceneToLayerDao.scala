@@ -8,7 +8,6 @@ import doobie._
 import doobie.Fragments._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import fs2.Stream
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
@@ -116,7 +115,7 @@ object SceneToLayerDao
                           greenBand: Option[Int] = None,
                           blueBand: Option[Int] = None,
                           sceneIdSubset: List[UUID] = List.empty)
-    : Stream[ConnectionIO, MosaicDefinition] = {
+    : ConnectionIO[List[MosaicDefinition]] = {
     val filters = List(
       polygonOption.map(polygon =>
         fr"ST_Intersects(tile_footprint, ${polygon})"),
@@ -131,7 +130,8 @@ object SceneToLayerDao
     val orderByF: Fragment =
       fr"ORDER BY scene_order ASC NULLS LAST, (acquisition_date, cloud_cover) ASC"
 
-    val select = fr"""
+    val select =
+      fr"""
     SELECT
       scene_id, project_id, project_layer_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
       data_footprint, is_single_band, single_band_options, geometry, data_path, crs, band_count,
@@ -147,48 +147,60 @@ object SceneToLayerDao
     ON
       scenes_stl.project_layer_id = project_layers.id
       """
-    (select ++ whereAndOpt(filters: _*) ++ orderByF)
-      .query[SceneToLayerWithSceneType]
-      .stream map { stp =>
-      {
-        Applicative[Option].map3(redBand, greenBand, blueBand) {
-          case (r, g, b) =>
+    for {
+      queryResult <- (select ++ whereAndOpt(filters: _*) ++ orderByF)
+        .query[SceneToLayerWithSceneType]
+        .to[List]
+    } yield {
+      queryResult map { stp =>
+        {
+          Applicative[Option].map3(redBand, greenBand, blueBand) {
+            case (r, g, b) =>
+              MosaicDefinition(
+                stp.sceneId,
+                stp.projectId,
+                stp.colorCorrectParams.copy(
+                  redBand = r,
+                  greenBand = g,
+                  blueBand = b
+                ),
+                stp.sceneType,
+                stp.ingestLocation,
+                stp.dataFootprint flatMap {
+                  _.geom.as[MultiPolygon]
+                },
+                stp.isSingleBand,
+                stp.singleBandOptions,
+                stp.mask flatMap {
+                  _.geom.as[MultiPolygon]
+                },
+                stp.metadataFields
+              )
+          } getOrElse {
             MosaicDefinition(
               stp.sceneId,
               stp.projectId,
-              stp.colorCorrectParams.copy(
-                redBand = r,
-                greenBand = g,
-                blueBand = b
-              ),
+              stp.colorCorrectParams,
               stp.sceneType,
               stp.ingestLocation,
-              stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
+              stp.dataFootprint flatMap {
+                _.geom.as[MultiPolygon]
+              },
               stp.isSingleBand,
               stp.singleBandOptions,
-              stp.mask flatMap { _.geom.as[MultiPolygon] },
+              stp.mask flatMap {
+                _.as[MultiPolygon]
+              },
               stp.metadataFields
             )
-        } getOrElse {
-          MosaicDefinition(
-            stp.sceneId,
-            stp.projectId,
-            stp.colorCorrectParams,
-            stp.sceneType,
-            stp.ingestLocation,
-            stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
-            stp.isSingleBand,
-            stp.singleBandOptions,
-            stp.mask flatMap { _.as[MultiPolygon] },
-            stp.metadataFields
-          )
+          }
         }
       }
     }
   }
 
   def getMosaicDefinition(
-      projectLayerId: UUID): Stream[ConnectionIO, MosaicDefinition] = {
+      projectLayerId: UUID): ConnectionIO[List[MosaicDefinition]] = {
     getMosaicDefinition(projectLayerId, None)
   }
 

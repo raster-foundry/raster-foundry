@@ -191,7 +191,7 @@ lazy val root = project
              lambdaOverviews)
 
 lazy val loggingDependencies = Seq(
-  Dependencies.scalaLogging,
+  Dependencies.scalaLogging % Runtime,
   Dependencies.logbackClassic % Runtime
 )
 
@@ -360,7 +360,6 @@ lazy val batch = project
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.scalatest,
-      Dependencies.scalaLogging,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
       Dependencies.geotrellisUtil,
@@ -430,7 +429,7 @@ lazy val akkautil = project
   * Backsplash Core Settings
   */
 lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
-  .dependsOn(common, http4sUtil)
+  .dependsOn(common)
   .settings(sharedSettings: _*)
   .settings(
     fork in run := true,
@@ -445,6 +444,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.scalacacheMemcached,
       Dependencies.scalaCheck,
       Dependencies.elasticacheClient,
+      Dependencies.opentracing,
       Dependencies.geotrellisServerOgc,
       Dependencies.spatial4j
     ) ++ loggingDependencies,
