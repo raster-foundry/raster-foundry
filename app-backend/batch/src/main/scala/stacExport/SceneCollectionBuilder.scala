@@ -216,9 +216,7 @@ class SceneCollectionBuilder[
         })
 
     val sceneLinks: List[(String, String, String)] =
-      sceneItemsAndLinks
-        .map(_._2)
-        .map(i => (i._1, s"${sceneCollection.id.get}/${i._2}", i._3)) // adjust relative links
+      sceneItemsAndLinks.map(_._2)
 
     (
       sceneCollection
