@@ -29,8 +29,6 @@ final case class WriteStacCatalog(exportId: UUID)(
 
   val name = WriteStacCatalog.name
 
-  def runJob(args: List[String]) = ???
-
   protected def s3Client = S3()
 
   @SuppressWarnings(Array("CatchThrowable"))
