@@ -6,6 +6,9 @@
 
 ### Changed
 
+- Changed database log level to debug [\#5164](https://github.com/raster-foundry/raster-foundry/pull/5164)
+- Used absolute S3 link for STAC label data upload [\#5164](https://github.com/raster-foundry/raster-foundry/pull/5164)
+
 ### Deprecated
 
 ### Removed
