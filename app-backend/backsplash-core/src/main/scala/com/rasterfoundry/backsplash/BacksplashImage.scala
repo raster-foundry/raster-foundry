@@ -1,29 +1,32 @@
 package com.rasterfoundry.backsplash
 
-import java.net.URLDecoder
-
+import com.rasterfoundry.backsplash.error.RequirementFailedException
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}
-import geotrellis.vector.{io => _, _}
-import geotrellis.raster.{io => _, _}
-import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.spark.SpatialKey
-import geotrellis.spark.tiling.ZoomedLayoutScheme
-import geotrellis.proj4.WebMercator
-import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-import java.util.UUID
 
-import com.typesafe.scalalogging.LazyLogging
-import geotrellis.contrib.vlm.RasterSource
-import geotrellis.contrib.vlm.gdal.GDALRasterSource
-import geotrellis.raster.MultibandTile
-import geotrellis.vector.MultiPolygon
-import scalacache.CatsEffect.modes._
-import scalacache._
-import scalacache.memoization._
+import cats.{Monad, MonadError, Parallel}
+import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
 import com.colisweb.tracing.TracingContext
+import com.typesafe.scalalogging.LazyLogging
+import geotrellis.contrib.vlm.RasterSource
+import geotrellis.contrib.vlm.gdal.GDALRasterSource
+import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
+import geotrellis.proj4.WebMercator
+import geotrellis.raster.MultibandTile
+import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.raster.{io => _, _}
+import geotrellis.spark.SpatialKey
+import geotrellis.spark.tiling.ZoomedLayoutScheme
+import geotrellis.vector.MultiPolygon
+import geotrellis.vector.{io => _, _}
+import scalacache.CatsEffect.modes._
+import scalacache.{MonadError => _, _}
+import scalacache.memoization._
+
+import java.net.URLDecoder
+import java.util.UUID
 
 /** An image used in a tile or export service, can be color corrected, and requested a subet of the bands from the
   * image
@@ -164,6 +167,46 @@ final case class BacksplashGeotiff(
 
   def selectBands(bands: List[Int]): BacksplashGeotiff =
     this.copy(subsetBands = bands)
+}
+
+abstract class MultiTiffImage[F[_]: Monad, G[_]](implicit F: Parallel[F, G],
+                                                 Err: MonadError[F, Throwable])
+    extends BacksplashImage[F]
+    with LazyLogging {
+
+  def getRasterSource: F[RasterSource] =
+    getBandRasterSource(subsetBands.headOption getOrElse 0)
+
+  /** Get a single band raster source for one band of this image
+    *
+    * MultiTiff image assumes that you have a single scene split up over several
+    * single band tiffs, e.g., how Landast 8 and Sentinel-2 are stored on AWS.
+    * This assumption will cause some things to break if you end up trying to make
+    * a MultiTiffImage out of a multi-band tiff, e.g., you might think you're going
+    * to color correct one way and have something else happen entirely.
+    */
+  def getBandRasterSource(i: Int): F[RasterSource]
+
+  def getRGBBandRasterSources(
+      red: Int,
+      green: Int,
+      blue: Int
+  ): F[NonEmptyList[RasterSource]] =
+    NonEmptyList(red, List(green, blue)) parTraverse {
+      getBandRasterSource _
+    } flatMap {
+      case NonEmptyList(r, g :: b :: Nil) => NonEmptyList(r, List(g, b)).pure[F]
+      case sources =>
+        Err.raiseError(
+          RequirementFailedException(
+            s"Somehow got ${sources.length} bands from three inputs"
+          )
+        )
+    }
+
+  def getFreeFormBandRasterSources(
+      bs: NonEmptyList[Int]): F[NonEmptyList[RasterSource]] =
+    bs parTraverse { getBandRasterSource _ }
 }
 
 sealed trait BacksplashImage[F[_]] extends LazyLogging {
