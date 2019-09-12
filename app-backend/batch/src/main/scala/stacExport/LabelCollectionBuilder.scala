@@ -249,6 +249,7 @@ class LabelCollectionBuilder[
     // but StacItem from gt-server only accepts `image/cog`
     // or it will throw an exception
     val labelDataRelLink = "./data.geojson"
+    val labelDataS3AbsLink: String = s"${labelItemSelfAbsPath}/data.geojson"
     val labelAsset = Map(
       labelItemId ->
         StacAsset(
@@ -281,7 +282,7 @@ class LabelCollectionBuilder[
         )
         .toStacCollection(),
       labelItem,
-      labelDataRelLink
+      labelDataS3AbsLink
     )
   }
 }

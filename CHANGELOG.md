@@ -12,6 +12,9 @@
 
 ### Fixed
 
+- Changed database log level to debug [\#5164](https://github.com/raster-foundry/raster-foundry/pull/5164)
+- Used absolute S3 link for STAC label data upload [\#5164](https://github.com/raster-foundry/raster-foundry/pull/5164)
+
 ### Security
 
 ## [1.29.0](https://github.com/raster-foundry/raster-foundry/compare/1.28.0...1.29.0)
