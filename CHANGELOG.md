@@ -5,6 +5,8 @@
 
 ### Added
 
+- Added tracing support to tile server [\#5165](https://github.com/raster-foundry/raster-foundry/pull/5165)
+
 ### Changed
 
 ### Deprecated
