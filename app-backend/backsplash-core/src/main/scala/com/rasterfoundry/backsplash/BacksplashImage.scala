@@ -210,11 +210,6 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
 
   def getRasterSource(context: TracingContext[F]): F[RasterSource]
 
-  def getRasterSource(uri: String, context: TracingContext[F]): RasterSource = {
-    logger.error(s"Error for Trace: ${context.traceId}")
-    throw new NotImplementedError(uri)
-  }
-
   def selectBands(bands: List[Int]): BacksplashImage[F]
 }
 
