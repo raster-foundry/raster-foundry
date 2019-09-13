@@ -14,6 +14,7 @@ import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.proj4.WebMercator
+import geotrellis.raster.histogram._
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.{io => _, _}
@@ -220,7 +221,7 @@ case class Landsat8MultiTiffImage(
   def selectBands(bands: List[Int]) = this.copy(subsetBands = bands)
 }
 
-abstract class MultiTiffImage[F[_]: Monad, G[_]](
+sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
     implicit F: Parallel[F, G],
     sync: Sync[F],
     mode: Mode[F],
@@ -256,6 +257,45 @@ abstract class MultiTiffImage[F[_]: Monad, G[_]](
       getBandRasterSource(band, context)
     }
 
+  def getHistogram(context: TracingContext[F]): F[Array[Histogram[Double]]] =
+    context.childSpan("readHistogramFromSource", Map.empty) use { child =>
+      for {
+        sources <- subsetBands.toNel match {
+          case Some(bs) => getBandRasterSources(bs, child)
+          case None =>
+            Err.raiseError(
+              RequirementFailedException("Must request at least one band"))
+        }
+        zoomedOutExtents <- sources parTraverse { rs =>
+          sync.delay {
+            // This is at this point just throwing garbag at the problem of how to get
+            // a reasonable sample
+            // For some reason the tiles coming back from this believe that their min / max is 0,
+            // which causes problems when trying to normalize before
+            rs.resolutions.take(rs.resolutions.length - 2).lastOption flatMap {
+              gridExtent =>
+                println(s"Resolution selected: $gridExtent")
+                println(
+                  s"Resolution stats: cols -- ${gridExtent.cols}, rows -- ${gridExtent.rows}")
+                println(
+                  s"Grid bounds stats: ${gridExtent.gridBoundsFor(gridExtent.extent)}")
+                // rs.read(gridExtent.extent, List(0))
+                rs.read(gridExtent.gridBoundsFor(gridExtent.extent), List(0))
+            }
+          }
+        }
+      } yield {
+        zoomedOutExtents collect {
+          case Some(t) => {
+            val tile = t.tile.band(0)
+            val (oldMin, oldMax) = tile.findMinMaxDouble
+            println(s"Old min: $oldMin, oldMax: $oldMax")
+            tile.normalize(oldMin, oldMax, 0, 255).histogramDouble
+          }
+        } toArray
+      }
+    }
+
   def readWithCache(z: Int, x: Int, y: Int, context: TracingContext[F])(
       implicit @cacheKeyExclude flags: Flags): F[Option[MultibandTile]] = {
     val readTags = tags.combine(Map("zoom" -> z.toString))
@@ -269,7 +309,7 @@ abstract class MultiTiffImage[F[_]: Monad, G[_]](
               Err.raiseError(
                 RequirementFailedException("Must request at least one band"))
           }
-          tiles <- sources traverse { rs =>
+          tiles <- sources parTraverse { rs =>
             child.childSpan("readFromRasterSource",
                             Map("rasterSourcePath" -> s"${rs.dataPath}")) use {
               _ =>
@@ -311,7 +351,7 @@ abstract class MultiTiffImage[F[_]: Monad, G[_]](
               Err.raiseError(
                 RequirementFailedException("Must request at least one band"))
           }
-          tiles <- sources traverse { rs =>
+          tiles <- sources parTraverse { rs =>
             sync.delay {
               rs.reproject(WebMercator, NearestNeighbor)
                 .resampleToGrid(
