@@ -309,6 +309,7 @@ object SceneDao
           MosaicDefinition(
             scene.id,
             UUID.randomUUID, // we don't have a project id here, so fake it
+            scene.datasource,
             ColorCorrect.Params(
               redBand,
               greenBand,
@@ -333,7 +334,8 @@ object SceneDao
             false,
             Some(().asJson),
             None,
-            scene.metadataFields
+            scene.metadataFields,
+            scene.metadataFiles
           )
         )
       } getOrElse { Seq.empty }

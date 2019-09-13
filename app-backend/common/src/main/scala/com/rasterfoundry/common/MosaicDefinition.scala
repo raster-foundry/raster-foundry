@@ -12,6 +12,7 @@ import io.circe.generic.JsonCodec
 final case class MosaicDefinition(
     sceneId: UUID,
     projectId: UUID,
+    datasource: UUID,
     colorCorrections: ColorCorrect.Params,
     sceneType: Option[SceneType] = None,
     ingestLocation: Option[String],
@@ -19,5 +20,6 @@ final case class MosaicDefinition(
     isSingleBand: Boolean,
     singleBandOptions: Option[Json],
     mask: Option[MultiPolygon],
-    sceneMetadataFields: SceneMetadataFields
+    sceneMetadataFields: SceneMetadataFields,
+    metadataFiles: List[String]
 )

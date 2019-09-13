@@ -121,7 +121,8 @@ object SceneToLayerDao
         fr"ST_Intersects(tile_footprint, ${polygon})"),
       Some(fr"project_layer_id = ${projectLayerId}"),
       Some(fr"accepted = true"),
-      Some(fr"ingest_status = 'INGESTED'"),
+      Some(
+        fr"(ingest_status = 'INGESTED' OR datasource = ${Config.publicData.landsat8DatasourceId})"),
       sceneIdSubset.toNel map {
         Fragments.in(fr"scene_id", _)
       }
@@ -133,9 +134,9 @@ object SceneToLayerDao
     val select =
       fr"""
     SELECT
-      scene_id, project_id, project_layer_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
-      data_footprint, is_single_band, single_band_options, geometry, data_path, crs, band_count,
-         cell_type, grid_extent, resolutions, no_data_value
+      scene_id, project_id, datasource, project_layer_id, accepted, scene_order, mosaic_definition,
+      scene_type, ingest_location, data_footprint, is_single_band, single_band_options,
+      geometry, data_path, crs, band_count, cell_type, grid_extent, resolutions, no_data_value, metadata_files
     FROM (
       scenes_to_layers
     LEFT JOIN
@@ -159,6 +160,7 @@ object SceneToLayerDao
               MosaicDefinition(
                 stp.sceneId,
                 stp.projectId,
+                stp.datasource,
                 stp.colorCorrectParams.copy(
                   redBand = r,
                   greenBand = g,
@@ -174,12 +176,14 @@ object SceneToLayerDao
                 stp.mask flatMap {
                   _.geom.as[MultiPolygon]
                 },
-                stp.metadataFields
+                stp.metadataFields,
+                stp.metadataFiles
               )
           } getOrElse {
             MosaicDefinition(
               stp.sceneId,
               stp.projectId,
+              stp.datasource,
               stp.colorCorrectParams,
               stp.sceneType,
               stp.ingestLocation,
@@ -191,7 +195,8 @@ object SceneToLayerDao
               stp.mask flatMap {
                 _.as[MultiPolygon]
               },
-              stp.metadataFields
+              stp.metadataFields,
+              stp.metadataFiles
             )
           }
         }

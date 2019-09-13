@@ -13,12 +13,14 @@ import com.rasterfoundry.backsplash.{
   RenderableStore
 }
 import cats.data.{NonEmptyList => NEL}
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import geotrellis.vector.{Polygon, Projected}
+
+import java.net.URI
 import java.util.UUID
 
 import com.colisweb.tracing.TracingContext
@@ -30,6 +32,11 @@ class RenderableStoreImplicits(xa: Transactor[IO])
   implicit val sceneCache = Cache.caffeineSceneCache
   implicit val projectLayerCache = Cache.caffeineProjectLayerCache
 
+  private def prefixFromHttpsS3Path(url: String): String = {
+    val path = URI.create(url).getPath
+    val tail = path.split("/").drop(1)
+    tail.take(tail.length - 1).mkString("/")
+  }
   @SuppressWarnings(Array("OptionGet"))
   private def mosaicDefinitionToImage(
       mosaicDefinition: MosaicDefinition,
@@ -41,11 +48,6 @@ class RenderableStoreImplicits(xa: Transactor[IO])
         _.as[SingleBandOptions.Params].toOption
       }
     val sceneId = mosaicDefinition.sceneId
-    val ingestLocation = mosaicDefinition.ingestLocation getOrElse {
-      throw UningestedScenesException(
-        s"Scene ${sceneId} does not have an ingest location"
-      )
-    }
     val footprint = mosaicDefinition.footprint getOrElse {
       throw NoFootprintException
     }
@@ -81,22 +83,46 @@ class RenderableStoreImplicits(xa: Transactor[IO])
       mosaicDefinition.colorCorrections.saturation
     )
 
-    BacksplashGeotiff(
-      sceneId,
-      mosaicDefinition.projectId,
-      projId, // actually the layer ID
-      ingestLocation,
-      subsetBands,
-      colorCorrectParameters,
-      singleBandOptions,
-      mosaicDefinition.mask,
-      footprint,
-      mosaicDefinition.sceneMetadataFields,
-      tracingContext
-    )
+    mosaicDefinition.datasource match {
+      case Config.publicData.landsat8DatasourceId =>
+        LandsatMultiTiffImage(
+          sceneId,
+          footprint,
+          subsetBands,
+          colorCorrectParameters,
+          singleBandOptions,
+          mosaicDefinition.projectId,
+          projId,
+          mosaicDefinition.mask,
+          mosaicDefinition.metadataFiles.headOption map { uri =>
+            s"s3://landsat-pds/${prefixFromHttpsS3Path(uri)}"
+          } getOrElse { "" }
+        )
+      case _ =>
+        val ingestLocation = mosaicDefinition.ingestLocation getOrElse {
+          throw UningestedScenesException(
+            s"Scene ${sceneId} does not have an ingest location"
+          )
+        }
+
+        BacksplashGeotiff(
+          sceneId,
+          mosaicDefinition.projectId,
+          projId, // actually the layer ID
+          ingestLocation,
+          subsetBands,
+          colorCorrectParameters,
+          singleBandOptions,
+          mosaicDefinition.mask,
+          footprint,
+          mosaicDefinition.sceneMetadataFields,
+          tracingContext
+        )
+    }
   }
 
-  implicit val sceneStore: RenderableStore[SceneDao] =
+  implicit def sceneStore(
+      contextShift: ContextShift[IO]): RenderableStore[SceneDao] =
     new RenderableStore[SceneDao] {
       def read(
           self: SceneDao,
@@ -149,7 +175,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])
       }
     }
 
-  implicit val layerStore: RenderableStore[SceneToLayerDao] =
+  implicit def layerStore(implicit contextShift: ContextShift[IO])
+    : RenderableStore[SceneToLayerDao] =
     new RenderableStore[SceneToLayerDao] {
       // projId here actually refers to a layer -- but the argument names have to
       // match the typeclass we're providing evidence for
