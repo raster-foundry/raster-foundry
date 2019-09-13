@@ -6,7 +6,7 @@ import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}
 
 import cats.{Monad, MonadError, Parallel}
 import cats.data.NonEmptyList
-import cats.effect.IO
+import cats.effect.{ContextShift, IO, Sync}
 import cats.implicits._
 import com.colisweb.tracing.TracingContext
 import com.typesafe.scalalogging.LazyLogging
@@ -160,8 +160,6 @@ final case class BacksplashGeotiff(
           }
         } yield {
           tile
-        }
-      }
     }
   }
 
@@ -169,10 +167,79 @@ final case class BacksplashGeotiff(
     this.copy(subsetBands = bands)
 }
 
-abstract class MultiTiffImage[F[_]: Monad, G[_]](implicit F: Parallel[F, G],
-                                                 Err: MonadError[F, Throwable])
-    extends BacksplashImage[F]
+case class LandsatMultiTiffImage(
+    imageId: UUID,
+    footprint: MultiPolygon,
+    subsetBands: List[Int],
+    corrections: ColorCorrect.Params,
+    singleBandOptions: Option[SingleBandOptions.Params],
+    projectId: UUID,
+    projectLayerId: UUID,
+    mask: Option[MultiPolygon],
+    prefix: String
+)(implicit contextShift: ContextShift[IO])
+    extends MultiTiffImage[IO, IO.Par] {
+
+  val metadata = SceneMetadataFields()
+  val imageName: Option[String] = prefix.split("/").lastOption
+
+  def getUri(band: Int): Option[String] = imageName map { name =>
+    s"$prefix/${name}_B${band}.TIF"
+  }
+
+  def getBandRasterSource(i: Int): IO[RasterSource] = {
+    getUri(i) map { uri =>
+//      if (enableGDAL) {
+      logger.debug(s"Using GDAL Raster Source: ${uri}")
+      // Do not bother caching - let GDAL internals worry about that
+      val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+      IO {
+        metadata.noDataValue match {
+          case Some(nd) =>
+            rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+          case _ =>
+            rasterSource
+        }
+
+      }
+      /** Do we need to support the geotiff raster source anymore? */
+//      }
+//      else {
+//        memoizeF(None) {
+//          logger.debug(s"Using GeoTiffRasterSource: ${uri}")
+//          val rasterSource = new GeoTiffRasterSource(uri)
+//          IO {
+//            metadata.noDataValue match {
+//              case Some(nd) =>
+//                rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+//              case _ =>
+//                rasterSource
+//            }
+//          }
+//        }
+//      }
+    } getOrElse {
+      IO.raiseError(
+        RequirementFailedException(
+          s"Could not construct uri from prefix: $prefix"
+        )
+      )
+    }
+  }
+
+  def selectBands(bands: List[Int]) = this.copy(subsetBands = bands)
+}
+
+abstract class MultiTiffImage[F[_]: Monad, G[_]](
+    implicit F: Parallel[F, G],
+    sync: Sync[F],
+    mode: Mode[F],
+    Err: MonadError[F, Throwable]
+) extends BacksplashImage[F]
     with LazyLogging {
+
+  implicit val tileCache = Cache.tileCache
+  implicit val rasterSourceCache = Cache.rasterSourceCache
 
   def getRasterSource: F[RasterSource] =
     getBandRasterSource(subsetBands.headOption getOrElse 0)
@@ -187,26 +254,61 @@ abstract class MultiTiffImage[F[_]: Monad, G[_]](implicit F: Parallel[F, G],
     */
   def getBandRasterSource(i: Int): F[RasterSource]
 
-  def getRGBBandRasterSources(
-      red: Int,
-      green: Int,
-      blue: Int
+  def getBandRasterSources(
+      bs: NonEmptyList[Int]
   ): F[NonEmptyList[RasterSource]] =
-    NonEmptyList(red, List(green, blue)) parTraverse {
-      getBandRasterSource _
-    } flatMap {
-      case NonEmptyList(r, g :: b :: Nil) => NonEmptyList(r, List(g, b)).pure[F]
-      case sources =>
-        Err.raiseError(
-          RequirementFailedException(
-            s"Somehow got ${sources.length} bands from three inputs"
-          )
-        )
+    bs parTraverse { getBandRasterSource _ }
+
+  def readWithCache(z: Int, x: Int, y: Int)(
+      implicit @cacheKeyExclude flags: Flags): F[Option[MultibandTile]] =
+    memoizeF(None) {
+      val layoutDefinition = BacksplashImage.tmsLevels(z)
+      for {
+        sources <- getBandRasterSources(subsetBands.toNel.get)
+        tiles <- sources traverse { rs =>
+          sync.delay {
+            rs.reproject(WebMercator)
+              .tileToLayout(layoutDefinition, NearestNeighbor)
+              .read(SpatialKey(x, y), List(0)) map { tile =>
+              tile
+                .mapBands((_: Int, t: Tile) => t.toArrayTile)
+                .band(0)
+            }
+          }
+        }
+      } yield {
+        Some(MultibandTile(tiles.toList collect { case Some(t) => t }))
+      }
     }
 
-  def getFreeFormBandRasterSources(
-      bs: NonEmptyList[Int]): F[NonEmptyList[RasterSource]] =
-    bs parTraverse { getBandRasterSource _ }
+  def readWithCache(extent: Extent, cs: CellSize)(
+      implicit flags: scalacache.Flags): F[Option[MultibandTile]] = {
+    memoizeF(None) {
+      logger.debug(
+        s"Reading Extent ${extent} with CellSize ${cs} - Image: ${imageId}"
+      )
+      val rasterExtent = RasterExtent(extent, cs)
+      logger.debug(
+        s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)"
+      )
+      for {
+        sources <- getBandRasterSources(subsetBands.toNel.get)
+        tiles <- sources traverse { rs =>
+          sync.delay {
+            rs.reproject(WebMercator, NearestNeighbor)
+              .resampleToGrid(
+                GridExtent[Long](rasterExtent.extent, rasterExtent.cellSize),
+                NearestNeighbor
+              )
+              .read(extent, List(0))
+              .map(_.tile.band(0))
+          }
+        }
+      } yield {
+        Some(MultibandTile(tiles.toList collect { case Some(t) => t }))
+      }
+    }
+  }
 }
 
 sealed trait BacksplashImage[F[_]] extends LazyLogging {
