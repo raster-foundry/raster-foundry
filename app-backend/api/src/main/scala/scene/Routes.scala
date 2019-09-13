@@ -4,7 +4,6 @@ import java.util.UUID
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
-import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.api.utils.Config
@@ -29,7 +28,6 @@ import io.circe.parser._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 import com.rasterfoundry.common.LayerAttribute
 
@@ -132,7 +130,7 @@ trait SceneRoutes
         case (Some(SceneType.COG), Some(ingestLocation), None) => {
           logger.debug(s"Ingest location is: $ingestLocation")
           logger.info(s"Generating Footprint for Newly Added COG")
-          CogUtils.getTiffExtent(ingestLocation)
+          Some(CogUtils.getTiffExtent(ingestLocation))
         }
         case (_, _, tf @ Some(_)) => {
           logger.info("Not generating footprint, already exists")
@@ -141,13 +139,11 @@ trait SceneRoutes
         case _ => None
       }
 
-      val histogram: OptionT[Future, Array[Histogram[Double]]] =
+      val histogram: Option[Array[Histogram[Double]]] =
         (newScene.sceneType, newScene.ingestLocation) match {
           case (Some(SceneType.COG), Some(ingestLocation)) =>
-            CogUtils.fromUri(ingestLocation) map { _.tiff } map { geoTiff =>
-              CogUtils.geoTiffDoubleHistogram(geoTiff)
-            }
-          case _ => OptionT.fromOption(None)
+            CogUtils.histogramFromUri(ingestLocation)
+          case _ => None
         }
 
       val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
@@ -158,41 +154,36 @@ trait SceneRoutes
       val updatedScene = newScene.copy(dataFootprint = dataFootprint,
                                        tileFootprint = tileFootprint)
 
-      val histogramAndInsertFut = for {
-        insertedScene <- OptionT.liftF(
-          SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture)
-        _ <- if (!newScene.ingestLocation.isEmpty) {
-          histogram flatMap { hist =>
-            OptionT {
-              parse(hist.toJson.toString) traverse { parsed =>
-                LayerAttributeDao
-                  .insertLayerAttribute(
-                    LayerAttribute(insertedScene.id.toString,
-                                   0,
-                                   "histogram",
-                                   parsed)
-                  )
-                  .transact(xa)
-                  .unsafeToFuture
-              } map { _.toOption }
-            }
-          }
-        } else {
-          // We have to return some kind of successful OptionT, so just provide
-          // a small int value wrapped in a Some()
-          // If we _don't_ do this, we can't post scenes without ingest locations,
-          // which is bad.
-          OptionT(Future.successful(Option(0)))
-        }
-      } yield insertedScene
+      val insertedScene = (histogram,
+                           newScene.sceneType,
+                           !newScene.ingestLocation.isEmpty) match {
+        case (Some(hist), Some(SceneType.COG), true) =>
+          for {
+            insertedScene <- SceneDao.insert(updatedScene, user)
+            _ <- parse(hist.toJson.toString) traverse { parsed =>
+              LayerAttributeDao
+                .insertLayerAttribute(
+                  LayerAttribute(insertedScene.id.toString,
+                                 0,
+                                 "histogram",
+                                 parsed)
+                )
+            } map { _.toOption }
+          } yield insertedScene
+        case (_, _, false) =>
+          SceneDao.insert(updatedScene, user)
+        case _ =>
+          throw new IllegalArgumentException(
+            "Unable to generate histograms for scene. Please verify that appropriate " ++
+              "overviews exist. Histogram generation requires an overview smaller than 600x600.")
+      }
+      val histogramAndInsertFut =
+        insertedScene.transact(xa).unsafeToFuture()
 
-      onSuccess(histogramAndInsertFut.value) {
-        case Some(scene) =>
-          if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested)
-            kickoffSceneIngest(scene.id)
-          complete((StatusCodes.Created, scene))
-        case None =>
-          complete(StatusCodes.BadRequest)
+      onSuccess(histogramAndInsertFut) { scene =>
+        if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested)
+          kickoffSceneIngest(scene.id)
+        complete((StatusCodes.Created, scene))
       }
     }
   }

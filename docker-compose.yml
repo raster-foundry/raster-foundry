@@ -51,7 +51,7 @@ services:
       - ./nginx/etc/nginx/conf.d/backsplash.conf:/etc/nginx/conf.d/default.conf
 
   api-server:
-    image: openjdk:11-slim
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
@@ -64,6 +64,7 @@ services:
       - TILE_SERVER_LOCATION
       - COURSIER_CACHE=/root/.coursier
       - BACKSPLASH_ENABLE_MULTITIFF=true
+      - AWS_DEFAULT_PROFILE=raster-foundry
     ports:
       - "9000:9000"
       - "9010:9010"
