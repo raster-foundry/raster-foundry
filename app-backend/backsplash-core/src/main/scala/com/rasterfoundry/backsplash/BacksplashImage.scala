@@ -194,32 +194,25 @@ case class Landsat8MultiTiffImage(
   )
 
   def getUri(band: Int): Option[String] = imageName map { name =>
-    s"$prefix/${name}_B${band}.TIF"
+    s"$prefix/${name}_B${band + 1}.TIF"
   }
 
   def getBandRasterSource(i: Int,
                           context: TracingContext[IO]): IO[RasterSource] = {
-    val rsTags = tags.combine(Map("band-read" -> i.toString))
+    val uri = getUri(i) getOrElse { "" }
+    val rsTags = tags.combine(Map("uri" -> uri))
     context.childSpan("getBandRasterSource", rsTags) use { _ =>
-      getUri(i) map { uri =>
-        logger.debug(s"Using GDAL Raster Source: ${uri}")
-        // Do not bother caching - let GDAL internals worry about that
-        val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
-        IO {
-          metadata.noDataValue match {
-            case Some(nd) =>
-              rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
-            case _ =>
-              rasterSource
-          }
-
+      logger.debug(s"Using GDAL Raster Source: ${uri}")
+      // Do not bother caching - let GDAL internals worry about that
+      val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+      IO {
+        metadata.noDataValue match {
+          case Some(nd) =>
+            rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+          case _ =>
+            rasterSource
         }
-      } getOrElse {
-        IO.raiseError(
-          RequirementFailedException(
-            s"Could not construct uri from prefix: $prefix"
-          )
-        )
+
       }
     }
   }
@@ -270,16 +263,25 @@ abstract class MultiTiffImage[F[_]: Monad, G[_]](
       memoizeF(None) {
         val layoutDefinition = BacksplashImage.tmsLevels(z)
         for {
-          sources <- getBandRasterSources(subsetBands.toNel.get, child)
+          sources <- subsetBands.toNel match {
+            case Some(bs) => getBandRasterSources(bs, child)
+            case None =>
+              Err.raiseError(
+                RequirementFailedException("Must request at least one band"))
+          }
           tiles <- sources traverse { rs =>
-            sync.delay {
-              rs.reproject(WebMercator)
-                .tileToLayout(layoutDefinition, NearestNeighbor)
-                .read(SpatialKey(x, y), List(0)) map { tile =>
-                tile
-                  .mapBands((_: Int, t: Tile) => t.toArrayTile)
-                  .band(0)
-              }
+            child.childSpan("readFromRasterSource",
+                            Map("rasterSourcePath" -> s"${rs.dataPath}")) use {
+              _ =>
+                sync.delay {
+                  rs.reproject(WebMercator)
+                    .tileToLayout(layoutDefinition, NearestNeighbor)
+                    .read(SpatialKey(x, y), List(0)) map { tile =>
+                    tile
+                      .mapBands((_: Int, t: Tile) => t.toArrayTile)
+                      .band(0)
+                  }
+                }
             }
           }
         } yield {
@@ -303,7 +305,12 @@ abstract class MultiTiffImage[F[_]: Monad, G[_]](
           s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)"
         )
         for {
-          sources <- getBandRasterSources(subsetBands.toNel.get, child)
+          sources <- subsetBands.toNel match {
+            case Some(rs) => getBandRasterSources(rs, child)
+            case None =>
+              Err.raiseError(
+                RequirementFailedException("Must request at least one band"))
+          }
           tiles <- sources traverse { rs =>
             sync.delay {
               rs.reproject(WebMercator, NearestNeighbor)

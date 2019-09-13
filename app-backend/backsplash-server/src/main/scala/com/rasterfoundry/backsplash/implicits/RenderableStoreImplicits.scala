@@ -25,7 +25,8 @@ import java.util.UUID
 
 import com.colisweb.tracing.TracingContext
 
-class RenderableStoreImplicits(xa: Transactor[IO])
+class RenderableStoreImplicits(xa: Transactor[IO])(
+    implicit contextShift: ContextShift[IO])
     extends ToRenderableStoreOps
     with LazyLogging {
 
@@ -42,7 +43,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])
       mosaicDefinition: MosaicDefinition,
       bandOverride: Option[BandOverride],
       projId: UUID,
-      tracingContext: TracingContext[IO]): BacksplashGeotiff = {
+      tracingContext: TracingContext[IO]): BacksplashImage[IO] = {
     val singleBandOptions =
       mosaicDefinition.singleBandOptions flatMap {
         _.as[SingleBandOptions.Params].toOption
@@ -85,7 +86,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])
 
     mosaicDefinition.datasource match {
       case Config.publicData.landsat8DatasourceId =>
-        LandsatMultiTiffImage(
+        Landsat8MultiTiffImage(
           sceneId,
           footprint,
           subsetBands,
@@ -96,7 +97,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])
           mosaicDefinition.mask,
           mosaicDefinition.metadataFiles.headOption map { uri =>
             s"s3://landsat-pds/${prefixFromHttpsS3Path(uri)}"
-          } getOrElse { "" }
+          } getOrElse { "" },
+          tracingContext
         )
       case _ =>
         val ingestLocation = mosaicDefinition.ingestLocation getOrElse {
@@ -121,8 +123,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])
     }
   }
 
-  implicit def sceneStore(
-      contextShift: ContextShift[IO]): RenderableStore[SceneDao] =
+  implicit def sceneStore: RenderableStore[SceneDao] =
     new RenderableStore[SceneDao] {
       def read(
           self: SceneDao,
@@ -175,8 +176,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])
       }
     }
 
-  implicit def layerStore(implicit contextShift: ContextShift[IO])
-    : RenderableStore[SceneToLayerDao] =
+  implicit def layerStore: RenderableStore[SceneToLayerDao] =
     new RenderableStore[SceneToLayerDao] {
       // projId here actually refers to a layer -- but the argument names have to
       // match the typeclass we're providing evidence for

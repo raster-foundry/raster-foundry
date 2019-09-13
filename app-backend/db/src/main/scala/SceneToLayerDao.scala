@@ -122,7 +122,7 @@ object SceneToLayerDao
       Some(fr"project_layer_id = ${projectLayerId}"),
       Some(fr"accepted = true"),
       Some(
-        fr"(ingest_status = 'INGESTED' OR datasource = ${Config.publicData.landsat8DatasourceId})"),
+        fr"(ingest_status = 'INGESTED' OR datasource = ${Config.publicData.landsat8DatasourceId} :: uuid)"),
       sceneIdSubset.toNel map {
         Fragments.in(fr"scene_id", _)
       }
