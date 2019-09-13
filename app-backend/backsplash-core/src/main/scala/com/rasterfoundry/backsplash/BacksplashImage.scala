@@ -272,15 +272,14 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
             // a reasonable sample
             // For some reason the tiles coming back from this believe that their min / max is 0,
             // which causes problems when trying to normalize before
-            rs.resolutions.take(rs.resolutions.length - 2).lastOption flatMap {
-              gridExtent =>
-                println(s"Resolution selected: $gridExtent")
-                println(
-                  s"Resolution stats: cols -- ${gridExtent.cols}, rows -- ${gridExtent.rows}")
-                println(
-                  s"Grid bounds stats: ${gridExtent.gridBoundsFor(gridExtent.extent)}")
-                // rs.read(gridExtent.extent, List(0))
-                rs.read(gridExtent.gridBoundsFor(gridExtent.extent), List(0))
+            rs.resolutions.lastOption flatMap { gridExtent =>
+              println(s"Resolution selected: $gridExtent")
+              println(
+                s"Resolution stats: cols -- ${gridExtent.cols}, rows -- ${gridExtent.rows}")
+              println(
+                s"Grid bounds stats: ${gridExtent.gridBoundsFor(gridExtent.extent)}")
+              // rs.read(gridExtent.extent, List(0))
+              rs.read(gridExtent.gridBoundsFor(gridExtent.extent), List(0))
             }
           }
         }
@@ -288,7 +287,9 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
         zoomedOutExtents collect {
           case Some(t) => {
             val tile = t.tile.band(0)
-            val (oldMin, oldMax) = tile.findMinMaxDouble
+            val data = tile.toArray
+            val oldMin = data.min
+            val oldMax = data.max
             println(s"Old min: $oldMin, oldMax: $oldMax")
             tile.normalize(oldMin, oldMax, 0, 255).histogramDouble
           }
