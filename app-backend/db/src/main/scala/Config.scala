@@ -11,5 +11,7 @@ object Config {
       publicDataConfig.getString("landsat8DatasourceId")
     val sentinel2DatasourceId =
       publicDataConfig.getString("sentinel2DatasourceId")
+    val enableMultiTiff =
+      publicDataConfig.getBoolean("enableMultiTiff")
   }
 }

@@ -116,13 +116,20 @@ object SceneToLayerDao
                           blueBand: Option[Int] = None,
                           sceneIdSubset: List[UUID] = List.empty)
     : ConnectionIO[List[MosaicDefinition]] = {
+    val ingestFilter: Option[Fragment] =
+      if (Config.publicData.enableMultiTiff) {
+        Some(
+          fr"(ingest_status = 'INGESTED' OR datasource = ${Config.publicData.landsat8DatasourceId} :: uuid)"
+        )
+      } else {
+        Some(fr"ingest_status = 'INGESTED'")
+      }
     val filters = List(
       polygonOption.map(polygon =>
         fr"ST_Intersects(tile_footprint, ${polygon})"),
       Some(fr"project_layer_id = ${projectLayerId}"),
       Some(fr"accepted = true"),
-      Some(
-        fr"(ingest_status = 'INGESTED' OR datasource = ${Config.publicData.landsat8DatasourceId} :: uuid)"),
+      ingestFilter,
       sceneIdSubset.toNel map {
         Fragments.in(fr"scene_id", _)
       }
