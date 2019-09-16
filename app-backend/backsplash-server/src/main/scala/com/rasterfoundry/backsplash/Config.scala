@@ -13,6 +13,8 @@ object Config {
       UUID.fromString(publicDataConfig.getString("landsat8DatasourceId"))
     val sentinel2DatasourceId =
       UUID.fromString(publicDataConfig.getString("sentinel2DatasourceId"))
+    val enableMultiTiff =
+      publicDataConfig.getBoolean("enableMultiTiff")
   }
 
   object parallelism {

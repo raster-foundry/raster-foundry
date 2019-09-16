@@ -85,7 +85,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
     )
 
     mosaicDefinition.datasource match {
-      case Config.publicData.landsat8DatasourceId =>
+      case Config.publicData.landsat8DatasourceId
+          if Config.publicData.enableMultiTiff =>
         Landsat8MultiTiffImage(
           sceneId,
           footprint,
