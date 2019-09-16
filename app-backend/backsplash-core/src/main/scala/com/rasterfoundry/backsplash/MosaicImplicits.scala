@@ -150,8 +150,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                                            sbo),
                  extent)
         case someTiles =>
-          val outTile = someTiles.foldLeft(
-            MultibandTile(invisiTile, invisiTile, invisiTile))(
+          val outTile = someTiles.foldLeft(MultibandTile(invisiTile))(
             (baseTile: MultibandTile, triple2: MBTTriple) =>
               interpretAsFallback(baseTile, firstNd) merge interpretAsFallback(
                 triple2._1,
