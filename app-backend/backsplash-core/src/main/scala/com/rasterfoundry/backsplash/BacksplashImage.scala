@@ -268,30 +268,18 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
         }
         zoomedOutExtents <- sources parTraverse { rs =>
           sync.delay {
-            // This is at this point just throwing garbag at the problem of how to get
-            // a reasonable sample
-            // For some reason the tiles coming back from this believe that their min / max is 0,
-            // which causes problems when trying to normalize before
-            rs.resolutions.lastOption flatMap { gridExtent =>
-              println(s"Resolution selected: $gridExtent")
-              println(
-                s"Resolution stats: cols -- ${gridExtent.cols}, rows -- ${gridExtent.rows}")
-              println(
-                s"Grid bounds stats: ${gridExtent.gridBoundsFor(gridExtent.extent)}")
-              // rs.read(gridExtent.extent, List(0))
-              rs.read(gridExtent.gridBoundsFor(gridExtent.extent), List(0))
-            }
+            // Fails for tifs without overviews, but you have overviews, right?
+            // You're definitely not trying to read a non-COG?
+            val idealResolution = rs.resolutions.minBy(res =>
+              scala.math.abs(250000 - res.rows * res.cols))
+            rs.resampleToGrid(idealResolution).read()
           }
         }
       } yield {
         zoomedOutExtents collect {
           case Some(t) => {
             val tile = t.tile.band(0)
-            val data = tile.toArray
-            val oldMin = data.min
-            val oldMax = data.max
-            println(s"Old min: $oldMin, oldMax: $oldMax")
-            tile.normalize(oldMin, oldMax, 0, 255).histogramDouble
+            tile.histogramDouble
           }
         } toArray
       }
