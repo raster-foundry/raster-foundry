@@ -106,7 +106,7 @@ final case class BacksplashGeotiff(
   def readWithCache(z: Int, x: Int, y: Int, context: TracingContext[IO])(
       implicit @cacheKeyExclude flags: Flags): IO[Option[MultibandTile]] = {
     val readTags = tags.combine(Map("zoom" -> z.toString))
-    context.childSpan("cache.read(z, x, y)", readTags) use { childContext =>
+    context.childSpan("cache.read:z_x_y:", readTags) use { childContext =>
       memoizeF(None) {
         val layoutDefinition = BacksplashImage.tmsLevels(z)
         for {
@@ -137,14 +137,14 @@ final case class BacksplashGeotiff(
   ): IO[Option[MultibandTile]] = {
     val readTags =
       tags.combine(Map("extent" -> extent.toString, "cellSize" -> cs.toString))
-    context.childSpan("cache.read(extent, cs)", readTags) use { child =>
+    context.childSpan("cache.read:extent_cs:", readTags) use { child =>
       memoizeF(None) {
         val rasterExtent = RasterExtent(extent, cs)
         logger.debug(
           s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
         for {
           rasterSource <- getRasterSource(child)
-          tile <- child.childSpan("rasterSource.read(extent, cs)", readTags) use {
+          tile <- child.childSpan("rasterSource.read:extent_cs:", readTags) use {
             _ =>
               IO(
                 rasterSource

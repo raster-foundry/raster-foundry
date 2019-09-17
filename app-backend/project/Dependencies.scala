@@ -13,8 +13,8 @@ object Version {
   val awsBatchSdk = "1.11.535"
   val awsLambdaCore = "1.1.0"
   val awsLambdaSdk = "1.11.535"
-  val awsS3 = "1.11.535"
-  val awsStsSdk = "1.11.535"
+  val awsSdkVersion = "1.11.535"
+  val awsXrayRecorder = "2.3.0"
   val betterFiles = "3.4.0"
   val caffeine = "2.3.5"
   val cats = "1.6.0"
@@ -74,9 +74,11 @@ object Dependencies {
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % Version.awsLambdaCore
-  val awsLambdaSdk = "com.amazonaws" % "aws-java-sdk-lambda" % Version.awsLambdaSdk
-  val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsS3
-  val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsStsSdk
+  val awsLambdaSdk = "com.amazonaws" % "aws-java-sdk-lambda" % Version.awsSdkVersion
+  val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsSdkVersion
+  val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsSdkVersion
+  val awsXraySdk = "com.amazonaws" % "aws-java-sdk-xray" % Version.awsSdkVersion
+  val awsXrayRecorder = "com.amazonaws" % "aws-xray-recorder-sdk-core" % Version.awsXrayRecorder
   val betterFiles = "com.github.pathikrit" %% "better-files" % Version.betterFiles
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % Version.caffeine
   val catsCore = "org.typelevel" %% "cats-core" % Version.cats
