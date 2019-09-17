@@ -29,7 +29,7 @@ import scala.util.Properties
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
-import com.rasterfoundry.http4s.{JaegerTracer, LoggingTracer}
+import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
@@ -144,7 +144,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     if (CommonConfig.awsbatch.environment.toUpperCase == "DEVELOPMENT") {
       JaegerTracer.tracingContextBuilder
     } else {
-      LoggingTracer.tracingContextBuilder
+      XRayTracer.tracingContextBuilder
     }
 
   val mosaicService: HttpRoutes[IO] = authenticators.tokensAuthMiddleware(

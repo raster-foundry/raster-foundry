@@ -6,8 +6,8 @@ import cats.implicits._
 import com.colisweb.tracing._
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.http4s.xray.{XrayHttp, XrayRequest}
 import io.opentracing._
-import io.opentracing.tag.Tags._
 import org.http4s._
 import org.http4s.util.CaseInsensitiveString
 
@@ -32,34 +32,58 @@ object TracedHTTPRoutes {
   ): Kleisli[OptionT[F, ?], AuthedRequest[F, User], Response[F]] = {
     Kleisli[OptionT[F, ?], AuthedRequest[F, User], Response[F]] { authedReq =>
       val req = authedReq.req
-      val operationName = "http4s-incoming-request"
-      val traceHeader =
-        req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id")) match {
-          case Some(header) => header.value
-          case _            => ""
-        }
+      val operationName = "http4s-request"
       val tags = Map(
-        HTTP_METHOD.getKey -> req.method.name,
-        HTTP_URL.getKey -> req.uri.path.toString,
-        "X-Amzn-Trace-Id" -> traceHeader
-      )
+        "http_method" -> req.method.name,
+        "request_url" -> req.uri.path.toString,
+        "environment" -> Config.environment
+      ).combine {
+        req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id")) match {
+          case Some(header) =>
+            header.value.split('=').reverse.headOption match {
+              case Some(traceId) => Map("amazon_trace_id" -> traceId)
+              case _             => Map.empty[String, String]
+            }
+          case _ => Map.empty[String, String]
+        }
+      }
+
+      def transformResponse(
+          context: TracingContext[F]): F[Option[Response[F]]] = {
+        val tracedRequest = AuthedTraceRequest[F](authedReq, context)
+        val responseOptionWithTags = routes.run(tracedRequest) semiflatMap {
+          response =>
+            val traceTags = Map(
+              "http_status" -> response.status.code.toString,
+            ) ++ tags ++
+              response.headers.toList
+                .map(h => (s"response_header_${h.name}" -> h.value))
+                .toMap
+            context
+              .addTags(traceTags)
+              .map(_ => response)
+        }
+        responseOptionWithTags.value
+      }
 
       OptionT {
-        builder(operationName, tags) use { context =>
-          val tracedRequest = AuthedTraceRequest[F](authedReq, context)
-          val responseOptionWithTags = routes.run(tracedRequest) semiflatMap {
-            response =>
-              val traceTags = Map(
-                HTTP_STATUS.getKey() -> response.status.code.toString
-              ) ++ tags ++
-                response.headers.toList
-                  .map(h => (s"http.response.header.${h.name}" -> h.value))
-                  .toMap
-              context
-                .addTags(traceTags)
-                .map(_ => response)
+        builder match {
+          case b: XRayTracer.XRayTracingContextBuilder[F] => {
+            val request =
+              XrayRequest(req.method.name,
+                          req.uri.path.toString,
+                          req.headers
+                            .get(CaseInsensitiveString("User-Agent"))
+                            .map(_.toString),
+                          req.from.map(_.toString))
+            val http = XrayHttp(Some(request), None)
+            b(operationName, tags, Some(http)) use (context =>
+              transformResponse(context))
           }
-          responseOptionWithTags.value
+          case _ => {
+            builder(operationName, tags) use (context =>
+              transformResponse(context))
+          }
         }
       }
     }
