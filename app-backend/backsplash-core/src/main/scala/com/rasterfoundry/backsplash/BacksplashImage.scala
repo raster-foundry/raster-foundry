@@ -4,7 +4,7 @@ import com.rasterfoundry.backsplash.error.RequirementFailedException
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}
 
-import cats.{Monad, MonadError, Parallel}
+import cats.{Applicative, Monad, MonadError, Parallel}
 import cats.data.NonEmptyList
 import cats.effect.{ContextShift, IO, Sync}
 import cats.implicits._
@@ -225,6 +225,7 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
     implicit F: Parallel[F, G],
     sync: Sync[F],
     mode: Mode[F],
+    app: Applicative[F],
     Err: MonadError[F, Throwable]
 ) extends BacksplashImage[F]
     with LazyLogging {
@@ -316,9 +317,12 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
                 }
             }
           }
-        } yield {
-          Some(MultibandTile(tiles.toList collect { case Some(t) => t }))
-        }
+          mbt <- child.childSpan("constructMultibandTile", readTags) use { _ =>
+            app.pure {
+              Some(MultibandTile(tiles.toList collect { case Some(t) => t }))
+            }
+          }
+        } yield mbt
       }
     }
   }
@@ -358,9 +362,12 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
                 }
             }
           }
-        } yield {
-          Some(MultibandTile(tiles.toList collect { case Some(t) => t }))
-        }
+          mbt <- child.childSpan("constructMultibandTile", readTags) use { _ =>
+            app.pure {
+              Some(MultibandTile(tiles.toList collect { case Some(t) => t }))
+            }
+          }
+        } yield mbt
       }
     }
   }
