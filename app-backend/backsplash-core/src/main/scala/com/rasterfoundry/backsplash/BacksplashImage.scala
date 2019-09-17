@@ -272,10 +272,11 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
           // for improving histograms
           val idealResolution = rs.resolutions.minBy(res =>
             scala.math.abs(250000 - res.rows * res.cols))
-          child.childSpan("readFromResampledGrid", tagRasterSource(rs)) use { _ =>
-            sync.delay {
-              rs.resampleToGrid(idealResolution).read()
-            }
+          child.childSpan("readFromResampledGrid", tagRasterSource(rs)) use {
+            _ =>
+              sync.delay {
+                rs.resampleToGrid(idealResolution).read()
+              }
           }
         }
       } yield {
@@ -302,8 +303,7 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
                 RequirementFailedException("Must request at least one band"))
           }
           tiles <- sources parTraverse { rs =>
-            child.childSpan("readFromRasterSource",
-                            tagRasterSource(rs)) {
+            child.childSpan("readFromRasterSource", tagRasterSource(rs)) use {
               _ =>
                 sync.delay {
                   rs.reproject(WebMercator)
@@ -344,16 +344,18 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
                 RequirementFailedException("Must request at least one band"))
           }
           tiles <- sources parTraverse { rs =>
-            child.childSpan("readFromResampledGrid", tagRasterSource(rs)) use { _ =>
-              sync.delay {
-                rs.reproject(WebMercator, NearestNeighbor)
-                  .resampleToGrid(
-                    GridExtent[Long](rasterExtent.extent, rasterExtent.cellSize),
-                    NearestNeighbor
-                  )
-                  .read(extent, List(0))
-                  .map(_.tile.band(0))
-              }
+            child.childSpan("readFromResampledGrid", tagRasterSource(rs)) use {
+              _ =>
+                sync.delay {
+                  rs.reproject(WebMercator, NearestNeighbor)
+                    .resampleToGrid(
+                      GridExtent[Long](rasterExtent.extent,
+                                       rasterExtent.cellSize),
+                      NearestNeighbor
+                    )
+                    .read(extent, List(0))
+                    .map(_.tile.band(0))
+                }
             }
           }
         } yield {
