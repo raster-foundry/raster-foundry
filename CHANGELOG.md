@@ -18,6 +18,8 @@
 
 ### Fixed
 
+- Made MODIS Aqua datasource id in the frontend a valid UUID [\#5175](https://github.com/raster-foundry/raster-foundry/pull/5175)
+
 ### Security
 
 ## [1.29.1](https://github.com/raster-foundry/raster-foundry/compare/1.29.0...1.29.1)
