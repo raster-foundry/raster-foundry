@@ -268,8 +268,9 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
         }
         zoomedOutExtents <- sources parTraverse { rs =>
           sync.delay {
-            // Fails for tifs without overviews, but you have overviews, right?
-            // You're definitely not trying to read a non-COG?
+            // Sample the resolution closest by square root to 500 x 500
+            // This is the same calculation as in #5169
+            // for improving histograms
             val idealResolution = rs.resolutions.minBy(res =>
               scala.math.abs(250000 - res.rows * res.cols))
             rs.resampleToGrid(idealResolution).read()
