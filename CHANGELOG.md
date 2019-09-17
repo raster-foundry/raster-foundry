@@ -15,6 +15,8 @@
 
 ### Removed
 
+- Remove API spec publishing [\#5174](https://github.com/raster-foundry/raster-foundry/pull/5174)
+
 ### Fixed
 
 ### Security
