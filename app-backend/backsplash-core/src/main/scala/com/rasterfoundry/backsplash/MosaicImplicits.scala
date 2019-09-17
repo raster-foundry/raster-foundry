@@ -331,6 +331,10 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
         case im: Landsat8MultiTiffImage =>
           logger.debug(s"Retrieving histograms for ${im.imageId} from source")
           im.getHistogram(im.tracingContext)
+        // Is this hilariously repetitive? Yes! But type erasure :(
+        case im: Sentinel2MultiTiffImage =>
+          logger.debug(s"Retrieving histograms for ${im.imageId} from source")
+          im.getHistogram(im.tracingContext)
       }
     }
 

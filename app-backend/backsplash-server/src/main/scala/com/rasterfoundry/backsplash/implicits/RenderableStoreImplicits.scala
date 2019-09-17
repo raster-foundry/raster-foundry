@@ -101,6 +101,22 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           } getOrElse { "" },
           tracingContext
         )
+      case Config.publicData.sentinel2DatasourceId
+          if Config.publicData.enableMultiTiff =>
+        Sentinel2MultiTiffImage(
+          sceneId,
+          footprint,
+          subsetBands,
+          colorCorrectParameters,
+          singleBandOptions,
+          mosaicDefinition.projectId,
+          projId,
+          mosaicDefinition.mask,
+          mosaicDefinition.metadataFiles.headOption map { uri =>
+            s"s3://sentinel-s2-l1c/${prefixFromHttpsS3Path(uri)}"
+          } getOrElse { "" },
+          tracingContext
+        )
       case _ =>
         val ingestLocation = mosaicDefinition.ingestLocation getOrElse {
           throw UningestedScenesException(

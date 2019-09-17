@@ -57,8 +57,8 @@ final case class BacksplashGeotiff(
     mask: Option[MultiPolygon],
     @cacheKeyExclude footprint: MultiPolygon,
     metadata: SceneMetadataFields,
-    @cacheKeyExclude tracingContext: TracingContext[IO])
-    extends LazyLogging
+    @cacheKeyExclude tracingContext: TracingContext[IO]
+) extends LazyLogging
     with BacksplashImage[IO] {
 
   val tags: Map[String, String] = Map(
@@ -104,7 +104,8 @@ final case class BacksplashGeotiff(
   }
 
   def readWithCache(z: Int, x: Int, y: Int, context: TracingContext[IO])(
-      implicit @cacheKeyExclude flags: Flags): IO[Option[MultibandTile]] = {
+      implicit @cacheKeyExclude flags: Flags
+  ): IO[Option[MultibandTile]] = {
     val readTags = tags.combine(Map("zoom" -> z.toString))
     context.childSpan("cache.read:z_x_y:", readTags) use { childContext =>
       memoizeF(None) {
@@ -141,7 +142,8 @@ final case class BacksplashGeotiff(
       memoizeF(None) {
         val rasterExtent = RasterExtent(extent, cs)
         logger.debug(
-          s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
+          s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)"
+        )
         for {
           rasterSource <- getRasterSource(child)
           tile <- child.childSpan("rasterSource.read:extent_cs:", readTags) use {
@@ -149,11 +151,16 @@ final case class BacksplashGeotiff(
               IO(
                 rasterSource
                   .reproject(WebMercator, NearestNeighbor)
-                  .resampleToGrid(GridExtent[Long](rasterExtent.extent,
-                                                   rasterExtent.cellSize),
-                                  NearestNeighbor)
+                  .resampleToGrid(
+                    GridExtent[Long](
+                      rasterExtent.extent,
+                      rasterExtent.cellSize
+                    ),
+                    NearestNeighbor
+                  )
                   .read(extent, subsetBands)
-                  .map(_.tile)).attempt
+                  .map(_.tile)
+              ).attempt
                 .map {
                   case Left(e)              => throw e
                   case Right(multibandTile) => multibandTile
@@ -168,6 +175,68 @@ final case class BacksplashGeotiff(
 
   def selectBands(bands: List[Int]): BacksplashGeotiff =
     this.copy(subsetBands = bands)
+}
+
+case class Sentinel2MultiTiffImage(
+    imageId: UUID,
+    footprint: MultiPolygon,
+    subsetBands: List[Int],
+    corrections: ColorCorrect.Params,
+    singleBandOptions: Option[SingleBandOptions.Params],
+    projectId: UUID,
+    projectLayerId: UUID,
+    mask: Option[MultiPolygon],
+    prefix: String,
+    tracingContext: TracingContext[IO]
+)(implicit contextShift: ContextShift[IO])
+    extends MultiTiffImage[IO, IO.Par] {
+  val metadata = SceneMetadataFields()
+  val imageName: Option[String] = prefix.split("/").lastOption
+
+  val tags = Map(
+    "imageName" -> (imageName getOrElse ""),
+    "imageId" -> s"$imageId",
+    "subsetBands" -> subsetBands.mkString(","),
+    "prefix" -> prefix,
+    "readType" -> "LandsatMultitiff"
+  )
+
+  def makeBandName(bandNum: Int): String = bandNum match {
+    case i if i < 9  => s"""B${"%02d".format(i)}"""
+    case i if i == 9 => "B8A"
+    case i if i > 9 =>
+      s"""B${"%02d".format(i - 1)}"""
+  }
+
+  val bandMap =
+    Map(((1 to 13 toList) map { i =>
+      i -> makeBandName(i)
+    }): _*)
+
+  def getUri(band: Int): Option[String] = bandMap.get(band + 1) map { name =>
+    s"$prefix/$name.jp2"
+  }
+
+  def getBandRasterSource(i: Int,
+                          context: TracingContext[IO]): IO[RasterSource] = {
+    val uri = getUri(i) getOrElse { "" }
+    val rsTags = tags.combine(Map("uri" -> uri))
+    context.childSpan("getBandRasterSource", rsTags) use { _ =>
+      logger.debug(s"Using GDAL Raster Source: ${uri}")
+      // Do not bother caching - let GDAL internals worry about that
+      val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+      IO {
+        metadata.noDataValue match {
+          case Some(nd) =>
+            rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+          case _ =>
+            rasterSource
+        }
+      }
+    }
+  }
+
+  def selectBands(bands: List[Int]) = this.copy(subsetBands = bands)
 }
 
 case class Landsat8MultiTiffImage(
@@ -198,8 +267,10 @@ case class Landsat8MultiTiffImage(
     s"$prefix/${name}_B${band + 1}.TIF"
   }
 
-  def getBandRasterSource(i: Int,
-                          context: TracingContext[IO]): IO[RasterSource] = {
+  def getBandRasterSource(
+      i: Int,
+      context: TracingContext[IO]
+  ): IO[RasterSource] = {
     val uri = getUri(i) getOrElse { "" }
     val rsTags = tags.combine(Map("uri" -> uri))
     context.childSpan("getBandRasterSource", rsTags) use { _ =>
@@ -213,7 +284,6 @@ case class Landsat8MultiTiffImage(
           case _ =>
             rasterSource
         }
-
       }
     }
   }
@@ -265,14 +335,16 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
           case Some(bs) => getBandRasterSources(bs, child)
           case None =>
             Err.raiseError(
-              RequirementFailedException("Must request at least one band"))
+              RequirementFailedException("Must request at least one band")
+            )
         }
         zoomedOutExtents <- sources parTraverse { rs =>
           // Sample the resolution closest by square root to 500 x 500
           // This is the same calculation as in #5169
           // for improving histograms
-          val idealResolution = rs.resolutions.minBy(res =>
-            scala.math.abs(250000 - res.rows * res.cols))
+          val idealResolution = rs.resolutions.minBy(
+            res => scala.math.abs(250000 - res.rows * res.cols)
+          )
           child.childSpan("readFromResampledGrid", tagRasterSource(rs)) use {
             _ =>
               sync.delay {
@@ -296,7 +368,8 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
     }
 
   def readWithCache(z: Int, x: Int, y: Int, context: TracingContext[F])(
-      implicit @cacheKeyExclude flags: Flags): F[Option[MultibandTile]] = {
+      implicit @cacheKeyExclude flags: Flags
+  ): F[Option[MultibandTile]] = {
     val readTags = tags.combine(Map("zoom" -> z.toString))
     context.childSpan("cache.read:z_x_y:", readTags) use { child =>
       memoizeF(None) {
@@ -306,7 +379,8 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
             case Some(bs) => getBandRasterSources(bs, child)
             case None =>
               Err.raiseError(
-                RequirementFailedException("Must request at least one band"))
+                RequirementFailedException("Must request at least one band")
+              )
           }
           tiles <- sources parTraverse { rs =>
             child.childSpan("readFromRasterSource", tagRasterSource(rs)) use {
@@ -333,7 +407,8 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
   }
 
   def readWithCache(extent: Extent, cs: CellSize, context: TracingContext[F])(
-      implicit flags: scalacache.Flags): F[Option[MultibandTile]] = {
+      implicit flags: scalacache.Flags
+  ): F[Option[MultibandTile]] = {
     val readTags =
       tags.combine(Map("extent" -> extent.toString, "cellSize" -> cs.toString))
     context.childSpan("cache.read:extent_cs:", readTags) use { child =>
@@ -350,7 +425,8 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
             case Some(rs) => getBandRasterSources(rs, child)
             case None =>
               Err.raiseError(
-                RequirementFailedException("Must request at least one band"))
+                RequirementFailedException("Must request at least one band")
+              )
           }
           tiles <- sources parTraverse { rs =>
             child.childSpan("readFromResampledGrid", tagRasterSource(rs)) use {
@@ -358,8 +434,10 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
                 sync.delay {
                   rs.reproject(WebMercator, NearestNeighbor)
                     .resampleToGrid(
-                      GridExtent[Long](rasterExtent.extent,
-                                       rasterExtent.cellSize),
+                      GridExtent[Long](
+                        rasterExtent.extent,
+                        rasterExtent.cellSize
+                      ),
                       NearestNeighbor
                     )
                     .read(extent, List(0))
@@ -394,22 +472,27 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
   val enableGDAL = Config.RasterSource.enableGDAL
 
   /** Read ZXY tile - defers to a private method to enable disable/enabling of cache **/
-  def read(z: Int,
-           x: Int,
-           y: Int,
-           context: TracingContext[F]): F[Option[MultibandTile]] = {
+  def read(
+      z: Int,
+      x: Int,
+      y: Int,
+      context: TracingContext[F]
+  ): F[Option[MultibandTile]] = {
     implicit val flags =
       Flags(Config.cache.tileCacheEnable, Config.cache.tileCacheEnable)
     readWithCache(z, x, y, context)
   }
 
   def readWithCache(z: Int, x: Int, y: Int, context: TracingContext[F])(
-      implicit @cacheKeyExclude flags: Flags): F[Option[MultibandTile]]
+      implicit @cacheKeyExclude flags: Flags
+  ): F[Option[MultibandTile]]
 
   /** Read tile - defers to a private method to enable disable/enabling of cache **/
-  def read(extent: Extent,
-           cs: CellSize,
-           context: TracingContext[F]): F[Option[MultibandTile]] = {
+  def read(
+      extent: Extent,
+      cs: CellSize,
+      context: TracingContext[F]
+  ): F[Option[MultibandTile]] = {
     implicit val flags =
       Flags(Config.cache.tileCacheEnable, Config.cache.tileCacheEnable)
     logger.debug(s"Tile Cache Status: ${flags}")
