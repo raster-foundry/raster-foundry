@@ -9,7 +9,7 @@ import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -18,7 +18,7 @@ import java.util.UUID
 
 class ToolStoreImplicits[HistStore](
     mosaicImplicits: MosaicImplicits[HistStore, SceneToLayerDao],
-    xa: Transactor[IO])
+    xa: Transactor[IO])(implicit contextShift: ContextShift[IO])
     extends RenderableStoreImplicits(xa)
     with LazyLogging {
 

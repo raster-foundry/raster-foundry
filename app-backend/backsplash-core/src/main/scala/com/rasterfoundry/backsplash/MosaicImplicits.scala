@@ -150,8 +150,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                                            sbo),
                  extent)
         case someTiles =>
-          val outTile = someTiles.foldLeft(
-            MultibandTile(invisiTile, invisiTile, invisiTile))(
+          val outTile = someTiles.foldLeft(MultibandTile(invisiTile))(
             (baseTile: MultibandTile, triple2: MBTTriple) =>
               interpretAsFallback(baseTile, firstNd) merge interpretAsFallback(
                 triple2._1,
@@ -324,8 +323,15 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
       relevant: BacksplashImage[IO]
   )(implicit @cacheKeyExclude flags: Flags): IO[Array[Histogram[Double]]] =
     memoizeF(None) {
-      logger.debug(s"Retrieving Histograms for ${relevant.imageId} from Source")
-      histStore.layerHistogram(relevant.imageId, relevant.subsetBands)
+      relevant match {
+        case im: BacksplashGeotiff =>
+          logger.debug(
+            s"Retrieving Histograms for ${im.imageId} from histogram store")
+          histStore.layerHistogram(im.imageId, im.subsetBands)
+        case im: Landsat8MultiTiffImage =>
+          logger.debug(s"Retrieving histograms for ${im.imageId} from source")
+          im.getHistogram(im.tracingContext)
+      }
     }
 
   // We need to be able to pass information about whether scenes should paint themselves while
