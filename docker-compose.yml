@@ -116,6 +116,20 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
 
+  xray:
+    image: amazon/aws-xray-daemon
+    env_file: .env
+    volumes:
+      - $HOME/.aws:/root/.aws:ro
+    ports:
+      - 2000
+    entrypoint: "/usr/bin/xray"
+    command:
+      - "-t"
+      - "0.0.0.0:2000"
+      - "-b"
+      - "0.0.0.0:2000"
+
   backsplash:
     image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
     depends_on:
@@ -125,6 +139,7 @@ services:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
       - jaeger:jaeger.service.internal
+      - xray:xray.service.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=DEBUG
