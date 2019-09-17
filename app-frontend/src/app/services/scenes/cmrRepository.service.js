@@ -14,7 +14,7 @@ export default (app) => {
         initDatasources() {
             this.datasources = [{
                 name: 'MYD09A1: MODIS/Aqua ',
-                uuid: '755735945-9da5-47c3-8ae4-572b5e11205b',
+                uuid: '55735945-9da5-47c3-8ae4-572b5e11205b',
                 id: 'MYD09A1',
                 uploadType: 'MODIS_USGS',
                 fileAdapter(scene) {
