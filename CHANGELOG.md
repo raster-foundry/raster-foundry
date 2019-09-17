@@ -6,8 +6,8 @@
 ### Added
 
 - Added support for visualizing Landsat 8 scenes directly from AWS without ingest [\#5167](https://github.com/raster-foundry/raster-foundry/pull/5167)
-- Added tracing support to tile server [\#5165](https://github.com/raster-foundry/raster-foundry/pull/5165)
 - Expose scene id in the scene detail modal [\#5168](https://github.com/raster-foundry/raster-foundry/pull/5168)
+- Added tracing support to tile server [\#5165](https://github.com/raster-foundry/raster-foundry/pull/5165)[\#5171](https://github.com/raster-foundry/raster-foundry/pull/5171)
 
 ### Changed
 
