@@ -267,13 +267,15 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
               RequirementFailedException("Must request at least one band"))
         }
         zoomedOutExtents <- sources parTraverse { rs =>
-          sync.delay {
-            // Sample the resolution closest by square root to 500 x 500
-            // This is the same calculation as in #5169
-            // for improving histograms
-            val idealResolution = rs.resolutions.minBy(res =>
-              scala.math.abs(250000 - res.rows * res.cols))
-            rs.resampleToGrid(idealResolution).read()
+          // Sample the resolution closest by square root to 500 x 500
+          // This is the same calculation as in #5169
+          // for improving histograms
+          val idealResolution = rs.resolutions.minBy(res =>
+            scala.math.abs(250000 - res.rows * res.cols))
+          child.childSpan("readFromResampledGrid", tagRasterSource(rs)) use { _ =>
+            sync.delay {
+              rs.resampleToGrid(idealResolution).read()
+            }
           }
         }
       } yield {
@@ -289,7 +291,7 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
   def readWithCache(z: Int, x: Int, y: Int, context: TracingContext[F])(
       implicit @cacheKeyExclude flags: Flags): F[Option[MultibandTile]] = {
     val readTags = tags.combine(Map("zoom" -> z.toString))
-    context.childSpan("cache.read(z, x, y)", readTags) use { child =>
+    context.childSpan("cache.read:z_x_y:", readTags) use { child =>
       memoizeF(None) {
         val layoutDefinition = BacksplashImage.tmsLevels(z)
         for {
@@ -301,7 +303,7 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
           }
           tiles <- sources parTraverse { rs =>
             child.childSpan("readFromRasterSource",
-                            Map("rasterSourcePath" -> s"${rs.dataPath}")) use {
+                            tagRasterSource(rs)) {
               _ =>
                 sync.delay {
                   rs.reproject(WebMercator)
@@ -325,7 +327,7 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
       implicit flags: scalacache.Flags): F[Option[MultibandTile]] = {
     val readTags =
       tags.combine(Map("extent" -> extent.toString, "cellSize" -> cs.toString))
-    context.childSpan("cache.read(extent, cs)", readTags) use { child =>
+    context.childSpan("cache.read:extent_cs:", readTags) use { child =>
       memoizeF(None) {
         logger.debug(
           s"Reading Extent ${extent} with CellSize ${cs} - Image: ${imageId}"
@@ -342,14 +344,16 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
                 RequirementFailedException("Must request at least one band"))
           }
           tiles <- sources parTraverse { rs =>
-            sync.delay {
-              rs.reproject(WebMercator, NearestNeighbor)
-                .resampleToGrid(
-                  GridExtent[Long](rasterExtent.extent, rasterExtent.cellSize),
-                  NearestNeighbor
-                )
-                .read(extent, List(0))
-                .map(_.tile.band(0))
+            child.childSpan("readFromResampledGrid", tagRasterSource(rs)) use { _ =>
+              sync.delay {
+                rs.reproject(WebMercator, NearestNeighbor)
+                  .resampleToGrid(
+                    GridExtent[Long](rasterExtent.extent, rasterExtent.cellSize),
+                    NearestNeighbor
+                  )
+                  .read(extent, List(0))
+                  .map(_.tile.band(0))
+              }
             }
           }
         } yield {
@@ -405,6 +409,10 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
   def getRasterSource(context: TracingContext[F]): F[RasterSource]
 
   def selectBands(bands: List[Int]): BacksplashImage[F]
+
+  def tagRasterSource(rs: RasterSource): Map[String, String] = {
+    Map("rasterSourcePath" -> s"${rs.dataPath}")
+  }
 }
 
 object BacksplashImage {
