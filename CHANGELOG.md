@@ -17,6 +17,7 @@
 ### Removed
 
 ### Fixed
+- Remove unnecessary coercion of scenes to a nodata value of 0 in single band mode [\#5173](https://github.com/raster-foundry/raster-foundry/pull/5173)
 
 ### Security
 
