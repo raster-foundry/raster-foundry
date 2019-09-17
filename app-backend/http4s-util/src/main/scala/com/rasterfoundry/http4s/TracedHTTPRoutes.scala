@@ -39,12 +39,17 @@ object TracedHTTPRoutes {
         "environment" -> Config.environment
       ).combine {
         req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id")) match {
-          case Some(header) => Map("amazon_trace_id" -> header.value)
-          case _            => Map.empty[String, String]
+          case Some(header) =>
+            header.value.split('=').reverse.headOption match {
+              case Some(traceId) => Map("amazon_trace_id" -> traceId)
+              case _             => Map.empty[String, String]
+            }
+          case _ => Map.empty[String, String]
         }
       }
 
-      def transformResponse(context: TracingContext[F]): F[Option[Response[F]]] = {
+      def transformResponse(
+          context: TracingContext[F]): F[Option[Response[F]]] = {
         val tracedRequest = AuthedTraceRequest[F](authedReq, context)
         val responseOptionWithTags = routes.run(tracedRequest) semiflatMap {
           response =>
@@ -64,16 +69,20 @@ object TracedHTTPRoutes {
       OptionT {
         builder match {
           case b: XRayTracer.XRayTracingContextBuilder[F] => {
-            val request = XrayRequest(
-              req.method.name,
-              req.uri.path.toString,
-              req.headers.get(CaseInsensitiveString("User-Agent")).map(_.toString),
-              req.from.map(_.toString))
+            val request =
+              XrayRequest(req.method.name,
+                          req.uri.path.toString,
+                          req.headers
+                            .get(CaseInsensitiveString("User-Agent"))
+                            .map(_.toString),
+                          req.from.map(_.toString))
             val http = XrayHttp(Some(request), None)
-            b(operationName, tags, Some(http)) use (context => transformResponse(context))
+            b(operationName, tags, Some(http)) use (context =>
+              transformResponse(context))
           }
           case _ => {
-            builder(operationName, tags) use (context => transformResponse(context))
+            builder(operationName, tags) use (context =>
+              transformResponse(context))
           }
         }
       }

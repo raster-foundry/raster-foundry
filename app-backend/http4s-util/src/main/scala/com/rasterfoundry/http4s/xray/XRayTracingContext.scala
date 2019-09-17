@@ -29,8 +29,10 @@ class XRayTracingContext[F[_]: Sync: Timer](
   def childSpan(
       operationName: String,
       tags: Map[String, String]
-  ): com.colisweb.tracing.TracingContext.TracingContextResource[F] =
-    XRayTracingContext(client, Some(this))(operationName, tags)(None)
+  ): TracingContextResource[F] = {
+    val sanitize: String => String = (s: String) => s.replaceAll("[(,)]", "_")
+    XRayTracingContext(client, Some(this))(sanitize(operationName), tags)(None)
+  }
 }
 
 object XRayTracingContext {
