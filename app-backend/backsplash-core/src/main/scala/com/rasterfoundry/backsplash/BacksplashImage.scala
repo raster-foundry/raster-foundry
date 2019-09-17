@@ -280,13 +280,18 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
               }
           }
         }
-      } yield {
-        zoomedOutExtents collect {
-          case Some(t) => {
-            val tile = t.tile.band(0)
-            tile.histogramDouble
+        hists <- child.childSpan("constructHistogram", Map.empty) use { _ =>
+          app.pure {
+            zoomedOutExtents collect {
+              case Some(t) => {
+                val tile = t.tile.band(0)
+                tile.histogramDouble
+              }
+            } toArray
           }
-        } toArray
+        }
+      } yield {
+        hists
       }
     }
 
