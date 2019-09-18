@@ -3,7 +3,7 @@ package com.rasterfoundry.backsplash.server
 import cats._
 import cats.data.NonEmptyList
 import cats.effect._
-import com.rasterfoundry.backsplash.Cache.tileCache
+import com.rasterfoundry.database.util.Cache.ProjectLayerCache
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -15,6 +15,7 @@ import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl._
 import scalacache.modes.sync._
 import sup.data._
+import scalacache.CatsEffect.modes._
 import sup.{Health, HealthCheck, HealthResult, mods}
 
 import scala.concurrent.duration._
@@ -29,7 +30,7 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
   val bucket = Config.healthcheck.tiffBucket
   val key = Config.healthcheck.tiffKey
   val s3Path = s"s3://${bucket}/${key}"
-
+  val cache = ProjectLayerCache.projectLayerCache
   private def gdalHealth =
     HealthCheck
       .liftF[IO, Id](
@@ -55,19 +56,31 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
   private def dbHealth =
     HealthCheck
       .liftF[IO, Id] {
-        fr"select name from licenses limit 1;"
+        val response = fr"select name from licenses limit 1;"
           .query[String]
           .to[List]
           .transact(xa)
-          .map(_ => HealthResult[Id](Health.Healthy))
+          .attempt
+        response.map {
+          case Left(e) =>
+            logger.error("DB Healthcheck Failed", e)
+            throw e
+          case _ => HealthResult[Id](Health.Healthy)
+        }
       }
       .through(mods.timeoutToSick(3 seconds))
       .through(mods.tagWith("db"))
 
   private def cacheHealth =
     HealthCheck
-      .liftF[IO, Id](IO(tileCache.get("bogus")).map(_ =>
-        HealthResult[Id](Health.Healthy)))
+      .liftF[IO, Id] {
+        cache.get[IO]("bogus").attempt.map {
+          case Left(e) =>
+            logger.error("Cache Healthcheck Failed", e)
+            throw e
+          case _ => HealthResult[Id](Health.Healthy)
+        }
+      }
       .through(mods.timeoutToSick(3 seconds))
       .through(mods.tagWith("cache"))
 
@@ -92,7 +105,6 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
         }
       }
       .through(mods.timeoutToSick(3 seconds))
-      .through(mods.recoverToSick)
       .through(mods.tagWith("requestQuota"))
 
   val routes: HttpRoutes[IO] = HttpRoutes.of {
