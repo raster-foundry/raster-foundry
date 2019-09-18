@@ -198,7 +198,7 @@ case class Sentinel2MultiTiffImage(
     "imageId" -> s"$imageId",
     "subsetBands" -> subsetBands.mkString(","),
     "prefix" -> prefix,
-    "readType" -> "LandsatMultitiff"
+    "readType" -> "Sentinel2Multitiff"
   )
 
   def makeBandName(bandNum: Int): String = bandNum match {
