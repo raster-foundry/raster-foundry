@@ -10,7 +10,9 @@
 - Added tracing support to tile server [\#5165](https://github.com/raster-foundry/raster-foundry/pull/5165)[\#5171](https://github.com/raster-foundry/raster-foundry/pull/5171)
 
 ### Changed
+
 - Improve histogram generation by using RasterSources [\#5169](https://github.com/raster-foundry/raster-foundry/pull/5169)
+- Adjusted the healthcheck to more easily distinguish between errors and timeouts [\#5179](https://github.com/raster-foundry/raster-foundry/pull/5179)
 
 ### Deprecated
 
