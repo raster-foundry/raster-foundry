@@ -58,7 +58,7 @@ object Version {
   val spark = "2.4.2"
   val spire = "0.16.0"
   val spray = "1.3.4"
-  val sup = "0.2.0"
+  val sup = "0.6.0"
   val openTracing = "0.0.6"
   val jaegerClient = "1.0.0"
 }

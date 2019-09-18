@@ -1,8 +1,9 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.Cache.tileCache
+import cats._
+import cats.data.NonEmptyList
 import cats.effect._
+import com.rasterfoundry.backsplash.Cache.tileCache
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -13,8 +14,8 @@ import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl._
 import scalacache.modes.sync._
-import sup._
-import sup.data.{HealthReporter, Tagged}
+import sup.data._
+import sup.{Health, HealthCheck, HealthResult, mods}
 
 import scala.concurrent.duration._
 
@@ -24,148 +25,98 @@ class HealthcheckService(xa: Transactor[IO], quota: Int)(
 ) extends Http4sDsl[IO]
     with LazyLogging {
 
-  private def timeoutToSick(
-      check: HealthCheck[IO, Tagged[String, ?]],
-      failureMessage: String
-  ): HealthCheck[IO, Tagged[String, ?]] =
+  val s3Client = S3Client.DEFAULT
+  val bucket = Config.healthcheck.tiffBucket
+  val key = Config.healthcheck.tiffKey
+  val s3Path = s"s3://${bucket}/${key}"
+
+  private def gdalHealth =
     HealthCheck
-      .race(
-        check,
-        HealthCheck.liftF[IO, Tagged[String, ?]](
-          IO.sleep(3 seconds) map { _ =>
-            HealthResult.tagged(failureMessage, Health.sick)
+      .liftF[IO, Id](
+        IO {
+          s3Client.doesObjectExist(bucket, key) match {
+            case false =>
+              logger.warn(
+                s"${s3Path} does not exist - not failing health check")
+              HealthResult[Id](Health.Healthy)
+            case true =>
+              val rs = GDALRasterSource(s"$s3Path")
+              rs.crs
+              rs.extent
+              rs.bandCount
           }
-        )
-      )
-      .transform(
-        healthIO =>
-          healthIO map {
-            case HealthResult(eitherK) =>
-              eitherK.run match {
-                case (Right(r)) => HealthResult(r)
-                case (Left(l))  => HealthResult(l)
-              }
+        } map { _ =>
+          HealthResult[Id](Health.Healthy)
         }
       )
-
-  private def gdalHealth = timeoutToSick(
-    HealthCheck.liftF[IO, Tagged[String, ?]] {
-      val s3Client = S3Client.DEFAULT
-      val bucket = Config.healthcheck.tiffBucket
-      val key = Config.healthcheck.tiffKey
-      val s3Path = s"s3://${bucket}/${key}"
-      s3Client.doesObjectExist(bucket, key) match {
-        case false =>
-          logger.warn(s"${s3Path} does not exist - not failing health check")
-          IO(HealthResult.tagged("Missing s3 object success", Health.healthy))
-        case true =>
-          val rs = GDALRasterSource(s"$s3Path")
-          // Read some metadata with GDAL
-          val crs = rs.crs
-          val bandCount = rs.bandCount
-          logger.debug(
-            s"Read metadata for ${s3Path} (CRS: ${crs}, Band Count: ${bandCount})"
-          )
-          IO(HealthResult.tagged("Read gdal data successfully", Health.healthy))
-      }
-    },
-    "Could not read data with GDAL"
-  )
+      .through(mods.timeoutToSick(3 seconds))
+      .through(mods.tagWith("gdal"))
 
   private def dbHealth =
-    timeoutToSick(
-      HealthCheck
-        .liftF[IO, Tagged[String, ?]](
-          // select things from the db
-          fr"select name from licenses limit 1;"
-            .query[String]
-            .to[List]
-            .transact(xa)
-            .map(_ => HealthResult.tagged("Db check succeeded", Health.healthy))
-        ),
-      "Could not read data from database"
-    )
+    HealthCheck
+      .liftF[IO, Id] {
+        fr"select name from licenses limit 1;"
+          .query[String]
+          .to[List]
+          .transact(xa)
+          .map(_ => HealthResult[Id](Health.Healthy))
+      }
+      .through(mods.timeoutToSick(3 seconds))
+      .through(mods.tagWith("db"))
 
   private def cacheHealth =
-    timeoutToSick(
-      HealthCheck
-        .liftF[IO, Tagged[String, ?]](
-          IO { tileCache.get("bogus") } map { _ =>
-            HealthResult.tagged("Cache read succeeded", Health.healthy)
-          }
-        ),
-      "Could not read data from cache"
-    )
+    HealthCheck
+      .liftF[IO, Id](IO(tileCache.get("bogus")).map(_ =>
+        HealthResult[Id](Health.Healthy)))
+      .through(mods.timeoutToSick(3 seconds))
+      .through(mods.tagWith("cache"))
 
   private def totalRequestLimitHealth =
-    timeoutToSick(
-      {
-        val served = Cache.requestCounter.get("requestsServed").getOrElse(0)
-        HealthCheck.liftF[IO, Tagged[String, ?]] {
-          IO {
-            if (quota == 0) {
-              val message =
-                "Ignoring request quota check - configured value is 0"
-              logger.debug(message)
-              HealthResult.tagged(
-                message,
-                Health.Healthy
-              )
-            } else if (served >= quota) {
-              val message =
-                s"Request quota exceeded -- limit: $quota, counted: $served"
-              logger.warn(message)
-              HealthResult.tagged(
-                message,
-                Health.sick
-              )
-            } else {
-              HealthResult.tagged("Healthy", Health.Healthy)
-            }
-          }
-        }
-      },
-      "Could not determine request count"
-    )
-
-  val routes: HttpRoutes[IO] =
-    HttpRoutes.of {
-      case req @ GET -> Root =>
-        val healthcheck =
-          HealthReporter.fromChecks(
-            dbHealth,
-            cacheHealth,
-            gdalHealth,
-            totalRequestLimitHealth
-          )
-        healthcheck.check flatMap { result =>
-          val report = result.value
-          // Make all of these `Map[String, Json]` for consistent response shapes
-          // There's a sup-http4s module that should do this, but it's on http4s-0.20.0-M4,
-          // and there appears to be a binary compatibility issue
-          if (report.health == Health.sick) {
-            val healthcheckResults = Map(
-              "result" -> "Unhealthy".asJson,
-              "errors" -> report.checks
-                .filter(_.health == Health.sick)
-                .map {
-                  _.tag
-                }
-                .asJson
-            ).asJson
-            logger.error(
-              s"Healthcheck Failing (trace_id: ${req.traceID}): $healthcheckResults")
-            ServiceUnavailable(
-              healthcheckResults
-            )
+    HealthCheck
+      .liftF[IO, Id] {
+        IO {
+          val served = Cache.requestCounter.get("requestsServed").getOrElse(0)
+          if (quota == 0) {
+            val message =
+              "Ignoring request quota check - configured value is 0"
+            logger.debug(message)
+            HealthResult[Id](Health.Healthy)
+          } else if (served >= quota) {
+            val message =
+              s"Request quota exceeded -- limit: $quota, counted: $served"
+            logger.warn(message)
+            HealthResult[Id](Health.Sick)
           } else {
-            Ok(
-              Map(
-                "result" -> "A-ok".asJson,
-                "errors" -> List.empty[String].asJson
-              )
-            )
+            HealthResult[Id](Health.Healthy)
           }
         }
-    }
+      }
+      .through(mods.timeoutToSick(3 seconds))
+      .through(mods.recoverToSick)
+      .through(mods.tagWith("requestQuota"))
+
+  val routes: HttpRoutes[IO] = HttpRoutes.of {
+    case GET -> Root =>
+      val healthcheck = HealthReporter.parWrapChecks(
+        NonEmptyList.of(dbHealth,
+                        cacheHealth,
+                        gdalHealth,
+                        totalRequestLimitHealth)
+      )
+      healthcheck.check flatMap { result =>
+        val report = result.value
+        if (report.health == Health.sick) {
+          ServiceUnavailable(
+            Map("result" -> "sick".asJson,
+                "errors" -> report.checks
+                  .filter(_.health == Health.sick)
+                  .map(_.tag)
+                  .asJson)
+          )
+        } else {
+          Ok(Map("result" -> "A-ok"))
+        }
+      }
+  }
+
 }
