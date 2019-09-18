@@ -24,7 +24,6 @@ import TmsReification._
 import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
 import com.typesafe.scalalogging.LazyLogging
 import com.rasterfoundry.datamodel.SingleBandOptions
-import com.rasterfoundry.datamodel.UploadType.LandsatHistorical
 
 class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     histStore: HistStore,
