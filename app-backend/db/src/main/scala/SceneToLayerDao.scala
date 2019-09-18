@@ -131,8 +131,8 @@ object SceneToLayerDao
           | (ingest_status = 'INGESTED' OR datasource IN
           | ('${Config.publicData.landsat8DatasourceId}' :: uuid,
           |  '${Config.publicData.sentinel2DatasourceId}' :: uuid,
-          |  '${Config.publicData.landsat45ThematicMapperDatasourceId} :: uuid,
-          |  '${Config.publicData.landsat7ETMDatasourceId}))
+          |  '${Config.publicData.landsat45ThematicMapperDatasourceId}' :: uuid,
+          |  '${Config.publicData.landsat7ETMDatasourceId}' :: uuid))
           | """.trim.stripMargin)
         )
       } else {
@@ -156,7 +156,7 @@ object SceneToLayerDao
     val select =
       fr"""
     SELECT
-      scene_id, project_id, datasource, name, project_layer_id, accepted, scene_order,
+      scene_id, project_id, datasource, scenes_stl.name, project_layer_id, accepted, scene_order,
       mosaic_definition,
       scene_type, ingest_location, data_footprint, is_single_band, single_band_options,
       geometry, data_path, crs, band_count, cell_type, grid_extent, resolutions, no_data_value, metadata_files
