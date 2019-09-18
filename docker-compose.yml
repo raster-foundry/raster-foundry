@@ -51,6 +51,7 @@ services:
       - ./nginx/etc/nginx/conf.d/backsplash.conf:/etc/nginx/conf.d/default.conf
 
   api-server:
+    # If changing container, make sure to update app-backend/api/Dockerfile as well
     image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
     links:
       - postgres:database.service.rasterfoundry.internal
@@ -132,6 +133,7 @@ services:
       - "0.0.0.0:2000"
 
   backsplash:
+    # If changing container, make sure to update app-backend/backsplash-server/Dockerfile as well
     image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
     depends_on:
       postgres:

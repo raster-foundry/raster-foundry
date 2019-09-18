@@ -50,6 +50,7 @@ object RFTransactor {
       hikariConfig.setUsername(user)
       hikariConfig.setPassword(password)
       hikariConfig.setDriverClassName(driver)
+      hikariConfig.setConnectionTimeout(2000)
 
       new HikariDataSource(hikariConfig)
     }
