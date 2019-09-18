@@ -217,25 +217,6 @@ case class Sentinel2MultiTiffImage(
     s"$prefix/$name.jp2"
   }
 
-  def getBandRasterSource(i: Int,
-                          context: TracingContext[IO]): IO[RasterSource] = {
-    val uri = getUri(i) getOrElse { "" }
-    val rsTags = tags.combine(Map("uri" -> uri))
-    context.childSpan("getBandRasterSource", rsTags) use { _ =>
-      logger.debug(s"Using GDAL Raster Source: ${uri}")
-      // Do not bother caching - let GDAL internals worry about that
-      val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
-      IO {
-        metadata.noDataValue match {
-          case Some(nd) =>
-            rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
-          case _ =>
-            rasterSource
-        }
-      }
-    }
-  }
-
   def selectBands(bands: List[Int]) = this.copy(subsetBands = bands)
 }
 
@@ -267,27 +248,6 @@ case class Landsat8MultiTiffImage(
     s"$prefix/${name}_B${band + 1}.TIF"
   }
 
-  def getBandRasterSource(
-      i: Int,
-      context: TracingContext[IO]
-  ): IO[RasterSource] = {
-    val uri = getUri(i) getOrElse { "" }
-    val rsTags = tags.combine(Map("uri" -> uri))
-    context.childSpan("getBandRasterSource", rsTags) use { _ =>
-      logger.debug(s"Using GDAL Raster Source: ${uri}")
-      // Do not bother caching - let GDAL internals worry about that
-      val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
-      IO {
-        metadata.noDataValue match {
-          case Some(nd) =>
-            rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
-          case _ =>
-            rasterSource
-        }
-      }
-    }
-  }
-
   def selectBands(bands: List[Int]) = this.copy(subsetBands = bands)
 }
 
@@ -310,6 +270,8 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
       getBandRasterSource(subsetBands.headOption getOrElse 0, child)
     }
 
+  def getUri(i: Int): Option[String]
+
   /** Get a single band raster source for one band of this image
     *
     * MultiTiff image assumes that you have a single scene split up over several
@@ -318,7 +280,23 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
     * a MultiTiffImage out of a multi-band tiff, e.g., you might think you're going
     * to color correct one way and have something else happen entirely.
     */
-  def getBandRasterSource(i: Int, context: TracingContext[F]): F[RasterSource]
+  def getBandRasterSource(i: Int, context: TracingContext[F]): F[RasterSource] = {
+    val uri = getUri(i) getOrElse { "" }
+    val rsTags = tags.combine(Map("uri" -> uri))
+    context.childSpan("getBandRasterSource", rsTags) use { _ =>
+      logger.debug(s"Using GDAL Raster Source: ${uri}")
+      // Do not bother caching - let GDAL internals worry about that
+      val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+      Sync[F].delay {
+        metadata.noDataValue match {
+          case Some(nd) =>
+            rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
+          case _ =>
+            rasterSource
+        }
+      }
+    }
+  }
 
   def getBandRasterSources(
       bs: NonEmptyList[Int],
