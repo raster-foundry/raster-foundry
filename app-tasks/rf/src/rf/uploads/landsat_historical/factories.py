@@ -88,11 +88,6 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
                      landsat_id)
         raise Exception('Could not find landsat scene %s', landsat_id)
     filter_metadata = extract_metadata(metadata_resp.content)
-    # (filename, cog_fname) = process_to_cog(prefix, gcs_prefix, landsat_id, config)
-    # s3_location = upload_file(owner, filename, cog_fname)
-    # logger.info('Creating image')
-    # ingest_location = 's3://{}/{}'.format(data_bucket,
-    #                                       urllib.quote(s3_location))
     scene = Scene(
         'PRIVATE', [],
         datasource, {},
@@ -105,13 +100,6 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
         acquisitionDate=filter_metadata['acquisition_date'],
         sceneType='COG',
         owner=owner)
-#    image = create_geotiff_image(
-#        filename,
-#        ingest_location,
-#        filename=cog_fname,
-#        owner=owner,
-#        scene=scene.id,
-#        band_create_function=lambda x: config.bands.values())
     scene.images = []
     return scene
 
