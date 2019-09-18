@@ -24,6 +24,7 @@ import TmsReification._
 import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
 import com.typesafe.scalalogging.LazyLogging
 import com.rasterfoundry.datamodel.SingleBandOptions
+import com.rasterfoundry.datamodel.UploadType.LandsatHistorical
 
 class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     histStore: HistStore,
@@ -333,6 +334,9 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
           im.getHistogram(im.tracingContext)
         // Is this hilariously repetitive? Yes! But type erasure :(
         case im: Sentinel2MultiTiffImage =>
+          logger.debug(s"Retrieving histograms for ${im.imageId} from source")
+          im.getHistogram(im.tracingContext)
+        case im: LandsatHistoricalMultiTiffImage =>
           logger.debug(s"Retrieving histograms for ${im.imageId} from source")
           im.getHistogram(im.tracingContext)
       }
