@@ -130,7 +130,9 @@ object SceneToLayerDao
           Fragment.const(s"""
           | (ingest_status = 'INGESTED' OR datasource IN
           | ('${Config.publicData.landsat8DatasourceId}' :: uuid,
-          |  '${Config.publicData.sentinel2DatasourceId}' :: uuid))
+          |  '${Config.publicData.sentinel2DatasourceId}' :: uuid,
+          |  '${Config.publicData.landsat45ThematicMapperDatasourceId} :: uuid,
+          |  '${Config.publicData.landsat7ETMDatasourceId}))
           | """.trim.stripMargin)
         )
       } else {
@@ -154,7 +156,8 @@ object SceneToLayerDao
     val select =
       fr"""
     SELECT
-      scene_id, project_id, datasource, project_layer_id, accepted, scene_order, mosaic_definition,
+      scene_id, project_id, datasource, name, project_layer_id, accepted, scene_order,
+      mosaic_definition,
       scene_type, ingest_location, data_footprint, is_single_band, single_band_options,
       geometry, data_path, crs, band_count, cell_type, grid_extent, resolutions, no_data_value, metadata_files
     FROM (
@@ -181,6 +184,7 @@ object SceneToLayerDao
                 stp.sceneId,
                 stp.projectId,
                 stp.datasource,
+                stp.sceneName,
                 stp.colorCorrectParams.copy(
                   redBand = r,
                   greenBand = g,
@@ -204,6 +208,7 @@ object SceneToLayerDao
               stp.sceneId,
               stp.projectId,
               stp.datasource,
+              stp.sceneName,
               stp.colorCorrectParams,
               stp.sceneType,
               stp.ingestLocation,

@@ -117,6 +117,21 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           } getOrElse { "" },
           tracingContext
         )
+      case Config.publicData.landsat45ThematicMapperDatasourceId |
+          Config.publicData.landsat7ETMDatasourceId
+          if Config.publicData.enableMultiTiff =>
+        LandsatHistoricalMultiTiffImage(
+          sceneId,
+          footprint,
+          subsetBands,
+          colorCorrectParameters,
+          singleBandOptions,
+          mosaicDefinition.projectId,
+          projId,
+          mosaicDefinition.mask,
+          mosaicDefinition.sceneName,
+          tracingContext
+        )
       case _ =>
         val ingestLocation = mosaicDefinition.ingestLocation getOrElse {
           throw UningestedScenesException(

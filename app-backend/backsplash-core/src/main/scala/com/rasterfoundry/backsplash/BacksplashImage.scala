@@ -177,6 +177,45 @@ final case class BacksplashGeotiff(
     this.copy(subsetBands = bands)
 }
 
+case class LandsatHistoricalMultiTiffImage(
+    imageId: UUID,
+    footprint: MultiPolygon,
+    subsetBands: List[Int],
+    corrections: ColorCorrect.Params,
+    singleBandOptions: Option[SingleBandOptions.Params],
+    projectId: UUID,
+    projectLayerId: UUID,
+    mask: Option[MultiPolygon],
+    landsatId: String,
+    tracingContext: TracingContext[IO]
+)(implicit contextShift: ContextShift[IO])
+    extends MultiTiffImage[IO, IO.Par] {
+  val metadata = SceneMetadataFields()
+
+  /** Extract sensor, Landsat number, path, and row from a Landsat ID
+    *
+    * Landsat IDs look like LT05_L1TP_046029_20090302_20160905_01_T1
+    */
+  val pattern = """L([\d]).(\d)_.{4}_(\d{3})(\d{3}).*""".r
+  val pattern(sensor, landsatNum, path, row) = landsatId
+
+  val prefix =
+    s"https://storage.googleapis.com/gcp-public-data-landsat/L${sensor}0${landsatNum}/01/${path}/${row}/${landsatId}"
+  val tags = Map(
+    "imageName" -> landsatId,
+    "imageId" -> s"$imageId",
+    "subsetBands" -> subsetBands.mkString(","),
+    "prefix" -> prefix,
+    "readType" -> "LandsatMSSMultitiff"
+  )
+
+  def getUri(band: Int): Option[String] = Some(
+    s"$prefix/${landsatId}_B${band + 1}.TIF"
+  )
+
+  def selectBands(bands: List[Int]) = this.copy(subsetBands = bands)
+}
+
 case class Sentinel2MultiTiffImage(
     imageId: UUID,
     footprint: MultiPolygon,
@@ -241,7 +280,7 @@ case class Landsat8MultiTiffImage(
     "imageId" -> s"$imageId",
     "subsetBands" -> subsetBands.mkString(","),
     "prefix" -> prefix,
-    "readType" -> "LandsatMultitiff"
+    "readType" -> "Landsat8Multitiff"
   )
 
   def getUri(band: Int): Option[String] = imageName map { name =>
@@ -280,7 +319,10 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
     * a MultiTiffImage out of a multi-band tiff, e.g., you might think you're going
     * to color correct one way and have something else happen entirely.
     */
-  def getBandRasterSource(i: Int, context: TracingContext[F]): F[RasterSource] = {
+  def getBandRasterSource(
+      i: Int,
+      context: TracingContext[F]
+  ): F[RasterSource] = {
     val uri = getUri(i) getOrElse { "" }
     val rsTags = tags.combine(Map("uri" -> uri))
     context.childSpan("getBandRasterSource", rsTags) use { _ =>
