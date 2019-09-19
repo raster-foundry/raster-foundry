@@ -1,7 +1,20 @@
 # Change Log
 
-
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.30.0](https://github.com/raster-foundry/raster-foundry/compare/1.29.1...1.30.0)
 
 ### Added
 
@@ -14,8 +27,6 @@
 - Improve histogram generation by using RasterSources [\#5169](https://github.com/raster-foundry/raster-foundry/pull/5169)
 - Adjusted the healthcheck to more easily distinguish between errors and timeouts [\#5179](https://github.com/raster-foundry/raster-foundry/pull/5179)
 
-### Deprecated
-
 ### Removed
 
 - Remove API spec publishing [\#5174](https://github.com/raster-foundry/raster-foundry/pull/5174)
@@ -24,8 +35,6 @@
 - Remove unnecessary coercion of scenes to a nodata value of 0 in single band mode [\#5173](https://github.com/raster-foundry/raster-foundry/pull/5173)
 
 - Made MODIS Aqua datasource id in the frontend a valid UUID [\#5175](https://github.com/raster-foundry/raster-foundry/pull/5175)
-
-### Security
 
 ## [1.29.1](https://github.com/raster-foundry/raster-foundry/compare/1.29.0...1.29.1)
 
