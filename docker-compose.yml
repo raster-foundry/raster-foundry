@@ -64,7 +64,7 @@ services:
       - RF_LOG_LEVEL=DEBUG
       - TILE_SERVER_LOCATION
       - COURSIER_CACHE=/root/.coursier
-      - BACKSPLASH_ENABLE_MULTITIFF=true
+      - BACKSPLASH_ENABLE_MULTITIFF=false
       - AWS_DEFAULT_PROFILE=raster-foundry
     ports:
       - "9000:9000"
@@ -164,7 +164,7 @@ services:
       - BACKSPLASH_CORE_STREAM_CONCURRENCY=16
       - BACKSPLASH_ENABLE_REQUEST_METRICS=false
       - BACKSPLASH_SERVER_REQUEST_LIMIT=0
-      - BACKSPLASH_ENABLE_MULTITIFF=true
+      - BACKSPLASH_ENABLE_MULTITIFF=false
       - AWS_REQUEST_PAYER=requester
     ports:
       - "8080:8080"
