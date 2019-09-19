@@ -196,7 +196,7 @@ case class LandsatHistoricalMultiTiffImage(
     *
     * Landsat IDs look like LT05_L1TP_046029_20090302_20160905_01_T1
     */
-  val pattern = """L([\d]).(\d)_.{4}_(\d{3})(\d{3}).*""".r
+  val pattern = """L(.).(\d)_.{4}_(\d{3})(\d{3}).*""".r
   val pattern(sensor, landsatNum, path, row) = landsatId
 
   val prefix =
