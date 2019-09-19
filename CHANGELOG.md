@@ -1,6 +1,5 @@
 # Change Log
 
-
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
@@ -14,6 +13,28 @@
 ### Fixed
 
 ### Security
+
+## [1.30.0](https://github.com/raster-foundry/raster-foundry/compare/1.29.1...1.30.0)
+
+### Added
+
+- Added (feature flagged) support for visualizing Landsat 8 scenes directly from AWS without ingest [\#5167](https://github.com/raster-foundry/raster-foundry/pull/5167), currently ineffective support for multitiff imagery for Landsats 4 / 5 / 7 and Sentinel-2 [\#5178](https://github.com/raster-foundry/raster-foundry/pull/5178)
+- Expose scene id in the scene detail modal [\#5168](https://github.com/raster-foundry/raster-foundry/pull/5168)
+- Added tracing support to tile server [\#5165](https://github.com/raster-foundry/raster-foundry/pull/5165)[\#5171](https://github.com/raster-foundry/raster-foundry/pull/5171)
+
+### Changed
+
+- Improve histogram generation by using RasterSources [\#5169](https://github.com/raster-foundry/raster-foundry/pull/5169)
+- Adjusted the healthcheck to more easily distinguish between errors and timeouts [\#5179](https://github.com/raster-foundry/raster-foundry/pull/5179)
+
+### Removed
+
+- Remove API spec publishing [\#5174](https://github.com/raster-foundry/raster-foundry/pull/5174)
+
+### Fixed
+- Remove unnecessary coercion of scenes to a nodata value of 0 in single band mode [\#5173](https://github.com/raster-foundry/raster-foundry/pull/5173)
+
+- Made MODIS Aqua datasource id in the frontend a valid UUID [\#5175](https://github.com/raster-foundry/raster-foundry/pull/5175)
 
 ## [1.29.1](https://github.com/raster-foundry/raster-foundry/compare/1.29.0...1.29.1)
 

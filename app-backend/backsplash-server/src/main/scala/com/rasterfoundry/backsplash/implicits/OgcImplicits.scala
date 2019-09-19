@@ -18,23 +18,23 @@ import com.rasterfoundry.database.{
   ProjectLayerDao,
   ProjectLayerDatasourcesDao
 }
-
-import cats.effect.{IO, ContextShift}
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
 import geotrellis.contrib.vlm.MosaicRasterSource
-import geotrellis.proj4.{LatLng, WebMercator, CRS}
+import geotrellis.proj4.{CRS, LatLng, WebMercator}
 import geotrellis.raster.histogram.Histogram
-import geotrellis.server.ogc.{OgcSource, SimpleSource, OgcStyle}
+import geotrellis.server.ogc.{OgcSource, OgcStyle, SimpleSource}
 import geotrellis.server.ogc.ows._
 import geotrellis.server.ogc.wcs.WcsModel
 import geotrellis.server.ogc.wms.{WmsModel, WmsParentLayerMeta}
 import geotrellis.server.ogc.wms.wmsScope
 import _root_.io.circe.syntax._
 import opengis.wms.{Name, OnlineResource, Service}
-
 import java.util.UUID
+
+import com.colisweb.tracing.TracingContext
 
 class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
     implicit contextShift: ContextShift[IO]
@@ -65,14 +65,17 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
     } yield { configured ++ rf }
 
   private def projectLayerToSimpleSource(
-      projectLayer: ProjectLayer
+      projectLayer: ProjectLayer,
+      tracingContext: TracingContext[IO]
   ): IO[(SimpleSource, List[CRS])] =
     (
       BacksplashMosaic.toRasterSource(
-        layers.read(projectLayer.id, None, None, None)
+        layers.read(projectLayer.id, None, None, None, tracingContext),
+        tracingContext
       ),
       BacksplashMosaic.getRasterSourceOriginalCRS(
-        layers.read(projectLayer.id, None, None, None)
+        layers.read(projectLayer.id, None, None, None, tracingContext),
+        tracingContext
       ),
       getStyles(projectLayer.id)
     ).parMapN(
@@ -89,21 +92,25 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
       }
     )
 
-  private def getSources(projectId: UUID): IO[List[(OgcSource, List[CRS])]] =
+  private def getSources(
+      projectId: UUID,
+      tracingContext: TracingContext[IO]): IO[List[(OgcSource, List[CRS])]] =
     for {
       projectLayers <- ProjectLayerDao
         .listProjectLayersWithImagery(projectId)
         .transact(xa)
-      sourcesAndCRS <- projectLayers parTraverse {
-        projectLayerToSimpleSource _
+      sourcesAndCRS <- projectLayers parTraverse { s =>
+        projectLayerToSimpleSource(s, tracingContext)
       }
     } yield sourcesAndCRS
 
   implicit val projectOgcStore: OgcStore[ProjectDao] =
     new OgcStore[ProjectDao] {
-      def getWcsModel(self: ProjectDao, id: UUID): IO[WcsModel] =
+      def getWcsModel(self: ProjectDao,
+                      id: UUID,
+                      tracingContext: TracingContext[IO]): IO[WcsModel] =
         for {
-          sourcesAndCRS <- getSources(id)
+          sourcesAndCRS <- getSources(id, tracingContext)
           sources = sourcesAndCRS.map(_._1)
         } yield {
           val serviceMeta = ServiceMetadata(
@@ -113,12 +120,14 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
           WcsModel(serviceMeta, sources)
         }
 
-      def getWmsModel(self: ProjectDao, id: UUID): IO[WmsModel] =
+      def getWmsModel(self: ProjectDao,
+                      id: UUID,
+                      tracingContext: TracingContext[IO]): IO[WmsModel] =
         for {
-          sourcesAndCRS <- getSources(id)
+          sourcesAndCRS <- getSources(id, tracingContext)
           sources = sourcesAndCRS.map(_._1)
           crs = sourcesAndCRS.flatMap(_._2)
-          service <- getWmsServiceMetadata(self, id)
+          service <- getWmsServiceMetadata(self, id, tracingContext)
         } yield {
           val parentLayerMeta = WmsParentLayerMeta(
             None,
@@ -129,7 +138,10 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
           WmsModel(service, parentLayerMeta, sources)
         }
 
-      def getWmsServiceMetadata(self: ProjectDao, id: UUID): IO[Service] =
+      def getWmsServiceMetadata(
+          self: ProjectDao,
+          id: UUID,
+          tracingContext: TracingContext[IO]): IO[Service] =
         for {
           project <- ProjectDao.unsafeGetProjectById(id).transact(xa)
         } yield {
@@ -150,7 +162,8 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
 
       def getLayerHistogram(
           self: ProjectDao,
-          id: UUID
+          id: UUID,
+          tracingContext: TracingContext[IO]
       ): IO[List[Histogram[Double]]] =
         LayerAttributeDao().getProjectLayerHistogram(id, xa) map { histArrays =>
           histArrays map { _.toList } reduce {

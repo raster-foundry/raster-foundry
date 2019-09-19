@@ -25,6 +25,8 @@ final case class SceneToLayer(sceneId: UUID,
 final case class SceneToLayerWithSceneType(
     sceneId: UUID,
     projectId: UUID,
+    datasource: UUID,
+    sceneName: String,
     projectLayerId: UUID,
     accepted: Boolean,
     sceneOrder: Option[Int] = None,
@@ -35,7 +37,8 @@ final case class SceneToLayerWithSceneType(
     isSingleBand: Boolean,
     singleBandOptions: Option[Json],
     mask: Option[Projected[Geometry]],
-    metadataFields: SceneMetadataFields
+    metadataFields: SceneMetadataFields,
+    metadataFiles: List[String]
 )
 
 @JsonCodec

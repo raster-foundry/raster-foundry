@@ -22,8 +22,13 @@ import com.typesafe.scalalogging.LazyLogging
 import java.net.URL
 import java.util.UUID
 
+import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.rasterfoundry.http4s.{TracedHTTPRoutes, AuthedTraceRequest}
+
 class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
-    implicit contextShift: ContextShift[IO])
+    implicit contextShift: ContextShift[IO],
+    tracingContextBuilder: TracingContextBuilder[IO])
     extends ToOgcStoreOps
     with LazyLogging {
 
@@ -31,9 +36,11 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     List(urlPrefix, request.scriptName, request.pathInfo).mkString
   }
 
-  private def authedReqToResponse(authedReq: AuthedRequest[IO, User],
-                                  projectId: UUID,
-                                  serviceUrl: String): IO[Response[IO]] =
+  private def authedReqToResponse(
+      authedReq: AuthedRequest[IO, User],
+      projectId: UUID,
+      serviceUrl: String,
+      tracingContext: TracingContext[IO]): IO[Response[IO]] =
     WmsParams(authedReq.req.multiParams) match {
       case Invalid(errors) =>
         BadRequest(s"Error parsing parameters: ${ParamError
@@ -42,14 +49,14 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
         p match {
           case _: WmsParams.GetCapabilities =>
             for {
-              rsm <- layers.getWmsModel(projectId)
+              rsm <- layers.getWmsModel(projectId, tracingContext)
               resp <- Ok(new CapabilitiesView(rsm, new URL(serviceUrl)).toXML)
             } yield resp
           case params: WmsParams.GetMap =>
             val re =
               RasterExtent(params.boundingBox, params.width, params.height)
             for {
-              rsm <- layers.getWmsModel(projectId)
+              rsm <- layers.getWmsModel(projectId, tracingContext)
               layer = rsm.getLayer(params.crs,
                                    params.layers.headOption,
                                    params.styles.headOption) getOrElse {
@@ -65,7 +72,8 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
               (evalExtent, evalHistogram) = layer match {
                 case sl @ SimpleOgcLayer(_, title, _, _, _) =>
                   (LayerExtent.identity(sl),
-                   layers.getLayerHistogram(UUID.fromString(title)))
+                   layers.getLayerHistogram(UUID.fromString(title),
+                                            tracingContext))
                 case _: MapAlgebraOgcLayer =>
                   throw new MetadataException(
                     "Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
@@ -110,14 +118,18 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
         }
     }
 
-  def routes: AuthedService[User, IO] = AuthedService[User, IO] {
-    case authedReq @ GET -> Root / UUIDWrapper(projectId) as _ =>
-      val serviceUrl = requestToServiceUrl(authedReq.req)
-      authedReqToResponse(authedReq, projectId, serviceUrl)
+  def routes: AuthedService[User, IO] = TracedHTTPRoutes[IO] {
+    case AuthedTraceRequest(authedRequest, tracingContext) => {
+      authedRequest match {
+        case authedReq @ GET -> Root / UUIDWrapper(projectId) as _ =>
+          val serviceUrl = requestToServiceUrl(authedReq.req)
+          authedReqToResponse(authedReq, projectId, serviceUrl, tracingContext)
 
-    case authedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
-          _) as _ =>
-      val serviceUrl = requestToServiceUrl(authedReq.req)
-      authedReqToResponse(authedReq, projectId, serviceUrl)
+        case authedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
+              _) as _ =>
+          val serviceUrl = requestToServiceUrl(authedReq.req)
+          authedReqToResponse(authedReq, projectId, serviceUrl, tracingContext)
+      }
+    }
   }
 }

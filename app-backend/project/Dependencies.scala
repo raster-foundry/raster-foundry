@@ -13,8 +13,8 @@ object Version {
   val awsBatchSdk = "1.11.535"
   val awsLambdaCore = "1.1.0"
   val awsLambdaSdk = "1.11.535"
-  val awsS3 = "1.11.535"
-  val awsStsSdk = "1.11.535"
+  val awsSdkVersion = "1.11.535"
+  val awsXrayRecorder = "2.3.0"
   val betterFiles = "3.4.0"
   val caffeine = "2.3.5"
   val cats = "1.6.0"
@@ -58,7 +58,9 @@ object Version {
   val spark = "2.4.2"
   val spire = "0.16.0"
   val spray = "1.3.4"
-  val sup = "0.2.0"
+  val sup = "0.6.0"
+  val openTracing = "0.0.6"
+  val jaegerClient = "1.0.0"
 }
 
 object Dependencies {
@@ -72,9 +74,11 @@ object Dependencies {
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % Version.awsLambdaCore
-  val awsLambdaSdk = "com.amazonaws" % "aws-java-sdk-lambda" % Version.awsLambdaSdk
-  val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsS3
-  val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsStsSdk
+  val awsLambdaSdk = "com.amazonaws" % "aws-java-sdk-lambda" % Version.awsSdkVersion
+  val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsSdkVersion
+  val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsSdkVersion
+  val awsXraySdk = "com.amazonaws" % "aws-java-sdk-xray" % Version.awsSdkVersion
+  val awsXrayRecorder = "com.amazonaws" % "aws-xray-recorder-sdk-core" % Version.awsXrayRecorder
   val betterFiles = "com.github.pathikrit" %% "better-files" % Version.betterFiles
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % Version.caffeine
   val catsCore = "org.typelevel" %% "cats-core" % Version.cats
@@ -120,10 +124,12 @@ object Dependencies {
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val http4sXml = "org.http4s" %% "http4s-scala-xml" % Version.http4s
+  val jaegerClient = "io.jaegertracing" % "jaeger-client" % "1.0.0"
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % "1.5.1-cats"
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
+  val opentracing = "com.colisweb" %% "scala-opentracing" % Version.openTracing
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
   val rollbar = "com.rollbar" % "rollbar-java" % Version.rollbar
   val scaffeine = "com.github.blemale" %% "scaffeine" % Version.scaffeine

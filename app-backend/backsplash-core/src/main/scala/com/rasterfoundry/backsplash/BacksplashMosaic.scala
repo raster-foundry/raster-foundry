@@ -2,27 +2,25 @@ package com.rasterfoundry.backsplash
 
 import geotrellis.contrib.vlm.MosaicRasterSource
 import geotrellis.proj4.CRS
-import geotrellis.vector._
 import geotrellis.raster.histogram._
 import geotrellis.server._
-
 import cats.implicits._
 import cats.data.{NonEmptyList => _}
 import cats.data.Validated._
 import cats.effect._
-
+import com.colisweb.tracing.TracingContext
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 
 object BacksplashMosaic extends ToHistogramStoreOps {
 
-  def toRasterSource(bsm: BacksplashMosaic)(
+  def toRasterSource(bsm: BacksplashMosaic, tracingContext: TracingContext[IO])(
       implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
-    filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
+    bsm flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>
           images parTraverse { image =>
-            image.getRasterSource
+            image.getRasterSource(tracingContext)
           } map { rasterSourceList =>
             MosaicRasterSource(rasterSourceList, rasterSourceList.head.crs)
           }
@@ -32,13 +30,14 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     }
   }
 
-  def getRasterSourceOriginalCRS(bsm: BacksplashMosaic)(
+  def getRasterSourceOriginalCRS(bsm: BacksplashMosaic,
+                                 tracingContext: TracingContext[IO])(
       implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
-    filterRelevant(bsm).compile.toList flatMap { backsplashImages =>
+    bsm flatMap { backsplashImages =>
       backsplashImages.toNel match {
         case Some(images) =>
           images parTraverse { image =>
-            image.getRasterSource
+            image.getRasterSource(tracingContext)
           } map { rasterSourceList =>
             rasterSourceList.map(_.crs).toList.distinct
           }
@@ -48,39 +47,8 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     }
   }
 
-  /** Filter out images that don't need to be included  */
-  def filterRelevant(bsm: BacksplashMosaic): BacksplashMosaic = {
-    var testMultiPoly: Option[MultiPolygon] = None
-
-    bsm.filter({ bsi =>
-      testMultiPoly match {
-        case None =>
-          testMultiPoly = Some(bsi.footprint)
-          true
-        case Some(mp) =>
-          val cond = mp.covers(bsi.footprint)
-          if (cond) {
-            false
-          } else {
-            testMultiPoly = (mp union bsi.footprint) match {
-              case PolygonResult(p)       => MultiPolygon(p).some
-              case MultiPolygonResult(mp) => mp.some
-              case _ =>
-                throw new Exception(
-                  "Should get a polygon or multipolygon, instead got no result")
-            }
-            true
-          }
-      }
-    })
-  }
-
   def first(bsm: BacksplashMosaic): IO[Option[BacksplashImage[IO]]] = {
-    bsm
-      .take(1)
-      .compile
-      .toList
-      .map(_.headOption)
+    bsm.map(_.headOption)
   }
 
   def layerHistogram(mosaic: BacksplashMosaic)(
@@ -102,14 +70,14 @@ object BacksplashMosaic extends ToHistogramStoreOps {
       extentReification: ExtentReification[BacksplashMosaic],
       cs: ContextShift[IO]): IO[List[Histogram[Double]]] =
     for {
-      allImages <- filterRelevant(mosaic).compile.toList
+      allImages <- mosaic
       histArrays <- allImages parTraverse { im =>
         histStore.layerHistogram(im.imageId, im.subsetBands)
       }
       result <- histArrays match {
         case Nil =>
-          layerHistogram(filterRelevant(mosaic)) map {
-            case Valid(hists) => hists.toList
+          layerHistogram(mosaic) map {
+            case Valid(hists) => hists
             case Invalid(e) =>
               throw new MetadataException(s"Could not produce histograms: $e")
           }
@@ -126,9 +94,12 @@ object BacksplashMosaic extends ToHistogramStoreOps {
               }
             )
             .toList
-          IO.pure { hists }
+          IO.pure {
+            hists
+          }
       }
     } yield {
       result
     }
+
 }

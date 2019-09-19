@@ -1,17 +1,16 @@
 package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.common.ast.{
+  MamlConversion,
   MapAlgebraAST,
-  NodeMetadata,
-  MamlConversion
+  NodeMetadata
 }
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.ProjectDao
-
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{ClassMap => _}
-
 import cats.effect.IO
+import com.colisweb.tracing.NoOpTracingContext
 import doobie.Transactor
 import doobie.implicits._
 
@@ -32,13 +31,19 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
           val bandActual = band.getOrElse(
             throw SingleBandOptionsException(
               "Band must be provided to evaluate AST"))
-          val mosaic = fs2.Stream.eval {
-            ProjectDao.unsafeGetProjectById(projId).transact(xa)
-          } flatMap { project =>
-            layerStore.read(project.defaultLayerId, None, None, None)
-          } map { backsplashImage =>
-            backsplashImage.selectBands(List(bandActual))
-          }
+          val mosaic =
+            ProjectDao.unsafeGetProjectById(projId).transact(xa) flatMap {
+              project =>
+                layerStore.read(project.defaultLayerId,
+                                None,
+                                None,
+                                None,
+                                NoOpTracingContext[IO]())
+            } map { bsiList =>
+              bsiList.map { backsplashImage =>
+                backsplashImage.selectBands(List(bandActual))
+              }
+            }
           Map[String, BacksplashMosaic](
             s"${projId.toString}_${bandActual}" -> mosaic
           )
@@ -52,8 +57,11 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
           Map[String, BacksplashMosaic](
             s"${layerId.toString}_${bandActual}" -> (
               layerStore
-                .read(layerId, None, None, None) map { backsplashIm =>
-                backsplashIm.selectBands(List(bandActual))
+                .read(layerId, None, None, None, NoOpTracingContext[IO]()) map {
+                bsiList =>
+                  bsiList map { backsplashIm =>
+                    backsplashIm.selectBands(List(bandActual))
+                  }
               }
             )
           )

@@ -61,16 +61,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 "${DIR}/../app-backend/lambda-overviews/target/scala-2.12/lambda-overviews-assembly.jar" \
                 "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/lambda-overviews-${GIT_COMMIT}.jar"
 
-            echo "Uploading API specs"
-            # At the most recent version prefixed
-            aws s3 sync \
-                "${DIR}/../docs/swagger/" \
-                "s3://${RF_DOCS_BUCKET}/spec/$(git describe --abbrev=0 --tags)/"
-            # At the root
-            aws s3 sync \
-                "${DIR}/../docs/swagger/" \
-                "s3://${RF_DOCS_BUCKET}/spec/"
-
             # Build publishable sbt projects as SNAPSHOT artifacts and
             # publish to Sonatype OSSRH (Snapshot Repository).
             if [ "$(whoami)" == "jenkins" ]; then

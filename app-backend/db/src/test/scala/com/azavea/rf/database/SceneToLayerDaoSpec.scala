@@ -99,8 +99,6 @@ class SceneToLayerDaoSpec
                 .getMosaicDefinition(dbProject.defaultLayerId,
                                      None,
                                      sceneIdSubset = selectedSceneIds)
-                .compile
-                .to[List]
               stls <- SceneToLayerDao.query
                 .filter(fr"project_layer_id = ${dbProject.defaultLayerId}")
                 .filter(selectedSceneIds.toNel map {

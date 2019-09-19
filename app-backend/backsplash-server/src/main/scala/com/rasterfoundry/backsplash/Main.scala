@@ -7,6 +7,7 @@ import com.rasterfoundry.database.{
   SceneToLayerDao,
   ToolRunDao
 }
+import com.rasterfoundry.common.{Config => CommonConfig}
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.database.util.RFTransactor
@@ -26,6 +27,9 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Properties
 import java.util.concurrent.{Executors, TimeUnit}
+
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
@@ -136,20 +140,25 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
 
   val metricMiddleware = new MetricMiddleware(xa)
+  implicit val tracingContext: TracingContextBuilder[IO] =
+    if (CommonConfig.awsbatch.environment.toUpperCase == "DEVELOPMENT") {
+      JaegerTracer.tracingContextBuilder
+    } else {
+      XRayTracer.tracingContextBuilder
+    }
 
-  val mosaicService: HttpRoutes[IO] =
-    authenticators.tokensAuthMiddleware(
-      metricMiddleware.middleware(
-        AuthedAutoSlash(
-          new MosaicService(
-            SceneToLayerDao(),
-            projectLayerMosaicImplicits,
-            analysisManager,
-            xa
-          ).routes
-        )
+  val mosaicService: HttpRoutes[IO] = authenticators.tokensAuthMiddleware(
+    metricMiddleware.middleware(
+      AuthedAutoSlash(
+        new MosaicService(
+          SceneToLayerDao(),
+          projectLayerMosaicImplicits,
+          analysisManager,
+          xa
+        ).routes
       )
     )
+  )
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
