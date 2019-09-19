@@ -48,16 +48,20 @@ object SceneToLayerDao
     """.update.run
   }
 
-  def acceptScenes(projectLayerId: UUID,
-                   sceneIds: List[UUID]): ConnectionIO[Int] = {
+  def acceptScenes(
+      projectLayerId: UUID,
+      sceneIds: List[UUID]
+  ): ConnectionIO[Int] = {
     sceneIds.toNel match {
       case Some(ids) => acceptScenes(projectLayerId, ids)
       case _         => 0.pure[ConnectionIO]
     }
   }
 
-  def acceptScenes(projectLayerId: UUID,
-                   sceneIds: NEL[UUID]): ConnectionIO[Int] = {
+  def acceptScenes(
+      projectLayerId: UUID,
+      sceneIds: NEL[UUID]
+  ): ConnectionIO[Int] = {
     (
       fr"""
         UPDATE scenes_to_layers
@@ -85,9 +89,11 @@ object SceneToLayerDao
     """).update.run
   }
 
-  def setManualOrder(projectId: UUID,
-                     projectLayerId: UUID,
-                     sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
+  def setManualOrder(
+      projectId: UUID,
+      projectLayerId: UUID,
+      sceneIds: Seq[UUID]
+  ): ConnectionIO[Seq[UUID]] = {
     val updates = for {
       i <- sceneIds.indices
     } yield {
@@ -103,30 +109,39 @@ object SceneToLayerDao
     } yield {
       logger
         .info(
-          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId")
+          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId"
+        )
       kickoffLayerOverviewCreate(projectId, projectLayerId)
       sceneIds
     }
   }
 
-  def getMosaicDefinition(projectLayerId: UUID,
-                          polygonOption: Option[Projected[Polygon]],
-                          redBand: Option[Int] = None,
-                          greenBand: Option[Int] = None,
-                          blueBand: Option[Int] = None,
-                          sceneIdSubset: List[UUID] = List.empty)
-    : ConnectionIO[List[MosaicDefinition]] = {
+  def getMosaicDefinition(
+      projectLayerId: UUID,
+      polygonOption: Option[Projected[Polygon]],
+      redBand: Option[Int] = None,
+      greenBand: Option[Int] = None,
+      blueBand: Option[Int] = None,
+      sceneIdSubset: List[UUID] = List.empty
+  ): ConnectionIO[List[MosaicDefinition]] = {
     val ingestFilter: Option[Fragment] =
       if (Config.publicData.enableMultiTiff) {
         Some(
-          fr"(ingest_status = 'INGESTED' OR datasource = ${Config.publicData.landsat8DatasourceId} :: uuid)"
+          Fragment.const(s"""
+          | (ingest_status = 'INGESTED' OR datasource IN
+          | ('${Config.publicData.landsat8DatasourceId}' :: uuid,
+          |  '${Config.publicData.sentinel2DatasourceId}' :: uuid,
+          |  '${Config.publicData.landsat45ThematicMapperDatasourceId}' :: uuid,
+          |  '${Config.publicData.landsat7ETMDatasourceId}' :: uuid))
+          | """.trim.stripMargin)
         )
       } else {
         Some(fr"ingest_status = 'INGESTED'")
       }
     val filters = List(
-      polygonOption.map(polygon =>
-        fr"ST_Intersects(tile_footprint, ${polygon})"),
+      polygonOption.map(
+        polygon => fr"ST_Intersects(tile_footprint, ${polygon})"
+      ),
       Some(fr"project_layer_id = ${projectLayerId}"),
       Some(fr"accepted = true"),
       ingestFilter,
@@ -141,7 +156,8 @@ object SceneToLayerDao
     val select =
       fr"""
     SELECT
-      scene_id, project_id, datasource, project_layer_id, accepted, scene_order, mosaic_definition,
+      scene_id, project_id, datasource, scenes_stl.name, project_layer_id, accepted, scene_order,
+      mosaic_definition,
       scene_type, ingest_location, data_footprint, is_single_band, single_band_options,
       geometry, data_path, crs, band_count, cell_type, grid_extent, resolutions, no_data_value, metadata_files
     FROM (
@@ -168,6 +184,7 @@ object SceneToLayerDao
                 stp.sceneId,
                 stp.projectId,
                 stp.datasource,
+                stp.sceneName,
                 stp.colorCorrectParams.copy(
                   redBand = r,
                   greenBand = g,
@@ -191,6 +208,7 @@ object SceneToLayerDao
               stp.sceneId,
               stp.projectId,
               stp.datasource,
+              stp.sceneName,
               stp.colorCorrectParams,
               stp.sceneType,
               stp.ingestLocation,
@@ -212,16 +230,19 @@ object SceneToLayerDao
   }
 
   def getMosaicDefinition(
-      projectLayerId: UUID): ConnectionIO[List[MosaicDefinition]] = {
+      projectLayerId: UUID
+  ): ConnectionIO[List[MosaicDefinition]] = {
     getMosaicDefinition(projectLayerId, None)
   }
 
   def getColorCorrectParams(
       projectLayerId: UUID,
-      sceneId: UUID): ConnectionIO[ColorCorrect.Params] = {
+      sceneId: UUID
+  ): ConnectionIO[ColorCorrect.Params] = {
     query
       .filter(
-        fr"project_layer_id = ${projectLayerId} AND scene_id = ${sceneId}")
+        fr"project_layer_id = ${projectLayerId} AND scene_id = ${sceneId}"
+      )
       .select
       .map { stl: SceneToLayer =>
         stl.colorCorrectParams
@@ -231,30 +252,37 @@ object SceneToLayerDao
   def setColorCorrectParams(
       projectLayerId: UUID,
       sceneId: UUID,
-      colorCorrectParams: ColorCorrect.Params): ConnectionIO[SceneToLayer] = {
+      colorCorrectParams: ColorCorrect.Params
+  ): ConnectionIO[SceneToLayer] = {
     fr"""
       UPDATE scenes_to_layers
       SET mosaic_definition = ${colorCorrectParams}
       WHERE project_layer_id = ${projectLayerId} AND scene_id = ${sceneId}
-    """.update.withUniqueGeneratedKeys("scene_id",
-                                       "project_layer_id",
-                                       "accepted",
-                                       "scene_order",
-                                       "mosaic_definition")
+    """.update.withUniqueGeneratedKeys(
+      "scene_id",
+      "project_layer_id",
+      "accepted",
+      "scene_order",
+      "mosaic_definition"
+    )
   }
 
   def setColorCorrectParamsBatch(
       projectLayerId: UUID,
-      batchParams: BatchParams): ConnectionIO[List[SceneToLayer]] = {
+      batchParams: BatchParams
+  ): ConnectionIO[List[SceneToLayer]] = {
     batchParams.items
-      .map(params =>
-        setColorCorrectParams(projectLayerId, params.sceneId, params.params))
+      .map(
+        params =>
+          setColorCorrectParams(projectLayerId, params.sceneId, params.params)
+      )
       .sequence
   }
 
   def setProjectLayerColorBands(
       projectLayerId: UUID,
-      colorBands: ProjectColorModeParams): ConnectionIO[Int] = {
+      colorBands: ProjectColorModeParams
+  ): ConnectionIO[Int] = {
     // TODO support setting color band by datasource instead of project wide
     // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
     (fr"""
@@ -272,7 +300,8 @@ object SceneToLayerDao
   }
 
   def getProjectsAndLayersBySceneId(
-      sceneId: UUID): ConnectionIO[List[SceneWithProjectIdLayerId]] = {
+      sceneId: UUID
+  ): ConnectionIO[List[SceneWithProjectIdLayerId]] = {
     (fr"""
       SELECT scene_id, project_id, project_layer_id
       FROM (

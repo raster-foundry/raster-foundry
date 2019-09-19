@@ -15,13 +15,15 @@ import cats.implicits._
 
 import com.typesafe.scalalogging.LazyLogging
 
+import java.net.URLDecoder
+
 object CogUtils extends LazyLogging {
   lazy val cacheConfig = CommonConfig.memcached
   lazy val memcachedClient = KryoMemcachedClient.default
   lazy val rfCache = new CacheClient(memcachedClient)
 
   def getTiffExtent(uri: String): Projected[MultiPolygon] = {
-    val rasterSource = GDALRasterSource(uri)
+    val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
     val crs = rasterSource.crs
     Projected(
       MultiPolygon(rasterSource.extent.reproject(crs, WebMercator).toPolygon()),
@@ -35,7 +37,7 @@ object CogUtils extends LazyLogging {
     // up to 250,000 pixels
     // We may need to adjust this number depending on how fast our API is able to process it, these
     // numbers are based off local testing
-    val rasterSource = GDALRasterSource(uri)
+    val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
     rasterSource.resolutions
       .filter(r => r.rows * r.cols < 400000)
       .toNel

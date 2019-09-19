@@ -310,6 +310,7 @@ object SceneDao
             scene.id,
             UUID.randomUUID, // we don't have a project id here, so fake it
             scene.datasource,
+            scene.name,
             ColorCorrect.Params(
               redBand,
               greenBand,

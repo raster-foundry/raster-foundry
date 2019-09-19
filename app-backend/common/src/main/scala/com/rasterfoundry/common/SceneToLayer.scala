@@ -26,6 +26,7 @@ final case class SceneToLayerWithSceneType(
     sceneId: UUID,
     projectId: UUID,
     datasource: UUID,
+    sceneName: String,
     projectLayerId: UUID,
     accepted: Boolean,
     sceneOrder: Option[Int] = None,

@@ -13,6 +13,10 @@ object Config {
       UUID.fromString(publicDataConfig.getString("landsat8DatasourceId"))
     val sentinel2DatasourceId =
       UUID.fromString(publicDataConfig.getString("sentinel2DatasourceId"))
+    val landsat45ThematicMapperDatasourceId =
+      UUID.fromString(publicDataConfig.getString("landsat45TMDatasourceId"))
+    val landsat7ETMDatasourceId =
+      UUID.fromString(publicDataConfig.getString("landsat7ETMDatasourceId"))
     val enableMultiTiff =
       publicDataConfig.getBoolean("enableMultiTiff")
   }

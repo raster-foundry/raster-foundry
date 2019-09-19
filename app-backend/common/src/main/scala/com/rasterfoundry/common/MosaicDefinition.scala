@@ -13,6 +13,7 @@ final case class MosaicDefinition(
     sceneId: UUID,
     projectId: UUID,
     datasource: UUID,
+    sceneName: String,
     colorCorrections: ColorCorrect.Params,
     sceneType: Option[SceneType] = None,
     ingestLocation: Option[String],

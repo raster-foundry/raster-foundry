@@ -91,8 +91,7 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
     (filename, cog_fname) = process_to_cog(prefix, gcs_prefix, landsat_id, config)
     s3_location = upload_file(owner, filename, cog_fname)
     logger.info('Creating image')
-    ingest_location = 's3://{}/{}'.format(data_bucket,
-                                          urllib.quote(s3_location))
+    ingest_location = 's3://{}/{}'.format(data_bucket, urllib.quote(s3_location))
     scene = Scene(
         'PRIVATE', [],
         datasource, {},
