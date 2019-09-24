@@ -55,7 +55,7 @@ services:
     image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
     links:
       - postgres:database.service.rasterfoundry.internal
-      - memcached:tile-cache.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
     depends_on:
       postgres:
         condition: service_healthy
@@ -105,7 +105,7 @@ services:
     external_links:
       - postgres:database.service.rasterfoundry.internal
       - api-server:rasterfoundry.com
-      - memcached:tile-cache.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
@@ -140,7 +140,7 @@ services:
         condition: service_healthy
     links:
       - postgres:database.service.rasterfoundry.internal
-      - memcached:tile-cache.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
       - jaeger:jaeger.service.internal
       - xray:xray.service.internal
     env_file: .env
@@ -195,7 +195,7 @@ services:
         condition: service_healthy
     links:
       - postgres:database.service.rasterfoundry.internal
-      - memcached:tile-cache.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
