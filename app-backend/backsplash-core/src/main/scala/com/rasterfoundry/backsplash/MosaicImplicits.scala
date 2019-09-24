@@ -251,7 +251,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
             val mbtIO = self.flatMap { listBsi =>
               val listIO = listBsi.map { bsi =>
                 bsi.read(z, x, y, bsi.tracingContext)
-              }.sequence
+              }.parSequence
               listIO.map(_.flatten.reduceOption(_ merge _))
             }
 
@@ -406,7 +406,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                       }
                     }
                   }
-                }.sequence
+                }.parSequence
                   .map(_.flatten.reduceOption(_ merge _))
                   .map({
                     case Some(r) => r
