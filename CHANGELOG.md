@@ -5,6 +5,7 @@
 ### Added
 
 ### Changed
+- Optimize long-running task query [\#5187](https://github.com/raster-foundry/raster-foundry/pull/5187)
 
 ### Deprecated
 
