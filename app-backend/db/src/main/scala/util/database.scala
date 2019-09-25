@@ -27,15 +27,7 @@ object RFTransactor {
       maximumPoolSize: Int =
         Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "32").toInt,
       poolName: String = "Raster-Foundry-Hikari-Pool",
-      maybeInitSql: Option[String] = None,
-      contextShift: ContextShift[IO] = IO.contextShift(
-        ExecutionContext.fromExecutor(
-          Executors.newFixedThreadPool(
-            8,
-            new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
-          )
-        )
-      )
+      maybeInitSql: Option[String] = None
   ) {
     val url = postgresUrl ++ dbName
     val initSql =
@@ -65,8 +57,7 @@ object RFTransactor {
 
     val transactionEC: ExecutionContext =
       ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          Properties.envOrElse("HIKARI_TRANSACTION_THREADS", "8").toInt,
+        Executors.newCachedThreadPool(
           new ThreadFactoryBuilder().setNameFormat("db-transaction-%d").build()
         )
       )
@@ -74,8 +65,7 @@ object RFTransactor {
 
   def buildTransactor(
       config: TransactorConfig = TransactorConfig()
-  ): HikariTransactor[IO] = {
-    implicit val cs: ContextShift[IO] = config.contextShift
+  )(implicit cs: ContextShift[IO]): HikariTransactor[IO] = {
     HikariTransactor.apply[IO](
       config.hikariDataSource,
       config.connectionEC,
@@ -85,8 +75,7 @@ object RFTransactor {
 
   def buildTransactorResource(
       config: TransactorConfig = TransactorConfig()
-  ): Resource[IO, HikariTransactor[IO]] = {
-    implicit val cs: ContextShift[IO] = config.contextShift
+  )(implicit cs: ContextShift[IO]): Resource[IO, HikariTransactor[IO]] = {
     HikariTransactor.newHikariTransactor[IO](
       config.driver,
       config.postgresUrl,
@@ -97,8 +86,8 @@ object RFTransactor {
     )
   }
 
-  def nonHikariTransactor(config: TransactorConfig) = {
-    implicit val cs: ContextShift[IO] = config.contextShift
+  def nonHikariTransactor(config: TransactorConfig)(
+      implicit cs: ContextShift[IO]) = {
     Transactor.fromDriverManager[IO](
       "org.postgresql.Driver",
       config.url,
@@ -107,6 +96,7 @@ object RFTransactor {
     )
   }
 
-  lazy val xaResource: Resource[IO, HikariTransactor[IO]] =
+  def xaResource(
+      implicit cs: ContextShift[IO]): Resource[IO, HikariTransactor[IO]] =
     buildTransactorResource()
 }

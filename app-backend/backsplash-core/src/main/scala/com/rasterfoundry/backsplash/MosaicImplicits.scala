@@ -249,9 +249,9 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
             BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
           val mosaic = {
             val mbtIO = self.flatMap { listBsi =>
-              val listIO = listBsi.map { bsi =>
+              val listIO = listBsi.parTraverse { bsi =>
                 bsi.read(z, x, y, bsi.tracingContext)
-              }.sequence
+              }
               listIO.map(_.flatten.reduceOption(_ merge _))
             }
 
@@ -371,7 +371,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
             mosaic <- if (bands.length == 3) {
               val bsm = self.map { bsiList =>
                 {
-                  bsiList map { relevant =>
+                  bsiList parTraverse { relevant =>
                     for {
                       imFiber <- relevant
                         .read(extent, cs, relevant.tracingContext)
@@ -406,8 +406,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                       }
                     }
                   }
-                }.sequence
-                  .map(_.flatten.reduceOption(_ merge _))
+                }.map(_.flatten.reduceOption(_ merge _))
                   .map({
                     case Some(r) => r
                     case _ =>

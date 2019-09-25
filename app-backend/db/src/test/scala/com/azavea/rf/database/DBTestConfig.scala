@@ -2,7 +2,6 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
-
 import com.typesafe.config.ConfigFactory
 import doobie._
 import doobie.implicits._
@@ -10,10 +9,15 @@ import doobie.postgres.implicits._
 import doobie.util.transactor.Strategy
 import doobie.free.connection.unit
 import cats.implicits._
-import org.scalatest.{Suite, BeforeAndAfterAll}
-
+import org.scalatest.{BeforeAndAfterAll, Suite}
 import java.util.UUID
+import java.util.concurrent.Executors
+
+import cats.effect.{ContextShift, IO}
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.flywaydb.core.Flyway
+
+import scala.concurrent.ExecutionContext
 
 // SetupTemplateDB is a singleton that is used to instantiate the template db
 // once and only once per test run
@@ -26,6 +30,16 @@ object SetupTemplateDB {
   // db create/drop cannot be done with transactions
   // this transactor has error handling and cleanup but no transaction/auto-commit behavior
   val xantConfig = RFTransactor.TransactorConfig(dbName = "")
+
+  implicit val contextShift: ContextShift[IO] =
+    IO.contextShift(
+      ExecutionContext.fromExecutor(
+        Executors.newCachedThreadPool(
+          new ThreadFactoryBuilder().setNameFormat("db-transactor-%d").build()
+        )
+      )
+    )
+
   val xant = RFTransactor.nonHikariTransactor(xantConfig)
 
   // we use a template database so that migrations only need to be run once
@@ -70,6 +84,16 @@ trait DBTestConfig extends BeforeAndAfterAll { this: Suite =>
 
   // this transactor has error handling and cleanup but no transaction/auto-commit behavior
   val xantConfig = RFTransactor.TransactorConfig(dbName = "")
+
+  implicit val contextShift: ContextShift[IO] =
+    IO.contextShift(
+      ExecutionContext.fromExecutor(
+        Executors.newCachedThreadPool(
+          new ThreadFactoryBuilder().setNameFormat("db-transactor-%d").build()
+        )
+      )
+    )
+
   val xant = RFTransactor.nonHikariTransactor(xantConfig)
   Transactor.strategy
     .set(xant, Strategy.default.copy(before = unit, after = unit))

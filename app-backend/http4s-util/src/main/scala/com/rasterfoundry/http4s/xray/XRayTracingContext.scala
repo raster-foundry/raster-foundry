@@ -54,8 +54,6 @@ object XRayTracingContext {
       tags: Map[String, String],
       http: Option[XrayHttp]): TracingContextResource[F] = {
 
-    val xrayClient = new UdpClient[F]()
-
     val acquire: F[(Segment[F], Ref[F, Map[String, String]])] = {
       val spanId = f"${Random.nextLong()}%016x"
       for {
@@ -91,8 +89,7 @@ object XRayTracingContext {
                 http)
           }
         }
-        _ <- xrayClient.write(segment)
-
+        _ <- UdpClient.write(segment).attempt
       } yield (segment, tagsRef)
     }
 
@@ -107,7 +104,7 @@ object XRayTracingContext {
                      in_progress = None,
                      annotations = tags)
         }
-        _ <- xrayClient.write(updatedSegment)
+        _ <- UdpClient.write(updatedSegment).attempt
       } yield ()
     }
     Resource
