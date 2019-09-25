@@ -1,9 +1,5 @@
 package com.rasterfoundry.common.utils
 
-import com.rasterfoundry.common.cache._
-import com.rasterfoundry.common.cache.kryo._
-import com.rasterfoundry.common.{Config => CommonConfig}
-
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.histogram._
@@ -18,9 +14,6 @@ import com.typesafe.scalalogging.LazyLogging
 import java.net.URLDecoder
 
 object CogUtils extends LazyLogging {
-  lazy val cacheConfig = CommonConfig.memcached
-  lazy val memcachedClient = KryoMemcachedClient.default
-  lazy val rfCache = new CacheClient(memcachedClient)
 
   def getTiffExtent(uri: String): Projected[MultiPolygon] = {
     val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))

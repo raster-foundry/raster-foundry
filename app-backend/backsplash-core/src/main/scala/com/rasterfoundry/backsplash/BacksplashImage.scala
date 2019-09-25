@@ -87,10 +87,10 @@ final case class BacksplashGeotiff(
     }
   }
 
-  def readWithTrace(z: Int,
-                    x: Int,
-                    y: Int,
-                    context: TracingContext[IO]): IO[Option[MultibandTile]] = {
+  def read(z: Int,
+           x: Int,
+           y: Int,
+           context: TracingContext[IO]): IO[Option[MultibandTile]] = {
     val readTags = tags.combine(Map("zoom" -> z.toString))
     context.childSpan("read:z_x_y:", readTags) use { childContext =>
       val layoutDefinition = BacksplashImage.tmsLevels(z)
@@ -116,9 +116,9 @@ final case class BacksplashGeotiff(
     }
   }
 
-  def readWithTrace(extent: Extent,
-                    cs: CellSize,
-                    context: TracingContext[IO]): IO[Option[MultibandTile]] = {
+  def read(extent: Extent,
+           cs: CellSize,
+           context: TracingContext[IO]): IO[Option[MultibandTile]] = {
     val readTags =
       tags.combine(Map("extent" -> extent.toString, "cellSize" -> cs.toString))
     context.childSpan("read:extent_cs:", readTags) use { child =>
@@ -363,10 +363,10 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
       }
     }
 
-  def readWithTrace(z: Int,
-                    x: Int,
-                    y: Int,
-                    context: TracingContext[F]): F[Option[MultibandTile]] = {
+  def read(z: Int,
+           x: Int,
+           y: Int,
+           context: TracingContext[F]): F[Option[MultibandTile]] = {
     val readTags = tags.combine(Map("zoom" -> z.toString))
     context.childSpan("read:z_x_y:", readTags) use { child =>
       val layoutDefinition = BacksplashImage.tmsLevels(z)
@@ -401,9 +401,9 @@ sealed abstract class MultiTiffImage[F[_]: Monad, G[_]](
     }
   }
 
-  def readWithTrace(extent: Extent,
-                    cs: CellSize,
-                    context: TracingContext[F]): F[Option[MultibandTile]] = {
+  def read(extent: Extent,
+           cs: CellSize,
+           context: TracingContext[F]): F[Option[MultibandTile]] = {
     val readTags =
       tags.combine(Map("extent" -> extent.toString, "cellSize" -> cs.toString))
     context.childSpan("read:extent_cs:", readTags) use { child =>
@@ -464,33 +464,20 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
 
   val enableGDAL = Config.RasterSource.enableGDAL
 
-  /** Read ZXY tile - defers to a private method with tracing **/
+  /** Read ZXY tile with tracing **/
   def read(
       z: Int,
       x: Int,
       y: Int,
       context: TracingContext[F]
-  ): F[Option[MultibandTile]] = {
-    readWithTrace(z, x, y, context)
-  }
+  ): F[Option[MultibandTile]]
 
-  def readWithTrace(z: Int,
-                    x: Int,
-                    y: Int,
-                    context: TracingContext[F]): F[Option[MultibandTile]]
-
-  /** Read tile - defers to a private method with tracing **/
+  /** Read tile with tracing **/
   def read(
       extent: Extent,
       cs: CellSize,
       context: TracingContext[F]
-  ): F[Option[MultibandTile]] = {
-    readWithTrace(extent, cs, context)
-  }
-
-  def readWithTrace(extent: Extent,
-                    cs: CellSize,
-                    context: TracingContext[F]): F[Option[MultibandTile]]
+  ): F[Option[MultibandTile]]
 
   def getRasterSource(context: TracingContext[F]): F[RasterSource]
 
