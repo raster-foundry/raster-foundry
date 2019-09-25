@@ -441,9 +441,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.scalacacheCats,
       Dependencies.scalacacheCore,
       Dependencies.scalacacheCaffeine,
-      Dependencies.scalacacheMemcached,
       Dependencies.scalaCheck,
-      Dependencies.elasticacheClient,
       Dependencies.opentracing,
       Dependencies.geotrellisServerOgc,
       Dependencies.spatial4j

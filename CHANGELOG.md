@@ -12,6 +12,7 @@
 ### Deprecated
 
 ### Removed
+- Remove broken RasterSource and Tile caches [\#5190](https://github.com/raster-foundry/raster-foundry/pull/5190)
 
 ### Fixed
 

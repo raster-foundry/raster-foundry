@@ -25,8 +25,5 @@ object Config {
     private val cacheConfig = config.getConfig("cache")
     val histogramCacheEnable =
       cacheConfig.getBoolean("core.histogramCacheEnable")
-    val tileCacheEnable = cacheConfig.getBoolean("core.tileCacheEnable")
-    val rasterSourceCacheEnable =
-      cacheConfig.getBoolean("core.rasterSourceCacheEnable")
   }
 }
