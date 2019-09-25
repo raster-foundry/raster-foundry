@@ -2,11 +2,12 @@ package com.rasterfoundry.common
 
 import geotrellis.vector.{Geometry, Projected}
 import io.circe.generic.JsonCodec
-import io.circe.Json
+import io.circe._
+
 import java.util.UUID
 
 import com.rasterfoundry.common.color._
-import com.rasterfoundry.datamodel.{SceneMetadataFields, SceneType}
+import com.rasterfoundry.datamodel._
 
 final case class SceneToLayer(sceneId: UUID,
                               projectLayerId: UUID,
@@ -22,6 +23,7 @@ final case class SceneToLayer(sceneId: UUID,
                               sceneOrder: Option[Int] = None,
                               colorCorrectParams: ColorCorrect.Params)
 
+@JsonCodec
 final case class SceneToLayerWithSceneType(
     sceneId: UUID,
     projectId: UUID,
