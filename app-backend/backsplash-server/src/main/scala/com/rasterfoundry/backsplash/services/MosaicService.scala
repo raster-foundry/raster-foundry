@@ -52,36 +52,37 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 bandOverride) as user =>
             val polygonBbox: Projected[Polygon] =
               TileUtils.getTileBounds(z, x, y)
-            val getEval = Cacheable.getProjectLayerById(layerId,
-                                                        xa,
-                                                        tracingContext) map {
-              layer =>
-                layer.geometry flatMap {
-                  _.geom.as[MultiPolygon]
-                } match {
-                  case Some(mask) =>
-                    // Intermediate val to anchor the implicit resolution with multiple argument lists
-                    val expression =
-                      Masking(
-                        List(GeomLit(mask.toGeoJson), RasterVar("mosaic"))
-                      )
-                    val param =
-                      layers.read(layerId,
-                                  Some(polygonBbox),
-                                  bandOverride,
-                                  None,
-                                  tracingContext)
-                    LayerTms(IO.pure(expression),
-                             IO.pure(Map("mosaic" -> param)),
-                             ConcurrentInterpreter.DEFAULT[IO])
-                  case _ =>
-                    LayerTms.identity(
-                      layers.read(layerId,
-                                  Some(polygonBbox),
-                                  bandOverride,
-                                  None,
-                                  tracingContext)
-                    )
+            val getEval = tracingContext.childSpan("getEval") use {
+              childContext =>
+                Cacheable.getProjectLayerById(layerId, xa, childContext) map {
+                  layer =>
+                    layer.geometry flatMap {
+                      _.geom.as[MultiPolygon]
+                    } match {
+                      case Some(mask) =>
+                        // Intermediate val to anchor the implicit resolution with multiple argument lists
+                        val expression =
+                          Masking(
+                            List(GeomLit(mask.toGeoJson), RasterVar("mosaic"))
+                          )
+                        val param =
+                          layers.read(layerId,
+                                      Some(polygonBbox),
+                                      bandOverride,
+                                      None,
+                                      childContext)
+                        LayerTms(IO.pure(expression),
+                                 IO.pure(Map("mosaic" -> param)),
+                                 ConcurrentInterpreter.DEFAULT[IO])
+                      case _ =>
+                        LayerTms.identity(
+                          layers.read(layerId,
+                                      Some(polygonBbox),
+                                      bandOverride,
+                                      None,
+                                      childContext)
+                        )
+                    }
                 }
             }
 
@@ -99,7 +100,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 }
               resp <- fiberResp.join flatMap {
                 case Valid(tile) =>
-                  Ok(tile.renderPng.bytes, pngType)
+                  tracingContext.childSpan("render") use { _ =>
+                    Ok(tile.renderPng.bytes, pngType)
+                  }
                 case Invalid(e) =>
                   BadRequest(s"Could not produce tile: $e ")
               }
@@ -116,7 +119,11 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
               ))
             for {
               authFiber <- authorizers.authProject(user, projectId).start
-              mosaic = layers.read(layerId, None, overrides, None)
+              mosaic = layers.read(layerId,
+                                   None,
+                                   overrides,
+                                   None,
+                                   tracingContext)
               histFiber <- LayerHistogram.identity(mosaic, 4000).start
               _ <- authFiber.join.handleErrorWith { error =>
                 histFiber.cancel *> IO.raiseError(error)

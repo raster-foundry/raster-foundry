@@ -47,8 +47,7 @@ final case class BacksplashGeotiff(
     singleBandOptions: Option[SingleBandOptions.Params],
     mask: Option[MultiPolygon],
     footprint: MultiPolygon,
-    metadata: SceneMetadataFields,
-    tracingContext: TracingContext[IO]
+    metadata: SceneMetadataFields
 ) extends LazyLogging
     with BacksplashImage[IO] {
 
@@ -167,8 +166,7 @@ case class LandsatHistoricalMultiTiffImage(
     projectId: UUID,
     projectLayerId: UUID,
     mask: Option[MultiPolygon],
-    landsatId: String,
-    tracingContext: TracingContext[IO]
+    landsatId: String
 )(implicit contextShift: ContextShift[IO])
     extends MultiTiffImage[IO, IO.Par] {
   val metadata = SceneMetadataFields()
@@ -206,8 +204,7 @@ case class Sentinel2MultiTiffImage(
     projectId: UUID,
     projectLayerId: UUID,
     mask: Option[MultiPolygon],
-    prefix: String,
-    tracingContext: TracingContext[IO]
+    prefix: String
 )(implicit contextShift: ContextShift[IO])
     extends MultiTiffImage[IO, IO.Par] {
   val metadata = SceneMetadataFields()
@@ -249,8 +246,7 @@ case class Landsat8MultiTiffImage(
     projectId: UUID,
     projectLayerId: UUID,
     mask: Option[MultiPolygon],
-    prefix: String,
-    tracingContext: TracingContext[IO]
+    prefix: String
 )(implicit contextShift: ContextShift[IO])
     extends MultiTiffImage[IO, IO.Par] {
 
@@ -460,7 +456,6 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
   val projectLayerId: UUID
   val mask: Option[MultiPolygon]
   val metadata: SceneMetadataFields
-  val tracingContext: TracingContext[F]
 
   val enableGDAL = Config.RasterSource.enableGDAL
 

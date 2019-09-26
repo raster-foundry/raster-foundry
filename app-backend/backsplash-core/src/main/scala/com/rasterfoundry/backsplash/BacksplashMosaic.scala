@@ -8,47 +8,52 @@ import cats.implicits._
 import cats.data.{NonEmptyList => _}
 import cats.data.Validated._
 import cats.effect._
-import com.colisweb.tracing.TracingContext
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 
 object BacksplashMosaic extends ToHistogramStoreOps {
 
-  def toRasterSource(bsm: BacksplashMosaic, tracingContext: TracingContext[IO])(
+  def toRasterSource(bsm: BacksplashMosaic)(
       implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
-    bsm flatMap { backsplashImages =>
-      backsplashImages.toNel match {
-        case Some(images) =>
-          images parTraverse { image =>
-            image.getRasterSource(tracingContext)
-          } map { rasterSourceList =>
-            MosaicRasterSource(rasterSourceList, rasterSourceList.head.crs)
+    bsm flatMap {
+      case (tracingContext, backsplashImages) =>
+        tracingContext.childSpan("bsm.toRasterSource") use { childContext =>
+          backsplashImages.toNel match {
+            case Some(images) =>
+              images parTraverse { image =>
+                image.getRasterSource(childContext)
+              } map { rasterSourceList =>
+                MosaicRasterSource(rasterSourceList, rasterSourceList.head.crs)
+              }
+            case _ =>
+              IO.raiseError(NoScenesException)
           }
-        case _ =>
-          IO.raiseError(NoScenesException)
-      }
+        }
     }
   }
 
-  def getRasterSourceOriginalCRS(bsm: BacksplashMosaic,
-                                 tracingContext: TracingContext[IO])(
+  def getRasterSourceOriginalCRS(bsm: BacksplashMosaic)(
       implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
-    bsm flatMap { backsplashImages =>
-      backsplashImages.toNel match {
-        case Some(images) =>
-          images parTraverse { image =>
-            image.getRasterSource(tracingContext)
-          } map { rasterSourceList =>
-            rasterSourceList.map(_.crs).toList.distinct
-          }
-        case _ =>
-          IO.raiseError(NoScenesException)
-      }
+    bsm flatMap {
+      case (tracingContext, backsplashImages) =>
+        tracingContext.childSpan("bsm.getRasterSourceOriginalCRS") use {
+          childContext =>
+            backsplashImages.toNel match {
+              case Some(images) =>
+                images parTraverse { image =>
+                  image.getRasterSource(childContext)
+                } map { rasterSourceList =>
+                  rasterSourceList.map(_.crs).toList.distinct
+                }
+              case _ =>
+                IO.raiseError(NoScenesException)
+            }
+        }
     }
   }
 
   def first(bsm: BacksplashMosaic): IO[Option[BacksplashImage[IO]]] = {
-    bsm.map(_.headOption)
+    bsm.map { case (_, backsplashImages) => backsplashImages.headOption }
   }
 
   def layerHistogram(mosaic: BacksplashMosaic)(
@@ -70,9 +75,16 @@ object BacksplashMosaic extends ToHistogramStoreOps {
       extentReification: ExtentReification[BacksplashMosaic],
       cs: ContextShift[IO]): IO[List[Histogram[Double]]] =
     for {
-      allImages <- mosaic
-      histArrays <- allImages parTraverse { im =>
-        histStore.layerHistogram(im.imageId, im.subsetBands)
+      (tracingContext, allImages) <- mosaic
+      histArrays <- tracingContext.childSpan("getAllImageHistograms") use {
+        childContext =>
+          allImages parTraverse { im =>
+            {
+              childContext.childSpan("layerHistogram") use { _ =>
+                histStore.layerHistogram(im.imageId, im.subsetBands)
+              }
+            }
+          }
       }
       result <- histArrays match {
         case Nil =>
