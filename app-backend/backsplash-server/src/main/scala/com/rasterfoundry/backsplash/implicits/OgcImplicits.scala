@@ -70,12 +70,10 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
   ): IO[(SimpleSource, List[CRS])] =
     (
       BacksplashMosaic.toRasterSource(
-        layers.read(projectLayer.id, None, None, None, tracingContext),
-        tracingContext
+        layers.read(projectLayer.id, None, None, None, tracingContext)
       ),
       BacksplashMosaic.getRasterSourceOriginalCRS(
-        layers.read(projectLayer.id, None, None, None, tracingContext),
-        tracingContext
+        layers.read(projectLayer.id, None, None, None, tracingContext)
       ),
       getStyles(projectLayer.id)
     ).parMapN(

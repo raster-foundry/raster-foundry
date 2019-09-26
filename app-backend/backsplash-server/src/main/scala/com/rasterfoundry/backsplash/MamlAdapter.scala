@@ -39,10 +39,11 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
                                 None,
                                 None,
                                 NoOpTracingContext[IO]())
-            } map { bsiList =>
-              bsiList.map { backsplashImage =>
-                backsplashImage.selectBands(List(bandActual))
-              }
+            } map {
+              case (tracingContext, bsiList) =>
+                (tracingContext, bsiList.map { backsplashImage =>
+                  backsplashImage.selectBands(List(bandActual))
+                })
             }
           Map[String, BacksplashMosaic](
             s"${projId.toString}_${bandActual}" -> mosaic
@@ -58,10 +59,10 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
             s"${layerId.toString}_${bandActual}" -> (
               layerStore
                 .read(layerId, None, None, None, NoOpTracingContext[IO]()) map {
-                bsiList =>
-                  bsiList map { backsplashIm =>
+                case (tracingContext, bsiList) =>
+                  (tracingContext, bsiList map { backsplashIm =>
                     backsplashIm.selectBands(List(bandActual))
-                  }
+                  })
               }
             )
           )

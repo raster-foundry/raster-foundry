@@ -21,7 +21,6 @@ import org.http4s.dsl.io._
 import org.http4s.headers._
 import java.util.UUID
 
-import com.colisweb.tracing.TracingContext
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import com.rasterfoundry.http4s.{TracedHTTPRoutes, AuthedTraceRequest}
 
@@ -39,8 +38,7 @@ class SceneService[RendStore, HistStore](
 
   private def sceneToBacksplashGeotiff(
       scene: Scene,
-      bandOverride: Option[BandOverride],
-      tracingContext: TracingContext[IO]): IO[BacksplashImage[IO]] = {
+      bandOverride: Option[BandOverride]): IO[BacksplashImage[IO]] = {
     val randomProjectId = UUID.randomUUID
     val ingestLocIO: IO[String] = IO {
       scene.ingestLocation
@@ -79,8 +77,7 @@ class SceneService[RendStore, HistStore](
           None, // no single band options ever
           None, // not adding the mask here, since out of functional scope for md to image
           footprint,
-          scene.metadataFields,
-          tracingContext
+          scene.metadataFields
         )
     }
   }
@@ -122,8 +119,8 @@ class SceneService[RendStore, HistStore](
               }
               bands <- bandsFiber.join
               eval = LayerTms.identity(
-                sceneToBacksplashGeotiff(scene, bands, tracingContext).map(a =>
-                  List(a)))
+                sceneToBacksplashGeotiff(scene, bands).map(a =>
+                  (tracingContext, List(a))))
               resp <- eval(z, x, y) flatMap {
                 case Valid(tile) =>
                   Ok(tile.renderPng.bytes, pngType)
@@ -142,8 +139,9 @@ class SceneService[RendStore, HistStore](
               }
               bands <- bandsFiber.join
               eval = LayerExtent.identity(
-                sceneToBacksplashGeotiff(scene, bands, tracingContext).map(a =>
-                  List(a)))(paintedMosaicExtentReification, cs)
+                sceneToBacksplashGeotiff(scene, bands).map(a =>
+                  (tracingContext, List(a))))(paintedMosaicExtentReification,
+                                              cs)
               extent <- IO.pure {
                 (scene.dataFootprint orElse scene.tileFootprint) map {
                   _.envelope
