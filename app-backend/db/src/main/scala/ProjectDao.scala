@@ -40,7 +40,11 @@ object ProjectDao
 
   def deleteCache(id: UUID) = {
     val result = for {
-      _ <- remove(Project.cacheKey(id))(projectCache, async[IO])
+      _ <- {
+        val cacheKey = Project.cacheKey(id)
+        logger.debug(s"Removing $cacheKey")
+        remove(cacheKey)(projectCache, async[IO]).attempt
+      }
     } yield ()
     Async[ConnectionIO].liftIO(result)
   }
@@ -213,7 +217,8 @@ object ProjectDao
         ),
         dbProject.defaultLayerId
       )
-      _ <- deleteCache(id).attempt
+      _ <- deleteCache(id)
+      _ <- SceneToLayerDao.deleteMosaicDefCache(dbProject.defaultLayerId)
       updateProject <- updateProjectQ(project, id).run
     } yield updateProject
   }
@@ -358,6 +363,7 @@ object ProjectDao
         )
         kickoffSceneIngest(scene.id).pure[ConnectionIO]
       }
+      _ <- SceneToLayerDao.deleteMosaicDefCache(projectLayerId)
       _ <- scenesToIngest.traverse { (scene: Scene) =>
         SceneDao.update(
           scene.copy(
@@ -455,6 +461,7 @@ object ProjectDao
               Some(fr"project_layer_id = ${projectLayerId}")
             )).update.run
           _ <- updateProjectExtentIO(projectId)
+          _ <- SceneToLayerDao.deleteMosaicDefCache(projectLayerId)
           layerDatasources <- ProjectLayerDatasourcesDao
             .listProjectLayerDatasources(projectLayerId)
           projectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
