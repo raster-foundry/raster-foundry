@@ -37,7 +37,7 @@ object TracedHTTPRoutes {
         "http_method" -> req.method.name,
         "request_url" -> req.uri.path.toString,
         "environment" -> Config.environment
-      ).combine {
+      ) combine {
         req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id")) match {
           case Some(header) =>
             header.value.split('=').reverse.headOption match {
@@ -45,6 +45,11 @@ object TracedHTTPRoutes {
               case _             => Map.empty[String, String]
             }
           case _ => Map.empty[String, String]
+        }
+      } combine {
+        req.headers.get(CaseInsensitiveString("Referer")) match {
+          case Some(referer) => Map("referer" -> referer.value)
+          case _             => Map.empty[String, String]
         }
       }
 
