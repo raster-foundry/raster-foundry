@@ -80,7 +80,10 @@ object SceneToLayerDao
         case Some(ids) => acceptScenes(projectLayerId, ids)
         case _         => 0.pure[ConnectionIO]
       }
-      _ <- deleteMosaicDefCache(projectLayerId)
+      _ <- updateCount match {
+        case 0 => ().pure[ConnectionIO]
+        case _ => deleteMosaicDefCache(projectLayerId)
+      }
     } yield updateCount
   }
 
