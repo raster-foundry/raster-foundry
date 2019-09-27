@@ -268,11 +268,11 @@ object SceneDao
               }
             case (previous, IngestStatus.Ingested)
                 if previous != IngestStatus.Ingested =>
-              n.pure[ConnectionIO] <*
-                SceneToLayerDao
-                  .getProjectsAndLayersBySceneId(scene.id)
-                  .map(spls => {
-                    spls.map(spl => {
+              SceneToLayerDao
+                .getProjectsAndLayersBySceneId(scene.id)
+                .flatMap(spls => {
+                  for {
+                    _ <- spls.map { spl =>
                       logger
                         .info(
                           s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}"
@@ -280,9 +280,12 @@ object SceneDao
                       kickoffLayerOverviewCreate(
                         spl.projectId,
                         spl.projectLayerId
-                      ).pure[ConnectionIO]
-                    })
-                  })
+                      )
+                      SceneToLayerDao.deleteMosaicDefCache(spl.projectLayerId)
+                    }.sequence
+                  } yield ()
+                })
+                .map(_ => n)
             case _ =>
               n.pure[ConnectionIO]
           }
