@@ -4,15 +4,15 @@ import com.rasterfoundry.backsplash.HistogramStore
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 import com.rasterfoundry.backsplash.error.RequirementFailedException
 import com.rasterfoundry.database.LayerAttributeDao
-
 import cats.effect.IO
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
 import geotrellis.raster.histogram._
 import geotrellis.raster.io.json._
-
 import java.util.UUID
+
+import com.colisweb.tracing.TracingContext
 
 trait HistogramStoreImplicits
     extends ToHistogramStoreOps
@@ -66,35 +66,44 @@ trait HistogramStoreImplicits
     new HistogramStore[LayerAttributeDao] {
       def layerHistogram(self: LayerAttributeDao,
                          layerId: UUID,
-                         subsetBands: List[Int]) = {
-        self
-          .getHistogram(layerId, xa)
-          .map({
-            case Some(hists: Array[Histogram[Double]]) =>
-              subsetBands.toArray map { band =>
-                hists(band)
-              }
-            case None =>
-              val msg =
-                s"No histogram stored for scene in layer: $layerId. Please re-ingest scene."
-              logger.error(msg)
-              throw RequirementFailedException(msg)
-          })
-          .attempt
-      } flatMap { handleBandsOutOfRange(_, layerId, subsetBands) }
+                         subsetBands: List[Int],
+                         tracingContext: TracingContext[IO]) = {
+        tracingContext.childSpan("layerAttributeDao.getHistogram") use { _ =>
+          self
+            .getHistogram(layerId, xa)
+            .map({
+              case Some(hists: Array[Histogram[Double]]) =>
+                subsetBands.toArray map { band =>
+                  hists(band)
+                }
+              case None =>
+                val msg =
+                  s"No histogram stored for scene in layer: $layerId. Please re-ingest scene."
+                logger.error(msg)
+                throw RequirementFailedException(msg)
+            })
+            .attempt
+        } flatMap {
+          handleBandsOutOfRange(_, layerId, subsetBands)
+        }
+      }
 
       def projectLayerHistogram(
           self: LayerAttributeDao,
           projectLayerId: UUID,
-          subsetBands: List[Int]
+          subsetBands: List[Int],
+          tracingContext: TracingContext[IO]
       ): IO[Array[Histogram[Double]]] = {
-        self
-          .getProjectLayerHistogram(projectLayerId, xa)
-          .map({ hists =>
-            mergeHistsForBands(projectLayerId, subsetBands, hists)
-          })
-          .attempt flatMap {
-          handleBandsOutOfRange(_, projectLayerId, subsetBands)
+        tracingContext.childSpan("layerAttributeDao.getProjectLayerHistogram") use {
+          _ =>
+            self
+              .getProjectLayerHistogram(projectLayerId, xa)
+              .map({ hists =>
+                mergeHistsForBands(projectLayerId, subsetBands, hists)
+              })
+              .attempt flatMap {
+              handleBandsOutOfRange(_, projectLayerId, subsetBands)
+            }
         }
       }
     }

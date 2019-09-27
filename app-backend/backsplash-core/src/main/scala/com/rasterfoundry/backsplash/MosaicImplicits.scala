@@ -131,9 +131,11 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
       }
       firstIm = mosaic.head
       histograms <- tracingContext.childSpan("renderMosaicSingleBand.histogram") use {
-        _ =>
+        context =>
           firstIm.singleBandOptions map { _.band } map { bd =>
-            histStore.projectLayerHistogram(firstIm.projectLayerId, List(bd))
+            histStore.projectLayerHistogram(firstIm.projectLayerId,
+                                            List(bd),
+                                            context)
           } getOrElse {
             IO.raiseError(
               SingleBandOptionsException(
@@ -342,7 +344,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
         case im: BacksplashGeotiff =>
           logger.debug(
             s"Retrieving Histograms for ${im.imageId} from histogram store")
-          histStore.layerHistogram(im.imageId, im.subsetBands)
+          histStore.layerHistogram(im.imageId, im.subsetBands, tracingContext)
         case im: Landsat8MultiTiffImage =>
           logger.debug(s"Retrieving histograms for ${im.imageId} from source")
           im.getHistogram(tracingContext)
@@ -398,13 +400,15 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                             .read(extent, cs, childContext)
                             .start
                           histsFiber <- childContext.childSpan("layerHistogram",
-                                                               tags) use { _ =>
-                            histStore
-                              .layerHistogram(
-                                relevant.imageId,
-                                relevant.subsetBands
-                              )
-                              .start
+                                                               tags) use {
+                            context =>
+                              histStore
+                                .layerHistogram(
+                                  relevant.imageId,
+                                  relevant.subsetBands,
+                                  context
+                                )
+                                .start
                           }
                           im <- imFiber.join
                           hists <- histsFiber.join
