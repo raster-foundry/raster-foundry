@@ -53,6 +53,8 @@ object Datasource {
 
   def create = Create.apply _
 
+  def cacheKey(datasourceId: UUID) = s"Datasource:$datasourceId"
+
   @JsonCodec
   final case class Thin(bands: Json, name: String, id: UUID)
 
