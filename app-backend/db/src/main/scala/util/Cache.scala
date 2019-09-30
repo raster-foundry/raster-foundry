@@ -71,4 +71,16 @@ object Cache extends LazyLogging {
       MemcachedCache[List[SceneToLayerWithSceneType]](memcachedClient)
     }
   }
+
+  object DatasourceCache {
+    implicit val datasourceCache: Cache[Datasource] = {
+      MemcachedCache[Datasource](memcachedClient)
+    }
+  }
+
+  object SceneCache {
+    implicit val sceneCache: Cache[Scene] = {
+      MemcachedCache[Scene](memcachedClient)
+    }
+  }
 }

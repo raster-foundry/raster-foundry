@@ -3,6 +3,8 @@ package com.rasterfoundry.database
 import java.sql.Timestamp
 import java.util.UUID
 
+import cats.implicits._
+import com.rasterfoundry.database.util.Cache
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.PageRequest
@@ -10,6 +12,10 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import scalacache._
+import scalacache.CatsEffect.modes._
+
+import scala.concurrent.duration._
 
 object DatasourceDao
     extends Dao[Datasource]
@@ -26,14 +32,25 @@ object DatasourceDao
         datasources.license_name
       FROM
 """
+  import Cache.DatasourceCache._
 
   val selectF: Fragment = select ++ tableF
 
+  def deleteCache(id: UUID): ConnectionIO[Unit] = {
+    for {
+      _ <- remove(Datasource.cacheKey(id))(datasourceCache, async[ConnectionIO]).attempt
+    } yield ()
+  }
+
   def unsafeGetDatasourceById(datasourceId: UUID): ConnectionIO[Datasource] =
-    query.filter(datasourceId).select
+    cachingF(Datasource.cacheKey(datasourceId))(Some(30 minutes)) {
+      query.filter(datasourceId).select
+    }
 
   def getDatasourceById(datasourceId: UUID): ConnectionIO[Option[Datasource]] =
-    query.filter(datasourceId).selectOption
+    Cache.getOptionCache(Datasource.cacheKey(datasourceId), Some(30 minutes)) {
+      query.filter(datasourceId).selectOption
+    }
 
   def listDatasources(
       page: PageRequest,
@@ -87,7 +104,10 @@ object DatasourceDao
       license_name = ${datasource.licenseName}
       where id = ${id}
       """
-    updateQuery.update.run
+    for {
+      result <- updateQuery.update.run
+      _ <- deleteCache(id)
+    } yield result
   }
 
   def deleteDatasource(id: UUID): ConnectionIO[Int] = {
@@ -135,20 +155,23 @@ object DatasourceDao
         .filter(fr"datasource = ${datasourceId}")
         .delete
       datasourceDeleteCount <- DatasourceDao.query.filter(datasourceId).delete
+      _ <- deleteCache(datasourceId)
     } yield { List(uDeleteCount, sceneDeleteCount, datasourceDeleteCount) }
   }
 
   def getSceneDatasource(sceneId: UUID): ConnectionIO[Option[Datasource]] = {
     val joinTableF =
       fr"datasources join scenes on datasources.id = scenes.datasource"
-    Dao
-      .QueryBuilder[Datasource](
-        select ++ joinTableF,
-        tableF,
-        Nil
-      )
-      .filter(fr"scenes.id = $sceneId")
-      .selectOption
+    Cache.getOptionCache(s"Scene:$sceneId:Datasource", Some(10 minutes)) {
+      Dao
+        .QueryBuilder[Datasource](
+          select ++ joinTableF,
+          tableF,
+          Nil
+        )
+        .filter(fr"scenes.id = $sceneId")
+        .selectOption
+    }
   }
 
   def authQuery(

@@ -80,8 +80,10 @@ object BacksplashMosaic extends ToHistogramStoreOps {
         childContext =>
           allImages parTraverse { im =>
             {
-              childContext.childSpan("layerHistogram") use { _ =>
-                histStore.layerHistogram(im.imageId, im.subsetBands)
+              childContext.childSpan("layerHistogram") use { histogramContext =>
+                histStore.layerHistogram(im.imageId,
+                                         im.subsetBands,
+                                         histogramContext)
               }
             }
           }

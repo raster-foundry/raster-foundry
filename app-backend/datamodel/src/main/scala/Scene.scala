@@ -158,6 +158,8 @@ final case class Scene(
 
 object Scene {
 
+  def cacheKey(id: UUID) = s"Scene:$id"
+
   /** Case class extracted from a POST request */
   @JsonCodec
   final case class Create(

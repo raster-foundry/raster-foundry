@@ -231,8 +231,11 @@ trait SceneRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      onSuccess(
-        SceneDao.query.filter(sceneId).delete.transact(xa).unsafeToFuture) {
+      val response = for {
+        result <- SceneDao.query.filter(sceneId).delete.transact(xa)
+        _ <- SceneDao.deleteCache(sceneId).transact(xa)
+      } yield result
+      onSuccess(response.unsafeToFuture) {
         completeSingleOrNotFound
       }
     }
