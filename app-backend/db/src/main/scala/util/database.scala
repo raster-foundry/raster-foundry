@@ -43,7 +43,7 @@ object RFTransactor {
       hikariConfig.setPassword(password)
       hikariConfig.setDriverClassName(driver)
       hikariConfig.setConnectionTimeout(2000)
-
+      hikariConfig.setLeakDetectionThreshold(30 * 1000)
       new HikariDataSource(hikariConfig)
     }
 
