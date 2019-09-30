@@ -4,6 +4,20 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.31.0](https://github.com/raster-foundry/raster-foundry/compare/1.30.0...1.31.0)
+
+### Added
+
 - Added caching of mosaic definition queryes [\#5192](https://github.com/raster-foundry/raster-foundry/pull/5192)
 
 ### Changed
@@ -11,14 +25,8 @@
 - Optimize long-running task query [\#5187](https://github.com/raster-foundry/raster-foundry/pull/5187)
 - Use default execution contexts for http4s and blaze and switch to using an unbounded pool for doobie transactions [\#5188](https://github.com/raster-foundry/raster-foundry/pull/5188)
 
-### Deprecated
-
 ### Removed
 - Remove broken RasterSource and Tile caches [\#5190](https://github.com/raster-foundry/raster-foundry/pull/5190)
-
-### Fixed
-
-### Security
 
 ## [1.30.0](https://github.com/raster-foundry/raster-foundry/compare/1.29.1...1.30.0)
 
