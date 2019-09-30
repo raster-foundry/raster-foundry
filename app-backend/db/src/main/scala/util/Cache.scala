@@ -2,7 +2,11 @@ package com.rasterfoundry.database.util
 
 import java.net.InetSocketAddress
 
-import com.rasterfoundry.common.{BacksplashConnectionFactory, Config}
+import com.rasterfoundry.common.{
+  BacksplashConnectionFactory,
+  Config,
+  SceneToLayerWithSceneType
+}
 import com.rasterfoundry.datamodel._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
@@ -58,6 +62,25 @@ object Cache extends LazyLogging {
   object UserCache {
     implicit val userCache: Cache[User] = {
       MemcachedCache[User](memcachedClient)
+    }
+  }
+
+  object MosaicDefinitionCache {
+    implicit val mosaicDefinitionCache
+      : Cache[List[SceneToLayerWithSceneType]] = {
+      MemcachedCache[List[SceneToLayerWithSceneType]](memcachedClient)
+    }
+  }
+
+  object DatasourceCache {
+    implicit val datasourceCache: Cache[Datasource] = {
+      MemcachedCache[Datasource](memcachedClient)
+    }
+  }
+
+  object SceneCache {
+    implicit val sceneCache: Cache[Scene] = {
+      MemcachedCache[Scene](memcachedClient)
     }
   }
 }

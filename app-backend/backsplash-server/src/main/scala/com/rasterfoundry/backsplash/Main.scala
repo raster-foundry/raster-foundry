@@ -19,55 +19,25 @@ import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, Timeout}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Properties
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.TimeUnit
 
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
-  val xaConfig = RFTransactor.TransactorConfig(
-    contextShift = IO.contextShift(
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          Config.parallelism.dbThreadPoolSize,
-          new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
-        )
-      )
-    )
-  )
-
-  val xa = RFTransactor.buildTransactor(xaConfig)
+  val xa = RFTransactor.buildTransactor()
 
   val ogcUrlPrefix = Properties.envOrNone("ENVIRONMENT") match {
     case Some("Production") => "https://tiles.rasterfoundry.com"
     case Some("Staging")    => "https://tiles.staging.rasterfoundry.com"
     case _                  => "http://localhost:8081"
   }
-
-  override protected implicit val contextShift: ContextShift[IO] =
-    IO.contextShift(
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          Config.parallelism.http4sThreadPoolSize,
-          new ThreadFactoryBuilder().setNameFormat("http4s-%d").build()
-        )
-      )
-    )
-
-  val blazeEC = ExecutionContext.fromExecutor(
-    Executors.newFixedThreadPool(
-      Config.parallelism.blazeThreadPoolSize,
-      new ThreadFactoryBuilder().setNameFormat("blaze-cached-%d").build()
-    )
-  )
 
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
@@ -224,7 +194,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   def stream =
     BlazeServerBuilder[IO]
-      .withExecutionContext(blazeEC)
       .withBanner(startupBanner)
       .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")

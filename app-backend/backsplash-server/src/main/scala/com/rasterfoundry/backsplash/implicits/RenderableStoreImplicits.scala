@@ -39,11 +39,9 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
     tail.take(tail.length - 1).mkString("/")
   }
   @SuppressWarnings(Array("OptionGet"))
-  private def mosaicDefinitionToImage(
-      mosaicDefinition: MosaicDefinition,
-      bandOverride: Option[BandOverride],
-      projId: UUID,
-      tracingContext: TracingContext[IO]): BacksplashImage[IO] = {
+  private def mosaicDefinitionToImage(mosaicDefinition: MosaicDefinition,
+                                      bandOverride: Option[BandOverride],
+                                      projId: UUID): BacksplashImage[IO] = {
     val singleBandOptions =
       mosaicDefinition.singleBandOptions flatMap {
         _.as[SingleBandOptions.Params].toOption
@@ -98,8 +96,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           mosaicDefinition.mask,
           mosaicDefinition.metadataFiles.headOption map { uri =>
             s"s3://landsat-pds/${prefixFromHttpsS3Path(uri)}"
-          } getOrElse { "" },
-          tracingContext
+          } getOrElse { "" }
         )
       case Config.publicData.sentinel2DatasourceId
           if Config.publicData.enableMultiTiff =>
@@ -114,8 +111,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           mosaicDefinition.mask,
           mosaicDefinition.metadataFiles.headOption map { uri =>
             s"s3://sentinel-s2-l1c/${prefixFromHttpsS3Path(uri)}"
-          } getOrElse { "" },
-          tracingContext
+          } getOrElse { "" }
         )
       case Config.publicData.landsat45ThematicMapperDatasourceId |
           Config.publicData.landsat7ETMDatasourceId
@@ -129,8 +125,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           mosaicDefinition.projectId,
           projId,
           mosaicDefinition.mask,
-          mosaicDefinition.sceneName,
-          tracingContext
+          mosaicDefinition.sceneName
         )
       case _ =>
         val ingestLocation = mosaicDefinition.ingestLocation getOrElse {
@@ -149,8 +144,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           singleBandOptions,
           mosaicDefinition.mask,
           footprint,
-          mosaicDefinition.sceneMetadataFields,
-          tracingContext
+          mosaicDefinition.sceneMetadataFields
         )
     }
   }
@@ -163,7 +157,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           window: Option[Projected[Polygon]],
           bandOverride: Option[BandOverride],
           imageSubset: Option[NEL[UUID]],
-          tracingContext: TracingContext[IO]): IO[List[BacksplashImage[IO]]] = {
+          tracingContext: TracingContext[IO]): BacksplashMosaic = {
         val tags = Map("sceneId" -> projId.toString)
         tracingContext.childSpan("sceneStore.read", tags) use { childContext =>
           Cacheable.getSceneById(projId, window, xa, childContext) map {
@@ -183,20 +177,20 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
               val colorCorrectParams =
                 ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
               logger.debug(s"Chosen color correction: ${colorCorrectParams}")
-              List(
-                BacksplashGeotiff(
-                  scene.id,
-                  randomProjectId,
-                  randomProjectId,
-                  ingestLocation,
-                  imageBandOverride,
-                  colorCorrectParams,
-                  None, // no single band options ever
-                  None, // not adding the mask here, since out of functional scope for md to image
-                  footprint,
-                  scene.metadataFields,
-                  childContext
-                ))
+              (tracingContext,
+               List(
+                 BacksplashGeotiff(
+                   scene.id,
+                   randomProjectId,
+                   randomProjectId,
+                   ingestLocation,
+                   imageBandOverride,
+                   colorCorrectParams,
+                   None, // no single band options ever
+                   None, // not adding the mask here, since out of functional scope for md to image
+                   footprint,
+                   scene.metadataFields
+                 )))
           }
         }
       }
@@ -212,13 +206,12 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
     new RenderableStore[SceneToLayerDao] {
       // projId here actually refers to a layer -- but the argument names have to
       // match the typeclass we're providing evidence for
-      def read(
-          self: SceneToLayerDao,
-          projId: UUID,
-          window: Option[Projected[Polygon]],
-          bandOverride: Option[BandOverride],
-          imageSubset: Option[NEL[UUID]],
-          tracingContext: TracingContext[IO]): IO[List[BacksplashImage[IO]]] = {
+      def read(self: SceneToLayerDao,
+               projId: UUID,
+               window: Option[Projected[Polygon]],
+               bandOverride: Option[BandOverride],
+               imageSubset: Option[NEL[UUID]],
+               tracingContext: TracingContext[IO]): BacksplashMosaic = {
         val tags = Map("projectId" -> projId.toString)
         tracingContext.childSpan("layerStore.read", tags) use { child =>
           for {
@@ -237,9 +230,9 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
                   .transact(xa)
             }
           } yield {
-            mosaicDefinitions map { md =>
-              mosaicDefinitionToImage(md, bandOverride, projId, child)
-            }
+            (tracingContext, mosaicDefinitions map { md =>
+              mosaicDefinitionToImage(md, bandOverride, projId)
+            })
           }
         }
       }

@@ -15,9 +15,11 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.UUID
+
 import com.rasterfoundry.database.util.Cache
 import scalacache._
 import scalacache.CatsEffect.modes._
+
 import scala.concurrent.duration._
 
 object ProjectLayerDao extends Dao[ProjectLayer] {
@@ -25,11 +27,11 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
 
   import Cache.ProjectLayerCache._
 
-  def deleteCache(id: UUID) = {
+  def deleteCache(id: UUID): ConnectionIO[Unit] = {
     for {
       _ <- remove(ProjectLayer.cacheKey(id))(projectLayerCache,
-                                             async[ConnectionIO])
-    } yield ContextShiftConnectionIO
+                                             async[ConnectionIO]).attempt
+    } yield ()
   }
 
   val selectAllColsF: Fragment = fr"""
@@ -145,14 +147,14 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
           L.liftIO(ProjectDao.removeLayerOverview(layerId, locUrl))
         case _ => ().pure[ConnectionIO]
       }
-      _ <- deleteCache(layerId).attempt
+      _ <- deleteCache(layerId)
       rowsDeleted <- query.filter(layerId).delete
     } yield rowsDeleted
 
   def updateProjectLayer(pl: ProjectLayer, plId: UUID): ConnectionIO[Int] = {
     for {
       updateQuery <- updateProjectLayerQ(pl, plId).run
-      _ <- deleteCache(plId).attempt
+      _ <- deleteCache(plId)
     } yield updateQuery
   }
 
@@ -281,7 +283,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
         .flatMap(ProjectLayerScenesDao.scenesToProjectScenes(_, layerId))
       groupedScenes = scenes.groupBy(groupScenesBySplitOptions(splitOptions))
       newLayers <- batchCreateLayers(groupedScenes, layer, splitOptions)
-      _ <- deleteCache(layerId).attempt
+      _ <- deleteCache(layerId)
       _ <- splitOptions.removeFromLayer match {
         case Some(true) =>
           ProjectDao.deleteScenesFromProject(scenes.map(_.id),

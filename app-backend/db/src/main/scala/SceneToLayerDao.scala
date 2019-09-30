@@ -14,14 +14,19 @@ import java.util.UUID
 
 import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.common.{
+  AWSLambda,
   BatchParams,
   MosaicDefinition,
   ProjectColorModeParams,
   SceneToLayer,
   SceneToLayerWithSceneType,
-  SceneWithProjectIdLayerId,
-  AWSLambda
+  SceneWithProjectIdLayerId
 }
+import com.rasterfoundry.database.util.Cache
+import scalacache._
+import scalacache.CatsEffect.modes._
+
+import scala.concurrent.duration._
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneToLayerDao()
@@ -31,6 +36,8 @@ object SceneToLayerDao
     with LazyLogging
     with AWSLambda {
 
+  import Cache.MosaicDefinitionCache._
+
   val tableName = "scenes_to_layers"
 
   val selectF: Fragment = sql"""
@@ -39,54 +46,63 @@ object SceneToLayerDao
     FROM
   """ ++ tableF
 
+  def mosaicDefCacheKey(projectLayerId: UUID): String =
+    s"SceneToLayer:ProjectLayer:$projectLayerId:MultiTiff:${Config.publicData.enableMultiTiff}"
+
+  def deleteMosaicDefCache(projectLayerId: UUID): ConnectionIO[Unit] = {
+    for {
+      _ <- {
+        val cacheKey = mosaicDefCacheKey(projectLayerId)
+        logger.debug(s"Removing $cacheKey")
+        remove(cacheKey)(mosaicDefinitionCache, async[ConnectionIO]).attempt
+      }
+    } yield ()
+  }
+
   def acceptScene(projectLayerId: UUID, sceneId: UUID): ConnectionIO[Int] = {
-    fr"""
+    for {
+      acceptCount <- fr"""
       UPDATE scenes_to_layers
       SET accepted = true
       WHERE project_layer_id = ${projectLayerId}
         AND scene_id = ${sceneId}
-    """.update.run
+        """.update.run
+      _ <- deleteMosaicDefCache(projectLayerId)
+    } yield acceptCount
   }
 
   def acceptScenes(
       projectLayerId: UUID,
       sceneIds: List[UUID]
   ): ConnectionIO[Int] = {
-    sceneIds.toNel match {
-      case Some(ids) => acceptScenes(projectLayerId, ids)
-      case _         => 0.pure[ConnectionIO]
-    }
+    for {
+      updateCount <- sceneIds.toNel match {
+        case Some(ids) => acceptScenes(projectLayerId, ids)
+        case _         => 0.pure[ConnectionIO]
+      }
+      _ <- updateCount match {
+        case 0 => ().pure[ConnectionIO]
+        case _ => deleteMosaicDefCache(projectLayerId)
+      }
+    } yield updateCount
   }
 
   def acceptScenes(
       projectLayerId: UUID,
       sceneIds: NEL[UUID]
   ): ConnectionIO[Int] = {
-    (
-      fr"""
+    for {
+      updateCount <- (
+        fr"""
         UPDATE scenes_to_layers
         SET accepted = true
       """ ++ Fragments.whereAnd(
-        fr"project_layer_id = ${projectLayerId}",
-        Fragments.in(fr"scene_id", sceneIds)
-      )
-    ).update.run
-  }
-
-  def addSceneOrdering(projectId: UUID): ConnectionIO[Int] = {
-    (fr"""
-      UPDATE scenes_to_layers
-      SET scene_order = s.rnum
-      FROM (
-        SELECT scene_id, project_layer_id, row_number() over (ORDER BY stl.scene_order ASC, scenes.acquisition_date ASC, scenes.cloud_cover ASC) as rnum
-        FROM scenes_to_layers stl
-          JOIN scenes ON scenes.id = stl.scene_id
-          JOIN project_layers pl ON pl.id = stl.project_layer_id
-          WHERE pl.project_id = ${projectId}
-      ) s
-      WHERE scenes_to_layers.project_layer_id = s.project_layer_id
-        AND scenes_to_layers.scene_id = s.scene_id
-    """).update.run
+          fr"project_layer_id = ${projectLayerId}",
+          Fragments.in(fr"scene_id", sceneIds)
+        )
+      ).update.run
+      _ <- deleteMosaicDefCache(projectLayerId)
+    } yield updateCount
   }
 
   def setManualOrder(
@@ -106,6 +122,7 @@ object SceneToLayerDao
     }
     for {
       _ <- updates.toList.sequence
+      _ <- deleteMosaicDefCache(projectLayerId)
     } yield {
       logger
         .info(
@@ -116,14 +133,16 @@ object SceneToLayerDao
     }
   }
 
-  def getMosaicDefinition(
-      projectLayerId: UUID,
-      polygonOption: Option[Projected[Polygon]],
-      redBand: Option[Int] = None,
-      greenBand: Option[Int] = None,
-      blueBand: Option[Int] = None,
-      sceneIdSubset: List[UUID] = List.empty
-  ): ConnectionIO[List[MosaicDefinition]] = {
+  def getMosaicDefinition(projectLayerId: UUID,
+                          polygonOption: Option[Projected[Polygon]],
+                          redBand: Option[Int] = None,
+                          greenBand: Option[Int] = None,
+                          blueBand: Option[Int] = None,
+                          sceneIdSubset: List[UUID] = List.empty)
+    : ConnectionIO[List[MosaicDefinition]] = {
+
+    val cacheKey = mosaicDefCacheKey(projectLayerId)
+
     val ingestFilter: Option[Fragment] =
       if (Config.publicData.enableMultiTiff) {
         Some(
@@ -138,16 +157,11 @@ object SceneToLayerDao
       } else {
         Some(fr"ingest_status = 'INGESTED'")
       }
-    val filters = List(
-      polygonOption.map(
-        polygon => fr"ST_Intersects(tile_footprint, ${polygon})"
-      ),
+
+    val dbQueryFilters = List(
       Some(fr"project_layer_id = ${projectLayerId}"),
       Some(fr"accepted = true"),
-      ingestFilter,
-      sceneIdSubset.toNel map {
-        Fragments.in(fr"scene_id", _)
-      }
+      ingestFilter
     )
 
     val orderByF: Fragment =
@@ -172,9 +186,27 @@ object SceneToLayerDao
       scenes_stl.project_layer_id = project_layers.id
       """
     for {
-      queryResult <- (select ++ whereAndOpt(filters: _*) ++ orderByF)
-        .query[SceneToLayerWithSceneType]
-        .to[List]
+      queryResult <- {
+        cachingF(cacheKey)(Some(30 minutes)) {
+          logger.debug(s"Cache Miss: $cacheKey - hitting database")
+          (select ++ whereAndOpt(dbQueryFilters: _*) ++ orderByF)
+            .query[SceneToLayerWithSceneType]
+            .to[List]
+        } map { results =>
+          results.filter { stl =>
+            ((stl.dataFootprint, polygonOption) match {
+              case (Some(footprint), Some(polygon)) =>
+                footprint.intersects(polygon)
+              case (None, Some(_)) => false
+              case _               => true
+            }) &&
+            (sceneIdSubset match {
+              case Nil => true
+              case _   => sceneIdSubset.contains(stl.sceneId)
+            })
+          }
+        }
+      }
     } yield {
       queryResult map { stp =>
         {
@@ -271,12 +303,15 @@ object SceneToLayerDao
       projectLayerId: UUID,
       batchParams: BatchParams
   ): ConnectionIO[List[SceneToLayer]] = {
-    batchParams.items
-      .map(
-        params =>
-          setColorCorrectParams(projectLayerId, params.sceneId, params.params)
-      )
-      .sequence
+    for {
+      stlList <- batchParams.items
+        .map(
+          params =>
+            setColorCorrectParams(projectLayerId, params.sceneId, params.params)
+        )
+        .sequence
+      _ <- deleteMosaicDefCache(projectLayerId)
+    } yield stlList
   }
 
   def setProjectLayerColorBands(
@@ -285,7 +320,8 @@ object SceneToLayerDao
   ): ConnectionIO[Int] = {
     // TODO support setting color band by datasource instead of project wide
     // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
-    (fr"""
+    for {
+      updateCount <- (fr"""
     UPDATE scenes_to_layers
     SET mosaic_definition =
       (mosaic_definition ||
@@ -297,6 +333,8 @@ object SceneToLayerDao
       )
     WHERE project_layer_id = ${projectLayerId}
     """).update.run
+      _ <- deleteMosaicDefCache(projectLayerId)
+    } yield updateCount
   }
 
   def getProjectsAndLayersBySceneId(

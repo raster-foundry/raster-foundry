@@ -55,7 +55,7 @@ services:
     image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
     links:
       - postgres:database.service.rasterfoundry.internal
-      - memcached:tile-cache.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
     depends_on:
       postgres:
         condition: service_healthy
@@ -105,7 +105,7 @@ services:
     external_links:
       - postgres:database.service.rasterfoundry.internal
       - api-server:rasterfoundry.com
-      - memcached:tile-cache.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
@@ -140,7 +140,7 @@ services:
         condition: service_healthy
     links:
       - postgres:database.service.rasterfoundry.internal
-      - memcached:tile-cache.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
       - jaeger:jaeger.service.internal
       - xray:xray.service.internal
     env_file: .env
@@ -156,10 +156,8 @@ services:
       - HIKARI_CONNECTION_THREADS=16
       - RF_AUTHENTICATION_CACHE_ENABLE=true
       - BACKSPLASH_HISTOGRAM_CACHE_ENABLE=true
-      - BACKSPLASH_TILE_CACHE_ENABLE=false
       - AWS_DEFAULT_PROFILE=raster-foundry
       - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
-      - BACKSPLASH_RASTERSOURCE_CACHE_ENABLE=true
       - BACKSPLASH_ENABLE_GDAL=true
       - BACKSPLASH_CORE_STREAM_CONCURRENCY=16
       - BACKSPLASH_ENABLE_REQUEST_METRICS=false
@@ -197,7 +195,7 @@ services:
         condition: service_healthy
     links:
       - postgres:database.service.rasterfoundry.internal
-      - memcached:tile-cache.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO

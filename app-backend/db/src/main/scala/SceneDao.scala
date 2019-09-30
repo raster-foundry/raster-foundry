@@ -1,6 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common._
+import com.rasterfoundry.database.util.Cache
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel.{Scene, User, _}
@@ -16,6 +17,8 @@ import geotrellis.vector.{Geometry, Polygon, Projected}
 import io.circe.syntax._
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.model.ObjectMetadata
+import scalacache._
+import scalacache.CatsEffect.modes._
 
 import scala.concurrent.duration._
 import java.sql.Timestamp
@@ -31,6 +34,8 @@ object SceneDao
     with ObjectPermissions[Scene]
     with AWSBatch
     with AWSLambda {
+
+  import Cache.SceneCache._
 
   type KickoffIngest = Boolean
 
@@ -48,8 +53,17 @@ object SceneDao
     FROM
   """ ++ tableF
 
-  def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
-    query.filter(id).selectOption
+  def deleteCache(id: UUID): ConnectionIO[Unit] = {
+    for {
+      _ <- remove(Scene.cacheKey(id))(sceneCache, async[ConnectionIO]).attempt
+    } yield ()
+  }
+
+  def getSceneById(id: UUID): ConnectionIO[Option[Scene]] = {
+    Cache.getOptionCache(Scene.cacheKey(id), Some(30 minutes)) {
+      query.filter(id).selectOption
+    }
+  }
 
   def getSceneById(sceneId: UUID, footprint: Option[Projected[Polygon]])(
       implicit Filter: Filterable[Any, Projected[Geometry]]
@@ -60,8 +74,11 @@ object SceneDao
       } getOrElse { List.empty })): _*
     )).query[Scene].option
 
-  def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
-    query.filter(id).select
+  def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] = {
+    cachingF(Scene.cacheKey(id))(Some(30 minutes)) {
+      query.filter(id).select
+    }
+  }
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
   def insert(
@@ -198,7 +215,8 @@ object SceneDao
         .whereAndOpt(idFilter))
         .query[(Timestamp, IngestStatus)]
         .unique
-    val updateIO: ConnectionIO[Int] = (sql"""
+    val updateIO: ConnectionIO[Int] = for {
+      result <- (sql"""
     UPDATE scenes
     SET
       modified_at = ${now},
@@ -225,7 +243,9 @@ object SceneDao
       grid_extent = ${scene.metadataFields.gridExtent},
       resolutions = ${scene.metadataFields.resolutions},
       no_data_value = ${scene.metadataFields.noDataValue}
-    """ ++ Fragments.whereAndOpt(idFilter)).update.run
+        """ ++ Fragments.whereAndOpt(idFilter)).update.run
+      _ <- deleteCache(id)
+    } yield result
 
     lastModifiedAndIngestIO flatMap {
       case (ts: Timestamp, prevIngestStatus: IngestStatus) =>
@@ -268,11 +288,11 @@ object SceneDao
               }
             case (previous, IngestStatus.Ingested)
                 if previous != IngestStatus.Ingested =>
-              n.pure[ConnectionIO] <*
-                SceneToLayerDao
-                  .getProjectsAndLayersBySceneId(scene.id)
-                  .map(spls => {
-                    spls.map(spl => {
+              SceneToLayerDao
+                .getProjectsAndLayersBySceneId(scene.id)
+                .flatMap(spls => {
+                  for {
+                    _ <- spls.map { spl =>
                       logger
                         .info(
                           s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}"
@@ -280,9 +300,12 @@ object SceneDao
                       kickoffLayerOverviewCreate(
                         spl.projectId,
                         spl.projectLayerId
-                      ).pure[ConnectionIO]
-                    })
-                  })
+                      )
+                      SceneToLayerDao.deleteMosaicDefCache(spl.projectLayerId)
+                    }.sequence
+                  } yield ()
+                })
+                .map(_ => n)
             case _ =>
               n.pure[ConnectionIO]
           }

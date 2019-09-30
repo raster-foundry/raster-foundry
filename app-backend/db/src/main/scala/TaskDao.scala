@@ -125,6 +125,11 @@ object TaskDao extends Dao[Task] {
       actions <- getTaskActions(task.id)
     } yield { task.toGeoJSONFeature(actions) }
 
+  def unsafeGetActionsForTask(task: Task): ConnectionIO[Task.TaskFeature] =
+    for {
+      actions <- getTaskActions(task.id)
+    } yield { task.toGeoJSONFeature(actions) }
+
   def updateTask(
       taskId: UUID,
       updateTask: Task.TaskFeatureCreate,
@@ -168,15 +173,30 @@ object TaskDao extends Dao[Task] {
       projectId: UUID,
       layerId: UUID,
       pageRequest: PageRequest
-  ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] =
+  ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] = {
+    val actionFiltered = queryParams.actionUser.nonEmpty ||
+      queryParams.actionType.nonEmpty ||
+      queryParams.actionStartTime.nonEmpty ||
+      queryParams.actionEndTime.nonEmpty ||
+      queryParams.actionMinCount.nonEmpty ||
+      queryParams.actionMaxCount.nonEmpty
     for {
-      paginatedResponse <- tasksForProjectAndLayerQB(
-        queryParams,
-        projectId,
-        layerId
-      ).page(pageRequest)
-      withActions <- paginatedResponse.results.toList traverse { feat =>
-        unsafeGetTaskWithActions(feat.id)
+      paginatedResponse <- actionFiltered match {
+        case true =>
+          tasksForProjectAndLayerQB(
+            queryParams,
+            projectId,
+            layerId
+          ).page(pageRequest)
+        case _ =>
+          query
+            .filter(queryParams)
+            .filter(fr"project_id = $projectId")
+            .filter(fr"project_layer_id = $layerId")
+            .page(pageRequest)
+      }
+      withActions <- paginatedResponse.results.toList traverse { task =>
+        unsafeGetActionsForTask(task)
       }
     } yield {
       PaginatedGeoJsonResponse(
@@ -188,6 +208,7 @@ object TaskDao extends Dao[Task] {
         withActions
       )
     }
+  }
 
   def toFragment(
       tfc: Task.TaskFeatureCreate,
