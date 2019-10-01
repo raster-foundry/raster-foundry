@@ -44,6 +44,10 @@ case class IncompleteStacCatalog(
     links: List[StacLink] = List(),
     contents: Option[ContentBundle] = None
 ) {
+  // it is ok to use .get in here because stacVersion, id,
+  // description are in the requirement above and only when
+  // they are populated does the compiler agree with
+  // the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def toStacCatalog(): StacCatalog = {
     StacCatalog(
@@ -104,6 +108,9 @@ class StacCatalogBuilder[
   ): StacCatalogBuilder[CatalogRequirements with CatalogContents] =
     new StacCatalogBuilder(stacCatalog.copy(contents = Some(contents)))
 
+  // it is ok to use .get in here because parentPath, contents,
+  // id, and stacVersion are in the requirement above and only
+  // when they are populated does the compiler agree with the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def build()(
       implicit ev: CatalogRequirements =:= CompleteCatalog
@@ -183,7 +190,8 @@ class StacCatalogBuilder[
 
           case None =>
             val extent = sceneList
-              .map(_.dataFootprint.get)
+              .map(_.dataFootprint)
+              .flatten
               .map(
                 geom =>
                   Reproject(

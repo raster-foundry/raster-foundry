@@ -43,15 +43,18 @@ case class IncompleteStacItem(
     _type: String = "Feature",
     geometry: Option[Geometry] = None,
     bbox: Option[ItemBbox] = None,
-    links: List[StacLink] = List(), // builders? ids? build function of parent needs to provide. relative links
-    assets: Map[String, StacAsset] = Map(), // relative links to collection, catalog
-    collection: Option[String] = None, // id of collection
+    links: List[StacLink] = List(),
+    assets: Map[String, StacAsset] = Map(),
+    collection: Option[String] = None,
     properties: Option[JsonObject] = None,
     parentPath: Option[String] = None,
     rootPath: Option[String] = None,
     stacVersion: Option[String] = None,
     stacExtensions: List[String] = List()
 ) {
+  // it is ok to use .get in here because these fields are
+  // in the requirement above and only when they are populated
+  // does the compiler agree with the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def toStacItem(): StacItem = {
     val itemBbox = this.bbox.get

@@ -60,6 +60,10 @@ case class IncompleteLabelCollection(
     itemPropsThin: StacLabelItemPropertiesThin = StacLabelItemPropertiesThin(),
     sceneItemLinks: List[(String, String, String)] = List()
 ) {
+  // it is ok to use .get in here because stacVersion, id,
+  // description are in the requirement above and only
+  // when they are populated does the compiler agree with
+  // the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def toStacCollection(): StacCollection = {
     val extent: Json = this.extent match {
@@ -164,7 +168,10 @@ class LabelCollectionBuilder[
         sceneItemLinks = labelCollection.sceneItemLinks ++ sceneItemLinks
       )
     )
-
+  // it is ok to use .get in here because paths, tasksGeomExtent,
+  // extent, and id are in the requirement above and only
+  // when they are populated does the compiler agree with
+  // the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def build()(
       implicit ev: CollectionRequirements =:= CompleteCollection
