@@ -9,7 +9,7 @@
   <logger name="org.http4s.blaze.channel.nio1" level="WARN"/>
   <logger name="geotrellis.server" level="WARN"/>
   <logger name="com.colisweb.tracing" level="${TRACING_LOG_LEVEL:-WARN}"/>
-  <logger name="com.zaxxer.hikari" level="${HIKARI_LOG_LEVEL:-DEBUG}"/>
+  <logger name="com.zaxxer.hikari" level="${HIKARI_LOG_LEVEL:-INFO}"/>
 
   <root level="INFO">
     <appender-ref ref="STDOUT" />
