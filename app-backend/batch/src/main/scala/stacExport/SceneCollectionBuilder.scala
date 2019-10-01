@@ -161,27 +161,32 @@ class SceneCollectionBuilder[
           // ../../../../catalog.json
           val sceneRootPath = s"../${rootPath}"
           val itemLinksAndTitle: (String, String, String) =
-            (s"${sceneAbsPath}/item.json",
-             s"${scene.id}/item.json",
-             s"Scene Item ${scene.id.toString}")
+            (
+              s"${sceneAbsPath}/item.json",
+              s"${scene.id}/item.json",
+              s"Scene Item ${scene.id.toString}"
+            )
           val sceneLinks = List(
             StacLink(
               itemLinksAndTitle._1,
               Self,
               Some(`application/json`),
-              Some(itemLinksAndTitle._3)
+              Some(itemLinksAndTitle._3),
+              List()
             ),
             StacLink(
               "../collection.json",
               Parent,
               Some(`application/json`),
-              Some("Scene Collection")
+              Some("Scene Collection"),
+              List()
             ),
             StacLink(
               sceneRootPath,
               StacRoot,
               Some(`application/json`),
-              Some("Root")
+              Some("Root"),
+              List()
             )
           )
           val sceneProperties = JsonObject.fromMap(
@@ -210,6 +215,8 @@ class SceneCollectionBuilder[
               .withProperties(sceneProperties)
               .withParentPath(absPath, rootPath)
               .withAssets(sceneAsset)
+              .withStacVersion(sceneCollection.stacVersion)
+              .withExtensions(List())
               .build(),
             itemLinksAndTitle
           )
@@ -226,7 +233,8 @@ class SceneCollectionBuilder[
               link._2,
               Item,
               Some(`application/json`),
-              Some(link._2)
+              Some(link._2),
+              List()
             )
           })
         )

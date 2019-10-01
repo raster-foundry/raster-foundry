@@ -286,7 +286,7 @@ final case class WriteStacCatalog(exportId: UUID)(
      */
     val catalogBuilder =
       new StacCatalogBuilder[StacCatalogBuilder.CatalogBuilder.EmptyCatalog]()
-    val stacVersion = "0.7.0"
+    val stacVersion = "0.8.0-rc1"
     val currentPath = s"s3://${dataBucket}/stac-exports"
     val catalogId = contentBundle.export.id.toString
     val catalogParentPath = s"${currentPath}/${catalogId}"
@@ -298,14 +298,16 @@ final case class WriteStacCatalog(exportId: UUID)(
         s"${catalogParentPath}/catalog.json",
         Self,
         Some(`application/json`),
-        Some(s"Catalog ${catalogId}")
+        Some(s"Catalog ${catalogId}"),
+        List()
       ),
       // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/catalog.json
       StacLink(
         "catalog.json",
         StacRoot,
         Some(`application/json`),
-        Some(s"Catalog ${catalogId}")
+        Some(s"Catalog ${catalogId}"),
+        List()
       )
     )
     val (
