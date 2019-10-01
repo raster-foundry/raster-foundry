@@ -61,6 +61,7 @@ services:
         condition: service_healthy
     env_file: .env
     environment:
+      - HIKARI_LOG_LEVEL=DEBUG
       - RF_LOG_LEVEL=DEBUG
       - TILE_SERVER_LOCATION
       - COURSIER_CACHE=/root/.coursier
@@ -146,6 +147,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=DEBUG
+      - HIKARI_LOG_LEVEL=DEBUG
       - TRACING_LOG_LEVEL=TRACE
       - COURSIER_CACHE=/root/.coursier
       - DB_THREADPOOL_THREADS=16

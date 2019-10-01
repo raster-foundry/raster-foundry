@@ -113,7 +113,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     val ioMBTwithSBO: IO[List[MBTTriple]] = tracingContext.childSpan(
       "renderMosaicSingleBand") use { context =>
       mosaic
-        .parTraverse((relevant: BacksplashImage[IO]) => {
+        .traverse((relevant: BacksplashImage[IO]) => {
           logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
           relevant.read(z, x, y, context) map {
             (_, relevant.singleBandOptions, relevant.metadata.noDataValue)
@@ -192,7 +192,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
     val ioMBT = tracingContext.childSpan("renderMosaic") use { context =>
       mosaic
-        .parTraverse((relevant: BacksplashImage[IO]) => {
+        .traverse((relevant: BacksplashImage[IO]) => {
           val tags = Map("sceneId" -> relevant.imageId.toString,
                          "projectId" -> relevant.projectId.toString,
                          "projectLayerId" -> relevant.projectLayerId.toString,
@@ -258,7 +258,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
               case (tracingContext, listBsi) =>
                 tracingContext.childSpan("getMergedRawMosaic") use {
                   childContext =>
-                    val listIO = listBsi.parTraverse { bsi =>
+                    val listIO = listBsi.traverse { bsi =>
                       bsi.read(z, x, y, childContext)
                     }
                     childContext.childSpan("mergeRawTiles") use { _ =>
@@ -391,7 +391,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                 case (tracingContext, bsiList) => {
                   tracingContext.childSpan("paintedMosaicExtentReification") use {
                     childContext =>
-                      bsiList parTraverse { relevant =>
+                      bsiList traverse { relevant =>
                         val tags =
                           Map("imageId" -> relevant.imageId.toString,
                               "projectId" -> relevant.projectId.toString)
