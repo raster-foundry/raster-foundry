@@ -30,15 +30,19 @@ object TracedHTTPRoutes {
     wrapHttpRoutes(tracedRoutes, builder)
   }
 
-  val metadataLocation = Properties.envOrNone("ECS_CONTAINER_METADATA_FILE")
+  // This will be returned as an http url, e.g.,
+  // http://<ip>/v3/<a uuid>
+  val metadataLocation = Properties.envOrNone("ECS_CONTAINER_METADATA_URI")
   val instanceMetadataTags: Map[String, String] = (for {
-    inf <- metadataLocation
-    unparsed = Source.fromFile(inf).mkString
+    url <- metadataLocation
+    unparsed = Source.fromURL(s"$url/task").mkString
     rawJson <- parse(unparsed).toOption
     obj <- rawJson.asObject
   } yield {
-    val tags = obj.toList filter { _._2.isString } map {
-      case (k, v) => (k, v.toString.replace("\"", ""))
+    // the metadata available are largely worthless, except TaskARN
+    val tags = obj.toList filter { _._2.isString } flatMap {
+      case ("TaskARN", v) => Some(("TaskARN", v.toString.replace("\"", "")))
+      case _              => None
     }
     Map(tags: _*)
   }) getOrElse Map.empty
