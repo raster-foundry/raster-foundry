@@ -4,6 +4,8 @@
 
 ### Added
 
+- Included TaskARN in tile server traces [\#5201](https://github.com/raster-foundry/raster-foundry/pull/5201)
+
 ### Changed
 
 ### Deprecated
