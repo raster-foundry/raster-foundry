@@ -64,11 +64,8 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       )
     )
 
-  def withQuota(svc: HttpRoutes[IO]) =
-    QuotaMiddleware(svc, Cache.requestCounter)
-
   def baseMiddleware(svc: HttpRoutes[IO]) =
-    withQuota(withCORS(withTimeout(svc)))
+    withCORS(withTimeout(AutoSlash(svc)))
 
   def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
     Timeout(
@@ -119,67 +116,52 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val mosaicService: HttpRoutes[IO] = authenticators.tokensAuthMiddleware(
     metricMiddleware.middleware(
-      AuthedAutoSlash(
-        new MosaicService(
-          SceneToLayerDao(),
-          projectLayerMosaicImplicits,
-          analysisManager,
-          xa
-        ).routes
-      )
+      new MosaicService(
+        SceneToLayerDao(),
+        projectLayerMosaicImplicits,
+        analysisManager,
+        xa
+      ).routes
     )
   )
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
       metricMiddleware.middleware(
-        AuthedAutoSlash(new AnalysisService(analysisManager).routes)
+        new AnalysisService(analysisManager).routes
       )
     )
 
   val sceneMosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      AuthedAutoSlash(
-        new SceneService(sceneMosaicImplicits, xa).routes
-      )
+      new SceneService(sceneMosaicImplicits, xa).routes
     )
 
   val wcsService = authenticators.tokensAuthMiddleware(
-    AuthedAutoSlash(
-      new WcsService(ProjectDao(), ogcUrlPrefix).routes
-    )
+    new WcsService(ProjectDao(), ogcUrlPrefix).routes
   )
 
   val wmsService = authenticators.tokensAuthMiddleware(
-    AuthedAutoSlash(
-      new WmsService(ProjectDao(), ogcUrlPrefix).routes
-    )
+    new WmsService(ProjectDao(), ogcUrlPrefix).routes
   )
-
-  val requestQuota = if (Config.server.requestLimit == 0) {
-    Config.server.requestLimit
-  } else {
-    Config.server.requestLimit + scala.util.Random.nextInt % 1500
-  }
 
   def router =
     errorHandling {
-      Router(
-        "/" -> ProjectToProjectLayerMiddleware(
-          baseMiddleware(mosaicService),
-          xa
-        ),
-        "/scenes" -> baseMiddleware(sceneMosaicService),
-        "/tools" -> baseMiddleware(analysisService),
-        "/wcs" -> baseMiddleware(wcsService),
-        "/wms" -> baseMiddleware(wmsService),
-        "/healthcheck" -> AutoSlash(
-          new HealthcheckService(
-            xa,
-            requestQuota
+      baseMiddleware {
+        Router(
+          "/" -> ProjectToProjectLayerMiddleware(
+            baseMiddleware(mosaicService),
+            xa
+          ),
+          "/scenes" -> sceneMosaicService,
+          "/tools" -> analysisService,
+          "/wcs" -> wcsService,
+          "/wms" -> wmsService,
+          "/healthcheck" -> new HealthcheckService(
+            xa
           ).routes
         )
-      )
+      }
     }
 
   val startupBanner =

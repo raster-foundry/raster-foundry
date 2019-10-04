@@ -5,6 +5,8 @@ import com.rasterfoundry.backsplash.OgcStore
 import com.rasterfoundry.backsplash.OgcStore.ToOgcStoreOps
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.http4s.TracedHTTPRoutes
+import com.rasterfoundry.http4s.TracedHTTPRoutes._
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
@@ -24,12 +26,11 @@ import java.util.UUID
 
 import com.colisweb.tracing.TracingContext
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
-import com.rasterfoundry.http4s.{TracedHTTPRoutes, AuthedTraceRequest}
 
 class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO],
-    tracingContextBuilder: TracingContextBuilder[IO])
-    extends ToOgcStoreOps
+    tracingContextBuilder: TracingContextBuilder[IO]
+) extends ToOgcStoreOps
     with LazyLogging {
 
   private def requestToServiceUrl(request: Request[IO]) = {
@@ -40,7 +41,8 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
       authedReq: AuthedRequest[IO, User],
       projectId: UUID,
       serviceUrl: String,
-      tracingContext: TracingContext[IO]): IO[Response[IO]] =
+      tracingContext: TracingContext[IO]
+  ): IO[Response[IO]] =
     WmsParams(authedReq.req.multiParams) match {
       case Invalid(errors) =>
         BadRequest(s"Error parsing parameters: ${ParamError
@@ -57,26 +59,35 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
               RasterExtent(params.boundingBox, params.width, params.height)
             for {
               rsm <- layers.getWmsModel(projectId, tracingContext)
-              layer = rsm.getLayer(params.crs,
-                                   params.layers.headOption,
-                                   params.styles.headOption) getOrElse {
+              layer = rsm.getLayer(
+                params.crs,
+                params.layers.headOption,
+                params.styles.headOption
+              ) getOrElse {
                 params.layers.headOption match {
                   case None =>
                     throw RequirementFailedException(
-                      "WMS Request must specify layers")
+                      "WMS Request must specify layers"
+                    )
                   case Some(l) =>
                     throw RequirementFailedException(
-                      s"Layer ${l} not found or something else went wrong")
+                      s"Layer ${l} not found or something else went wrong"
+                    )
                 }
               }
               (evalExtent, evalHistogram) = layer match {
                 case sl @ SimpleOgcLayer(_, title, _, _, _) =>
-                  (LayerExtent.identity(sl),
-                   layers.getLayerHistogram(UUID.fromString(title),
-                                            tracingContext))
+                  (
+                    LayerExtent.identity(sl),
+                    layers.getLayerHistogram(
+                      UUID.fromString(title),
+                      tracingContext
+                    )
+                  )
                 case _: MapAlgebraOgcLayer =>
                   throw new MetadataException(
-                    "Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints")
+                    "Arbitrary MAML evaluation is not yet supported by backsplash's OGC endpoints"
+                  )
               }
               respIO <- (evalExtent(re.extent, re.cellSize), evalHistogram)
                 .parMapN {
@@ -97,10 +108,12 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
                       case 4 =>
                         Render.rgba(fullTile, layer.style, params.format, hists)
                       case _ =>
-                        Render.singleband(fullTile,
-                                          layer.style,
-                                          params.format,
-                                          hists)
+                        Render.singleband(
+                          fullTile,
+                          layer.style,
+                          params.format,
+                          hists
+                        )
                     }
                     Ok(tileResp)
                   // at least one is invalid, we don't care which, and we want all the errors
@@ -118,18 +131,21 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
         }
     }
 
-  def routes: AuthedService[User, IO] = TracedHTTPRoutes[IO] {
-    case AuthedTraceRequest(authedRequest, tracingContext) => {
-      authedRequest match {
-        case authedReq @ GET -> Root / UUIDWrapper(projectId) as _ =>
-          val serviceUrl = requestToServiceUrl(authedReq.req)
-          authedReqToResponse(authedReq, projectId, serviceUrl, tracingContext)
+  def routes: AuthedRoutes[User, IO] = TracedHTTPRoutes[IO] {
+    case tracedReq @ GET -> Root / UUIDWrapper(projectId) as _ using tracingContext =>
+      val serviceUrl = requestToServiceUrl(tracedReq.authedRequest.req)
+      authedReqToResponse(tracedReq.authedRequest,
+                          projectId,
+                          serviceUrl,
+                          tracingContext)
 
-        case authedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
-              _) as _ =>
-          val serviceUrl = requestToServiceUrl(authedReq.req)
-          authedReqToResponse(authedReq, projectId, serviceUrl, tracingContext)
-      }
-    }
+    case tracedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
+          _
+        ) as _ using tracingContext =>
+      val serviceUrl = requestToServiceUrl(tracedReq.authedRequest.req)
+      authedReqToResponse(tracedReq.authedRequest,
+                          projectId,
+                          serviceUrl,
+                          tracingContext)
   }
 }
