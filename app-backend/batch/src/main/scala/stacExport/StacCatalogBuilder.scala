@@ -8,6 +8,7 @@ import geotrellis.vector.reproject.Reproject
 import cats.implicits._
 import io.circe._
 import java.sql.Timestamp
+import shapeless._
 
 object StacCatalogBuilder {
   sealed trait CatalogRequirements
@@ -154,26 +155,32 @@ class StacCatalogBuilder[
             "../catalog.json",
             Parent,
             Some(`application/json`),
-            Some(s"Catalog ${stacCatalog.id.get}")
+            Some(s"Catalog ${stacCatalog.id.get}"),
+            List()
           ),
           StacLink(
             // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<layerCollectionId>/collection.json
             layerSelfAbsLink,
             Self,
             Some(`application/json`),
-            Some(s"Layer Collection ${layerId}")
+            Some(s"Layer Collection ${layerId}"),
+            List()
           ),
           StacLink(
             // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<catalogId>.json
             layerRootPath,
             StacRoot,
             Some(`application/json`),
-            Some("Root")
+            Some("Root"),
+            List()
           )
         )
-        val layerSceneSpatialExtent: List[Double] = sceneGeomExtent match {
+        val layerSceneSpatialExtent = sceneGeomExtent match {
           case Some(geomExt) =>
-            List(geomExt.xMin, geomExt.yMin, geomExt.xMax, geomExt.yMax)
+            Coproduct[Bbox](
+              TwoDimBbox(geomExt.xMin, geomExt.yMin, geomExt.xMax, geomExt.yMax)
+            )
+
           case None =>
             val extent = sceneList
               .map(_.dataFootprint.get)
@@ -189,7 +196,9 @@ class StacCatalogBuilder[
               .reduce((e1, e2) => {
                 e1.combine(e2)
               })
-            List(extent.xmin, extent.ymin, extent.xmax, extent.ymax)
+            Coproduct[Bbox](
+              TwoDimBbox(extent.xmin, extent.ymin, extent.xmax, extent.ymax)
+            )
         }
         val layerSceneAqcTime: List[Timestamp] =
           sceneList map { scene =>
@@ -200,8 +209,8 @@ class StacCatalogBuilder[
           Some(layerSceneAqcTime.maxBy(_.getTime).toLocalDateTime.toString)
         )
         val layerExtent = StacExtent(
-          layerSceneSpatialExtent,
-          layerSceneTemporalExtent
+          SpatialExtent(List(layerSceneSpatialExtent)),
+          TemporalExtent(List(layerSceneTemporalExtent))
         )
         val (
           layerCollection,
@@ -237,13 +246,15 @@ class StacCatalogBuilder[
               s"${layerCollection.id}/collection.json",
               Child,
               Some(`application/json`),
-              Some("Layer Collection")
+              Some("Layer Collection"),
+              List()
             )
         }
       )
       .toStacCatalog()
-    val layerInfoList = layerCollectionList.map(layerInfo =>
-      (layerInfo._1, layerInfo._2, layerInfo._3))
+    val layerInfoList = layerCollectionList.map(
+      layerInfo => (layerInfo._1, layerInfo._2, layerInfo._3)
+    )
 
     (updatedStacCatalog, layerInfoList)
   }

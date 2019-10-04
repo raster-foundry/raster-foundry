@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Upgraded STAC version in STAC export builder [\#5202](https://github.com/raster-foundry/raster-foundry/pull/5202)
+
 ### Deprecated
 
 ### Removed
