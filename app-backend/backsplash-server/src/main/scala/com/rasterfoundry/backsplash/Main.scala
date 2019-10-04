@@ -15,7 +15,7 @@ import cats.data.OptionT
 import cats.effect._
 import com.olegpy.meow.hierarchy._
 import org.http4s._
-import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, Timeout}
+import org.http4s.server.middleware.{CORS, CORSConfig, Timeout}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
@@ -65,7 +65,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
 
   def baseMiddleware(svc: HttpRoutes[IO]) =
-    withCORS(withTimeout(AutoSlash(svc)))
+    RequestRewriteMiddleware(withCORS(withTimeout(svc)), xa)
 
   def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
     Timeout(
@@ -149,10 +149,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     errorHandling {
       baseMiddleware {
         Router(
-          "/" -> ProjectToProjectLayerMiddleware(
-            baseMiddleware(mosaicService),
-            xa
-          ),
+          "/" -> mosaicService,
           "/scenes" -> sceneMosaicService,
           "/tools" -> analysisService,
           "/wcs" -> wcsService,

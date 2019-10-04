@@ -1,6 +1,7 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
@@ -113,6 +114,8 @@ class SceneService[RendStore, HistStore](
     TracedHTTPRoutes[IO] {
       case GET -> Root / UUIDWrapper(sceneId) / IntVar(z) / IntVar(x) / IntVar(
             y
+          ) :? BandOverrideQueryParamDecoder(
+            bandOverride
           ) as user using tracingContext =>
         for {
           sceneFiber <- authorizers.authScene(user, sceneId).start
@@ -122,7 +125,7 @@ class SceneService[RendStore, HistStore](
           }
           bands <- bandsFiber.join
           eval = LayerTms.identity(
-            sceneToBacksplashGeotiff(scene, bands)
+            sceneToBacksplashGeotiff(scene, bandOverride orElse bands)
               .map(a => (tracingContext, List(a)))
           )
           resp <- eval(z, x, y) flatMap {
