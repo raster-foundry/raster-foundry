@@ -19,10 +19,10 @@ import java.util.UUID
 
 class MetricMiddleware[F[_]](xa: Transactor[F])(implicit Conc: Concurrent[F]) {
 
-  def middleware(http: AuthedService[User, F]): AuthedService[User, F] =
+  def middleware(http: AuthedRoutes[User, F]): AuthedRoutes[User, F] =
     Kleisli { withMetrics(http) }
 
-  def withMetrics(http: AuthedService[User, F])(
+  def withMetrics(http: AuthedRoutes[User, F])(
       authedReq: AuthedRequest[F, User]): OptionT[F, Response[F]] =
     authedReq match {
       case _ if !Config.metrics.enableMetrics => http(authedReq)

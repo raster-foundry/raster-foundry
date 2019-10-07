@@ -9,12 +9,15 @@
 ### Changed
 
 - Upgraded STAC version in STAC export builder [\#5202](https://github.com/raster-foundry/raster-foundry/pull/5202)
+- Upgrade http4s to 0.20.11 [\#5213](https://github.com/raster-foundry/raster-foundry/)
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- Fixed a routing bug that prevented viewing tiles under the `/scenes/` routes [\#5213](https://github.com/raster-foundry/raster-foundry/)
 
 ### Security
 
