@@ -4234,20 +4234,6 @@ paths:
                 - 'EDIT'
                 - 'DELETE'
                 - '*'
-  /feed/:
-    get:
-      summary: 'Get the cached RSS feed'
-      parameters:
-        - $ref: '#/parameters/source'
-      tags:
-        - Users
-      responses:
-        200:
-          description: 'RSS feed json as a string'
-        default:
-          description: 'Unexpected Error'
-          schema:
-            $ref: '#/definitions/Error'
   /exports/:
     x-resource: Exports
     get:
@@ -5580,12 +5566,6 @@ parameters:
       - 'COMPLETE'
       - 'FAILED'
       - 'ABORTED'
-  source:
-    name: source
-    description: 'Feed source URI'
-    in: query
-    type: string
-    required: false
   licenseID:
     name: licenseID
     description: 'id/shortName of a license'

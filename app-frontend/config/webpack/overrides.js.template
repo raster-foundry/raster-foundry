@@ -15,7 +15,6 @@ const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
 
 // leave this unless you are setting your own
 const INTERCOM_APP_ID = 'disabled';
-const FEED_SOURCE = 'disabled';
 const GOOGLE_TAG_ID = 'disabled';
 
 const basemaps = JSON.stringify({
@@ -67,7 +66,6 @@ module.exports = function (_path) {
                     LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
-                    FEED_SOURCE: JSON.stringify(FEED_SOURCE),
                     PLATFORM_USERS: PLATFORM_USERS,
                     EMBED_URI: JSON.stringify('')
                 },
