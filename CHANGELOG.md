@@ -14,6 +14,8 @@
 
 ### Removed
 
+- Removed blog/feed endpoint and frontend [\#5216](https://github.com/raster-foundry/raster-foundry/pull/5216)
+
 ### Fixed
 
 ### Security
