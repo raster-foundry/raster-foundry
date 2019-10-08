@@ -496,15 +496,6 @@ object ShapeQueryParameters {
     deriveDecoder[ShapeQueryParameters]
 }
 
-final case class FeedQueryParameters(source: Option[String] = None)
-
-object FeedQueryParameters {
-  implicit def encFeedQueryParameters: Encoder[FeedQueryParameters] =
-    deriveEncoder[FeedQueryParameters]
-  implicit def decFeedQueryParameters: Decoder[FeedQueryParameters] =
-    deriveDecoder[FeedQueryParameters]
-}
-
 final case class SearchQueryParameters(search: Option[String] = None)
 
 object SearchQueryParameters {

@@ -55,15 +55,6 @@
             </p>
             <a class="btn btn-light" ui-sref="user.settings.profile({userId: 'me'})">Manage account</a>
           </section>
-          <section ng-if="$ctrl.blogPosts && $ctrl.blogPosts.length">
-            <h5>From our blog</h5>
-            <ul class="list-unstyled">
-              <li ng-repeat="post in $ctrl.blogPosts">
-                <a ng-href="https://blog.rasterfoundry.com/{{post.uniqueSlug}}"
-                   target="about:blank">{{post.title}}</a>
-              </li>
-            </ul>
-          </section>
           <section class="aside-footer">
             <h5>Help</h5>
             <ul class="list-unstyled">
