@@ -47,7 +47,7 @@ object SceneToLayerDao
   """ ++ tableF
 
   def mosaicDefCacheKey(projectLayerId: UUID): String =
-    s"SceneToLayer:ProjectLayer:$projectLayerId:MultiTiff:${Config.publicData.enableMultiTiff}"
+    s"SceneToLayer:ProjectLayer:$projectLayerId:MultiTiff:${Config.publicData.enableMultiTiff}:binary"
 
   def deleteMosaicDefCache(projectLayerId: UUID): ConnectionIO[Unit] = {
     for {
