@@ -4,6 +4,8 @@ import com.rasterfoundry.backsplash.OgcStore
 import com.rasterfoundry.backsplash.OgcStore.ToOgcStoreOps
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.http4s.TracedHTTPRoutes
+import com.rasterfoundry.http4s.TracedHTTPRoutes._
 import cats.data.Validated
 import cats.effect.{ContextShift, IO}
 import geotrellis.server.ogc.wcs.params.{
@@ -22,12 +24,11 @@ import java.util.UUID
 
 import com.colisweb.tracing.TracingContext
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
-import com.rasterfoundry.http4s.{TracedHTTPRoutes, AuthedTraceRequest}
 
 class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO],
-    tracingContextBuilder: TracingContextBuilder[IO])
-    extends ToOgcStoreOps
+    tracingContextBuilder: TracingContextBuilder[IO]
+) extends ToOgcStoreOps
     with LazyLogging {
 
   private def requestToServiceUrl(request: Request[IO]) = {
@@ -38,11 +39,13 @@ class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
       authedReq: AuthedRequest[IO, User],
       projectId: UUID,
       serviceUrl: String,
-      tracingContext: TracingContext[IO]): IO[Response[IO]] =
+      tracingContext: TracingContext[IO]
+  ): IO[Response[IO]] =
     WcsParams(authedReq.req.multiParams) match {
       case Validated.Invalid(errors) =>
         BadRequest(
-          s"Error parsing parameters: ${WcsParamsError.generateErrorMessage(errors.toList)}")
+          s"Error parsing parameters: ${WcsParamsError.generateErrorMessage(errors.toList)}"
+        )
 
       case Validated.Valid(p) =>
         p match {
@@ -74,21 +77,25 @@ class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
   // Authed so we can piggyback on magic public checks from existing authenticators,
   // and so that if something _can_ provide the params we want, we can still auth
   val routes = TracedHTTPRoutes[IO] {
-    case AuthedTraceRequest(authedRequest, tracingContext) => {
-      authedRequest match {
-        case authedReq @ GET -> Root / UUIDWrapper(projectId) as _ =>
-          val serviceUrl = requestToServiceUrl(authedReq.req)
-          authedReqToResponse(authedReq, projectId, serviceUrl, tracingContext)
+    case tracedReq @ GET -> Root / UUIDWrapper(projectId) as _ using tracingContext =>
+      val serviceUrl = requestToServiceUrl(tracedReq.authedRequest.req)
+      authedReqToResponse(tracedReq.authedRequest,
+                          projectId,
+                          serviceUrl,
+                          tracingContext)
 
-        case authedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
-              _) as _ =>
-          val serviceUrl = requestToServiceUrl(authedReq.req)
-          authedReqToResponse(authedReq, projectId, serviceUrl, tracingContext)
+    case tracedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
+          _
+        ) as _ using tracingContext =>
+      val serviceUrl = requestToServiceUrl(tracedReq.authedRequest.req)
+      authedReqToResponse(tracedReq.authedRequest,
+                          projectId,
+                          serviceUrl,
+                          tracingContext)
 
-        case r @ _ =>
-          logger.warn(s"Unexpected request: ${r.req.pathInfo}, ${r.req.params}")
-          NotFound()
-      }
-    }
+    case r @ _ using _ =>
+      logger.warn(
+        s"Unexpected request: ${r.authedRequest.req.pathInfo}, ${r.authedRequest.req.params}")
+      NotFound()
   }
 }

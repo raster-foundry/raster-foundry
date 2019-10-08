@@ -9,12 +9,18 @@
 ### Changed
 
 - Changed serialization of scenes to layer cache to binary [\#5218](https://github.com/raster-foundry/raster-foundry/pull/5218)
+- Upgraded STAC version in STAC export builder [\#5202](https://github.com/raster-foundry/raster-foundry/pull/5202)
+- Upgrade http4s to 0.20.11 [\#5213](https://github.com/raster-foundry/raster-foundry/)
 
 ### Deprecated
 
 ### Removed
 
+- Removed blog/feed endpoint and frontend [\#5216](https://github.com/raster-foundry/raster-foundry/pull/5216)
+
 ### Fixed
+
+- Fixed a routing bug that prevented viewing tiles under the `/scenes/` routes [\#5213](https://github.com/raster-foundry/raster-foundry/)
 
 ### Security
 

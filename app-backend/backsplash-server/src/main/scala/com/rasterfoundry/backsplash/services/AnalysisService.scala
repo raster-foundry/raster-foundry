@@ -10,8 +10,8 @@ import org.http4s.dsl.io._
 class AnalysisService[Param, HistStore](
     analysisManager: AnalysisManager[Param, HistStore]) {
 
-  val routes: AuthedService[User, IO] =
-    AuthedService {
+  val routes: AuthedRoutes[User, IO] =
+    AuthedRoutes.of {
       case GET -> Root / UUIDWrapper(analysisId) / "histogram"
             :? NodeQueryParamMatcher(node) as user =>
         analysisManager.histogram(user, analysisId, node)
@@ -31,5 +31,4 @@ class AnalysisService[Param, HistStore](
             :? NodeQueryParamMatcher(node) as user =>
         analysisManager.export(authedReq, user, analysisId, node, extent, zoom)
     }
-
 }

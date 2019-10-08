@@ -66,7 +66,6 @@ require('./vectors/shapes.service.js').default(shared);
 
 // common
 require('./common/mousetip.service').default(shared);
-require('./common/feed.service').default(shared);
 require('./common/thumbnail.service').default(shared);
 require('./common/decimal.filter').default(shared);
 require('./common/modal.service').default(shared);

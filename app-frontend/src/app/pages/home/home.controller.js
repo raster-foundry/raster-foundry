@@ -1,20 +1,15 @@
 /* global BUILDCONFIG HELPCONFIG */
 
 class HomeController {
-    constructor(authService, modalService, feedService) {
+    constructor(authService, modalService) {
         'ngInject';
         this.authService = authService;
         this.modalService = modalService;
-        this.feedService = feedService;
     }
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
         this.HELPCONFIG = HELPCONFIG;
-        this.blogPosts = [];
-        this.feedService.getPosts().then(posts => {
-            this.blogPosts = posts;
-        }).catch(() => {});
     }
 
     openCreateProjectModal() {

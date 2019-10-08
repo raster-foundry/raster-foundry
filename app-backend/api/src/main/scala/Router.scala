@@ -5,7 +5,6 @@ import com.rasterfoundry.api.config.ConfigRoutes
 import com.rasterfoundry.api.datasource.DatasourceRoutes
 import com.rasterfoundry.api.exports.ExportRoutes
 import com.rasterfoundry.api.featureflags.FeatureFlagRoutes
-import com.rasterfoundry.api.feed.FeedRoutes
 import com.rasterfoundry.api.healthcheck._
 import com.rasterfoundry.api.maptoken.MapTokenRoutes
 import com.rasterfoundry.api.organization.OrganizationRoutes
@@ -50,7 +49,6 @@ trait Router
     with ToolRunRoutes
     with DatasourceRoutes
     with MapTokenRoutes
-    with FeedRoutes
     with UploadRoutes
     with ExportRoutes
     with Config
@@ -104,9 +102,6 @@ trait Router
           } ~
           pathPrefix("map-tokens") {
             mapTokenRoutes
-          } ~
-          pathPrefix("feed") {
-            feedRoutes
           } ~
           pathPrefix("uploads") {
             uploadRoutes

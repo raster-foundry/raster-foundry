@@ -50,6 +50,10 @@ final case class IncompleteSceneCollection(
     rootPath: Option[String] = None,
     sceneList: List[Scene] = List()
 ) {
+  // it is ok to use .get in here because stacVersion, id,
+  // description are in the requirement above and only
+  // when they are populated does the compiler agree with
+  // the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def toStacCollection: StacCollection = {
     val extent: Json = this.extent match {
@@ -130,6 +134,13 @@ class SceneCollectionBuilder[
         .copy(sceneList = sceneCollection.sceneList ++ sceneList)
     )
 
+  // it is ok to use .get in here because paths, id,
+  // are in the requirement above and only when they
+  // are populated does the compiler agree with the
+  // .build() call
+  // for the .get on scene datafootprint and ingest
+  // location, if labels are generated from these
+  // scenes, these fields should have values already
   @SuppressWarnings(Array("OptionGet"))
   def build()(
       implicit ev: CollectionRequirements =:= CompleteCollection
@@ -161,27 +172,32 @@ class SceneCollectionBuilder[
           // ../../../../catalog.json
           val sceneRootPath = s"../${rootPath}"
           val itemLinksAndTitle: (String, String, String) =
-            (s"${sceneAbsPath}/item.json",
-             s"${scene.id}/item.json",
-             s"Scene Item ${scene.id.toString}")
+            (
+              s"${sceneAbsPath}/item.json",
+              s"${scene.id}/item.json",
+              s"Scene Item ${scene.id.toString}"
+            )
           val sceneLinks = List(
             StacLink(
               itemLinksAndTitle._1,
               Self,
               Some(`application/json`),
-              Some(itemLinksAndTitle._3)
+              Some(itemLinksAndTitle._3),
+              List()
             ),
             StacLink(
               "../collection.json",
               Parent,
               Some(`application/json`),
-              Some("Scene Collection")
+              Some("Scene Collection"),
+              List()
             ),
             StacLink(
               sceneRootPath,
               StacRoot,
               Some(`application/json`),
-              Some("Root")
+              Some("Root"),
+              List()
             )
           )
           val sceneProperties = JsonObject.fromMap(
@@ -210,6 +226,8 @@ class SceneCollectionBuilder[
               .withProperties(sceneProperties)
               .withParentPath(absPath, rootPath)
               .withAssets(sceneAsset)
+              .withStacVersion(sceneCollection.stacVersion)
+              .withExtensions(List())
               .build(),
             itemLinksAndTitle
           )
@@ -226,7 +244,8 @@ class SceneCollectionBuilder[
               link._2,
               Item,
               Some(`application/json`),
-              Some(link._2)
+              Some(link._2),
+              List()
             )
           })
         )

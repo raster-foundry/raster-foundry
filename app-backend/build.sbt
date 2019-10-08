@@ -64,8 +64,8 @@ lazy val sharedSettings = Seq(
   scalacOptions := scalaOptions,
   // https://github.com/sbt/sbt/issues/3570
   scalacOptions in (Compile, console) ~= (_.filterNot(
-    _ == "-Ywarn-unused-import")
-    .filterNot(_ == "-Xfatal-warnings")
+    _ == "-Ywarn-unused-import"
+  ).filterNot(_ == "-Xfatal-warnings")
     .filterNot(_ == "-Ywarn-unused")
     .filterNot(_ == "-Ywarn-unused-import")),
   updateOptions := updateOptions.value.withGigahorse(false),
@@ -153,7 +153,6 @@ lazy val publishSettings = Seq(
   pgpSecretRing := file("/root/.gnupg/secring.gpg"),
   usePgpKeyHex(System.getenv().getOrDefault("PGP_HEX_KEY", "0")),
   releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
     inquireVersions,
     setReleaseVersion,
     releaseStepCommand("publishSigned"),
@@ -179,16 +178,18 @@ lazy val root = project
   .in(file("."))
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
-  .aggregate(api,
-             akkautil,
-             db,
-             common,
-             datamodel,
-             batch,
-             backsplashCore,
-             backsplashServer,
-             backsplashExport,
-             lambdaOverviews)
+  .aggregate(
+    api,
+    akkautil,
+    db,
+    common,
+    datamodel,
+    batch,
+    backsplashCore,
+    backsplashServer,
+    backsplashExport,
+    lambdaOverviews
+  )
 
 lazy val loggingDependencies = Seq(
   Dependencies.scalaLogging % Runtime,
@@ -240,8 +241,8 @@ lazy val lambdaOverviews = project
     mainClass in assembly := Some("com.rasterfoundry.lambda.overviews.Main"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
     addCompilerPlugin(scalafixSemanticdb),
-    assemblyOption in assembly := (assemblyOption in assembly).value.copy(
-      includeScala = false),
+    assemblyOption in assembly := (assemblyOption in assembly).value
+      .copy(includeScala = false),
     assemblyJarName in assembly := "lambda-overviews-assembly.jar"
   )
   .settings({
@@ -292,7 +293,7 @@ lazy val common = project
       Dependencies.apacheCommonsEmail,
       Dependencies.scalaCheck,
       Dependencies.catsScalacheck,
-      Dependencies.awsLambdaSdk,
+      Dependencies.awsLambdaSdk
     ) ++ loggingDependencies
   })
 

@@ -60,6 +60,10 @@ case class IncompleteLabelCollection(
     itemPropsThin: StacLabelItemPropertiesThin = StacLabelItemPropertiesThin(),
     sceneItemLinks: List[(String, String, String)] = List()
 ) {
+  // it is ok to use .get in here because stacVersion, id,
+  // description are in the requirement above and only
+  // when they are populated does the compiler agree with
+  // the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def toStacCollection(): StacCollection = {
     val extent: Json = this.extent match {
@@ -136,10 +140,13 @@ class LabelCollectionBuilder[
       tasks: List[Task],
       tasksGeomExtent: Option[UnionedGeomExtent]
   ): LabelCollectionBuilder[
-    CollectionRequirements with CollectionTasksGeomExtent] =
+    CollectionRequirements with CollectionTasksGeomExtent
+  ] =
     new LabelCollectionBuilder(
-      labelCollection.copy(tasks = labelCollection.tasks ++ tasks,
-                           tasksGeomExtent = tasksGeomExtent)
+      labelCollection.copy(
+        tasks = labelCollection.tasks ++ tasks,
+        tasksGeomExtent = tasksGeomExtent
+      )
     )
 
   def withItemPropInfo(
@@ -161,7 +168,10 @@ class LabelCollectionBuilder[
         sceneItemLinks = labelCollection.sceneItemLinks ++ sceneItemLinks
       )
     )
-
+  // it is ok to use .get in here because paths, tasksGeomExtent,
+  // extent, and id are in the requirement above and only
+  // when they are populated does the compiler agree with
+  // the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def build()(
       implicit ev: CollectionRequirements =:= CompleteCollection
@@ -195,31 +205,34 @@ class LabelCollectionBuilder[
         labelItemSelfAbsLink,
         Self,
         Some(`application/json`),
-        Some(s"Label item ${labelItemId}")
+        Some(s"Label item ${labelItemId}"),
+        List(labelItemId)
       ),
       StacLink(
         "../collection.json",
         Parent,
         Some(`application/json`),
-        Some("Label Collection")
+        Some("Label Collection"),
+        List()
       ),
       StacLink(
         s"../${rootPath}",
         StacRoot,
         Some(`application/json`),
-        Some("Root")
+        Some("Root"),
+        List()
       )
     ) ++ labelCollection.sceneItemLinks.map(link => {
-      // TODO: For the rel (the second argumetn), we need a Source type,
-      // which needs to be added in gt-server
       StacLink(
         s"../${link._2}",
-        VendorLinkType("Source"),
+        Source,
         Some(`image/cog`),
-        Some("Source image STAC item for the label item")
+        Some("Source image STAC item for the label item"),
+        List()
       )
     })
-    val dateTime = labelCollection.extent.get.temporal(0) match {
+    val dateTime
+      : List[Timestamp] = labelCollection.extent.get.temporal.interval.flatten map {
       case Some(dt) => Timestamp.from(Instant.parse(s"${dt}Z"))
       case _        => new Timestamp(new java.util.Date().getTime)
     }
@@ -231,7 +244,7 @@ class LabelCollectionBuilder[
       Some(List(labelCollection.itemPropsThin.task)),
       Some(List("manual")),
       None,
-      dateTime
+      dateTime(0)
     )
     val labelItemPropertiesJsonObj = JsonObject.fromMap(
       Map(
@@ -245,9 +258,6 @@ class LabelCollectionBuilder[
         "datetime" -> labelItemProperties.datetime.asJson
       )
     )
-    // TODO: below should actually be `application/geo+json`
-    // but StacItem from gt-server only accepts `image/cog`
-    // or it will throw an exception
     val labelDataRelLink = "./data.geojson"
     val labelDataS3AbsLink: String = s"${labelItemSelfAbsPath}/data.geojson"
     val labelAsset = Map(
@@ -255,9 +265,10 @@ class LabelCollectionBuilder[
         StacAsset(
           labelDataRelLink,
           Some("Label Data Feature Collection"),
-          Some(`image/cog`)
+          Some(`application/geo+json`)
         )
     )
+    val stacExtensions = List("label")
     val labelItem: StacItem = itemBuilder
       .withId(labelItemId)
       .withGeometries(labelItemFootprint, labelItemBbox)
@@ -266,6 +277,8 @@ class LabelCollectionBuilder[
       .withProperties(labelItemPropertiesJsonObj)
       .withParentPath(absPath, rootPath)
       .withAssets(labelAsset)
+      .withStacVersion(labelCollection.stacVersion)
+      .withExtensions(stacExtensions)
       .build()
 
     (
@@ -276,7 +289,8 @@ class LabelCollectionBuilder[
               labelItemSelfRelLink,
               Item,
               Some(`application/json`),
-              Some("STAC label item link")
+              Some("STAC label item link"),
+              List()
             )
           )
         )
