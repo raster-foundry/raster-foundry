@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Changed serialization of scenes to layer cache to binary [\#5218](https://github.com/raster-foundry/raster-foundry/pull/5218)
+
 ### Deprecated
 
 ### Removed
