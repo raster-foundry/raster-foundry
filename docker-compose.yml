@@ -13,6 +13,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    command: postgres -c log_statement=all
 
   memcached:
     image: memcached:1.4-alpine
@@ -61,8 +62,8 @@ services:
         condition: service_healthy
     env_file: .env
     environment:
-      - HIKARI_LOG_LEVEL=DEBUG
-      - RF_LOG_LEVEL=DEBUG
+      - HIKARI_LOG_LEVEL=WARN
+      - RF_LOG_LEVEL=WARN
       - TILE_SERVER_LOCATION
       - COURSIER_CACHE=/root/.coursier
       - BACKSPLASH_ENABLE_MULTITIFF=false
@@ -148,7 +149,7 @@ services:
     environment:
       - RF_LOG_LEVEL=DEBUG
       - HIKARI_LOG_LEVEL=DEBUG
-      - TRACING_LOG_LEVEL=TRACE
+      - TRACING_LOG_LEVEL=WARN
       - COURSIER_CACHE=/root/.coursier
       - DB_THREADPOOL_THREADS=16
       - HTTP4S_THREADPOOL_THREADS=16

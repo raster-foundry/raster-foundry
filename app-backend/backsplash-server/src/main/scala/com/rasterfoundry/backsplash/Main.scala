@@ -24,10 +24,13 @@ import doobie.implicits._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Properties
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{Executors, TimeUnit}
 
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
+
+import scala.concurrent.ExecutionContext
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
@@ -82,6 +85,13 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       }
     }
 
+  val rasterIO: ContextShift[IO] = IO.contextShift(
+    ExecutionContext.fromExecutor(
+      Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
+      )
+    ))
+
   val authenticators = new Authenticators(xa)
 
   val projectStoreImplicits = new RenderableStoreImplicits(xa)
@@ -120,7 +130,8 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
         SceneToLayerDao(),
         projectLayerMosaicImplicits,
         analysisManager,
-        xa
+        xa,
+        rasterIO
       ).routes
     )
   )

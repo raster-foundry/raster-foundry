@@ -30,8 +30,11 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     layers: LayerStore,
     mosaicImplicits: MosaicImplicits[HistStore, LayerStore],
     analysisManager: AnalysisManager[ToolStore, HistStore],
-    xa: Transactor[IO]
-)(implicit cs: ContextShift[IO], tracingContext: TracingContextBuilder[IO]) {
+    xa: Transactor[IO],
+    contextShift: ContextShift[IO]
+)(implicit tracingContext: TracingContextBuilder[IO]) {
+
+  implicit val cs = contextShift
 
   import mosaicImplicits._
 

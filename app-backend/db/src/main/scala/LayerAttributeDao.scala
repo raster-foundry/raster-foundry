@@ -1,7 +1,6 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common.LayerAttribute
-
 import cats.effect.IO
 import cats.implicits._
 import doobie.Fragments._
@@ -14,19 +13,29 @@ import DefaultJsonProtocol._
 import geotrellis.spark.LayerId
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json._
-
+import scalacache._
+import scalacache.CatsEffect.modes._
+import com.rasterfoundry.database.util.Cache
 import java.util.UUID
 
+import com.typesafe.scalalogging.LazyLogging
+
 @SuppressWarnings(Array("EmptyCaseClass"))
-final case class LayerAttributeDao() extends HistogramJsonFormats {
+final case class LayerAttributeDao()
+    extends HistogramJsonFormats
+    with LazyLogging {
+  import Cache.HistogramCache._
+
   def getHistogram(layerId: UUID,
-                   xa: Transactor[IO]): IO[Option[Array[Histogram[Double]]]] = {
-    LayerAttributeDao
-      .getAttribute(LayerId(layerId.toString, 0), "histogram")
-      .transact(xa)
-      .map(_.map(attr =>
-        attr.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]))
-  }
+                   xa: Transactor[IO]): IO[Option[Array[Histogram[Double]]]] =
+    Cache.getOptionCacheIO(s"histogram:$layerId") {
+      logger.debug(s"Getting histogram from database")
+      LayerAttributeDao
+        .getAttribute(LayerId(layerId.toString, 0), "histogram")
+        .transact(xa)
+        .map(_.map(attr =>
+          attr.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]))
+    }
 
   def getProjectLayerHistogram(
       projectLayerId: UUID,
