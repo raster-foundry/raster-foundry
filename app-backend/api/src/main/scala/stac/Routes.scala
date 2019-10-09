@@ -5,13 +5,17 @@ import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.common.S3
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
+import com.amazonaws.services.s3.{AmazonS3URI}
 
 import java.util.UUID
+import java.net.URLDecoder
+
 import doobie._
 import doobie.implicits._
 
@@ -32,7 +36,6 @@ trait StacRoutes
       pathPrefix(JavaUUID) { stacExportId =>
         pathEndOrSingleSlash {
           get { getStacExport(stacExportId) } ~
-            put { updateStacExport(stacExportId) } ~
             delete { deleteStacExport(stacExportId) }
         }
       }
@@ -42,8 +45,30 @@ trait StacRoutes
     (withPagination & stacExportQueryParameters) {
       (page: PageRequest, params: StacExportQueryParameters) =>
         complete {
+          val s3Client = S3()
           StacExportDao
             .list(page, params, user)
+            .map(p =>
+              PaginatedResponse[StacExport.WithSignedDownload](
+                p.count,
+                p.hasPrevious,
+                p.hasNext,
+                p.page,
+                p.pageSize,
+                p.results.map(export =>
+                  StacExport.signDownloadUrl(
+                    export,
+                    export.exportLocation.map(uri => {
+
+                      val s3Uri =
+                        new AmazonS3URI(URLDecoder.decode(uri, "utf-8"))
+                      s3Client
+                        .getSignedUrl(s3Uri.getBucket,
+                                      s"${s3Uri.getKey}/catalog.zip")
+                        .toString
+                    })
+                ))
+            ))
             .transact(xa)
             .unsafeToFuture
         }
@@ -83,25 +108,6 @@ trait StacRoutes
             .getById(id)
             .transact(xa)
             .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def updateStacExport(id: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      StacExportDao
-        .isOwnerOrSuperUser(user, id)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[StacExport]) { updateStacExport =>
-        onSuccess(
-          StacExportDao
-            .update(updateStacExport, id)
-            .transact(xa)
-            .unsafeToFuture) {
-          completeSingleOrNotFound
         }
       }
     }
