@@ -28,7 +28,7 @@ final case class LayerAttributeDao()
 
   def getHistogram(layerId: UUID,
                    xa: Transactor[IO]): IO[Option[Array[Histogram[Double]]]] =
-    Cache.getOptionCacheIO(s"histogram:$layerId") {
+    Cache.getOptionCache(s"histogram:$layerId") {
       logger.debug(s"Getting histogram from database")
       LayerAttributeDao
         .getAttribute(LayerId(layerId.toString, 0), "histogram")

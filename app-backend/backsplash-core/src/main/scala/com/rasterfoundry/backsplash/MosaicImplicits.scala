@@ -383,7 +383,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                 case (tracingContext, bsiList) => {
                   tracingContext.childSpan("paintedMosaicExtentReification") use {
                     childContext =>
-                      bsiList parTraverse  { relevant =>
+                      bsiList parTraverse { relevant =>
                         val tags =
                           Map("imageId" -> relevant.imageId.toString,
                               "projectId" -> relevant.projectId.toString)
