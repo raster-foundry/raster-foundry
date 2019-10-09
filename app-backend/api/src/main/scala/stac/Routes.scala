@@ -59,7 +59,6 @@ trait StacRoutes
                   StacExport.signDownloadUrl(
                     export,
                     export.exportLocation.map(uri => {
-
                       val s3Uri =
                         new AmazonS3URI(URLDecoder.decode(uri, "utf-8"))
                       s3Client
@@ -106,6 +105,22 @@ trait StacRoutes
         complete {
           StacExportDao
             .getById(id)
+            .map {
+              case Some(export) =>
+                Some(StacExport.signDownloadUrl(
+                  export,
+                  export.exportLocation.map(uri => {
+                    val s3Client = S3()
+                    val s3Uri =
+                      new AmazonS3URI(URLDecoder.decode(uri, "utf-8"))
+                    s3Client
+                      .getSignedUrl(s3Uri.getBucket,
+                                    s"${s3Uri.getKey}/catalog.zip")
+                      .toString
+                  })
+                ))
+              case _ => None
+            }
             .transact(xa)
             .unsafeToFuture
         }
