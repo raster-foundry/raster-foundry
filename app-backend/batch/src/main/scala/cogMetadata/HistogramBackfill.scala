@@ -88,8 +88,7 @@ object HistogramBackfill
   }
 
   def runJob(args: List[String]): IO[Unit] = {
-    implicit val xa =
-      RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
+    implicit val xa = RFTransactor.nonHikariTransactor
     for {
       sceneTupleChunks <- args map { UUID.fromString(_) } match {
         // If we don't have any ids, just get all the COG scenes without histograms

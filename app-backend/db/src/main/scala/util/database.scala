@@ -22,8 +22,7 @@ object RFTransactor {
       user: String = Properties.envOrElse("POSTGRES_USER", "rasterfoundry"),
       password: String =
         Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry"),
-      maximumPoolSize: Int =
-        Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "32").toInt,
+      maximumPoolSize: Int = 2,
       poolName: String = "Raster-Foundry-Hikari-Pool"
   ) {
     val url = postgresUrl ++ dbName
@@ -80,13 +79,15 @@ object RFTransactor {
     )
   }
 
-  def nonHikariTransactor(config: TransactorConfig)(
-      implicit cs: ContextShift[IO]) = {
+  def nonHikariTransactor(implicit cs: ContextShift[IO]) = {
     Transactor.fromDriverManager[IO](
       "org.postgresql.Driver",
-      config.url,
-      config.user,
-      config.password
+      Properties.envOrElse(
+        "POSTGRES_URL",
+        "jdbc:postgresql://database.service.rasterfoundry.internal/"
+      ),
+      Properties.envOrElse("POSTGRES_USER", "rasterfoundry"),
+      Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry")
     )
   }
 
