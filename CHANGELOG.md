@@ -5,6 +5,7 @@
 ### Added
 
 - Included TaskARN in tile server traces [\#5201](https://github.com/raster-foundry/raster-foundry/pull/5201)
+- Add zipped stac export url to stac objects returned from API [\#5220](https://github.com/raster-foundry/raster-foundry/pull/5220)
 
 ### Changed
 
