@@ -176,6 +176,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       ]
   ): IO[PutObjectResult] = {
     // get root url
+    @SuppressWarnings((Array("TraversableHead")))
     val catalogRootFile = catalog.links.filter(l => l.rel == Self).head.href
 
     val catalogRootPath =
