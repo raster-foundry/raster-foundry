@@ -174,41 +174,51 @@ final case class WriteStacCatalog(exportId: UUID)(
             (StacCollection, StacItem, (Option[Json], String)) // label collection, label item, label data, and s3 location
         )
       ]
-  ): IO[PutObjectResult] = {
+  ): IO[Option[PutObjectResult]] = {
     // get root url
-    @SuppressWarnings((Array("TraversableHead")))
-    val catalogRootFile = catalog.links.filter(l => l.rel == Self).head.href
 
-    val catalogRootPath =
-      catalogRootFile.substring(5, catalogRootFile.lastIndexOf("/"))
+    val catalogRootFileO =
+      catalog.links.filter(l => l.rel == Self).headOption.map(_.href)
 
-    for {
-      tempDirectory <- IO { ScalaFile.newTemporaryDirectory() }
-      // catalog
-      _ <- writeObjectToFileSystem(
-        getStacSelfLink(catalog.links)
-          .map(sl =>
-            sl.replace(s"s3://${catalogRootPath}", tempDirectory.pathAsString)),
-        Some(catalog.asJson)
-      )
-      // layer collections
-      _ <- layerSceneLabelCollectionsItemsAssets.traverse {
-        collectionItemsAndAssets =>
-          writeCollectionToFileSystem(
-            tempDirectory.pathAsString,
-            s"s3://${catalogRootPath}",
-            LayerCollectionAndAssets.fromTuples(collectionItemsAndAssets)
+    catalogRootFileO match {
+      case Some(catalogRootFile) =>
+        val catalogRootPath =
+          catalogRootFile.substring(5, catalogRootFile.lastIndexOf("/"))
+
+        for {
+          tempDirectory <- IO { ScalaFile.newTemporaryDirectory() }
+          // catalog
+          _ <- writeObjectToFileSystem(
+            getStacSelfLink(catalog.links)
+              .map(
+                sl =>
+                  sl.replace(s"s3://${catalogRootPath}",
+                             tempDirectory.pathAsString)),
+            Some(catalog.asJson)
           )
-      }
-      zipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
-      // zip directory to file
-      _ <- IO { tempDirectory.zipTo(destination = zipFile) }
-      _ <- IO { tempDirectory.delete() }
-      s3WriteResult <- IO {
-        s3Client.putObject(catalogRootPath, "catalog.zip", zipFile.toJava)
-      }
-      _ <- IO { zipFile.delete(true) }
-    } yield s3WriteResult
+          // layer collections
+          _ <- layerSceneLabelCollectionsItemsAssets.traverse {
+            collectionItemsAndAssets =>
+              writeCollectionToFileSystem(
+                tempDirectory.pathAsString,
+                s"s3://${catalogRootPath}",
+                LayerCollectionAndAssets.fromTuples(collectionItemsAndAssets)
+              )
+          }
+          zipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
+          // zip directory to file
+          _ <- IO { tempDirectory.zipTo(destination = zipFile) }
+          _ <- IO { tempDirectory.delete() }
+          s3WriteResult <- IO {
+            s3Client.putObject(catalogRootPath, "catalog.zip", zipFile.toJava)
+          }
+          _ <- IO { zipFile.delete(true) }
+        } yield Some(s3WriteResult)
+      case _ =>
+        logger.error("No self link found for catalog. Aborting.")
+        IO { None }
+    }
+
   }
 
   // Use the SELF type link on each object to upload it to the correct place
