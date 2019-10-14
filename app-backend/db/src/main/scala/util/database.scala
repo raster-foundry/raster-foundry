@@ -79,15 +79,13 @@ object RFTransactor {
     )
   }
 
-  def nonHikariTransactor(implicit cs: ContextShift[IO]) = {
+  def nonHikariTransactor(config: TransactorConfig)(
+      implicit cs: ContextShift[IO]) = {
     Transactor.fromDriverManager[IO](
       "org.postgresql.Driver",
-      Properties.envOrElse(
-        "POSTGRES_URL",
-        "jdbc:postgresql://database.service.rasterfoundry.internal/"
-      ),
-      Properties.envOrElse("POSTGRES_USER", "rasterfoundry"),
-      Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry")
+      config.url,
+      config.user,
+      config.password
     )
   }
 
