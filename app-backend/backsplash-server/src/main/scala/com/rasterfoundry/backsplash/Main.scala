@@ -87,7 +87,8 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val rasterIO: ContextShift[IO] = IO.contextShift(
     ExecutionContext.fromExecutor(
-      Executors.newCachedThreadPool(
+      Executors.newFixedThreadPool(
+        4,
         new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
       )
     ))
