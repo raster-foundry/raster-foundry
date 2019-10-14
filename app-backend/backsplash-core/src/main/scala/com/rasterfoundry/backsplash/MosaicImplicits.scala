@@ -13,9 +13,6 @@ import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.Semigroup
-import scalacache._
-import scalacache.memoization._
-import scalacache.CatsEffect.modes._
 import RenderableStore._
 import ToolStore._
 import ExtentReification._
@@ -24,6 +21,9 @@ import TmsReification._
 import com.colisweb.tracing.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import com.rasterfoundry.datamodel.SingleBandOptions
+
+import cats.effect.{IO, ContextShift}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     histStore: HistStore,
@@ -36,10 +36,9 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     with ToToolStoreOps
     with LazyLogging {
 
-  implicit val histCache = Cache.histCache
-  implicit val flags = Cache.histCacheFlags
-
   val streamConcurrency = Config.parallelism.streamConcurrency
+
+  val colorCorrectContextShift = IO.contextShift(global)
 
   // To be used when folding over/merging tiles
   val invisiCellType = IntUserDefinedNoDataCellType(0)
@@ -113,7 +112,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     val ioMBTwithSBO: IO[List[MBTTriple]] = tracingContext.childSpan(
       "renderMosaicSingleBand") use { context =>
       mosaic
-        .traverse((relevant: BacksplashImage[IO]) => {
+        .parTraverse((relevant: BacksplashImage[IO]) => {
           logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
           relevant.read(z, x, y, context) map {
             (_, relevant.singleBandOptions, relevant.metadata.noDataValue)
@@ -192,7 +191,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
     val ioMBT = tracingContext.childSpan("renderMosaic") use { context =>
       mosaic
-        .traverse((relevant: BacksplashImage[IO]) => {
+        .parTraverse((relevant: BacksplashImage[IO]) => {
           val tags = Map("sceneId" -> relevant.imageId.toString,
                          "projectId" -> relevant.projectId.toString,
                          "projectLayerId" -> relevant.projectLayerId.toString,
@@ -209,29 +208,24 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                     getHistogramWithCache(relevant, childContext)
                   }
                 }.start
-                hists <- histsFiber.join
-                im <- imFiber.join
-                renderedTile <- {
-                  childContext.childSpan("renderMosaicMultiband.colorCorrect",
-                                         tags) use {
-                    _ =>
-                      IO.pure {
-                        im map { mbTile =>
-                          val noDataValue = getNoDataValue(mbTile.cellType)
-                          logger.debug(
-                            s"NODATA Value: $noDataValue with CellType: ${mbTile.cellType}"
-                          )
-                          relevant.corrections.colorCorrect(
-                            mbTile,
-                            hists,
-                            relevant.metadata.noDataValue orElse noDataValue orElse Some(
-                              0))
-                        }
-                      }
+                (im, hists) <- (imFiber, histsFiber).tupled.join
+                _ <- IO.shift(colorCorrectContextShift)
+                resultTile <- IO {
+                  im map { mbTile =>
+                    val noDataValue = getNoDataValue(mbTile.cellType)
+                    logger.debug(
+                      s"NODATA Value: $noDataValue with CellType: ${mbTile.cellType}"
+                    )
+                    relevant.corrections.colorCorrect(
+                      mbTile,
+                      hists,
+                      relevant.metadata.noDataValue orElse noDataValue orElse Some(
+                        0))
                   }
                 }
+                _ <- IO.shift
               } yield {
-                renderedTile
+                resultTile
               }
           }
         })
@@ -258,7 +252,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
               case (tracingContext, listBsi) =>
                 tracingContext.childSpan("getMergedRawMosaic") use {
                   childContext =>
-                    val listIO = listBsi.traverse { bsi =>
+                    val listIO = listBsi.parTraverse { bsi =>
                       bsi.read(z, x, y, childContext)
                     }
                     childContext.childSpan("mergeRawTiles") use { _ =>
@@ -338,24 +332,22 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
   private def getHistogramWithCache(
       relevant: BacksplashImage[IO],
       tracingContext: TracingContext[IO]
-  )(implicit @cacheKeyExclude flags: Flags): IO[Array[Histogram[Double]]] =
-    memoizeF(None) {
-      relevant match {
-        case im: BacksplashGeotiff =>
-          logger.debug(
-            s"Retrieving Histograms for ${im.imageId} from histogram store")
-          histStore.layerHistogram(im.imageId, im.subsetBands, tracingContext)
-        case im: Landsat8MultiTiffImage =>
-          logger.debug(s"Retrieving histograms for ${im.imageId} from source")
-          im.getHistogram(tracingContext)
-        // Is this hilariously repetitive? Yes! But type erasure :(
-        case im: Sentinel2MultiTiffImage =>
-          logger.debug(s"Retrieving histograms for ${im.imageId} from source")
-          im.getHistogram(tracingContext)
-        case im: LandsatHistoricalMultiTiffImage =>
-          logger.debug(s"Retrieving histograms for ${im.imageId} from source")
-          im.getHistogram(tracingContext)
-      }
+  ): IO[Array[Histogram[Double]]] =
+    relevant match {
+      case im: BacksplashGeotiff =>
+        logger.debug(
+          s"Retrieving Histograms for ${im.imageId} from histogram store")
+        histStore.layerHistogram(im.imageId, im.subsetBands, tracingContext)
+      case im: Landsat8MultiTiffImage =>
+        logger.debug(s"Retrieving histograms for ${im.imageId} from source")
+        im.getHistogram(tracingContext)
+      // Is this hilariously repetitive? Yes! But type erasure :(
+      case im: Sentinel2MultiTiffImage =>
+        logger.debug(s"Retrieving histograms for ${im.imageId} from source")
+        im.getHistogram(tracingContext)
+      case im: LandsatHistoricalMultiTiffImage =>
+        logger.debug(s"Retrieving histograms for ${im.imageId} from source")
+        im.getHistogram(tracingContext)
     }
 
   // We need to be able to pass information about whether scenes should paint themselves while
@@ -391,7 +383,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                 case (tracingContext, bsiList) => {
                   tracingContext.childSpan("paintedMosaicExtentReification") use {
                     childContext =>
-                      bsiList traverse { relevant =>
+                      bsiList parTraverse { relevant =>
                         val tags =
                           Map("imageId" -> relevant.imageId.toString,
                               "projectId" -> relevant.projectId.toString)
@@ -456,7 +448,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                 (tracingContext, imageList) <- self
                 corrected <- tracingContext.childSpan(
                   "singleBandPaintedExtentReification") use { childContext =>
-                  imageList.traverse { bsi =>
+                  imageList.parTraverse { bsi =>
                     bsi.singleBandOptions match {
                       case Some(opts) =>
                         bsi.read(extent, cs, childContext) map {
@@ -504,9 +496,9 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                     mbts <- {
                       childContext.childSpan("rawMosaicExtentReification.reads") use {
                         grandContext =>
-                          listBsi.traverse({ relevant =>
+                          listBsi.parTraverse { relevant =>
                             relevant.read(extent, cs, grandContext)
-                          })
+                          }
                       }
                     }
                   } yield {
@@ -542,7 +534,7 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
           case (tracingContext, bsiList) =>
             tracingContext.childSpan("mosaicRasterExtents") use {
               childContext =>
-                bsiList.traverse({ img =>
+                bsiList.parTraverse({ img =>
                   img.getRasterSource(childContext) map { rs =>
                     val rasterExtents = rs.resolutions map { res =>
                       ReprojectRasterExtent(RasterExtent(res.extent,

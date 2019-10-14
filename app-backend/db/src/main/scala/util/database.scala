@@ -22,8 +22,7 @@ object RFTransactor {
       user: String = Properties.envOrElse("POSTGRES_USER", "rasterfoundry"),
       password: String =
         Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry"),
-      maximumPoolSize: Int =
-        Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "32").toInt,
+      maximumPoolSize: Int = 32,
       poolName: String = "Raster-Foundry-Hikari-Pool"
   ) {
     val url = postgresUrl ++ dbName
