@@ -623,6 +623,23 @@ object Generators extends ArbitraryInstances {
       )
     }
 
+  private def geojsonUploadCreateGen: Gen[GeojsonUpload.Create] =
+    for {
+      uploadStatus <- uploadStatusGen
+      fileType <- fileTypeGen
+      uploadType <- uploadTypeGen
+      files <- stringListGen
+      keepFiles <- arbitrary[Boolean]
+    } yield {
+      GeojsonUpload.Create(
+        uploadStatus,
+        fileType,
+        uploadType,
+        files,
+        keepFiles
+      )
+    }
+
   private def layerAttributeGen: Gen[LayerAttribute] =
     for {
       layerName <- nonEmptyStringGen
@@ -1121,6 +1138,11 @@ object Generators extends ArbitraryInstances {
     implicit def arbUploadCreate: Arbitrary[Upload.Create] = Arbitrary {
       uploadCreateGen
     }
+
+    implicit def arbGeojsonUploadCreate: Arbitrary[GeojsonUpload.Create] =
+      Arbitrary {
+        geojsonUploadCreateGen
+      }
 
     implicit def arbAOICreate: Arbitrary[AOI.Create] = Arbitrary {
       aoiCreateGen
