@@ -11,6 +11,7 @@
 - Changed serialization of scenes to layer cache to binary [\#5218](https://github.com/raster-foundry/raster-foundry/pull/5218)
 - Upgraded STAC version in STAC export builder [\#5202](https://github.com/raster-foundry/raster-foundry/pull/5202)
 - Upgrade http4s to 0.20.11 [\#5213](https://github.com/raster-foundry/raster-foundry/)
+- Started publishing `http4s-util` artifact [\#5224](https://github.com/raster-foundry/raster-foundry/pull/5224)
 
 ### Deprecated
 

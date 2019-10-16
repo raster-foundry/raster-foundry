@@ -55,6 +55,10 @@ lazy val sharedSettings = Seq(
     "org.apache.spark",
     "spark-core"
   ),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "io.jaegertracing",
+    "jaeger-client"
+  ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
     "log4j" % "log4j",
@@ -184,6 +188,7 @@ lazy val root = project
     db,
     common,
     datamodel,
+    http4sUtil,
     batch,
     backsplashCore,
     backsplashServer,
@@ -526,7 +531,7 @@ lazy val backsplashServer =
 lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   .dependsOn(db)
   .settings(sharedSettings: _*)
-  .settings(noPublishSettings)
+  .settings(publishSettings)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.awsXrayRecorder,
