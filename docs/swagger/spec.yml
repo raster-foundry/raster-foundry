@@ -8307,10 +8307,10 @@ definitions:
             description: 'STAC export Id'
           exportLocation:
             type: string
-            description: 'The url of the exported STAC catalog'
+            description: 'The s3 url of the exported STAC catalog'
           exportStatus:
             type: string
-            description: 'The url of the exported STAC catalog'
+            description: 'The processing status of STAC catalog'
             enum:
               - 'CREATED'
               - 'EXPORTING'
@@ -8320,6 +8320,9 @@ definitions:
               - 'COMPLETE'
               - 'FAILED'
               - 'ABORTED'
+          downloadUrl:
+            type: string
+            description: 'Signed http download URL for a zip of the stac catalog. Expires in 1 day'
   StacExportPaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'

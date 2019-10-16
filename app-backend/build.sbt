@@ -365,6 +365,7 @@ lazy val batch = project
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.betterFiles,
       Dependencies.scalatest,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,

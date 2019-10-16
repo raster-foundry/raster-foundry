@@ -7,6 +7,7 @@ import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.S3
+import better.files.{File => ScalaFile}
 
 import geotrellis.server.stac._
 import java.sql.Timestamp
@@ -24,6 +25,34 @@ import com.amazonaws.services.s3.model.{
   PutObjectRequest,
   ObjectMetadata,
   PutObjectResult
+}
+
+case class LayerCollectionAndAssets(
+    layerCollection: StacCollection,
+    sceneCollection: StacCollection,
+    sceneItemList: List[StacItem],
+    labelCollection: StacCollection,
+    labelItem: StacItem,
+    labelData: Option[Json],
+    labelDataLink: String
+)
+
+object LayerCollectionAndAssets {
+  def fromTuples(
+      tuple: (
+          StacCollection, // layer collection
+          (StacCollection, List[StacItem]), // scene collection and scene items
+          (StacCollection, StacItem, (Option[Json], String)) // label collection, label item, label data, and s3 location
+      )
+  ) = LayerCollectionAndAssets(
+    tuple._1,
+    tuple._2._1,
+    tuple._2._2,
+    tuple._3._1,
+    tuple._3._2,
+    tuple._3._3._1,
+    tuple._3._3._2
+  )
 }
 
 final case class WriteStacCatalog(exportId: UUID)(
@@ -65,8 +94,132 @@ final case class WriteStacCatalog(exportId: UUID)(
     }
   }
 
+  protected def writeObjectToFileSystem(
+      pathO: Option[String],
+      dataO: Option[Json]
+  ): IO[Option[ScalaFile]] = IO {
+    (pathO, dataO) match {
+      case (Some(path), Some(data)) =>
+        val file = ScalaFile(path)
+        file.createIfNotExists(false, true).append(data.noSpaces)
+        Some(file)
+      case _ =>
+        logger.info("Missing path or data, unable to write file")
+        None
+    }
+  }
+
   protected def getStacSelfLink(stacLinks: List[StacLink]): Option[String] =
     stacLinks.find(_.rel == Self).map(_.href)
+
+  protected def writeCollectionToFileSystem(
+      directory: String,
+      catalogRootPath: String,
+      lca: LayerCollectionAndAssets
+  ): IO[List[ScalaFile]] =
+    for {
+      layerCollectionFile <- {
+        writeObjectToFileSystem(
+          getStacSelfLink(lca.layerCollection.links)
+            .map(sl => sl.replace(catalogRootPath, directory)),
+          Some(lca.layerCollection.asJson)
+        )
+      }
+      sceneCollectionFile <- writeObjectToFileSystem(
+        getStacSelfLink(lca.sceneCollection.links)
+          .map(sl => sl.replace(catalogRootPath, directory)),
+        Some(lca.sceneCollection.asJson)
+      )
+      sceneItemFiles <- lca.sceneItemList.traverse(
+        sceneItem =>
+          writeObjectToFileSystem(
+            getStacSelfLink(sceneItem.links)
+              .map(
+                sl => sl.replace(catalogRootPath, directory)
+              ),
+            Some(sceneItem.asJson)
+        )
+      )
+      labelCollectionFile <- writeObjectToFileSystem(
+        getStacSelfLink(lca.labelCollection.links)
+          .map(sl => sl.replace(catalogRootPath, directory)),
+        Some(lca.labelCollection.asJson)
+      )
+      labelItemsFile <- writeObjectToFileSystem(
+        getStacSelfLink(lca.labelItem.links)
+          .map(sl => sl.replace(catalogRootPath, directory)),
+        Some(lca.labelItem.asJson)
+      )
+      labelDataFile <- writeObjectToFileSystem(
+        Some(lca.labelDataLink)
+          .map(sl => sl.replace(catalogRootPath, directory)),
+        lca.labelData
+      )
+    } yield
+      List(
+        layerCollectionFile,
+        sceneCollectionFile,
+        labelCollectionFile,
+        labelItemsFile,
+        labelDataFile
+      ).flatten ++ sceneItemFiles.flatten
+
+  // Write files locally and zip them up
+  protected def zipAndWriteToS3(
+      catalog: StacCatalog,
+      layerSceneLabelCollectionsItemsAssets: List[
+        (
+            StacCollection, // layer collection
+            (StacCollection, List[StacItem]), // scene collection and scene items
+            (StacCollection, StacItem, (Option[Json], String)) // label collection, label item, label data, and s3 location
+        )
+      ]
+  ): IO[Option[PutObjectResult]] = {
+    // get root url
+
+    val catalogRootFileO =
+      catalog.links.filter(l => l.rel == Self).headOption.map(_.href)
+
+    catalogRootFileO match {
+      case Some(catalogRootFile) =>
+        val catalogRootPath =
+          catalogRootFile.substring(5, catalogRootFile.lastIndexOf("/"))
+
+        for {
+          tempDirectory <- IO { ScalaFile.newTemporaryDirectory() }
+          // catalog
+          _ <- writeObjectToFileSystem(
+            getStacSelfLink(catalog.links)
+              .map(
+                sl =>
+                  sl.replace(s"s3://${catalogRootPath}",
+                             tempDirectory.pathAsString)),
+            Some(catalog.asJson)
+          )
+          // layer collections
+          _ <- layerSceneLabelCollectionsItemsAssets.traverse {
+            collectionItemsAndAssets =>
+              writeCollectionToFileSystem(
+                tempDirectory.pathAsString,
+                s"s3://${catalogRootPath}",
+                LayerCollectionAndAssets.fromTuples(collectionItemsAndAssets)
+              )
+          }
+          zipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
+          // zip directory to file
+          _ <- IO { tempDirectory.zipTo(destination = zipFile) }
+          _ <- IO { tempDirectory.delete() }
+          s3WriteResult <- IO {
+            s3Client.putObject(catalogRootPath, "catalog.zip", zipFile.toJava)
+          }
+          _ <- IO { zipFile.delete(true) }
+        } yield Some(s3WriteResult)
+      case _ =>
+        logger.error("No self link found for catalog. Aborting.")
+        IO { None }
+    }
+
+  }
 
   // Use the SELF type link on each object to upload it to the correct place
   // label items are accopanied by a geojson asset, which should be uploaded relative
@@ -358,7 +511,14 @@ final case class WriteStacCatalog(exportId: UUID)(
       contentAndCatalog <- createCatalogIO
       (contentBundle, catalog, layerSceneLabelCollectionsItemsAssets) = contentAndCatalog
       _ <- IO {
-        logger.info(s"Writing catalog to S3 for record ${exportId}...")
+        logger.info(s"Zipping catalog and writing to s3 for record ${exportId}")
+      }
+      _ <- zipAndWriteToS3(catalog, layerSceneLabelCollectionsItemsAssets)
+      _ <- IO {
+        logger.info(s"Wrote zipped catalog to s3 for record ${exportId}")
+      }
+      _ <- IO {
+        logger.info(s"Writing expanded catalog to S3 for record ${exportId}...")
       }
       _ <- writeToS3(catalog, layerSceneLabelCollectionsItemsAssets)
       _ <- IO { logger.info(s"Wrote catalog to S3 for record ${exportId}...") }

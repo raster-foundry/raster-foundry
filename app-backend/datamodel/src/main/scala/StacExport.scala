@@ -25,6 +25,36 @@ object StacExport {
   final case class LayerDefinition(projectId: UUID, layerId: UUID)
 
   @JsonCodec
+  final case class WithSignedDownload(
+      id: UUID,
+      createdAt: Timestamp,
+      createdBy: String,
+      modifiedAt: Timestamp,
+      owner: String,
+      name: String,
+      exportLocation: Option[String],
+      exportStatus: ExportStatus,
+      layerDefinitions: List[StacExport.LayerDefinition],
+      taskStatuses: List[String],
+      downloadUrl: Option[String]
+  )
+
+  def signDownloadUrl(export: StacExport, signedDownload: Option[String]) =
+    WithSignedDownload(
+      export.id,
+      export.createdAt,
+      export.createdBy,
+      export.modifiedAt,
+      export.owner,
+      export.name,
+      export.exportLocation,
+      export.exportStatus,
+      export.layerDefinitions,
+      export.taskStatuses,
+      signedDownload
+    )
+
+  @JsonCodec
   final case class Create(name: String,
                           owner: Option[String],
                           layerDefinitions: List[StacExport.LayerDefinition],
