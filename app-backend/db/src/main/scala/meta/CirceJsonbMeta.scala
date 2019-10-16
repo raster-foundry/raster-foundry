@@ -11,6 +11,7 @@ import cats.implicits._
 import scala.reflect.runtime.universe.TypeTag
 import java.net.URI
 
+import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import geotrellis.raster.{CellSize, GridExtent}
 
 object CirceJsonbMeta {
@@ -103,4 +104,7 @@ trait CirceJsonbMeta {
 
   implicit val taskStatusListMeta: Meta[List[TaskStatus]] =
     CirceJsonbMeta[List[TaskStatus]]
+
+  implicit val backsplashGeoTiffInfoMeta: Meta[BacksplashGeoTiffInfo] =
+    CirceJsonbMeta[BacksplashGeoTiffInfo]
 }

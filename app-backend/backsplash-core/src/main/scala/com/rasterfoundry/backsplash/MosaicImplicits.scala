@@ -21,9 +21,8 @@ import TmsReification._
 import com.colisweb.tracing.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import com.rasterfoundry.datamodel.SingleBandOptions
-
-import cats.effect.{IO, ContextShift}
-import scala.concurrent.ExecutionContext.Implicits.global
+import cats.effect.{ContextShift, IO}
+import doobie.util.transactor.Transactor
 
 class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     histStore: HistStore,
@@ -37,8 +36,6 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     with LazyLogging {
 
   val streamConcurrency = Config.parallelism.streamConcurrency
-
-  val colorCorrectContextShift = IO.contextShift(global)
 
   // To be used when folding over/merging tiles
   val invisiCellType = IntUserDefinedNoDataCellType(0)
@@ -73,11 +70,11 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     }))
   }
 
-  def chooseMosaic(
-      z: Int,
-      baseImage: BacksplashImage[IO],
-      config: OverviewConfig,
-      fallbackIms: NEL[BacksplashImage[IO]]): NEL[BacksplashImage[IO]] =
+  def chooseMosaic(z: Int,
+                   baseImage: BacksplashImage[IO],
+                   config: OverviewConfig,
+                   fallbackIms: NEL[BacksplashImage[IO]],
+                   xa: Transactor[IO]): NEL[BacksplashImage[IO]] =
     config match {
       case OverviewConfig(Some(overviewLocation), Some(minZoom))
           if z <= minZoom =>
@@ -92,7 +89,8 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
             baseImage.singleBandOptions,
             baseImage.mask,
             baseImage.footprint,
-            baseImage.metadata
+            baseImage.metadata,
+            xa
           ),
           Nil: _*
         )
@@ -209,21 +207,23 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                   }
                 }.start
                 (im, hists) <- (imFiber, histsFiber).tupled.join
-                _ <- IO.shift(colorCorrectContextShift)
-                resultTile <- IO {
-                  im map { mbTile =>
-                    val noDataValue = getNoDataValue(mbTile.cellType)
-                    logger.debug(
-                      s"NODATA Value: $noDataValue with CellType: ${mbTile.cellType}"
-                    )
-                    relevant.corrections.colorCorrect(
-                      mbTile,
-                      hists,
-                      relevant.metadata.noDataValue orElse noDataValue orElse Some(
-                        0))
-                  }
+                resultTile <- childContext.childSpan(
+                  "renderMosaicMultiband.colorCorrect") use {
+                  _ =>
+                    IO {
+                      im map { mbTile =>
+                        val noDataValue = getNoDataValue(mbTile.cellType)
+                        logger.debug(
+                          s"NODATA Value: $noDataValue with CellType: ${mbTile.cellType}"
+                        )
+                        relevant.corrections.colorCorrect(
+                          mbTile,
+                          hists,
+                          relevant.metadata.noDataValue orElse noDataValue orElse Some(
+                            0))
+                      }
+                    }
                 }
-                _ <- IO.shift
               } yield {
                 resultTile
               }
@@ -294,7 +294,11 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
                 rendStore.getOverviewConfig(imagesNel.head.projectLayerId,
                                             childContext)
             }
-            mosaic = chooseMosaic(z, imagesNel.head, overviewConfig, imagesNel)
+            mosaic = chooseMosaic(z,
+                                  imagesNel.head,
+                                  overviewConfig,
+                                  imagesNel,
+                                  xa)
             // for single band imagery, after color correction we have RGBA, so
             // the empty tile needs to be four band as well
             rendered <- context.childSpan("paintedRender") use {

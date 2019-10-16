@@ -34,7 +34,7 @@ class SceneService[RendStore, HistStore](
 
   import mosaicImplicits._
 
-  implicit val tmsReification = paintedMosaicTmsReification
+  implicit val tmsReification = paintedMosaicTmsReification(xa)
 
   implicit val sceneCache = Cache.caffeineSceneCache
 
@@ -81,7 +81,8 @@ class SceneService[RendStore, HistStore](
           None, // no single band options ever
           None, // not adding the mask here, since out of functional scope for md to image
           footprint,
-          scene.metadataFields
+          scene.metadataFields,
+          xa
         )
     }
   }

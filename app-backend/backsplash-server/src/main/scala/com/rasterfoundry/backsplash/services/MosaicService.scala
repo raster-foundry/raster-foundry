@@ -40,7 +40,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
 
   implicit val projectLayerCache = Cache.caffeineProjectLayerCache
 
-  implicit val tmsReification = paintedMosaicTmsReification
+  implicit val tmsReification = paintedMosaicTmsReification(xa)
 
   private val pngType = `Content-Type`(MediaType.image.png)
   private val tiffType = `Content-Type`(MediaType.image.tiff)

@@ -345,6 +345,7 @@ lazy val db = project
       Dependencies.doobiePostgresCirce,
       Dependencies.scalacacheCats,
       Dependencies.scalacacheCore,
+      Dependencies.scalacacheCaffeine,
       Dependencies.scalacacheMemcached,
       Dependencies.scalacacheCirce,
       Dependencies.elasticacheClient,
@@ -436,7 +437,7 @@ lazy val akkautil = project
   * Backsplash Core Settings
   */
 lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
-  .dependsOn(common)
+  .dependsOn(common, db)
   .settings(sharedSettings: _*)
   .settings(
     fork in run := true,

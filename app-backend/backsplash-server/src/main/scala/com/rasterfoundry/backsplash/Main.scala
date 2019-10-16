@@ -34,6 +34,15 @@ import scala.concurrent.ExecutionContext
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
+  val rasterIO: ContextShift[IO] = IO.contextShift(
+    ExecutionContext.fromExecutor(
+      Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
+      )
+    ))
+
+  override implicit val contextShift: ContextShift[IO] = rasterIO
+
   val xa = RFTransactor.buildTransactor()
 
   val ogcUrlPrefix = Properties.envOrNone("ENVIRONMENT") match {
@@ -84,14 +93,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
         }
       }
     }
-
-  val rasterIO: ContextShift[IO] = IO.contextShift(
-    ExecutionContext.fromExecutor(
-      Executors.newFixedThreadPool(
-        4,
-        new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
-      )
-    ))
 
   val authenticators = new Authenticators(xa)
 

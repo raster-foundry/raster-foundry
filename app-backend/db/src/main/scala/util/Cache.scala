@@ -8,6 +8,7 @@ import cats.implicits._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.common.{
   BacksplashConnectionFactory,
+  BacksplashGeoTiffInfo,
   Config,
   SceneToLayerWithSceneType
 }
@@ -16,6 +17,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.histogram.Histogram
 import net.spy.memcached.MemcachedClient
 import scalacache._
+import scalacache.caffeine.CaffeineCache
 import scalacache.memcached.MemcachedCache
 
 import scala.collection.JavaConverters._
@@ -96,6 +98,12 @@ object Cache extends LazyLogging {
     import scalacache.serialization.binary._
     implicit val histogramCache: Cache[Array[Histogram[Double]]] = {
       MemcachedCache[Array[Histogram[Double]]](memcachedClient)
+    }
+  }
+
+  object GeotiffInfoCache {
+    implicit val geotiffInfoCache: Cache[BacksplashGeoTiffInfo] = {
+      CaffeineCache[BacksplashGeoTiffInfo]
     }
   }
 }
