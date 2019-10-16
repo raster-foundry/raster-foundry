@@ -184,6 +184,7 @@ lazy val root = project
     db,
     common,
     datamodel,
+    http4sUtil,
     batch,
     backsplashCore,
     backsplashServer,
