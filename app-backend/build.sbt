@@ -533,6 +533,7 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
       Dependencies.awsXrayRecorder,
       Dependencies.awsXraySdk,
       Dependencies.doobieCore,
+      Dependencies.jaegerClient,
       Dependencies.opentracing,
       Dependencies.nimbusJose,
       Dependencies.scalacacheCore,
