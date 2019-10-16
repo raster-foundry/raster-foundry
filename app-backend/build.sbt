@@ -53,8 +53,11 @@ lazy val sharedSettings = Seq(
   ),
   unusedCompileDependenciesFilter -= moduleFilter(
     "org.apache.spark",
-    "spark-core",
-    "io.jaegertracing"
+    "spark-core"
+  ),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "io.jaegertracing",
+    "jaeger-client"
   ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
