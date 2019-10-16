@@ -48,26 +48,46 @@ trait StacRoutes
           val s3Client = S3()
           StacExportDao
             .list(page, params, user)
-            .map(p =>
-              PaginatedResponse[StacExport.WithSignedDownload](
-                p.count,
-                p.hasPrevious,
-                p.hasNext,
-                p.page,
-                p.pageSize,
-                p.results.map(export =>
-                  StacExport.signDownloadUrl(
-                    export,
-                    export.exportLocation.map(uri => {
-                      val s3Uri =
-                        new AmazonS3URI(URLDecoder.decode(uri, "utf-8"))
-                      s3Client
-                        .getSignedUrl(s3Uri.getBucket,
-                                      s"${s3Uri.getKey}/catalog.zip")
-                        .toString
-                    })
-                ))
-            ))
+            .map(
+              p =>
+                PaginatedResponse[StacExport.WithSignedDownload](
+                  p.count,
+                  p.hasPrevious,
+                  p.hasNext,
+                  p.page,
+                  p.pageSize,
+                  p.results.map { export =>
+                    export.exportLocation match {
+                      case Some(uri) => {
+                        val s3Uri =
+                          new AmazonS3URI(
+                            URLDecoder.decode(s"${uri}/catalog.zip", "utf-8")
+                          )
+                        s3Client.doesObjectExist(
+                          s3Uri.getBucket,
+                          s3Uri.getKey
+                        ) match {
+                          case true =>
+                            StacExport.signDownloadUrl(
+                              export,
+                              Some(
+                                s3Client
+                                  .getSignedUrl(s3Uri.getBucket, s3Uri.getKey)
+                                  .toString
+                              )
+                            )
+                          case _ =>
+                            StacExport.signDownloadUrl(
+                              export,
+                              None
+                            )
+                        }
+                      }
+                      case _ => StacExport.signDownloadUrl(export, None)
+                    }
+                  }
+              )
+            )
             .transact(xa)
             .unsafeToFuture
         }
@@ -86,7 +106,8 @@ trait StacRoutes
           StacExportDao
             .create(newStacExport, user)
             .transact(xa)
-            .unsafeToFuture) { stacExport =>
+            .unsafeToFuture
+        ) { stacExport =>
           kickoffStacExport(stacExport.id)
           complete((StatusCodes.Created, stacExport))
         }
@@ -107,18 +128,22 @@ trait StacRoutes
             .getById(id)
             .map {
               case Some(export) =>
-                Some(StacExport.signDownloadUrl(
-                  export,
-                  export.exportLocation.map(uri => {
-                    val s3Client = S3()
-                    val s3Uri =
-                      new AmazonS3URI(URLDecoder.decode(uri, "utf-8"))
-                    s3Client
-                      .getSignedUrl(s3Uri.getBucket,
-                                    s"${s3Uri.getKey}/catalog.zip")
-                      .toString
-                  })
-                ))
+                Some(
+                  StacExport.signDownloadUrl(
+                    export,
+                    export.exportLocation.map(uri => {
+                      val s3Client = S3()
+                      val s3Uri =
+                        new AmazonS3URI(URLDecoder.decode(uri, "utf-8"))
+                      s3Client
+                        .getSignedUrl(
+                          s3Uri.getBucket,
+                          s"${s3Uri.getKey}/catalog.zip"
+                        )
+                        .toString
+                    })
+                  )
+                )
               case _ => None
             }
             .transact(xa)
@@ -139,7 +164,8 @@ trait StacRoutes
         StacExportDao
           .delete(id)
           .transact(xa)
-          .unsafeToFuture) { count: Int =>
+          .unsafeToFuture
+      ) { count: Int =>
         complete((StatusCodes.NoContent, s"$count stac export deleted"))
       }
     }
