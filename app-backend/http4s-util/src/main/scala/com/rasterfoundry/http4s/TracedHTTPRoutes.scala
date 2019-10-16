@@ -56,7 +56,7 @@ object TracedHTTPRoutes {
       val operationName = "http4s-request"
       val tags = Map(
         "http_method" -> req.method.name,
-        "request_url" -> req.uri.path.toString,
+        "request_url" -> req.uri.path,
         "environment" -> Config.environment
       ) combine {
         req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id")) match {
@@ -99,7 +99,7 @@ object TracedHTTPRoutes {
             val request =
               XrayRequest(
                 req.method.name,
-                req.uri.path.toString,
+                req.uri.path,
                 req.headers
                   .get(CaseInsensitiveString("User-Agent"))
                   .map(_.toString),
