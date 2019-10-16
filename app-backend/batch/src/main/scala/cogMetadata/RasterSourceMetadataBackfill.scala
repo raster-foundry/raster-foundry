@@ -1,19 +1,23 @@
 package com.rasterfoundry.batch.cogMetadata
 
-import java.net.URLDecoder
 import java.util.UUID
+import java.util.concurrent.Executors
 
-import cats.effect.IO
+import cats.effect._
 import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.rasterfoundry.backsplash.BacksplashGeotiffReader
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.database.RasterSourceMetadataDao
+import com.rasterfoundry.common.{BacksplashGeoTiffInfo, RollbarNotifier}
 import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.database.{RasterSourceMetadataDao, SceneDao}
 import com.rasterfoundry.datamodel.RasterSourceMetadata
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.contrib.vlm.gdal.GDALRasterSource
+import geotrellis.contrib.vlm.gdal.GDALDataPath
+
+import scala.concurrent.ExecutionContext
 
 object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
 
@@ -40,40 +44,64 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
     }
   }
 
-  // presence of the ingest location is guaranteed by the filter in the sql string
-  @SuppressWarnings(Array("OptionGet"))
-  def insertRasterSourceMetadata(cogTuple: CogTuple)(
-      implicit xa: Transactor[IO]): IO[RasterSourceMetadata] = {
-    logger.info(s"Getting Raster Source: ${cogTuple._1}")
-    val rasterSource = GDALRasterSource(URLDecoder.decode(cogTuple._2, "UTF-8"))
-    logger.info(s"Getting Metadata: ${cogTuple._1}")
-    val rasterSourceMetadata = RasterSourceMetadata(
-      rasterSource.dataPath,
-      rasterSource.crs,
-      rasterSource.bandCount,
-      rasterSource.cellType,
-      rasterSource.noDataValue,
-      rasterSource.gridExtent,
-      rasterSource.resolutions
-    )
-    logger.info(s"Inserting Metadata: ${cogTuple._1}")
-    val md = RasterSourceMetadataDao
-      .update(cogTuple._1, rasterSourceMetadata)
-      .transact(xa)
-      .map(_ => rasterSourceMetadata)
-    println(s"Done: ${cogTuple._1}")
-    md
+  def getBacksplashInfo(path: String): IO[BacksplashGeoTiffInfo] = {
+    IO(BacksplashGeotiffReader.getBacksplashGeotiffInfo(path))
   }
 
-  def runJob(args: List[String]) =
+  // presence of the ingest location is guaranteed by the filter in the sql string
+  @SuppressWarnings(Array("OptionGet"))
+  def insertRasterSourceMetadata(id: UUID,
+                                 path: String,
+                                 backsplashInfo: BacksplashGeoTiffInfo)(
+      implicit xa: Transactor[IO]): IO[Int] = {
+    val rasterSourceMetadata = RasterSourceMetadata(
+      GDALDataPath(path),
+      backsplashInfo.crs,
+      backsplashInfo.bandCount,
+      backsplashInfo.tiffTags.cellType,
+      backsplashInfo.noDataValue,
+      backsplashInfo.tiffTags.rasterExtent.toGridType[Long],
+      backsplashInfo.overviews
+        .map(_.tiffTags.rasterExtent.toGridType[Long])
+        .toList
+    )
+    RasterSourceMetadataDao
+      .update(id, rasterSourceMetadata)
+      .transact(xa)
+  }
+
+  def insertGeotiffInfo(id: UUID, backsplashInfo: BacksplashGeoTiffInfo)(
+      implicit xa: Transactor[IO]): IO[Int] = {
+    logger.info(s"Getting Metadata: ${id}")
+    SceneDao.updateSceneGeoTiffInfo(backsplashInfo, id).transact(xa)
+  }
+
+  def runJob(args: List[String]) = {
+
     RFTransactor.xaResource.use { transactor =>
       implicit val xa = transactor
-      for {
-        scenes <- getScenesToBackfill(xa)
-        metadata <- scenes.map(t => insertRasterSourceMetadata(t)).parSequence
-      } yield {
-        metadata
-          .foreach(rsm => println(s"Inserted metadata for ${rsm.dataPath}"))
+      val scenesToUpdate = getScenesToBackfill(xa).unsafeRunSync()
+
+      val rasterIO: ContextShift[IO] = IO.contextShift(
+        ExecutionContext.fromExecutor(
+          Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder().setNameFormat("backfill-%d").build()
+          )
+        ))
+
+      implicit val contextShift: ContextShift[IO] = rasterIO
+
+      val response = scenesToUpdate.parTraverse {
+        case (id, uri) =>
+          for {
+            backsplashInfo <- getBacksplashInfo(uri)
+            rmdResult <- insertRasterSourceMetadata(id, uri, backsplashInfo)
+            geotiffResult <- insertGeotiffInfo(id, backsplashInfo)
+          } yield (rmdResult, geotiffResult)
       }
+
+      response
+        .map(rsm => println(s"Inserted metadata for ${rsm.length} resources"))
     }
+  }
 }

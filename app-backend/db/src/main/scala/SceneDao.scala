@@ -36,6 +36,7 @@ object SceneDao
     with AWSLambda {
 
   import Cache.SceneCache._
+  import Cache.GeotiffInfoCache._
 
   type KickoffIngest = Boolean
 
@@ -150,6 +151,20 @@ object SceneDao
         ().pure[ConnectionIO]
       }
     } yield copied
+  }
+
+  def getSceneGeoTiffInfo(
+      sceneId: UUID): ConnectionIO[Option[BacksplashGeoTiffInfo]] = {
+    Cache.getOptionCache(s"SceneInfo:$sceneId", Some(30 minutes)) {
+      sql"SELECT backsplash_geotiff_info FROM scenes WHERE id = $sceneId"
+        .query[Option[BacksplashGeoTiffInfo]]
+        .unique
+    }
+  }
+
+  def updateSceneGeoTiffInfo(bsi: BacksplashGeoTiffInfo,
+                             id: UUID): ConnectionIO[Int] = {
+    fr"""UPDATE scenes SET backsplash_geotiff_info = ${bsi} WHERE id = ${id}""".update.run
   }
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
@@ -292,17 +307,8 @@ object SceneDao
                 .getProjectsAndLayersBySceneId(scene.id)
                 .flatMap(spls => {
                   for {
-                    _ <- spls.map { spl =>
-                      logger
-                        .info(
-                          s"Kicking off layer overview creation for project-${spl.projectId}-layer-${spl.projectLayerId}"
-                        )
-                      kickoffLayerOverviewCreate(
-                        spl.projectId,
-                        spl.projectLayerId
-                      )
-                      SceneToLayerDao.deleteMosaicDefCache(spl.projectLayerId)
-                    }.sequence
+                    _ <- spls.traverse(spl =>
+                      SceneToLayerDao.deleteMosaicDefCache(spl.projectLayerId))
                   } yield ()
                 })
                 .map(_ => n)

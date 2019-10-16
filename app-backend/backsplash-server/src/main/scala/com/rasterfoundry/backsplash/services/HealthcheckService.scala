@@ -7,14 +7,12 @@ import com.rasterfoundry.database.util.Cache.ProjectLayerCache
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import geotrellis.contrib.vlm.gdal.GDALRasterSource
-import geotrellis.spark.io.s3.S3Client
 import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl._
-import sup.data._
 import scalacache.CatsEffect.modes._
+import sup.data._
 import sup.{Health, HealthCheck, HealthResult, mods}
 
 import scala.concurrent.duration._
@@ -25,32 +23,7 @@ class HealthcheckService(xa: Transactor[IO])(
 ) extends Http4sDsl[IO]
     with LazyLogging {
 
-  val s3Client = S3Client.DEFAULT
-  val bucket = Config.healthcheck.tiffBucket
-  val key = Config.healthcheck.tiffKey
-  val s3Path = s"s3://${bucket}/${key}"
   val cache = ProjectLayerCache.projectLayerCache
-  private def gdalHealth =
-    HealthCheck
-      .liftF[IO, Id](
-        IO {
-          s3Client.doesObjectExist(bucket, key) match {
-            case false =>
-              logger.warn(
-                s"${s3Path} does not exist - not failing health check")
-              HealthResult[Id](Health.Healthy)
-            case true =>
-              val rs = GDALRasterSource(s"$s3Path")
-              rs.crs
-              rs.extent
-              rs.bandCount
-          }
-        } map { _ =>
-          HealthResult[Id](Health.Healthy)
-        }
-      )
-      .through(mods.timeoutToSick(3 seconds))
-      .through(mods.tagWith("gdal"))
 
   private def dbHealth =
     HealthCheck
@@ -86,7 +59,7 @@ class HealthcheckService(xa: Transactor[IO])(
   val routes: HttpRoutes[IO] = HttpRoutes.of {
     case GET -> Root =>
       val healthcheck = HealthReporter.parWrapChecks(
-        NonEmptyList.of(dbHealth, cacheHealth, gdalHealth)
+        NonEmptyList.of(dbHealth, cacheHealth)
       )
       healthcheck.check flatMap { result =>
         val report = result.value
