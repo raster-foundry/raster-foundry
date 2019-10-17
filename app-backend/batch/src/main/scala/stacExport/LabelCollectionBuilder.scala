@@ -198,8 +198,8 @@ class LabelCollectionBuilder[
     // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<layerCollectionId>/<labelCollectionId>/<labelItemId>
     val labelItemSelfAbsPath = s"${absPath}/${labelItemId}"
     // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<layerCollectionId>/<labelCollectionId>/<labelItemId>/item.json
-    val labelItemSelfAbsLink = s"${labelItemSelfAbsPath}/item.json"
-    val labelItemSelfRelLink = s"${labelItemId}/item.json"
+    val labelItemSelfAbsLink = s"${labelItemSelfAbsPath}/${labelItemId}.json"
+    val labelItemSelfRelLink = s"${labelItemId}/${labelItemId}.json"
     val labelItemLinks = List(
       StacLink(
         labelItemSelfAbsLink,
