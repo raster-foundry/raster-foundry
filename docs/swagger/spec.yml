@@ -3316,7 +3316,135 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
+  /projects/{projectID}/layers/{layerID}/annotation-groups/{annotationGroupID}/uploads:
+    x-resource: Projects
+    get:
+      summary: 'Get geojson upload records for an annotation group'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+      responses:
+        200:
+          description: 'Paginated GeojsonUpload records'
+          schema:
+            $ref: '#/definitions/GeojsonUploadPaginated'
+        404:
+          description: 'Resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        403:
+          description: 'Insufficient permissions for resource'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: 'Create a new GeojsonUpload for this annotation group'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+        - name: GeojsonUpload
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GeojsonUploadCreate'
+      responses:
+        200:
+          description: 'Created GeojsonUpload'
+          schema:
+            $ref: '#/definitions/GeojsonUpload'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
 
+  /projects/{projectID}/layers/{layerID}/annotation-groups/{annotationGroupID}/uploads/{geojsonUploadID}:
+    x-resource: Projects
+    get:
+      summary: 'Get GeojsonUpload for annotation group'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+        - $ref: '#/parameters/geojsonUploadID'
+      responses:
+        200:
+          description: 'fetched geojson upload'
+          schema:
+            $ref: '#/definitions/GeojsonUpload'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: 'Update GeojsonUpload'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+        - $ref: '#/parameters/geojsonUploadID'
+        - name: geojsonUpload
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GeojsonUpload'
+      responses:
+        200:
+          description: 'Number of updated GeojsonUpload resources from this request'
+          schema:
+            type: number
+            format: integer
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Delete GeojsonUpload'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+        - $ref: '#/parameters/geojsonUploadID'
+      responses:
+        200:
+          description: 'Number of GeojsonUpload from this request'
+          schema:
+            type: number
+            format: integer
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
   /projects/{projectID}/layers/{layerID}/tasks/:
     get:
       summary: 'Get tasks belonging to a project layer'
@@ -5118,6 +5246,12 @@ parameters:
     format: uuid
   annotationGroupID:
     name: annotationGroupID
+    in: path
+    required: true
+    type: string
+    format: uuid
+  geojsonUploadID:
+    name: geojsonUploadID
     in: path
     required: true
     type: string
@@ -7452,6 +7586,75 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/Upload'
+  GeojsonUploadCreate:
+    type: object
+    properties:
+      uploadStatus:
+        type: string
+        description: 'Status of upload'
+        enum:
+          - 'CREATED'
+          - 'UPLOADING'
+          - 'UPLOADED'
+          - 'QUEUED'
+          - 'PROCESSING'
+          - 'COMPLETE'
+          - 'FAILED'
+          - 'ABORTED'
+      fileType:
+        type: string
+        description: 'type of data being uploaded, limited to two options right now'
+        enum:
+          - 'GEOJSON'
+      uploadType:
+        type: string
+        description: 'Source of files and uploads'
+        enum:
+          - 'S3'
+      files:
+        type: array
+        items:
+          type: string
+        description: 'An array of strings of file locations. This cannot be empty'
+      keepFiles:
+        type: boolean
+        description: |
+          Keep geojson files once they've been added to the project. 
+          Defaults to true, requires Delete permissions for the s3 bucket.
+  GeojsonUpload:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/GeojsonUploadCreate'
+      - type: object
+        properties:
+          createdAt:
+            type: string
+            format: datetime
+          createdBy:
+            type: string
+            format: uuid
+          modifiedAt:
+            type: string
+            format: datetime
+          projectId:
+            type: string
+            format: uuid
+          projectLayerId:
+            type: string
+            format: uuid
+          annotationGroup:
+            type: string
+            format: uuid
+  GeojsonUploadPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/GeojsonUpload'
+
   UploadCredentials:
     type: object
     properties:

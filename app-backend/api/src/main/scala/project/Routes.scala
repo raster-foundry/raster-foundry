@@ -123,22 +123,28 @@ trait ProjectRoutes
                       pathPrefix(JavaUUID) { sceneId =>
                         pathEndOrSingleSlash {
                           get {
-                            getProjectLayerSceneColorCorrectParams(projectId,
-                                                                   layerId,
-                                                                   sceneId)
+                            getProjectLayerSceneColorCorrectParams(
+                              projectId,
+                              layerId,
+                              sceneId
+                            )
                           } ~
                             put {
-                              setProjectLayerSceneColorCorrectParams(projectId,
-                                                                     layerId,
-                                                                     sceneId)
+                              setProjectLayerSceneColorCorrectParams(
+                                projectId,
+                                layerId,
+                                sceneId
+                              )
                             }
                         }
                       } ~
                       pathPrefix("bulk-update-color-corrections") {
                         pathEndOrSingleSlash {
                           post {
-                            setProjectLayerScenesColorCorrectParams(projectId,
-                                                                    layerId)
+                            setProjectLayerScenesColorCorrectParams(
+                              projectId,
+                              layerId
+                            )
                           }
                         }
                       }
@@ -178,9 +184,11 @@ trait ProjectRoutes
                               updateLayerAnnotation(projectId, layerId)
                             } ~
                             delete {
-                              deleteLayerAnnotation(projectId,
-                                                    annotationId,
-                                                    layerId)
+                              deleteLayerAnnotation(
+                                projectId,
+                                annotationId,
+                                layerId
+                              )
                             }
                         }
                       } ~
@@ -194,13 +202,16 @@ trait ProjectRoutes
                                 val tempFile = ScalaFile.newTemporaryFile()
                                 tempFile.deleteOnExit()
                                 val response =
-                                  storeUploadedFile("name",
-                                                    (_) => tempFile.toJava) {
-                                    (_, _) =>
-                                      processShapefile(projectId,
-                                                       tempFile,
-                                                       None,
-                                                       Some(layerId))
+                                  storeUploadedFile(
+                                    "name",
+                                    (_) => tempFile.toJava
+                                  ) { (_, _) =>
+                                    processShapefile(
+                                      projectId,
+                                      tempFile,
+                                      None,
+                                      Some(layerId)
+                                    )
                                   }
                                 tempFile.delete()
                                 response
@@ -214,13 +225,16 @@ trait ProjectRoutes
                                   val tempFile = ScalaFile.newTemporaryFile()
                                   tempFile.deleteOnExit()
                                   val response =
-                                    storeUploadedFile("shapefile",
-                                                      (_) => tempFile.toJava) {
-                                      (_, _) =>
-                                        processShapefile(projectId,
-                                                         tempFile,
-                                                         Some(fields),
-                                                         Some(layerId))
+                                    storeUploadedFile(
+                                      "shapefile",
+                                      (_) => tempFile.toJava
+                                    ) { (_, _) =>
+                                      processShapefile(
+                                        projectId,
+                                        tempFile,
+                                        Some(fields),
+                                        Some(layerId)
+                                      )
                                     }
                                   tempFile.delete()
                                   response
@@ -242,25 +256,75 @@ trait ProjectRoutes
                       pathPrefix(JavaUUID) { annotationGroupId =>
                         pathEndOrSingleSlash {
                           get {
-                            getLayerAnnotationGroup(projectId,
-                                                    layerId,
-                                                    annotationGroupId)
+                            getLayerAnnotationGroup(
+                              projectId,
+                              layerId,
+                              annotationGroupId
+                            )
                           } ~
                             put {
-                              updateLayerAnnotationGroup(projectId,
-                                                         layerId,
-                                                         annotationGroupId)
+                              updateLayerAnnotationGroup(
+                                projectId,
+                                layerId,
+                                annotationGroupId
+                              )
                             } ~
                             delete {
-                              deleteLayerAnnotationGroup(projectId,
-                                                         layerId,
-                                                         annotationGroupId)
+                              deleteLayerAnnotationGroup(
+                                projectId,
+                                layerId,
+                                annotationGroupId
+                              )
                             }
                         } ~
                           pathPrefix("summary") {
-                            getLayerAnnotationGroupSummary(projectId,
-                                                           layerId,
-                                                           annotationGroupId)
+                            getLayerAnnotationGroupSummary(
+                              projectId,
+                              layerId,
+                              annotationGroupId
+                            )
+                          } ~
+                          pathPrefix("uploads") {
+                            pathEndOrSingleSlash {
+                              get {
+                                listGeojsonUploads(projectId,
+                                                   layerId,
+                                                   annotationGroupId)
+                              } ~
+                                post {
+                                  createGeojsonUpload(
+                                    projectId,
+                                    layerId,
+                                    annotationGroupId
+                                  )
+                                }
+                            } ~
+                              pathPrefix(JavaUUID) { uploadId =>
+                                get {
+                                  getGeojsonUpload(
+                                    projectId,
+                                    layerId,
+                                    annotationGroupId,
+                                    uploadId
+                                  )
+                                } ~
+                                  put {
+                                    updateGeojsonUpload(
+                                      projectId,
+                                      layerId,
+                                      annotationGroupId,
+                                      uploadId
+                                    )
+                                  } ~
+                                  delete {
+                                    deleteGeojsonUpload(
+                                      projectId,
+                                      layerId,
+                                      annotationGroupId,
+                                      uploadId
+                                    )
+                                  }
+                              }
                           }
                       }
                   } ~
@@ -407,13 +471,16 @@ trait ProjectRoutes
                           val tempFile = ScalaFile.newTemporaryFile()
                           tempFile.deleteOnExit()
                           val response =
-                            storeUploadedFile("shapefile",
-                                              (_) => tempFile.toJava) {
-                              (_, _) =>
-                                processShapefile(projectId,
-                                                 tempFile,
-                                                 Some(fields),
-                                                 None)
+                            storeUploadedFile(
+                              "shapefile",
+                              (_) => tempFile.toJava
+                            ) { (_, _) =>
+                              processShapefile(
+                                projectId,
+                                tempFile,
+                                Some(fields),
+                                None
+                              )
                             }
                           tempFile.delete()
                           response
@@ -554,7 +621,8 @@ trait ProjectRoutes
         ProjectDao
           .insertProject(newProject, user)
           .transact(xa)
-          .unsafeToFuture) { project =>
+          .unsafeToFuture
+      ) { project =>
         complete(StatusCodes.Created, project)
       }
     }
@@ -564,9 +632,11 @@ trait ProjectRoutes
     (extractMapTokenParam & projectQueryParameters) {
       (mapTokenO, projectQueryParams) =>
         (projectAuthFromMapTokenO(mapTokenO, projectId) |
-          projectAuthFromTokenO(tokenO,
-                                projectId,
-                                projectQueryParams.analysisId) |
+          projectAuthFromTokenO(
+            tokenO,
+            projectId,
+            projectQueryParams.analysisId
+          ) |
           projectIsPublic(projectId)) {
           complete {
             ProjectDao.getProjectById(projectId).transact(xa).unsafeToFuture
@@ -587,7 +657,8 @@ trait ProjectRoutes
           ProjectDao
             .updateProject(updatedProject, projectId)
             .transact(xa)
-            .unsafeToFuture) {
+            .unsafeToFuture
+        ) {
           completeSingleOrNotFound
         }
       }
@@ -647,7 +718,8 @@ trait ProjectRoutes
           AoiDao
             .createAOI(aoi.toAOI(projectId, user), user: User)
             .transact(xa)
-            .unsafeToFuture()) { a =>
+            .unsafeToFuture()
+        ) { a =>
           complete(StatusCodes.Created, a)
         }
       }
@@ -665,8 +737,8 @@ trait ProjectRoutes
         complete {
           val acceptSceneIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            rowsAffected <- SceneToLayerDao.acceptScene(project.defaultLayerId,
-                                                        sceneId)
+            rowsAffected <- SceneToLayerDao
+              .acceptScene(project.defaultLayerId, sceneId)
           } yield { rowsAffected }
 
           acceptSceneIO.transact(xa).unsafeToFuture
@@ -688,8 +760,8 @@ trait ProjectRoutes
 
         val acceptScenesIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          rowsAffected <- SceneToLayerDao.acceptScenes(project.defaultLayerId,
-                                                       sceneIds)
+          rowsAffected <- SceneToLayerDao
+            .acceptScenes(project.defaultLayerId, sceneIds)
         } yield { rowsAffected }
 
         onSuccess(acceptScenesIO.transact(xa).unsafeToFuture) { _ =>
@@ -726,10 +798,8 @@ trait ProjectRoutes
     (projectQueryParameters) { projectQueryParams =>
       authorizeAsync {
         val authorized = for {
-          authProject <- ProjectDao.authorized(user,
-                                               ObjectType.Project,
-                                               projectId,
-                                               ActionType.View)
+          authProject <- ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.View)
           authResult <- (authProject, projectQueryParams.analysisId) match {
             case (AuthFailure(), Some(analysisId: UUID)) =>
               ToolRunDao
@@ -768,9 +838,8 @@ trait ProjectRoutes
 
         val setOrderIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          updatedOrder <- SceneToLayerDao.setManualOrder(projectId,
-                                                         project.defaultLayerId,
-                                                         sceneIds)
+          updatedOrder <- SceneToLayerDao
+            .setManualOrder(projectId, project.defaultLayerId, sceneIds)
         } yield { updatedOrder }
 
         onSuccess(setOrderIO.transact(xa).unsafeToFuture) { _ =>
@@ -794,7 +863,8 @@ trait ProjectRoutes
             project <- ProjectDao.unsafeGetProjectById(projectId)
             params <- SceneToLayerDao.getColorCorrectParams(
               project.defaultLayerId,
-              sceneId)
+              sceneId
+            )
           } yield { params }
 
           getColorCorrectParamsIO.transact(xa).unsafeToFuture
@@ -814,9 +884,11 @@ trait ProjectRoutes
         entity(as[ColorCorrect.Params]) { ccParams =>
           val setColorCorrectParamsIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            stl <- SceneToLayerDao.setColorCorrectParams(project.defaultLayerId,
-                                                         sceneId,
-                                                         ccParams)
+            stl <- SceneToLayerDao.setColorCorrectParams(
+              project.defaultLayerId,
+              sceneId,
+              ccParams
+            )
           } yield { stl }
 
           onSuccess(setColorCorrectParamsIO.transact(xa).unsafeToFuture) { _ =>
@@ -911,10 +983,12 @@ trait ProjectRoutes
           val scenesAdded = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
             layerId = ProjectDao.getProjectLayerId(layerIdO, project)
-            addedScenes <- ProjectDao.addScenesToProject(sceneIds,
-                                                         projectId,
-                                                         layerId,
-                                                         true)
+            addedScenes <- ProjectDao.addScenesToProject(
+              sceneIds,
+              projectId,
+              layerId,
+              true
+            )
           } yield addedScenes
 
           complete { scenesAdded.transact(xa).unsafeToFuture }
@@ -922,8 +996,10 @@ trait ProjectRoutes
       }
     }
 
-  def updateProjectScenes(projectId: UUID,
-                          layerIdO: Option[UUID] = None): Route =
+  def updateProjectScenes(
+      projectId: UUID,
+      layerIdO: Option[UUID] = None
+  ): Route =
     authenticate { user =>
       authorizeAuthResultAsync {
         ProjectDao
@@ -941,9 +1017,11 @@ trait ProjectRoutes
               val replaceIO = for {
                 project <- ProjectDao.unsafeGetProjectById(projectId)
                 layerId = ProjectDao.getProjectLayerId(layerIdO, project)
-                replacement <- ProjectDao.replaceScenesInProject(ids,
-                                                                 projectId,
-                                                                 layerId)
+                replacement <- ProjectDao.replaceScenesInProject(
+                  ids,
+                  projectId,
+                  layerId
+                )
               } yield replacement
 
               complete {
@@ -955,32 +1033,32 @@ trait ProjectRoutes
       }
     }
 
-  def deleteProjectScenes(projectId: UUID,
-                          layerIdO: Option[UUID] = None): Route = authenticate {
-    user =>
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[Seq[UUID]]) { sceneIds =>
-          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-            complete(StatusCodes.RequestEntityTooLarge)
-          }
+  def deleteProjectScenes(
+      projectId: UUID,
+      layerIdO: Option[UUID] = None
+  ): Route = authenticate { user =>
+    authorizeAuthResultAsync {
+      ProjectDao
+        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      entity(as[Seq[UUID]]) { sceneIds =>
+        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+          complete(StatusCodes.RequestEntityTooLarge)
+        }
 
-          val deleteIO = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            layerId = ProjectDao.getProjectLayerId(layerIdO, project)
-            deletion <- ProjectDao.deleteScenesFromProject(sceneIds.toList,
-                                                           projectId,
-                                                           layerId)
-          } yield deletion
-          onSuccess(deleteIO.transact(xa).unsafeToFuture) { _ =>
-            complete(StatusCodes.NoContent)
-          }
+        val deleteIO = for {
+          project <- ProjectDao.unsafeGetProjectById(projectId)
+          layerId = ProjectDao.getProjectLayerId(layerIdO, project)
+          deletion <- ProjectDao
+            .deleteScenesFromProject(sceneIds.toList, projectId, layerId)
+        } yield deletion
+        onSuccess(deleteIO.transact(xa).unsafeToFuture) { _ =>
+          complete(StatusCodes.NoContent)
         }
       }
+    }
   }
 
   def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
@@ -1002,13 +1080,17 @@ trait ProjectRoutes
   def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ProjectDao.authorized(user,
-                               ObjectType.Project,
-                               projectId,
-                               ActionType.Edit) map { _.toBoolean },
-         acrList traverse { acr =>
-           ProjectDao.isValidPermission(acr, user)
-         } map { _.foldLeft(true)(_ && _) }).tupled
+        (
+          ProjectDao.authorized(
+            user,
+            ObjectType.Project,
+            projectId,
+            ActionType.Edit
+          ) map { _.toBoolean },
+          acrList traverse { acr =>
+            ProjectDao.isValidPermission(acr, user)
+          } map { _.foldLeft(true)(_ && _) }
+        ).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })
@@ -1028,11 +1110,15 @@ trait ProjectRoutes
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ProjectDao.authorized(user,
-                               ObjectType.Project,
-                               projectId,
-                               ActionType.Edit) map { _.toBoolean },
-         ProjectDao.isValidPermission(acr, user)).tupled
+        (
+          ProjectDao.authorized(
+            user,
+            ObjectType.Project,
+            projectId,
+            ActionType.Edit
+          ) map { _.toBoolean },
+          ProjectDao.isValidPermission(acr, user)
+        ).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })
@@ -1096,10 +1182,12 @@ trait ProjectRoutes
     }
   }
 
-  def processShapefile(projectId: UUID,
-                       tempFile: ScalaFile,
-                       propsO: Option[Map[String, String]] = None,
-                       projectLayerIdO: Option[UUID]): Route =
+  def processShapefile(
+      projectId: UUID,
+      tempFile: ScalaFile,
+      propsO: Option[Map[String, String]] = None,
+      projectLayerIdO: Option[UUID]
+  ): Route =
     authenticate { user =>
       {
         val unzipped = tempFile.unzip()
@@ -1110,24 +1198,34 @@ trait ProjectRoutes
             complete(
               StatusCodes.ClientError(400)(
                 "Bad Request",
-                "No .shp and .prj Files Found in Archive"))
+                "No .shp and .prj Files Found in Archive"
+              )
+            )
           case (true, false) =>
             complete(
-              StatusCodes.ClientError(400)("Bad Request",
-                                           "No .prj File Found in Archive"))
+              StatusCodes.ClientError(400)(
+                "Bad Request",
+                "No .prj File Found in Archive"
+              )
+            )
           case (false, true) =>
             complete(
-              StatusCodes.ClientError(400)("Bad Request",
-                                           "No .shp File Found in Archive"))
+              StatusCodes.ClientError(400)(
+                "Bad Request",
+                "No .shp File Found in Archive"
+              )
+            )
           case (true, true) => {
             propsO match {
               case Some(props) =>
-                processShapefileImport(matches,
-                                       prj,
-                                       props,
-                                       user,
-                                       projectId,
-                                       projectLayerIdO)
+                processShapefileImport(
+                  matches,
+                  prj,
+                  props,
+                  user,
+                  projectId,
+                  projectLayerIdO
+                )
               case _ =>
                 complete(StatusCodes.OK, processShapefileUpload(matches))
             }
@@ -1136,12 +1234,14 @@ trait ProjectRoutes
       }
     }
 
-  def processShapefileImport(matches: Iterator[ScalaFile],
-                             prj: Iterator[ScalaFile],
-                             props: Map[String, String],
-                             user: User,
-                             projectId: UUID,
-                             projectLayerIdO: Option[UUID]): Route = {
+  def processShapefileImport(
+      matches: Iterator[ScalaFile],
+      prj: Iterator[ScalaFile],
+      props: Map[String, String],
+      user: User,
+      projectId: UUID,
+      projectLayerIdO: Option[UUID]
+  ): Route = {
     val shapefilePath = matches.next.toString
     val prjPath: String = prj.next.toString
     val projectionSource = scala.io.Source.fromFile(prjPath)
@@ -1157,7 +1257,8 @@ trait ProjectRoutes
         features.toList,
         props,
         user.id,
-        projection)
+        projection
+      )
     featureAccumulationResult match {
       case Left(errorIndices) =>
         complete(
@@ -1169,10 +1270,12 @@ trait ProjectRoutes
       case Right(annotationCreates) => {
         complete(
           StatusCodes.Created,
-          (AnnotationDao.insertAnnotations(annotationCreates,
-                                           projectId,
-                                           user,
-                                           projectLayerIdO)
+          (AnnotationDao.insertAnnotations(
+            annotationCreates,
+            projectId,
+            user,
+            projectLayerIdO
+          )
             map { (anns: List[Annotation]) =>
               anns map { _.toGeoJSONFeature }
             }).transact(xa).unsafeToFuture
@@ -1193,5 +1296,4 @@ trait ProjectRoutes
       .map(_.split(".Attribute: ")(1).split("<")(0))
       .toList
   }
-
 }
