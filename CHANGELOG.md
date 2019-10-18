@@ -21,6 +21,7 @@
 
 ### Removed
 
+- Remove AOI project creation from frontend [\#5228](https://github.com/raster-foundry/raster-foundry/pull/5228)
 - Removed blog/feed endpoint and frontend [\#5216](https://github.com/raster-foundry/raster-foundry/pull/5216)
 - Removed project overview generation [\#5222](https://github.com/raster-foundry/raster-foundry/pull/5222)
 
