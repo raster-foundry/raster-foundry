@@ -12,14 +12,6 @@
   </div>
 </div>
 <div class="list-group" ng-if="!$ctrl.fetchingScenes">
-  <div class="list-group-item no-border"
-       ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length"
-  >
-    <div class="alert alert-secondary">
-      <div class="alert-message">{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
-      <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
-    </div>
-  </div>
   <div class="list-group-item"
        ng-if="$ctrl.currentRepository && !$ctrl.currentRepository.service.defaultRepository"
   >

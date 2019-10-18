@@ -30,8 +30,6 @@ import projectsSceneBrowserTpl from './pages/projects/edit/browse/browse.html';
 import projectOrderScenesTpl from './pages/projects/edit/order/order.html';
 import projectMaskingTpl from './pages/projects/edit/masking/masking.html';
 import projectMaskingDrawTpl from './pages/projects/edit/masking/draw/draw.html';
-import aoiApproveTpl from './pages/projects/edit/aoi-approve/aoi-approve.html';
-import aoiParametersTpl from './pages/projects/edit/aoi-parameters/aoi-parameters.html';
 import exportTpl from './pages/projects/edit/exports/exports.html';
 import newExportTpl from './pages/projects/edit/exports/new/new.html';
 import annotateTpl from './pages/projects/edit/annotate/annotate.html';
@@ -255,12 +253,6 @@ function projectStatesV2($stateProvider) {
                 }
             },
             redirectTo: 'project.layer.scenes'
-        })
-        // project layer routes
-        .state('project.layer.aoi', {
-            title: 'Project Layer AOI',
-            url: '/aoi',
-            component: 'rfProjectLayerAoiPage'
         })
         .state('project.layer.colormode', {
             title: 'Project Layer Colormode',
@@ -505,20 +497,6 @@ function projectEditStates($stateProvider) {
             url: '/mask',
             templateUrl: projectMaskingDrawTpl,
             controller: 'ProjectsMaskingDrawController',
-            controllerAs: '$ctrl'
-        })
-        .state('projects.edit.aoi-approve', {
-            title: 'Project: Pending Scenes',
-            url: '/aoi-approve',
-            templateUrl: aoiApproveTpl,
-            controller: 'AOIApproveController',
-            controllerAs: '$ctrl'
-        })
-        .state('projects.edit.aoi-parameters', {
-            title: 'Project: AOI',
-            url: '/aoi-parameters',
-            templateUrl: aoiParametersTpl,
-            controller: 'AOIParametersController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.exports', {

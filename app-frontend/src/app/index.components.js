@@ -123,9 +123,6 @@ export default angular.module('index.components', [
     require('./components/common/itemActionButtons/itemActionButtons.js').default.name,
     ...commonComponents,
 
-    // Single components for new domains
-    require('./components/aoiFilterPane/aoiFilterPane.module.js').default.name,
-
     // project color composite components
     require('./components/colorComposites/colorSchemeBuilder/colorSchemeBuilder.module.js').default
         .name,
