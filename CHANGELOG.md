@@ -23,6 +23,7 @@
 
 ### Fixed
 
+- Used item IDs instead of `"item.json"` for STAC item names [\#5226](https://github.com/raster-foundry/raster-foundry/pull/5226)
 - Fixed a routing bug that prevented viewing tiles under the `/scenes/` routes [\#5213](https://github.com/raster-foundry/raster-foundry/)
 
 ### Security
