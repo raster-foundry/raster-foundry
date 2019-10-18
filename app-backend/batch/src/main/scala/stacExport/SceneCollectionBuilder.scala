@@ -1,13 +1,16 @@
 package com.rasterfoundry.batch.stacExport
 
+import com.rasterfoundry.batch.stacExport.{StacExtent => BatchStacExtent}
+import com.rasterfoundry.datamodel._
+
 import geotrellis.vector.reproject.Reproject
 import geotrellis.proj4.CRS
-import com.rasterfoundry.datamodel._
-import io.circe._
-import io.circe.syntax._
 import geotrellis.server.stac._
 import geotrellis.server.stac.{StacExtent => _}
-import com.rasterfoundry.batch.stacExport.{StacExtent => BatchStacExtent}
+import io.circe._
+import io.circe.syntax._
+
+import java.net.URLDecoder
 
 object SceneCollectionBuilder {
   sealed trait CollectionRequirements
@@ -212,7 +215,7 @@ class SceneCollectionBuilder[
           val sceneAsset = Map(
             scene.id.toString ->
               StacAsset(
-                scene.ingestLocation.get,
+                URLDecoder.decode(scene.ingestLocation.get, "utf-8"),
                 Some("scene"),
                 Some(`image/cog`)
               )
