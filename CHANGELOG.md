@@ -10,6 +10,7 @@
 
 ### Changed
 
+- Stopped serializing null label extension fields on STAC label items [\#5227](https://github.com/raster-foundry/raster-foundry/pull/5227)
 - Changed serialization of scenes to layer cache to binary [\#5218](https://github.com/raster-foundry/raster-foundry/pull/5218)
 - Upgraded STAC version in STAC export builder [\#5202](https://github.com/raster-foundry/raster-foundry/pull/5202)
 - Upgrade http4s to 0.20.11 [\#5213](https://github.com/raster-foundry/raster-foundry/)
