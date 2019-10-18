@@ -256,7 +256,10 @@ class LabelCollectionBuilder[
         "label:method" -> labelItemProperties.method.asJson,
         "label:overview" -> labelItemProperties.overview.asJson,
         "datetime" -> labelItemProperties.datetime.asJson
-      )
+      ).filter({
+        case (k, v) =>
+          !v.isNull
+      })
     )
     val labelDataRelLink = "./data.geojson"
     val labelDataS3AbsLink: String = s"${labelItemSelfAbsPath}/data.geojson"
