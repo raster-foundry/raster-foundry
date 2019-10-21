@@ -150,9 +150,17 @@ object ImportGeojsonFiles extends Config with LazyLogging {
         logger.info(
           s"Uploading ${annotations.size} annotations to annotation group: ${upload.annotationGroup}"
         )
-        val inserted =
-          insertAnnotations(annotations, upload).transact(xa).unsafeRunSync()
-        logger.info(s"Annotations uploaded: ${inserted.size}")
+        params.testRun match {
+          case true =>
+            logger.info(
+              s"Test run: Not inserting ${annotations.size} annotations")
+          case _ =>
+            val inserted =
+              insertAnnotations(annotations, upload)
+                .transact(xa)
+                .unsafeRunSync()
+            logger.info(s"Annotations uploaded: ${inserted.size}")
+        }
         return
       case _ =>
         logger.error(s"Unable to fetch upload with id: ${uploadId}")
