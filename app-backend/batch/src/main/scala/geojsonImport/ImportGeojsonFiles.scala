@@ -46,7 +46,7 @@ object CommandLine {
         .action(
           (_, conf) => conf.copy(testRun = true)
         )
-        .text("Dry run geojson import to verify created annotations")
+        .text("Dry run geojson import to verify geojson file parses correctly to annotations")
 
       opt[String]('u', "upload")
         .required()
