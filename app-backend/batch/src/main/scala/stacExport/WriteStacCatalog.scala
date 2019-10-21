@@ -72,7 +72,10 @@ final case class WriteStacCatalog(exportId: UUID)(
     (selfLinkO, dataO) match {
       case (Some(selfLink), Some(data)) =>
         val key = selfLink.replace(s"s3://${dataBucket}/", "")
-        val dataByte = data.noSpaces.getBytes(Charset.forName("UTF-8"))
+        val dataByte = Printer.noSpaces
+          .copy(dropNullValues = true)
+          .pretty(data)
+          .getBytes(Charset.forName("UTF-8"))
         val dataStream = new ByteArrayInputStream(dataByte)
         val dataMd = new ObjectMetadata()
         dataMd.setContentType(contentType)
@@ -101,7 +104,9 @@ final case class WriteStacCatalog(exportId: UUID)(
     (pathO, dataO) match {
       case (Some(path), Some(data)) =>
         val file = ScalaFile(path)
-        file.createIfNotExists(false, true).append(data.noSpaces)
+        file
+          .createIfNotExists(false, true)
+          .append(Printer.noSpaces.copy(dropNullValues = true).pretty(data))
         Some(file)
       case _ =>
         logger.info("Missing path or data, unable to write file")
@@ -192,8 +197,11 @@ final case class WriteStacCatalog(exportId: UUID)(
             getStacSelfLink(catalog.links)
               .map(
                 sl =>
-                  sl.replace(s"s3://${catalogRootPath}",
-                             tempDirectory.pathAsString)),
+                  sl.replace(
+                    s"s3://${catalogRootPath}",
+                    tempDirectory.pathAsString
+                )
+              ),
             Some(catalog.asJson)
           )
           // layer collections
