@@ -176,8 +176,8 @@ class SceneCollectionBuilder[
           val sceneRootPath = s"../${rootPath}"
           val itemLinksAndTitle: (String, String, String) =
             (
-              s"${sceneAbsPath}/item.json",
-              s"${scene.id}/item.json",
+              s"${sceneAbsPath}/${scene.id}.json",
+              s"${scene.id}/${scene.id}.json",
               s"Scene Item ${scene.id.toString}"
             )
           val sceneLinks = List(
