@@ -46,7 +46,8 @@ object CommandLine {
         .action(
           (_, conf) => conf.copy(testRun = true)
         )
-        .text("Dry run geojson import to verify geojson file parses correctly to annotations")
+        .text(
+          "Dry run geojson import to verify geojson file parses correctly to annotations")
 
       opt[String]('u', "upload")
         .required()
@@ -70,21 +71,17 @@ object ImportGeojsonFiles extends Config with LazyLogging {
         )
       )
     )
-  implicit val xa = RFTransactor.buildTransactor()
+  val xa = RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
 
   def processUploadToAnnotations(
       upload: GeojsonUpload
   ): List[Annotation.Create] = {
     val s3Client = S3()
     // download and parse files
-    upload.files.map { uri =>
+    upload.files.flatMap { uri =>
       {
         logger.info(s"Downloading file: ${uri}")
         // Only s3 uris are currently supported.
-        // TODO: hmm, this might be a security problem. Anyone can point RF at geojson file that we have
-        // access to, and this will let them view it even if they shouldn't be able to view it.
-        // I think we need a more formal system which requires signed uploads to specific directories, and
-        // reject any s3 urls that aren't in those directories like scene uploads
         val s3Uri = new AmazonS3URI(URLDecoder.decode(uri, "utf-8"))
         val s3Object = s3Client.getObject(s3Uri.getBucket, s3Uri.getKey)
         val geojsonString =
@@ -99,13 +96,13 @@ object ImportGeojsonFiles extends Config with LazyLogging {
         logger.info("Annotations parsed")
         annotations
       }
-    }.flatten
+    }
   }
 
   def insertAnnotations(
       annotations: List[Annotation.Create],
       upload: GeojsonUpload
-  ): ConnectionIO[List[Annotation]] = {
+  ): ConnectionIO[Int] = {
     // https://makk.es/blog/postgresql-parameter-limitation/
     // max # of interpolated params in postgres driver = 32,767 (2 byte int)
     // each annotation = 17 params
@@ -126,7 +123,7 @@ object ImportGeojsonFiles extends Config with LazyLogging {
             Some(upload.projectLayerId)
           )
         })
-        .map { _.flatten }
+        .map { _.size }
     } yield inserted
   }
 
@@ -139,32 +136,24 @@ object ImportGeojsonFiles extends Config with LazyLogging {
         return
     }
     val uploadId = params.upload
-    val uploadO = GeojsonUploadDao
-      .getUploadById(uploadId)
-      .transact(xa)
-      .unsafeRunSync()
 
-    uploadO match {
-      case Some(upload) =>
-        val annotations = processUploadToAnnotations(upload)
-        logger.info(
-          s"Uploading ${annotations.size} annotations to annotation group: ${upload.annotationGroup}"
-        )
-        params.testRun match {
-          case true =>
-            logger.info(
-              s"Test run: Not inserting ${annotations.size} annotations")
-          case _ =>
-            val inserted =
+    val jobIO = for {
+      upload <- GeojsonUploadDao.getUploadById(uploadId).transact(xa)
+      inserted <- (upload match {
+        case Some(upload) =>
+          val annotations = processUploadToAnnotations(upload)
+          params.testRun match {
+            case false =>
               insertAnnotations(annotations, upload)
-                .transact(xa)
-                .unsafeRunSync()
-            logger.info(s"Annotations uploaded: ${inserted.size}")
-        }
-        return
-      case _ =>
-        logger.error(s"Unable to fetch upload with id: ${uploadId}")
-        return
-    }
+            case _ =>
+              logger.info(
+                s"Test run: Not inserting ${annotations.size} annotations")
+              Option.empty.pure[ConnectionIO]
+          }
+        case _ => throw new RuntimeException("No upload found, aborting")
+      }).transact(xa)
+    } yield inserted
+    jobIO.unsafeRunSync()
+    return
   }
 }
