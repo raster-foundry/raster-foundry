@@ -55,10 +55,6 @@
   </li>
   <li class="separator" ng-show="$ctrl.shouldShowTargetParams()">
     <input type="url" class="form-control slim" placeholder="S3 Bucket URI" ng-model="$ctrl.exportTargetURI">
-    <div class="alert alert-secondary" ng-if="$ctrl.invalidTargetError">
-      <div class="alert-message">{{$ctrl.pendingSceneList.length}} scenes awaiting approval</div>
-      <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
-    </div>
   </li>
   <li class="separator">
     <span class="label">Zoom Level</span>

@@ -24,7 +24,6 @@ class ProjectsScenesController {
         if (!this.currentRequest) {
             this.fetchPage();
         }
-        this.getPendingSceneCount();
         // eslint-disable-next-line
         let thisItem = this;
         this.treeOptions = {
@@ -79,20 +78,6 @@ class ProjectsScenesController {
         }
     }
 
-
-    getPendingSceneCount() {
-        if (!this.pendingSceneRequest) {
-            this.pendingSceneRequest = this.projectService.getProjectScenes(this.projectId, {
-                pending: true,
-                pageSize: 0
-            });
-            this.pendingSceneRequest.then((paginatedResponse) => {
-                this.pendingSceneCount =
-                    this.paginationService.buildPagination(paginatedResponse).count;
-            });
-        }
-        return this.pendingSceneRequest;
-    }
 
     onSceneDragStart(e) {
         this.setDragPlaceholderHeight(e);

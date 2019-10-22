@@ -151,14 +151,6 @@ export default app => {
                             layerId: '@layerId'
                         }
                     },
-                    projectAois: {
-                        method: 'GET',
-                        cache: false,
-                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/areas-of-interest`,
-                        params: {
-                            projectId: '@projectId'
-                        }
-                    },
                     removeScenes: {
                         method: 'DELETE',
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes/`,
@@ -175,20 +167,6 @@ export default app => {
                         url: `${BUILDCONFIG.API_HOST}/api/exports?project=:project&layer=:layer`,
                         params: {
                             project: '@project'
-                        }
-                    },
-                    createAOI: {
-                        method: 'POST',
-                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/areas-of-interest/`,
-                        params: {
-                            projectId: '@projectId'
-                        }
-                    },
-                    approveScenes: {
-                        method: 'POST',
-                        url: `${BUILDCONFIG.API_HOST}` + '/api/projects/:projectId/scenes/accept',
-                        params: {
-                            projectId: '@projectId'
                         }
                     },
                     sceneOrder: {
@@ -410,7 +388,7 @@ export default app => {
                         visibility: params.visibility || 'PRIVATE',
                         tileVisibility: params.tileVisibility || 'PRIVATE',
                         tags: params.tags || [],
-                        isAOIProject: params.isAOIProject || false
+                        isAOIProject: false
                     }).$promise;
                 },
                 error => {
@@ -600,24 +578,6 @@ export default app => {
             return this.Project.updateLayer(params).$promise;
         }
 
-        createAOI(project, params) {
-            return this.$q((resolve, reject) => {
-                this.authService.getCurrentUser().then(user => {
-                    const paramsWithOrg = Object.assign(params, {
-                        organizationId: user.organizationId
-                    });
-                    this.Project.createAOI({ projectId: project }, paramsWithOrg).$promise.then(
-                        () => resolve(),
-                        err => reject(err)
-                    );
-                });
-            });
-        }
-
-        approveScenes(projectId, sceneIds) {
-            return this.Project.approveScenes({ projectId }, sceneIds).$promise;
-        }
-
         getProjectTileURL(project, params) {
             let projectId = typeof project === 'object' ? project.id : project;
             let formattedParams = L.Util.getParamString(
@@ -738,10 +698,6 @@ export default app => {
                     resolve(shareUrl);
                 }
             });
-        }
-
-        getProjectAois(projectId) {
-            return this.Project.projectAois({ projectId: projectId }).$promise;
         }
 
         getSceneOrder(projectId) {
