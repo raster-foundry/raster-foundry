@@ -1,11 +1,10 @@
 package com.rasterfoundry.batch.geojsonImport
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.concurrent.ExecutionContext
-import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.S3
+import com.rasterfoundry.batch.Job
 
 import com.typesafe.scalalogging.LazyLogging
 
@@ -16,9 +15,6 @@ import cats.effect._
 
 import scala.util._
 import java.util.UUID
-import java.util.concurrent.Executors
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 
 import java.util.UUID
 import com.rasterfoundry.database.GeojsonUploadDao
@@ -30,47 +26,9 @@ import io.circe.parser.decode
 import com.rasterfoundry.database.UserDao
 import com.rasterfoundry.database.AnnotationDao
 
-object CommandLine {
-  final case class Params(
-      upload: UUID = UUID.randomUUID(),
-      testRun: Boolean = false
-  )
-
-  val parser =
-    new scopt.OptionParser[Params]("raster-foundry-geojson-import") {
-      override def terminate(exitState: Either[String, Unit]): Unit = ()
-
-      head("raster-foundry-geojson-import", "0.1")
-
-      opt[Unit]('t', "test")
-        .action(
-          (_, conf) => conf.copy(testRun = true)
-        )
-        .text(
-          "Dry run geojson import to verify geojson file parses correctly to annotations")
-
-      opt[String]('u', "upload")
-        .required()
-        .action(
-          (u, conf) => {
-            conf.copy(upload = UUID.fromString(u))
-          }
-        )
-        .text("GeojsonUpload entry to process")
-    }
-}
-
-object ImportGeojsonFiles extends Config with LazyLogging {
+object ImportGeojsonFiles extends Job with LazyLogging {
   val name = "import_geojson_files"
 
-  implicit val contextShift: ContextShift[IO] =
-    IO.contextShift(
-      ExecutionContext.fromExecutor(
-        Executors.newCachedThreadPool(
-          new ThreadFactoryBuilder().setNameFormat("geojson-import-%d").build()
-        )
-      )
-    )
   val xa = RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
 
   def processUploadToAnnotations(
@@ -93,7 +51,7 @@ object ImportGeojsonFiles extends Config with LazyLogging {
             case Right(fc) => fc.features.map(_.toAnnotationCreate).toList
             case Left(e)   => throw e
           }
-        logger.info("Annotations parsed")
+        logger.info(s"${annotations.size} annotations parsed")
         annotations
       }
     }
@@ -116,44 +74,37 @@ object ImportGeojsonFiles extends Config with LazyLogging {
           val updatedAnnotationBatch =
             annotationBatch
               .map(_.copy(annotationGroup = Some(upload.annotationGroup)))
-          AnnotationDao.insertAnnotations(
-            updatedAnnotationBatch,
-            upload.projectId,
-            user,
-            Some(upload.projectLayerId)
-          )
+          AnnotationDao
+            .insertAnnotations(
+              updatedAnnotationBatch,
+              upload.projectId,
+              user,
+              Some(upload.projectLayerId)
+            )
+            .map(_.size)
         })
-        .map { _.size }
+        .map { _.foldLeft(0)(_ + _) }
     } yield inserted
   }
 
-  def main(args: Array[String]): Unit = {
-    val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
-      case Some(params) =>
-        params
-      case None =>
-        logger.info("Invalid params")
-        return
-    }
-    val uploadId = params.upload
-
-    val jobIO = for {
-      upload <- GeojsonUploadDao.getUploadById(uploadId).transact(xa)
-      inserted <- (upload match {
+  def runJob(args: List[String]): IO[Unit] = {
+    val uploadIdO = args.headOption.map(UUID.fromString(_))
+    for {
+      uploadO <- uploadIdO match {
+        case Some(id) => GeojsonUploadDao.getUploadById(id).transact(xa)
+        case _        => Option.empty.pure[IO]
+      }
+      inserts <- uploadO match {
         case Some(upload) =>
           val annotations = processUploadToAnnotations(upload)
-          params.testRun match {
-            case false =>
-              insertAnnotations(annotations, upload)
-            case _ =>
-              logger.info(
-                s"Test run: Not inserting ${annotations.size} annotations")
-              Option.empty.pure[ConnectionIO]
-          }
-        case _ => throw new RuntimeException("No upload found, aborting")
-      }).transact(xa)
-    } yield inserted
-    jobIO.unsafeRunSync()
-    return
+          insertAnnotations(annotations, upload).transact(xa)
+        case _ =>
+          throw new RuntimeException(
+            s"No geojson upload found with id: ${uploadIdO}"
+          )
+      }
+    } yield {
+      logger.info(s"Uploaded ${inserts} annotations")
+    }
   }
 }
