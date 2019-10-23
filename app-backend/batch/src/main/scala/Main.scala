@@ -12,6 +12,7 @@ import com.rasterfoundry.batch.aoi.UpdateAOIProject
 import com.rasterfoundry.batch.stacImport.{ReadStacFeature}
 import com.rasterfoundry.batch.stacExport.{WriteStacCatalog}
 import com.rasterfoundry.batch.notification.NotifyIngestStatus
+import com.rasterfoundry.batch.geojsonImport.ImportGeojsonFiles
 
 object Main {
   val modules = Map[String, Array[String] => Unit](
@@ -26,6 +27,7 @@ object Main {
     WriteStacCatalog.name -> (WriteStacCatalog.main(_)),
     UpdateAOIProject.name -> (UpdateAOIProject.main(_)),
     UpdateExportStatus.name -> (UpdateExportStatus.main(_)),
+    ImportGeojsonFiles.name -> (ImportGeojsonFiles.main(_)),
   )
 
   def main(args: Array[String]): Unit = {
