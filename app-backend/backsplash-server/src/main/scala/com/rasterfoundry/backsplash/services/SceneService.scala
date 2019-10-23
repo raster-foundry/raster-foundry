@@ -26,15 +26,15 @@ import java.util.UUID
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 
-class SceneService[RendStore, HistStore](
-    mosaicImplicits: MosaicImplicits[HistStore, RendStore],
+class SceneService[HistStore](
+    mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO]
 )(implicit cs: ContextShift[IO], builder: TracingContextBuilder[IO])
     extends ToRenderableStoreOps {
 
   import mosaicImplicits._
 
-  implicit val tmsReification = paintedMosaicTmsReification(xa)
+  implicit val tmsReification = paintedMosaicTmsReification
 
   implicit val sceneCache = Cache.caffeineSceneCache
 

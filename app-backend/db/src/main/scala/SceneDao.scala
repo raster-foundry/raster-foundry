@@ -32,8 +32,7 @@ object SceneDao
     extends Dao[Scene]
     with LazyLogging
     with ObjectPermissions[Scene]
-    with AWSBatch
-    with AWSLambda {
+    with AWSBatch {
 
   import Cache.SceneCache._
   import Cache.GeotiffInfoCache._

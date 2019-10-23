@@ -192,8 +192,7 @@ lazy val root = project
     batch,
     backsplashCore,
     backsplashServer,
-    backsplashExport,
-    lambdaOverviews
+    backsplashExport
   )
 
 lazy val loggingDependencies = Seq(
@@ -236,43 +235,6 @@ lazy val api = project
   })
 
 /**
-  * Lambda Overviews
-  */
-lazy val lambdaOverviews = project
-  .in(file("lambda-overviews"))
-  .dependsOn(datamodel)
-  .settings(sharedSettings: _*)
-  .settings(
-    mainClass in assembly := Some("com.rasterfoundry.lambda.overviews.Main"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
-    addCompilerPlugin(scalafixSemanticdb),
-    assemblyOption in assembly := (assemblyOption in assembly).value
-      .copy(includeScala = false),
-    assemblyJarName in assembly := "lambda-overviews-assembly.jar"
-  )
-  .settings({
-    libraryDependencies ++= Seq(
-      Dependencies.awsS3,
-      Dependencies.awsLambdaCore,
-      Dependencies.catsCore,
-      Dependencies.geotrellisContribVLM,
-      Dependencies.geotrellisS3,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisProj4,
-      Dependencies.geotrellisVector,
-      Dependencies.commonsIO % Runtime,
-      Dependencies.sttpCore,
-      Dependencies.sttpJson,
-      Dependencies.sttpCirce,
-      Dependencies.circeCore,
-      Dependencies.circeParser,
-      Dependencies.scalatest,
-      Dependencies.clistCore,
-      Dependencies.clistMacros % "provided"
-    ) ++ loggingDependencies
-  })
-
-/**
   * Common Settings
   */
 lazy val common = project
@@ -297,8 +259,7 @@ lazy val common = project
       Dependencies.rollbar,
       Dependencies.apacheCommonsEmail,
       Dependencies.scalaCheck,
-      Dependencies.catsScalacheck,
-      Dependencies.awsLambdaSdk
+      Dependencies.catsScalacheck
     ) ++ loggingDependencies
   })
 

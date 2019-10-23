@@ -74,7 +74,6 @@ object Dependencies {
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % Version.awsLambdaCore
-  val awsLambdaSdk = "com.amazonaws" % "aws-java-sdk-lambda" % Version.awsSdkVersion
   val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsSdkVersion
   val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsSdkVersion
   val awsXraySdk = "com.amazonaws" % "aws-java-sdk-xray" % Version.awsSdkVersion

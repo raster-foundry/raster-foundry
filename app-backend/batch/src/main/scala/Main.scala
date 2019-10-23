@@ -1,16 +1,12 @@
 package com.rasterfoundry.batch
 
 import com.rasterfoundry.batch.aoi.FindAOIProjects
-import com.rasterfoundry.batch.cogMetadata.{
-  HistogramBackfill,
-  OverviewBackfill,
-  RasterSourceMetadataBackfill
-}
+import com.rasterfoundry.batch.cogMetadata._
 import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
 import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.aoi.UpdateAOIProject
-import com.rasterfoundry.batch.stacImport.{ReadStacFeature}
-import com.rasterfoundry.batch.stacExport.{WriteStacCatalog}
+import com.rasterfoundry.batch.stacImport.ReadStacFeature
+import com.rasterfoundry.batch.stacExport.WriteStacCatalog
 import com.rasterfoundry.batch.notification.NotifyIngestStatus
 import com.rasterfoundry.batch.geojsonImport.ImportGeojsonFiles
 
@@ -22,7 +18,6 @@ object Main {
     HistogramBackfill.name -> (HistogramBackfill.main(_)),
     RasterSourceMetadataBackfill.name -> (RasterSourceMetadataBackfill.main(_)),
     NotifyIngestStatus.name -> (NotifyIngestStatus.main(_)),
-    OverviewBackfill.name -> (OverviewBackfill.main(_)),
     ReadStacFeature.name -> (ReadStacFeature.main(_)),
     WriteStacCatalog.name -> (WriteStacCatalog.main(_)),
     UpdateAOIProject.name -> (UpdateAOIProject.main(_)),
