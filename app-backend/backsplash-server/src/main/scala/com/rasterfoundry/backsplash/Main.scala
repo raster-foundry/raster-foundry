@@ -3,7 +3,6 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.database.{
   LayerAttributeDao,
   ProjectDao,
-  SceneDao,
   SceneToLayerDao,
   ToolRunDao
 }
@@ -100,9 +99,9 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   import projectStoreImplicits._
 
   val projectLayerMosaicImplicits =
-    new MosaicImplicits(LayerAttributeDao(), SceneToLayerDao())
+    new MosaicImplicits(LayerAttributeDao())
   val sceneMosaicImplicits =
-    new MosaicImplicits(LayerAttributeDao(), SceneDao())
+    new MosaicImplicits(LayerAttributeDao())
   val toolStoreImplicits =
     new ToolStoreImplicits(projectLayerMosaicImplicits, xa)
   import toolStoreImplicits.toolRunDaoStore

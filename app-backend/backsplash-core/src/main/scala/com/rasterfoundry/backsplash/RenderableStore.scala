@@ -23,9 +23,4 @@ import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
       tracingContext: TracingContext[IO] = NoOpTracingContext[IO]()
   ): BacksplashMosaic
 
-  @op("getOverviewConfig") def getOverviewConfig(
-      self: A,
-      renderableId: UUID,
-      tracingContext: TracingContext[IO]
-  ): IO[OverviewConfig]
 }

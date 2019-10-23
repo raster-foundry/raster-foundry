@@ -242,7 +242,7 @@ trait ProjectLayerRoutes
 
           onSuccess(
             SceneToLayerDao
-              .setManualOrder(projectId, layerId, sceneIds)
+              .setManualOrder(layerId, sceneIds)
               .transact(xa)
               .unsafeToFuture
           ) { _ =>

@@ -28,7 +28,7 @@ import com.rasterfoundry.http4s.TracedHTTPRoutes
 
 class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     layers: LayerStore,
-    mosaicImplicits: MosaicImplicits[HistStore, LayerStore],
+    mosaicImplicits: MosaicImplicits[HistStore],
     analysisManager: AnalysisManager[ToolStore, HistStore],
     xa: Transactor[IO],
     contextShift: ContextShift[IO]
@@ -40,7 +40,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
 
   implicit val projectLayerCache = Cache.caffeineProjectLayerCache
 
-  implicit val tmsReification = paintedMosaicTmsReification(xa)
+  implicit val tmsReification = paintedMosaicTmsReification
 
   private val pngType = `Content-Type`(MediaType.image.png)
   private val tiffType = `Content-Type`(MediaType.image.tiff)

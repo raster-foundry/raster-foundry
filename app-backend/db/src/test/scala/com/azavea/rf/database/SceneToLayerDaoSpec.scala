@@ -92,8 +92,7 @@ class SceneToLayerDaoSpec
                                                  dbProject.id,
                                                  dbProject.defaultLayerId,
                                                  false)
-              _ <- SceneToLayerDao.setManualOrder(dbProject.id,
-                                                  dbProject.defaultLayerId,
+              _ <- SceneToLayerDao.setManualOrder(dbProject.defaultLayerId,
                                                   scenesInsert map { _.id })
               mds <- SceneToLayerDao
                 .getMosaicDefinition(dbProject.defaultLayerId,

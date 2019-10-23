@@ -15,12 +15,14 @@
 - Upgraded STAC version in STAC export builder [\#5202](https://github.com/raster-foundry/raster-foundry/pull/5202)
 - Upgrade http4s to 0.20.11 [\#5213](https://github.com/raster-foundry/raster-foundry/)
 - Started publishing `http4s-util` artifact [\#5224](https://github.com/raster-foundry/raster-foundry/pull/5224)
+- Added custom raster source to use cached GeoTiffInfo for serving tiles [\#5222](https://github.com/raster-foundry/raster-foundry/pull/5222)
 
 ### Deprecated
 
 ### Removed
 
 - Removed blog/feed endpoint and frontend [\#5216](https://github.com/raster-foundry/raster-foundry/pull/5216)
+- Removed project overview generation [\#5222](https://github.com/raster-foundry/raster-foundry/pull/5222)
 
 ### Fixed
 

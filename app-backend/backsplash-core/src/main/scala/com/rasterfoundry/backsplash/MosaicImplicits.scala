@@ -22,12 +22,9 @@ import com.colisweb.tracing.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import com.rasterfoundry.datamodel.SingleBandOptions
 import cats.effect.{ContextShift, IO}
-import doobie.util.transactor.Transactor
 
-class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
-    histStore: HistStore,
-    rendStore: RendStore
-) extends ToTmsReificationOps
+class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
+    extends ToTmsReificationOps
     with ToExtentReificationOps
     with ToHasRasterExtentsOps
     with ToHistogramStoreOps
@@ -70,33 +67,6 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
     }))
   }
 
-  def chooseMosaic(z: Int,
-                   baseImage: BacksplashImage[IO],
-                   config: OverviewConfig,
-                   fallbackIms: NEL[BacksplashImage[IO]],
-                   xa: Transactor[IO]): NEL[BacksplashImage[IO]] =
-    config match {
-      case OverviewConfig(Some(overviewLocation), Some(minZoom))
-          if z <= minZoom =>
-        NEL.of(
-          BacksplashGeotiff(
-            baseImage.imageId,
-            baseImage.projectId,
-            baseImage.projectLayerId,
-            overviewLocation,
-            baseImage.subsetBands,
-            baseImage.corrections,
-            baseImage.singleBandOptions,
-            baseImage.mask,
-            baseImage.footprint,
-            baseImage.metadata,
-            xa
-          ),
-          Nil: _*
-        )
-      case _ =>
-        fallbackIms
-    }
   @SuppressWarnings(Array("TraversableHead"))
   def renderMosaicSingleBand(
       mosaic: NEL[BacksplashImage[IO]],
@@ -282,23 +252,13 @@ class MosaicImplicits[HistStore: HistogramStore, RendStore: RenderableStore](
           val imagesIO: IO[(TracingContext[IO], List[BacksplashImage[IO]])] =
             self
           (for {
-            (context, imagesNel) <- imagesIO map {
+            (context, mosaic) <- imagesIO map {
               case (tracingContext, images) => (tracingContext, images.toNel)
             } flatMap {
               case (tracingContext, Some(ims)) => IO.pure((tracingContext, ims))
               case (_, None)                   => IO.raiseError(NoDataInRegionException)
             }
-            bandCount = imagesNel.head.subsetBands.length
-            overviewConfig <- context.childSpan("getOverviewConfig") use {
-              childContext =>
-                rendStore.getOverviewConfig(imagesNel.head.projectLayerId,
-                                            childContext)
-            }
-            mosaic = chooseMosaic(z,
-                                  imagesNel.head,
-                                  overviewConfig,
-                                  imagesNel,
-                                  xa)
+            bandCount = mosaic.head.subsetBands.length
             // for single band imagery, after color correction we have RGBA, so
             // the empty tile needs to be four band as well
             rendered <- context.childSpan("paintedRender") use {

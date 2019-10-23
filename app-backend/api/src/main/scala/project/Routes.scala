@@ -839,7 +839,7 @@ trait ProjectRoutes
         val setOrderIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
           updatedOrder <- SceneToLayerDao
-            .setManualOrder(projectId, project.defaultLayerId, sceneIds)
+            .setManualOrder(project.defaultLayerId, sceneIds)
         } yield { updatedOrder }
 
         onSuccess(setOrderIO.transact(xa).unsafeToFuture) { _ =>
