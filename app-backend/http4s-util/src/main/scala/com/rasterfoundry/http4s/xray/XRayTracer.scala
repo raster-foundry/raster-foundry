@@ -20,17 +20,16 @@ object XRayTracer {
               tags: Map[String, String]): TracingContextResource[F]
   }
 
-  def tracingContextBuilder(implicit contextShift: ContextShift[IO],
-                            timer: Timer[IO]): TracingContextBuilder[IO] = {
+  def tracingContextBuilder[F[_]: Sync: Timer]: TracingContextBuilder[F] = {
 
-    new XRayTracingContextBuilder[IO] {
+    new XRayTracingContextBuilder[F] {
       def apply(operationName: String,
                 tags: Map[String, String],
-                http: Option[XrayHttp]): TracingContextResource[IO] = {
-        XRayTracingContext[IO](getTracer)(operationName, tags)(http)
+                http: Option[XrayHttp]): TracingContextResource[F] = {
+        XRayTracingContext[F](getTracer)(operationName, tags)(http)
       }
       def apply(operationName: String,
-                tags: Map[String, String]): TracingContextResource[IO] = {
+                tags: Map[String, String]): TracingContextResource[F] = {
         apply(operationName, tags, None)
       }
     }
