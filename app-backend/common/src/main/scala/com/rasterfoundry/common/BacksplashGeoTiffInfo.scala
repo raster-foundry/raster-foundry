@@ -13,9 +13,9 @@ import cats.data.{NonEmptyList => NEL}
 
 /** Container for metadata for Tiffs
   *
-  * This tracks closely to [[GeoTiffInfo]], but omits and adds a few things
+  * This tracks closely to GeoTiffInfo, but omits and adds a few things
   * to make it easier to serialize. As such, this class has a static helper method
-  * to construct itself from an instance of [[GeoTiffInfo]] and also transform back
+  * to construct itself from an instance of GeoTiffInfo and also transform back
   * into one
   *
   * @param extent

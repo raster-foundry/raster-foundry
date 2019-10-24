@@ -16,7 +16,7 @@ import geotrellis.raster.reproject.{Reproject, ReprojectRasterExtent}
 import geotrellis.raster.resample.{NearestNeighbor, ResampleMethod}
 import geotrellis.vector._
 
-/** Custom RasterSource that allows us to pass in cached [[GeoTiffInfo]]
+/** Custom RasterSource that allows us to pass in cached GeoTiffInfo
   * rather than incur the overhead of reading the info for every reads/raster
   * source creation
   *

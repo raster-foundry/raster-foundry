@@ -53,7 +53,7 @@ object BacksplashGeotiffReader extends LazyLogging {
 
   /** This method is copy/pasted from  GeoTrellis source code
     * because we need tiff tags for the native resolution
-    * and any overviews in order to recreate [[GeoTiffInfo]] that
+    * and any overviews in order to recreate GeoTiffInfo that
     * the reader needs
     *
     * @param byteReader
@@ -130,7 +130,7 @@ object BacksplashGeotiffReader extends LazyLogging {
     }
   }
 
-  /** Helper function that gets a serializable [[BacksplashGeoTiffInfo]] given
+  /** Helper function that gets a serializable BacksplashGeoTiffInfo given
     * a URI
     *
     * @param uri
