@@ -29,7 +29,6 @@ class ProjectCreateModalController {
         ];
         this.currentStep = this.steps[0];
         this.projectBuffer = {
-            isAOIProject: false,
             addType: 'public'
         };
         this.allowNext = true;
@@ -104,13 +103,6 @@ class ProjectCreateModalController {
         }
     }
 
-    gotoAOIParameters() {
-        if (this.project) {
-            this.close();
-            this.$state.go('projects.edit.aoi-parameters', {projectid: this.project.id});
-        }
-    }
-
     startImport() {
         this.closeWithData();
 
@@ -156,9 +148,7 @@ class ProjectCreateModalController {
                 }
             } else if (this.currentStepIs('ADD_SCENES')) {
                 let isPublic = this.projectAttributeIs('addType', 'public');
-                if (this.projectBuffer.isAOIProject && isPublic) {
-                    this.gotoAOIParameters();
-                } else if (isPublic) {
+                if (isPublic) {
                     this.gotoSceneBrowser();
                 } else {
                     this.startImport();

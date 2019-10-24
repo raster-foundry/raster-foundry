@@ -23,7 +23,6 @@ object Platform {
                                   emailSmtpPort: Int,
                                   emailSmtpEncryption: String,
                                   emailIngestNotification: Boolean,
-                                  emailAoiNotification: Boolean,
                                   emailExportNotification: Boolean,
                                   platformHost: Option[String],
                                   emailFrom: String,

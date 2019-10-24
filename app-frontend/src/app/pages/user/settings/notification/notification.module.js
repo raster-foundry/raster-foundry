@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-const SUBSCRIPTIONS = ['AOI project update', 'scene ingest status', 'scene export status'];
+const SUBSCRIPTIONS = ['scene ingest status', 'scene export status'];
 
 class NotificationController {
     constructor($scope, $window, authService, userService) {

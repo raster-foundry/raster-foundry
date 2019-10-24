@@ -2063,55 +2063,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /projects/{projectID}/areas-of-interest/:
-    x-resource: Projects
-    get:
-      summary: 'Get all areas of interest for a project'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/projectID'
-        - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/page'
-      responses:
-        200:
-          description: 'JSON summary of the filters and Polygons that make up AOIs for the given project.'
-          schema:
-            $ref: '#/definitions/AoiPaginated'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-
-    post:
-      summary: 'Create an area of interest for a project'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/projectID'
-        - name: aoi
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/AOI'
-      responses:
-        201:
-          description: 'Area of Interest created.'
-          schema:
-            $ref: '#/definitions/AOI'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-
   /projects/{projectID}/scenes/:
     x-resource: Projects
     get:
@@ -3683,79 +3634,6 @@ paths:
           description: "Unexpected error"
           schema:
             $ref: "#/definitions/Error"
-  /areas-of-interest/:
-    get:
-      summary: 'Get a list of areas of interest'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/page'
-        - $ref: '#/parameters/organization'
-        - $ref: '#/parameters/owner'
-      responses:
-        200:
-          description: 'A paginated list of all AOIs the user is authorized to view.'
-          schema:
-            $ref: '#/definitions/AoiPaginated'
-
-  /areas-of-interest/{aoiID}/:
-    get:
-      summary: 'Get a specific area of interest'
-      parameters:
-        - $ref: '#/parameters/aoiID'
-      responses:
-        200:
-          description: "JSON summary of the given AOI's filters and Polygons."
-          schema:
-            $ref: '#/definitions/AOI'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      summary: 'Update an area of interest'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/aoiID'
-        - name: aoi
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/AOI'
-      responses:
-        204:
-          description: 'Update successful.'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-    delete:
-      summary: 'Delete a project'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/aoiID'
-      responses:
-        204:
-          description: 'Deletion successful.'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
 
   /map-tokens/:
     x-resource: Tokens
@@ -5833,7 +5711,6 @@ definitions:
       - 'LICENSE'
       - 'TOOLTAG'
       - 'TOOLCATEGORY'
-      - 'AOI'
   LayerSplitOptions:
     type: object
     properties:
@@ -6067,7 +5944,6 @@ definitions:
               - 'LICENSE'
               - 'TOOLTAG'
               - 'TOOLCATEGORY'
-              - 'AOI'
           objectId:
             type: string
             description: 'Id of the object this access control rule applies to'
@@ -6112,21 +5988,6 @@ definitions:
         type: string
       redirectURI:
         type: string
-  AOI:
-    type: object
-    properties:
-      shape:
-        type: string
-        format: uuid
-      filters:
-        $ref: '#/definitions/CombinedSceneQueryParams'
-      isActive:
-        type: boolean
-      approvalRequired:
-        type: boolean
-      startTime:
-        type: string
-        format: date-time
   ColorCorrection:
     type: object
     properties:
@@ -7232,16 +7093,6 @@ definitions:
             items:
               $ref: '#/definitions/Project'
 
-  AoiPaginated:
-    allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-      - type: object
-        properties:
-          results:
-            type: array
-            items:
-              $ref: '#/definitions/AOI'
-
   BandCreate:
     type: object
     properties:
@@ -7619,7 +7470,7 @@ definitions:
       keepFiles:
         type: boolean
         description: |
-          Keep geojson files once they've been added to the project. 
+          Keep geojson files once they've been added to the project.
           Defaults to true, requires Delete permissions for the s3 bucket.
   GeojsonUpload:
     allOf:

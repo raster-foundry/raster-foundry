@@ -38,10 +38,7 @@ class PlatformEmailController {
         if (type === 'ingest') {
             this.platformBuffer.publicSettings.emailIngestNotification =
                 !this.platformBuffer.publicSettings.emailIngestNotification;
-        } else if (type === 'aoi') {
-            this.platformBuffer.publicSettings.emailAoiNotification =
-                !this.platformBuffer.publicSettings.emailAoiNotification;
-        } else if (type === 'export') {
+        }  else if (type === 'export') {
             this.platformBuffer.publicSettings.emailExportNotification =
                 !this.platformBuffer.publicSettings.emailExportNotification;
         }

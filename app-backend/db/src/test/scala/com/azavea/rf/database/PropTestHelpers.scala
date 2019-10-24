@@ -228,20 +228,6 @@ trait PropTestHelpers {
     }
   }
 
-  def fixupAoiCreate(
-      user: User,
-      project: Project,
-      aoiCreate: AOI.Create,
-      shape: Shape
-  ): AOI =
-    aoiCreate
-      .copy(owner = Some(user.id), shape = shape.id)
-      .toAOI(project.id, user)
-
-  def fixupAoi(user: User, aoi: AOI): AOI = {
-    aoi.copy(owner = user.id, createdBy = user.id)
-  }
-
   def fixupTeam(teamCreate: Team.Create, org: Organization, user: User): Team =
     teamCreate.copy(organizationId = org.id).toTeam(user)
 
