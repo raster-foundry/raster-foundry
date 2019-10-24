@@ -26,7 +26,6 @@ object ObjectType {
   case object License extends ObjectType("LICENSE")
   case object ToolTag extends ObjectType("TOOLTAG")
   case object ToolCategory extends ObjectType("TOOLCATEGORY")
-  case object AOI extends ObjectType("AOI")
 
   def fromString(s: String): ObjectType = s.toUpperCase match {
     case "PROJECT"      => Project
@@ -47,7 +46,6 @@ object ObjectType {
     case "LICENSE"      => License
     case "TOOLTAG"      => ToolTag
     case "TOOLCATEGORY" => ToolCategory
-    case "AOI"          => AOI
     case _              => throw new Exception(s"Invalid ObjectType: ${s}")
   }
 

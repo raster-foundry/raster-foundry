@@ -1,6 +1,5 @@
 package com.rasterfoundry.api
 
-import com.rasterfoundry.api.aoi.AoiRoutes
 import com.rasterfoundry.api.config.ConfigRoutes
 import com.rasterfoundry.api.datasource.DatasourceRoutes
 import com.rasterfoundry.api.exports.ExportRoutes
@@ -41,7 +40,6 @@ trait Router
     with OrganizationRoutes
     with SceneRoutes
     with ProjectRoutes
-    with AoiRoutes
     with TokenRoutes
     with ThumbnailRoutes
     with ToolRoutes
@@ -72,9 +70,6 @@ trait Router
         } ~
           pathPrefix("platforms") {
             platformRoutes
-          } ~
-          pathPrefix("areas-of-interest") {
-            aoiRoutes
           } ~
           pathPrefix("organizations") {
             organizationRoutes

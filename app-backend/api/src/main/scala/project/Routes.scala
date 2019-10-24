@@ -503,16 +503,6 @@ trait ProjectRoutes
                 }
               }
           } ~
-          pathPrefix("areas-of-interest") {
-            pathEndOrSingleSlash {
-              get {
-                listAOIs(projectId)
-              } ~
-                post {
-                  createAOI(projectId)
-                }
-            }
-          } ~
           pathPrefix("datasources") {
             pathEndOrSingleSlash {
               get {
@@ -687,41 +677,6 @@ trait ProjectRoutes
     } {
       complete {
         AnnotationDao.listProjectLabels(projectId).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def listAOIs(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      withPagination { page =>
-        complete {
-          AoiDao.listAOIs(projectId, page).transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def createAOI(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[AOI.Create]) { aoi =>
-        onSuccess(
-          AoiDao
-            .createAOI(aoi.toAOI(projectId, user), user: User)
-            .transact(xa)
-            .unsafeToFuture()
-        ) { a =>
-          complete(StatusCodes.Created, a)
-        }
       }
     }
   }

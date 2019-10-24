@@ -151,19 +151,6 @@ object ProjectSceneQueryParameters {
     deriveDecoder[ProjectSceneQueryParameters]
 }
 
-final case class AoiQueryParameters(
-    orgParams: OrgQueryParameters = OrgQueryParameters(),
-    userParams: UserQueryParameters = UserQueryParameters(),
-    timestampParams: TimestampQueryParameters = TimestampQueryParameters()
-)
-
-object AoiQueryParameters {
-  implicit def encAoiQueryParameters: Encoder[AoiQueryParameters] =
-    deriveEncoder[AoiQueryParameters]
-  implicit def decAoiQueryParameters: Decoder[AoiQueryParameters] =
-    deriveDecoder[AoiQueryParameters]
-}
-
 final case class ToolQueryParameters(
     singleSource: Option[Boolean] = None
 )
