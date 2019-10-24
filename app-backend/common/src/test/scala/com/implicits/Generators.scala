@@ -656,7 +656,6 @@ object Generators extends ArbitraryInstances {
       emailSmtpPort <- Gen.oneOf(25, 2525, 465, 587)
       emailSmtpEncryption <- Gen.oneOf("ssl", "tls", "starttls")
       emailIngestNotification <- arbitrary[Boolean]
-      emailAoiNotification <- arbitrary[Boolean]
       emailExportNotification <- arbitrary[Boolean]
       platformHost <- Gen.const(None)
       emailFrom <- nonEmptyStringGen
@@ -669,7 +668,6 @@ object Generators extends ArbitraryInstances {
         emailSmtpPort,
         emailSmtpEncryption,
         emailIngestNotification,
-        emailAoiNotification,
         emailExportNotification,
         platformHost,
         emailFrom,
