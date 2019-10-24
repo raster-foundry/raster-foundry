@@ -1,10 +1,8 @@
 package com.rasterfoundry.batch
 
-import com.rasterfoundry.batch.aoi.FindAOIProjects
 import com.rasterfoundry.batch.cogMetadata._
 import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
 import com.rasterfoundry.batch.healthcheck.HealthCheck
-import com.rasterfoundry.batch.aoi.UpdateAOIProject
 import com.rasterfoundry.batch.stacImport.ReadStacFeature
 import com.rasterfoundry.batch.stacExport.WriteStacCatalog
 import com.rasterfoundry.batch.notification.NotifyIngestStatus
