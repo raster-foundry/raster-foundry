@@ -60,6 +60,26 @@ final case class WriteStacCatalog(exportId: UUID)(
 ) extends Config
     with RollbarNotifier {
 
+  implicit class stacCollectionWithoutSelf(s: StacCollection) {
+    def withoutSelfLink = {
+      val filteredLinks = s.links.flatMap {
+        case StacLink(_, Self, _, _, _) => None
+        case nonSelfLink                => Some(nonSelfLink)
+      }
+      s.copy(links = filteredLinks)
+    }
+  }
+
+  implicit class stacItemWithoutSelf(s: StacItem) {
+    def withoutSelfLink = {
+      val filteredLinks = s.links.flatMap {
+        case StacLink(_, Self, _, _, _) => None
+        case nonSelfLink                => Some(nonSelfLink)
+      }
+      s.copy(links = filteredLinks)
+    }
+  }
+
   val name = WriteStacCatalog.name
 
   protected def s3Client = S3()
@@ -127,13 +147,13 @@ final case class WriteStacCatalog(exportId: UUID)(
         writeObjectToFileSystem(
           getStacSelfLink(lca.layerCollection.links)
             .map(sl => sl.replace(catalogRootPath, directory)),
-          Some(lca.layerCollection.asJson)
+          Some(lca.layerCollection.withoutSelfLink.asJson)
         )
       }
       sceneCollectionFile <- writeObjectToFileSystem(
         getStacSelfLink(lca.sceneCollection.links)
           .map(sl => sl.replace(catalogRootPath, directory)),
-        Some(lca.sceneCollection.asJson)
+        Some(lca.sceneCollection.withoutSelfLink.asJson)
       )
       sceneItemFiles <- lca.sceneItemList.traverse(
         sceneItem =>
@@ -142,18 +162,18 @@ final case class WriteStacCatalog(exportId: UUID)(
               .map(
                 sl => sl.replace(catalogRootPath, directory)
               ),
-            Some(sceneItem.asJson)
+            Some(sceneItem.withoutSelfLink.asJson)
         )
       )
       labelCollectionFile <- writeObjectToFileSystem(
         getStacSelfLink(lca.labelCollection.links)
           .map(sl => sl.replace(catalogRootPath, directory)),
-        Some(lca.labelCollection.asJson)
+        Some(lca.labelCollection.withoutSelfLink.asJson)
       )
       labelItemsFile <- writeObjectToFileSystem(
         getStacSelfLink(lca.labelItem.links)
           .map(sl => sl.replace(catalogRootPath, directory)),
-        Some(lca.labelItem.asJson)
+        Some(lca.labelItem.withoutSelfLink.asJson)
       )
       labelDataFile <- writeObjectToFileSystem(
         Some(lca.labelDataLink)
@@ -259,13 +279,13 @@ final case class WriteStacCatalog(exportId: UUID)(
           // layer collection
           val writeLayerCollectionIO = putObjectToS3(
             getStacSelfLink(layerCollection.links),
-            Some(layerCollection.asJson),
+            Some(layerCollection.withoutSelfLink.asJson),
             "application/json"
           )
           // scene collection
           val writeSceneCollectionIO = putObjectToS3(
             getStacSelfLink(sceneCollection.links),
-            Some(sceneCollection.asJson),
+            Some(sceneCollection.withoutSelfLink.asJson),
             "application/json"
           )
           // scene items
@@ -273,20 +293,20 @@ final case class WriteStacCatalog(exportId: UUID)(
             sceneItem =>
               putObjectToS3(
                 getStacSelfLink(sceneItem.links),
-                Some(sceneItem.asJson),
+                Some(sceneItem.withoutSelfLink.asJson),
                 "application/json"
             )
           )
           // label collection
           val writeLabelCollectionIO = putObjectToS3(
             getStacSelfLink(labelCollection.links),
-            Some(labelCollection.asJson),
+            Some(labelCollection.withoutSelfLink.asJson),
             "application/json"
           )
           // label item
           val writeLabelItemIO = putObjectToS3(
             getStacSelfLink(labelItem.links),
-            Some(labelItem.asJson),
+            Some(labelItem.withoutSelfLink.asJson),
             "application/json"
           )
           // label data
