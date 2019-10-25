@@ -196,6 +196,13 @@ class SceneCollectionBuilder[
               List()
             ),
             StacLink(
+              "../collection.json",
+              Collection,
+              Some(`application/json`),
+              Some("Label Collection"),
+              List()
+            ),
+            StacLink(
               sceneRootPath,
               StacRoot,
               Some(`application/json`),

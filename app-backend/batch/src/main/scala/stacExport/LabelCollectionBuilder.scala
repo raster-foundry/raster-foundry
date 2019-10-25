@@ -216,6 +216,13 @@ class LabelCollectionBuilder[
         List()
       ),
       StacLink(
+        "../collection.json",
+        Collection,
+        Some(`application/json`),
+        Some("Label Collection"),
+        List()
+      ),
+      StacLink(
         s"../${rootPath}",
         StacRoot,
         Some(`application/json`),
