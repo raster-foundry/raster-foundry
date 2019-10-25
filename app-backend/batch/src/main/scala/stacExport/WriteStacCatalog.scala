@@ -410,7 +410,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       new StacCatalogBuilder[
         StacCatalogBuilder.CatalogBuilder.EmptyCatalog
       ]()
-    val stacVersion = "0.8.0-rc1"
+    val stacVersion = "0.8.0"
     val currentPath = s"s3://${dataBucket}/stac-exports"
     val catalogId = contentBundle.export.id.toString
     val catalogParentPath = s"${currentPath}/${catalogId}"
