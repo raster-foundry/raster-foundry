@@ -33,7 +33,7 @@ object Version {
   val geotools = "17.1"
   val geotrellisContrib = "3.16.1-M3"
   val geotrellis = "3.0.0-M3"
-  val geotrellisServer = "3.4.0-6-ge843f05-SNAPSHOT"
+  val geotrellisServer = "3.4.0-4-gaac8d7e-SNAPSHOT"
   val hadoop = "2.8.4"
   val http4s = "0.20.11"
   val json4s = "3.5.0"
