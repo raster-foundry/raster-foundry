@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.{AWSBatch, AWSLambda, S3}
+import com.rasterfoundry.common.{AWSBatch, S3}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.color._
@@ -31,7 +31,6 @@ final case class ProjectDao()
 object ProjectDao
     extends Dao[Project]
     with AWSBatch
-    with AWSLambda
     with ObjectPermissions[Project] {
 
   val tableName = "projects"
@@ -379,7 +378,6 @@ object ProjectDao
         .info(
           s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId"
         )
-      kickoffLayerOverviewCreate(projectId, projectLayerId)
       sceneToLayerInserts
     }
   }
@@ -479,13 +477,6 @@ object ProjectDao
             case _ => 0.pure[ConnectionIO]
           }
         } yield {
-          if (!layerDatasources.isEmpty) {
-            logger
-              .info(
-                s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId"
-              )
-            kickoffLayerOverviewCreate(projectId, projectLayerId)
-          }
           rowsDeleted
         }
       case _ => 0.pure[ConnectionIO]

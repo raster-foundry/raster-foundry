@@ -531,45 +531,6 @@ object Generators extends ArbitraryInstances {
       )
     }
 
-  private def aoiCreateGen: Gen[AOI.Create] =
-    for {
-      shape <- uuidGen
-      filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
-      owner <- Gen.const(None)
-      isActive <- arbitrary[Boolean]
-      startTime <- timestampIn2016Gen
-      approvalRequired <- arbitrary[Boolean]
-    } yield {
-      AOI.Create(shape, filters, owner, isActive, startTime, approvalRequired)
-    }
-
-  private def aoiGen: Gen[AOI] =
-    for {
-      id <- uuidGen
-      timeField <- timestampIn2016Gen
-      userField <- nonEmptyStringGen
-      shape <- uuidGen
-      filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
-      isActive <- arbitrary[Boolean]
-      startTime <- timestampIn2016Gen
-      approvalRequired <- arbitrary[Boolean]
-      projectId <- uuidGen
-    } yield {
-      AOI(
-        id,
-        timeField,
-        timeField,
-        userField,
-        userField,
-        shape,
-        filters,
-        isActive,
-        startTime,
-        approvalRequired,
-        projectId
-      )
-    }
-
   private def datasourceCreateGen: Gen[Datasource.Create] =
     for {
       name <- nonEmptyStringGen
@@ -620,6 +581,23 @@ object Generators extends ArbitraryInstances {
         layerId,
         source,
         keepInSourceBucket
+      )
+    }
+
+  private def geojsonUploadCreateGen: Gen[GeojsonUpload.Create] =
+    for {
+      uploadStatus <- uploadStatusGen
+      fileType <- fileTypeGen
+      uploadType <- uploadTypeGen
+      files <- stringListGen
+      keepFiles <- arbitrary[Boolean]
+    } yield {
+      GeojsonUpload.Create(
+        uploadStatus,
+        fileType,
+        uploadType,
+        files,
+        keepFiles
       )
     }
 
@@ -678,7 +656,6 @@ object Generators extends ArbitraryInstances {
       emailSmtpPort <- Gen.oneOf(25, 2525, 465, 587)
       emailSmtpEncryption <- Gen.oneOf("ssl", "tls", "starttls")
       emailIngestNotification <- arbitrary[Boolean]
-      emailAoiNotification <- arbitrary[Boolean]
       emailExportNotification <- arbitrary[Boolean]
       platformHost <- Gen.const(None)
       emailFrom <- nonEmptyStringGen
@@ -691,7 +668,6 @@ object Generators extends ArbitraryInstances {
         emailSmtpPort,
         emailSmtpEncryption,
         emailIngestNotification,
-        emailAoiNotification,
         emailExportNotification,
         platformHost,
         emailFrom,
@@ -1122,11 +1098,10 @@ object Generators extends ArbitraryInstances {
       uploadCreateGen
     }
 
-    implicit def arbAOICreate: Arbitrary[AOI.Create] = Arbitrary {
-      aoiCreateGen
-    }
-
-    implicit def arbAOI: Arbitrary[AOI] = Arbitrary { aoiGen }
+    implicit def arbGeojsonUploadCreate: Arbitrary[GeojsonUpload.Create] =
+      Arbitrary {
+        geojsonUploadCreateGen
+      }
 
     implicit def arbLayerAttribute: Arbitrary[LayerAttribute] = Arbitrary {
       layerAttributeGen

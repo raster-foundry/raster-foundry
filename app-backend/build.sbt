@@ -55,6 +55,10 @@ lazy val sharedSettings = Seq(
     "org.apache.spark",
     "spark-core"
   ),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "io.jaegertracing",
+    "jaeger-client"
+  ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
     "log4j" % "log4j",
@@ -64,8 +68,8 @@ lazy val sharedSettings = Seq(
   scalacOptions := scalaOptions,
   // https://github.com/sbt/sbt/issues/3570
   scalacOptions in (Compile, console) ~= (_.filterNot(
-    _ == "-Ywarn-unused-import")
-    .filterNot(_ == "-Xfatal-warnings")
+    _ == "-Ywarn-unused-import"
+  ).filterNot(_ == "-Xfatal-warnings")
     .filterNot(_ == "-Ywarn-unused")
     .filterNot(_ == "-Ywarn-unused-import")),
   updateOptions := updateOptions.value.withGigahorse(false),
@@ -153,7 +157,6 @@ lazy val publishSettings = Seq(
   pgpSecretRing := file("/root/.gnupg/secring.gpg"),
   usePgpKeyHex(System.getenv().getOrDefault("PGP_HEX_KEY", "0")),
   releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
     inquireVersions,
     setReleaseVersion,
     releaseStepCommand("publishSigned"),
@@ -179,16 +182,18 @@ lazy val root = project
   .in(file("."))
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
-  .aggregate(api,
-             akkautil,
-             db,
-             common,
-             datamodel,
-             batch,
-             backsplashCore,
-             backsplashServer,
-             backsplashExport,
-             lambdaOverviews)
+  .aggregate(
+    api,
+    akkautil,
+    db,
+    common,
+    datamodel,
+    http4sUtil,
+    batch,
+    backsplashCore,
+    backsplashServer,
+    backsplashExport
+  )
 
 lazy val loggingDependencies = Seq(
   Dependencies.scalaLogging % Runtime,
@@ -230,43 +235,6 @@ lazy val api = project
   })
 
 /**
-  * Lambda Overviews
-  */
-lazy val lambdaOverviews = project
-  .in(file("lambda-overviews"))
-  .dependsOn(datamodel)
-  .settings(sharedSettings: _*)
-  .settings(
-    mainClass in assembly := Some("com.rasterfoundry.lambda.overviews.Main"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
-    addCompilerPlugin(scalafixSemanticdb),
-    assemblyOption in assembly := (assemblyOption in assembly).value.copy(
-      includeScala = false),
-    assemblyJarName in assembly := "lambda-overviews-assembly.jar"
-  )
-  .settings({
-    libraryDependencies ++= Seq(
-      Dependencies.awsS3,
-      Dependencies.awsLambdaCore,
-      Dependencies.catsCore,
-      Dependencies.geotrellisContribVLM,
-      Dependencies.geotrellisS3,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisProj4,
-      Dependencies.geotrellisVector,
-      Dependencies.commonsIO % Runtime,
-      Dependencies.sttpCore,
-      Dependencies.sttpJson,
-      Dependencies.sttpCirce,
-      Dependencies.circeCore,
-      Dependencies.circeParser,
-      Dependencies.scalatest,
-      Dependencies.clistCore,
-      Dependencies.clistMacros % "provided"
-    ) ++ loggingDependencies
-  })
-
-/**
   * Common Settings
   */
 lazy val common = project
@@ -291,8 +259,7 @@ lazy val common = project
       Dependencies.rollbar,
       Dependencies.apacheCommonsEmail,
       Dependencies.scalaCheck,
-      Dependencies.catsScalacheck,
-      Dependencies.awsLambdaSdk,
+      Dependencies.catsScalacheck
     ) ++ loggingDependencies
   })
 
@@ -339,6 +306,7 @@ lazy val db = project
       Dependencies.doobiePostgresCirce,
       Dependencies.scalacacheCats,
       Dependencies.scalacacheCore,
+      Dependencies.scalacacheCaffeine,
       Dependencies.scalacacheMemcached,
       Dependencies.scalacacheCirce,
       Dependencies.elasticacheClient,
@@ -359,6 +327,7 @@ lazy val batch = project
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.betterFiles,
       Dependencies.scalatest,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
@@ -429,7 +398,7 @@ lazy val akkautil = project
   * Backsplash Core Settings
   */
 lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
-  .dependsOn(common)
+  .dependsOn(common, db)
   .settings(sharedSettings: _*)
   .settings(
     fork in run := true,
@@ -438,7 +407,6 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.geotrellisContribVLM,
       Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisServer,
-      Dependencies.scalacacheCats,
       Dependencies.scalacacheCore,
       Dependencies.scalacacheCaffeine,
       Dependencies.scalaCheck,
@@ -526,7 +494,7 @@ lazy val backsplashServer =
 lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   .dependsOn(db)
   .settings(sharedSettings: _*)
-  .settings(noPublishSettings)
+  .settings(publishSettings)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.awsXrayRecorder,

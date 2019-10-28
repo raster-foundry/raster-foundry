@@ -1,18 +1,23 @@
 package com.rasterfoundry.database.util
 
 import java.net.InetSocketAddress
+import java.util.concurrent.Executors
 
+import cats._
+import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.common.{
   BacksplashConnectionFactory,
+  BacksplashGeoTiffInfo,
   Config,
   SceneToLayerWithSceneType
 }
 import com.rasterfoundry.datamodel._
 import com.typesafe.scalalogging.LazyLogging
-import doobie.ConnectionIO
-import doobie.implicits.AsyncConnectionIO
+import geotrellis.raster.histogram.Histogram
 import net.spy.memcached.MemcachedClient
 import scalacache._
+import scalacache.caffeine.CaffeineCache
 import scalacache.memcached.MemcachedCache
 
 import scala.collection.JavaConverters._
@@ -22,30 +27,34 @@ import scala.concurrent.duration.Duration
 
 object Cache extends LazyLogging {
 
-  def getOptionCache[T](cacheKey: String, ttl: Option[Duration] = None)(
-      f: => ConnectionIO[Option[T]])(
+  def getOptionCache[F[_]: Monad, T](
+      cacheKey: String,
+      ttl: Option[Duration] = None)(f: => F[Option[T]])(
       implicit cache: Cache[T],
-      mode: Mode[ConnectionIO]): ConnectionIO[Option[T]] = {
-    val cacheValue: ConnectionIO[Option[T]] = get(cacheKey)
+      mode: Mode[F]): F[Option[T]] = {
+    val cacheValue: F[Option[T]] = get(cacheKey)
     cacheValue.flatMap {
       case Some(t) =>
         logger.debug(s"Cache Hit for Key: ${cacheKey}")
-        AsyncConnectionIO.pure[Option[T]](Some(t))
+        Applicative[F].pure(Some(t))
       case _ =>
         logger.debug(s"Cache Miss for Key: $cacheKey")
         f.flatMap {
           case Some(selectT) =>
             logger.debug(s"Inserting Key ($cacheKey) into Cache")
             put(cacheKey)(selectT, ttl).map(_ => Some(selectT): Option[T])
-          case _ => AsyncConnectionIO.pure[Option[T]](None)
+          case _ => Applicative[F].pure(None)
         }
     }
   }
 
+  lazy val es = Executors.newCachedThreadPool(
+    new ThreadFactoryBuilder().setNameFormat("cache-%d").build())
   val address =
     new InetSocketAddress(Config.memcached.host, Config.memcached.port)
   val memcachedClient =
-    new MemcachedClient(new BacksplashConnectionFactory, List(address).asJava)
+    new MemcachedClient(new BacksplashConnectionFactory(es),
+                        List(address).asJava)
 
   object ProjectCache {
     implicit val projectCache: Cache[Project] = {
@@ -66,6 +75,7 @@ object Cache extends LazyLogging {
   }
 
   object MosaicDefinitionCache {
+    import scalacache.serialization.binary._
     implicit val mosaicDefinitionCache
       : Cache[List[SceneToLayerWithSceneType]] = {
       MemcachedCache[List[SceneToLayerWithSceneType]](memcachedClient)
@@ -81,6 +91,19 @@ object Cache extends LazyLogging {
   object SceneCache {
     implicit val sceneCache: Cache[Scene] = {
       MemcachedCache[Scene](memcachedClient)
+    }
+  }
+
+  object HistogramCache {
+    import scalacache.serialization.binary._
+    implicit val histogramCache: Cache[Array[Histogram[Double]]] = {
+      MemcachedCache[Array[Histogram[Double]]](memcachedClient)
+    }
+  }
+
+  object GeotiffInfoCache {
+    implicit val geotiffInfoCache: Cache[BacksplashGeoTiffInfo] = {
+      CaffeineCache[BacksplashGeoTiffInfo]
     }
   }
 }

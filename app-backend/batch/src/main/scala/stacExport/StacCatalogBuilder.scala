@@ -8,6 +8,7 @@ import geotrellis.vector.reproject.Reproject
 import cats.implicits._
 import io.circe._
 import java.sql.Timestamp
+import shapeless._
 
 object StacCatalogBuilder {
   sealed trait CatalogRequirements
@@ -43,6 +44,10 @@ case class IncompleteStacCatalog(
     links: List[StacLink] = List(),
     contents: Option[ContentBundle] = None
 ) {
+  // it is ok to use .get in here because stacVersion, id,
+  // description are in the requirement above and only when
+  // they are populated does the compiler agree with
+  // the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def toStacCatalog(): StacCatalog = {
     StacCatalog(
@@ -103,6 +108,9 @@ class StacCatalogBuilder[
   ): StacCatalogBuilder[CatalogRequirements with CatalogContents] =
     new StacCatalogBuilder(stacCatalog.copy(contents = Some(contents)))
 
+  // it is ok to use .get in here because parentPath, contents,
+  // id, and stacVersion are in the requirement above and only
+  // when they are populated does the compiler agree with the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def build()(
       implicit ev: CatalogRequirements =:= CompleteCatalog
@@ -154,29 +162,36 @@ class StacCatalogBuilder[
             "../catalog.json",
             Parent,
             Some(`application/json`),
-            Some(s"Catalog ${stacCatalog.id.get}")
+            Some(s"Catalog ${stacCatalog.id.get}"),
+            List()
           ),
           StacLink(
             // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<layerCollectionId>/collection.json
             layerSelfAbsLink,
             Self,
             Some(`application/json`),
-            Some(s"Layer Collection ${layerId}")
+            Some(s"Layer Collection ${layerId}"),
+            List()
           ),
           StacLink(
             // s3://rasterfoundry-production-data-us-east-1/stac-exports/<catalogId>/<catalogId>.json
             layerRootPath,
             StacRoot,
             Some(`application/json`),
-            Some("Root")
+            Some("Root"),
+            List()
           )
         )
-        val layerSceneSpatialExtent: List[Double] = sceneGeomExtent match {
+        val layerSceneSpatialExtent = sceneGeomExtent match {
           case Some(geomExt) =>
-            List(geomExt.xMin, geomExt.yMin, geomExt.xMax, geomExt.yMax)
+            Coproduct[Bbox](
+              TwoDimBbox(geomExt.xMin, geomExt.yMin, geomExt.xMax, geomExt.yMax)
+            )
+
           case None =>
             val extent = sceneList
-              .map(_.dataFootprint.get)
+              .map(_.dataFootprint)
+              .flatten
               .map(
                 geom =>
                   Reproject(
@@ -189,7 +204,9 @@ class StacCatalogBuilder[
               .reduce((e1, e2) => {
                 e1.combine(e2)
               })
-            List(extent.xmin, extent.ymin, extent.xmax, extent.ymax)
+            Coproduct[Bbox](
+              TwoDimBbox(extent.xmin, extent.ymin, extent.xmax, extent.ymax)
+            )
         }
         val layerSceneAqcTime: List[Timestamp] =
           sceneList map { scene =>
@@ -200,8 +217,8 @@ class StacCatalogBuilder[
           Some(layerSceneAqcTime.maxBy(_.getTime).toLocalDateTime.toString)
         )
         val layerExtent = StacExtent(
-          layerSceneSpatialExtent,
-          layerSceneTemporalExtent
+          SpatialExtent(List(layerSceneSpatialExtent)),
+          TemporalExtent(List(layerSceneTemporalExtent))
         )
         val (
           layerCollection,
@@ -237,13 +254,15 @@ class StacCatalogBuilder[
               s"${layerCollection.id}/collection.json",
               Child,
               Some(`application/json`),
-              Some("Layer Collection")
+              Some("Layer Collection"),
+              List()
             )
         }
       )
       .toStacCatalog()
-    val layerInfoList = layerCollectionList.map(layerInfo =>
-      (layerInfo._1, layerInfo._2, layerInfo._3))
+    val layerInfoList = layerCollectionList.map(
+      layerInfo => (layerInfo._1, layerInfo._2, layerInfo._3)
+    )
 
     (updatedStacCatalog, layerInfoList)
   }

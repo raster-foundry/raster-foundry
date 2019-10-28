@@ -2,17 +2,17 @@ package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.backsplash.error.RequirementFailedException
 import com.rasterfoundry.common.color._
+import com.rasterfoundry.database.SceneDao
 import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}
-
 import cats.{Applicative, Monad, MonadError, Parallel}
 import cats.data.NonEmptyList
 import cats.effect.{ContextShift, IO, Sync}
 import cats.implicits._
+import doobie.implicits._
 import com.colisweb.tracing.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
-import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.proj4.WebMercator
 import geotrellis.raster.histogram._
 import geotrellis.raster.MultibandTile
@@ -22,9 +22,16 @@ import geotrellis.spark.SpatialKey
 import geotrellis.spark.tiling.ZoomedLayoutScheme
 import geotrellis.vector.MultiPolygon
 import geotrellis.vector.{io => _, _}
-
+import scalacache._
+import scalacache.CatsEffect.modes._
+import com.rasterfoundry.database.util.{Cache => DBCache}
 import java.net.URLDecoder
 import java.util.UUID
+
+import com.rasterfoundry.common.BacksplashGeoTiffInfo
+
+import scala.concurrent.duration._
+import doobie.util.transactor.Transactor
 
 /** An image used in a tile or export service, can be color corrected, and requested a subet of the bands from the
   * image
@@ -47,9 +54,12 @@ final case class BacksplashGeotiff(
     singleBandOptions: Option[SingleBandOptions.Params],
     mask: Option[MultiPolygon],
     footprint: MultiPolygon,
-    metadata: SceneMetadataFields
+    metadata: SceneMetadataFields,
+    xa: Transactor[IO]
 ) extends LazyLogging
     with BacksplashImage[IO] {
+
+  import DBCache.GeotiffInfoCache._
 
   val tags: Map[String, String] = Map(
     "imageId" -> imageId.toString,
@@ -59,7 +69,7 @@ final case class BacksplashGeotiff(
   )
 
   def getRasterSource(context: TracingContext[IO]): IO[RasterSource] = {
-    context.childSpan("getRasterSource", tags) use { _ =>
+    context.childSpan("getRasterSource", tags) use { child =>
       if (enableGDAL) {
         logger.debug(s"Using GDAL Raster Source: ${uri}")
         val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
@@ -72,15 +82,35 @@ final case class BacksplashGeotiff(
           }
         }
       } else {
-        logger.debug(s"Using GeoTiffRasterSource: ${uri}")
-        val rasterSource = new GeoTiffRasterSource(uri)
-        IO {
-          metadata.noDataValue match {
-            case Some(nd) =>
-              rasterSource.interpretAs(DoubleUserDefinedNoDataCellType(nd))
-            case _ =>
-              rasterSource
+        for {
+          infoOption <- child.childSpan("getSceneGeoTiffInfo") use { _ =>
+            SceneDao.getSceneGeoTiffInfo(imageId).transact(xa)
           }
+          info <- child.childSpan("getGeotiffInfoFromSource") use { _ =>
+            infoOption match {
+              case Some(i) => IO.pure(i)
+              case _ => {
+                for {
+                  sourceInfo <- IO(
+                    BacksplashGeotiffReader.getBacksplashGeotiffInfo(uri))
+                  _ <- SceneDao
+                    .updateSceneGeoTiffInfo(sourceInfo, imageId)
+                    .transact(xa)
+                  _ <- put[IO, BacksplashGeoTiffInfo](s"SceneInfo:$imageId")(
+                    sourceInfo,
+                    Some(30 minutes))
+                } yield sourceInfo
+              }
+            }
+          }
+          reader <- child.childSpan("getByteReader") use { _ =>
+            IO(getByteReader(uri))
+          }
+          gtInfo <- child.childSpan("toGeotiffInfo") use { _ =>
+            IO(info.toGeotiffInfo(reader))
+          }
+        } yield {
+          BacksplashRasterSource(gtInfo, uri)
         }
       }
     }

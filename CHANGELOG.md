@@ -14,6 +14,36 @@
 
 ### Security
 
+## [1.32.0](https://github.com/raster-foundry/raster-foundry/compare/1.31.0...1.32.0)
+
+### Added
+
+- Included TaskARN in tile server traces [\#5201](https://github.com/raster-foundry/raster-foundry/pull/5201)
+- Add zipped stac export url to stac objects returned from API [\#5220](https://github.com/raster-foundry/raster-foundry/pull/5220)
+- Add Geojson Upload datamodel and api [\#5223](https://github.com/raster-foundry/raster-foundry/pull/5223)
+- Add Geojson Upload batch job [\#5230](https://github.com/raster-foundry/raster-foundry/pull/5230)
+
+### Changed
+
+- Changed serialization of scenes to layer cache to binary [\#5218](https://github.com/raster-foundry/raster-foundry/pull/5218)
+- Upgraded STAC version in STAC export builder [\#5202](https://github.com/raster-foundry/raster-foundry/pull/5202)
+- Upgrade http4s to 0.20.11 [\#5213](https://github.com/raster-foundry/raster-foundry/)
+- Started publishing `http4s-util` artifact [\#5224](https://github.com/raster-foundry/raster-foundry/pull/5224)
+- Added custom raster source to use cached GeoTiffInfo for serving tiles [\#5222](https://github.com/raster-foundry/raster-foundry/pull/5222)
+
+### Removed
+
+- Remove AOI project creation from frontend [\#5228](https://github.com/raster-foundry/raster-foundry/pull/5228)
+- Removed blog/feed endpoint and frontend [\#5216](https://github.com/raster-foundry/raster-foundry/pull/5216)
+- Removed project overview generation [\#5222](https://github.com/raster-foundry/raster-foundry/pull/5222)
+
+### Fixed
+
+- STAC bug fixes: Stopped serializing null label extension fields on STAC label items, stopped URL encoding absolute links, fixed failure of STAC export if no task statuses selected [\#5227](https://github.com/raster-foundry/raster-foundry/pull/5227)
+- Used item IDs instead of `"item.json"` for STAC item names [\#5226](https://github.com/raster-foundry/raster-foundry/pull/5226)
+- Fixed a routing bug that prevented viewing tiles under the `/scenes/` routes [\#5213](https://github.com/raster-foundry/raster-foundry/)
+
+
 ## [1.31.0](https://github.com/raster-foundry/raster-foundry/compare/1.30.0...1.31.0)
 
 ### Added

@@ -1,7 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.datamodel.User
-import com.rasterfoundry.database.SceneToLayerDao
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 
@@ -26,7 +25,7 @@ import java.util.UUID
 @SuppressWarnings(Array("TraversableHead"))
 class AnalysisManager[Param: ToolStore, HistStore](
     analyses: Param,
-    mosaicImplicits: MosaicImplicits[HistStore, SceneToLayerDao],
+    mosaicImplicits: MosaicImplicits[HistStore],
     toolstoreImplicits: ToolStoreImplicits[HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO])
     extends ColorImplicits {

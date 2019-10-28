@@ -13,15 +13,7 @@ import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
 
 import com.rasterfoundry.common.color.ColorCorrect
-import com.rasterfoundry.common.{
-  AWSLambda,
-  BatchParams,
-  MosaicDefinition,
-  ProjectColorModeParams,
-  SceneToLayer,
-  SceneToLayerWithSceneType,
-  SceneWithProjectIdLayerId
-}
+import com.rasterfoundry.common._
 import com.rasterfoundry.database.util.Cache
 import scalacache._
 import scalacache.CatsEffect.modes._
@@ -31,10 +23,7 @@ import scala.concurrent.duration._
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneToLayerDao()
 
-object SceneToLayerDao
-    extends Dao[SceneToLayer]
-    with LazyLogging
-    with AWSLambda {
+object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
 
   import Cache.MosaicDefinitionCache._
 
@@ -47,7 +36,7 @@ object SceneToLayerDao
   """ ++ tableF
 
   def mosaicDefCacheKey(projectLayerId: UUID): String =
-    s"SceneToLayer:ProjectLayer:$projectLayerId:MultiTiff:${Config.publicData.enableMultiTiff}"
+    s"SceneToLayer:ProjectLayer:$projectLayerId:MultiTiff:${Config.publicData.enableMultiTiff}:binary"
 
   def deleteMosaicDefCache(projectLayerId: UUID): ConnectionIO[Unit] = {
     for {
@@ -106,7 +95,6 @@ object SceneToLayerDao
   }
 
   def setManualOrder(
-      projectId: UUID,
       projectLayerId: UUID,
       sceneIds: Seq[UUID]
   ): ConnectionIO[Seq[UUID]] = {
@@ -124,11 +112,6 @@ object SceneToLayerDao
       _ <- updates.toList.sequence
       _ <- deleteMosaicDefCache(projectLayerId)
     } yield {
-      logger
-        .info(
-          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId"
-        )
-      kickoffLayerOverviewCreate(projectId, projectLayerId)
       sceneIds
     }
   }

@@ -22,28 +22,21 @@ object RFTransactor {
       user: String = Properties.envOrElse("POSTGRES_USER", "rasterfoundry"),
       password: String =
         Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry"),
-      statementTimeout: String =
-        Properties.envOrElse("POSTGRES_STATEMENT_TIMEOUT", "30000"),
-      maximumPoolSize: Int =
-        Properties.envOrElse("POSTGRES_DB_POOL_SIZE", "32").toInt,
-      poolName: String = "Raster-Foundry-Hikari-Pool",
-      maybeInitSql: Option[String] = None
+      maximumPoolSize: Int = 32,
+      poolName: String = "Raster-Foundry-Hikari-Pool"
   ) {
     val url = postgresUrl ++ dbName
-    val initSql =
-      maybeInitSql.getOrElse(s"SET statement_timeout = ${statementTimeout};")
 
     lazy val hikariDataSource = {
       val hikariConfig = new HikariConfig()
       hikariConfig.setPoolName(poolName)
       hikariConfig.setMaximumPoolSize(maximumPoolSize)
-      hikariConfig.setConnectionInitSql(initSql)
       hikariConfig.setJdbcUrl(url)
       hikariConfig.setUsername(user)
       hikariConfig.setPassword(password)
       hikariConfig.setDriverClassName(driver)
-      hikariConfig.setConnectionTimeout(2000)
-
+      hikariConfig.setLeakDetectionThreshold(30 * 1000)
+      hikariConfig.setAutoCommit(false)
       new HikariDataSource(hikariConfig)
     }
 

@@ -3,7 +3,6 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.database.{
   LayerAttributeDao,
   ProjectDao,
-  SceneDao,
   SceneToLayerDao,
   ToolRunDao
 }
@@ -15,7 +14,7 @@ import cats.data.OptionT
 import cats.effect._
 import com.olegpy.meow.hierarchy._
 import org.http4s._
-import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, Timeout}
+import org.http4s.server.middleware.{CORS, CORSConfig, Timeout}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
@@ -24,12 +23,24 @@ import doobie.implicits._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Properties
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{Executors, TimeUnit}
 
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
 
+import scala.concurrent.ExecutionContext
+
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
+
+  val rasterIO: ContextShift[IO] = IO.contextShift(
+    ExecutionContext.fromExecutor(
+      Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
+      )
+    ))
+
+  override implicit val contextShift: ContextShift[IO] = rasterIO
 
   val xa = RFTransactor.buildTransactor()
 
@@ -64,11 +75,8 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       )
     )
 
-  def withQuota(svc: HttpRoutes[IO]) =
-    QuotaMiddleware(svc, Cache.requestCounter)
-
   def baseMiddleware(svc: HttpRoutes[IO]) =
-    withQuota(withCORS(withTimeout(svc)))
+    RequestRewriteMiddleware(withCORS(withTimeout(svc)), xa)
 
   def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
     Timeout(
@@ -91,9 +99,9 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   import projectStoreImplicits._
 
   val projectLayerMosaicImplicits =
-    new MosaicImplicits(LayerAttributeDao(), SceneToLayerDao())
+    new MosaicImplicits(LayerAttributeDao())
   val sceneMosaicImplicits =
-    new MosaicImplicits(LayerAttributeDao(), SceneDao())
+    new MosaicImplicits(LayerAttributeDao())
   val toolStoreImplicits =
     new ToolStoreImplicits(projectLayerMosaicImplicits, xa)
   import toolStoreImplicits.toolRunDaoStore
@@ -119,67 +127,50 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val mosaicService: HttpRoutes[IO] = authenticators.tokensAuthMiddleware(
     metricMiddleware.middleware(
-      AuthedAutoSlash(
-        new MosaicService(
-          SceneToLayerDao(),
-          projectLayerMosaicImplicits,
-          analysisManager,
-          xa
-        ).routes
-      )
+      new MosaicService(
+        SceneToLayerDao(),
+        projectLayerMosaicImplicits,
+        analysisManager,
+        xa,
+        rasterIO
+      ).routes
     )
   )
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
       metricMiddleware.middleware(
-        AuthedAutoSlash(new AnalysisService(analysisManager).routes)
+        new AnalysisService(analysisManager).routes
       )
     )
 
   val sceneMosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      AuthedAutoSlash(
-        new SceneService(sceneMosaicImplicits, xa).routes
-      )
+      new SceneService(sceneMosaicImplicits, xa).routes
     )
 
   val wcsService = authenticators.tokensAuthMiddleware(
-    AuthedAutoSlash(
-      new WcsService(ProjectDao(), ogcUrlPrefix).routes
-    )
+    new WcsService(ProjectDao(), ogcUrlPrefix).routes
   )
 
   val wmsService = authenticators.tokensAuthMiddleware(
-    AuthedAutoSlash(
-      new WmsService(ProjectDao(), ogcUrlPrefix).routes
-    )
+    new WmsService(ProjectDao(), ogcUrlPrefix).routes
   )
-
-  val requestQuota = if (Config.server.requestLimit == 0) {
-    Config.server.requestLimit
-  } else {
-    Config.server.requestLimit + scala.util.Random.nextInt % 1500
-  }
 
   def router =
     errorHandling {
-      Router(
-        "/" -> ProjectToProjectLayerMiddleware(
-          baseMiddleware(mosaicService),
-          xa
-        ),
-        "/scenes" -> baseMiddleware(sceneMosaicService),
-        "/tools" -> baseMiddleware(analysisService),
-        "/wcs" -> baseMiddleware(wcsService),
-        "/wms" -> baseMiddleware(wmsService),
-        "/healthcheck" -> AutoSlash(
-          new HealthcheckService(
-            xa,
-            requestQuota
+      baseMiddleware {
+        Router(
+          "/" -> mosaicService,
+          "/scenes" -> sceneMosaicService,
+          "/tools" -> analysisService,
+          "/wcs" -> wcsService,
+          "/wms" -> wmsService,
+          "/healthcheck" -> new HealthcheckService(
+            xa
           ).routes
         )
-      )
+      }
     }
 
   val startupBanner =

@@ -5,12 +5,14 @@ import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.database._
 import com.rasterfoundry.akkautil._
+import com.rasterfoundry.common.AWSBatch
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.effect._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.Transactor
 import doobie.implicits._
+import doobie._
 
 import scala.concurrent.ExecutionContext
 import java.util.UUID
@@ -20,7 +22,8 @@ trait ProjectAnnotationRoutes
     with CommonHandlers
     with PaginationDirectives
     with ProjectAuthorizationDirectives
-    with QueryParametersCommon {
+    with QueryParametersCommon
+    with AWSBatch {
 
   implicit val xa: Transactor[IO]
   implicit val ec: ExecutionContext
@@ -309,5 +312,4 @@ trait ProjectAnnotationRoutes
         }
       }
   }
-
 }

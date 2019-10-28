@@ -33,9 +33,9 @@ object Version {
   val geotools = "17.1"
   val geotrellisContrib = "3.16.1-M3"
   val geotrellis = "3.0.0-M3"
-  val geotrellisServer = "3.4.0"
+  val geotrellisServer = "3.4.0-4-gaac8d7e-SNAPSHOT"
   val hadoop = "2.8.4"
-  val http4s = "0.20.0"
+  val http4s = "0.20.11"
   val json4s = "3.5.0"
   val jts = "1.16.0"
   val logback = "1.2.3"
@@ -74,7 +74,6 @@ object Dependencies {
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % Version.awsLambdaCore
-  val awsLambdaSdk = "com.amazonaws" % "aws-java-sdk-lambda" % Version.awsSdkVersion
   val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsSdkVersion
   val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsSdkVersion
   val awsXraySdk = "com.amazonaws" % "aws-java-sdk-xray" % Version.awsSdkVersion
@@ -109,10 +108,10 @@ object Dependencies {
   val geotrellisGeotools = "org.locationtech.geotrellis" %% "geotrellis-geotools" % Version.geotrellis
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
-  val geotrellisServer = "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer
+  val geotrellisServer = "com.azavea.geotrellis" %% "geotrellis-server-core" % Version.geotrellisServer
   val geotrellisProj4 = "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellis
-  val geotrellisServerOgc = "com.azavea" %% "geotrellis-server-ogc" % Version.geotrellisServer
-  val geotrellisServerStac = "com.azavea" %% "geotrellis-server-stac" % Version.geotrellisServer
+  val geotrellisServerOgc = "com.azavea.geotrellis" %% "geotrellis-server-ogc" % Version.geotrellisServer
+  val geotrellisServerStac = "com.azavea.geotrellis" %% "geotrellis-server-stac" % Version.geotrellisServer
   val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis

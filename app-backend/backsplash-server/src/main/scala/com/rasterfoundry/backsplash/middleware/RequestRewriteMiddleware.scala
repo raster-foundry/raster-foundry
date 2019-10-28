@@ -13,7 +13,7 @@ import org.http4s.dsl.io._
 
 import java.util.UUID
 
-object ProjectToProjectLayerMiddleware {
+object RequestRewriteMiddleware {
   private def getDefaultLayerId(projectId: UUID,
                                 xa: Transactor[IO]): OptionT[IO, UUID] =
     OptionT { ProjectDao.getProjectById(projectId).transact(xa) } map {
@@ -28,7 +28,7 @@ object ProjectToProjectLayerMiddleware {
         // match on the request here and route to the service if it matches the deprecated route
         val scriptName = req.scriptName
         // Due to middleware application order, we have to strip a trailing slash here
-        if (scriptName.isEmpty && req.pathInfo.charAt(req.pathInfo.length - 1) == '/') {
+        if (req.pathInfo.charAt(req.pathInfo.length - 1) == '/') {
           apply(service, xa)(
             req.withPathInfo(
               req.pathInfo.substring(0, req.pathInfo.length - 1)))

@@ -18,12 +18,6 @@ import java.util.UUID
 @SuppressWarnings(Array("CatchException", "ListAppend"))
 trait Filterables extends RFMeta with LazyLogging {
 
-  implicit val aoiQueryParamsFilter: Filterable[Any, AoiQueryParameters] =
-    Filterable[Any, AoiQueryParameters] { qp: AoiQueryParameters =>
-      Filters.userQP(qp.userParams) ++
-        Filters.timestampQP(qp.timestampParams)
-    }
-
   implicit val permissionsFilter: Filterable[Any, User] =
     Filterable[Any, User] { user: User =>
       val filter = Some(fr"owner = ${user.id}")

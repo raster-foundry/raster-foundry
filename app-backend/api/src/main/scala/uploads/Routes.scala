@@ -109,6 +109,11 @@ trait UploadRoutes
                 "S3 upload must specify a source if no files are specified"
               )
           }
+          case (_, _, FileType.GeoJson) => {
+            throw new IllegalStateException(
+              "Scene uploads must contain imagery, not GeoJson"
+            )
+          }
           case (_, _, _) => {
             if (newUpload.files.nonEmpty) newUpload
             else

@@ -469,23 +469,16 @@ object TaskDao extends Dao[Task] {
       layerId: UUID,
       taskStatuses: List[String]
   ): ConnectionIO[List[Task]] = {
-    val taskStatusF: Fragment =
-      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
-        case Some(taskStatusNel) => Fragments.in(fr"status", taskStatusNel)
-        case _                   => fr""
-      }
     query
       .filter(fr"project_id = $projectId")
       .filter(fr"project_layer_id = $layerId")
-      .filter(taskStatusF)
+      .filter(taskStatusF(taskStatuses))
       .list
   }
 
-  def taskStatusF(taskStatuses: List[String]): Fragment =
-    taskStatuses.map(TaskStatus.fromString(_)).toNel match {
-      case Some(taskStatusNel) =>
-        fr"AND" ++ Fragments.in(fr"status", taskStatusNel)
-      case _ => fr""
+  def taskStatusF(taskStatuses: List[String]): Option[Fragment] =
+    taskStatuses.map(TaskStatus.fromString(_)).toNel map { taskStatusNel =>
+      Fragments.in(fr"status", taskStatusNel)
     }
 
   def createUnionedGeomExtent(
@@ -493,20 +486,25 @@ object TaskDao extends Dao[Task] {
       layerId: UUID,
       taskStatuses: List[String]
   ): ConnectionIO[Option[UnionedGeomExtent]] =
-    (fr"""
+    Dao
+      .QueryBuilder[UnionedGeomExtent](
+        fr"""
     SELECT
       ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry,
       ST_XMin(ST_Extent(ST_Transform(geometry, 4326))) AS x_min,
       ST_YMin(ST_Extent(ST_Transform(geometry, 4326))) AS y_min,
       ST_XMax(ST_Extent(ST_Transform(geometry, 4326))) AS x_max,
       ST_YMax(ST_Extent(ST_Transform(geometry, 4326))) AS y_max
-    FROM tasks
-    WHERE
-      project_id = ${projectId}
-      AND project_layer_id = ${layerId}
-    """ ++ taskStatusF(taskStatuses))
-      .query[UnionedGeomExtent]
-      .option
+      FROM tasks
+    """,
+        fr"tasks",
+        Nil,
+        None
+      )
+      .filter(fr"project_id = $projectId")
+      .filter(fr"project_layer_id = $layerId")
+      .filter(taskStatusF(taskStatuses))
+      .selectOption
 
   def listTaskGeomByStatus(
       user: User,
@@ -522,19 +520,8 @@ object TaskDao extends Dao[Task] {
     WHERE
       project_id = ${projectId}
       AND project_layer_id = ${layerId}
-    """ ++ taskStatusF(
-      statusO match {
-        case Some(status) => List(status.toString())
-        case _ =>
-          List(
-            TaskStatus.Unlabeled.toString,
-            TaskStatus.LabelingInProgress.toString,
-            TaskStatus.Labeled.toString,
-            TaskStatus.ValidationInProgress.toString,
-            TaskStatus.Validated.toString
-          )
-      }
-    ) ++ fr"GROUP BY status")
+    """ ++ (taskStatusF(statusO.toList map { _.toString })
+      .getOrElse(Fragment.empty)) ++ fr"GROUP BY status")
       .query[UnionedGeomWithStatus]
       .to[List]
       .map(geomWithStatusList => {

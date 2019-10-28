@@ -151,19 +151,6 @@ object ProjectSceneQueryParameters {
     deriveDecoder[ProjectSceneQueryParameters]
 }
 
-final case class AoiQueryParameters(
-    orgParams: OrgQueryParameters = OrgQueryParameters(),
-    userParams: UserQueryParameters = UserQueryParameters(),
-    timestampParams: TimestampQueryParameters = TimestampQueryParameters()
-)
-
-object AoiQueryParameters {
-  implicit def encAoiQueryParameters: Encoder[AoiQueryParameters] =
-    deriveEncoder[AoiQueryParameters]
-  implicit def decAoiQueryParameters: Decoder[AoiQueryParameters] =
-    deriveDecoder[AoiQueryParameters]
-}
-
 final case class ToolQueryParameters(
     singleSource: Option[Boolean] = None
 )
@@ -494,15 +481,6 @@ object ShapeQueryParameters {
     deriveEncoder[ShapeQueryParameters]
   implicit def decShapeQueryParameters: Decoder[ShapeQueryParameters] =
     deriveDecoder[ShapeQueryParameters]
-}
-
-final case class FeedQueryParameters(source: Option[String] = None)
-
-object FeedQueryParameters {
-  implicit def encFeedQueryParameters: Encoder[FeedQueryParameters] =
-    deriveEncoder[FeedQueryParameters]
-  implicit def decFeedQueryParameters: Decoder[FeedQueryParameters] =
-    deriveDecoder[FeedQueryParameters]
 }
 
 final case class SearchQueryParameters(search: Option[String] = None)

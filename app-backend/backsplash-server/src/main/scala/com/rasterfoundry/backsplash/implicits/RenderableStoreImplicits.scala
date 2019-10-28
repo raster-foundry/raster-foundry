@@ -14,7 +14,6 @@ import com.rasterfoundry.backsplash.{
 }
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.{ContextShift, IO}
-import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -144,7 +143,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           singleBandOptions,
           mosaicDefinition.mask,
           footprint,
-          mosaicDefinition.sceneMetadataFields
+          mosaicDefinition.sceneMetadataFields,
+          xa
         )
     }
   }
@@ -189,16 +189,11 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
                    None, // no single band options ever
                    None, // not adding the mask here, since out of functional scope for md to image
                    footprint,
-                   scene.metadataFields
+                   scene.metadataFields,
+                   xa
                  )))
           }
         }
-      }
-
-      def getOverviewConfig(self: SceneDao,
-                            renderableId: UUID,
-                            tracingContext: TracingContext[IO]) = IO.pure {
-        OverviewConfig.empty
       }
     }
 
@@ -236,17 +231,5 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           }
         }
       }
-
-      def getOverviewConfig(
-          self: SceneToLayerDao,
-          projId: UUID,
-          tracingContext: TracingContext[IO]): IO[OverviewConfig] =
-        Cacheable.getProjectLayerById(projId, xa, tracingContext) map {
-          projectLayer =>
-            (projectLayer.overviewsLocation, projectLayer.minZoomLevel).tupled map {
-              case (overviews, minZoom) =>
-                OverviewConfig(Some(overviews), Some(minZoom))
-            } getOrElse { OverviewConfig.empty }
-        }
     }
 }

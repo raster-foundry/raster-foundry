@@ -7,6 +7,7 @@ import geotrellis.proj4.CRS
 import java.util.UUID
 import io.circe._
 import io.circe.syntax._
+import shapeless._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.batch.stacExport.{StacExtent => BatchStacExtent}
 
@@ -61,6 +62,10 @@ case class IncompleteLayerCollection(
       )
     ] = None
 ) {
+  // it is ok to use .get in here because stacVersion, id,
+  // description are in the requirement above and only
+  // when they are populated does the compiler agree with
+  // the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def toStacCollection(): StacCollection = {
     val extent: Json = this.extent match {
@@ -153,6 +158,9 @@ class LayerCollectionBuilder[
 
   def inspect: IncompleteLayerCollection = layerCollection
 
+  // it is ok to use .get in here because all these fields
+  // are in the requirement above and only when they are
+  // populated does the compiler agree with the .build() call
   @SuppressWarnings(Array("OptionGet"))
   def build()(
       implicit ev: CollectionRequirements =:= CompleteCollection
@@ -184,19 +192,22 @@ class LayerCollectionBuilder[
         sceneCollectionAbsLink,
         Self,
         Some(`application/json`),
-        Some(s"Scene Collection ${sceneCollectionId}")
+        Some(s"Scene Collection ${sceneCollectionId}"),
+        List()
       ),
       StacLink(
         sceneCollectionRootPath,
         StacRoot,
         Some(`application/json`),
-        Some("Root")
+        Some("Root"),
+        List()
       ),
       StacLink(
         "../collection.json",
         Parent,
         Some(`application/json`),
-        Some("Layer Collection")
+        Some("Layer Collection"),
+        List()
       )
     )
     val (sceneCollection, sceneItems, sceneItemLinks): (
@@ -231,27 +242,33 @@ class LayerCollectionBuilder[
         labelCollectionAbsLink,
         Self,
         Some(`application/json`),
-        Some(s"Label Collection ${labelCollectionId}")
+        Some(s"Label Collection ${labelCollectionId}"),
+        List()
       ),
       StacLink(
         labelCollectionRootPath,
         StacRoot,
         Some(`application/json`),
-        Some("Root")
+        Some("Root"),
+        List()
       ),
       StacLink(
         "../collection.json",
         Parent,
         Some(`application/json`),
-        Some("Layer Collection")
+        Some("Layer Collection"),
+        List()
       )
     )
     val tasks = layerCollection.sceneTaskAnnotations.get._3
     val tasksGeomExtent = layerCollection.sceneTaskAnnotations.get._4
     val itemPropsThin = layerCollection.sceneTaskAnnotations.get._6
-    val labelSpatialExtent: List[Double] = labelGeomExtent match {
+    val labelSpatialExtent = labelGeomExtent match {
       case Some(extent) =>
-        List(extent.xMin, extent.yMin, extent.xMax, extent.yMax)
+        Coproduct[Bbox](
+          TwoDimBbox(extent.xMin, extent.yMin, extent.xMax, extent.yMax)
+        )
+
       case None =>
         val ext = tasks
           .map(_.geometry)
@@ -267,11 +284,12 @@ class LayerCollectionBuilder[
           .reduce((e1, e2) => {
             e1.combine(e2)
           })
-        List(ext.xmin, ext.ymin, ext.xmax, ext.ymax)
+        Coproduct[Bbox](TwoDimBbox(ext.xmin, ext.ymin, ext.xmax, ext.ymax))
+
     }
 
     val labelExtent: BatchStacExtent = layerCollection.extent.get.copy(
-      spatial = labelSpatialExtent
+      spatial = SpatialExtent(List(labelSpatialExtent))
     )
     val (labelCollection, labelItem, labelDataS3AbsLink): (
         StacCollection,
@@ -288,8 +306,9 @@ class LayerCollectionBuilder[
         .withParentPath(labelCollectionAbsPath, labelCollectionRootPath)
         .withTasksGeomExtent(tasks, tasksGeomExtent)
         .withItemPropInfo(itemPropsThin.get)
-        .withSceneItemLinks(sceneItemLinks.map(i =>
-          (i._1, s"../${i._2}", i._3))) // adjust relative links
+        .withSceneItemLinks(
+          sceneItemLinks.map(i => (i._1, s"../${i._2}", i._3))
+        ) // adjust relative links
         .build()
 
     val updatedLayerCollection: StacCollection = layerCollection
@@ -299,13 +318,15 @@ class LayerCollectionBuilder[
             labelCollectionRelLink,
             Child,
             Some(`application/json`),
-            Some("Label Collection")
+            Some("Label Collection"),
+            List()
           ),
           StacLink(
             sceneCollectionRelLink,
             Child,
             Some(`application/json`),
-            Some("Scene Collection")
+            Some("Scene Collection"),
+            List()
           )
         )
       )

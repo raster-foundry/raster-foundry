@@ -33,11 +33,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                       -f "${DIR}/../docker-compose.test.yml"\
                       build app-migrations
 
-            echo "Building JARs (application, lambda overview, backsplash)"
+            echo "Building JARs (application, backsplash)"
             docker-compose \
                 -f "${DIR}/../docker-compose.test.yml" \
                 run --rm --no-deps \
-                build "; api/assembly; backsplash-server/assembly; lambdaOverviews/assembly"
+                build "; api/assembly; backsplash-server/assembly"
 
             echo "Building python lambda functions"
             docker-compose -f "${DIR}/../docker-compose.test.yml" \
@@ -55,11 +55,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 "${DIR}/../app-lambda/package.zip" \
                 "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/package-${GIT_COMMIT}.zip"
             rm "${DIR}/../app-lambda/package.zip"
-
-            echo "Uploading Java Lambda Overview Function"
-            aws s3 cp \
-                "${DIR}/../app-backend/lambda-overviews/target/scala-2.12/lambda-overviews-assembly.jar" \
-                "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/lambda-overviews-${GIT_COMMIT}.jar"
 
             # Build publishable sbt projects as SNAPSHOT artifacts and
             # publish to Sonatype OSSRH (Snapshot Repository).

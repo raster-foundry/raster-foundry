@@ -29,22 +29,8 @@
       </form>
     </div>
     <div class="content">
-      <h3 class="modal-content-header">Select a Project type</h3>
       <div class="box-select-row">
-        <rf-box-select-item
-          title="Standard Project"
-          ng-class="{selected: $ctrl.projectAttributeIs('isAOIProject', false)}"
-          ng-click="$ctrl.setProjectAttribute('isAOIProject',false)"
-        >
-          Start a new project and begin importing your own earth observation imagery immediately, or discover publicly available scenes to add to your project.
-        </rf-box-select-item>
-        <rf-box-select-item
-          title="Area of Interest Project"
-          ng-class="{selected: $ctrl.projectAttributeIs('isAOIProject', true)}"
-          ng-click="$ctrl.setProjectAttribute('isAOIProject',true)"
-        >
-          Set an area of interest on the map, an update frequency and automatically add new scenes to the project as they are added to {{$ctrl.BUILDCONFIG.APP_NAME}}.
-        </rf-box-select-item>
+	Start a new project and begin importing your own earth observation imagery immediately, or discover publicly available scenes to add to your project.
       </div>
     </div>
   </div>

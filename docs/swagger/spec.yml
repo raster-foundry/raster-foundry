@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: Raster Foundry
   description: An application to find, view, and analyze geospatial data at any scale
-  version: "1.31.0"
+  version: "1.32.0"
 
 host: app.rasterfoundry.com
 
@@ -2063,55 +2063,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /projects/{projectID}/areas-of-interest/:
-    x-resource: Projects
-    get:
-      summary: 'Get all areas of interest for a project'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/projectID'
-        - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/page'
-      responses:
-        200:
-          description: 'JSON summary of the filters and Polygons that make up AOIs for the given project.'
-          schema:
-            $ref: '#/definitions/AoiPaginated'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-
-    post:
-      summary: 'Create an area of interest for a project'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/projectID'
-        - name: aoi
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/AOI'
-      responses:
-        201:
-          description: 'Area of Interest created.'
-          schema:
-            $ref: '#/definitions/AOI'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-
   /projects/{projectID}/scenes/:
     x-resource: Projects
     get:
@@ -3316,7 +3267,135 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
+  /projects/{projectID}/layers/{layerID}/annotation-groups/{annotationGroupID}/uploads:
+    x-resource: Projects
+    get:
+      summary: 'Get geojson upload records for an annotation group'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+      responses:
+        200:
+          description: 'Paginated GeojsonUpload records'
+          schema:
+            $ref: '#/definitions/GeojsonUploadPaginated'
+        404:
+          description: 'Resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        403:
+          description: 'Insufficient permissions for resource'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: 'Create a new GeojsonUpload for this annotation group'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+        - name: GeojsonUpload
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GeojsonUploadCreate'
+      responses:
+        200:
+          description: 'Created GeojsonUpload'
+          schema:
+            $ref: '#/definitions/GeojsonUpload'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
 
+  /projects/{projectID}/layers/{layerID}/annotation-groups/{annotationGroupID}/uploads/{geojsonUploadID}:
+    x-resource: Projects
+    get:
+      summary: 'Get GeojsonUpload for annotation group'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+        - $ref: '#/parameters/geojsonUploadID'
+      responses:
+        200:
+          description: 'fetched geojson upload'
+          schema:
+            $ref: '#/definitions/GeojsonUpload'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: 'Update GeojsonUpload'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+        - $ref: '#/parameters/geojsonUploadID'
+        - name: geojsonUpload
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GeojsonUpload'
+      responses:
+        200:
+          description: 'Number of updated GeojsonUpload resources from this request'
+          schema:
+            type: number
+            format: integer
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: 'Delete GeojsonUpload'
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectID'
+        - $ref: '#/parameters/layerID'
+        - $ref: '#/parameters/annotationGroupID'
+        - $ref: '#/parameters/geojsonUploadID'
+      responses:
+        200:
+          description: 'Number of GeojsonUpload from this request'
+          schema:
+            type: number
+            format: integer
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
   /projects/{projectID}/layers/{layerID}/tasks/:
     get:
       summary: 'Get tasks belonging to a project layer'
@@ -3555,79 +3634,6 @@ paths:
           description: "Unexpected error"
           schema:
             $ref: "#/definitions/Error"
-  /areas-of-interest/:
-    get:
-      summary: 'Get a list of areas of interest'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/page'
-        - $ref: '#/parameters/organization'
-        - $ref: '#/parameters/owner'
-      responses:
-        200:
-          description: 'A paginated list of all AOIs the user is authorized to view.'
-          schema:
-            $ref: '#/definitions/AoiPaginated'
-
-  /areas-of-interest/{aoiID}/:
-    get:
-      summary: 'Get a specific area of interest'
-      parameters:
-        - $ref: '#/parameters/aoiID'
-      responses:
-        200:
-          description: "JSON summary of the given AOI's filters and Polygons."
-          schema:
-            $ref: '#/definitions/AOI'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      summary: 'Update an area of interest'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/aoiID'
-        - name: aoi
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/AOI'
-      responses:
-        204:
-          description: 'Update successful.'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-    delete:
-      summary: 'Delete a project'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/aoiID'
-      responses:
-        204:
-          description: 'Deletion successful.'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
 
   /map-tokens/:
     x-resource: Tokens
@@ -4234,20 +4240,6 @@ paths:
                 - 'EDIT'
                 - 'DELETE'
                 - '*'
-  /feed/:
-    get:
-      summary: 'Get the cached RSS feed'
-      parameters:
-        - $ref: '#/parameters/source'
-      tags:
-        - Users
-      responses:
-        200:
-          description: 'RSS feed json as a string'
-        default:
-          description: 'Unexpected Error'
-          schema:
-            $ref: '#/definitions/Error'
   /exports/:
     x-resource: Exports
     get:
@@ -5136,6 +5128,12 @@ parameters:
     required: true
     type: string
     format: uuid
+  geojsonUploadID:
+    name: geojsonUploadID
+    in: path
+    required: true
+    type: string
+    format: uuid
   aoiID:
     name: aoiID
     in: path
@@ -5580,12 +5578,6 @@ parameters:
       - 'COMPLETE'
       - 'FAILED'
       - 'ABORTED'
-  source:
-    name: source
-    description: 'Feed source URI'
-    in: query
-    type: string
-    required: false
   licenseID:
     name: licenseID
     description: 'id/shortName of a license'
@@ -5719,7 +5711,6 @@ definitions:
       - 'LICENSE'
       - 'TOOLTAG'
       - 'TOOLCATEGORY'
-      - 'AOI'
   LayerSplitOptions:
     type: object
     properties:
@@ -5953,7 +5944,6 @@ definitions:
               - 'LICENSE'
               - 'TOOLTAG'
               - 'TOOLCATEGORY'
-              - 'AOI'
           objectId:
             type: string
             description: 'Id of the object this access control rule applies to'
@@ -5998,21 +5988,6 @@ definitions:
         type: string
       redirectURI:
         type: string
-  AOI:
-    type: object
-    properties:
-      shape:
-        type: string
-        format: uuid
-      filters:
-        $ref: '#/definitions/CombinedSceneQueryParams'
-      isActive:
-        type: boolean
-      approvalRequired:
-        type: boolean
-      startTime:
-        type: string
-        format: date-time
   ColorCorrection:
     type: object
     properties:
@@ -7118,16 +7093,6 @@ definitions:
             items:
               $ref: '#/definitions/Project'
 
-  AoiPaginated:
-    allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-      - type: object
-        properties:
-          results:
-            type: array
-            items:
-              $ref: '#/definitions/AOI'
-
   BandCreate:
     type: object
     properties:
@@ -7472,6 +7437,75 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/Upload'
+  GeojsonUploadCreate:
+    type: object
+    properties:
+      uploadStatus:
+        type: string
+        description: 'Status of upload'
+        enum:
+          - 'CREATED'
+          - 'UPLOADING'
+          - 'UPLOADED'
+          - 'QUEUED'
+          - 'PROCESSING'
+          - 'COMPLETE'
+          - 'FAILED'
+          - 'ABORTED'
+      fileType:
+        type: string
+        description: 'type of data being uploaded, limited to two options right now'
+        enum:
+          - 'GEOJSON'
+      uploadType:
+        type: string
+        description: 'Source of files and uploads'
+        enum:
+          - 'S3'
+      files:
+        type: array
+        items:
+          type: string
+        description: 'An array of strings of file locations. This cannot be empty'
+      keepFiles:
+        type: boolean
+        description: |
+          Keep geojson files once they've been added to the project.
+          Defaults to true, requires Delete permissions for the s3 bucket.
+  GeojsonUpload:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/GeojsonUploadCreate'
+      - type: object
+        properties:
+          createdAt:
+            type: string
+            format: datetime
+          createdBy:
+            type: string
+            format: uuid
+          modifiedAt:
+            type: string
+            format: datetime
+          projectId:
+            type: string
+            format: uuid
+          projectLayerId:
+            type: string
+            format: uuid
+          annotationGroup:
+            type: string
+            format: uuid
+  GeojsonUploadPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/GeojsonUpload'
+
   UploadCredentials:
     type: object
     properties:
@@ -8327,10 +8361,10 @@ definitions:
             description: 'STAC export Id'
           exportLocation:
             type: string
-            description: 'The url of the exported STAC catalog'
+            description: 'The s3 url of the exported STAC catalog'
           exportStatus:
             type: string
-            description: 'The url of the exported STAC catalog'
+            description: 'The processing status of STAC catalog'
             enum:
               - 'CREATED'
               - 'EXPORTING'
@@ -8340,6 +8374,9 @@ definitions:
               - 'COMPLETE'
               - 'FAILED'
               - 'ABORTED'
+          downloadUrl:
+            type: string
+            description: 'Signed http download URL for a zip of the stac catalog. Expires in 1 day'
   StacExportPaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'

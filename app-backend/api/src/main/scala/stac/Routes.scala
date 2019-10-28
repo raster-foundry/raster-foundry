@@ -5,13 +5,17 @@ import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.common.S3
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
+import com.amazonaws.services.s3.{AmazonS3URI}
 
 import java.util.UUID
+import java.net.URLDecoder
+
 import doobie._
 import doobie.implicits._
 
@@ -32,10 +36,41 @@ trait StacRoutes
       pathPrefix(JavaUUID) { stacExportId =>
         pathEndOrSingleSlash {
           get { getStacExport(stacExportId) } ~
-            put { updateStacExport(stacExportId) } ~
             delete { deleteStacExport(stacExportId) }
         }
       }
+  }
+
+  def signExportUrl(export: StacExport): StacExport.WithSignedDownload = {
+    val s3Client = S3()
+    export.exportLocation match {
+      case Some(uri) => {
+        val s3Uri =
+          new AmazonS3URI(
+            URLDecoder.decode(s"${uri}/catalog.zip", "utf-8")
+          )
+        s3Client.doesObjectExist(
+          s3Uri.getBucket,
+          s3Uri.getKey
+        ) match {
+          case true =>
+            StacExport.signDownloadUrl(
+              export,
+              Some(
+                s3Client
+                  .getSignedUrl(s3Uri.getBucket, s3Uri.getKey)
+                  .toString
+              )
+            )
+          case _ =>
+            StacExport.signDownloadUrl(
+              export,
+              None
+            )
+        }
+      }
+      case _ => StacExport.signDownloadUrl(export, None)
+    }
   }
 
   def listStacExports: Route = authenticate { user =>
@@ -44,6 +79,17 @@ trait StacRoutes
         complete {
           StacExportDao
             .list(page, params, user)
+            .map(
+              p =>
+                PaginatedResponse[StacExport.WithSignedDownload](
+                  p.count,
+                  p.hasPrevious,
+                  p.hasNext,
+                  p.page,
+                  p.pageSize,
+                  p.results.map(signExportUrl(_))
+              )
+            )
             .transact(xa)
             .unsafeToFuture
         }
@@ -62,7 +108,8 @@ trait StacRoutes
           StacExportDao
             .create(newStacExport, user)
             .transact(xa)
-            .unsafeToFuture) { stacExport =>
+            .unsafeToFuture
+        ) { stacExport =>
           kickoffStacExport(stacExport.id)
           complete((StatusCodes.Created, stacExport))
         }
@@ -81,27 +128,15 @@ trait StacRoutes
         complete {
           StacExportDao
             .getById(id)
+            .map {
+              case Some(export) =>
+                Some(
+                  signExportUrl(export)
+                )
+              case _ => None
+            }
             .transact(xa)
             .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def updateStacExport(id: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      StacExportDao
-        .isOwnerOrSuperUser(user, id)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[StacExport]) { updateStacExport =>
-        onSuccess(
-          StacExportDao
-            .update(updateStacExport, id)
-            .transact(xa)
-            .unsafeToFuture) {
-          completeSingleOrNotFound
         }
       }
     }
@@ -118,7 +153,8 @@ trait StacRoutes
         StacExportDao
           .delete(id)
           .transact(xa)
-          .unsafeToFuture) { count: Int =>
+          .unsafeToFuture
+      ) { count: Int =>
         complete((StatusCodes.NoContent, s"$count stac export deleted"))
       }
     }

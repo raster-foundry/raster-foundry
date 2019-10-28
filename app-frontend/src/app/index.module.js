@@ -75,8 +75,6 @@ const App = angular.module(
         require('./pages/projects/edit/order/order.module.js').default.name,
         require('./pages/projects/edit/masking/masking.module.js').default.name,
         require('./pages/projects/edit/masking/draw/draw.module.js').default.name,
-        require('./pages/projects/edit/aoi-approve/aoi-approve.module.js').default.name,
-        require('./pages/projects/edit/aoi-parameters/aoi-parameters.module.js').default.name,
         require('./pages/projects/edit/exports/exports.module.js').default.name,
         require('./pages/projects/edit/exports/new/new.module.js').default.name,
         require('./pages/projects/edit/annotate/annotate.module.js').default.name,
