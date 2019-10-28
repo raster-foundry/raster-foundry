@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Fixed bug listing task summaries [\#5238](https://github.com/raster-foundry/raster-foundry/pull/5238)
+
 ### Security
 
 ## [1.32.0](https://github.com/raster-foundry/raster-foundry/compare/1.31.0...1.32.0)

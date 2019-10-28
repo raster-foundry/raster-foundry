@@ -516,12 +516,11 @@ object TaskDao extends Dao[Task] {
     SELECT
       status,
       ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry
-    FROM tasks
-    WHERE
-      project_id = ${projectId}
-      AND project_layer_id = ${layerId}
-    """ ++ (taskStatusF(statusO.toList map { _.toString })
-      .getOrElse(Fragment.empty)) ++ fr"GROUP BY status")
+    FROM tasks""" ++ Fragments
+      .whereAndOpt(
+        Some(fr"project_layer_id = ${layerId}"),
+        Some(fr"project_id = ${projectId}"),
+        taskStatusF(statusO.toList map { _.toString })) ++ fr"GROUP BY status")
       .query[UnionedGeomWithStatus]
       .to[List]
       .map(geomWithStatusList => {
