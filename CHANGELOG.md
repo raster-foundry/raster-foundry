@@ -4,6 +4,20 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.32.0](https://github.com/raster-foundry/raster-foundry/compare/1.31.0...1.32.0)
+
+### Added
+
 - Included TaskARN in tile server traces [\#5201](https://github.com/raster-foundry/raster-foundry/pull/5201)
 - Add zipped stac export url to stac objects returned from API [\#5220](https://github.com/raster-foundry/raster-foundry/pull/5220)
 - Add Geojson Upload datamodel and api [\#5223](https://github.com/raster-foundry/raster-foundry/pull/5223)
@@ -17,8 +31,6 @@
 - Started publishing `http4s-util` artifact [\#5224](https://github.com/raster-foundry/raster-foundry/pull/5224)
 - Added custom raster source to use cached GeoTiffInfo for serving tiles [\#5222](https://github.com/raster-foundry/raster-foundry/pull/5222)
 
-### Deprecated
-
 ### Removed
 
 - Remove AOI project creation from frontend [\#5228](https://github.com/raster-foundry/raster-foundry/pull/5228)
@@ -31,7 +43,6 @@
 - Used item IDs instead of `"item.json"` for STAC item names [\#5226](https://github.com/raster-foundry/raster-foundry/pull/5226)
 - Fixed a routing bug that prevented viewing tiles under the `/scenes/` routes [\#5213](https://github.com/raster-foundry/raster-foundry/)
 
-### Security
 
 ## [1.31.0](https://github.com/raster-foundry/raster-foundry/compare/1.30.0...1.31.0)
 
