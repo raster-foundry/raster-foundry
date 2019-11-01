@@ -270,6 +270,7 @@ lazy val datamodel = project
     libraryDependencies ++= Seq(
       Dependencies.shapeless,
       Dependencies.catsCore,
+      Dependencies.doobieCore,
       Dependencies.monocleCore,
       Dependencies.circeGeneric,
       Dependencies.spray,
@@ -278,6 +279,7 @@ lazy val datamodel = project
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisVectorTestkit,
+      Dependencies.geotrellisServerStac,
       Dependencies.circeCore,
       Dependencies.circeParser,
       Dependencies.circeOptics,
@@ -337,7 +339,8 @@ lazy val batch = project
       Dependencies.sparkCore,
       Dependencies.ficus,
       Dependencies.dropbox,
-      Dependencies.scopt
+      Dependencies.scopt,
+      "io.lemonlabs" %% "scala-uri" % "1.5.1"
     ) ++ loggingDependencies
   })
   .settings({
