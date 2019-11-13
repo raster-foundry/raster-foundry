@@ -1,8 +1,8 @@
 [repositories]
   local
-  ivy-proxy-releases: http://localhost:8081/repository/ivy-public/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
-  maven-proxy-releases: http://localhost:8081/repository/maven-public/
-  locationtech-releases: http://localhost:8081/repository/locationtech-releases/
-  locationtech-snapshots: http://localhost:8081/repository/locationtech-snapshots/
-  azavea-snapshots: http://localhost:8081/repository/azavea-snapshots/
-  azavea-releases: http://localhost:8081/repository/azavea-releases/
+  ivy-proxy-releases: http://nexus.internal.azavea.com/repository/ivy-public/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
+  maven-proxy-releases: http://nexus.internal.azavea.com/repository/maven-public/
+  locationtech-releases: http://nexus.internal.azavea.com/repository/locationtech-releases/
+  locationtech-snapshots: http://nexus.internal.azavea.com/repository/locationtech-snapshots/
+  azavea-snapshots: http://nexus.internal.azavea.com/repository/azavea-snapshots/
+  azavea-releases: http://nexus.internal.azavea.com/repository/azavea-releases/
