@@ -67,16 +67,16 @@ final case class WriteStacCatalog(exportId: UUID)(
           links = layerCollection.links ++ List(
             StacLink(
               s"./${sceneCollection.id}/collection.json",
-              Item,
-              Some(`image/cog`),
-              None,
+              Child,
+              Some(`application/json`),
+              Some(s"Scene Collection: ${sceneCollection.id}"),
               List()
             ),
             StacLink(
-              s"./${layerCollection.id}/collection.json",
-              Item,
-              Some(`image/cog`),
-              None,
+              s"./${labelCollection.id}/collection.json",
+              Child,
+              Some(`application/json`),
+              Some(s"Label Collection: ${labelCollection.id}"),
               List()
             )
           )
@@ -88,7 +88,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         StacLink(
           s"./${itemWithAbsolute.item.id}.json",
           Item,
-          Some(`image/cog`),
+          Some(`application/json`),
           None,
           List()
         )
