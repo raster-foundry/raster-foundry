@@ -3,7 +3,6 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.{ArrayTile, MultibandTile, isData}
 import io.circe.generic.JsonCodec
-import org.apache.commons.math3.util.FastMath
 import spire.syntax.cfor.cfor
 import geotrellis.raster.UByteConstantNoDataCellType
 
@@ -12,15 +11,15 @@ import geotrellis.raster.UByteConstantNoDataCellType
   * We can consider these functions usages in case of real performance issues caused by a long color correction.
   */
 object ColorCorrect extends LazyLogging {
-  import functions.SaturationAdjust._
-  import functions.SigmoidalContrast._
 
-  final case class LayerClipping(redMin: Int,
-                                 redMax: Int,
-                                 greenMin: Int,
-                                 greenMax: Int,
-                                 blueMin: Int,
-                                 blueMax: Int)
+  final case class LayerClipping(
+      redMin: Int,
+      redMax: Int,
+      greenMin: Int,
+      greenMax: Int,
+      blueMin: Int,
+      blueMax: Int
+  )
   sealed trait ClipValue
   final case class ClipBounds(min: Int, max: Int) extends ClipValue
   final case class MaybeClipBounds(maybeMin: Option[Int], maybeMax: Option[Int])
@@ -28,26 +27,19 @@ object ColorCorrect extends LazyLogging {
   final case class ClippingParams(band: Int, bounds: ClipValue)
 
   @JsonCodec
-  final case class Params(redBand: Int,
-                          greenBand: Int,
-                          blueBand: Int,
-                          gamma: BandGamma,
-                          bandClipping: PerBandClipping,
-                          tileClipping: MultiBandClipping,
-                          sigmoidalContrast: SigmoidalContrast,
-                          saturation: Saturation) {
-    def getGamma: Map[Int, Option[Double]] = Map(
-      0 -> (if (gamma.enabled) gamma.redGamma else None),
-      1 -> (if (gamma.enabled) gamma.greenGamma else None),
-      2 -> (if (gamma.enabled) gamma.blueGamma else None)
-    )
-
-    def colorCorrect(tile: MultibandTile,
-                     hist: Seq[Histogram[Double]],
-                     nodataValue: Option[Double]): MultibandTile = {
+  final case class Params(
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int
+  ) {
+    def colorCorrect(
+        tile: MultibandTile,
+        hist: Seq[Histogram[Double]],
+        nodataValue: Option[Double]
+    ): MultibandTile = {
       val indexedHist = hist.toIndexedSeq
       val rgbHist = Seq(redBand, greenBand, blueBand) map { indexedHist(_) }
-      ColorCorrect(tile, rgbHist, this, nodataValue)
+      ColorCorrect(tile, rgbHist, nodataValue)
     }
 
     def withBands(red: Int, green: Int, blue: Int) =
@@ -55,71 +47,51 @@ object ColorCorrect extends LazyLogging {
   }
 
   @inline def normalizeAndClampAndGammaCorrectPerPixel(
-      z: Double,
+      pixelValue: Double,
       oldMin: Int,
       oldMax: Int,
       newMin: Int,
       newMax: Int,
-      gammaOpt: Option[Double],
       noDataValue: Option[Double]
   ): Int = {
-    if (isData(z)) {
+    if (isData(pixelValue)) {
       val dNew = newMax - newMin
       val dOld = oldMax - oldMin
 
-      if (noDataValue.map(nd => (nd - z).abs < 0.00000001).getOrElse(false)) {
+      if (noDataValue
+            .map(nd => (nd - pixelValue).abs < 0.00000001)
+            .getOrElse(false)) {
         0
       } else if (dOld == 0) {
-        // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
+        // When dOld is nothing (normalipixelValueation is meaningless in this context), we still need to clamp
         val v = {
-          if (z > newMax) newMax
-          else if (z < newMin) newMin
-          else z.toInt
+          if (pixelValue > newMax) newMax
+          else if (pixelValue < newMin) newMin
+          else pixelValue.toInt
         }
 
-        gammaOpt match {
-          case None => v
-          case Some(gamma) =>
-            clampColor {
-              val gammaCorrection = 1 / gamma
-              (255 * FastMath.pow(v / 255.0, gammaCorrection)).toInt
-            }
-        }
+        v
       } else {
         val v = {
-          val scaled = (((z - oldMin) * dNew) / dOld) + newMin
+          val scaled = (((pixelValue - oldMin) * dNew) / dOld) + newMin
 
           if (scaled > newMax) newMax
           else if (scaled < newMin) newMin
           else scaled.toInt
         }
 
-        gammaOpt match {
-          case None => v
-          case Some(gamma) =>
-            clampColor {
-              val gammaCorrection = 1 / gamma
-              (255 * FastMath.pow(v / 255.0, gammaCorrection)).toInt
-            }
-        }
+        v
       }
-    } else z.toInt
+    } else pixelValue.toInt
   }
 
   val rgbBand: (Option[Int], Option[Int], Int) => Some[Int] =
     (specificBand: Option[Int], allBands: Option[Int], tileDefault: Int) =>
       specificBand.fold(allBands)(Some(_)).fold(Some(tileDefault))(x => Some(x))
 
-  def complexColorCorrect(rgbTile: MultibandTile, saturation: Saturation)(
-      layerNormalizeArgs: Map[Int, ClipBounds],
-      gammas: Map[Int, Option[Double]]
-  )(sigmoidalContrast: SigmoidalContrast)(
-      colorCorrectArgs: Map[Int, MaybeClipBounds],
-      tileClipping: MultiBandClipping,
-      noDataValue: Option[Double]
-  ): MultibandTile = {
+  def complexColorCorrect(rgbTile: MultibandTile,
+                          noDataValue: Option[Double]): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
-    val (gr, gg, gb) = (gammas(0), gammas(1), gammas(2))
     val tileCellType = UByteConstantNoDataCellType
     val (nred, ngreen, nblue) = (
       ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows),
@@ -127,58 +99,10 @@ object ColorCorrect extends LazyLogging {
       ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows)
     )
 
-    val ClipBounds(rmin, rmax) = layerNormalizeArgs(0)
-    val ClipBounds(gmin, gmax) = layerNormalizeArgs(1)
-    val ClipBounds(bmin, bmax) = layerNormalizeArgs(2)
-
     val tileMin = 1
-    val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, tileMin, 255)
-    val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, tileMin, 255)
-    val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, tileMin, 255)
-
-    val sigmoidal: Double => Double =
-      (
-        sigmoidalContrast.enabled,
-        sigmoidalContrast.alpha,
-        sigmoidalContrast.beta
-      ) match {
-        case (true, Some(a), Some(b)) => localTransform(rgbTile.cellType, a, b)
-        case _                        => identity
-      }
-
-    val (clipr, clipg, clipb): (Int => Int, Int => Int, Int => Int) = {
-      val MaybeClipBounds(mrmin, mrmax) = colorCorrectArgs(0)
-      val MaybeClipBounds(mgmin, mgmax) = colorCorrectArgs(1)
-      val MaybeClipBounds(mbmin, mbmax) = colorCorrectArgs(2)
-
-      val (mrclipMin, mrclipMax) = (
-        rgbBand(mrmin, tileClipping.min, 0).get,
-        rgbBand(mrmax, tileClipping.max, 255).get
-      )
-      val (mgclipMin, mgclipMax) = (
-        rgbBand(mgmin, tileClipping.min, 0).get,
-        rgbBand(mgmax, tileClipping.max, 255).get
-      )
-      val (mbclipMin, mbclipMax) = (
-        rgbBand(mbmin, tileClipping.min, 0).get,
-        rgbBand(mbmax, tileClipping.max, 255).get
-      )
-
-      @inline def clipBands(z: Int, min: Int, max: Int): Int = {
-        if (isData(z) && z > max) 255
-        else if (isData(z) && z < min) 0
-        else z
-      }
-
-      (
-        clipBands(_, mrclipMin, mrclipMax),
-        clipBands(_, mgclipMin, mgclipMax),
-        clipBands(_, mbclipMin, mbclipMax)
-      )
-    }
-
-    logger.trace(
-      s"Red (Clip Min: ${rclipMin}, Max: ${rclipMax}) (New Min: ${rnewMin}, ${rnewMax})")
+    val (rclipMin, rclipMax, rnewMin, rnewMax) = (0, 255, tileMin, 255)
+    val (gclipMin, gclipMax, gnewMin, gnewMax) = (0, 255, tileMin, 255)
+    val (bclipMin, bclipMax, bnewMin, bnewMax) = (0, 255, tileMin, 255)
 
     /** In this case for some reason with this func wrap it works faster ¯\_(ツ)_/¯ (it was micro benchmarked) */
     lazyWrapper {
@@ -192,7 +116,6 @@ object ColorCorrect extends LazyLogging {
                 rclipMax,
                 rnewMin,
                 rnewMax,
-                gr,
                 noDataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
@@ -201,7 +124,6 @@ object ColorCorrect extends LazyLogging {
                 gclipMax,
                 gnewMin,
                 gnewMax,
-                gg,
                 noDataValue
               ),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
@@ -210,24 +132,13 @@ object ColorCorrect extends LazyLogging {
                 bclipMax,
                 bnewMin,
                 bnewMax,
-                gb,
                 noDataValue
               )
             )
 
-          val (nr, ng, nb) = (saturation.enabled, saturation.saturation) match {
-            case (true, Some(cf)) =>
-              val (hue, chroma, luma) = rgbToHcluma(r, g, b)
-              val newChroma = scaleChroma(chroma, cf)
-              val (nr, ng, nb) = hclumaToRgb(hue, newChroma, luma)
-              (nr, ng, nb)
-
-            case _ => (r, g, b)
-          }
-
-          nred.set(col, row, clipr(sigmoidal(nr).toInt))
-          ngreen.set(col, row, clipg(sigmoidal(ng).toInt))
-          nblue.set(col, row, clipb(sigmoidal(nb).toInt))
+          nred.set(col, row, r.toInt)
+          ngreen.set(col, row, g.toInt)
+          nblue.set(col, row, b.toInt)
         }
       }
     }
@@ -237,11 +148,9 @@ object ColorCorrect extends LazyLogging {
 
   def apply(rgbTile: MultibandTile,
             rgbHist: Seq[Histogram[Double]],
-            params: Params,
             noDataValue: Option[Double]): MultibandTile = {
     val _rgbTile = rgbTile
     val _rgbHist = rgbHist
-    val gammas = params.getGamma
 
     val layerRgbClipping = {
       val range = 1 until 255
@@ -273,29 +182,8 @@ object ColorCorrect extends LazyLogging {
       2 -> ClipBounds(layerRgbClipping.blueMin, layerRgbClipping.blueMax)
     )
 
-    val colorCorrectArgs: Map[Int, MaybeClipBounds] = Map(
-      0 -> MaybeClipBounds(
-        params.bandClipping.redMin,
-        params.bandClipping.redMax
-      ),
-      1 -> MaybeClipBounds(
-        params.bandClipping.greenMin,
-        params.bandClipping.greenMax
-      ),
-      2 -> MaybeClipBounds(
-        params.bandClipping.blueMin,
-        params.bandClipping.blueMax
-      )
-    )
-
-    logger.trace(s"ColorCorrectArgs: ${colorCorrectArgs}")
     logger.trace(s"Layer Normalize Args: ${layerNormalizeArgs}")
-    complexColorCorrect(_rgbTile, params.saturation)(
-      layerNormalizeArgs,
-      gammas
-    )(params.sigmoidalContrast)(colorCorrectArgs,
-                                params.tileClipping,
-                                noDataValue)
+    complexColorCorrect(_rgbTile, noDataValue)
   }
 
   @inline def clampColor(z: Int): Int = {
@@ -305,19 +193,4 @@ object ColorCorrect extends LazyLogging {
   }
 
   private def lazyWrapper[T](f: => T): T = f
-
-  def paramsFromBandSpecOnly(
-      redBand: Int,
-      greenBand: Int,
-      blueBand: Int
-  ): Params = Params(
-    redBand,
-    greenBand,
-    blueBand,
-    BandGamma(false, None, None, None),
-    PerBandClipping(false, None, None, None, None, None, None),
-    MultiBandClipping(false, None, None),
-    SigmoidalContrast(false, None, None),
-    Saturation(false, None)
-  )
 }

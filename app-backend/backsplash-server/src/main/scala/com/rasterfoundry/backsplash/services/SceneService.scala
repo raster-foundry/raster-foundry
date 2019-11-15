@@ -77,7 +77,7 @@ class SceneService[HistStore](
           randomProjectId,
           ingestLocation,
           imageBandOverride,
-          ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
+          ColorCorrect.Params(0, 1, 2),
           None, // no single band options ever
           None, // not adding the mask here, since out of functional scope for md to image
           footprint,

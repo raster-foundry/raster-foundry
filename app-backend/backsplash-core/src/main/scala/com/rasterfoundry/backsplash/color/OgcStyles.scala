@@ -32,7 +32,7 @@ object OgcStyles {
         val rgbHists = bands map { indexedHist(_) }
         val subset = mbtile.subsetBands(bands)
         val params =
-          ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
+          ColorCorrect.Params(0, 1, 2)
         val corrected = params.colorCorrect(subset, rgbHists.toSeq, None)
         toBytes(corrected, format)
       }
