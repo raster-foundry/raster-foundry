@@ -87,6 +87,7 @@ object ColorCorrect extends LazyLogging {
       specificBand.fold(allBands)(Some(_)).fold(Some(tileDefault))(x => Some(x))
 
   def complexColorCorrect(rgbTile: MultibandTile,
+                          layerNormalizeArgs: Map[String, ClipBounds],
                           noDataValue: Option[Double]): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val tileCellType = UByteConstantNoDataCellType
@@ -96,10 +97,22 @@ object ColorCorrect extends LazyLogging {
       ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows)
     )
 
+    /** These are all super unsafe destructurings
+      * I tried to make the assumptions more explicit by naming the keys instead
+      * of numbering them, but if you see this and feel nervous about it, that's
+      * reasonable.
+      * It's safe, because the layerNormalizeArgs are constructed and consumed in
+      * this and only this file, so there's no way for this map to get all wonky,
+      * but, future reader, your concern is not unreasonable.
+      */
+    val ClipBounds(rmin, rmax) = layerNormalizeArgs("red")
+    val ClipBounds(gmin, gmax) = layerNormalizeArgs("green")
+    val ClipBounds(bmin, bmax) = layerNormalizeArgs("blue")
+
     val tileMin = 1
-    val (rclipMin, rclipMax, rnewMin, rnewMax) = (0, 255, tileMin, 255)
-    val (gclipMin, gclipMax, gnewMin, gnewMax) = (0, 255, tileMin, 255)
-    val (bclipMin, bclipMax, bnewMin, bnewMax) = (0, 255, tileMin, 255)
+    val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, tileMin, 255)
+    val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, tileMin, 255)
+    val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, tileMin, 255)
 
     /** In this case for some reason with this func wrap it works faster ¯\_(ツ)_/¯ (it was micro benchmarked) */
     lazyWrapper {
@@ -173,14 +186,15 @@ object ColorCorrect extends LazyLogging {
       } else LayerClipping(0, 255, 0, 255, 0, 255)
     }
 
-    val layerNormalizeArgs: Map[Int, ClipBounds] = Map(
-      0 -> ClipBounds(layerRgbClipping.redMin, layerRgbClipping.redMax),
-      1 -> ClipBounds(layerRgbClipping.greenMin, layerRgbClipping.greenMax),
-      2 -> ClipBounds(layerRgbClipping.blueMin, layerRgbClipping.blueMax)
+    val layerNormalizeArgs: Map[String, ClipBounds] = Map(
+      "red" -> ClipBounds(layerRgbClipping.redMin, layerRgbClipping.redMax),
+      "green" -> ClipBounds(layerRgbClipping.greenMin,
+                            layerRgbClipping.greenMax),
+      "blue" -> ClipBounds(layerRgbClipping.blueMin, layerRgbClipping.blueMax)
     )
 
     logger.trace(s"Layer Normalize Args: ${layerNormalizeArgs}")
-    complexColorCorrect(_rgbTile, noDataValue)
+    complexColorCorrect(_rgbTile, layerNormalizeArgs, noDataValue)
   }
 
   @inline def clampColor(z: Int): Int = {
