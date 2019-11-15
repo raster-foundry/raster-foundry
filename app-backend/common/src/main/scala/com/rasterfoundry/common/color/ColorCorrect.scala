@@ -41,12 +41,9 @@ object ColorCorrect extends LazyLogging {
       val rgbHist = Seq(redBand, greenBand, blueBand) map { indexedHist(_) }
       ColorCorrect(tile, rgbHist, nodataValue)
     }
-
-    def withBands(red: Int, green: Int, blue: Int) =
-      this.copy(redBand = red, greenBand = green, blueBand = blue)
   }
 
-  @inline def normalizeAndClampAndGammaCorrectPerPixel(
+  @inline def normalizePerPixel(
       pixelValue: Double,
       oldMin: Int,
       oldMax: Int,
@@ -93,7 +90,7 @@ object ColorCorrect extends LazyLogging {
                           noDataValue: Option[Double]): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val tileCellType = UByteConstantNoDataCellType
-    val (nred, ngreen, nblue) = (
+    val (dstRed, dstGreen, dstBlue) = (
       ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows),
       ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows),
       ArrayTile.alloc(tileCellType, rgbTile.cols, rgbTile.rows)
@@ -110,7 +107,7 @@ object ColorCorrect extends LazyLogging {
         cfor(0)(_ < rgbTile.rows, _ + 1) { row =>
           val (r, g, b) =
             (
-              ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
+              ColorCorrect.normalizePerPixel(
                 red.getDouble(col, row),
                 rclipMin,
                 rclipMax,
@@ -118,7 +115,7 @@ object ColorCorrect extends LazyLogging {
                 rnewMax,
                 noDataValue
               ),
-              ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
+              ColorCorrect.normalizePerPixel(
                 green.getDouble(col, row),
                 gclipMin,
                 gclipMax,
@@ -126,7 +123,7 @@ object ColorCorrect extends LazyLogging {
                 gnewMax,
                 noDataValue
               ),
-              ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
+              ColorCorrect.normalizePerPixel(
                 blue.getDouble(col, row),
                 bclipMin,
                 bclipMax,
@@ -136,14 +133,14 @@ object ColorCorrect extends LazyLogging {
               )
             )
 
-          nred.set(col, row, r.toInt)
-          ngreen.set(col, row, g.toInt)
-          nblue.set(col, row, b.toInt)
+          dstRed.set(col, row, r.toInt)
+          dstGreen.set(col, row, g.toInt)
+          dstBlue.set(col, row, b.toInt)
         }
       }
     }
 
-    MultibandTile(nred, ngreen, nblue)
+    MultibandTile(dstRed, dstGreen, dstBlue)
   }
 
   def apply(rgbTile: MultibandTile,
