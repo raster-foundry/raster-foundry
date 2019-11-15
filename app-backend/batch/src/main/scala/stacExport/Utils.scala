@@ -62,7 +62,7 @@ object Utils {
         s"./$layerId/collection.json",
         Child,
         Some(`application/json`),
-        Some("Layer Collection $layerId"),
+        Some(s"Layer Collection $layerId"),
         List()
       )
     }
