@@ -33,7 +33,6 @@ require('./vendor/planetLabs.service.js').default(shared);
 require('./vendor/aws-sdk-s3.module.js');
 
 // projects
-require('./projects/colorCorrect.service').default(shared);
 require('./projects/colorScheme.service').default(shared);
 require('./projects/project.service').default(shared);
 require('./projects/edit.service').default(shared);
@@ -73,6 +72,5 @@ require('./common/url.filter').default(shared);
 require('./common/orgStatus.filter').default(shared);
 require('./common/pagination.service').default(shared);
 require('./common/graph.service').default(shared);
-
 
 export default shared;
