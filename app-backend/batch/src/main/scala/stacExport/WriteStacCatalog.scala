@@ -17,6 +17,7 @@ import doobie._
 import doobie.implicits._
 import cats.implicits._
 import cats.effect.{ContextShift, IO}
+import com.amazonaws.services.s3.model.PutObjectResult
 import doobie.hikari.HikariTransactor
 
 final case class WriteStacCatalog(exportId: UUID)(
@@ -25,43 +26,67 @@ final case class WriteStacCatalog(exportId: UUID)(
 ) extends Config
     with RollbarNotifier {
 
-  private def processLayerCollection(exportDef: StacExport,
-                                     exportPath: String,
-                                     catalog: StacCatalog,
-                                     tempDir: ScalaFile,
-                                     layerId: UUID,
-                                     sceneTaskAnnotation: ExportData) = {
+  private def processLayerCollection(
+      exportDef: StacExport,
+      exportPath: String,
+      catalog: StacCatalog,
+      tempDir: ScalaFile,
+      layerId: UUID,
+      sceneTaskAnnotation: ExportData
+  ): IO[(List[PutObjectResult], List[ScalaFile])] = {
     logger.info(s"Processing Layer Collection: $layerId")
     val layerCollectionPrefix = s"$exportPath/$layerId"
     val labelRootURI = new URI(layerCollectionPrefix)
     val layerCollectionAbsolutePath =
       s"$layerCollectionPrefix/collection.json"
-    val layerStacCollection =
-      ObjectWithAbsolute(layerCollectionAbsolutePath,
-                         Utils.getLayerStacCollection(exportDef,
-                                                      catalog,
-                                                      layerId,
-                                                      sceneTaskAnnotation))
+    val layerCollection = Utils.getLayerStacCollection(
+      exportDef,
+      catalog,
+      layerId,
+      sceneTaskAnnotation
+    )
+
     val sceneCollection =
-      Utils.getSceneCollection(exportDef, catalog, layerStacCollection)
+      Utils.getSceneCollection(exportDef, catalog, layerCollection)
     val labelCollection =
-      Utils.getLabelCollection(exportDef, catalog, layerStacCollection)
-    val labelCollectionWithPath = ObjectWithAbsolute(
-      s"$layerCollectionPrefix/${labelCollection.id}/collection.json",
-      labelCollection)
+      Utils.getLabelCollection(exportDef, catalog, layerCollection)
 
     val annotations = ObjectWithAbsolute(
       s"$layerCollectionPrefix/${labelCollection.id}/data.json",
-      sceneTaskAnnotation.annotations)
+      sceneTaskAnnotation.annotations
+    )
 
     val sceneItems = sceneTaskAnnotation.scenes flatMap { scene =>
       Utils.getSceneItem(catalog, layerCollectionPrefix, sceneCollection, scene)
     }
 
+    val absoluteLayerCollection =
+      ObjectWithAbsolute(
+        layerCollectionAbsolutePath,
+        layerCollection.copy(
+          links = layerCollection.links ++ List(
+            StacLink(
+              s"./${sceneCollection.id}/collection.json",
+              Item,
+              Some(`image/cog`),
+              None,
+              List()
+            ),
+            StacLink(
+              s"./${layerCollection.id}/collection.json",
+              Item,
+              Some(`image/cog`),
+              None,
+              List()
+            )
+          )
+        )
+      )
+
     val updatedSceneLinks = sceneCollection.links ++ sceneItems.map {
       itemWithAbsolute =>
         StacLink(
-          s"./${itemWithAbsolute.item}.json",
+          s"./${itemWithAbsolute.item.id}.json",
           Item,
           Some(`image/cog`),
           None,
@@ -74,53 +99,87 @@ final case class WriteStacCatalog(exportId: UUID)(
 
     val sceneCollectionWithPath = ObjectWithAbsolute(
       s"$layerCollectionPrefix/${sceneCollection.id}/collection.json",
-      updatedSceneCollection)
+      updatedSceneCollection
+    )
     val labelItem =
-      Utils.getLabelItem(catalog,
-                         sceneTaskAnnotation,
-                         labelCollectionWithPath,
-                         sceneItems,
-                         s"$layerCollectionPrefix/${labelCollection.id}",
-                         labelRootURI)
+      Utils.getLabelItem(
+        catalog,
+        sceneTaskAnnotation,
+        labelCollection,
+        sceneItems,
+        s"$layerCollectionPrefix/${labelCollection.id}",
+        labelRootURI
+      )
 
+    val updatedLabelLinks = StacLink(
+      s"./${labelItem.item.id}.json",
+      Item,
+      Some(`application/json`),
+      None,
+      List()
+    ) :: labelCollection.links
+
+    val labelCollectionWithPath = ObjectWithAbsolute(
+      s"$layerCollectionPrefix/${labelCollection.id}/collection.json",
+      labelCollection.copy(links = updatedLabelLinks)
+    )
     for {
       s3LabelCollectionResult <- StacFileIO.putObjectToS3(
-        labelCollectionWithPath)
-      s3SceneItemResults <- sceneItems.parTraverse(item =>
-        StacFileIO.putObjectToS3(item))
+        labelCollectionWithPath
+      )
+      s3SceneItemResults <- sceneItems.parTraverse(
+        item => StacFileIO.putObjectToS3(item)
+      )
       s3SceneCollectionResults <- StacFileIO.putObjectToS3(
-        sceneCollectionWithPath)
+        sceneCollectionWithPath
+      )
       s3LabelItemResults <- StacFileIO.putObjectToS3(labelItem)
-      s3LayerCollectionResults <- StacFileIO.putObjectToS3(layerStacCollection)
+      s3LayerCollectionResults <- StacFileIO.putObjectToS3(
+        absoluteLayerCollection
+      )
       s3AnnotationResults <- StacFileIO.putObjectToS3(annotations)
 
       localLabelCollectionResult <- StacFileIO.writeObjectToFilesystem(
         tempDir,
-        labelCollectionWithPath)
-      localSceneItemResults <- sceneItems.parTraverse(item =>
-        StacFileIO.writeObjectToFilesystem(tempDir, item))
+        labelCollectionWithPath
+      )
+      localSceneItemResults <- sceneItems.parTraverse(
+        item => StacFileIO.writeObjectToFilesystem(tempDir, item)
+      )
       localSceneCollectionResults <- StacFileIO.writeObjectToFilesystem(
         tempDir,
-        sceneCollectionWithPath)
-      localLabelItemResults <- StacFileIO.writeObjectToFilesystem(tempDir,
-                                                                  labelItem)
+        sceneCollectionWithPath
+      )
+      localLabelItemResults <- StacFileIO.writeObjectToFilesystem(
+        tempDir,
+        labelItem
+      )
       localLayerCollectionResults <- StacFileIO.writeObjectToFilesystem(
         tempDir,
-        layerStacCollection)
-      localAnnotationResults <- StacFileIO.writeObjectToFilesystem(tempDir,
-                                                                   annotations)
+        absoluteLayerCollection
+      )
+      localAnnotationResults <- StacFileIO.writeObjectToFilesystem(
+        tempDir,
+        annotations
+      )
 
     } yield {
-      (List(s3LabelCollectionResult,
-            s3SceneCollectionResults,
-            s3LabelItemResults,
-            s3AnnotationResults,
-            s3LayerCollectionResults) ++ s3SceneItemResults,
-       List(localLabelCollectionResult,
-            localSceneCollectionResults,
-            localLabelItemResults,
-            localAnnotationResults,
-            localLayerCollectionResults) ++ localSceneItemResults)
+      (
+        List(
+          s3LabelCollectionResult,
+          s3SceneCollectionResults,
+          s3LabelItemResults,
+          s3AnnotationResults,
+          s3LayerCollectionResults
+        ) ++ s3SceneItemResults,
+        List(
+          localLabelCollectionResult,
+          localSceneCollectionResults,
+          localLabelItemResults,
+          localAnnotationResults,
+          localLayerCollectionResults
+        ) ++ localSceneItemResults
+      )
     }
   }
 
@@ -150,8 +209,9 @@ final case class WriteStacCatalog(exportId: UUID)(
         val currentPath = s"s3://$dataBucket/stac-exports"
         val exportPath = s"$currentPath/${exportDef.id}"
         logger.info(s"Writing export under prefix: $exportPath")
+        val layerIds = layerInfo.keys.toList
         val catalog: StacCatalog =
-          Utils.getStacCatalog(currentPath, exportDef, "0.8.0")
+          Utils.getStacCatalog(currentPath, exportDef, "0.8.0", layerIds)
         val catalogWithPath =
           ObjectWithAbsolute(s"$exportPath/catalog.json", catalog)
 
@@ -160,12 +220,14 @@ final case class WriteStacCatalog(exportId: UUID)(
 
         val layerIO = layerInfo map {
           case (layerId, sceneTaskAnnotation) =>
-            processLayerCollection(exportDef,
-                                   exportPath,
-                                   catalog,
-                                   tempDir,
-                                   layerId,
-                                   sceneTaskAnnotation)
+            processLayerCollection(
+              exportDef,
+              exportPath,
+              catalog,
+              tempDir,
+              layerId,
+              sceneTaskAnnotation
+            )
         }
         for {
           s3CatalogResults <- StacFileIO.putObjectToS3(catalogWithPath)
@@ -174,12 +236,16 @@ final case class WriteStacCatalog(exportId: UUID)(
           (s3LayerCollectionResults, _) = layer.unzip
           tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
           _ <- IO { tempDir.zipTo(tempZipFile) }
-          s3ZipFile <- StacFileIO.putToS3(s"$exportPath/catalog.zip",
-                                          tempZipFile)
+          s3ZipFile <- StacFileIO.putToS3(
+            s"$exportPath/catalog.zip",
+            tempZipFile
+          )
           _ <- {
             val updatedExport =
-              exportDef.copy(exportStatus = ExportStatus.Exported,
-                             exportLocation = Some(exportPath))
+              exportDef.copy(
+                exportStatus = ExportStatus.Exported,
+                exportLocation = Some(exportPath)
+              )
             StacExportDao.update(updatedExport, exportDef.id).transact(xa)
           }
         } yield {

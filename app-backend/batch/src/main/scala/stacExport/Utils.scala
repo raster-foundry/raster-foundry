@@ -30,9 +30,12 @@ object Utils {
     List()
   )
 
-  def getStacCatalog(currentPath: String,
-                     export: StacExport,
-                     stacVersion: String): StacCatalog = {
+  def getStacCatalog(
+      currentPath: String,
+      export: StacExport,
+      stacVersion: String,
+      layerIds: List[UUID]
+  ): StacCatalog = {
     val catalogId = export.id.toString
     val catalogParentPath = s"$currentPath/$catalogId"
     val catalogDescription =
@@ -48,26 +51,38 @@ object Utils {
       ),
       // s3://<prefix>/<catalogId>/catalog.json
       StacLink(
-        "catalog.json",
+        "./catalog.json",
         StacRoot,
         Some(`application/json`),
         Some(s"Catalog $catalogId"),
         List()
       )
+    ) ++ layerIds.map { layerId =>
+      StacLink(
+        s"./$layerId/collection.json",
+        Child,
+        Some(`application/json`),
+        Some("Layer Collection $layerId"),
+        List()
+      )
+    }
+    StacCatalog(
+      stacVersion,
+      catalogId,
+      None,
+      catalogDescription,
+      catalogOwnLinks
     )
-    StacCatalog(stacVersion,
-                catalogId,
-                None,
-                catalogDescription,
-                catalogOwnLinks)
   }
 
-  def getLabelItem(catalog: StacCatalog,
-                   sceneTaskAnnotation: ExportData,
-                   labelCollectionWithPath: ObjectWithAbsolute[StacCollection],
-                   sceneItems: List[ObjectWithAbsolute[StacItem]],
-                   labelCollectionPrefix: String,
-                   catalogRootPath: URI): ObjectWithAbsolute[StacItem] = {
+  def getLabelItem(
+      catalog: StacCatalog,
+      sceneTaskAnnotation: ExportData,
+      labelCollection: StacCollection,
+      sceneItems: List[ObjectWithAbsolute[StacItem]],
+      labelCollectionPrefix: String,
+      catalogRootPath: URI
+  ): ObjectWithAbsolute[StacItem] = {
     val labelItemId = UUID.randomUUID().toString
     val labelItemGeomExtent = sceneTaskAnnotation.taskGeomExtent
     val labelItemFootprint = labelItemGeomExtent.geometry
@@ -78,7 +93,6 @@ object Utils {
       labelItemGeomExtent.yMax
     )
     val absPath = labelCollectionPrefix
-    val labelCollection = labelCollectionWithPath.item
     // s3://<prefix>/<catalogId>/<layerCollectionId>/<labelCollectionId>/<labelItemId>.json
     val labelItemSelfAbsPath = s"$absPath/$labelItemId.json"
     val labelItemLinks = List(
@@ -166,15 +180,18 @@ object Utils {
     ObjectWithAbsolute(labelItemSelfAbsPath, labelItem)
   }
 
-  def getSceneItem(catalog: StacCatalog,
-                   layerCollectionAbsolutePath: String,
-                   sceneCollection: StacCollection,
-                   scene: Scene): Option[ObjectWithAbsolute[StacItem]] = {
+  def getSceneItem(
+      catalog: StacCatalog,
+      layerCollectionAbsolutePath: String,
+      sceneCollection: StacCollection,
+      scene: Scene
+  ): Option[ObjectWithAbsolute[StacItem]] = {
 
     val sceneFootprintOption = scene.dataFootprint match {
       case Some(footprint) =>
         Some(
-          Reproject(footprint, CRS.fromEpsgCode(3857), CRS.fromEpsgCode(4326)))
+          Reproject(footprint, CRS.fromEpsgCode(3857), CRS.fromEpsgCode(4326))
+        )
       case _ => None
     }
     val itemBboxOption = sceneFootprintOption.map { footprint =>
@@ -229,16 +246,18 @@ object Utils {
       case (sceneFootprint, itemBbox, sceneAsset) =>
         ObjectWithAbsolute(
           sceneItemAbsolutePath,
-          StacItem(scene.id.toString,
-                   catalog.stacVersion,
-                   List(),
-                   "Feature",
-                   sceneFootprint,
-                   itemBbox,
-                   sceneLinks,
-                   sceneAsset,
-                   Some(sceneCollection.id),
-                   sceneProperties)
+          StacItem(
+            scene.id.toString,
+            catalog.stacVersion,
+            List(),
+            "Feature",
+            sceneFootprint,
+            itemBbox,
+            sceneLinks,
+            sceneAsset,
+            Some(sceneCollection.id),
+            sceneProperties
+          )
         )
     }
 
@@ -247,8 +266,8 @@ object Utils {
   def getLabelCollection(
       exportDefinition: StacExport,
       catalog: StacCatalog,
-      layerStacCollection: ObjectWithAbsolute[StacCollection])
-    : StacCollection = {
+      layerStacCollection: StacCollection
+  ): StacCollection = {
     val labelCollectionLinks = List(
       relativeCatalogRoot,
       relativeLayerCollection
@@ -258,11 +277,11 @@ object Utils {
       catalog.stacVersion,
       UUID.randomUUID().toString,
       Some("Label Collection"),
-      s"Label Collection in layer ${layerStacCollection.item.id}",
+      s"Label Collection in layer ${layerStacCollection.id}",
       List[String](),
       "1",
       List[StacProvider](),
-      layerStacCollection.item.extent,
+      layerStacCollection.extent,
       JsonObject.empty,
       labelCollectionLinks
     )
@@ -271,8 +290,8 @@ object Utils {
   def getSceneCollection(
       exportDefinition: StacExport,
       catalog: StacCatalog,
-      layerStacCollection: ObjectWithAbsolute[StacCollection])
-    : StacCollection = {
+      layerStacCollection: StacCollection
+  ): StacCollection = {
     val sceneCollectionId = UUID.randomUUID().toString
     val sceneCollectionOwnLinks = List(
       relativeCatalogRoot,
@@ -282,11 +301,11 @@ object Utils {
       catalog.stacVersion,
       sceneCollectionId,
       Some("Scene Collection"),
-      s"Scene collection in layer ${layerStacCollection.item.id}",
+      s"Scene collection in layer ${layerStacCollection.id}",
       List[String](),
       "1",
       List[StacProvider](),
-      layerStacCollection.item.extent,
+      layerStacCollection.extent,
       JsonObject.empty,
       sceneCollectionOwnLinks
     )
@@ -296,7 +315,8 @@ object Utils {
       exportDefinition: StacExport,
       catalog: StacCatalog,
       layerId: UUID,
-      sceneTaskAnnotation: ExportData): StacCollection = {
+      sceneTaskAnnotation: ExportData
+  ): StacCollection = {
 
     val layerRootPath = "../catalog.json"
     val layerLinks = List(
@@ -327,7 +347,8 @@ object Utils {
       }
     val layerSceneTemporalExtent: TemporalExtent = TemporalExtent(
       layerSceneAqcTime.minBy(_.getTime).toInstant,
-      layerSceneAqcTime.maxBy(_.getTime).toInstant)
+      layerSceneAqcTime.maxBy(_.getTime).toInstant
+    )
 
     val layerExtent = StacExtent(
       SpatialExtent(List(layerSceneSpatialExtent)),
