@@ -29,15 +29,7 @@ class AnnotateImportController {
             quality: null
         };
         this.bindGeoJSONUploadEvent();
-        this.bindShapefileUploadEvent();
         this.isMachineData = false;
-
-        this.$scope.$watch('$ctrl.$parent.annotationShapefileProps', props => {
-            if (props && props.length) {
-                this.hasShapefileProps = true;
-                this.dataProperties = props;
-            }
-        });
     }
 
     bindGeoJSONUploadEvent() {
@@ -50,17 +42,6 @@ class AnnotateImportController {
                         this.setSelectionMenuItems(JSON.parse(event.target.result));
                     };
                     reader.readAsText(datum);
-                });
-            }
-        });
-    }
-
-    bindShapefileUploadEvent() {
-        $('#shapefile-btn-upload').change(e => {
-            let upload = _.values(e.target.files);
-            if (upload.length) {
-                upload.forEach(datum => {
-                    this.setShapefileUploadData(datum);
                 });
             }
         });
@@ -86,11 +67,6 @@ class AnnotateImportController {
             return _.intersection(accu, Object.keys(feature.properties));
         }, Object.keys(data.features[0].properties));
         this.$scope.$apply();
-    }
-
-    setShapefileUploadData(shapefileData) {
-        this.shapefileData = shapefileData;
-        this.$parent.uploadShapefile(shapefileData);
     }
 
     updateKeySelection(appKey, dataKey) {
@@ -147,18 +123,11 @@ class AnnotateImportController {
             });
         }
 
-        if (this.hasShapefileProps) {
-            this.$parent.importShapefileWithProps(this.shapefileData, this.matchKeys);
-            this.hasShapefileProps = false;
-        }
-
         this.$state.go('projects.edit.annotate');
     }
 
     onGoToParent() {
-        this.hasShapefileProps = false;
         this.dataProperties = [];
-        this.$parent.deleteShapeFileUpload();
         this.$state.go('projects.edit.annotate');
     }
 }

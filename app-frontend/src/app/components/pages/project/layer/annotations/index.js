@@ -35,8 +35,6 @@ class LayerAnnotationsController {
     }
 
     mapStateToThis(state) {
-        // listen for changes for the shapefile upload so you can know when that's done
-        // and display the posted annotations
         let filter = state.projects.filter;
         const annotations = state.projects.annotations;
         let visibleAnnotations = annotations ? annotations.toArray() : [];
@@ -51,7 +49,6 @@ class LayerAnnotationsController {
         }
         let persistedLabels = state.projects.labels;
         let labels = [{ name: 'All' }, ...persistedLabels.map(label => ({ name: label }))];
-        let annotationShapefileProps = state.projects.annotationShapefileProps;
 
         return {
             user: state.api.user,
@@ -64,8 +61,7 @@ class LayerAnnotationsController {
             creatingAnnotations: state.projects.creatingAnnotations,
             creatingAnnotationsError: state.projects.creatingAnnotationsError,
             editingAnnotation: state.projects.editingAnnotation,
-            annotationTemplate: state.projects.annotationTemplate,
-            annotationShapefileProps
+            annotationTemplate: state.projects.annotationTemplate
         };
     }
 

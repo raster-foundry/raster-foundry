@@ -673,7 +673,10 @@ export default class SceneImportModalController {
         // cause the $q.all() call, above, to get rejected completely, when what we really want is
         // to convert the rejection to a warning. To make this work, the error handler here returns
         // a -1 value.
-        return datasetPromise.then(ds => this.$q.resolve(ds.count()), () => this.$q.resolve(-1));
+        return datasetPromise.then(
+            ds => this.$q.resolve(ds.count()),
+            () => this.$q.resolve(-1)
+        );
     }
 
     getTotalFileSize() {

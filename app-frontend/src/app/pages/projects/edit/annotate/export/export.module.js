@@ -21,26 +21,12 @@ class AnnotateExportController {
         this.$scope.$on('$destroy', unsubscribe);
 
         this.visibleAnnotations = this.$parent.visibleAnnotations;
-        this.projectService.getAnnotationShapefile(this.$state.params.projectid).then(
-            res => {
-                this.shapefileDlUri = res.data;
-                this.hasShapefile = true;
-            },
-            err => {
-                this.hasShapefile = false;
-                this.$log.error(err);
-            }
-        );
     }
 
     onAnnotationsDownload(e, annotationData) {
         let href = `data:text/json;charset=utf-8,${encodeURI(JSON.stringify(annotationData))}`;
         let dl = angular.element(`<a href="${href}"
             download="${this.fileName}.geojson"></a>`);
-        if (this.exportType === 'Shapefile' && this.shapefileDlUri) {
-            href = this.shapefileDlUri;
-            dl = angular.element(`<a href="${href}"></a>`);
-        }
         angular
             .element(e.target)
             .parent()

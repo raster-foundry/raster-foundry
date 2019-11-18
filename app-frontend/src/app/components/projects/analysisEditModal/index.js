@@ -19,7 +19,10 @@ class AnalysisEditModalController {
         }
         try {
             this.editableNodes = this.editableNodesFromAnalyses(this.analyses);
-            const geojson = _.get(this.editableNodes.find(n => n.type === 'mask'), 'node.mask');
+            const geojson = _.get(
+                this.editableNodes.find(n => n.type === 'mask'),
+                'node.mask'
+            );
             if (geojson) {
                 const reprojected = this.geometryFromMaskGeometry(geojson);
                 this.getMap().then(mapContainer => {
@@ -69,56 +72,58 @@ class AnalysisEditModalController {
         let editableNodes = new OrderedMap();
         let nodes = [root];
         const addEditableNode = node =>
-            (({
-                mask: () =>
-                    editableNodes.set(node.id, {
-                        node,
-                        type: 'mask',
-                        value: node.mask
-                    }),
-                layerSrc: () => {
-                    this.hasInconsistentSource =
-                        this.hasInconsistentSource ||
-                        node.projId !== analysis.projectId ||
-                        node.layerId !== analysis.projectLayerId;
-                    const editableNode = {
-                        node,
-                        type: 'layerSrc',
-                        value: '' + node.band,
-                        options: [{ name: node.band, number: node.band }]
-                    };
-                    this.projectService
-                        .getProjectLayerDatasources(analysis.projectId, analysis.projectLayerId)
-                        .then(datasources => {
-                            if (datasources.length === 0) {
-                                this.$log.error('No datasources in layer, disabling changes');
-                            } else {
-                                if (datasources.length !== 1) {
-                                    this.$log.error(
-                                        'layer has more than one datasource',
-                                        'falling back to the first one'
-                                    );
+            ((
+                {
+                    mask: () =>
+                        editableNodes.set(node.id, {
+                            node,
+                            type: 'mask',
+                            value: node.mask
+                        }),
+                    layerSrc: () => {
+                        this.hasInconsistentSource =
+                            this.hasInconsistentSource ||
+                            node.projId !== analysis.projectId ||
+                            node.layerId !== analysis.projectLayerId;
+                        const editableNode = {
+                            node,
+                            type: 'layerSrc',
+                            value: '' + node.band,
+                            options: [{ name: node.band, number: node.band }]
+                        };
+                        this.projectService
+                            .getProjectLayerDatasources(analysis.projectId, analysis.projectLayerId)
+                            .then(datasources => {
+                                if (datasources.length === 0) {
+                                    this.$log.error('No datasources in layer, disabling changes');
+                                } else {
+                                    if (datasources.length !== 1) {
+                                        this.$log.error(
+                                            'layer has more than one datasource',
+                                            'falling back to the first one'
+                                        );
+                                    }
+                                    const datasource = _.first(datasources);
+                                    editableNode.options = datasource.bands;
+                                    if (
+                                        !datasource.bands
+                                            .map(d => d.number)
+                                            .includes(editableNode.value)
+                                    ) {
+                                        editableNode.value = null;
+                                    }
                                 }
-                                const datasource = _.first(datasources);
-                                editableNode.options = datasource.bands;
-                                if (
-                                    !datasource.bands
-                                        .map(d => d.number)
-                                        .includes(editableNode.value)
-                                ) {
-                                    editableNode.value = null;
-                                }
-                            }
-                        });
-                    return editableNodes.set(node.id, editableNode);
-                },
-                const: () =>
-                    editableNodes.set(node.id, {
-                        node,
-                        type: 'const',
-                        value: +node.constant
-                    })
-            }[node.type || node.apply] || (() => editableNodes))());
+                            });
+                        return editableNodes.set(node.id, editableNode);
+                    },
+                    const: () =>
+                        editableNodes.set(node.id, {
+                            node,
+                            type: 'const',
+                            value: +node.constant
+                        })
+                }[node.type || node.apply] || (() => editableNodes)
+            )());
         while (nodes.length) {
             const node = nodes.pop();
             editableNodes = addEditableNode(node);

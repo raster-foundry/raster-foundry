@@ -402,7 +402,7 @@ export default app => {
             let profileName = (profile, dpr) =>
                 (dpr.name !== profile.email ? dpr.name : null) ||
                 (dpr.nickname !== profile.email ? dpr.nickname : null) ||
-                (dpr.given_name || '' + dpr.family_name || '') ||
+                dpr.given_name || '' + dpr.family_name || '' ||
                 null;
 
             let p = this.getProfile();

@@ -50,7 +50,6 @@ require('./scenes/upload.service').default(shared);
 require('./scenes/datasource.service').default(shared);
 require('./scenes/rasterFoundryRepository.service').default(shared);
 require('./scenes/planetRepository.service').default(shared);
-require('./scenes/cmrRepository.service').default(shared);
 require('./scenes/datasourceLicense.service').default(shared);
 
 // map

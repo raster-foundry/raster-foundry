@@ -95,37 +95,6 @@ trait ProjectAnnotationRoutes
     }
   }
 
-  def exportAnnotationShapefile(projectId: UUID): Route = authenticate { user =>
-    (annotationExportQueryParameters) { annotationExportQP =>
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        onSuccess(
-          AnnotationDao
-            .listForProjectExport(projectId, annotationExportQP)
-            .transact(xa)
-            .unsafeToFuture
-        ) {
-          case annotations @ (_: List[Annotation]) => {
-            complete(
-              AnnotationShapefileService
-                .getAnnotationShapefileDownloadUrl(annotations, user)
-            )
-          }
-          case _ =>
-            complete(
-              throw new Exception(
-                "Annotations do not exist or are not accessible by this user"
-              )
-            )
-        }
-      }
-    }
-  }
-
   def getAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate {
     user =>
       authorizeAuthResultAsync {

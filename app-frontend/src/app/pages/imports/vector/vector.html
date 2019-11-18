@@ -16,9 +16,6 @@
           <option value="owned">Owned by me</option>
           <option value="shared">Shared with me</option>
         </select>
-        <button type="button" class="btn btn-primary" ng-click="$ctrl.importModal()">
-          Import shape
-        </button>
       </div>
       <rf-pagination-count
           start-index="$ctrl.pagination.startingItem"
@@ -53,11 +50,9 @@
             class="panel panel-off-white"
             ng-if="$ctrl.currentOwnershipFilter === 'owned' && !$ctrl.currentQuery && !$ctrl.search && $ctrl.pagination && !$ctrl.pagination.count">
           <p class="pb-25">
-            Every shape that you import or create will be listed here.
-            After you have imported one or more shapes, you can return to this page to view them.
+            Every shape that you create will be listed here.
+            After you have created one or more shapes, you can return to this page to view them.
           </p>
-
-          <a class="btn btn-primary" ng-click="$ctrl.importModal()">Import Shape</a>
           <p>
             <a>Getting started with Shapes</a>
           </p>
@@ -103,7 +98,7 @@
         <section>
           <h5>What are Shapes?</h5>
           <p class="font-size-small">
-            Shapes are polygons, either drawn directly on the map or uploaded as a shapefile.
+            Shapes are polygons, drawn directly on the map or uploaded as geojson.
           </p>
           <h5>What restrictions are there?</h5>
           <p class="font-size-small">

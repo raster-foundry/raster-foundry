@@ -9,6 +9,7 @@
 ### Deprecated
 
 ### Removed
+* CMR and Shapefile support [\#5247](https://github.com/raster-foundry/raster-foundry/pull/5247)
 
 - Complex color correction (saturation, per-band clipping, contrast adjustment, etc.) [#5245](https://github.com/raster-foundry/raster-foundry/pull/5245)
 

@@ -185,18 +185,6 @@ class ShapeFilterController {
         }
     }
 
-    shapeImportModal() {
-        let modal = this.modalService.open({
-            component: 'rfVectorImportModal',
-            resolve: {}
-        });
-        modal.result
-            .then(() => {
-                this.getShapes();
-            })
-            .catch(() => {});
-    }
-
     startCreateShape() {
         this.$q((resolve, reject) => {
             this.getMap().then(m => {

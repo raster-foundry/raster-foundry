@@ -128,7 +128,11 @@ class ProjectsScenesController {
             p = this.pagination.count - 1;
         }
 
-        arrayMove(this.sceneList, this.sceneList.findIndex(s => s.id === scene.id), p);
+        arrayMove(
+            this.sceneList,
+            this.sceneList.findIndex(s => s.id === scene.id),
+            p
+        );
         this.onSceneDropped(this.sceneList);
     }
 

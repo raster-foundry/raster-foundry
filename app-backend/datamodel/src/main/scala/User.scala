@@ -119,10 +119,6 @@ final case class User(id: String,
       s"s3://$dataBucket/user-exports/${URLEncoder.encode(id, "UTF-8")}/${export.id}"
     )
 
-  def getDefaultAnnotationShapefileSource(dataBucket: String): URI =
-    new URI(s"s3://$dataBucket/user-exports/${URLEncoder
-      .encode(id, "UTF-8")}/annotations/${UUID.randomUUID}/annotations.zip")
-
   def getEmail: String =
     (emailNotifications, personalInfo.emailNotifications) match {
       case (true, true) | (false, true) => personalInfo.email

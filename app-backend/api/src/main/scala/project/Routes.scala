@@ -4,7 +4,6 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
-import better.files.{File => ScalaFile}
 import cats.Applicative
 import cats.data.NonEmptyList
 import cats.effect.IO
@@ -12,7 +11,6 @@ import cats.implicits._
 import com.rasterfoundry.api.scene._
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.utils.Shapefile
 import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
 import com.rasterfoundry.akkautil.{
   Authentication,
@@ -20,14 +18,13 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel.{Annotation, _}
+import com.rasterfoundry.datamodel._
 import com.rasterfoundry.akkautil.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import geotrellis.shapefile.ShapeFileReader
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.common._
 
@@ -191,57 +188,6 @@ trait ProjectRoutes
                               )
                             }
                         }
-                      } ~
-                      pathPrefix("shapefile") {
-                        pathEndOrSingleSlash {
-                          get {
-                            exportLayerAnnotationShapefile(projectId, layerId)
-                          } ~
-                            post {
-                              authenticate { _ =>
-                                val tempFile = ScalaFile.newTemporaryFile()
-                                tempFile.deleteOnExit()
-                                val response =
-                                  storeUploadedFile(
-                                    "name",
-                                    (_) => tempFile.toJava
-                                  ) { (_, _) =>
-                                    processShapefile(
-                                      projectId,
-                                      tempFile,
-                                      None,
-                                      Some(layerId)
-                                    )
-                                  }
-                                tempFile.delete()
-                                response
-                              }
-                            }
-                        } ~
-                          pathPrefix("import") {
-                            pathEndOrSingleSlash {
-                              (post & formFieldMap) { fields =>
-                                authenticate { _ =>
-                                  val tempFile = ScalaFile.newTemporaryFile()
-                                  tempFile.deleteOnExit()
-                                  val response =
-                                    storeUploadedFile(
-                                      "shapefile",
-                                      (_) => tempFile.toJava
-                                    ) { (_, _) =>
-                                      processShapefile(
-                                        projectId,
-                                        tempFile,
-                                        Some(fields),
-                                        Some(layerId)
-                                      )
-                                    }
-                                  tempFile.delete()
-                                  response
-                                }
-                              }
-                            }
-                          }
                       }
                   } ~
                   pathPrefix("annotation-groups") {
@@ -445,50 +391,6 @@ trait ProjectRoutes
                   deleteProjectAnnotations(projectId)
                 }
             } ~
-              pathPrefix("shapefile") {
-                pathEndOrSingleSlash {
-                  get {
-                    exportAnnotationShapefile(projectId)
-                  } ~
-                    post {
-                      authenticate { _ =>
-                        val tempFile = ScalaFile.newTemporaryFile()
-                        tempFile.deleteOnExit()
-                        val response =
-                          storeUploadedFile("name", (_) => tempFile.toJava) {
-                            (_, _) =>
-                              processShapefile(projectId, tempFile, None, None)
-                          }
-                        tempFile.delete()
-                        response
-                      }
-                    }
-                } ~
-                  pathPrefix("import") {
-                    pathEndOrSingleSlash {
-                      (post & formFieldMap) { fields =>
-                        authenticate { _ =>
-                          val tempFile = ScalaFile.newTemporaryFile()
-                          tempFile.deleteOnExit()
-                          val response =
-                            storeUploadedFile(
-                              "shapefile",
-                              (_) => tempFile.toJava
-                            ) { (_, _) =>
-                              processShapefile(
-                                projectId,
-                                tempFile,
-                                Some(fields),
-                                None
-                              )
-                            }
-                          tempFile.delete()
-                          response
-                        }
-                      }
-                    }
-                  }
-              } ~
               pathPrefix(JavaUUID) { annotationId =>
                 pathEndOrSingleSlash {
                   get {
@@ -1135,120 +1037,5 @@ trait ProjectRoutes
           .unsafeToFuture
       }
     }
-  }
-
-  def processShapefile(
-      projectId: UUID,
-      tempFile: ScalaFile,
-      propsO: Option[Map[String, String]] = None,
-      projectLayerIdO: Option[UUID]
-  ): Route =
-    authenticate { user =>
-      {
-        val unzipped = tempFile.unzip()
-        val matches = unzipped.glob("*.shp")
-        val prj = unzipped.glob("*.prj")
-        (matches.hasNext, prj.hasNext) match {
-          case (false, false) =>
-            complete(
-              StatusCodes.ClientError(400)(
-                "Bad Request",
-                "No .shp and .prj Files Found in Archive"
-              )
-            )
-          case (true, false) =>
-            complete(
-              StatusCodes.ClientError(400)(
-                "Bad Request",
-                "No .prj File Found in Archive"
-              )
-            )
-          case (false, true) =>
-            complete(
-              StatusCodes.ClientError(400)(
-                "Bad Request",
-                "No .shp File Found in Archive"
-              )
-            )
-          case (true, true) => {
-            propsO match {
-              case Some(props) =>
-                processShapefileImport(
-                  matches,
-                  prj,
-                  props,
-                  user,
-                  projectId,
-                  projectLayerIdO
-                )
-              case _ =>
-                complete(StatusCodes.OK, processShapefileUpload(matches))
-            }
-          }
-        }
-      }
-    }
-
-  def processShapefileImport(
-      matches: Iterator[ScalaFile],
-      prj: Iterator[ScalaFile],
-      props: Map[String, String],
-      user: User,
-      projectId: UUID,
-      projectLayerIdO: Option[UUID]
-  ): Route = {
-    val shapefilePath = matches.next.toString
-    val prjPath: String = prj.next.toString
-    val projectionSource = scala.io.Source.fromFile(prjPath)
-
-    val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
-    val projection = try projectionSource.mkString
-    finally projectionSource.close()
-
-    val featureAccumulationResult =
-      Shapefile.accumulateFeatures(Shapefile.fromSimpleFeatureWithProps)(
-        List(),
-        List(),
-        features.toList,
-        props,
-        user.id,
-        projection
-      )
-    featureAccumulationResult match {
-      case Left(errorIndices) =>
-        complete(
-          StatusCodes.ClientError(400)(
-            "Bad Request",
-            s"Several features could not be translated to annotations. Indices: ${errorIndices}"
-          )
-        )
-      case Right(annotationCreates) => {
-        complete(
-          StatusCodes.Created,
-          (AnnotationDao.insertAnnotations(
-            annotationCreates,
-            projectId,
-            user,
-            projectLayerIdO
-          )
-            map { (anns: List[Annotation]) =>
-              anns map { _.toGeoJSONFeature }
-            }).transact(xa).unsafeToFuture
-        )
-      }
-    }
-  }
-
-  def processShapefileUpload(matches: Iterator[ScalaFile]): List[String] = {
-    // shapefile should have same fields in the property table
-    // so it is fine to use toList(0)
-    ShapeFileReader
-      .readSimpleFeatures(matches.next.toString)
-      .toList(0)
-      .toString
-      .split("SimpleFeatureImpl")
-      .filter(s => s != "" && s.contains(".Attribute: "))
-      .map(_.split(".Attribute: ")(1).split("<")(0))
-      .toList
   }
 }

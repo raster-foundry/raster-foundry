@@ -215,36 +215,6 @@ trait ProjectLayerAnnotationRoutes
       }
     }
 
-  def exportLayerAnnotationShapefile(projectId: UUID, layerId: UUID): Route =
-    authenticate { user =>
-      authorizeAsync {
-        ProjectDao
-          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        onSuccess(
-          AnnotationDao
-            .listForLayerExport(projectId, layerId)
-            .transact(xa)
-            .unsafeToFuture
-        ) {
-          case annotations @ (_: List[Annotation]) => {
-            complete(
-              AnnotationShapefileService
-                .getAnnotationShapefileDownloadUrl(annotations, user)
-            )
-          }
-          case _ =>
-            complete(
-              throw new Exception(
-                "Annotations do not exist or are not accessible by this user"
-              )
-            )
-        }
-      }
-    }
-
   def listLayerAnnotationGroups(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
       authorizeAsync {

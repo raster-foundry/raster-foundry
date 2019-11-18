@@ -31,8 +31,6 @@ class AnnotateController {
         $scope.autoInject(this, arguments);
     }
     mapStateToThis(state) {
-        // listen for changes for the shapefile upload so you can know when that's done
-        // and display the posted annotations
         let filter = state.projects.filter;
         const annotations = state.projects.annotations;
         let visibleAnnotations = annotations ? annotations.toArray() : [];
@@ -47,7 +45,6 @@ class AnnotateController {
         }
         let persistedLabels = state.projects.labels;
         let labels = [{ name: 'All' }].concat(persistedLabels.map(label => ({ name: label })));
-        let annotationShapefileProps = state.projects.annotationShapefileProps;
         return {
             user: state.api.user,
             annotations,
@@ -59,8 +56,7 @@ class AnnotateController {
             creatingAnnotations: state.projects.creatingAnnotations,
             creatingAnnotationsError: state.projects.creatingAnnotationsError,
             editingAnnotation: state.projects.editingAnnotation,
-            annotationTemplate: state.projects.annotationTemplate,
-            annotationShapefileProps
+            annotationTemplate: state.projects.annotationTemplate
         };
     }
 

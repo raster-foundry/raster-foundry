@@ -35,9 +35,10 @@ class ReclassifyModalController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), HistogramActions)(
-            this
-        );
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            HistogramActions
+        )(this);
         this.$scope.$on('$destroy', unsubscribe);
 
         this.$scope.$watch('$ctrl.inputNodeId', id => {

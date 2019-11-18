@@ -13,7 +13,6 @@
               ng-init="$ctrl.exportType = 'GeoJSON'"
               ng-model="$ctrl.exportType">
         <option value="GeoJSON">GeoJSON</option>
-        <option value="Shapefile" ng-if="$ctrl.hasShapefile">Shapefile</option>
       </select>
     </div>
     <div class="list-group-item" ng-if="$ctrl.exportType === 'GeoJSON'">

@@ -82,18 +82,6 @@ class VectorListController {
             this.fetchPage();
         });
     }
-
-    importModal() {
-        let modal = this.modalService.open({
-            component: 'rfVectorImportModal',
-            resolve: {}
-        });
-        modal.result
-            .then(() => {
-                this.fetchPage();
-            })
-            .catch(() => {});
-    }
 }
 
 const VectorListModule = angular.module('pages.imports.vectors', []);

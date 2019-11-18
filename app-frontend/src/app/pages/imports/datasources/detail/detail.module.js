@@ -104,9 +104,10 @@ class DatasourceDetailController {
 
     getAllLicenses(pages) {
         let promises = _.times(pages, idx => {
-            return this.datasourceLicenseService
-                .getLicenses({ page: idx })
-                .then(resp => resp, error => error);
+            return this.datasourceLicenseService.getLicenses({ page: idx }).then(
+                resp => resp,
+                error => error
+            );
         });
         this.$q.all(promises).then(
             response => {

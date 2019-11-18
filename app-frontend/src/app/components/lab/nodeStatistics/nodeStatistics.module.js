@@ -26,9 +26,10 @@ class NodeStatisticsController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), StatisticsActions)(
-            this
-        );
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            StatisticsActions
+        )(this);
         this.$scope.$on('$destroy', unsubscribe);
 
         // re-fetch statistics every time there's a hard update
