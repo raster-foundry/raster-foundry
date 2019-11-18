@@ -219,7 +219,7 @@ class PlanetSceneFactory(object):
             if acceptable_type in asset_dict:
                 logger.info('Found acceptable type: %s', acceptable_type)
                 return acceptable_type
-        raise Exception('No acceptable asset types found: %s', asset_dict.keys())
+        raise Exception('No acceptable asset types found: %s', list(asset_dict.keys()))
 
     def activate_asset_and_wait(self, asset_type, assets, item_id, item_type):
         """Activate and asset to prepare for it to download

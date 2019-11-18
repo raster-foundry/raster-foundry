@@ -2,7 +2,7 @@ import os
 import requests
 import logging
 
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 
 logger = logging.getLogger(__name__)
 

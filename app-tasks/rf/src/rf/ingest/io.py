@@ -10,7 +10,7 @@ import boto3
 
 import logging
 import os
-import urllib
+from urllib.parse import quote_plus
 
 DATA_BUCKET = os.getenv('DATA_BUCKET')
 
@@ -41,7 +41,7 @@ def create_cog(image_locations, scene, same_path=False):
             updated_scene = upload_tif(
                 cog_path, scene,
                 os.path.join('user-uploads', scene.owner, '{}_COG.tif'.format(scene.id)),
-                os.path.join('user-uploads', urllib.quote_plus(scene.owner), '{}_COG.tif'.format(scene.id))
+                os.path.join('user-uploads', quote_plus(scene.owner), '{}_COG.tif'.format(scene.id))
             )
         else:
             updated_scene = upload_tif(cog_path, scene)
