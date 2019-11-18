@@ -17,6 +17,7 @@ import org.scalacheck.cats.implicits._
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.util.UUID
+import geotrellis.server.stac.Proprietary
 
 object Generators extends ArbitraryInstances {
 
@@ -994,6 +995,7 @@ object Generators extends ArbitraryInstances {
         name,
         owner,
         List(layerDefinition),
+        StacExportLicense(Proprietary(), Some("http://example.com")),
         taskStatuses
       )
     }

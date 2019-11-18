@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Fixed usage of license types for STAC exports [\#5240](https://github.com/raster-foundry/raster-foundry/pull/5240)
+
 ### Security
 
 ## [1.32.1](https://github.com/raster-foundry/raster-foundry/compare/1.32.0...1.32.1)
