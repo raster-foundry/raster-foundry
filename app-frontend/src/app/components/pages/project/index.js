@@ -13,24 +13,22 @@ const projectResolves = {
         user: ($stateParams, authService) => {
             return authService.getCurrentUser();
         },
-        userRoles: (authService) => {
+        userRoles: authService => {
             return authService.fetchUserRoles();
         },
         platform: (userRoles, platformService) => {
-            const platformRole = userRoles.find(
-                r => r.groupType === 'PLATFORM'
-            );
+            const platformRole = userRoles.find(r => r.groupType === 'PLATFORM');
             return platformService.getPlatform(platformRole.groupId);
         },
-        organizationRoles: (userRoles) => {
+        organizationRoles: userRoles => {
             return _.uniqBy(userRoles, r => r.groupId).filter(r => r.groupType === 'ORGANIZATION');
         },
         organizations: ($q, organizationRoles, organizationService) => {
-            return $q.all(organizationRoles.map(
-                r => organizationService.getOrganization(r.groupId)
-            ));
+            return $q.all(
+                organizationRoles.map(r => organizationService.getOrganization(r.groupId))
+            );
         },
-        teamRoles: (userRoles) => {
+        teamRoles: userRoles => {
             return _.uniqBy(userRoles, r => r.groupId).filter(r => r.groupType === 'TEAM');
         },
         teams: ($q, teamRoles, teamService) => {
@@ -41,9 +39,7 @@ const projectResolves = {
 
 autoInject(projectResolves);
 
-export {
-    projectResolves
-};
+export { projectResolves };
 
 export default [
     layersPage,

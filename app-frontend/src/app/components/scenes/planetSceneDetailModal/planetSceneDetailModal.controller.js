@@ -1,9 +1,7 @@
 /* global L */
 
 export default class PlanetSceneDetailModalController {
-    constructor(
-        $rootScope, $scope, mapService
-    ) {
+    constructor($rootScope, $scope, mapService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }

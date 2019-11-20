@@ -3,9 +3,19 @@ import _ from 'lodash';
 
 class Controller {
     constructor(
-        $scope, $state, $log, $window,
-        modalService, projectService, teamService, authService, paginationService,
-        platform, organization, members, team
+        $scope,
+        $state,
+        $log,
+        $window,
+        modalService,
+        projectService,
+        teamService,
+        authService,
+        paginationService,
+        platform,
+        organization,
+        members,
+        team
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -24,8 +34,8 @@ class Controller {
         this.search = search && search.length ? search : null;
         delete this.fetchError;
         this.results = [];
-        const currentQuery = this.projectService.query(
-            {
+        const currentQuery = this.projectService
+            .query({
                 sort: 'createdAt,desc',
                 pageSize: 10,
                 ownershipType: 'inherited',
@@ -33,23 +43,27 @@ class Controller {
                 groupId: this.team.id,
                 search: this.search,
                 page: page - 1
-            }
-        ).then(paginatedResponse => {
-            this.results = paginatedResponse.results;
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, this.search);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
+            })
+            .then(
+                paginatedResponse => {
+                    this.results = paginatedResponse.results;
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page, this.search);
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
+                }
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
         this.currentQuery = currentQuery;
     }
 }

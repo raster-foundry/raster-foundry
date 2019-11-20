@@ -25,12 +25,13 @@ class ReclassifyHistogramController {
         this.graphId = this.uuid4.generate();
         this.getGraph = () => this.graphService.getGraph(this.graphId);
 
-        this.getGraph().then((graph) => {
+        this.getGraph().then(graph => {
             this.$scope.$watch('$ctrl.histogram', histogram => {
                 if (histogram) {
                     this.usingDefaultData = false;
                     const plot = this.createPlotFromHistogram(histogram);
-                    graph.setData({histogram: plot, breakpoints: this._breakpoints})
+                    graph
+                        .setData({ histogram: plot, breakpoints: this._breakpoints })
                         .setOptions(this._options)
                         .render();
                 } else if (!histogram) {
@@ -97,15 +98,18 @@ class ReclassifyHistogramController {
     }
 
     setDefaults(options) {
-        this._options = Object.assign({
-            min: 0,
-            max: 255,
-            masks: {
-                min: false,
-                max: false
+        this._options = Object.assign(
+            {
+                min: 0,
+                max: 255,
+                masks: {
+                    min: false,
+                    max: false
+                },
+                scale: 'SEQUENTIAL'
             },
-            scale: 'SEQUENTIAL'
-        }, options ? options : {});
+            options ? options : {}
+        );
     }
 
     createPlotFromHistogram(data) {
@@ -128,12 +132,12 @@ class ReclassifyHistogramController {
         let plot;
         if (buckets && buckets.length < 100) {
             let valMap = {};
-            _.range(0, 100).map((mult) => {
+            _.range(0, 100).map(mult => {
                 let key = mult * diff + newHistogram.minimum;
                 let roundedkey = Math.round(key / this.precision) * this.precision;
                 valMap[roundedkey] = 0;
             });
-            buckets.forEach((bucket) => {
+            buckets.forEach(bucket => {
                 let key = bucket[0];
                 let roundedkey = Math.round(key / this.precision) * this.precision;
                 valMap[roundedkey] = bucket[1];
@@ -141,25 +145,27 @@ class ReclassifyHistogramController {
             plot = Object.keys(valMap)
                 .map(key => parseFloat(key))
                 .sort((a, b) => a - b)
-                .map((key) => {
+                .map(key => {
                     return {
-                        x: key, y: valMap[key]
+                        x: key,
+                        y: valMap[key]
                     };
                 });
         } else if (buckets) {
-            plot = buckets.map((bucket) => {
+            plot = buckets.map(bucket => {
                 return {
-                    x: Math.round(bucket[0]), y: bucket[1]
+                    x: Math.round(bucket[0]),
+                    y: bucket[1]
                 };
             });
         }
 
         if (plot) {
             if (_.first(plot).x > min) {
-                plot.splice(0, 0, {x: min, y: 0});
+                plot.splice(0, 0, { x: min, y: 0 });
             }
             if (_.last(plot).x < max) {
-                plot.push({x: max, y: 0});
+                plot.push({ x: max, y: 0 });
             }
         }
         return plot;
@@ -178,15 +184,15 @@ class ReclassifyHistogramController {
     }
 
     getLowerBoundForIndex(index) {
-        return index === 0 ?
-            Math.min(this.histogramRange.min, this.histogram.minimum) :
-            this._breakpoints[index - 1].break;
+        return index === 0
+            ? Math.min(this.histogramRange.min, this.histogram.minimum)
+            : this._breakpoints[index - 1].break;
     }
 
     getUpperBoundForIndex(index) {
-        return index === this._breakpoints.length - 1 ?
-            Math.max(this.histogramRange.max, this.histogram.maximum) :
-            this._breakpoints[index + 1].break;
+        return index === this._breakpoints.length - 1
+            ? Math.max(this.histogramRange.max, this.histogram.maximum)
+            : this._breakpoints[index + 1].break;
     }
 }
 
@@ -194,7 +200,8 @@ const ReclassifyHistogramModule = angular.module('components.histogram.reclassif
 
 ReclassifyHistogramModule.component('rfReclassifyHistogram', ReclassifyHistogramComponent);
 ReclassifyHistogramModule.controller(
-    'ReclassifyHistogramController', ReclassifyHistogramController
+    'ReclassifyHistogramController',
+    ReclassifyHistogramController
 );
 
 export default ReclassifyHistogramModule;

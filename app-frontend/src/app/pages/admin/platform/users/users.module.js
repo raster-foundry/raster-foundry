@@ -3,8 +3,13 @@ import _ from 'lodash';
 
 class PlatformUsersController {
     constructor(
-        $scope, $state, $q,
-        modalService, platformService, authService, paginationService,
+        $scope,
+        $state,
+        $q,
+        modalService,
+        platformService,
+        authService,
+        paginationService,
         platform
     ) {
         'ngInject';
@@ -20,37 +25,41 @@ class PlatformUsersController {
         this.search = search && search.length ? search : null;
         delete this.fetchError;
         this.results = [];
-        const currentQuery = this.platformService.getMembers(
-            this.platform.id,
-            page - 1,
-            search
-        ).then(paginatedResponse => {
-            this.results = paginatedResponse.results;
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, this.search);
-            this.buildOptions();
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
+        const currentQuery = this.platformService
+            .getMembers(this.platform.id, page - 1, search)
+            .then(
+                paginatedResponse => {
+                    this.results = paginatedResponse.results;
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page, this.search);
+                    this.buildOptions();
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
+                }
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
         this.currentQuery = currentQuery;
     }
 
     buildOptions() {
-        this.results.forEach(user => Object.assign(user, {
-            options: {
-                items: this.itemsForUser(user)
-            },
-            showOptions: this.isEffectiveAdmin
-        }));
+        this.results.forEach(user =>
+            Object.assign(user, {
+                options: {
+                    items: this.itemsForUser(user)
+                },
+                showOptions: this.isEffectiveAdmin
+            })
+        );
     }
 
     itemsForUser(user) {
@@ -61,9 +70,11 @@ class PlatformUsersController {
             options.push({
                 label: 'Revoke admin role',
                 callback: () => {
-                    this.updateUserGroupRole(Object.assign(user, {
-                        groupRole: 'MEMBER'
-                    })).then(() => {
+                    this.updateUserGroupRole(
+                        Object.assign(user, {
+                            groupRole: 'MEMBER'
+                        })
+                    ).then(() => {
                         this.buildOptions();
                     });
                 }
@@ -72,9 +83,11 @@ class PlatformUsersController {
             options.push({
                 label: 'Grant admin role',
                 callback: () => {
-                    this.updateUserGroupRole(Object.assign(user, {
-                        groupRole: 'ADMIN'
-                    })).then(() => {
+                    this.updateUserGroupRole(
+                        Object.assign(user, {
+                            groupRole: 'ADMIN'
+                        })
+                    ).then(() => {
                         this.buildOptions();
                     });
                 }
@@ -85,23 +98,23 @@ class PlatformUsersController {
     }
 
     updateUserGroupRole(user) {
-        return this.platformService.setUserRole(
-            this.platform.id,
-            user
-        ).catch(() => {
+        return this.platformService.setUserRole(this.platform.id, user).catch(() => {
             this.fetchPage(this.pagination.currentPage);
         });
     }
 
     newUserModal() {
-        this.modalService.open({
-            component: 'rfUserModal',
-            resolve: { },
-            size: 'sm'
-        }).result.then((result) => {
-            // eslint-disable-next-line
-            console.log('user modal closed with value:', result);
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfUserModal',
+                resolve: {},
+                size: 'sm'
+            })
+            .result.then(result => {
+                // eslint-disable-next-line
+                console.log('user modal closed with value:', result);
+            })
+            .catch(() => {});
     }
 }
 

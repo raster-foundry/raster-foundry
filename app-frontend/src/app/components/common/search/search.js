@@ -78,7 +78,7 @@ class SearchController {
 
     clearSearch() {
         this.searchText = '';
-        this.onSearch({value: null});
+        this.onSearch({ value: null });
     }
 
     handleSuggestionSelect(suggestion) {
@@ -87,6 +87,7 @@ class SearchController {
     }
 }
 
-export default angular.module('components.common.search', [])
+export default angular
+    .module('components.common.search', [])
     .component('rfSearch', searchComponent)
     .controller('SearchController', SearchController);

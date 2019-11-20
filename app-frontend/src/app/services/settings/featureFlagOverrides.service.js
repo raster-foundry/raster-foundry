@@ -1,4 +1,4 @@
-import {Map} from 'immutable';
+import { Map } from 'immutable';
 
 /* Feature Flag Overrides service
  * Feature flags can be set / overridden in a number of ways:
@@ -22,8 +22,8 @@ export default app => {
             this.flagCache = new Map();
 
             let keyPrefix = 'featureFlags.';
-            this.prefixedKeyForUser = (user) => {
-                return (flagName) => keyPrefix + user + '.' + flagName;
+            this.prefixedKeyForUser = user => {
+                return flagName => keyPrefix + user + '.' + flagName;
             };
         }
 
@@ -46,10 +46,11 @@ export default app => {
                 cached = this.localStorage.get(prefixed);
             }
             if (!cached) {
-                let profileFlags = this.userProfile &&
+                let profileFlags =
+                    this.userProfile &&
                     this.userProfile.user_metadata &&
                     this.userProfile.user_metadata.featureFlags;
-                cached = profileFlags ? profileFlags.find((flag) => flag.key === key) : false;
+                cached = profileFlags ? profileFlags.find(flag => flag.key === key) : false;
             }
             return typeof cached !== 'undefined' && cached !== null;
         }
@@ -65,10 +66,11 @@ export default app => {
                 cached = this.localStorage.get(prefixed);
             }
             if (!cached) {
-                let profileFlags = this.userProfile &&
+                let profileFlags =
+                    this.userProfile &&
                     this.userProfile.user_metadata &&
                     this.userProfile.user_metadata.featureFlags;
-                let f = profileFlags && profileFlags.find((flag) => flag.key === flagName);
+                let f = profileFlags && profileFlags.find(flag => flag.key === flagName);
                 cached = f ? f.active : false;
             }
             return cached;

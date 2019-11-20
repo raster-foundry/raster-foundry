@@ -3,9 +3,18 @@ import _ from 'lodash';
 
 class OrganizationDatasourcesController {
     constructor(
-        $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        platform, organization, members, teams
+        $scope,
+        $stateParams,
+        $log,
+        $window,
+        modalService,
+        organizationService,
+        teamService,
+        authService,
+        platform,
+        organization,
+        members,
+        teams
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -23,11 +32,10 @@ class OrganizationDatasourcesController {
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.debouncedSearch = _.debounce(this.onSearch.bind(this), 500, {
+            leading: false,
+            trailing: true
+        });
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
@@ -53,12 +61,13 @@ class OrganizationDatasourcesController {
         };
     }
 
-    fetchPage() {
-    }
+    fetchPage() {}
 }
 
 const OrganizationDatasouresModule = angular.module('pages.organization.datasources', []);
-OrganizationDatasouresModule
-    .controller('OrganizationDatasourcesController', OrganizationDatasourcesController);
+OrganizationDatasouresModule.controller(
+    'OrganizationDatasourcesController',
+    OrganizationDatasourcesController
+);
 
 export default OrganizationDatasouresModule;

@@ -1,13 +1,15 @@
 import angular from 'angular';
 import $ from 'jquery';
 import _ from 'lodash';
-import {Map} from 'immutable';
+import { Map } from 'immutable';
 import nodeHistogramTpl from './nodeHistogram.html';
 import LabActions from '_redux/actions/lab-actions';
 import HistogramActions from '_redux/actions/histogram-actions';
 import { getNodeDefinition, getNodeHistogram } from '_redux/node-utils';
 import {
-    breakpointsFromRenderDefinition, renderDefinitionFromState, colorStopsToRange
+    breakpointsFromRenderDefinition,
+    renderDefinitionFromState,
+    colorStopsToRange
 } from '_redux/histogram-utils';
 
 const NodeHistogram = {
@@ -20,9 +22,16 @@ const NodeHistogram = {
 
 class NodeHistogramController {
     constructor(
-        $log, $rootScope, $scope, $element, $ngRedux,
-        uuid4, histogramService, colorSchemeService,
-        modalService, graphService
+        $log,
+        $rootScope,
+        $scope,
+        $element,
+        $ngRedux,
+        uuid4,
+        histogramService,
+        colorSchemeService,
+        modalService,
+        graphService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -63,11 +72,12 @@ class NodeHistogramController {
 
         this.debouncedBreakpointChange = _.debounce(this.onBreakpointChange.bind(this), 500);
         // once histogram and render definitions are initialized, plot data
-        this.getGraph().then((graph) => {
+        this.getGraph().then(graph => {
             this.$scope.$watch('$ctrl.histogram', histogram => {
                 if (histogram && histogram.data && this.renderDefinition) {
                     this.createPlotFromHistogram(histogram);
-                    graph.setData({histogram: this.plot, breakpoints: this.breakpoints})
+                    graph
+                        .setData({ histogram: this.plot, breakpoints: this.breakpoints })
                         .setOptions(this.options)
                         .render();
                 }
@@ -76,23 +86,19 @@ class NodeHistogramController {
                     graph.setData().render();
                 }
             });
-            const renderDefWatch = this.$scope.$watch('$ctrl.renderDefinition', (rdef) => {
+            const renderDefWatch = this.$scope.$watch('$ctrl.renderDefinition', rdef => {
                 let changed = false;
                 if ((!this.breakpoints || !this.breakpoints.length) && rdef) {
                     changed = true;
-                    this.breakpoints = breakpointsFromRenderDefinition(
-                        rdef, this.uuid4.generate
-                    );
-                    this.graph.setData({histogram: this.plot, breakpoints: this.breakpoints});
+                    this.breakpoints = breakpointsFromRenderDefinition(rdef, this.uuid4.generate);
+                    this.graph.setData({ histogram: this.plot, breakpoints: this.breakpoints });
                 }
                 if (rdef) {
                     changed = true;
                     this.options = Object.assign({}, this.options, {
                         masks: {
-                            min: rdef.clip === 'left' ||
-                                rdef.clip === 'both',
-                            max: rdef.clip === 'right' ||
-                                rdef.clip === 'both'
+                            min: rdef.clip === 'left' || rdef.clip === 'both',
+                            max: rdef.clip === 'right' || rdef.clip === 'both'
                         },
                         scale: this.renderDefinition.scale,
                         breakpointRange: this.getBreakpointRange(this.breakpoints)
@@ -100,8 +106,7 @@ class NodeHistogramController {
                     this.graph.setOptions(this.options);
                 }
                 if (changed) {
-                    this.graph
-                        .render();
+                    this.graph.render();
                 }
             });
         });
@@ -147,13 +152,16 @@ class NodeHistogramController {
 
         if (this.renderDefinition) {
             this.breakpoints = breakpointsFromRenderDefinition(
-                this.renderDefinition, this.uuid4.generate
+                this.renderDefinition,
+                this.uuid4.generate
             );
             Object.assign({}, this.options, {
                 masks: {
-                    min: this.renderDefinition.clip === 'left' ||
+                    min:
+                        this.renderDefinition.clip === 'left' ||
                         this.renderDefinition.clip === 'both',
-                    max: this.renderDefinition.clip === 'right' ||
+                    max:
+                        this.renderDefinition.clip === 'right' ||
                         this.renderDefinition.clip === 'both'
                 },
                 scale: this.renderDefinition.scale,
@@ -176,8 +184,8 @@ class NodeHistogramController {
       Histogram object with form {data, ...} (only data is relevant)
       @returns undefined
      */
-    createPlotFromHistogram({data: histogram}) {
-        let {min: bpmin, max: bpmax} = this.histogramOptions.range;
+    createPlotFromHistogram({ data: histogram }) {
+        let { min: bpmin, max: bpmax } = this.histogramOptions.range;
         this.options = Object.assign({}, this.options, {
             dataRange: {
                 max: histogram.maximum,
@@ -218,23 +226,25 @@ class NodeHistogramController {
                 let roundedBucket = Math.round(bucket / this.precision) * this.precision;
                 valueMap = valueMap.set(roundedBucket, value);
             });
-            _.range(0, 100).forEach((mult) => {
-                let key = Math.round(
-                    (mult * diff + this.options.viewRange.min) / this.precision
-                ) * this.precision;
+            _.range(0, 100).forEach(mult => {
+                let key =
+                    Math.round((mult * diff + this.options.viewRange.min) / this.precision) *
+                    this.precision;
                 let value = valueMap.get(key, 0);
                 valueMap = valueMap.set(key, value);
             });
 
-            plot = valueMap.entrySeq()
+            plot = valueMap
+                .entrySeq()
                 .sort(([K1], [K2]) => K1 - K2)
-                .map(([key, value]) => ({x: key, y: value}))
+                .map(([key, value]) => ({ x: key, y: value }))
                 .toArray();
         } else {
             // TODO fix this so it acts like above
-            plot = buckets.map((bucket) => {
+            plot = buckets.map(bucket => {
                 return {
-                    x: Math.round(bucket[0]), y: bucket[1]
+                    x: Math.round(bucket[0]),
+                    y: bucket[1]
                 };
             });
         }
@@ -269,16 +279,16 @@ class NodeHistogramController {
         let absNewRange = newRange.max - newRange.min;
         let absOldRange = oldRange.max - oldRange.min;
 
-        return this.breakpoints.map((bp) => {
+        return this.breakpoints.map(bp => {
             if (bp.id === breakpoint.id) {
-                return Object.assign({}, bp, {value});
+                return Object.assign({}, bp, { value });
             } else if (bp.id === minBreakpoint.id || bp.id === maxBreakpoint.id) {
                 return Object.assign({}, bp);
             }
 
             let percent = (bp.value - oldRange.min) / absOldRange;
             let newValue = percent * absNewRange + newRange.min;
-            return Object.assign({}, bp, {value: newValue});
+            return Object.assign({}, bp, { value: newValue });
         });
     }
 
@@ -289,27 +299,27 @@ class NodeHistogramController {
                 breakpointRange: this.getBreakpointRange(this.breakpoints)
             });
         } else {
-            this.breakpoints = this.breakpoints.map((bp) => {
+            this.breakpoints = this.breakpoints.map(bp => {
                 if (bp.id === breakpoint.id) {
                     if (value > this.options.breakpointRange.max) {
-                        return Object.assign({}, bp, {value: this.options.breakpointRange.max});
+                        return Object.assign({}, bp, { value: this.options.breakpointRange.max });
                     } else if (value < this.options.breakpointRange.min) {
-                        return Object.assign({}, bp, {value: this.options.breakpointRange.min});
+                        return Object.assign({}, bp, { value: this.options.breakpointRange.min });
                     }
-                    return Object.assign({}, bp, {value});
+                    return Object.assign({}, bp, { value });
                 }
                 return Object.assign({}, bp);
             });
         }
-        let {nodeId, breakpoints, options} = this;
+        let { nodeId, breakpoints, options } = this;
         let renderDefinition = renderDefinitionFromState(options, breakpoints);
         let histogramOptions = Object.assign({}, this.histogramOptions, {
             range: this.options.breakpointRange
         });
-        this.updateRenderDefinition({nodeId, renderDefinition, histogramOptions});
+        this.updateRenderDefinition({ nodeId, renderDefinition, histogramOptions });
         if (this.graph) {
             this.graph
-                .setData({histogram: this.plot, breakpoints: this.breakpoints})
+                .setData({ histogram: this.plot, breakpoints: this.breakpoints })
                 .setOptions(this.options)
                 .render();
         }
@@ -331,7 +341,8 @@ class NodeHistogramController {
                 max = range.max > current.value ? range.max : current.value;
             }
             return {
-                min, max
+                min,
+                max
             };
         }, {});
     }
@@ -346,13 +357,13 @@ class NodeHistogramController {
 
         if (this.graph) {
             this.graph
-                .setData({histogram: this.plot, breakpoints: this.breakpoints})
+                .setData({ histogram: this.plot, breakpoints: this.breakpoints })
                 .setOptions(this.options)
                 .render();
         }
 
         let renderDefinition = renderDefinitionFromState(this.options, this.breakpoints);
-        this.updateRenderDefinition({nodeId: this.nodeId, renderDefinition});
+        this.updateRenderDefinition({ nodeId: this.nodeId, renderDefinition });
     }
 
     onColorSchemeChange(baseScheme) {
@@ -363,7 +374,7 @@ class NodeHistogramController {
             breakpointRange.max
         );
         this.breakpoints = breakpointsFromRenderDefinition(
-            Object.assign({}, this.renderDefinition, {breakpoints: breakpointMap}),
+            Object.assign({}, this.renderDefinition, { breakpoints: breakpointMap }),
             this.uuid4.generate
         );
         this.options = Object.assign({}, this.options, {
@@ -373,7 +384,7 @@ class NodeHistogramController {
 
         if (this.graph) {
             this.graph
-                .setData({histogram: this.plot, breakpoints: this.breakpoints})
+                .setData({ histogram: this.plot, breakpoints: this.breakpoints })
                 .setOptions(this.options)
                 .render();
         }
@@ -387,7 +398,7 @@ class NodeHistogramController {
         });
     }
 
-    onBpMouseover({id}) {
+    onBpMouseover({ id }) {
         if (!this.isSource) {
             this.lastMouseOver = id;
         }
@@ -400,43 +411,46 @@ class NodeHistogramController {
             resolve: {
                 histogram: () => this.histogram,
                 plot: () => this.plot,
-                breakpoints: () => this.breakpoints.map(bp => ({value: bp.value, color: bp.color}))
+                breakpoints: () =>
+                    this.breakpoints.map(bp => ({ value: bp.value, color: bp.color }))
             }
         });
-        modal.result.then((bpMap) => {
-            this.breakpoints = breakpointsFromRenderDefinition(
-                Object.assign({}, this.renderDefinition, {breakpoints: bpMap}),
-                this.uuid4.generate
-            );
+        modal.result
+            .then(bpMap => {
+                this.breakpoints = breakpointsFromRenderDefinition(
+                    Object.assign({}, this.renderDefinition, { breakpoints: bpMap }),
+                    this.uuid4.generate
+                );
 
-            const baseScheme = {
-                dataType: 'CUSTOM',
-                colorBins: 0,
-                colorScheme: _.keys(bpMap)
-                    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
-                    .map((value) => bpMap[value.toString()])
-            };
+                const baseScheme = {
+                    dataType: 'CUSTOM',
+                    colorBins: 0,
+                    colorScheme: _.keys(bpMap)
+                        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+                        .map(value => bpMap[value.toString()])
+                };
 
-            this.options = Object.assign({}, this.options, {
-                baseScheme: Object.assign({}, baseScheme)
-            });
-            let renderDefinition = renderDefinitionFromState(this.options, this.breakpoints);
+                this.options = Object.assign({}, this.options, {
+                    baseScheme: Object.assign({}, baseScheme)
+                });
+                let renderDefinition = renderDefinitionFromState(this.options, this.breakpoints);
 
-            if (this.graph) {
-                this.graph
-                    .setData({histogram: this.plot, breakpoints: this.breakpoints})
-                    .setOptions(this.options)
-                    .render();
-            }
+                if (this.graph) {
+                    this.graph
+                        .setData({ histogram: this.plot, breakpoints: this.breakpoints })
+                        .setOptions(this.options)
+                        .render();
+                }
 
-            this.updateRenderDefinition({
-                nodeId: this.nodeId,
-                renderDefinition,
-                histogramOptions: Object.assign({}, this.histogramOptions, {
-                    baseScheme
-                })
-            });
-        }).catch(() => {});
+                this.updateRenderDefinition({
+                    nodeId: this.nodeId,
+                    renderDefinition,
+                    histogramOptions: Object.assign({}, this.histogramOptions, {
+                        baseScheme
+                    })
+                });
+            })
+            .catch(() => {});
     }
 }
 

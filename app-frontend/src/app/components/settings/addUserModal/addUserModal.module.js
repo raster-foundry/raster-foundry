@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import addUserModalTpl from './addUserModal.html';
-import {Map} from 'immutable';
+import { Map } from 'immutable';
 
 const AddUserModalComponent = {
     templateUrl: addUserModalTpl,
@@ -16,8 +16,14 @@ const AddUserModalComponent = {
 
 class AddUserModalController {
     constructor(
-        $log, $q, $scope,
-        authService, platformService, organizationService, teamService, userService
+        $log,
+        $q,
+        $scope,
+        authService,
+        platformService,
+        organizationService,
+        teamService,
+        userService
     ) {
         'ngInject';
         this.$log = $log;
@@ -36,11 +42,10 @@ class AddUserModalController {
         this.platformId = this.resolve.platformId;
         this.organizationId = this.resolve.organizationId;
 
-        let debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        let debouncedSearch = _.debounce(this.onSearch.bind(this), 500, {
+            leading: false,
+            trailing: true
+        });
 
         this.$scope.$watch('$ctrl.search', debouncedSearch);
 
@@ -85,39 +90,45 @@ class AddUserModalController {
             if (this.isPlatformAdmin) {
                 this.fetchPlatformUsers(page, search);
             } else {
-                this.organizationService.getMembers(
-                    this.platformId,
-                    this.organizationId,
-                    page - 1,
-                    search && search.length ? search : null
-                ).then((response) => {
-                    this.hasPermission = true;
-                    this.fetching = false;
-                    this.updatePagination(response);
-                    this.lastUserResult = response;
-                    this.users = response.results;
-                }, (error) => {
-                    this.permissionDenied(error, 'organization admin');
-                });
+                this.organizationService
+                    .getMembers(
+                        this.platformId,
+                        this.organizationId,
+                        page - 1,
+                        search && search.length ? search : null
+                    )
+                    .then(
+                        response => {
+                            this.hasPermission = true;
+                            this.fetching = false;
+                            this.updatePagination(response);
+                            this.lastUserResult = response;
+                            this.users = response.results;
+                        },
+                        error => {
+                            this.permissionDenied(error, 'organization admin');
+                        }
+                    );
             }
         }
     }
 
     fetchPlatformUsers(page, search) {
-        this.platformService.getMembers(
-            this.platformId,
-            page - 1,
-            search && search.length ? search : null
-        ).then((response) => {
-            this.hasPermission = true;
-            this.fetching = false;
-            this.updatePagination(response);
-            this.lastUserResult = response;
-            this.users = response.results;
-        }, (error) => {
-            // platform admins or super users are allowed to list platform users
-            this.permissionDenied(error, 'platform admin');
-        });
+        this.platformService
+            .getMembers(this.platformId, page - 1, search && search.length ? search : null)
+            .then(
+                response => {
+                    this.hasPermission = true;
+                    this.fetching = false;
+                    this.updatePagination(response);
+                    this.lastUserResult = response;
+                    this.users = response.results;
+                },
+                error => {
+                    // platform admins or super users are allowed to list platform users
+                    this.permissionDenied(error, 'platform admin');
+                }
+            );
     }
 
     toggleUserSelect(user, adminToggle) {
@@ -132,34 +143,40 @@ class AddUserModalController {
 
     addUsers() {
         delete this.error;
-        let promises = this.selected.entrySeq().toArray().map((select) => {
-            const userId = select[0];
-            const isAdmin = select[1];
-            if (this.resolve.groupType === 'team') {
-                return this.teamService.addUserWithRole(
-                    this.resolve.platformId,
-                    this.resolve.organizationId,
-                    this.resolve.teamId,
-                    isAdmin ? 'ADMIN' : 'MEMBER',
-                    userId
-                );
-            } else if (this.resolve.groupType === 'organization') {
-                return this.organizationService.addUserWithRole(
-                    this.resolve.platformId,
-                    this.resolve.organizationId,
-                    isAdmin ? 'ADMIN' : 'MEMBER',
-                    userId
-                );
+        let promises = this.selected
+            .entrySeq()
+            .toArray()
+            .map(select => {
+                const userId = select[0];
+                const isAdmin = select[1];
+                if (this.resolve.groupType === 'team') {
+                    return this.teamService.addUserWithRole(
+                        this.resolve.platformId,
+                        this.resolve.organizationId,
+                        this.resolve.teamId,
+                        isAdmin ? 'ADMIN' : 'MEMBER',
+                        userId
+                    );
+                } else if (this.resolve.groupType === 'organization') {
+                    return this.organizationService.addUserWithRole(
+                        this.resolve.platformId,
+                        this.resolve.organizationId,
+                        isAdmin ? 'ADMIN' : 'MEMBER',
+                        userId
+                    );
+                }
+                throw new Error('Undefined admin view - cannot add users without a defined group');
+            });
+        this.$q.all(promises).then(
+            () => {
+                this.close();
+            },
+            err => {
+                // eslint-disable-next-line
+                this.error = err.data;
+                this.$log.error('Error adding users to team:', err);
             }
-            throw new Error('Undefined admin view - cannot add users without a defined group');
-        });
-        this.$q.all(promises).then(() => {
-            this.close();
-        }, (err) => {
-            // eslint-disable-next-line
-            this.error = err.data;
-            this.$log.error('Error adding users to team:', err);
-        });
+        );
     }
 
     permissionDenied(err, subject, adminEmail) {
@@ -170,7 +187,6 @@ class AddUserModalController {
         this.permissionDeniedMsg = `${err.data}. Please contact `;
     }
 }
-
 
 const AddUserModalModule = angular.module('components.settings.addUserModal', []);
 

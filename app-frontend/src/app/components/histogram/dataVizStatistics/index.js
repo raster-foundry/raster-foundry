@@ -1,9 +1,7 @@
 import tpl from './index.html';
 
 class DataVizStatisticsController {
-    constructor(
-        $rootScope, $scope, $log, $q
-    ) {
+    constructor($rootScope, $scope, $log, $q) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -26,5 +24,4 @@ const component = {
 export default angular
     .module('components.histogram.dataVizStatistics', [])
     .controller(DataVizStatisticsController.name, DataVizStatisticsController)
-    .component('rfDataVizStatistics', component)
-    .name;
+    .component('rfDataVizStatistics', component).name;

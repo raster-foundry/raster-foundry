@@ -1,13 +1,14 @@
 import angular from 'angular';
 
-class AdminDetailFeaturesController {
-}
+class AdminDetailFeaturesController {}
 
 const AdminDetailFeaturesModule = angular.module(
-    'pages.platform.organizations.detail.features', []
+    'pages.platform.organizations.detail.features',
+    []
 );
 AdminDetailFeaturesModule.controller(
-    'AdminDetailFeaturesController', AdminDetailFeaturesController
+    'AdminDetailFeaturesController',
+    AdminDetailFeaturesController
 );
 
 export default AdminDetailFeaturesModule;

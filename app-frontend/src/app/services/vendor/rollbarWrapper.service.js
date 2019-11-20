@@ -1,6 +1,6 @@
 /* global BUILDCONFIG */
 
-export default (app) => {
+export default app => {
     class RollbarWrapperService {
         constructor($resource, APP_CONFIG, Rollbar) {
             'ngInject';

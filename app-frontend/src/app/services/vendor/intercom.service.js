@@ -1,6 +1,6 @@
 /* global Intercom, BUILDCONFIG */
 import _ from 'lodash';
-export default (app) => {
+export default app => {
     class IntercomService {
         constructor($resource, $q, $http, APP_CONFIG, angularLoad) {
             'ngInject';
@@ -34,7 +34,7 @@ export default (app) => {
         }
 
         doBoot(user) {
-            const bootData = Object.assign(user, { 'app_id': this.appId });
+            const bootData = Object.assign(user, { app_id: this.appId });
             Intercom('boot', bootData);
         }
 

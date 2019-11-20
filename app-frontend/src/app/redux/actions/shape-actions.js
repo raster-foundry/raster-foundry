@@ -6,7 +6,7 @@ export const SHAPES_ACTION_PREFIX = 'SHAPES';
 export function startDrawing(resolve, reject, mapId) {
     return {
         type: `${SHAPES_DRAW}_START`,
-        payload: {resolve, reject, mapId}
+        payload: { resolve, reject, mapId }
     };
 }
 
@@ -38,7 +38,7 @@ export function finishDrawing(geojson) {
 export function startEditingShape(geometry, resolve, reject) {
     return {
         type: `${SHAPES_EDIT}_START`,
-        payload: {geometry, resolve, reject}
+        payload: { geometry, resolve, reject }
     };
 }
 
@@ -68,6 +68,10 @@ export function cancelEditingShape() {
 }
 
 export default {
-    startDrawing, cancelDrawing, finishDrawing,
-    startEditingShape, finishEditingShape, cancelEditingShape
+    startDrawing,
+    cancelDrawing,
+    finishDrawing,
+    startEditingShape,
+    finishEditingShape,
+    cancelEditingShape
 };

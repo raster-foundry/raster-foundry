@@ -33,40 +33,36 @@ class NavbarSearchController {
             let thisRequest = this.lastRequest;
             this.loading = true;
             switch (this.searchType) {
-            case 'Organizations':
-                this.organizationService.searchOrganizations(text).then((response) => {
-                    if (this.lastRequest === thisRequest) {
-                        this.loading = false;
-                    }
-                    if (this.searchText && this.searchText.length) {
-                        this.searchResults = response.map(
-                            (org) => ({
+                case 'Organizations':
+                    this.organizationService.searchOrganizations(text).then(response => {
+                        if (this.lastRequest === thisRequest) {
+                            this.loading = false;
+                        }
+                        if (this.searchText && this.searchText.length) {
+                            this.searchResults = response.map(org => ({
                                 name: org.name || org.id,
                                 avatar: org.logoUri,
                                 state: `admin.organization({organizationId: '${org.id}'})`
-                            })
-                        );
-                    }
-                });
-                break;
-            case 'Users':
-                this.userService.searchUsers(text).then((response) => {
-                    if (this.lastRequest === thisRequest) {
-                        this.loading = false;
-                    }
-                    if (this.searchText && this.searchText.length) {
-                        this.searchResults = response.map(
-                            (user) => ({
+                            }));
+                        }
+                    });
+                    break;
+                case 'Users':
+                    this.userService.searchUsers(text).then(response => {
+                        if (this.lastRequest === thisRequest) {
+                            this.loading = false;
+                        }
+                        if (this.searchText && this.searchText.length) {
+                            this.searchResults = response.map(user => ({
                                 name: user.name || user.email || user.id,
                                 avatar: user.profileImageUri,
                                 state: `user({userId: '${user.id}'})`
-                            })
-                        );
-                    }
-                });
-                break;
-            default:
-                throw new Error('Invalid select option for navbar search dropdown selected');
+                            }));
+                        }
+                    });
+                    break;
+                default:
+                    throw new Error('Invalid select option for navbar search dropdown selected');
             }
         } else {
             delete this.searchResults;

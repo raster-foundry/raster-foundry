@@ -1,12 +1,8 @@
 import typeToReducer from 'type-to-reducer';
 
-import {
-    SHAPES_DRAW,
-    SHAPES_EDIT} from '_redux/actions/shape-actions';
+import { SHAPES_DRAW, SHAPES_EDIT } from '_redux/actions/shape-actions';
 
-import {
-    PROJECT_EDIT_LAYER
-} from '_redux/actions/project-actions';
+import { PROJECT_EDIT_LAYER } from '_redux/actions/project-actions';
 
 export const shapeReducer = typeToReducer({
     [SHAPES_DRAW]: {
@@ -17,7 +13,7 @@ export const shapeReducer = typeToReducer({
                 reject: action.payload.reject
             });
         },
-        FINISH: (state) => {
+        FINISH: state => {
             return Object.assign({}, state, {
                 mapId: null,
                 resolve: null,

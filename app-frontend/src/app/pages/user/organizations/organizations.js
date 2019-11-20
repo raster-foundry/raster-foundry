@@ -1,9 +1,5 @@
 class UserOrganizationsController {
-    constructor(
-        $scope, $state,
-        organizationService,
-        organizationRoles, organizations, user
-    ) {
+    constructor($scope, $state, organizationService, organizationRoles, organizations, user) {
         'ngInject';
         $scope.autoInject(this, arguments);
     }
@@ -13,37 +9,37 @@ class UserOrganizationsController {
     }
 
     membershipPending(organization) {
-        return !!this.organizationRoles.find(r =>
+        return !!this.organizationRoles.find(
+            r =>
                 r.groupType === 'ORGANIZATION' &&
                 r.groupId === organization.id &&
                 r.membershipStatus === 'INVITED'
-            );
+        );
     }
 
     updateUserMembershipStatus(organization, isApproved) {
         if (isApproved) {
-            const role = this.organizationRoles.find(r =>
-                r.groupType === 'ORGANIZATION' &&
-                r.groupId === organization.id
+            const role = this.organizationRoles.find(
+                r => r.groupType === 'ORGANIZATION' && r.groupId === organization.id
             ).groupRole;
             if (role) {
-                this.organizationService.approveUserMembership(
-                    organization.platformId,
-                    organization.id,
-                    this.user.id,
-                    role
-                ).then(resp => {
-                    this.$state.reload();
-                });
+                this.organizationService
+                    .approveUserMembership(
+                        organization.platformId,
+                        organization.id,
+                        this.user.id,
+                        role
+                    )
+                    .then(resp => {
+                        this.$state.reload();
+                    });
             }
         } else {
-            this.organizationService.removeUser(
-                organization.platformId,
-                organization.id,
-                this.user.id
-            ).then(resp => {
-                this.$state.reload();
-            });
+            this.organizationService
+                .removeUser(organization.platformId, organization.id, this.user.id)
+                .then(resp => {
+                    this.$state.reload();
+                });
         }
     }
 }

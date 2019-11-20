@@ -3,9 +3,18 @@ import _ from 'lodash';
 
 class OrganizationVectorsController {
     constructor(
-        $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        platform, organization, members, teams
+        $scope,
+        $stateParams,
+        $log,
+        $window,
+        modalService,
+        organizationService,
+        teamService,
+        authService,
+        platform,
+        organization,
+        members,
+        teams
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -23,11 +32,10 @@ class OrganizationVectorsController {
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.debouncedSearch = _.debounce(this.onSearch.bind(this), 500, {
+            leading: false,
+            trailing: true
+        });
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
@@ -53,15 +61,14 @@ class OrganizationVectorsController {
         };
     }
 
-
-    fetchPage() {
-    }
+    fetchPage() {}
 }
 
-const OrganizationVectorsModule =
-    angular.module('pages.organization.vectors', []);
+const OrganizationVectorsModule = angular.module('pages.organization.vectors', []);
 
-OrganizationVectorsModule
-    .controller('OrganizationVectorsController', OrganizationVectorsController);
+OrganizationVectorsModule.controller(
+    'OrganizationVectorsController',
+    OrganizationVectorsController
+);
 
 export default OrganizationVectorsModule;

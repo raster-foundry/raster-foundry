@@ -5,10 +5,7 @@ export default class DatasourceCreateModalController {
     }
 
     $onInit() {
-        this.steps = [
-            'NAME',
-            'SUCCESS'
-        ];
+        this.steps = ['NAME', 'SUCCESS'];
         this.currentStep = this.steps[0];
         this.datasourceBuffer = {
             name: null,
@@ -40,16 +37,18 @@ export default class DatasourceCreateModalController {
 
     handleCreate() {
         this.createDatasource()
-            .then(ds => {
-                this.currentStep = 'SUCCESS';
-                this.datasource = ds;
-            },
-            () => {
-                this.showError = true;
-            }).finally(() => {
+            .then(
+                ds => {
+                    this.currentStep = 'SUCCESS';
+                    this.datasource = ds;
+                },
+                () => {
+                    this.showError = true;
+                }
+            )
+            .finally(() => {
                 this.isCreatingDatasource = false;
             });
         this.isCreatingDatasource = true;
     }
-
 }

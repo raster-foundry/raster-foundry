@@ -26,7 +26,7 @@ class ReclassifyEntryController {
         this.isShowingRange = true;
         // A nonexistent entry is valid, so if we're just coming into existence with invalid
         // values, we need to notify of a change.
-        this.onValidityChange({validity: this.isValid()});
+        this.onValidityChange({ validity: this.isValid() });
     }
 
     $onChanges() {
@@ -65,7 +65,7 @@ class ReclassifyEntryController {
     // not already valid.
     $onDestroy() {
         if (!this.isValid()) {
-            this.onValidityChange({validity: true});
+            this.onValidityChange({ validity: true });
         }
     }
 
@@ -74,7 +74,7 @@ class ReclassifyEntryController {
         this.break.value = +this.break.value;
         this.computeRange();
         if (this.isValid()) {
-            this.onBreakChange({break: this.break});
+            this.onBreakChange({ break: this.break });
         }
     }
 }
@@ -85,4 +85,3 @@ ReclassifyEntryModule.controller('ReclassifyEntryController', ReclassifyEntryCon
 ReclassifyEntryModule.component('rfReclassifyEntry', ReclassifyEntryComponent);
 
 export default ReclassifyEntryModule;
-

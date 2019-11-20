@@ -3,10 +3,24 @@ import autoInject from '_appRoot/autoInject';
 
 class OrganizationController {
     constructor(
-        $stateParams, $q, $window,
-        organizationService, authService, modalService,
-        organization, platform, user, userRoles, members, teams,
-        projects, rasters, vectors, datasources, templates, analyses
+        $stateParams,
+        $q,
+        $window,
+        organizationService,
+        authService,
+        modalService,
+        organization,
+        platform,
+        user,
+        userRoles,
+        members,
+        teams,
+        projects,
+        rasters,
+        vectors,
+        datasources,
+        templates,
+        analyses
     ) {
         'ngInject';
 
@@ -38,15 +52,18 @@ class OrganizationController {
     }
 
     addLogoModal() {
-        this.modalService.open({
-            component: 'rfAddPhotoModal',
-            resolve: {
-                organizationId: () => this.$stateParams.organizationId
-            }
-        }).result.then((resp) => {
-            this.organization = Object.assign({}, this.organization, resp);
-            this.logoUpdateTrigger = new Date().getTime();
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfAddPhotoModal',
+                resolve: {
+                    organizationId: () => this.$stateParams.organizationId
+                }
+            })
+            .result.then(resp => {
+                this.organization = Object.assign({}, this.organization, resp);
+                this.logoUpdateTrigger = new Date().getTime();
+            })
+            .catch(() => {});
     }
 
     toggleOrgNameEdit() {
@@ -59,19 +76,23 @@ class OrganizationController {
             this.nameBuffer.length &&
             this.nameBuffer !== this.organization.name
         ) {
-            const orgUpdated = Object.assign({}, this.organization, {name: this.nameBuffer});
+            const orgUpdated = Object.assign({}, this.organization, { name: this.nameBuffer });
 
-            this.organizationService.updateOrganization(
-                this.organization.platformId, this.organization.id, orgUpdated
-            ).then(resp => {
-                this.organization = resp;
-                this.nameBuffer = this.organization.name;
-            }, () => {
-                this.$window.alert('Organization\'s name cannot be updated at the moment.');
-                delete this.nameBuffer;
-            }).finally(() => {
-                delete this.isEditOrgName;
-            });
+            this.organizationService
+                .updateOrganization(this.organization.platformId, this.organization.id, orgUpdated)
+                .then(
+                    resp => {
+                        this.organization = resp;
+                        this.nameBuffer = this.organization.name;
+                    },
+                    () => {
+                        this.$window.alert("Organization's name cannot be updated at the moment.");
+                        delete this.nameBuffer;
+                    }
+                )
+                .finally(() => {
+                    delete this.isEditOrgName;
+                });
         } else {
             delete this.nameBuffer;
             delete this.isEditOrgName;
@@ -88,7 +109,7 @@ OrganizationModule.resolve = {
     platform: (organization, platformService) => {
         return platformService.getPlatform(organization.platformId);
     },
-    user: (authService) => {
+    user: authService => {
         return authService.getCurrentUser();
     },
     members: (platform, organization, organizationService) => {
@@ -97,80 +118,68 @@ OrganizationModule.resolve = {
     teams: (platform, organization, organizationService) => {
         return organizationService.getTeams(platform.id, organization.id, 0, '');
     },
-    userRoles: (authService) => {
+    userRoles: authService => {
         return authService.fetchUserRoles();
     },
     projects: (organization, projectService) => {
-        return projectService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'organization',
-                groupId: organization.id
-            }
-        );
+        return projectService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'organization',
+            groupId: organization.id
+        });
     },
     rasters: (organization, sceneService) => {
-        return sceneService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'organization',
-                groupId: organization.id
-            }
-        );
+        return sceneService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'organization',
+            groupId: organization.id
+        });
     },
     vectors: (organization, shapesService) => {
-        return shapesService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'organization',
-                groupId: organization.id
-            }
-        );
+        return shapesService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'organization',
+            groupId: organization.id
+        });
     },
     datasources: (organization, datasourceService) => {
-        return datasourceService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'organization',
-                groupId: organization.id
-            }
-        );
+        return datasourceService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'organization',
+            groupId: organization.id
+        });
     },
     templates: (organization, analysisService) => {
-        return analysisService.fetchTemplates(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'organization',
-                groupId: organization.id
-            }
-        );
+        return analysisService.fetchTemplates({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'organization',
+            groupId: organization.id
+        });
     },
     analyses: (organization, analysisService) => {
-        return analysisService.fetchAnalyses(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'organization',
-                groupId: organization.id
-            }
-        );
+        return analysisService.fetchAnalyses({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'organization',
+            groupId: organization.id
+        });
     }
 };
 autoInject(OrganizationModule);

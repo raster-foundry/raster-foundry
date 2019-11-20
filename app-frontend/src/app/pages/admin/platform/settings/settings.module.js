@@ -1,10 +1,7 @@
 import angular from 'angular';
 
 class PlatformSettingsController {
-    constructor(
-        $stateParams, authService,
-        platform
-    ) {
+    constructor($stateParams, authService, platform) {
         'ngInject';
 
         this.$stateParams = $stateParams;
@@ -19,9 +16,6 @@ class PlatformSettingsController {
 
 const PlatformSettingsModule = angular.module('pages.platform.settings', []);
 
-PlatformSettingsModule.controller(
-    'PlatformSettingsController',
-    PlatformSettingsController
-);
+PlatformSettingsModule.controller('PlatformSettingsController', PlatformSettingsController);
 
 export default PlatformSettingsModule;

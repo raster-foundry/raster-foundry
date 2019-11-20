@@ -13,10 +13,7 @@ const ProjectLayerCreateModalComponent = {
 };
 
 class ProjectLayerCreateModalController {
-    constructor(
-        $rootScope, $log,
-        projectService
-    ) {
+    constructor($rootScope, $log, projectService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -41,10 +38,11 @@ class ProjectLayerCreateModalController {
     }
 
     isCreateDisabled() {
-        return !(this.projectLayerCreateBuffer.name &&
-            this.projectLayerCreateBuffer.name.length) ||
+        return (
+            !(this.projectLayerCreateBuffer.name && this.projectLayerCreateBuffer.name.length) ||
             this.isCreatingLayer ||
-            this.isCreatingLayerError;
+            this.isCreatingLayerError
+        );
     }
 
     createProjectLayer() {
@@ -59,7 +57,7 @@ class ProjectLayerCreateModalController {
                     this.projectLayerCreate,
                     this.projectLayerCreateBuffer
                 );
-                this.close({$value: createdProjectLayer});
+                this.close({ $value: createdProjectLayer });
             })
             .catch(err => {
                 this.isCreatingLayerError = true;
@@ -72,15 +70,18 @@ class ProjectLayerCreateModalController {
 }
 
 const ProjectLayerCreateModalModule = angular.module(
-    'components.projects.projectLayerCreateModal', []
+    'components.projects.projectLayerCreateModal',
+    []
 );
 
 ProjectLayerCreateModalModule.controller(
-    'ProjectLayerCreateModalController', ProjectLayerCreateModalController
+    'ProjectLayerCreateModalController',
+    ProjectLayerCreateModalController
 );
 
 ProjectLayerCreateModalModule.component(
-    'rfProjectLayerCreateModal', ProjectLayerCreateModalComponent
+    'rfProjectLayerCreateModal',
+    ProjectLayerCreateModalComponent
 );
 
 export default ProjectLayerCreateModalModule;

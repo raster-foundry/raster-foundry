@@ -23,10 +23,7 @@ class ProjectCreateModalController {
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
-        this.steps = [
-            'TYPE',
-            'ADD_SCENES'
-        ];
+        this.steps = ['TYPE', 'ADD_SCENES'];
         this.currentStep = this.steps[0];
         this.projectBuffer = {
             addType: 'public'
@@ -99,22 +96,24 @@ class ProjectCreateModalController {
     gotoSceneBrowser() {
         if (this.project) {
             this.close();
-            this.$state.go('projects.edit.browse', {projectid: this.project.id});
+            this.$state.go('projects.edit.browse', { projectid: this.project.id });
         }
     }
 
     startImport() {
         this.closeWithData();
 
-        this.modalService.open({
-            component: 'rfSceneImportModal',
-            backdrop: 'static',
-            keyboard: false,
-            resolve: {
-                project: () => this.project,
-                origin: () => 'projectCreate'
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfSceneImportModal',
+                backdrop: 'static',
+                keyboard: false,
+                resolve: {
+                    project: () => this.project,
+                    origin: () => 'projectCreate'
+                }
+            })
+            .result.catch(() => {});
     }
 
     createProject() {
@@ -137,14 +136,16 @@ class ProjectCreateModalController {
                 if (this.validateProjectName()) {
                     this.allowNext = false;
                     this.isCreatingProject = true;
-                    this.createProject().then(p => {
-                        this.project = p;
-                        this.returnData.reloadProjectList = true;
-                        this.gotoNextStep();
-                    }).finally(() => {
-                        this.allowNext = true;
-                        this.isCreatingProject = false;
-                    });
+                    this.createProject()
+                        .then(p => {
+                            this.project = p;
+                            this.returnData.reloadProjectList = true;
+                            this.gotoNextStep();
+                        })
+                        .finally(() => {
+                            this.allowNext = true;
+                            this.isCreatingProject = false;
+                        });
                 }
             } else if (this.currentStepIs('ADD_SCENES')) {
                 let isPublic = this.projectAttributeIs('addType', 'public');
@@ -160,7 +161,7 @@ class ProjectCreateModalController {
     }
 
     closeWithData() {
-        this.close({$value: this.returnData});
+        this.close({ $value: this.returnData });
     }
 }
 

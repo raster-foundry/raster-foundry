@@ -12,11 +12,10 @@ export default class ProjectsNavbarController {
     $onInit() {
         this.isEditingProjectName = false;
         this.isSavingProjectName = false;
-        this.projectEditService.fetchCurrentProject()
-            .then((project) => {
-                this.project = project;
-            });
-        this.$scope.$watch('$ctrl.projectEditService.currentProject', (project) => {
+        this.projectEditService.fetchCurrentProject().then(project => {
+            this.project = project;
+        });
+        this.$scope.$watch('$ctrl.projectEditService.currentProject', project => {
             this.project = project;
         });
     }
@@ -24,7 +23,7 @@ export default class ProjectsNavbarController {
     toggleProjectNameEdit() {
         if (this.project) {
             if (!this.isEditingProjectName) {
-                this.projectEditService.fetchCurrentProject().then((project) => {
+                this.projectEditService.fetchCurrentProject().then(project => {
                     this.projectNameBuffer = project.name;
                     this.isEditingProjectName = !this.isEditingProjectName;
                 });
@@ -38,14 +37,20 @@ export default class ProjectsNavbarController {
             let lastProjectName = this.project.name;
             this.isSavingProjectName = true;
             this.project.name = this.projectNameBuffer;
-            this.projectEditService.updateCurrentProject(this.project).then((project) => {
-                this.project = project;
-            }, () => {
-                // Revert if the update fails
-                this.project.name = lastProjectName;
-            }).finally(() => {
-                this.isSavingProjectName = false;
-            });
+            this.projectEditService
+                .updateCurrentProject(this.project)
+                .then(
+                    project => {
+                        this.project = project;
+                    },
+                    () => {
+                        // Revert if the update fails
+                        this.project.name = lastProjectName;
+                    }
+                )
+                .finally(() => {
+                    this.isSavingProjectName = false;
+                });
         }
     }
 }

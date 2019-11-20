@@ -3,8 +3,7 @@ import angular from 'angular';
 const sharePolicies = [
     {
         label: 'Private',
-        description:
-        `Only you and those you create tokens for
+        description: `Only you and those you create tokens for
          will be able to view tiles for this project`,
         enum: 'PRIVATE',
         active: false,
@@ -13,8 +12,7 @@ const sharePolicies = [
     },
     {
         label: 'Organization',
-        description:
-        `Users in your organization will be able to use
+        description: `Users in your organization will be able to use
          their own tokens to view tiles for this project`,
         enum: 'ORGANIZATION',
         active: false,
@@ -47,10 +45,7 @@ const urlMappings = {
 };
 
 class SharingController {
-    constructor(
-        $log, $state, $window, $timeout,
-        projectService, projectEditService, tokenService
-    ) {
+    constructor($log, $state, $window, $timeout, projectService, projectEditService, tokenService) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
@@ -63,9 +58,7 @@ class SharingController {
     }
 
     $onInit() {
-        this.projectEditService
-            .fetchCurrentProject()
-            .then(project => this.initProject(project));
+        this.projectEditService.fetchCurrentProject().then(project => this.initProject(project));
     }
 
     initProject(project) {
@@ -77,20 +70,18 @@ class SharingController {
 
     initSharePolicies() {
         if (this.project) {
-            this.sharePolicies = sharePolicies.map(
-                (policy) => {
-                    let isActive = policy.enum === this.project.tileVisibility;
-                    policy.active = isActive;
-                    return policy;
-                }
-            );
-            this.activePolicy = this.sharePolicies.find((policy) => policy.active);
+            this.sharePolicies = sharePolicies.map(policy => {
+                let isActive = policy.enum === this.project.tileVisibility;
+                policy.active = isActive;
+                return policy;
+            });
+            this.activePolicy = this.sharePolicies.find(policy => policy.active);
         }
     }
 
     initShareURL() {
         if (this.project) {
-            this.projectService.getProjectShareURL(this.project).then((url) => {
+            this.projectService.getProjectShareURL(this.project).then(url => {
                 this.shareUrl = url;
             });
         }
@@ -113,14 +104,13 @@ class SharingController {
                     standard: `${zxyUrl}`
                 };
             } else {
-                this.tokenService.getOrCreateProjectMapToken(this.project).then(
-                    (mapToken) => {
-                        this.mapToken = mapToken;
-                        this.tileLayerUrls = {
-                            arcGIS: `${arcGISUrl}&mapToken=${mapToken.id}`,
-                            standard: `${zxyUrl}&mapToken=${mapToken.id}`
-                        };
-                    });
+                this.tokenService.getOrCreateProjectMapToken(this.project).then(mapToken => {
+                    this.mapToken = mapToken;
+                    this.tileLayerUrls = {
+                        arcGIS: `${arcGISUrl}&mapToken=${mapToken.id}`,
+                        standard: `${zxyUrl}&mapToken=${mapToken.id}`
+                    };
+                });
             }
         }
     }
@@ -142,14 +132,17 @@ class SharingController {
             this.project.visibility = this.activePolicy.enum;
 
             if (shouldUpdate) {
-                this.projectService.updateProject(this.project).then((res) => {
-                    this.$log.debug(res);
-                }, (err) => {
-                    this.$log.debug('Error while updating project share policy', err);
-                    this.activePolicy.active = false;
-                    this.activePolicy = lastPolicy;
-                    this.activePolicy.active = true;
-                });
+                this.projectService.updateProject(this.project).then(
+                    res => {
+                        this.$log.debug(res);
+                    },
+                    err => {
+                        this.$log.debug('Error while updating project share policy', err);
+                        this.activePolicy.active = false;
+                        this.activePolicy = lastPolicy;
+                        this.activePolicy.active = true;
+                    }
+                );
             }
 
             this.initTileURL();

@@ -351,17 +351,17 @@ class DiagramContainerController {
 
     canUseAction(action) {
         switch (action) {
-        case 'preview':
-            return !this.selectingNode || this.selectingNode === 'preview';
-        case 'compare':
-        case 'select':
-            return (
-                !this.selectingNode ||
+            case 'preview':
+                return !this.selectingNode || this.selectingNode === 'preview';
+            case 'compare':
+            case 'select':
+                return (
+                    !this.selectingNode ||
                     this.selectingNode === 'compare' ||
                     this.selectingNode === 'select'
-            );
-        default:
-            return false;
+                );
+            default:
+                return false;
         }
     }
 }

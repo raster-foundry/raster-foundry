@@ -31,17 +31,14 @@ class AnnotateToolbarController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis,
-            AnnotationActions
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis, AnnotationActions)(this);
         this.$scope.$on('$destroy', unsubscribe);
 
         this.isDrawCancel = false;
         this.inBulkMode = false;
         this.lastHandler = null;
 
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             this.listeners = [
                 mapWrapper.on(L.Draw.Event.CREATED, this.createShape.bind(this)),
                 mapWrapper.on('click', this.onMapClick.bind(this)),
@@ -53,7 +50,7 @@ class AnnotateToolbarController {
 
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
 
-        this.$scope.$watch('$ctrl.annotationTemplate', (template) => {
+        this.$scope.$watch('$ctrl.annotationTemplate', template => {
             if (template) {
                 this.enableBulkCreate();
             } else {
@@ -63,8 +60,8 @@ class AnnotateToolbarController {
     }
 
     $onDestroy() {
-        this.getMap().then((mapWrapper) => {
-            this.listeners.forEach((listener) => {
+        this.getMap().then(mapWrapper => {
+            this.listeners.forEach(listener => {
                 mapWrapper.off(listener);
             });
         });
@@ -85,7 +82,7 @@ class AnnotateToolbarController {
 
     onMapMousedown() {
         if (this.isDrawCancel && this.isDrawingPolygon) {
-            this.getMap().then((mapWrapper) => {
+            this.getMap().then(mapWrapper => {
                 this.mapCenter = mapWrapper.map.getCenter();
             });
         }
@@ -93,7 +90,7 @@ class AnnotateToolbarController {
 
     onMapMouseup() {
         if (this.isDrawCancel && this.isDrawingPolygon) {
-            this.getMap().then((mapWrapper) => {
+            this.getMap().then(mapWrapper => {
                 let center = mapWrapper.map.getCenter();
                 if (!_.isEqual(this.mapCenter, center)) {
                     this.drawPolygonHandler.deleteLastVertex();
@@ -121,7 +118,7 @@ class AnnotateToolbarController {
             }
         });
         this.drawMarkerHandler = new L.Draw.Marker(mapWrapper.map, {
-            icon: L.divIcon({'className': 'annotate-marker'})
+            icon: L.divIcon({ className: 'annotate-marker' })
         });
     }
 
@@ -183,7 +180,7 @@ class AnnotateToolbarController {
         }
 
         this.onShapeCreated({
-            'shapeLayer': e.layer
+            shapeLayer: e.layer
         });
 
         if (this.inBulkMode && this.lastHandler) {

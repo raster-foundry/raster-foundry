@@ -1,11 +1,13 @@
 /* globals BUILDCONFIG */
 
-export default (app) => {
+export default app => {
     class aoiService {
         constructor($resource) {
             'ngInject';
             this.AOI = $resource(
-                `${BUILDCONFIG.API_HOST}/api/areas-of-interest/:id`, {id: '@id'}, {
+                `${BUILDCONFIG.API_HOST}/api/areas-of-interest/:id`,
+                { id: '@id' },
+                {
                     update: {
                         method: 'PUT'
                     }

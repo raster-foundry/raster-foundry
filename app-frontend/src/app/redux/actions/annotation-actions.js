@@ -1,7 +1,12 @@
 import {
-    getProjectAnnotationsRequest, createProjectAnnotationsRequest, updateProjectAnnotationRequest,
-    getProjectLabelsRequest, clearProjectAnnotationsRequest, deleteProjectAnnotationRequest,
-    uploadShapefileOnly, uploadShapefileWithProps
+    getProjectAnnotationsRequest,
+    createProjectAnnotationsRequest,
+    updateProjectAnnotationRequest,
+    getProjectLabelsRequest,
+    clearProjectAnnotationsRequest,
+    deleteProjectAnnotationRequest,
+    uploadShapefileOnly,
+    uploadShapefileWithProps
 } from '_api/annotations';
 
 // IF YOU ADD CONSTANTS:
@@ -50,11 +55,9 @@ export function fetchAnnotations(page) {
         const state = getState();
         dispatch({
             type: ANNOTATIONS_FETCH,
-            payload: getProjectAnnotationsRequest(
-                state, {
-                    page: page ? page : 0
-                }
-            ),
+            payload: getProjectAnnotationsRequest(state, {
+                page: page ? page : 0
+            }),
             meta: {
                 state
             }
@@ -180,7 +183,7 @@ export function deleteAnnotation(annotationId) {
     }
     // eslint-disable-next-line
     console.error('Cannot delete an annotation without an id');
-    return {type: ''};
+    return { type: '' };
 }
 
 export function bulkCreateAnnotations(annotation) {
@@ -200,17 +203,29 @@ export function transformDrawlayer(transform, options) {
     return {
         type: `${ANNOTATIONS_TRANSFORM_DRAWLAYER}`,
         payload: {
-            transform, options
+            transform,
+            options
         }
     };
 }
 
 export default {
-    resetAnnotations, enableSidebar, disableSidebar,
-    fetchAnnotations, fetchLabels,
-    createAnnotations, updateAnnotation, filterAnnotations,
-    clearAnnotations, editAnnotation, finishEditingAnnotation,
-    deleteAnnotation, bulkCreateAnnotations, finishBulkCreate,
-    transformDrawlayer, uploadShapefile, importShapefileWithProps,
+    resetAnnotations,
+    enableSidebar,
+    disableSidebar,
+    fetchAnnotations,
+    fetchLabels,
+    createAnnotations,
+    updateAnnotation,
+    filterAnnotations,
+    clearAnnotations,
+    editAnnotation,
+    finishEditingAnnotation,
+    deleteAnnotation,
+    bulkCreateAnnotations,
+    finishBulkCreate,
+    transformDrawlayer,
+    uploadShapefile,
+    importShapefileWithProps,
     deleteShapeFileUpload
 };

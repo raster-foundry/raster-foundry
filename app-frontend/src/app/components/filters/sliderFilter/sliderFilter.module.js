@@ -16,7 +16,6 @@ class SliderFilterController {
     }
 
     $onChanges(changes) {
-
         if (changes.filter && changes.filter.currentValue) {
             this.filter = changes.filter.currentValue;
 
@@ -68,7 +67,7 @@ class SliderFilterController {
         } else {
             filterParams[this.filter.params.max] = null;
         }
-        this.onFilterChange({filter: this.filter, filterParams});
+        this.onFilterChange({ filter: this.filter, filterParams });
     }
 }
 

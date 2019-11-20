@@ -15,20 +15,18 @@ class LabBrowseController {
 }
 
 const LabBrowseModule = angular
-  .module('pages.lab.browse', [])
-  .controller('LabBrowseController', LabBrowseController);
+    .module('pages.lab.browse', [])
+    .controller('LabBrowseController', LabBrowseController);
 
 LabBrowseModule.resolve = {
     user: ($stateParams, authService) => {
         return authService.getCurrentUser();
     },
-    userRoles: (authService) => {
+    userRoles: authService => {
         return authService.fetchUserRoles();
     },
     platform: (userRoles, platformService) => {
-        const platformRole = userRoles.find(r =>
-            r.groupType === 'PLATFORM'
-        );
+        const platformRole = userRoles.find(r => r.groupType === 'PLATFORM');
 
         return platformService.getPlatform(platformRole.groupId);
     }

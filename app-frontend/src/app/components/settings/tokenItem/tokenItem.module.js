@@ -24,16 +24,14 @@ class TokenItemController {
         this.editing = false;
         this.newName = this.token.name;
         if (this.type !== 'api') {
-            this.projectService.query({id: this.token.project}).then(
-                (project) => {
-                    this.project = project;
-                }
-            );
+            this.projectService.query({ id: this.token.project }).then(project => {
+                this.project = project;
+            });
         }
     }
 
     deleteToken() {
-        this.onDelete({data: this.token});
+        this.onDelete({ data: this.token });
     }
 
     startEditing() {
@@ -42,7 +40,7 @@ class TokenItemController {
 
     onEditComplete(name) {
         this.editing = false;
-        this.onUpdate({token: this.token, name: name});
+        this.onUpdate({ token: this.token, name: name });
     }
 
     onEditCancel() {
@@ -51,14 +49,16 @@ class TokenItemController {
     }
 
     publishModal() {
-        this.modalService.open({
-            component: 'rfProjectPublishModal',
-            resolve: {
-                project: () => this.project,
-                tileUrl: () => this.projectService.getProjectTileURL(this.project),
-                shareUrl: () => this.projectService.getProjectShareURL(this.project)
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfProjectPublishModal',
+                resolve: {
+                    project: () => this.project,
+                    tileUrl: () => this.projectService.getProjectTileURL(this.project),
+                    shareUrl: () => this.projectService.getProjectShareURL(this.project)
+                }
+            })
+            .result.catch(() => {});
     }
 }
 

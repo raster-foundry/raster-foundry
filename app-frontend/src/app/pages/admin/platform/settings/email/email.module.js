@@ -4,10 +4,7 @@ import angular from 'angular';
 import _ from 'lodash';
 
 class PlatformEmailController {
-    constructor(
-        $stateParams, $log, $timeout,
-        platformService
-    ) {
+    constructor($stateParams, $log, $timeout, platformService) {
         'ngInject';
         this.$stateParams = $stateParams;
         this.$log = $log;
@@ -19,28 +16,24 @@ class PlatformEmailController {
     }
 
     $onInit() {
-        this.platformService
-            .getPlatform(this.$stateParams.platformId)
-            .then((platform) => {
-                this.platform = platform;
-                this.platformBuffer = _.cloneDeep(this.platform);
-                this.platformBuffer.privateSettings = {emailPassword: ''};
-                this.platformBuffer.publicSettings.platformHost =
-                    this.platformBuffer.publicSettings.platformHost ||
-                    'app.rasterfoundry.com';
-                this.platformBuffer.publicSettings.emailSmtpEncryption =
-                    this.platformBuffer.publicSettings.emailSmtpEncryption ||
-                    'ssl';
-            });
+        this.platformService.getPlatform(this.$stateParams.platformId).then(platform => {
+            this.platform = platform;
+            this.platformBuffer = _.cloneDeep(this.platform);
+            this.platformBuffer.privateSettings = { emailPassword: '' };
+            this.platformBuffer.publicSettings.platformHost =
+                this.platformBuffer.publicSettings.platformHost || 'app.rasterfoundry.com';
+            this.platformBuffer.publicSettings.emailSmtpEncryption =
+                this.platformBuffer.publicSettings.emailSmtpEncryption || 'ssl';
+        });
     }
 
     onToggleChange(type) {
         if (type === 'ingest') {
-            this.platformBuffer.publicSettings.emailIngestNotification =
-                !this.platformBuffer.publicSettings.emailIngestNotification;
-        }  else if (type === 'export') {
-            this.platformBuffer.publicSettings.emailExportNotification =
-                !this.platformBuffer.publicSettings.emailExportNotification;
+            this.platformBuffer.publicSettings.emailIngestNotification = !this.platformBuffer
+                .publicSettings.emailIngestNotification;
+        } else if (type === 'export') {
+            this.platformBuffer.publicSettings.emailExportNotification = !this.platformBuffer
+                .publicSettings.emailExportNotification;
         }
     }
 
@@ -79,9 +72,6 @@ class PlatformEmailController {
 
 const PlatformEmailModule = angular.module('pages.platform.settings.email', []);
 
-PlatformEmailModule.controller(
-    'PlatformEmailController',
-    PlatformEmailController
-);
+PlatformEmailModule.controller('PlatformEmailController', PlatformEmailController);
 
 export default PlatformEmailModule;

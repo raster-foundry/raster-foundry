@@ -11,34 +11,47 @@ const daterangeFilterComponent = {
     }
 };
 
-
 class DaterangeFilterController {
     constructor($location, modalService, moment) {
         this.$location = $location;
         this.modalService = modalService;
         this.moment = moment;
         this.selectedFilter = null;
-        this.presets = [{
-            name: 'Today',
-            start: moment().startOf('day'),
-            end: moment().endOf('day')
-        }, {
-            name: 'The last week',
-            start: moment().startOf('day').subtract(1, 'weeks'),
-            end: moment().endOf('day')
-        }, {
-            name: 'The last month',
-            start: moment().startOf('day').subtract(1, 'months'),
-            end: moment().endOf('day')
-        }, {
-            name: 'The last year',
-            start: moment().startOf('day').subtract(1, 'years'),
-            end: moment().endOf('day')
-        }, {
-            name: 'Unset',
-            start: moment().startOf('day').subtract(100, 'years'),
-            end: moment().endOf('day')
-        }];
+        this.presets = [
+            {
+                name: 'Today',
+                start: moment().startOf('day'),
+                end: moment().endOf('day')
+            },
+            {
+                name: 'The last week',
+                start: moment()
+                    .startOf('day')
+                    .subtract(1, 'weeks'),
+                end: moment().endOf('day')
+            },
+            {
+                name: 'The last month',
+                start: moment()
+                    .startOf('day')
+                    .subtract(1, 'months'),
+                end: moment().endOf('day')
+            },
+            {
+                name: 'The last year',
+                start: moment()
+                    .startOf('day')
+                    .subtract(1, 'years'),
+                end: moment().endOf('day')
+            },
+            {
+                name: 'Unset',
+                start: moment()
+                    .startOf('day')
+                    .subtract(100, 'years'),
+                end: moment().endOf('day')
+            }
+        ];
 
         let UnsetPreset = _.last(this.presets);
         this.datefilter = {
@@ -51,7 +64,7 @@ class DaterangeFilterController {
     $onChanges(changes) {
         if (changes.filter && changes.filter.currentValue) {
             const filter = changes.filter.currentValue;
-            const preset = _.first(this.presets.filter((p) => p.name === filter.default));
+            const preset = _.first(this.presets.filter(p => p.name === filter.default));
             if (preset) {
                 this.datefilter.start = preset.start;
                 this.datefilter.end = preset.end;
@@ -68,7 +81,10 @@ class DaterangeFilterController {
             if (start && startMoment.isValid()) {
                 this.dateFilterPreset = null;
                 if (this.onDatetimeBorder(startMoment)) {
-                    startMoment.utc().utcOffset(this.moment().utcOffset(), true).local();
+                    startMoment
+                        .utc()
+                        .utcOffset(this.moment().utcOffset(), true)
+                        .local();
                 } else {
                     this.usingUTC = false;
                 }
@@ -79,45 +95,54 @@ class DaterangeFilterController {
                 if (!this.onDatetimeBorder(endMoment)) {
                     this.usingUTC = false;
                 } else {
-                    endMoment.utc().utcOffset(this.moment().utcOffset(), true).local();
+                    endMoment
+                        .utc()
+                        .utcOffset(this.moment().utcOffset(), true)
+                        .local();
                 }
                 this.datefilter.end = endMoment;
             }
 
-            this.setDateRange(
-                this.datefilter.start,
-                this.datefilter.end,
-                this.dateFilterPreset
-            );
+            this.setDateRange(this.datefilter.start, this.datefilter.end, this.dateFilterPreset);
         }
     }
 
     onDatetimeBorder(m) {
-        const start = m.clone().utc().startOf('day');
-        const end = m.clone().utc().endOf('day');
+        const start = m
+            .clone()
+            .utc()
+            .startOf('day');
+        const end = m
+            .clone()
+            .utc()
+            .endOf('day');
         return m.isSame(start) || m.isSame(end);
     }
 
     openDateRangePickerModal() {
-        this.modalService.open({
-            component: 'rfDateRangePickerModal',
-            resolve: {
-                config: () => Object({
-                    range: this.datefilter,
-                    ranges: this.presets
-                })
-            }
-        }).result.then((range) => {
-            if (range) {
-                this.lastRange = range;
-                this.setDateRange(range.start, range.end, range.preset);
-            }
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfDateRangePickerModal',
+                resolve: {
+                    config: () =>
+                        Object({
+                            range: this.datefilter,
+                            ranges: this.presets
+                        })
+                }
+            })
+            .result.then(range => {
+                if (range) {
+                    this.lastRange = range;
+                    this.setDateRange(range.start, range.end, range.preset);
+                }
+            })
+            .catch(() => {});
     }
 
     setDateRange(start, end, preset) {
-        this.lastSetting = {start, end, preset};
-        if (_.isEmpty({start}) || _.isEmpty(end)) {
+        this.lastSetting = { start, end, preset };
+        if (_.isEmpty({ start }) || _.isEmpty(end)) {
             this.clearDateFilter(false);
         } else {
             this.datefilter.start = start.startOf('day');
@@ -157,7 +182,7 @@ class DaterangeFilterController {
     }
     onSetUTC(value) {
         this.usingUTC = value;
-        let {start, end, preset} = this.lastSetting;
+        let { start, end, preset } = this.lastSetting;
         this.setDateRange(start, end, preset);
     }
 }

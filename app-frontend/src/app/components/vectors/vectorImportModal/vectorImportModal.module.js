@@ -39,11 +39,12 @@ class VectorImportModalController {
             {
                 name: 'UPLOADING_FILE',
                 onEnter: () => this.startUpload(),
-                next: () => this.uploadError ? 'FAILED' : 'FINISH',
+                next: () => (this.uploadError ? 'FAILED' : 'FINISH'),
                 allowNext: () => {
-                    return this.fileUploads &&
-                        this.uploadedFileCount + this.abortedUploadCount
-                        === this.fileUploads.length;
+                    return (
+                        this.fileUploads &&
+                        this.uploadedFileCount + this.abortedUploadCount === this.fileUploads.length
+                    );
                 },
                 onExit: () => this.finishedUpload(),
                 allowClose: () => false
@@ -131,10 +132,10 @@ class VectorImportModalController {
 
     preventInterruptions() {
         if (!this.closeCanceller) {
-            this.closeCanceller = this.$scope.$on('modal.closing', (e) => {
+            this.closeCanceller = this.$scope.$on('modal.closing', e => {
                 e.preventDefault();
             });
-            this.locationChangeCanceller = this.$scope.$on('$locationChangeStart', (event) => {
+            this.locationChangeCanceller = this.$scope.$on('$locationChangeStart', event => {
                 event.preventDefault();
             });
         }
@@ -191,22 +192,27 @@ class VectorImportModalController {
                 Authorization: `Bearer ${this.authService.token()}`
             }
         });
-        this.upload.then((resp) => {
-            this.shape = _.first(resp.data);
-            this.handleNext();
-        }, (err) => {
-            if (err.status === 400) {
-                this.uploadError = err.data;
-            } else {
-                this.uploadError = `Error: ${err.status} ${err.statusText}`;
+        this.upload.then(
+            resp => {
+                this.shape = _.first(resp.data);
+                this.handleNext();
+            },
+            err => {
+                if (err.status === 400) {
+                    this.uploadError = err.data;
+                } else {
+                    this.uploadError = `Error: ${err.status} ${err.statusText}`;
+                }
+                this.handleNext();
+            },
+            evt => {
+                this.uploadProgress = evt;
+                this.progressKB = parseInt(
+                    (100.0 * this.uploadProgress.loaded) / this.uploadProgress.total,
+                    10
+                );
             }
-            this.handleNext();
-        }, (evt) => {
-            this.uploadProgress = evt;
-            this.progressKB = parseInt(
-                100.0 * this.uploadProgress.loaded / this.uploadProgress.total, 10
-            );
-        });
+        );
     }
 
     abortUpload() {
@@ -234,10 +240,9 @@ class VectorImportModalController {
     }
 }
 
-const VectorImportModalModule = angular.module(
-    'components.vectors.vectorImportModal',
-    ['ngFileUpload']
-);
+const VectorImportModalModule = angular.module('components.vectors.vectorImportModal', [
+    'ngFileUpload'
+]);
 
 VectorImportModalModule.controller('VectorImportModalController', VectorImportModalController);
 VectorImportModalModule.component('rfVectorImportModal', VectorImportModalComponent);

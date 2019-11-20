@@ -10,7 +10,8 @@ const providers = [
         name: 'Google'
     },
     {
-        profilePictureLink: 'https://help.twitter.com/en/managing-your-account/common-issues-when-uploading-profile-photo',
+        profilePictureLink:
+            'https://help.twitter.com/en/managing-your-account/common-issues-when-uploading-profile-photo',
         profileSettingsLink: 'https://twitter.com/settings/profile',
         provider: 'twitter',
         name: 'Twitter'
@@ -44,10 +45,7 @@ const userOrgTypes = ['COMMERCIAL', 'GOVERNMENT', 'NON-PROFIT', 'ACADEMIC', 'MIL
 /* eslint-enable */
 
 class ProfileController {
-    constructor(
-        $scope, $log, $window, $timeout,
-        localStorage, authService, userService
-    ) {
+    constructor($scope, $log, $window, $timeout, localStorage, authService, userService) {
         'ngInject';
         $scope.autoInject(this, arguments);
         this.profile = localStorage.get('profile');
@@ -66,32 +64,37 @@ class ProfileController {
     }
 
     updateUserMetadata() {
-        this.userService.updateUserMetadata(this.profile.user_metadata)
-            .then((profile) => {
+        this.userService.updateUserMetadata(this.profile.user_metadata).then(
+            profile => {
                 this.$log.debug('Profile updated!');
                 this.profile = profile;
-            }, (err) => {
+            },
+            err => {
                 this.$log.debug('Error updating profile:', err);
                 this.profile = this.localStorage.get('profile');
-            });
+            }
+        );
     }
 
     getCurrentUser() {
         this.authService.getCurrentUser().then(resp => {
             this.currentUser = resp;
             this.currentUserBuffer = _.cloneDeep(this.currentUser);
-            this.provider = this.providers.find(provider => {
-                return resp.id.includes(provider.provider);
-            }) || this.defaultProvider;
+            this.provider =
+                this.providers.find(provider => {
+                    return resp.id.includes(provider.provider);
+                }) || this.defaultProvider;
             this.showProfileSettingsButton = this.isThirdParty();
         });
     }
 
     isThirdParty() {
-        return this.provider.provider === 'google-oauth2' ||
+        return (
+            this.provider.provider === 'google-oauth2' ||
             this.provider.provider === 'twitter' ||
             this.provider.provider === 'facebook' ||
-            this.provider.provider === 'github';
+            this.provider.provider === 'github'
+        );
     }
 
     getButtonText() {
@@ -107,18 +110,21 @@ class ProfileController {
     onPersonalInfoSubmit() {
         this.saved = false;
         this.isSendingReq = true;
-        this.userService.updateOwnUser(this.currentUserBuffer).then(res => {
-            this.saved = true;
-            this.$timeout(() => {
-                this.saved = false;
+        this.userService.updateOwnUser(this.currentUserBuffer).then(
+            res => {
+                this.saved = true;
+                this.$timeout(() => {
+                    this.saved = false;
+                    this.isSendingReq = false;
+                }, 1000);
+                this.currentUser = res;
+                delete this.error;
+            },
+            err => {
+                this.error = err;
                 this.isSendingReq = false;
-            }, 1000);
-            this.currentUser = res;
-            delete this.error;
-        }, (err) => {
-            this.error = err;
-            this.isSendingReq = false;
-        });
+            }
+        );
     }
 }
 

@@ -1,7 +1,7 @@
 // import _ from 'lodash';
 import axios from 'axios';
 
-export default (app) => {
+export default app => {
     class CMRRepository {
         constructor($q, authService, uploadService) {
             this.$q = $q;
@@ -12,75 +12,83 @@ export default (app) => {
         }
 
         initDatasources() {
-            this.datasources = [{
-                name: 'MYD09A1: MODIS/Aqua ',
-                uuid: '55735945-9da5-47c3-8ae4-572b5e11205b',
-                id: 'MYD09A1',
-                uploadType: 'MODIS_USGS',
-                fileAdapter(scene) {
-                    return [ scene.sceneMetadata.links.find(l => l.rel.contains('data#')).href ];
+            this.datasources = [
+                {
+                    name: 'MYD09A1: MODIS/Aqua ',
+                    uuid: '55735945-9da5-47c3-8ae4-572b5e11205b',
+                    id: 'MYD09A1',
+                    uploadType: 'MODIS_USGS',
+                    fileAdapter(scene) {
+                        return [scene.sceneMetadata.links.find(l => l.rel.contains('data#')).href];
+                    },
+                    default: true
                 },
-                default: true
-            }, {
-                name: 'MOD09A1: MODIS/Terra',
-                uuid: 'a11b768b-d869-476e-a1ed-0ac3205ed761',
-                uploadType: 'MODIS_USGS',
-                id: 'MOD09A1',
-                fileAdapter(scene) {
-                    return [ scene.sceneMetadata.links.find(l => l.rel.contains('data#')).href ];
+                {
+                    name: 'MOD09A1: MODIS/Terra',
+                    uuid: 'a11b768b-d869-476e-a1ed-0ac3205ed761',
+                    uploadType: 'MODIS_USGS',
+                    id: 'MOD09A1',
+                    fileAdapter(scene) {
+                        return [scene.sceneMetadata.links.find(l => l.rel.contains('data#')).href];
+                    }
+                },
+                {
+                    name: 'Landsat 4 + 5 TM',
+                    uuid: 'e8c4d923-5a73-430d-8fe4-53bd6a12ce6a',
+                    uploadType: 'LANDSAT_HISTORICAL',
+                    id: 'Landsat4-5_TM_C1',
+                    fileAdapter(scene) {
+                        return [scene.name];
+                    }
+                },
+                {
+                    name: 'Landsat 7 ETM',
+                    uuid: '5a462d31-5744-4ab9-9e80-5dbcb118f72f',
+                    uploadType: 'LANDSAT_HISTORICAL',
+                    id: 'Landsat7_ETM_Plus_C1',
+                    fileAdapter(scene) {
+                        return [scene.name];
+                    }
                 }
-            }, {
-                name: 'Landsat 4 + 5 TM',
-                uuid: 'e8c4d923-5a73-430d-8fe4-53bd6a12ce6a',
-                uploadType: 'LANDSAT_HISTORICAL',
-                id: 'Landsat4-5_TM_C1',
-                fileAdapter(scene) {
-                    return [scene.name];
-                }
-            }, {
-                name: 'Landsat 7 ETM',
-                uuid: '5a462d31-5744-4ab9-9e80-5dbcb118f72f',
-                uploadType: 'LANDSAT_HISTORICAL',
-                id: 'Landsat7_ETM_Plus_C1',
-                fileAdapter(scene) {
-                    return [scene.name];
-                }
-            }];
+            ];
         }
 
         getSources() {
-            return this.$q((resolve) => {
+            return this.$q(resolve => {
                 resolve(this.datasources);
             });
         }
 
         // returns Promise()
         initRepository() {
-            return this.$q((resolve) => {
+            return this.$q(resolve => {
                 this.initDatasources();
                 resolve();
             });
         }
 
         getFilters() {
-            return [{
-                param: 'datasource',
-                label: 'Imagery Collection',
-                type: 'search-select',
-                getSources: this.getSources.bind(this)
-            }, {
-                params: {
-                    min: 'minAcquisitionDatetime',
-                    max: 'maxAcquisitionDatetime'
+            return [
+                {
+                    param: 'datasource',
+                    label: 'Imagery Collection',
+                    type: 'search-select',
+                    getSources: this.getSources.bind(this)
                 },
-                label: 'Date Range',
-                type: 'daterange',
-                default: 'The last month'
-            }];
+                {
+                    params: {
+                        min: 'minAcquisitionDatetime',
+                        max: 'maxAcquisitionDatetime'
+                    },
+                    label: 'Date Range',
+                    type: 'daterange',
+                    default: 'The last month'
+                }
+            ];
         }
 
         getDatasource(scene) {
-            return this.$q(resolve => resolve({name: scene.sceneMetadata.dataset_id}));
+            return this.$q(resolve => resolve({ name: scene.sceneMetadata.dataset_id }));
         }
 
         getThumbnail(scene) {
@@ -96,8 +104,9 @@ export default (app) => {
 
         getThumbnails(scene) {
             if (scene && scene.sceneMetadata) {
-                return scene.sceneMetadata.links
-                    .filter(l => l.rel.toLowerCase().contains('browse'));
+                return scene.sceneMetadata.links.filter(l =>
+                    l.rel.toLowerCase().contains('browse')
+                );
             }
             return [];
         }
@@ -122,7 +131,7 @@ export default (app) => {
          */
         fetchScenes(filters) {
             const baseUrl = 'https://cmr.earthdata.nasa.gov/search/granules.json';
-            return (bbox) => {
+            return bbox => {
                 const pageSize = 25;
                 let page = 1;
 
@@ -134,25 +143,28 @@ export default (app) => {
                                 // MYD09A1, MOD09A1, MOD14A2, Landsat7_ETM_Plus_C1
                                 // Landsat_8_OLI_TIRS_C1 Landsat4-5_TM_C1, ISERV
                                 // EO1_ALI, EO1_Hyperion
-                                'short_name': filters.datasource,
-                                'bounding_box': this.bboxFilterAdapter(bbox),
-                                'temporal': this.dateFilterAdapter(filters),
-                                'page_size': pageSize,
-                                'page_num': page,
-                                'sort_key': '-start_date'
+                                short_name: filters.datasource,
+                                bounding_box: this.bboxFilterAdapter(bbox),
+                                temporal: this.dateFilterAdapter(filters),
+                                page_size: pageSize,
+                                page_num: page,
+                                sort_key: '-start_date'
                             }
-                        }).then(response => {
-                            page += 1;
-                            resolve({
-                                scenes: response.data.feed.entry.map(s =>
-                                    this.incomingSceneAdapter(s, filters.datasource)
-                                ),
-                                hasNext: true,
-                                count: 'unknown'
-                            });
-                        }, err => {
-                            reject(err);
-                        });
+                        }).then(
+                            response => {
+                                page += 1;
+                                resolve({
+                                    scenes: response.data.feed.entry.map(s =>
+                                        this.incomingSceneAdapter(s, filters.datasource)
+                                    ),
+                                    hasNext: true,
+                                    count: 'unknown'
+                                });
+                            },
+                            err => {
+                                reject(err);
+                            }
+                        );
                     });
                 };
             };
@@ -160,32 +172,37 @@ export default (app) => {
 
         bboxFilterAdapter(bbox) {
             // Clamp bbox to lat/lon limits
-            return bbox.split(',').map((p, i) => {
-                if (i % 2) {
-                    return Math.min(Math.max(p, -90), 90);
-                }
-                return Math.min(Math.max(p, -180), 180);
-            }).join(',');
+            return bbox
+                .split(',')
+                .map((p, i) => {
+                    if (i % 2) {
+                        return Math.min(Math.max(p, -90), 90);
+                    }
+                    return Math.min(Math.max(p, -180), 180);
+                })
+                .join(',');
         }
 
         footprintAdapter(points) {
             if (points) {
-                return [[
-                    points[0][0].split(' ').reduce((coords, point, index, pointArr) => {
-                        if (index % 2) {
-                            coords.push([+pointArr[index], +pointArr[index - 1]]);
+                return [
+                    [
+                        points[0][0].split(' ').reduce((coords, point, index, pointArr) => {
+                            if (index % 2) {
+                                coords.push([+pointArr[index], +pointArr[index - 1]]);
+                                return coords;
+                            }
                             return coords;
-                        }
-                        return coords;
-                    }, [])
-                ]];
+                        }, [])
+                    ]
+                ];
             }
 
             return [];
         }
 
         dateFilterAdapter(filters) {
-            let oneDayAgoUnix = Math.round(new Date().getTime() / 1000) - (24 * 3600);
+            let oneDayAgoUnix = Math.round(new Date().getTime() / 1000) - 24 * 3600;
             let oneDayAgo = new Date(oneDayAgoUnix * 1000);
             let filterMax = new Date(filters.maxAcquisitionDatetime);
             let maxAcquisitionDatetime;
@@ -197,7 +214,8 @@ export default (app) => {
                 maxAcquisitionDatetime = filterMax;
             }
             // eslint-disable-next-line
-            return `${filters.minAcquisitionDatetime || ''},${maxAcquisitionDatetime.toISOString() || ''}`;
+            return `${filters.minAcquisitionDatetime ||
+                ''},${maxAcquisitionDatetime.toISOString() || ''}`;
         }
 
         // Transform a single scene
@@ -248,22 +266,17 @@ export default (app) => {
         */
         addToProject(projectId, scenes) {
             return this.authService.getCurrentUser().then(user => {
-                const uploads = scenes.map(
-                    s => this.sceneToUploadObject(s, projectId, null, user)
-                );
-                return this.$q.all(
-                    uploads.map(u => this.uploadService.create(u))
-                );
+                const uploads = scenes.map(s => this.sceneToUploadObject(s, projectId, null, user));
+                return this.$q.all(uploads.map(u => this.uploadService.create(u)));
             });
         }
 
         addToLayer(projectId, layerId, scenes) {
             return this.authService.getCurrentUser().then(user => {
-                const uploads = scenes.map(
-                    s => this.sceneToUploadObject(s, projectId, layerId, user)
+                const uploads = scenes.map(s =>
+                    this.sceneToUploadObject(s, projectId, layerId, user)
                 );
-                return this.$q.all(
-                    uploads.map(u => this.uploadService.create(u)));
+                return this.$q.all(uploads.map(u => this.uploadService.create(u)));
             });
         }
     }

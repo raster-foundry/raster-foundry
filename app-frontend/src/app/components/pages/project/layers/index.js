@@ -338,7 +338,7 @@ class ProjectLayersPageController {
         if (layersWithoutAOI.length) {
             this.aoiRequiredModal(layersWithoutAOI[0]);
         } else {
-            this.$state.go('project.create-analysis', {layers});
+            this.$state.go('project.create-analysis', { layers });
         }
     }
 
@@ -463,7 +463,7 @@ class ProjectLayersPageController {
                 component: 'rfFeedbackModal',
                 resolve: {
                     title: () => 'No AOI defined',
-                    content: () =>`
+                    content: () => `
                         <h2>
                             Creating an analyses requires an AOI
                         </h2>

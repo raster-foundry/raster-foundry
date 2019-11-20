@@ -48,9 +48,7 @@ class InputNodeController {
 
         this.$scope.$watch('$ctrl.node', (node, oldNode) => {
             let inputsEqual =
-                node &&
-                oldNode &&
-                _.matches(_.pick(node, ['projId', 'band', 'layerId']))(oldNode);
+                node && oldNode && _.matches(_.pick(node, ['projId', 'band', 'layerId']))(oldNode);
             if (node && (!inputsEqual || !this.initialized)) {
                 this.processUpdates();
             }
@@ -61,9 +59,9 @@ class InputNodeController {
         if (this.node) {
             this.initialized = true;
             if (
-                this.node.projId && !this.selectedProject && !this.selectedLayer ||
-                this.selectedProject && this.node.projId !== this.selectedProject.id ||
-                this.selectedLayer && this.node.layerId !== this.selectedLayer.id
+                (this.node.projId && !this.selectedProject && !this.selectedLayer) ||
+                (this.selectedProject && this.node.projId !== this.selectedProject.id) ||
+                (this.selectedLayer && this.node.layerId !== this.selectedLayer.id)
             ) {
                 this.projectService
                     .fetchProject(this.node.projId, {
@@ -130,7 +128,7 @@ class InputNodeController {
             .open({
                 component: 'rfProjectSelectModal',
                 resolve: {
-                    project: () => this.selectedProject && this.selectedProject.id || false,
+                    project: () => (this.selectedProject && this.selectedProject.id) || false,
                     content: () => ({
                         title: 'Select a project',
                         nodeName: this.node.metadata.label

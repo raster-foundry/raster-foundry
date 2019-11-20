@@ -1,12 +1,9 @@
 import tpl from './index.html';
 
-class ProjectLayerAnnotateController {
-
-}
+class ProjectLayerAnnotateController {}
 
 const component = {
-    bindings: {
-    },
+    bindings: {},
     templateUrl: tpl,
     controller: ProjectLayerAnnotateController.name
 };
@@ -14,5 +11,4 @@ const component = {
 export default angular
     .module('components.pages.project.layer.annotate', [])
     .controller(ProjectLayerAnnotateController.name, ProjectLayerAnnotateController)
-    .component('rfProjectLayerAnnotatePage', component)
-    .name;
+    .component('rfProjectLayerAnnotatePage', component).name;

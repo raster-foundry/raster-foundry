@@ -40,10 +40,10 @@ class DiagramNodeHeaderController {
 
     get typeMap() {
         return {
-            'function': 'Function',
-            'projectSrc': 'Input',
-            'const': 'Constant',
-            'classify': 'Classify'
+            function: 'Function',
+            projectSrc: 'Input',
+            const: 'Constant',
+            classify: 'Classify'
         };
     }
 
@@ -70,7 +70,7 @@ class DiagramNodeHeaderController {
     }
 
     setHeight(height) {
-        this.model.set('size', {width: 300, height: height});
+        this.model.set('size', { width: 300, height: height });
     }
 
     toggleNodeLabelEdit() {
@@ -79,8 +79,8 @@ class DiagramNodeHeaderController {
 
     finishNodelabelEdit() {
         if (this.nameBuffer) {
-            this.node = Object.assign(this.node, {metadata: {label: this.nameBuffer}});
-            this.updateNode({ payload: this.node, hard: true});
+            this.node = Object.assign(this.node, { metadata: { label: this.nameBuffer } });
+            this.updateNode({ payload: this.node, hard: true });
             this.isEditingNodeLabel = !this.isEditingNodeLabel;
         }
     }

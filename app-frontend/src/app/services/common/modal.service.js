@@ -1,4 +1,4 @@
-export default (app) => {
+export default app => {
     class ModalService {
         constructor($uibModal) {
             this.$uibModal = $uibModal;
@@ -14,9 +14,11 @@ export default (app) => {
             }
 
             this.activeModal = this.$uibModal.open(modalConfig);
-            this.activeModal.result.catch(() => {}).finally(() => {
-                delete this.activeModal;
-            });
+            this.activeModal.result
+                .catch(() => {})
+                .finally(() => {
+                    delete this.activeModal;
+                });
             return this.activeModal;
         }
 

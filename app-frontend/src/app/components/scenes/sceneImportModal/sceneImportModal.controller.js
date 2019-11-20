@@ -15,10 +15,20 @@ const availableImportTypes = ['local', 'S3', 'Planet', 'COG'];
 
 export default class SceneImportModalController {
     constructor(
-        $rootScope, $scope, $state, $q, $log,
-        projectService, Upload, uploadService, authService,
-        rollbarWrapperService, datasourceService, userService,
-        sceneService, APP_CONFIG
+        $rootScope,
+        $scope,
+        $state,
+        $q,
+        $log,
+        projectService,
+        Upload,
+        uploadService,
+        authService,
+        rollbarWrapperService,
+        datasourceService,
+        userService,
+        sceneService,
+        APP_CONFIG
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -28,20 +38,20 @@ export default class SceneImportModalController {
     }
 
     $onInit() {
-        require.ensure([
-            'loamLib/loam-worker.js',
-            'gdalJs/gdal.js',
-            'gdalJs/gdal.wasm',
-            'gdalJs/gdal.data'
-        ], (require) => {
-            require('loamLib/loam-worker.js');
-            require('gdalJs/gdal.js');
-            require('gdalJs/gdal.wasm');
-            require('gdalJs/gdal.data');
-        }, (error) => {
-            this.gdalImportError = true;
-            this.$log.error('There was an error while fetching the gdal dependencies.');
-        }, 'gdal');
+        require.ensure(
+            ['loamLib/loam-worker.js', 'gdalJs/gdal.js', 'gdalJs/gdal.wasm', 'gdalJs/gdal.data'],
+            require => {
+                require('loamLib/loam-worker.js');
+                require('gdalJs/gdal.js');
+                require('gdalJs/gdal.wasm');
+                require('gdalJs/gdal.data');
+            },
+            error => {
+                this.gdalImportError = true;
+                this.$log.error('There was an error while fetching the gdal dependencies.');
+            },
+            'gdal'
+        );
 
         this.initSteps();
         this.importType = 'local';
@@ -71,7 +81,7 @@ export default class SceneImportModalController {
         this.uploadedFileCount = 0;
 
         this.datasource = this.resolve.datasource || false;
-        const onWindowUnload = (event) => {
+        const onWindowUnload = event => {
             if (this.closeCanceller) {
                 event.returnValue = 'Leaving this page will cancel your upload. Are you sure?';
             }
@@ -80,12 +90,10 @@ export default class SceneImportModalController {
             window.removeEventListener('beforeunload', onWindowUnload);
         });
 
-        this.authService
-            .getCurrentUser()
-            .then(user => {
-                this.hasPlanetCredential = Boolean(user.planetCredential);
-                this.planetCredential = user.planetCredential;
-            });
+        this.authService.getCurrentUser().then(user => {
+            this.hasPlanetCredential = Boolean(user.planetCredential);
+            this.planetCredential = user.planetCredential;
+        });
 
         window.addEventListener('beforeunload', onWindowUnload);
     }
@@ -102,109 +110,122 @@ export default class SceneImportModalController {
                 previous: () => false
             });
         }
-        this.steps = this.steps.concat([{
-            name: 'IMPORT',
-            previous: () => this.resolve.datasource ? false : 'DATASOURCE_SELECT',
-            allowPrevious: () => true,
-            next: () => {
-                if (this.importType === 'COG') {
-                    return 'METADATA';
-                } else if (this.importType === 'S3') {
-                    return 'METADATA';
-                } else if (this.importType === 'Planet') {
-                    return 'IMPORT_PLANET';
-                }
-                return 'LOCAL_UPLOAD';
-            },
-            allowNext: () => {
-                if (this.importType === 'local') {
+        this.steps = this.steps.concat([
+            {
+                name: 'IMPORT',
+                previous: () => (this.resolve.datasource ? false : 'DATASOURCE_SELECT'),
+                allowPrevious: () => true,
+                next: () => {
+                    if (this.importType === 'COG') {
+                        return 'METADATA';
+                    } else if (this.importType === 'S3') {
+                        return 'METADATA';
+                    } else if (this.importType === 'Planet') {
+                        return 'IMPORT_PLANET';
+                    }
+                    return 'LOCAL_UPLOAD';
+                },
+                allowNext: () => {
+                    if (this.importType === 'local') {
+                        return true;
+                    } else if (this.importType === 'S3') {
+                        return this.validateS3Config() && this.isValidS3Path;
+                    } else if (this.importType === 'Planet') {
+                        return this.validatePlanetConfig();
+                    }
                     return true;
-                } else if (this.importType === 'S3') {
-                    return this.validateS3Config() && this.isValidS3Path;
-                } else if (this.importType === 'Planet') {
-                    return this.validatePlanetConfig();
+                },
+                allowClose: () => true,
+                onExit: () => {
+                    this.currentError = null;
                 }
-                return true;
             },
-            allowClose: () => true,
-            onExit: () => {
-                this.currentError = null;
+            {
+                name: 'LOCAL_UPLOAD',
+                onEnter: () => {
+                    loamInitialize();
+                    this.verifyFileCount();
+                },
+                previous: () => 'IMPORT',
+                allowPrevious: () => true,
+                next: () => 'METADATA',
+                allowNext: () => this.verifyFileCount() && this.verifyValidTiffs(),
+                allowClose: () => true
+            },
+            {
+                name: 'METADATA',
+                onExit: () => {
+                    this.selectedFileDatasets.map(fileDS => {
+                        return fileDS.dataset.then(ds => ds.close());
+                    });
+                },
+                next: () => {
+                    if (this.importType === 'COG') {
+                        return 'IMPORT_COG';
+                    } else if (this.importType === 'S3') {
+                        return 'S3_UPLOAD';
+                    }
+                    return 'UPLOAD_PROGRESS';
+                },
+                previous: () => 'IMPORT',
+                allowNext: () => true,
+                allowPrevious: () => true,
+                allowClose: () => true
+            },
+            {
+                name: 'UPLOAD_PROGRESS',
+                onEnter: () => this.startLocalUpload(),
+                next: () => 'IMPORT_SUCCESS',
+                allowNext: () => {
+                    return (
+                        this.fileUploads &&
+                        this.uploadedFileCount + this.abortedUploadCount === this.fileUploads.length
+                    );
+                },
+                onExit: () => this.finishUpload()
+            },
+            {
+                name: 'S3_UPLOAD',
+                previous: () => 'IMPORT',
+                next: () => 'IMPORT_SUCCESS',
+                onEnter: () => this.startS3Upload(),
+                onExit: () => {
+                    if (!this.isProcessS3Failed) {
+                        this.finishUpload();
+                    }
+                    this.isProcessS3Failed = !this.isProcessS3Failed;
+                }
+            },
+            {
+                name: 'IMPORT_SUCCESS',
+                allowDone: () => true
+            },
+            {
+                name: 'IMPORT_PLANET',
+                previous: () => 'IMPORT',
+                onEnter: () => this.startPlanetUpload(),
+                onExit: () => this.finishUpload(),
+                next: () => 'IMPORT_SUCCESS'
+            },
+            {
+                name: 'IMPORT_COG',
+                previous: () => 'IMPORT',
+                allowPrevious: () => false,
+                onEnter: () => this.startCogImport(),
+                next: () => 'IMPORT_COG_PROGRESS'
+            },
+            {
+                name: 'IMPORT_COG_PROGRESS',
+                previous: () => 'IMPORT_COG',
+                allowPrevious: () => false,
+                allowNext: () => false,
+                next: () => 'IMPORT_SUCCESS'
+            },
+            {
+                name: 'IMPORT_ERROR',
+                allowDone: () => true
             }
-        }, {
-            name: 'LOCAL_UPLOAD',
-            onEnter: () => {
-                loamInitialize();
-                this.verifyFileCount();
-            },
-            previous: () => 'IMPORT',
-            allowPrevious: () => true,
-            next: () => 'METADATA',
-            allowNext: () => this.verifyFileCount() && this.verifyValidTiffs(),
-            allowClose: () => true
-        }, {
-            name: 'METADATA',
-            onExit: () => {
-                this.selectedFileDatasets.map(fileDS => {
-                    return fileDS.dataset.then(ds => ds.close());
-                });
-            },
-            next: () => {
-                if (this.importType === 'COG') {
-                    return 'IMPORT_COG';
-                } else if (this.importType === 'S3') {
-                    return 'S3_UPLOAD';
-                }
-                return 'UPLOAD_PROGRESS';
-            },
-            previous: () => 'IMPORT',
-            allowNext: () => true,
-            allowPrevious: () => true,
-            allowClose: () => true
-        }, {
-            name: 'UPLOAD_PROGRESS',
-            onEnter: () => this.startLocalUpload(),
-            next: () => 'IMPORT_SUCCESS',
-            allowNext: () => {
-                return this.fileUploads &&
-                    this.uploadedFileCount + this.abortedUploadCount === this.fileUploads.length;
-            },
-            onExit: () => this.finishUpload()
-        }, {
-            name: 'S3_UPLOAD',
-            previous: () => 'IMPORT',
-            next: () => 'IMPORT_SUCCESS',
-            onEnter: () => this.startS3Upload(),
-            onExit: () => {
-                if (!this.isProcessS3Failed) {
-                    this.finishUpload();
-                }
-                this.isProcessS3Failed = !this.isProcessS3Failed;
-            }
-        }, {
-            name: 'IMPORT_SUCCESS',
-            allowDone: () => true
-        }, {
-            name: 'IMPORT_PLANET',
-            previous: () => 'IMPORT',
-            onEnter: () => this.startPlanetUpload(),
-            onExit: () => this.finishUpload(),
-            next: () => 'IMPORT_SUCCESS'
-        }, {
-            name: 'IMPORT_COG',
-            previous: () => 'IMPORT',
-            allowPrevious: () => false,
-            onEnter: () => this.startCogImport(),
-            next: () => 'IMPORT_COG_PROGRESS'
-        }, {
-            name: 'IMPORT_COG_PROGRESS',
-            previous: () => 'IMPORT_COG',
-            allowPrevious: () => false,
-            allowNext: () => false,
-            next: () => 'IMPORT_SUCCESS'
-        }, {
-            name: 'IMPORT_ERROR',
-            allowDone: () => true
-        }]);
+        ]);
 
         this.setCurrentStep(this.steps[0]);
     }
@@ -272,16 +293,16 @@ export default class SceneImportModalController {
     }
 
     shouldShowList() {
-        return !this.isLoadingDatasources &&
-            this.datasources.count &&
-            this.datasources.count > 0;
+        return !this.isLoadingDatasources && this.datasources.count && this.datasources.count > 0;
     }
 
     shouldShowPagination() {
-        return !this.isLoadingDatasources &&
+        return (
+            !this.isLoadingDatasources &&
             !this.isErrorLoadingDatasources &&
             this.datasources.count &&
-            this.datasources.count > this.pageSize;
+            this.datasources.count > this.pageSize
+        );
     }
 
     setImportType(type) {
@@ -350,16 +371,20 @@ export default class SceneImportModalController {
         this.authService
             .getCurrentUser()
             .then(this.createUpload.bind(this))
-            .then(upload => {
-                this.isProcessS3Failed = false;
-                delete this.error;
-                this.upload = upload;
-                this.uploadsDone();
-                return upload;
-            }, err => {
-                this.isProcessS3Failed = true;
-                this.uploadError(err);
-            }).finally(() => {
+            .then(
+                upload => {
+                    this.isProcessS3Failed = false;
+                    delete this.error;
+                    this.upload = upload;
+                    this.uploadsDone();
+                    return upload;
+                },
+                err => {
+                    this.isProcessS3Failed = true;
+                    this.uploadError(err);
+                }
+            )
+            .finally(() => {
                 this.allowInterruptions();
             });
     }
@@ -368,25 +393,32 @@ export default class SceneImportModalController {
         this.preventInterruptions();
         this.handleNext();
         let tries = 0;
-        this.sceneService.createCogScene({
-            metadata: this.sceneData,
-            location: this.cogConfig.url,
-            projectId: _.get(this, 'resolve.project.id', false),
-            layerId: _.get(this, 'resolve.layer.id', false)
-        }, this.datasource).then(() => {
-            this.handleNext();
-        }, err => {
-            this.uploadError(err);
-            this.handleNext();
-        }).finally(() => {
-            this.allowInterruptions();
-        });
+        this.sceneService
+            .createCogScene(
+                {
+                    metadata: this.sceneData,
+                    location: this.cogConfig.url,
+                    projectId: _.get(this, 'resolve.project.id', false),
+                    layerId: _.get(this, 'resolve.layer.id', false)
+                },
+                this.datasource
+            )
+            .then(
+                () => {
+                    this.handleNext();
+                },
+                err => {
+                    this.uploadError(err);
+                    this.handleNext();
+                }
+            )
+            .finally(() => {
+                this.allowInterruptions();
+            });
     }
 
     finishUpload() {
-        this.upload.uploadStatus = this.isCog ?
-            'COMPLETE' :
-            'UPLOADED';
+        this.upload.uploadStatus = this.isCog ? 'COMPLETE' : 'UPLOADED';
         this.uploadService.update(this.upload).then(() => {
             this.allowInterruptions();
         });
@@ -397,14 +429,17 @@ export default class SceneImportModalController {
         this.authService
             .getCurrentUser()
             .then(this.createUpload.bind(this))
-            .then(upload => {
-                this.upload = upload;
-                this.uploadsDone();
-                return upload;
-            }, err => {
-                this.uploadError(err);
-                this.handlePrevious();
-            });
+            .then(
+                upload => {
+                    this.upload = upload;
+                    this.uploadsDone();
+                    return upload;
+                },
+                err => {
+                    this.uploadError(err);
+                    this.handlePrevious();
+                }
+            );
     }
 
     createUpload(user) {
@@ -415,8 +450,10 @@ export default class SceneImportModalController {
             uploadStatus: 'UPLOADING',
             visibility: 'PRIVATE',
             organizationId: user.organizationId,
-            metadata: {acquisitionDate: this.sceneData.acquisitionDate,
-                cloudCover: this.sceneData.cloudCover}
+            metadata: {
+                acquisitionDate: this.sceneData.acquisitionDate,
+                cloudCover: this.sceneData.cloudCover
+            }
         };
 
         if (this.importType === 'local') {
@@ -472,9 +509,9 @@ export default class SceneImportModalController {
             sessionToken: credentialData.credentials.SessionToken
         });
         const s3 = new AWS.S3(config);
-        this.cachedUploadConfig = {s3, bucket};
-        this.fileUploads = this.selectedFileDatasets.map(
-            fileDS => this.sendFile(s3, bucket, fileDS.file)
+        this.cachedUploadConfig = { s3, bucket };
+        this.fileUploads = this.selectedFileDatasets.map(fileDS =>
+            this.sendFile(s3, bucket, fileDS.file)
         );
     }
 
@@ -501,17 +538,20 @@ export default class SceneImportModalController {
             this.upload.files.push(filePath);
         }
 
-        managedUpload.on('httpUploadProgress', (progress) => {
+        managedUpload.on('httpUploadProgress', progress => {
             this.handleUploadProgress(upload, progress);
         });
 
-        upload.promise.then(() => {
-            this.$scope.$evalAsync(() => {
-                this.uploadDone(upload);
-            });
-        }, (err) => {
-            this.uploadError(err, upload);
-        });
+        upload.promise.then(
+            () => {
+                this.$scope.$evalAsync(() => {
+                    this.uploadDone(upload);
+                });
+            },
+            err => {
+                this.uploadError(err, upload);
+            }
+        );
 
         this.$scope.$evalAsync(() => {
             this.uploadProgressPct[upload.file.name] = '0%';
@@ -523,9 +563,11 @@ export default class SceneImportModalController {
     retryUpload(upload) {
         this.preventInterruptions();
 
-        let uploadIndex = this.fileUploads.findIndex((u) => u === upload);
+        let uploadIndex = this.fileUploads.findIndex(u => u === upload);
         this.fileUploads[uploadIndex] = this.sendFile(
-            this.cachedUploadConfig.s3, this.cachedUploadConfig.bucket, upload.file
+            this.cachedUploadConfig.s3,
+            this.cachedUploadConfig.bucket,
+            upload.file
         );
         this.abortedUploadCount = this.fileUploads.filter(u => u.aborted).length;
     }
@@ -556,15 +598,20 @@ export default class SceneImportModalController {
     uploadsDone() {
         if (!this.abortedUploadCount) {
             if (this.isCog) {
-                this.$q.all(this.upload.files.map(f => {
-                    this.handleNext();
-                    return this.sceneService.createCogScene({
-                        metadata: this.sceneData,
-                        location: encodeURI(f),
-                        projectId: _.get(this, 'resolve.project.id', false),
-                        layerId: _.get(this, 'resolve.layer.id', false)
-                    }, this.datasource);
-                }));
+                this.$q.all(
+                    this.upload.files.map(f => {
+                        this.handleNext();
+                        return this.sceneService.createCogScene(
+                            {
+                                metadata: this.sceneData,
+                                location: encodeURI(f),
+                                projectId: _.get(this, 'resolve.project.id', false),
+                                layerId: _.get(this, 'resolve.layer.id', false)
+                            },
+                            this.datasource
+                        );
+                    })
+                );
             } else {
                 this.handleNext();
             }
@@ -573,7 +620,7 @@ export default class SceneImportModalController {
 
     uploadError(err, upload) {
         if (upload && !upload.aborted) {
-            Object.assign(upload, {error: err});
+            Object.assign(upload, { error: err });
             this.$scope.$evalAsync(() => {
                 this.uploadProgressPct[upload.file.name] = 'Errored';
                 this.uploadProgressFlexString[upload.file.name] = '1 0';
@@ -587,10 +634,13 @@ export default class SceneImportModalController {
     handleUploadProgress(upload, progress) {
         upload.progress = progress;
         this.$scope.$evalAsync(() => {
-            this.uploadProgressPct[progress.key] =
-                `${(progress.loaded / progress.total * 100).toFixed(1)}%`;
-            this.uploadProgressFlexString[progress.key] =
-                `${(progress.loaded / progress.total).toFixed(3)} 0`;
+            this.uploadProgressPct[progress.key] = `${(
+                (progress.loaded / progress.total) *
+                100
+            ).toFixed(1)}%`;
+            this.uploadProgressFlexString[progress.key] = `${(
+                progress.loaded / progress.total
+            ).toFixed(3)} 0`;
         });
     }
 
@@ -600,10 +650,9 @@ export default class SceneImportModalController {
 
     filesSelected(files) {
         let datasetPromises = files.map(file => {
-            return this.$q.resolve(loamOpen(file))
-                .catch((error) => {
-                    this.$log.error("Error in loam caught", error);
-                });
+            return this.$q.resolve(loamOpen(file)).catch(error => {
+                this.$log.error('Error in loam caught', error);
+            });
         });
         let bandCountPromises = datasetPromises.map(dsPromise => {
             return this.bandCount(dsPromise);
@@ -624,10 +673,7 @@ export default class SceneImportModalController {
         // cause the $q.all() call, above, to get rejected completely, when what we really want is
         // to convert the rejection to a warning. To make this work, the error handler here returns
         // a -1 value.
-        return datasetPromise.then(
-            ds => this.$q.resolve(ds.count()),
-            () => this.$q.resolve(-1)
-        );
+        return datasetPromise.then(ds => this.$q.resolve(ds.count()), () => this.$q.resolve(-1));
     }
 
     getTotalFileSize() {
@@ -640,16 +686,16 @@ export default class SceneImportModalController {
     }
 
     removeFileAtIndex(index) {
-        this.$q.resolve(
-            this.selectedFileDatasets[index].dataset.then(ds => ds.close())
-        ).finally(() => {
-            this.selectedFileDatasets.splice(index, 1);
-            this.selectedFiles.splice(index, 1);
-        });
+        this.$q
+            .resolve(this.selectedFileDatasets[index].dataset.then(ds => ds.close()))
+            .finally(() => {
+                this.selectedFileDatasets.splice(index, 1);
+                this.selectedFiles.splice(index, 1);
+            });
     }
 
     removeAllFiles() {
-        this.selectedFileDatasets.map((fileDS) => {
+        this.selectedFileDatasets.map(fileDS => {
             fileDS.dataset.then(ds => ds.close());
         });
         this.selectedFileDatasets = [];
@@ -659,30 +705,32 @@ export default class SceneImportModalController {
     loadDatasources(page = 1) {
         this.isLoadingDatasources = true;
         this.isErrorLoadingDatasources = false;
-        this.datasourceService.query({
-            sort: 'createdAt,desc',
-            pageSize: this.pageSize,
-            page: page - 1
-        }).then(
-            datasourceResponse => {
-                this.datasources = datasourceResponse;
-                this.currentPage = datasourceResponse.page + 1;
-            },
-            () => {
-                this.isErrorLoadingDatasources = true;
+        this.datasourceService
+            .query({
+                sort: 'createdAt,desc',
+                pageSize: this.pageSize,
+                page: page - 1
             })
+            .then(
+                datasourceResponse => {
+                    this.datasources = datasourceResponse;
+                    this.currentPage = datasourceResponse.page + 1;
+                },
+                () => {
+                    this.isErrorLoadingDatasources = true;
+                }
+            )
             .finally(() => {
                 this.isLoadingDatasources = false;
-            }
-            );
+            });
     }
 
     preventInterruptions() {
         if (!this.closeCanceller) {
-            this.closeCanceller = this.$scope.$on('modal.closing', (e) => {
+            this.closeCanceller = this.$scope.$on('modal.closing', e => {
                 e.preventDefault();
             });
-            this.locationChangeCanceller = this.$scope.$on('$locationChangeStart', (event) => {
+            this.locationChangeCanceller = this.$scope.$on('$locationChangeStart', event => {
                 event.preventDefault();
             });
         }
@@ -705,10 +753,7 @@ export default class SceneImportModalController {
             this.$state.reload();
         }
         if (this.resolve.origin === 'projectCreate') {
-            this.$state.go(
-                'projects.edit.scenes',
-                { projectid: this.resolve.project.id}
-            );
+            this.$state.go('projects.edit.scenes', { projectid: this.resolve.project.id });
         }
         if (this.resolve.origin === 'datasource') {
             this.$state.go('imports.rasters');
@@ -734,8 +779,8 @@ export default class SceneImportModalController {
 
         if (_.get(segments, 'length') > 1) {
             let cleanSegs = segments.filter(seg => !seg.includes('s3.amazonaws.com'));
-            this.suggestedPaths = cleanSegs.map((seg, idx) =>
-                `s3://${cleanSegs.slice(0, idx + 1).join('/')}`
+            this.suggestedPaths = cleanSegs.map(
+                (seg, idx) => `s3://${cleanSegs.slice(0, idx + 1).join('/')}`
             );
         }
     }

@@ -5,8 +5,14 @@ import _ from 'lodash';
 
 class ProjectEmbedController {
     constructor(
-        $rootScope, $scope, $state, $timeout,
-        projectService, analysisService, paginationService, tokenService
+        $rootScope,
+        $scope,
+        $state,
+        $timeout,
+        projectService,
+        analysisService,
+        paginationService,
+        tokenService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -24,7 +30,7 @@ class ProjectEmbedController {
 
     initEmbedParameters() {
         this.embedParameters = {
-        // type: 'comparison' or 'single'
+            // type: 'comparison' or 'single'
             projectID: this.project.id,
             type: 'comparison',
             pane1: '',
@@ -41,40 +47,45 @@ class ProjectEmbedController {
     fetchPage(page = this.$state.params.page || 1) {
         this.layerList = [];
         this.layerActions = {};
-        const currentQuery = this.projectService.getProjectLayers(
-            this.project.id,
-            {
+        const currentQuery = this.projectService
+            .getProjectLayers(this.project.id, {
                 pageSize: 30,
                 page: page - 1
-            }
-        ).then(paginatedResponse => {
-            this.layerList = paginatedResponse.results;
-            this.layerList.forEach((layer) => {
-                layer.subtext = '';
-                if (layer.id === this.project.defaultLayerId) {
-                    layer.subtext += 'Default layer';
+            })
+            .then(
+                paginatedResponse => {
+                    this.layerList = paginatedResponse.results;
+                    this.layerList.forEach(layer => {
+                        layer.subtext = '';
+                        if (layer.id === this.project.defaultLayerId) {
+                            layer.subtext += 'Default layer';
+                        }
+                        if (layer.smartLayerId) {
+                            layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
+                        }
+                    });
+                    const defaultLayer = this.layerList.find(
+                        l => l.id === this.project.defaultLayerId
+                    );
+                    this.layerActions = [];
+
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page);
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
                 }
-                if (layer.smartLayerId) {
-                    layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
                 }
             });
-            const defaultLayer = this.layerList.find(l => l.id === this.project.defaultLayerId);
-            this.layerActions = [];
-
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, e => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
         this.currentQuery = currentQuery;
         return currentQuery;
     }
@@ -91,21 +102,22 @@ class ProjectEmbedController {
 
         this.layerAnalyses[layer.id].isLoading = true;
 
-        const currentQuery = this.analysisService.fetchAnalyses(
-            {
+        const currentQuery = this.analysisService
+            .fetchAnalyses({
                 pageSize: 10,
                 page: this.layerAnalyses[layer.id].pagination.currentPage,
                 projectLayerId: layer.id
-            }
-        ).then((paginatedAnalyses) => {
-            this.layerAnalyses[layer.id] = {
-                isLoading: false,
-                items: [ ...this.layerAnalyses[layer.id].items, ...paginatedAnalyses.results],
-                pagination: this.paginationService.buildPagination(paginatedAnalyses)
-            };
-        }).catch((e) => {
-            this.fetchError = e;
-        });
+            })
+            .then(paginatedAnalyses => {
+                this.layerAnalyses[layer.id] = {
+                    isLoading: false,
+                    items: [...this.layerAnalyses[layer.id].items, ...paginatedAnalyses.results],
+                    pagination: this.paginationService.buildPagination(paginatedAnalyses)
+                };
+            })
+            .catch(e => {
+                this.fetchError = e;
+            });
     }
 
     onSelect(layer) {
@@ -178,8 +190,9 @@ class ProjectEmbedController {
     }
 
     hasValidParameters() {
-        return !!this.embedParameters.pane1 && (
-            this.embedParameters.type === 'single' || !!this.embedParameters.pane2
+        return (
+            !!this.embedParameters.pane1 &&
+            (this.embedParameters.type === 'single' || !!this.embedParameters.pane2)
         );
     }
 
@@ -208,9 +221,10 @@ class ProjectEmbedController {
     }
 
     embedParametersToString(params) {
-        const paramsP = this.project.visibility !== 'PUBLIC' ?
-            this.mapTokenRequest.then(m => ({ ...params, mapToken: m.id})) :
-            Promise.resolve({...params});
+        const paramsP =
+            this.project.visibility !== 'PUBLIC'
+                ? this.mapTokenRequest.then(m => ({ ...params, mapToken: m.id }))
+                : Promise.resolve({ ...params });
 
         return paramsP.then(p => {
             if (p.type === 'single') {
@@ -218,11 +232,18 @@ class ProjectEmbedController {
             }
             const kvTransform = (k, v) => `${k}=${v}`;
             const defaultTransform = k => kvTransform(k, p[k]);
-            const setTransform = k => kvTransform(k, p[k].toJS().map(i => i.id).join(','));
+            const setTransform = k =>
+                kvTransform(
+                    k,
+                    p[k]
+                        .toJS()
+                        .map(i => i.id)
+                        .join(',')
+                );
             const setParameters = ['layers', 'analyses'];
-            const stringifiedParams = Object.keys(p).map(k => setParameters.includes(k) ?
-                setTransform(k) :
-                defaultTransform(k)).join('&');
+            const stringifiedParams = Object.keys(p)
+                .map(k => (setParameters.includes(k) ? setTransform(k) : defaultTransform(k)))
+                .join('&');
             return stringifiedParams;
         });
     }
@@ -240,5 +261,4 @@ const component = {
 export default angular
     .module('components.pages.projects.settings.embed', [])
     .controller(ProjectEmbedController.name, ProjectEmbedController)
-    .component('rfProjectEmbedPage', component)
-    .name;
+    .component('rfProjectEmbedPage', component).name;

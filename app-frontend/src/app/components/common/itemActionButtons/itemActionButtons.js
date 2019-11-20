@@ -38,9 +38,7 @@ class ItemActionButtonsController {
 
 const ItemActionButtonsModule = angular.module('components.common.itemActionButtons', []);
 
-ItemActionButtonsModule.component(
-    'rfItemActionButtons', ItemActionButtonsComponent
-);
+ItemActionButtonsModule.component('rfItemActionButtons', ItemActionButtonsComponent);
 ItemActionButtonsModule.controller('ItemActionButtonsController', ItemActionButtonsController);
 
 export default ItemActionButtonsModule;

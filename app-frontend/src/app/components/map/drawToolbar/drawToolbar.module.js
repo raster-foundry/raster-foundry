@@ -41,8 +41,7 @@ class DrawToolbarController {
         this.polygonLayers = [];
         this.areaTypeText = '';
 
-
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             this.listeners = [
                 mapWrapper.on(L.Draw.Event.CREATED, this.addPolygon.bind(this)),
                 mapWrapper.on(L.Draw.Event.EDITED, this.editPolygon.bind(this)),
@@ -75,7 +74,7 @@ class DrawToolbarController {
 
         this.polygonLayers = [];
         /* eslint-disable no-underscore-dangle */
-        Object.keys(drawLayer._layers).forEach((layer) => {
+        Object.keys(drawLayer._layers).forEach(layer => {
             this.polygonLayers.push(drawLayer._layers[layer]);
         });
         /* eslint-enable no-underscore-dangle */
@@ -101,8 +100,8 @@ class DrawToolbarController {
 
     $onDestroy() {
         // clear map listeners
-        this.getMap().then((mapWrapper) => {
-            this.listeners.forEach((listener) => {
+        this.getMap().then(mapWrapper => {
+            this.listeners.forEach(listener => {
                 mapWrapper.off(listener);
             });
             mapWrapper.deleteLayers('draw');
@@ -120,14 +119,14 @@ class DrawToolbarController {
                 this.$log.error('Invalid geometry used in draw toolbar');
             } else {
                 // split multipolygon into polygons
-                let polygons = geom.coordinates.map((coords) => {
+                let polygons = geom.coordinates.map(coords => {
                     return {
                         type: 'Polygon',
                         coordinates: coords
                     };
                 });
                 if (polygons.length) {
-                    this.getMap().then((mapWrapper) => {
+                    this.getMap().then(mapWrapper => {
                         this.setDrawLayer(mapWrapper, polygons);
                     });
                 }
@@ -138,7 +137,7 @@ class DrawToolbarController {
     updatePolygons() {
         // Coordinates aren't actually wound counter-clockwise,
         // but our backend doesn't care
-        let polygons = this.polygonLayers.map((layer) => {
+        let polygons = this.polygonLayers.map(layer => {
             let feature = layer.toGeoJSON();
             let coordinates = feature.geometry.coordinates;
             return coordinates;
@@ -152,7 +151,7 @@ class DrawToolbarController {
             return {
                 geom: {
                     type: 'MultiPolygon',
-                    coordinates: this.polygonLayers.map((layer) => {
+                    coordinates: this.polygonLayers.map(layer => {
                         let feature = layer.toGeoJSON();
                         return feature.geometry.coordinates;
                     })
@@ -164,13 +163,12 @@ class DrawToolbarController {
     }
 
     onDoneClicked() {
-        this.onSave({polygons: this.getMultiPolygonFromLayers()});
+        this.onSave({ polygons: this.getMultiPolygonFromLayers() });
     }
 
     onCancelClicked() {
         this.onCancel();
     }
-
 
     revertLayers() {
         if (this.drawing) {
@@ -262,7 +260,7 @@ class DrawToolbarController {
             area: this.calculateArea(layer),
             id: new Date()
         };
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             let drawLayer = mapWrapper.getLayers('draw')[0];
             drawLayer.addLayer(layer);
             this.polygonLayers.push(layer);
@@ -272,16 +270,14 @@ class DrawToolbarController {
 
     /* eslint-disable no-underscore-dangle */
     editPolygon(event) {
-        Object.values(
-            event.layers._layers
-        ).forEach((layer) => {
+        Object.values(event.layers._layers).forEach(layer => {
             layer.properties.area = this.calculateArea(layer);
         });
         this.$scope.$evalAsync();
     }
 
     deletePolygon(event) {
-        Object.keys(event.layers._layers).forEach((layerid) => {
+        Object.keys(event.layers._layers).forEach(layerid => {
             let layer = event.layers._layers[layerid];
             this.polygonLayers.splice(this.polygonLayers.indexOf(layer), 1);
         });

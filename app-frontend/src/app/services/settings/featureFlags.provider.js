@@ -59,9 +59,9 @@ export default app => {
         }
 
         isOn(key) {
-            return this.isOverridden(key) ?
-                this.featureFlagOverrides.get(key) :
-                this.serverFlagCache[key];
+            return this.isOverridden(key)
+                ? this.featureFlagOverrides.get(key)
+                : this.serverFlagCache[key];
         }
 
         isOnByDefault(key) {
@@ -71,7 +71,6 @@ export default app => {
         isOverridden(key) {
             return this.featureFlagOverrides.isPresent(key);
         }
-
     }
 
     class PerUserFeatureFlagService {

@@ -20,7 +20,8 @@
         "test": "karma start karma.conf.js",
         "test-watch": "karma start karma.conf.js --auto-watch --no-single-run",
         "validate-api-spec": "swagger-cli validate /opt/swagger/spec.yml",
-        "validate-tile-spec": "swagger-cli validate /opt/swagger/tile-spec.yml"
+        "validate-tile-spec": "swagger-cli validate /opt/swagger/tile-spec.yml",
+	"format": "prettier --config .prettierrc --write 'src/**/*.js'"
     },
     "dependencies": {
         "@babel/runtime": "^7.1.2",

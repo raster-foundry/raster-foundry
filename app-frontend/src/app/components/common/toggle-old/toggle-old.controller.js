@@ -15,6 +15,6 @@ export default class ToggleOldController {
     toggle($event) {
         $event.stopPropagation();
         $event.preventDefault();
-        this.onChange({value: !this.model});
+        this.onChange({ value: !this.model });
     }
 }

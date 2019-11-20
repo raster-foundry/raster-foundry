@@ -6,11 +6,26 @@ import autoInject from '_appRoot/autoInject';
 
 class LabAnalysisController {
     constructor(
-        $ngRedux, $scope, $rootScope, $state, $timeout, $element, $window, $document, modalService,
-        mapService, projectService, authService, mapUtilsService, analysisService, tokenService,
+        $ngRedux,
+        $scope,
+        $rootScope,
+        $state,
+        $timeout,
+        $element,
+        $window,
+        $document,
+        modalService,
+        mapService,
+        projectService,
+        authService,
+        mapUtilsService,
+        analysisService,
+        tokenService,
         permissionsService,
-        platform, user, permissions,
-        APP_CONFIG,
+        platform,
+        user,
+        permissions,
+        APP_CONFIG
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -35,12 +50,12 @@ class LabAnalysisController {
 
         this.$scope.$on('$destroy', unsubscribe);
         this.$scope.$on('$destroy', () => {
-            $('body').css({overflow: ''});
+            $('body').css({ overflow: '' });
         });
 
-        $('body').css({overflow: 'hidden'});
+        $('body').css({ overflow: 'hidden' });
 
-        this.$scope.$watch('$ctrl.previewNodes', (nodes) => {
+        this.$scope.$watch('$ctrl.previewNodes', nodes => {
             if (nodes && nodes.length) {
                 this.showPreview(nodes.length > 1 ? nodes : nodes[0]);
             } else {
@@ -48,13 +63,12 @@ class LabAnalysisController {
             }
         });
 
-        this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
+        this.singlePreviewPosition = { x: 0, offset: 10, side: 'none' };
         this.initAnalysis();
     }
 
     userCanEdit() {
-        return this.permissions.includes('EDIT') ||
-            this.permissions.includes('*');
+        return this.permissions.includes('EDIT') || this.permissions.includes('*');
     }
 
     getMap() {
@@ -105,19 +119,17 @@ class LabAnalysisController {
     saveAnalysis() {
         this.saveInProgress = true;
         this.clearWarning();
-        const analysisSavePromise = this.analysisService.updateAnalysis(
-            Object.assign(
-                {},
-                this.analysis
-            )
-        ).then(() => {
-            if (this.isShowingPreview) {
-                this.createPreviewLayers();
-                this.showPreview(this.previewData);
-            }
-        }).finally(() => {
-            this.applyInProgress = false;
-        });
+        const analysisSavePromise = this.analysisService
+            .updateAnalysis(Object.assign({}, this.analysis))
+            .then(() => {
+                if (this.isShowingPreview) {
+                    this.createPreviewLayers();
+                    this.showPreview(this.previewData);
+                }
+            })
+            .finally(() => {
+                this.applyInProgress = false;
+            });
         return analysisSavePromise;
     }
 
@@ -125,28 +137,32 @@ class LabAnalysisController {
         if (nodeId && this.analysis) {
             let node = this.findNodeinAST(nodeId, this.analysis.executionParameters);
             if (node.type === 'projectSrc') {
-                this.tokenService.getOrCreateAnalysisMapToken({
-                    organizationId: this.analysis.organizationId,
-                    name: this.analysis.title + ' - ' + this.analysis.id,
-                    project: node.projId
-                }).then((mapToken) => {
-                    this.publishModal(
-                        this.projectService.getProjectTileURL(
-                            node.projId, {mapToken: mapToken.id}
-                        )
-                    );
-                });
+                this.tokenService
+                    .getOrCreateAnalysisMapToken({
+                        organizationId: this.analysis.organizationId,
+                        name: this.analysis.title + ' - ' + this.analysis.id,
+                        project: node.projId
+                    })
+                    .then(mapToken => {
+                        this.publishModal(
+                            this.projectService.getProjectTileURL(node.projId, {
+                                mapToken: mapToken.id
+                            })
+                        );
+                    });
             } else {
-                this.tokenService.getOrCreateAnalysisMapToken({
-                    organizationId: this.analysis.organizationId,
-                    name: this.analysis.title + ' - ' + this.analysis.id,
-                    analysis: this.analysis.id
-                }).then((mapToken) => {
-                    this.publishModal(
-                        // eslint-disable-next-line max-len
-                        `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${nodeId}`
-                    );
-                });
+                this.tokenService
+                    .getOrCreateAnalysisMapToken({
+                        organizationId: this.analysis.organizationId,
+                        name: this.analysis.title + ' - ' + this.analysis.id,
+                        analysis: this.analysis.id
+                    })
+                    .then(mapToken => {
+                        this.publishModal(
+                            // eslint-disable-next-line max-len
+                            `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${nodeId}`
+                        );
+                    });
             }
         }
     }
@@ -207,10 +223,7 @@ class LabAnalysisController {
             let node = inQ.pop();
             outQ.push(node);
             if (node.args) {
-                inQ = [
-                    ...inQ,
-                    ...node.args.map(a => Object.assign({}, a, { parent: node }))
-                ];
+                inQ = [...inQ, ...node.args.map(a => Object.assign({}, a, { parent: node }))];
             }
         }
         return outQ;
@@ -218,7 +231,7 @@ class LabAnalysisController {
 
     findNodeinAST(nodeId, analysisDefinition) {
         let flattenedAnalysisDefinition = this.flattenAnalysisDefinition(analysisDefinition);
-        return flattenedAnalysisDefinition.find((n) => n.id === nodeId);
+        return flattenedAnalysisDefinition.find(n => n.id === nodeId);
     }
 
     getNodeUrl(node) {
@@ -229,14 +242,19 @@ class LabAnalysisController {
             let labNode = this.nodes.get(id);
             // let labNode = this.findNodeinAST(id, this.analysis.executionParameters);
             if (labNode.type === 'projectSrc') {
-                return this.projectService.getProjectTileURL({
-                    id: labNode.projId
-                }, {
-                    token: token
-                });
+                return this.projectService.getProjectTileURL(
+                    {
+                        id: labNode.projId
+                    },
+                    {
+                        token: token
+                    }
+                );
             }
-            return `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}` +
-                    `?token=${token}&node=${node}&tag=${new Date().getTime()}`;
+            return (
+                `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}` +
+                `?token=${token}&node=${node}&tag=${new Date().getTime()}`
+            );
         }
         return false;
     }
@@ -285,31 +303,33 @@ class LabAnalysisController {
 
         if (!this.frameControlAdded) {
             this.frameControlAdded = true;
-            this.getMap().then((m) => {
+            this.getMap().then(m => {
                 this.frameControl.addTo(m.map);
                 let frame = this.frameControl.getFrame();
                 let mapSize = m.map.getSize();
-                frame.dimensions = Object.assign(
-                    frame.dimensions,
-                    {width: mapSize.x, height: mapSize.y}
-                );
+                frame.dimensions = Object.assign(frame.dimensions, {
+                    width: mapSize.x,
+                    height: mapSize.y
+                });
                 this.leftFrame = new FrameView();
                 this.leftFrame.dimensions = {
-                    x: 0, y: 0,
+                    x: 0,
+                    y: 0,
                     width: mapSize.x / 2,
                     height: mapSize.y
                 };
                 this.leftFrame.children = [this.previewLayers[0]];
                 this.rightFrame = new FrameView();
                 this.rightFrame.dimensions = {
-                    x: mapSize.x / 2, y: 0,
+                    x: mapSize.x / 2,
+                    y: 0,
                     width: mapSize.x / 2,
                     height: mapSize.y
                 };
                 this.rightFrame.children = [this.previewLayers[1]];
                 frame.children = [this.leftFrame, this.rightFrame];
                 this.dividerPosition = 0.5;
-                frame.onUpdate = (dividers) => {
+                frame.onUpdate = dividers => {
                     let currentPosition = this.dividerPosition;
                     this.dividerPosition = dividers.length ? dividers[0].position : 0;
                     if (this.dividerPosition !== currentPosition) {
@@ -355,11 +375,13 @@ class LabAnalysisController {
                         this.$timeout(() => {
                             let s = this.analysisService.generateSourcesFromAST(this.analysis);
                             let firstSourceId = Object.keys(s)[0];
-                            this.projectService.fetchProject(s[firstSourceId].projId, {
-                                analysisId: this.analysisId
-                            }).then(p => {
-                                this.fitProjectExtent(p);
-                            });
+                            this.projectService
+                                .fetchProject(s[firstSourceId].projId, {
+                                    analysisId: this.analysisId
+                                })
+                                .then(p => {
+                                    this.fitProjectExtent(p);
+                                });
                         });
                     }
                 });
@@ -371,11 +393,11 @@ class LabAnalysisController {
         this.showMap = percentRatio > 10;
         this.showDiagram = percentRatio < 90;
         if (percentRatio >= 0 && percentRatio <= 100) {
-            this.labLeftStyle = {width: `${percentRatio}%`};
-            this.labRightStyle = {width: `${100 - percentRatio}%`};
-            this.resizeHandleStyle = {left: `${percentRatio}%`};
+            this.labLeftStyle = { width: `${percentRatio}%` };
+            this.labRightStyle = { width: `${100 - percentRatio}%` };
+            this.resizeHandleStyle = { left: `${percentRatio}%` };
         }
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             this.$timeout(() => {
                 mapWrapper.map.invalidateSize();
             }, 100);
@@ -388,7 +410,7 @@ class LabAnalysisController {
         this.labRightStyle = {};
         this.resizeHandleStyle = {};
 
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             this.$timeout(() => {
                 mapWrapper.map.invalidateSize();
             }, 100);
@@ -400,10 +422,10 @@ class LabAnalysisController {
             this.resizeStopListener();
         }
         this.labResizing = true;
-        this.resizeMoveListener = (resizeEvent) => {
+        this.resizeMoveListener = resizeEvent => {
             this.clearTextSelections();
 
-            this.splitPercentX = resizeEvent.pageX / this.$element.width() * 100;
+            this.splitPercentX = (resizeEvent.pageX / this.$element.width()) * 100;
             if (this.splitPercentX > 80) {
                 if (this.splitPercentX > 90) {
                     this.labResizingStyle = {
@@ -441,14 +463,14 @@ class LabAnalysisController {
             }
             this.$scope.$evalAsync();
         };
-        this.resizeStopListener = (resizeStopEvent) => {
+        this.resizeStopListener = resizeStopEvent => {
             this.$element.off('mousemove', this.resizeMoveListener);
             this.$element.off('mouseup', this.resizeStopListener);
             this.labResizing = false;
             this.$scope.$evalAsync();
 
             if (resizeStopEvent.pageX) {
-                this.splitPercentX = resizeStopEvent.pageX / this.$element.width() * 100;
+                this.splitPercentX = (resizeStopEvent.pageX / this.$element.width()) * 100;
                 if (this.splitPercentX > 80) {
                     if (this.splitPercentX > 90) {
                         this.splitPercentX = 100;
@@ -481,7 +503,7 @@ class LabAnalysisController {
         };
         this.$element.css({
             'user-select': 'none',
-            'cursor': 'col-resize'
+            cursor: 'col-resize'
         });
         this.resizeMoveListener(event);
         this.$element.on('mousemove', this.resizeMoveListener);
@@ -494,7 +516,7 @@ class LabAnalysisController {
 
     get leftPreviewPosition() {
         if (!this._leftPreviewPosition || this._leftPreviewPosition.x !== this.dividerPosition) {
-            this._leftPreviewPosition = {x: this.dividerPosition, offset: 10, side: 'left'};
+            this._leftPreviewPosition = { x: this.dividerPosition, offset: 10, side: 'left' };
         }
         return this._leftPreviewPosition;
     }
@@ -505,7 +527,7 @@ class LabAnalysisController {
 
     get rightPreviewPosition() {
         if (!this._rightPreviewPosition || this._rightPreviewPosition.x !== this.dividerPosition) {
-            this._rightPreviewPosition = {x: this.dividerPosition, offset: 10, side: 'right'};
+            this._rightPreviewPosition = { x: this.dividerPosition, offset: 10, side: 'right' };
         }
         return this._rightPreviewPosition;
     }
@@ -519,17 +541,11 @@ class LabAnalysisController {
     }
 
     onLeftSelect(id) {
-        this.compareNodes([
-            id,
-            this.previewData[1]
-        ]);
+        this.compareNodes([id, this.previewData[1]]);
     }
 
     onRightSelect(id) {
-        this.compareNodes([
-            this.previewData[0],
-            id
-        ]);
+        this.compareNodes([this.previewData[0], id]);
     }
 
     onSingleSelect(id) {
@@ -570,16 +586,18 @@ class LabAnalysisController {
     }
 
     permissionsModal() {
-        this.modalService.open({
-            component: 'rfPermissionModal',
-            resolve: {
-                object: () => this.analysis,
-                permissionsBase: () => 'tool-runs',
-                objectType: () => 'ANALYSIS',
-                objectName: () => this.analysis.name,
-                platform: () => this.platform
-            }
-        }).result.then(() => this.fetchAnalysisPermissions(this.analysis));
+        this.modalService
+            .open({
+                component: 'rfPermissionModal',
+                resolve: {
+                    object: () => this.analysis,
+                    permissionsBase: () => 'tool-runs',
+                    objectType: () => 'ANALYSIS',
+                    objectName: () => this.analysis.name,
+                    platform: () => this.platform
+                }
+            })
+            .result.then(() => this.fetchAnalysisPermissions(this.analysis));
     }
 }
 
@@ -591,13 +609,11 @@ LabAnalysisModule.resolve = {
     user: ($stateParams, authService) => {
         return authService.getCurrentUser();
     },
-    userRoles: (authService) => {
+    userRoles: authService => {
         return authService.fetchUserRoles();
     },
     platform: (userRoles, platformService) => {
-        const platformRole = userRoles.find(r =>
-            r.groupType === 'PLATFORM'
-        );
+        const platformRole = userRoles.find(r => r.groupType === 'PLATFORM');
 
         return platformService.getPlatform(platformRole.groupId);
     },

@@ -1,7 +1,6 @@
 /* global BUILDCONFIG */
 import autoInject from '_appRoot/autoInject';
 
-
 class ImportsController {
     constructor(authService, modalService) {
         'ngInject';
@@ -14,9 +13,11 @@ class ImportsController {
     }
 
     openCreateDatasourceModal() {
-        this.modalService.open({
-            component: 'rfDatasourceCreateModal'
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfDatasourceCreateModal'
+            })
+            .result.catch(() => {});
     }
 }
 
@@ -29,13 +30,11 @@ ImportsModule.resolve = {
         }
         return false;
     },
-    userRoles: (authService) => {
+    userRoles: authService => {
         return authService.fetchUserRoles();
     },
     platform: (userRoles, platformService) => {
-        const platformRole = userRoles.find(r =>
-            r.groupType === 'PLATFORM'
-        );
+        const platformRole = userRoles.find(r => r.groupType === 'PLATFORM');
 
         return platformService.getPlatform(platformRole.groupId);
     }

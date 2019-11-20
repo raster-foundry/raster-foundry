@@ -1,7 +1,7 @@
 /* globals BUILDCONFIG */
 import _ from 'lodash';
 
-export default (app) => {
+export default app => {
     class DatasourceService {
         constructor($resource, $q, $cacheFactory, authService) {
             'ngInject';
@@ -11,9 +11,11 @@ export default (app) => {
             this.$cacheFactory = $cacheFactory;
 
             this.Datasource = $resource(
-                `${BUILDCONFIG.API_HOST}/api/datasources/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/datasources/:id/`,
+                {
                     id: '@properties.id'
-                }, {
+                },
+                {
                     query: {
                         method: 'GET',
                         cache: false
@@ -31,23 +33,18 @@ export default (app) => {
                         params: {
                             id: '@id'
                         },
-                        transformRequest: (payload) => {
-                            let transformed = Object.assign(
-                                {}, payload, {
-                                    bands: _.map(
-                                        payload.bands,
-                                        band => {
-                                            if (_.isString(band.wavelength)) {
-                                                let bookends = band.wavelength.trim().split(',');
-                                                band.wavelength = _.map(
-                                                    bookends, (x) => Number.parseInt(x, 10)
-                                                );
-                                            }
-                                            return band;
-                                        }
-                                    )
-                                }
-                            );
+                        transformRequest: payload => {
+                            let transformed = Object.assign({}, payload, {
+                                bands: _.map(payload.bands, band => {
+                                    if (_.isString(band.wavelength)) {
+                                        let bookends = band.wavelength.trim().split(',');
+                                        band.wavelength = _.map(bookends, x =>
+                                            Number.parseInt(x, 10)
+                                        );
+                                    }
+                                    return band;
+                                })
+                            });
                             return angular.toJson(transformed);
                         }
                     },
@@ -73,16 +70,14 @@ export default (app) => {
 
         get(id) {
             if (Array.isArray(id)) {
-                return this.$q.all(
-                    id.map(ds => this.get(ds))
-                );
+                return this.$q.all(id.map(ds => this.get(ds)));
             }
-            return this.Datasource.get({id}).$promise;
+            return this.Datasource.get({ id }).$promise;
         }
 
         createDatasource(name, composites, params = {}) {
             return this.authService.getCurrentUser().then(
-                (user) => {
+                user => {
                     return this.Datasource.create({
                         organizationId: user.organizationId,
                         name: name,
@@ -92,16 +87,16 @@ export default (app) => {
                         bands: params.bands || []
                     }).$promise;
                 },
-                (error) => {
+                error => {
                     return error;
                 }
             );
         }
 
         updateDatasource(updatedParams = {}) {
-            this.$cacheFactory.get('$http').remove(
-                `${BUILDCONFIG.API_HOST}/api/datasources/${updatedParams.id}`
-            );
+            this.$cacheFactory
+                .get('$http')
+                .remove(`${BUILDCONFIG.API_HOST}/api/datasources/${updatedParams.id}`);
             return this.Datasource.update(updatedParams).$promise;
         }
 
@@ -119,30 +114,31 @@ export default (app) => {
 
         getUnifiedBands(datasources) {
             const bands = datasources.map(d => d.bands);
-            const unifiedBands =
-                _.every(bands, b => _.isEqual(b, bands[0])) ?
-                    bands[0] :
-                    this.generateDefaultBands(Math.min(bands.map(b => b.length)));
+            const unifiedBands = _.every(bands, b => _.isEqual(b, bands[0]))
+                ? bands[0]
+                : this.generateDefaultBands(Math.min(bands.map(b => b.length)));
 
             return Array.isArray(unifiedBands) ? unifiedBands : [];
         }
 
         generateDefaultBands(count) {
             if (count) {
-                return Array(count).fill().map((a, i) => ({
-                    'name': `Band ${i}`,
-                    'number': `${i}`
-                }));
+                return Array(count)
+                    .fill()
+                    .map((a, i) => ({
+                        name: `Band ${i}`,
+                        number: `${i}`
+                    }));
             }
             return [];
         }
 
         getPermissions(id) {
-            return this.Datasource.getPermissions({id}).$promise;
+            return this.Datasource.getPermissions({ id }).$promise;
         }
 
         deleteDatasource(id) {
-            return this.Datasource.delete({id}).$promise;
+            return this.Datasource.delete({ id }).$promise;
         }
     }
 

@@ -5,7 +5,10 @@ import DateRangePickerModalController from './dateRangePickerModal.controller.js
 
 const DateRangePickerModalModule = angular.module('components.common.dateRangePickerModal', []);
 
-DateRangePickerModalModule.controller('DateRangePickerModalController', DateRangePickerModalController);
+DateRangePickerModalModule.controller(
+    'DateRangePickerModalController',
+    DateRangePickerModalController
+);
 DateRangePickerModalModule.component('rfDateRangePickerModal', DateRangePickerModalComponent);
 
 export default DateRangePickerModalModule;

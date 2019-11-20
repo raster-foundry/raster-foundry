@@ -63,5 +63,4 @@ const ProjectLayerSelectModalComponent = {
 export default angular
     .module('components.projects.projectLayerSelectModal', [])
     .controller('ProjectLayerSelectModalController', ProjectLayerSelectModalController)
-    .component('rfProjectLayerSelectModal', ProjectLayerSelectModalComponent)
-    .name;
+    .component('rfProjectLayerSelectModal', ProjectLayerSelectModalComponent).name;

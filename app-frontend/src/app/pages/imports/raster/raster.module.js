@@ -1,10 +1,6 @@
 /* global BUILDCONFIG, HELPCONFIG */
 class RasterListController {
-    constructor(
-        $scope, $state, modalService,
-        authService, uploadService,
-        platform
-    ) {
+    constructor($scope, $state, modalService, authService, uploadService, platform) {
         'ngInject';
         $scope.autoInject(this, arguments);
     }
@@ -22,29 +18,36 @@ class RasterListController {
             this.activeModal.dismiss();
         }
 
-        this.modalService.open({
-            component: 'rfSceneImportModal',
-            resolve: {
-                origin: () => 'raster'
-            }
-        }).result.then(() => {
-            this.checkPendingImports();
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfSceneImportModal',
+                resolve: {
+                    origin: () => 'raster'
+                }
+            })
+            .result.then(() => {
+                this.checkPendingImports();
+            })
+            .catch(() => {});
     }
 
     checkPendingImports() {
-        this.uploadService.query({
-            uploadStatus: 'UPLOADED',
-            pageSize: 0
-        }).then(uploads => {
-            this.pendingImports = uploads.count;
-        });
+        this.uploadService
+            .query({
+                uploadStatus: 'UPLOADED',
+                pageSize: 0
+            })
+            .then(uploads => {
+                this.pendingImports = uploads.count;
+            });
     }
 
     openCreateDatasourceModal() {
-        this.modalService.open({
-            component: 'rfDatasourceCreateModal'
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfDatasourceCreateModal'
+            })
+            .result.catch(() => {});
     }
 }
 

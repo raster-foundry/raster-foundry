@@ -450,9 +450,7 @@ export default app => {
                     i => !i
                 )
             );
-            return `${
-                this.tileServer
-            }/${projectId}/analyses/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
+            return `${this.tileServer}/${projectId}/analyses/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         transformWmPointToLatLngArray(wmPoint) {

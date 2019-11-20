@@ -22,16 +22,19 @@ class SearchSelectFilterController {
         if (changes.filter && changes.filter.currentValue) {
             this.filter = changes.filter.currentValue;
             const paramValue = this.$location.search()[this.filter.param];
-            this.filter.getSources().then((sources) => {
-                this.sources = sources;
+            this.filter.getSources().then(
+                sources => {
+                    this.sources = sources;
 
-                let paramSource = _.first(
-                    this.sources.filter((source) => source.id === paramValue)
-                ) || this.sources.find(s => s.default);
-                this.selectOption(paramSource);
-            }, (err) => {
-                this.error = err;
-            });
+                    let paramSource =
+                        _.first(this.sources.filter(source => source.id === paramValue)) ||
+                        this.sources.find(s => s.default);
+                    this.selectOption(paramSource);
+                },
+                err => {
+                    this.error = err;
+                }
+            );
         }
     }
 
@@ -40,7 +43,7 @@ class SearchSelectFilterController {
 
         const filterParams = {};
         filterParams[this.filter.param] = option && option.id ? option.id : null;
-        this.onFilterChange({filter: this.filter, filterParams});
+        this.onFilterChange({ filter: this.filter, filterParams });
     }
 
     clearOption() {
@@ -48,7 +51,7 @@ class SearchSelectFilterController {
 
         const filterParams = {};
         filterParams[this.filter.param] = null;
-        this.onFilterChange({filter: this.filter, filterParams});
+        this.onFilterChange({ filter: this.filter, filterParams });
     }
 }
 

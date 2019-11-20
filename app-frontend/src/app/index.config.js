@@ -12,10 +12,15 @@ if (BUILDCONFIG.LOGOFILE) {
 }
 
 function config( // eslint-disable-line max-params
-    $logProvider, $compileProvider,
-    jwtInterceptorProvider, $ngReduxProvider,
-    $httpProvider, configProvider, APP_CONFIG,
-    featureFlagsProvider, RollbarProvider
+    $logProvider,
+    $compileProvider,
+    jwtInterceptorProvider,
+    $ngReduxProvider,
+    $httpProvider,
+    configProvider,
+    APP_CONFIG,
+    featureFlagsProvider,
+    RollbarProvider
 ) {
     'ngInject';
     // redux
@@ -28,25 +33,26 @@ function config( // eslint-disable-line max-params
         window.__REDUX_DEVTOOLS_EXTENSION__ ? [window.__REDUX_DEVTOOLS_EXTENSION__()] : []
     );
 
-
     // Enable log
     $logProvider.debugEnabled(true);
     $compileProvider.debugInfoEnabled(false);
 
-    jwtInterceptorProvider.tokenGetter = function (authService) {
+    jwtInterceptorProvider.tokenGetter = function(authService) {
         'ngInject';
         return authService.token();
     };
 
     $httpProvider.interceptors.push('jwtInterceptor');
-    $httpProvider.interceptors.push(function ($q, $injector) {
+    $httpProvider.interceptors.push(function($q, $injector) {
         'ngInject';
         return {
-            responseError: function (rejection) {
+            responseError: function(rejection) {
                 let authService = $injector.get('authService');
-                if (rejection.status === 401 &&
+                if (
+                    rejection.status === 401 &&
                     rejection.config.url.indexOf('/api') === 0 &&
-                    !rejection.config.params.mapToken) {
+                    !rejection.config.params.mapToken
+                ) {
                     authService.logout();
                 }
                 return $q.reject(rejection);

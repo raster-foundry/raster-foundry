@@ -13,7 +13,6 @@ const rfBandSelect = {
 };
 
 class BandSelectController {
-
     get activeBand() {
         return `${this.selectedBand}`;
     }

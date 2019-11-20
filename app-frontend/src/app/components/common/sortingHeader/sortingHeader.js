@@ -21,6 +21,7 @@ class SortingHeaderController {
     }
 }
 
-export default angular.module('components.common.sortingHeader', [])
+export default angular
+    .module('components.common.sortingHeader', [])
     .component('rfSortingHeader', sortingHeaderComponent)
     .controller('SortingHeaderController', SortingHeaderController);

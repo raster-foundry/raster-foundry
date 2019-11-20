@@ -26,4 +26,3 @@ ShapeItemModule.component('rfShapeItem', ShapeItemComponent);
 ShapeItemModule.controller('ShapeItemController', ShapeItemController);
 
 export default ShapeItemModule;
-

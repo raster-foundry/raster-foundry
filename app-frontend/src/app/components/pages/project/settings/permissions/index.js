@@ -25,5 +25,4 @@ const component = {
 export default angular
     .module('components.pages.projects.settings.permissions', [])
     .controller(ProjectPermissionsController.name, ProjectPermissionsController)
-    .component('rfProjectPermissionsPage', component)
-    .name;
+    .component('rfProjectPermissionsPage', component).name;

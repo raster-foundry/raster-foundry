@@ -13,15 +13,16 @@ const UserModalComponent = {
 };
 
 class UserModalController {
-    constructor() {
-    }
+    constructor() {}
 
     onAdd() {
-        this.close({$value: {
-            name: this.form.name.$modelValue,
-            email: this.form.email.$modelValue,
-            role: this.form.role.$modelValue
-        }});
+        this.close({
+            $value: {
+                name: this.form.name.$modelValue,
+                email: this.form.email.$modelValue,
+                role: this.form.role.$modelValue
+            }
+        });
     }
 }
 

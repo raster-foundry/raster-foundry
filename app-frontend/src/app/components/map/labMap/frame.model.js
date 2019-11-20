@@ -3,10 +3,10 @@ const defaultOptions = {
     classes: []
 };
 /**
-  * Frames can contain any number of child Frames.
-  * Base frames are only concerned with their layout, and the layout of their children
-  * That includes: things like drag to resize, position, rotate, etc
-  */
+ * Frames can contain any number of child Frames.
+ * Base frames are only concerned with their layout, and the layout of their children
+ * That includes: things like drag to resize, position, rotate, etc
+ */
 export default class Frame {
     constructor(options) {
         this._children = [];
@@ -34,7 +34,9 @@ export default class Frame {
 
         this._container = L.DomUtil.create(
             // eslint-disable-next-line no-underscore-dangle
-            'div', 'leaflet-frame', map._controlContainer
+            'div',
+            'leaflet-frame',
+            map._controlContainer
         );
 
         this._addEvents();
@@ -43,8 +45,8 @@ export default class Frame {
     remove() {
         this._removeEvents();
         L.DomUtil.remove(this._container);
-        this._children.forEach((child) => child.remove());
-        this._dividers.forEach((divider) => divider.remove());
+        this._children.forEach(child => child.remove());
+        this._dividers.forEach(divider => divider.remove());
     }
 
     get map() {
@@ -81,7 +83,9 @@ export default class Frame {
         } else {
             this._container = L.DomUtil.create(
                 // eslint-disable-next-line no-underscore-dangle
-                'div', `leaflet-frame ${this.options.classes.join(' ')}`, frame._container
+                'div',
+                `leaflet-frame ${this.options.classes.join(' ')}`,
+                frame._container
             );
         }
     }
@@ -115,19 +119,19 @@ export default class Frame {
     }
 
     set children(children) {
-        let nonFrameChildren = children.map(
-            (child) => child instanceof Frame
-        ).filter((isLayer) => !isLayer).length;
+        let nonFrameChildren = children
+            .map(child => child instanceof Frame)
+            .filter(isLayer => !isLayer).length;
         if (nonFrameChildren > 0) {
             throw new Error('Frames can only contain other Frames as children');
         }
         this._children = children;
-        this._children.forEach((child) => {
+        this._children.forEach(child => {
             child.parent = this;
         });
 
         // remove old dividers
-        this._dividers.forEach((divider) => {
+        this._dividers.forEach(divider => {
             divider.remove();
         });
         this._dividers = [];
@@ -135,7 +139,7 @@ export default class Frame {
         // add new dividers
         for (let i = 1; i < this._children.length; i = i + 1) {
             let divider = new Divider(
-                this.dimensions.width / this._children.length * i / this.dimensions.width
+                ((this.dimensions.width / this._children.length) * i) / this.dimensions.width
             );
             divider.frame = this;
             divider.onPositionChange = this.update.bind(this);
@@ -175,7 +179,7 @@ export default class Frame {
         for (let i = 0; i < this._children.length; i = i + 1) {
             let child = this._children[i];
 
-            let x = dimensions.width / this._children.length * i;
+            let x = (dimensions.width / this._children.length) * i;
             let width = dimensions.width / this._children.length;
             if (this._dividers.length) {
                 if (i === 0) {
@@ -183,24 +187,21 @@ export default class Frame {
                     width = dimensions.width * this._dividers[0].position;
                 } else if (i < this._dividers.length - 1) {
                     x = this._dividers[i - 1].position * dimensions.width;
-                    width = (
-                        this._dividers[i].position - this._dividers[i - 1].position
-                    ) * dimensions.width;
+                    width =
+                        (this._dividers[i].position - this._dividers[i - 1].position) *
+                        dimensions.width;
                 } else {
                     x = this._dividers[i - 1].position * dimensions.width;
                     width = (1 - this._dividers[i - 1].position) * dimensions.width;
                 }
             }
 
-            child.dimensions = Object.assign(
-                child.dimensions,
-                {
-                    x: x,
-                    y: 0,
-                    width: width,
-                    height: dimensions.height
-                }
-            );
+            child.dimensions = Object.assign(child.dimensions, {
+                x: x,
+                y: 0,
+                width: width,
+                height: dimensions.height
+            });
 
             // update child
             child.update();

@@ -30,8 +30,20 @@ const LabMapComponent = {
 
 class LabMapController {
     constructor(
-        $rootScope, $log, $state, $document, $element, $scope, $timeout, $compile,
-        $window, $ngRedux, mapService, authService, exportService, modalService
+        $rootScope,
+        $log,
+        $state,
+        $document,
+        $element,
+        $scope,
+        $timeout,
+        $compile,
+        $window,
+        $ngRedux,
+        mapService,
+        authService,
+        exportService,
+        modalService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -65,7 +77,7 @@ class LabMapController {
 
     $onChanges(changes) {
         if (changes.options && changes.options.currentValue) {
-            this.getMap().then((mapWrapper) => {
+            this.getMap().then(mapWrapper => {
                 mapWrapper.changeOptions(changes.options.currentValues);
             });
         }
@@ -76,7 +88,7 @@ class LabMapController {
             this.mapWrapper.deleteLayers('Measurement');
         }
         if (this.drawListener) {
-            this.drawListener.forEach((listener) => this.map.off(listener));
+            this.drawListener.forEach(listener => this.map.off(listener));
         }
         this.disableDrawHandlers();
 
@@ -104,15 +116,16 @@ class LabMapController {
             keyboard: !this.options.static,
             tap: !this.options.static,
             maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
-        }).setView(
-            this.initialCenter ? this.initialCenter : [0, 0],
-            this.initialZoom ? this.initialZoom : 2
-        ).on('zoom', () => {
-            this.zoomLevel = this.map.getZoom();
-            this.exportOptions.resolution = this.zoomLevel;
-            this.$scope.$evalAsync();
-        });
-
+        })
+            .setView(
+                this.initialCenter ? this.initialCenter : [0, 0],
+                this.initialZoom ? this.initialZoom : 2
+            )
+            .on('zoom', () => {
+                this.zoomLevel = this.map.getZoom();
+                this.exportOptions.resolution = this.zoomLevel;
+                this.$scope.$evalAsync();
+            });
 
         this.$timeout(() => {
             this.map.invalidateSize();
@@ -169,7 +182,7 @@ class LabMapController {
 
     zoomOut() {
         this.map.zoomOut();
-        this.$timeout(()=> {}, 500);
+        this.$timeout(() => {}, 500);
         this.zoomLevel = this.map.getZoom();
     }
 
@@ -199,7 +212,6 @@ class LabMapController {
         return [];
     }
 
-
     layerEnabled(layerId) {
         if (this.mapWrapper) {
             return this.mapWrapper.getLayerVisibility(layerId) === 'visible';
@@ -227,8 +239,10 @@ class LabMapController {
                 options.url,
                 Object.assign(
                     {
-                        s: options.properties.subdomains && options.properties.subdomains[0] ?
-                            options.properties.subdomains[0] : 'a',
+                        s:
+                            options.properties.subdomains && options.properties.subdomains[0]
+                                ? options.properties.subdomains[0]
+                                : 'a',
                         z: '17',
                         x: '38168',
                         y: '49642'
@@ -236,7 +250,7 @@ class LabMapController {
                     options.properties
                 )
             );
-            return {'background': `url(${url}) no-repeat center`};
+            return { background: `url(${url}) no-repeat center` };
         }
         return {};
     }
@@ -261,17 +275,21 @@ class LabMapController {
     }
 
     addMeasureShapeToMap(layer, type) {
-        require.ensure(['mathjs'], (require) => {
-            const mathjs = require('mathjs');
-            let measurement = this.measureCal(type, layer, mathjs);
-            let compiledPopup = this.setPopupContent(type, measurement, layer);
-            let measureLayers = this.mapWrapper.getLayers('Measurement');
-            measureLayers.push(layer.bindPopup(compiledPopup[0]));
-            this.mapWrapper.setLayer('Measurement', measureLayers, false);
-            layer.openPopup();
-        }, (error) => {
-            throw new Error('Error fetching math.js dependency. Check webpack config');
-        });
+        require.ensure(
+            ['mathjs'],
+            require => {
+                const mathjs = require('mathjs');
+                let measurement = this.measureCal(type, layer, mathjs);
+                let compiledPopup = this.setPopupContent(type, measurement, layer);
+                let measureLayers = this.mapWrapper.getLayers('Measurement');
+                measureLayers.push(layer.bindPopup(compiledPopup[0]));
+                this.mapWrapper.setLayer('Measurement', measureLayers, false);
+                layer.openPopup();
+            },
+            error => {
+                throw new Error('Error fetching math.js dependency. Check webpack config');
+            }
+        );
     }
 
     measureCal(shapeType, layer, mathjs) {
@@ -347,7 +365,7 @@ class LabMapController {
             this.setBboxDrawHandlers();
             this.drawBboxRectangleHandler.enable();
             if (this.resultNodeId !== this.lastResultNodeId) {
-                this.setDefaultExportNode({nodeId: this.resultNodeId});
+                this.setDefaultExportNode({ nodeId: this.resultNodeId });
                 this.lastResultNodeId = this.resultNodeId;
             }
         }
@@ -395,24 +413,26 @@ class LabMapController {
         this.exportService
             .exportLabNode(
                 this.analysisId,
-                this.exportTarget.value === 'dropbox' ? {exportType: 'DROPBOX'} : {},
-                Object.assign(this.exportOptions, {resolution}))
-            .then(() => {
-                this.exportNotice =
-                    'Your export job has been created. '
-                    + 'Please check it from your list of analyses later.';
-            }, err => {
-                this.$log.error(err);
-                this.exportNotice =
-                    'Your export job has failed to create. '
-                    + 'Please try again later.';
-            })
+                this.exportTarget.value === 'dropbox' ? { exportType: 'DROPBOX' } : {},
+                Object.assign(this.exportOptions, { resolution })
+            )
+            .then(
+                () => {
+                    this.exportNotice =
+                        'Your export job has been created. ' +
+                        'Please check it from your list of analyses later.';
+                },
+                err => {
+                    this.$log.error(err);
+                    this.exportNotice =
+                        'Your export job has failed to create. ' + 'Please try again later.';
+                }
+            )
             .finally(() => {
                 delete this.isExportCreating;
                 this.isExportCreated = true;
             });
     }
-
 
     toggleMeasure(shapeType) {
         if (shapeType === 'Polygon') {
@@ -436,13 +456,14 @@ class LabMapController {
 
     getCurrentResolution() {
         const resolutionValue = this.exportOptions ? this.exportOptions.resolution : 9;
-        return this.availableResolutions
-            .find(r => r.value === resolutionValue) || this.availableResolutions[0];
+        return (
+            this.availableResolutions.find(r => r.value === resolutionValue) ||
+            this.availableResolutions[0]
+        );
     }
 
     setDefaultTarget() {
-        this.exportTarget = this.availableTargets.find(t => t.default) ||
-            this.availableTargets[0];
+        this.exportTarget = this.availableTargets.find(t => t.default) || this.availableTargets[0];
     }
 
     updateTarget(target) {
@@ -462,17 +483,20 @@ class LabMapController {
     }
 
     displayDropboxModal() {
-        this.modalService.open({
-            component: 'rfConfirmationModal',
-            resolve: {
-                title: () => 'You don\'t have Dropbox credential set',
-                content: () => 'Go to your API connections page and set one?',
-                confirmText: () => 'Add Dropbox credential',
-                cancelText: () => 'Cancel'
-            }
-        }).result.then((resp) => {
-            this.$state.go('user.settings.connections');
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfConfirmationModal',
+                resolve: {
+                    title: () => "You don't have Dropbox credential set",
+                    content: () => 'Go to your API connections page and set one?',
+                    confirmText: () => 'Add Dropbox credential',
+                    cancelText: () => 'Cancel'
+                }
+            })
+            .result.then(resp => {
+                this.$state.go('user.settings.connections');
+            })
+            .catch(() => {});
     }
 }
 

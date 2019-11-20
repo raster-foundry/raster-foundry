@@ -8,8 +8,14 @@ const BLUE = '#3388FF';
 
 class ShareProjectLayersController {
     constructor(
-        $rootScope, $state, $q, $timeout,
-        mapService, projectService, paginationService, shareService
+        $rootScope,
+        $state,
+        $q,
+        $timeout,
+        mapService,
+        projectService,
+        paginationService,
+        shareService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -32,8 +38,10 @@ class ShareProjectLayersController {
                 this.visible = new Set([project.defaultLayerId]);
                 this.syncMapLayersToVisible();
                 this.fetchPage();
-                this.toggleAnnotationCallback = this.shareService
-                    .addCallback('toggleShowingAnnotations', v => this.onAnnotationsToggle(v));
+                this.toggleAnnotationCallback = this.shareService.addCallback(
+                    'toggleShowingAnnotations',
+                    v => this.onAnnotationsToggle(v)
+                );
                 this.onAnnotationsToggle(this.shareService.showingAnnotations);
             });
     }
@@ -163,18 +171,19 @@ class ShareProjectLayersController {
     addLayerAnnotations(lid) {
         if (this.shareService.showingAnnotations) {
             // fetch annotation pages until there are none left
-            const f = p => this.fetchAnnotationPage(lid, p).then(r => {
-                this.getMap().then(map => {
-                    this.projectLayerAnnotations[lid] = this.projectLayerAnnotations[lid] || [];
-                    r.features.forEach(a => {
-                        this.projectLayerAnnotations[lid].push(a.id);
-                        map.setGeojson(a.id, a, this.getAnnotationOptions());
+            const f = p =>
+                this.fetchAnnotationPage(lid, p).then(r => {
+                    this.getMap().then(map => {
+                        this.projectLayerAnnotations[lid] = this.projectLayerAnnotations[lid] || [];
+                        r.features.forEach(a => {
+                            this.projectLayerAnnotations[lid].push(a.id);
+                            map.setGeojson(a.id, a, this.getAnnotationOptions());
+                        });
                     });
+                    if (r.hasNext) {
+                        f(p + 1);
+                    }
                 });
-                if (r.hasNext) {
-                    f(p + 1);
-                }
-            });
 
             f(1);
         }
@@ -183,9 +192,7 @@ class ShareProjectLayersController {
     removeLayerAnnotations(lid) {
         this.getMap().then(map => {
             if (this.projectLayerAnnotations[lid]) {
-                this.projectLayerAnnotations[lid].forEach(id =>
-                    map.deleteGeojson(id)
-                );
+                this.projectLayerAnnotations[lid].forEach(id => map.deleteGeojson(id));
                 this.projectLayerAnnotations[lid] = [];
             }
         });
@@ -194,39 +201,39 @@ class ShareProjectLayersController {
     getAnnotationOptions() {
         return {
             pointToLayer: (geoJsonPoint, latlng) => {
-                return L.marker(latlng, {'icon': L.divIcon({'className': 'annotate-marker'})});
+                return L.marker(latlng, { icon: L.divIcon({ className: 'annotate-marker' }) });
             },
             onEachFeature: (feature, currentLayer) => {
-                currentLayer.bindPopup(
-                    `
+                currentLayer
+                    .bindPopup(
+                        `
                     <label class="leaflet-popup-label">Label:<br/>
                     <p>${feature.properties.label}</p></label><br/>
                     <label class="leaflet-popup-label">Description:<br/>
                     <p>${feature.properties.description || 'No description'}</p></label>
                     `,
-                    {closeButton: false}
-                ).on('click', (e) => {
-                    this.getMap().then((mapWrapper) => {
-                        if (this.clickedId !== feature.id) {
-                            const resetPreviousLayerStyle = () => {
-                                let layer = _.first(mapWrapper.getGeojson(this.clickedId));
-                                if (layer) {
-                                    this.setLayerStyle(
-                                        layer, BLUE, 'annotate-marker'
-                                    );
-                                }
-                            };
-                            resetPreviousLayerStyle();
-                            this.clickedId = feature.id;
-                            this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
-                            this.$scope.$evalAsync();
-                        } else {
-                            delete this.clickedId;
-                            this.setLayerStyle(e.target, BLUE, 'annotate-marker');
-                            this.$scope.$evalAsync();
-                        }
+                        { closeButton: false }
+                    )
+                    .on('click', e => {
+                        this.getMap().then(mapWrapper => {
+                            if (this.clickedId !== feature.id) {
+                                const resetPreviousLayerStyle = () => {
+                                    let layer = _.first(mapWrapper.getGeojson(this.clickedId));
+                                    if (layer) {
+                                        this.setLayerStyle(layer, BLUE, 'annotate-marker');
+                                    }
+                                };
+                                resetPreviousLayerStyle();
+                                this.clickedId = feature.id;
+                                this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
+                                this.$scope.$evalAsync();
+                            } else {
+                                delete this.clickedId;
+                                this.setLayerStyle(e.target, BLUE, 'annotate-marker');
+                                this.$scope.$evalAsync();
+                            }
+                        });
                     });
-                });
             }
         };
     }
@@ -236,9 +243,9 @@ class ShareProjectLayersController {
             target.feature.geometry.type === 'Polygon' ||
             target.feature.geometry.type === 'MultiPolygon'
         ) {
-            target.setStyle({'color': color});
+            target.setStyle({ color: color });
         } else if (target.feature.geometry.type === 'Point') {
-            target.setIcon(L.divIcon({'className': iconClass}));
+            target.setIcon(L.divIcon({ className: iconClass }));
         }
     }
 
