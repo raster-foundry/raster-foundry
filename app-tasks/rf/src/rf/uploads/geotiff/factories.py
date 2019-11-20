@@ -15,7 +15,7 @@ from rf.utils.io import (
     get_tempdir
 )
 
-import urllib
+from urllib.parse import unquote
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class GeoTiffS3SceneFactory(object):
                 else:
                     scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id)[0]
                 images = [self.create_geotiff_image(
-                    tmp_fname, urllib.unquote(scene.ingestLocation), scene, cog_path
+                    tmp_fname, unquote(scene.ingestLocation), scene, cog_path
                 )]
 
             scene.thumbnails = []

@@ -85,7 +85,7 @@ def fetch_image(location, filename, local_dir):
     bucket = bucket.split('.')[0]
     logger.info('Fetching image from bucket %s with key %s', bucket, key)
     dst = os.path.join(local_dir, filename)
-    with open(dst, 'w') as outf:
+    with open(dst, 'wb') as outf:
         outf.write(
             s3client.get_object(Bucket=bucket, Key=key,
                                 **extra_kwargs)['Body'].read())

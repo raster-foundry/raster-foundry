@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import subprocess
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 import boto3
 import click
@@ -94,8 +94,8 @@ def get_export_definition(export_uri):
 
     parsed_uri = urlparse(export_uri)
     logger.info('Downloading export defintion %s', export_uri)
-    data = s3.Object(parsed_uri.netloc, parsed_uri.path[1:]).get()['Body']
-    return json.load(data)
+    data = s3.Object(parsed_uri.netloc, parsed_uri.path[1:]).get()['Body'].read().decode('utf-8')
+    return json.loads(data)
 
 
 def write_export_definition(export_definition, local_dir):

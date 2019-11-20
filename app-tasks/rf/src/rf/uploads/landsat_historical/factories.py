@@ -3,7 +3,7 @@ import glob
 import logging
 import os
 import shutil
-import urllib
+from urllib.parse import quote
 
 import boto3
 import requests
@@ -91,7 +91,7 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
     (filename, cog_fname) = process_to_cog(prefix, gcs_prefix, landsat_id, config)
     s3_location = upload_file(owner, filename, cog_fname)
     logger.info('Creating image')
-    ingest_location = 's3://{}/{}'.format(data_bucket, urllib.quote(s3_location))
+    ingest_location = 's3://{}/{}'.format(data_bucket, quote(s3_location))
     scene = Scene(
         'PRIVATE', [],
         datasource, {},
@@ -110,14 +110,14 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
         filename=cog_fname,
         owner=owner,
         scene=scene.id,
-        band_create_function=lambda x: config.bands.values())
+        band_create_function=lambda x: list(config.bands.values()))
     scene.images = [image]
     return scene
 
 
 def process_to_cog(prefix, gcs_prefix, landsat_id, config):
     logger.info('Fetching all bands')
-    for band in config.bands.keys():
+    for band in list(config.bands.keys()):
         fetch_band(prefix, gcs_prefix, band, landsat_id)
     cog_fname = '{}_COG.tif'.format(landsat_id)
     stacked_fname = '{}_STACKED.tif'.format(landsat_id)
@@ -147,7 +147,7 @@ def upload_file(owner, local_path, remote_fname):
 def fetch_band(local_prefix, gcs_prefix, band, landsat_id):
     with open(
             os.path.join(local_prefix, io.make_fname_for_band(
-                band, landsat_id)), 'w') as outf:
+                band, landsat_id)), 'wb') as outf:
         outf.write(
             requests.get(io.make_path_for_band(gcs_prefix, band,
                                                landsat_id)).content)
