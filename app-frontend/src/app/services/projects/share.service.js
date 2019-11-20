@@ -1,4 +1,4 @@
-export default (app) => {
+export default app => {
     class ShareService {
         constructor() {
             this.showingAnnotations = false;

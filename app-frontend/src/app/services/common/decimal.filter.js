@@ -1,8 +1,8 @@
-export default (app) => {
+export default app => {
     // Restrict a number to a desired number of decimal places without trailing zeros
-    app.filter('setDecimal', function () {
+    app.filter('setDecimal', function() {
         'ngInject';
-        return function (input, places) {
+        return function(input, places) {
             if (isNaN(input)) {
                 return input;
             }

@@ -181,10 +181,12 @@ class ProjectPublishingController {
                 this.project.owner = this.project.owner.id;
             }
             this.projectService
-                .updateProject(Object.assign({}, this.project, {
-                    tileVisibility: policy.enum,
-                    visibility: policy.enum
-                }))
+                .updateProject(
+                    Object.assign({}, this.project, {
+                        tileVisibility: policy.enum,
+                        visibility: policy.enum
+                    })
+                )
                 .then(() => {
                     if (this.activePolicy) {
                         this.activePolicy.active = false;

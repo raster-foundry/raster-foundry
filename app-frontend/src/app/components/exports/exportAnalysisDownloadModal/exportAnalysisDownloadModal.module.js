@@ -26,18 +26,18 @@ class ExportAnalysisDownloadModalController {
 
     getExportsByAnalysisId() {
         // TODO: in a future card, implement paginated exports
-        this.exportService.query(
-            {
+        this.exportService
+            .query({
                 sort: 'createdAt,desc',
                 pageSize: '20',
                 page: 0,
                 analysis: this.analysis.id
-            }
-        ).then(firstPageExports => {
-            if (firstPageExports.results.find(r => r.toolRunId === this.analysis.id)) {
-                this.exports = firstPageExports.results;
-            }
-        });
+            })
+            .then(firstPageExports => {
+                if (firstPageExports.results.find(r => r.toolRunId === this.analysis.id)) {
+                    this.exports = firstPageExports.results;
+                }
+            });
     }
 
     isDownloadAllowed(thisExport) {
@@ -58,23 +58,29 @@ class ExportAnalysisDownloadModalController {
     }
 
     handleAnalysisDownload(thisExport) {
-        this.modalService.open({
-            component: 'rfExportDownloadModal',
-            resolve: {
-                export: () => thisExport
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfExportDownloadModal',
+                resolve: {
+                    export: () => thisExport
+                }
+            })
+            .result.catch(() => {});
     }
 }
 
-const ExportAnalysisDownloadModalModule =
-    angular.module('components.exports.exportAnalysisDownloadModal', []);
+const ExportAnalysisDownloadModalModule = angular.module(
+    'components.exports.exportAnalysisDownloadModal',
+    []
+);
 
 ExportAnalysisDownloadModalModule.controller(
-    'ExportAnalysisDownloadModalController', ExportAnalysisDownloadModalController
+    'ExportAnalysisDownloadModalController',
+    ExportAnalysisDownloadModalController
 );
 ExportAnalysisDownloadModalModule.component(
-    'rfExportAnalysisDownloadModal', ExportAnalysisDownloadModalComponent
+    'rfExportAnalysisDownloadModal',
+    ExportAnalysisDownloadModalComponent
 );
 
 export default ExportAnalysisDownloadModalModule;

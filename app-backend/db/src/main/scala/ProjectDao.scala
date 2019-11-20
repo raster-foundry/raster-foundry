@@ -406,21 +406,7 @@ object ProjectDao
           .Params(
             redBand,
             greenBand,
-            blueBand, // Bands
-            // Color corrections; everything starts out disabled (false) and null for now
-            BandGamma(enabled = false, None, None, None), // Gamma
-            PerBandClipping(
-              enabled = false,
-              None,
-              None,
-              None, // Clipping Max: R,G,B
-              None,
-              None,
-              None
-            ), // Clipping Min: R,G,B
-            MultiBandClipping(enabled = false, None, None), // Min, Max
-            SigmoidalContrast(enabled = false, None, None), // Alpha, Beta
-            Saturation(enabled = false, None) // Saturation
+            blueBand
           )
           .asJson
       )

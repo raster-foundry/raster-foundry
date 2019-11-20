@@ -1,4 +1,4 @@
-import {authedRequest} from '_api/authentication';
+import { authedRequest } from '_api/authentication';
 
 export const STATISTICS_FETCH = 'STATISTICS_FETCH';
 
@@ -10,18 +10,23 @@ export function fetchStatistics(nodeId) {
         const state = getState();
         let lastUpdate = state.lab.lastAnalysisRefresh;
         let cachedStats = state.lab.statistics.get(nodeId);
-        if (!cachedStats ||
+        if (
+            !cachedStats ||
             cachedStats.error ||
-            cachedStats.data && lastUpdate > cachedStats.fetched
-           ) {
+            (cachedStats.data && lastUpdate > cachedStats.fetched)
+        ) {
             dispatch({
                 type: STATISTICS_FETCH,
-                meta: {nodeId},
-                payload: authedRequest({
-                    method: 'get',
-                    url: `${state.api.tileUrl}/tools/${state.lab.analysis.id}` +
-                        `/statistics/?node=${nodeId}&voidCache=true&token=${state.api.apiToken}`
-                }, state)
+                meta: { nodeId },
+                payload: authedRequest(
+                    {
+                        method: 'get',
+                        url:
+                            `${state.api.tileUrl}/tools/${state.lab.analysis.id}` +
+                            `/statistics/?node=${nodeId}&voidCache=true&token=${state.api.apiToken}`
+                    },
+                    state
+                )
             });
         }
     };

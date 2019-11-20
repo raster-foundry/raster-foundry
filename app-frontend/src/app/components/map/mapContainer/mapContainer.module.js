@@ -27,8 +27,15 @@ const MapContainerComponent = {
 
 class MapContainerController {
     constructor(
-        $document, $element, $scope, $timeout, $q,
-        modalService, mapService, $ngRedux, uuid4,
+        $document,
+        $element,
+        $scope,
+        $timeout,
+        $q,
+        modalService,
+        mapService,
+        $ngRedux,
+        uuid4,
         $rootScope
     ) {
         'ngInject';
@@ -45,10 +52,7 @@ class MapContainerController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            ShapeActions
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), ShapeActions)(this);
         this.$scope.$on('$destroy', unsubscribe);
 
         this.getMap().then(m => this.initDrawControls(m));
@@ -82,7 +86,7 @@ class MapContainerController {
 
     $onChanges(changes) {
         if (changes.options && changes.options.currentValue) {
-            this.getMap().then((mapWrapper) => {
+            this.getMap().then(mapWrapper => {
                 mapWrapper.changeOptions(changes.options.currentValue);
             });
         }
@@ -126,14 +130,15 @@ class MapContainerController {
             keyboard: !this.options.static,
             tap: !this.options.static,
             maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
-        }).setView(
-            this.initialCenter ? this.initialCenter : [0, 0],
-            this.initialZoom ? this.initialZoom : 2
-        ).on('zoom', () => {
-            this.zoomLevel = this.map.getZoom();
-            this.$scope.$evalAsync();
-        });
-
+        })
+            .setView(
+                this.initialCenter ? this.initialCenter : [0, 0],
+                this.initialZoom ? this.initialZoom : 2
+            )
+            .on('zoom', () => {
+                this.zoomLevel = this.map.getZoom();
+                this.$scope.$evalAsync();
+            });
 
         this.$timeout(() => {
             this.map.invalidateSize();
@@ -152,7 +157,7 @@ class MapContainerController {
 
     zoomOut() {
         this.map.zoomOut();
-        this.$timeout(()=> {}, 500);
+        this.$timeout(() => {}, 500);
         this.zoomLevel = this.map.getZoom();
     }
 
@@ -185,7 +190,6 @@ class MapContainerController {
         }
         return [];
     }
-
 
     layerEnabled(layerId) {
         if (this.mapWrapper) {
@@ -237,8 +241,10 @@ class MapContainerController {
                 options.url,
                 Object.assign(
                     {
-                        s: options.properties.subdomains && options.properties.subdomains[0] ?
-                            options.properties.subdomains[0] : 'a',
+                        s:
+                            options.properties.subdomains && options.properties.subdomains[0]
+                                ? options.properties.subdomains[0]
+                                : 'a',
                         z: '17',
                         x: '38168',
                         y: '49642'
@@ -246,7 +252,7 @@ class MapContainerController {
                     options.properties
                 )
             );
-            return {'background': `url(${url}) no-repeat center`};
+            return { background: `url(${url}) no-repeat center` };
         }
         return {};
     }
@@ -259,8 +265,9 @@ class MapContainerController {
         this.modalService
             .open({
                 component: 'rfMapSearchModal',
-                resolve: { }
-            }).result.then(location => {
+                resolve: {}
+            })
+            .result.then(location => {
                 if (location.coords) {
                     this.map.setView(location.coords, 11);
                 } else {
@@ -270,7 +277,8 @@ class MapContainerController {
                         [mapView.topLeft.latitude, mapView.topLeft.longitude]
                     ]);
                 }
-            }).catch(() => {});
+            })
+            .catch(() => {});
     }
 
     startDrawingShape() {
@@ -286,9 +294,11 @@ class MapContainerController {
             this.editingStage = null;
             this.cancelEditingShape();
         } else if (this.shapes.features.length) {
-            this.shapes.features.map(f => f.id).forEach((id) => {
-                this.mapWrapper.deleteGeojson(id);
-            });
+            this.shapes.features
+                .map(f => f.id)
+                .forEach(id => {
+                    this.mapWrapper.deleteGeojson(id);
+                });
             this.shapes = {
                 type: 'FeatureCollection',
                 features: []
@@ -299,9 +309,11 @@ class MapContainerController {
     }
 
     onFinishDrawing() {
-        this.shapes.features.map(f => f.id).forEach((id) => {
-            this.mapWrapper.deleteGeojson(id);
-        });
+        this.shapes.features
+            .map(f => f.id)
+            .forEach(id => {
+                this.mapWrapper.deleteGeojson(id);
+            });
         this.finishDrawing(this.shapes);
         this.shapes = {
             type: 'FeatureCollection',
@@ -328,8 +340,8 @@ class MapContainerController {
             }),
             onEachFeature: (feature, layer) => {
                 layer.on({
-                    mouseover: (e) => this.onShapeMouseover(e),
-                    mouseout: (e) => this.onShapeMouseout(e),
+                    mouseover: e => this.onShapeMouseover(e),
+                    mouseout: e => this.onShapeMouseout(e),
                     click: () => this.onShapeClick(shapeJson.id)
                 });
             }
@@ -347,7 +359,7 @@ class MapContainerController {
             drawLayer.transform.disable();
         }
 
-        let {geometry} = drawLayer.toGeoJSON();
+        let { geometry } = drawLayer.toGeoJSON();
         this.finishEditingShape(geometry);
     }
 
@@ -390,26 +402,25 @@ class MapContainerController {
 
         const editPromise = this.$q((resolve, reject) => {
             let drawLayer = _.first(this.mapWrapper.getLayers('draw'));
-            if (!_.isEmpty(drawLayer)
-                && drawLayer.transform) {
+            if (!_.isEmpty(drawLayer) && drawLayer.transform) {
                 drawLayer.transform.disable();
             }
-            this.startEditingShape(
-                this.shapes.features[editIndex].geometry,
-                resolve, reject
-            );
+            this.startEditingShape(this.shapes.features[editIndex].geometry, resolve, reject);
         });
 
-        editPromise.then((geojson) => {
-            if (geojson) {
-                this.shapes.features[editIndex].geometry = geojson;
+        editPromise.then(
+            geojson => {
+                if (geojson) {
+                    this.shapes.features[editIndex].geometry = geojson;
+                    this.addShapeToMap(this.mapWrapper, this.shapes.features[editIndex]);
+                } else {
+                    this.shapes.features.splice(editIndex, 1);
+                }
+            },
+            () => {
                 this.addShapeToMap(this.mapWrapper, this.shapes.features[editIndex]);
-            } else {
-                this.shapes.features.splice(editIndex, 1);
             }
-        }, () => {
-            this.addShapeToMap(this.mapWrapper, this.shapes.features[editIndex]);
-        });
+        );
     }
 }
 

@@ -1,8 +1,8 @@
-export default (app) => {
+export default app => {
     // Restrict the display segments of an url
-    app.filter('shortenUrl', function () {
+    app.filter('shortenUrl', function() {
         'ngInject';
-        return function (url) {
+        return function(url) {
             if (!url.length) {
                 return '';
             }

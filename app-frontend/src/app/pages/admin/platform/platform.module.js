@@ -2,18 +2,26 @@
 
 import angular from 'angular';
 import autoInject from '_appRoot/autoInject';
-let assetLogo = BUILDCONFIG.LOGOFILE ?
-    require(`../../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
-    require('../../../../assets/images/raster-foundry-logo.svg');
+let assetLogo = BUILDCONFIG.LOGOFILE
+    ? require(`../../../../assets/images/${BUILDCONFIG.LOGOFILE}`)
+    : require('../../../../assets/images/raster-foundry-logo.svg');
 
 assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
 class PlatformController {
     constructor(
         $stateParams,
-        platformService, authService,
-        platform, members, organizations,
-        projects, rasters, vectors, datasources, templates, analyses
+        platformService,
+        authService,
+        platform,
+        members,
+        organizations,
+        projects,
+        rasters,
+        vectors,
+        datasources,
+        templates,
+        analyses
     ) {
         'ngInject';
         this.$stateParams = $stateParams;
@@ -42,7 +50,7 @@ PlatformModule.resolve = {
     platform: ($stateParams, platformService) => {
         return platformService.getPlatform($stateParams.platformId);
     },
-    user: (authService) => {
+    user: authService => {
         return authService.getCurrentUser();
     },
     members: (platform, platformService) => {
@@ -52,76 +60,64 @@ PlatformModule.resolve = {
         return platformService.getOrganizations(platform.id, 0, '');
     },
     projects: (platform, projectService) => {
-        return projectService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'platform',
-                groupId: platform.id
-            }
-        );
+        return projectService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'platform',
+            groupId: platform.id
+        });
     },
     rasters: (platform, sceneService) => {
-        return sceneService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'platform',
-                groupId: platform.id
-            }
-        );
+        return sceneService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'platform',
+            groupId: platform.id
+        });
     },
     vectors: (platform, shapesService) => {
-        return shapesService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'platform',
-                groupId: platform.id
-            }
-        );
+        return shapesService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'platform',
+            groupId: platform.id
+        });
     },
     datasources: (platform, datasourceService) => {
-        return datasourceService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'platform',
-                groupId: platform.id
-            }
-        );
+        return datasourceService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'platform',
+            groupId: platform.id
+        });
     },
     templates: (platform, analysisService) => {
-        return analysisService.fetchTemplates(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'platform',
-                groupId: platform.id
-            }
-        );
+        return analysisService.fetchTemplates({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'platform',
+            groupId: platform.id
+        });
     },
     analyses: (platform, analysisService) => {
-        return analysisService.fetchAnalyses(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'inherited',
-                groupType: 'platform',
-                groupId: platform.id
-            }
-        );
+        return analysisService.fetchAnalyses({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'inherited',
+            groupType: 'platform',
+            groupId: platform.id
+        });
     }
 };
 

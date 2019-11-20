@@ -1,30 +1,32 @@
-export default (app) => {
+export default app => {
     class ReclassifyService {
         constructor() {
             'ngInject';
         }
         /**
-          * Converts a list of range breakpoints into range objects
-          * @param {array} breaksList list of breakpoint numbers
-          * @returns {array} list of range objects
-          */
+         * Converts a list of range breakpoints into range objects
+         * @param {array} breaksList list of breakpoint numbers
+         * @returns {array} list of range objects
+         */
         breaksToRangeObjects(breaksList) {
-            return breaksList.sort((a, b) => a - b).map((breakVal, index, array) => {
-                if (index === 0) {
-                    return {start: 0, end: breakVal};
-                }
-                return {start: array[index - 1], end: breakVal};
-            });
+            return breaksList
+                .sort((a, b) => a - b)
+                .map((breakVal, index, array) => {
+                    if (index === 0) {
+                        return { start: 0, end: breakVal };
+                    }
+                    return { start: array[index - 1], end: breakVal };
+                });
         }
 
         /**
-          * Verifies that a list of range objects has no gaps or overlaps
-          *
-          * Note that this does not include single-valued ranges currently.
-          *
-          * @param {array} ranges Array of range objects ({start: Number, end: Number}) to validate
-          * @returns {boolean} Whether the input ranges are contiguous (no gaps) without overlapping
-          */
+         * Verifies that a list of range objects has no gaps or overlaps
+         *
+         * Note that this does not include single-valued ranges currently.
+         *
+         * @param {array} ranges Array of range objects ({start: Number, end: Number}) to validate
+         * @returns {boolean} Whether the input ranges are contiguous (no gaps) without overlapping
+         */
         noGapsOrOverlaps(ranges) {
             // TODO: Combining single-value ranges with multi-value ranges is hard, so this doesn't
             // try; single-value ranges are simply skipped.
@@ -32,9 +34,10 @@ export default (app) => {
             // overlaps, which simply means that the endpoint of range n should be the same as the
             // startpoint of range n+1 (my understanding is that our ranges are exclusive at the
             // start and inclusive at the end).
-            let checkRanges = angular.copy(ranges)
+            let checkRanges = angular
+                .copy(ranges)
                 .sort((r1, r2) => r1.start - r2.start)
-                .filter((range) => range.start !== range.end);
+                .filter(range => range.start !== range.end);
             // Check for gaps / overlaps to the right.
             let gapOrOverlap = checkRanges.map((rangeObj, index, array) => {
                 if (index === array.length - 1) {
@@ -42,7 +45,7 @@ export default (app) => {
                 }
                 return rangeObj.end !== array[index + 1].start;
             });
-            if (gapOrOverlap.filter((bool) => bool).length > 0) {
+            if (gapOrOverlap.filter(bool => bool).length > 0) {
                 return false;
             }
             return true;

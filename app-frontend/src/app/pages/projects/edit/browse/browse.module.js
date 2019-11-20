@@ -6,10 +6,23 @@ import _ from 'lodash';
 
 class ProjectsSceneBrowserController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $location, $scope, $timeout, $rootScope,
-        modalService, mapService, sceneService,
-        projectService, sessionStorage, planetLabsService, authService, featureFlags,
-        RasterFoundryRepository, PlanetRepository, CMRRepository
+        $log,
+        $state,
+        $location,
+        $scope,
+        $timeout,
+        $rootScope,
+        modalService,
+        mapService,
+        sceneService,
+        projectService,
+        sessionStorage,
+        planetLabsService,
+        authService,
+        featureFlags,
+        RasterFoundryRepository,
+        PlanetRepository,
+        CMRRepository
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -45,14 +58,14 @@ class ProjectsSceneBrowserController {
         this.sceneCount = null;
         this.planetThumbnailUrls = new Map();
         this.scenesBeingAdded = [];
-        this.setBboxParam = _.debounce((bbox) => {
+        this.setBboxParam = _.debounce(bbox => {
             this.$location.search('bbox', bbox).replace();
         }, 500);
         this.debouncedSceneFetch = _.debounce(this.fetchNextScenes.bind(this), 500);
 
         if (!this.$parent.project) {
             this.project = this.$parent.project;
-            this.$parent.waitForProject().then((project) => {
+            this.$parent.waitForProject().then(project => {
                 this.project = project;
                 this.initParams();
                 this.initMap();
@@ -94,10 +107,7 @@ class ProjectsSceneBrowserController {
             let coordsStrings = bboxString.split(',');
             let coords = _.map(coordsStrings, str => parseFloat(str));
             // Leaflet expects nested coordinate arrays
-            bbox = [
-                [coords[1], coords[0]],
-                [coords[3], coords[2]]
-            ];
+            bbox = [[coords[1], coords[0]], [coords[3], coords[2]]];
         }
         return bbox;
     }
@@ -112,7 +122,7 @@ class ProjectsSceneBrowserController {
         }
         this.getMap().then(browseMap => {
             browseMap.map.fitBounds(this.bounds);
-            browseMap.on('contextmenu', ($event) => {
+            browseMap.on('contextmenu', $event => {
                 $event.originalEvent.preventDefault();
                 return false;
             });
@@ -138,8 +148,8 @@ class ProjectsSceneBrowserController {
         this.currentRepository = repository;
 
         this.sceneList = [];
-        this.getMap().then((mapWrapper) => {
-            if (this.bboxCoords || this.queryParams && this.queryParams.bbox) {
+        this.getMap().then(mapWrapper => {
+            if (this.bboxCoords || (this.queryParams && this.queryParams.bbox)) {
                 this.fetchNextScenesForBbox = this.bboxFetchFactory(
                     this.bboxCoords || this.queryParams.bbox
                 );
@@ -182,22 +192,29 @@ class ProjectsSceneBrowserController {
         this.sceneCount = null;
         let factoryFn = this.bboxFetchFactory;
         let fetchScenes = this.fetchNextScenesForBbox;
-        this.fetchNextScenesForBbox().then(({scenes, hasNext, count}) => {
-            if (fetchScenes === this.fetchNextScenesForBbox &&
-                factoryFn === this.bboxFetchFactory) {
-                this.fetchingScenes = false;
-                this.sceneList = this.sceneList.concat(scenes);
-                this.hasNext = hasNext;
-                this.sceneCount = count;
+        this.fetchNextScenesForBbox().then(
+            ({ scenes, hasNext, count }) => {
+                if (
+                    fetchScenes === this.fetchNextScenesForBbox &&
+                    factoryFn === this.bboxFetchFactory
+                ) {
+                    this.fetchingScenes = false;
+                    this.sceneList = this.sceneList.concat(scenes);
+                    this.hasNext = hasNext;
+                    this.sceneCount = count;
+                }
+            },
+            err => {
+                if (
+                    fetchScenes === this.fetchNextScenesForBbox &&
+                    factoryFn === this.bboxFetchFactory
+                ) {
+                    this.fetchingScenes = false;
+                    this.fetchError = err;
+                    this.hasNext = false;
+                }
             }
-        }, (err) => {
-            if (fetchScenes === this.fetchNextScenesForBbox &&
-                factoryFn === this.bboxFetchFactory) {
-                this.fetchingScenes = false;
-                this.fetchError = err;
-                this.hasNext = false;
-            }
-        });
+        );
     }
 
     toggleFilterPane() {
@@ -207,7 +224,7 @@ class ProjectsSceneBrowserController {
     setHoveredScene(scene) {
         if (scene !== this.hoveredScene) {
             this.hoveredScene = scene;
-            this.getMap().then((map) => {
+            this.getMap().then(map => {
                 if (scene.sceneType !== 'COG') {
                     map.setThumbnail(scene, this.currentRepository);
                 } else {
@@ -222,25 +239,23 @@ class ProjectsSceneBrowserController {
             map.setLayer(
                 'Hovered Scene',
                 L.tileLayer(
-                    this.sceneService.getSceneLayerURL(
-                        scene,
-                        {
-                            token: this.authService.token(),
-                            redBand: rgbBands.RED,
-                            greenBand: rgbBands.GREEN,
-                            blueBand: rgbBands.BLUE
-                        }
-                    ),
+                    this.sceneService.getSceneLayerURL(scene, {
+                        token: this.authService.token(),
+                        redBand: rgbBands.RED,
+                        greenBand: rgbBands.GREEN,
+                        blueBand: rgbBands.BLUE
+                    }),
                     {
                         maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
                         maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
-                    })
+                    }
+                )
             );
         });
     }
 
     removeHoveredScene() {
-        this.getMap().then((map) => {
+        this.getMap().then(map => {
             if (this.hoveredScene.sceneType === 'COG') {
                 map.deleteLayers('Hovered Scene');
             } else {
@@ -260,8 +275,7 @@ class ProjectsSceneBrowserController {
 
     addSceneToProject(scene) {
         this.scenesBeingAdded = [...this.scenesBeingAdded, scene.id];
-        return this.currentRepository
-            .service
+        return this.currentRepository.service
             .addToProject(this.project.id, [scene])
             .then(() => {
                 scene.inProject = true;
@@ -276,8 +290,7 @@ class ProjectsSceneBrowserController {
         const scenesToAdd = this.sceneList.filter(s => !this.isInProject(s));
         const sceneIdsToAdd = scenesToAdd.map(s => s.id);
         this.scenesBeingAdded = [...this.scenesBeingAdded, ...sceneIdsToAdd];
-        return this.currentRepository
-            .service
+        return this.currentRepository.service
             .addToProject(this.project.id, scenesToAdd)
             .then(() => {
                 scenesToAdd.forEach(scene => {
@@ -286,8 +299,9 @@ class ProjectsSceneBrowserController {
             })
             .finally(() => {
                 this.$parent.layerFromProject();
-                this.scenesBeingAdded =
-                    this.scenesBeingAdded.filter(s => sceneIdsToAdd.includes(s));
+                this.scenesBeingAdded = this.scenesBeingAdded.filter(s =>
+                    sceneIdsToAdd.includes(s)
+                );
             });
     }
 
@@ -302,7 +316,8 @@ class ProjectsSceneBrowserController {
 const ProjectsSceneBrowserModule = angular.module('pages.projects.edit.browse', []);
 
 ProjectsSceneBrowserModule.controller(
-    'ProjectsSceneBrowserController', ProjectsSceneBrowserController
+    'ProjectsSceneBrowserController',
+    ProjectsSceneBrowserController
 );
 
 export default ProjectsSceneBrowserModule;

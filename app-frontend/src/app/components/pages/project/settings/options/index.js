@@ -1,10 +1,7 @@
 import tpl from './index.html';
 
 class ProjectOptionsController {
-    constructor(
-        $rootScope, $state,
-        projectEditService, projectService
-    ) {
+    constructor($rootScope, $state, projectEditService, projectService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -25,28 +22,40 @@ class ProjectOptionsController {
         this.errorType = this.NONE;
         this.project.name = this.projectNameBuffer;
 
-        this.projectEditService.updateCurrentProject(this.project).then((project) => {
-            this.project = project;
-            this.projectNameBuffer = this.project.name;
-        }, () => {
-            // Revert if the update fails
-            this.errorType = this.PROJECT_RENAME;
-            this.project.name = previousProjectName;
-        }).finally(() => {
-            this.projectRenameInProgress = false;
-        });
+        this.projectEditService
+            .updateCurrentProject(this.project)
+            .then(
+                project => {
+                    this.project = project;
+                    this.projectNameBuffer = this.project.name;
+                },
+                () => {
+                    // Revert if the update fails
+                    this.errorType = this.PROJECT_RENAME;
+                    this.project.name = previousProjectName;
+                }
+            )
+            .finally(() => {
+                this.projectRenameInProgress = false;
+            });
     }
 
     onProjectDelete() {
         this.projectDeleteInProgress = true;
         this.errorType = this.NONE;
-        this.projectService.deleteProject(this.project.id).then(() => {
-            this.$state.go('projects');
-        }, () => {
-            this.errorType = this.PROJECT_DELETE;
-        }).finally(() => {
-            this.projectDeleteInProgress = false;
-        });
+        this.projectService
+            .deleteProject(this.project.id)
+            .then(
+                () => {
+                    this.$state.go('projects');
+                },
+                () => {
+                    this.errorType = this.PROJECT_DELETE;
+                }
+            )
+            .finally(() => {
+                this.projectDeleteInProgress = false;
+            });
     }
 }
 
@@ -61,5 +70,4 @@ const component = {
 export default angular
     .module('components.pages.project.settings.options', [])
     .controller(ProjectOptionsController.name, ProjectOptionsController)
-    .component('rfProjectOptionsPage', component)
-    .name;
+    .component('rfProjectOptionsPage', component).name;

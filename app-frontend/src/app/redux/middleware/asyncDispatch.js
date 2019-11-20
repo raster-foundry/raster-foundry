@@ -15,8 +15,7 @@ export const asyncDispatchMiddleware = store => next => action => {
         }
     }
 
-    const actionWithAsyncDispatch =
-          Object.assign({}, action, { asyncDispatch });
+    const actionWithAsyncDispatch = Object.assign({}, action, { asyncDispatch });
 
     next(actionWithAsyncDispatch);
     syncActivityFinished = true;

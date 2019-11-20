@@ -1,7 +1,7 @@
 import angular from 'angular';
 
 class AdminController {
-    constructor() { }
+    constructor() {}
 }
 
 const AdminModule = angular.module('pages.admin', []);

@@ -21,8 +21,8 @@ class OperationNodeController {
         if (!node) {
             return {};
         }
-        const inputs = node.args.map((nodeId) => {
-            let inputNode = getNodeDefinition(state, {nodeId});
+        const inputs = node.args.map(nodeId => {
+            let inputNode = getNodeDefinition(state, { nodeId });
             return inputNode.metadata.label;
         });
         return {
@@ -32,9 +32,7 @@ class OperationNodeController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis.bind(this)
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this))(this);
         this.$scope.$on('$destroy', unsubscribe);
     }
 }

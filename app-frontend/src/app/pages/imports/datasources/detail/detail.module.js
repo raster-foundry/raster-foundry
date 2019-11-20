@@ -3,8 +3,15 @@ import _ from 'lodash';
 
 class DatasourceDetailController {
     constructor(
-        $log, $timeout, $q, $stateParams,
-        modalService, datasourceService, uuid4, authService, datasourceLicenseService
+        $log,
+        $timeout,
+        $q,
+        $stateParams,
+        modalService,
+        datasourceService,
+        uuid4,
+        authService,
+        datasourceLicenseService
     ) {
         'ngInject';
         this.$log = $log;
@@ -28,36 +35,42 @@ class DatasourceDetailController {
     }
 
     initLicenseSettings() {
-        this.emptyLicense = [{'shortName': null, 'name': null, 'url': ''}];
+        this.emptyLicense = [{ shortName: null, name: null, url: '' }];
         this.selectedLicense = Object.assign({}, this.emptyLicense[0]);
 
-        this.datasourceLicenseService.getLicenses().then((res) => {
-            this.getAllLicenses(Math.ceil(res.count / res.pageSize) + 1);
-        }, (err) => {
-            this.$log.error(err);
-        });
+        this.datasourceLicenseService.getLicenses().then(
+            res => {
+                this.getAllLicenses(Math.ceil(res.count / res.pageSize) + 1);
+            },
+            err => {
+                this.$log.error(err);
+            }
+        );
     }
 
     loadDatasource() {
         this.isLoadingDatasource = true;
         this.isLoadingDatasourceError = false;
         this.isDatasourceVisibilityUpdated = false;
-        this.datasourceService.get(this.datasourceId).then(
-            datasourceResponse => {
-                this.datasource = datasourceResponse;
-                this.hasBands = !_.isEmpty(this.datasource.bands);
-                this.isPublic = this.isPublicDatasource();
-                let id = this.authService.getProfile().sub;
-                this.isOwner = id === this.datasource.owner;
-                this.initBuffers();
-                this.getLicense(this.datasource);
-            },
-            () => {
-                this.isLoadingDatasourceError = true;
-            }
-        ).finally(() => {
-            this.isLoadingDatasource = false;
-        });
+        this.datasourceService
+            .get(this.datasourceId)
+            .then(
+                datasourceResponse => {
+                    this.datasource = datasourceResponse;
+                    this.hasBands = !_.isEmpty(this.datasource.bands);
+                    this.isPublic = this.isPublicDatasource();
+                    let id = this.authService.getProfile().sub;
+                    this.isOwner = id === this.datasource.owner;
+                    this.initBuffers();
+                    this.getLicense(this.datasource);
+                },
+                () => {
+                    this.isLoadingDatasourceError = true;
+                }
+            )
+            .finally(() => {
+                this.isLoadingDatasource = false;
+            });
     }
 
     initBuffers() {
@@ -68,12 +81,12 @@ class DatasourceDetailController {
     getLicense(datasource) {
         if (datasource.licenseName && datasource.licenseName.length) {
             this.datasourceLicenseService.getLicense(datasource.licenseName).then(
-                (res) => {
+                res => {
                     if (!_.isEmpty(res)) {
                         this.selectedLicense = Object.assign({}, res);
                     }
                 },
-                (err) => {
+                err => {
                     this.$log.error(err);
                 }
             );
@@ -90,16 +103,20 @@ class DatasourceDetailController {
     }
 
     getAllLicenses(pages) {
-        let promises = _.times(pages, (idx) => {
-            return this.datasourceLicenseService.getLicenses({page: idx})
-              .then(resp => resp, error => error);
+        let promises = _.times(pages, idx => {
+            return this.datasourceLicenseService
+                .getLicenses({ page: idx })
+                .then(resp => resp, error => error);
         });
-        this.$q.all(promises).then((response) => {
-            this.licenses = _.flatMap(response, r => r.results);
-            this.matchedLicenses = this.setMatchedLicensesDefault(this.licenses);
-        }, (err) =>{
-            this.$log.error(err);
-        });
+        this.$q.all(promises).then(
+            response => {
+                this.licenses = _.flatMap(response, r => r.results);
+                this.matchedLicenses = this.setMatchedLicensesDefault(this.licenses);
+            },
+            err => {
+                this.$log.error(err);
+            }
+        );
     }
 
     onLicenseInputChange() {
@@ -113,9 +130,11 @@ class DatasourceDetailController {
 
     matchLicense(licenseInput) {
         if (this.licenses && this.licenses.length) {
-            this.matchedLicenses = this.licenses.filter((license) => {
-                return license.shortName.toUpperCase().includes(licenseInput.toUpperCase())
-                || license.name.toUpperCase().includes(licenseInput.toUpperCase());
+            this.matchedLicenses = this.licenses.filter(license => {
+                return (
+                    license.shortName.toUpperCase().includes(licenseInput.toUpperCase()) ||
+                    license.name.toUpperCase().includes(licenseInput.toUpperCase())
+                );
             });
             this.showMatchedLicenses = this.matchedLicenses.length;
         }
@@ -131,13 +150,20 @@ class DatasourceDetailController {
         this.selectedLicense = Object.assign({}, license);
         this.isMouseOnLicenseOption = false;
         this.resetLicenseSearch();
-        this.datasourceService.updateDatasource(Object.assign(this.datasource, {
-            licenseName: license.shortName
-        })).then((ds) => {
-            this.datasource = ds;
-        }, (err) => {
-            this.$log.error('Error saving datasource', err);
-        });
+        this.datasourceService
+            .updateDatasource(
+                Object.assign(this.datasource, {
+                    licenseName: license.shortName
+                })
+            )
+            .then(
+                ds => {
+                    this.datasource = ds;
+                },
+                err => {
+                    this.$log.error('Error saving datasource', err);
+                }
+            );
     }
 
     resetLicenseSearch() {
@@ -156,13 +182,15 @@ class DatasourceDetailController {
     }
 
     openImportModal() {
-        this.modalService.open({
-            component: 'rfSceneImportModal',
-            resolve: {
-                datasource: () => this.datasource,
-                origin: () => 'datasource'
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfSceneImportModal',
+                resolve: {
+                    datasource: () => this.datasource,
+                    origin: () => 'datasource'
+                }
+            })
+            .result.catch(() => {});
     }
 
     saveColorComposites() {
@@ -171,15 +199,22 @@ class DatasourceDetailController {
             delete val.changed;
             newBuffer[val.label] = val;
         });
-        this.datasourceService.updateDatasource(Object.assign(this.datasource, {
-            composites: newBuffer
-        })).then((ds) => {
-            this.datasource = ds;
-            this.changedBuffer = false;
-            this.colorCompositesBuffer = newBuffer;
-        }, (err) => {
-            this.$log.error('Error saving datasource', err);
-        });
+        this.datasourceService
+            .updateDatasource(
+                Object.assign(this.datasource, {
+                    composites: newBuffer
+                })
+            )
+            .then(
+                ds => {
+                    this.datasource = ds;
+                    this.changedBuffer = false;
+                    this.colorCompositesBuffer = newBuffer;
+                },
+                err => {
+                    this.$log.error('Error saving datasource', err);
+                }
+            );
     }
 
     cancel() {
@@ -250,24 +285,33 @@ class DatasourceDetailController {
     }
 
     anyInvalidWavelengths() {
-        return this.bandsBuffer.length === 0 ?
-            false :
-            _.reduce(
-                this.bandsBuffer, (prior, band) => {
-                    return band.invalidWavelength || prior;
-                }, false
-            );
+        return this.bandsBuffer.length === 0
+            ? false
+            : _.reduce(
+                  this.bandsBuffer,
+                  (prior, band) => {
+                      return band.invalidWavelength || prior;
+                  },
+                  false
+              );
     }
 
     saveBufferedBands() {
-        this.datasourceService.updateDatasource(Object.assign(this.datasource, {
-            bands: this.bandsBuffer
-        })).then((ds) => {
-            this.datasource = ds;
-            this.resetBandsBuffer();
-        }, (err) => {
-            this.$log.error('Error saving datasource', err);
-        });
+        this.datasourceService
+            .updateDatasource(
+                Object.assign(this.datasource, {
+                    bands: this.bandsBuffer
+                })
+            )
+            .then(
+                ds => {
+                    this.datasource = ds;
+                    this.resetBandsBuffer();
+                },
+                err => {
+                    this.$log.error('Error saving datasource', err);
+                }
+            );
     }
 
     resetBandsBuffer() {
@@ -277,7 +321,7 @@ class DatasourceDetailController {
 
     addCompositeRow() {
         this.colorCompositesBuffer[this.uuid4.generate()] = {
-            value: {redBand: 0, greenBand: 1, blueBand: 2}
+            value: { redBand: 0, greenBand: 1, blueBand: 2 }
         };
     }
 

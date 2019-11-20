@@ -24,9 +24,9 @@ class ReclassifyModalController {
     }
 
     mapStateToThis(state) {
-        const node = getNodeDefinition(state, {nodeId: this.resolve.nodeId});
+        const node = getNodeDefinition(state, { nodeId: this.resolve.nodeId });
         const inputNodeId = _.first(node.args);
-        const histogram = getNodeHistogram(state, {nodeId: inputNodeId});
+        const histogram = getNodeHistogram(state, { nodeId: inputNodeId });
         return {
             node,
             inputNodeId,
@@ -35,13 +35,12 @@ class ReclassifyModalController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            HistogramActions
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), HistogramActions)(
+            this
+        );
         this.$scope.$on('$destroy', unsubscribe);
 
-        this.$scope.$watch('$ctrl.inputNodeId', (id) => {
+        this.$scope.$watch('$ctrl.inputNodeId', id => {
             if (id) {
                 this.fetchHistogram(id);
             }
@@ -74,18 +73,19 @@ class ReclassifyModalController {
             let lastBreak = this.breaks.slice(-1)[0];
 
             // Scale the step size to the histogram range if possible
-            let step = this.histogram ?
-                Math.pow(10,
-                    Math.round(
-                        Math.log10((this.histogram.maximum - this.histogram.minimum) / 100)
-                    )
-                ) :
-                1;
+            let step = this.histogram
+                ? Math.pow(
+                      10,
+                      Math.round(
+                          Math.log10((this.histogram.maximum - this.histogram.minimum) / 100)
+                      )
+                  )
+                : 1;
 
             // Fill them with values above the highest break
-            let newBreaks = Array(breaksToAdd).fill(1).map(
-                (a, index) => (index + 1) * step + Number(lastBreak.break)
-            );
+            let newBreaks = Array(breaksToAdd)
+                .fill(1)
+                .map((a, index) => (index + 1) * step + Number(lastBreak.break));
 
             this.updateBreaks([
                 ...this.breaks,
@@ -110,11 +110,13 @@ class ReclassifyModalController {
 
             // Keep each range's associated output value so that output values stay in the same
             // order when applying the equal interval, but overwrite the range values.
-            this.updateBreaks(this.breaks.map((b, i) => {
-                return Object.assign({}, b, {
-                    break: rangeWidth * (i + 1)
-                });
-            }));
+            this.updateBreaks(
+                this.breaks.map((b, i) => {
+                    return Object.assign({}, b, {
+                        break: rangeWidth * (i + 1)
+                    });
+                })
+            );
         }
     }
 
@@ -127,7 +129,7 @@ class ReclassifyModalController {
     }
 
     closeAndUpdate() {
-        this.close({$value: this.breaks});
+        this.close({ $value: this.breaks });
     }
 }
 const ReclassifyModalModule = angular.module('components.lab.reclassifyModal', []);

@@ -6,9 +6,8 @@ import $ from 'jquery';
 require('./import.scss');
 
 class AnnotateImportController {
-    constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $timeout, $ngRedux
-    ) {
+    constructor($log, $state, $scope, $timeout, $ngRedux) {
+        // eslint-disable-line max-params
         'ngInject';
         this.$log = $log;
         this.$state = $state;
@@ -33,7 +32,7 @@ class AnnotateImportController {
         this.bindShapefileUploadEvent();
         this.isMachineData = false;
 
-        this.$scope.$watch('$ctrl.$parent.annotationShapefileProps', (props) => {
+        this.$scope.$watch('$ctrl.$parent.annotationShapefileProps', props => {
             if (props && props.length) {
                 this.hasShapefileProps = true;
                 this.dataProperties = props;
@@ -42,12 +41,12 @@ class AnnotateImportController {
     }
 
     bindGeoJSONUploadEvent() {
-        $('#geojson-btn-upload').change((e) => {
+        $('#geojson-btn-upload').change(e => {
             let upload = _.values(e.target.files);
             if (upload.length) {
-                upload.forEach((datum) => {
+                upload.forEach(datum => {
                     let reader = new FileReader();
-                    reader.onload = (event) => {
+                    reader.onload = event => {
                         this.setSelectionMenuItems(JSON.parse(event.target.result));
                     };
                     reader.readAsText(datum);
@@ -57,10 +56,10 @@ class AnnotateImportController {
     }
 
     bindShapefileUploadEvent() {
-        $('#shapefile-btn-upload').change((e) => {
+        $('#shapefile-btn-upload').change(e => {
             let upload = _.values(e.target.files);
             if (upload.length) {
-                upload.forEach((datum) => {
+                upload.forEach(datum => {
                     this.setShapefileUploadData(datum);
                 });
             }
@@ -121,27 +120,28 @@ class AnnotateImportController {
     onImportClick() {
         if (this.uploadData) {
             this.$parent.createAnnotations({
-                'type': 'FeatureCollection',
-                'features': this.uploadData.features.map((feature) => {
+                type: 'FeatureCollection',
+                features: this.uploadData.features.map(feature => {
                     let confidence = null;
                     let quality = null;
                     if (this.isMachineData) {
-                        confidence = this.matchKeys.confidence ?
-                            feature.properties[this.matchKeys.confidence] : null;
+                        confidence = this.matchKeys.confidence
+                            ? feature.properties[this.matchKeys.confidence]
+                            : null;
                         quality = this.getValOrDefault('quality', feature);
                     }
                     return {
-                        'properties': {
-                            'label': this.getValOrDefault('label', feature).toString(),
-                            'description': (
+                        properties: {
+                            label: this.getValOrDefault('label', feature).toString(),
+                            description: (
                                 this.getValOrDefault('description', feature) || ''
                             ).toString(),
-                            'machineGenerated': this.isMachineData,
-                            'confidence': confidence,
-                            'quality': quality
+                            machineGenerated: this.isMachineData,
+                            confidence: confidence,
+                            quality: quality
                         },
-                        'geometry': feature.geometry,
-                        'type': 'Feature'
+                        geometry: feature.geometry,
+                        type: 'Feature'
                     };
                 })
             });
@@ -165,8 +165,6 @@ class AnnotateImportController {
 
 const AnnotateImportModule = angular.module('pages.projects.edit.annotate.import', []);
 
-AnnotateImportModule.controller(
-    'AnnotateImportController', AnnotateImportController
-);
+AnnotateImportModule.controller('AnnotateImportController', AnnotateImportController);
 
 export default AnnotateImportModule;

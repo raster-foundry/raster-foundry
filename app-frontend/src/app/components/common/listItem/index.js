@@ -17,7 +17,5 @@ const component = {
     }
 };
 
-export default angular
-    .module('components.common.listItem', [])
-    .component('rfListItem', component)
+export default angular.module('components.common.listItem', []).component('rfListItem', component)
     .name;

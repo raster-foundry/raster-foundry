@@ -45,19 +45,23 @@ class ChannelHistogramController {
         this.options = {
             clipping: {
                 rgb: {
-                    min: minClip, max: maxClip,
+                    min: minClip,
+                    max: maxClip,
                     color: 'white'
                 },
                 red: {
-                    min: minClip, max: maxClip,
+                    min: minClip,
+                    max: maxClip,
                     color: 'red'
                 },
                 green: {
-                    min: minClip, max: maxClip,
+                    min: minClip,
+                    max: maxClip,
                     color: 'green'
                 },
                 blue: {
-                    min: minClip, max: maxClip,
+                    min: minClip,
+                    max: maxClip,
                     color: 'blue'
                 }
             },
@@ -82,7 +86,7 @@ class ChannelHistogramController {
         let changed = false;
         if (clipping.max !== this.upperClip) {
             if (this.histogramMode === 'rgb') {
-                _.forOwn(this.options.clipping, (clip) => {
+                _.forOwn(this.options.clipping, clip => {
                     clip.max = this.upperClip;
                 });
             } else {
@@ -92,7 +96,7 @@ class ChannelHistogramController {
         }
         if (clipping.min !== this.lowerClip) {
             if (this.histogramMode === 'rgb') {
-                _.forOwn(this.options.clipping, (clip) => {
+                _.forOwn(this.options.clipping, clip => {
                     clip.min = this.lowerClip;
                 });
             } else {
@@ -102,7 +106,7 @@ class ChannelHistogramController {
         }
 
         if (changed) {
-            this.onChange({clipping: this.options.clipping});
+            this.onChange({ clipping: this.options.clipping });
         }
         this.lastHistogramModeUpdate = this.histogramMode;
         this.graph.setOptions(this.options);
@@ -126,45 +130,43 @@ class ChannelHistogramController {
         if ('corrections' in changesObj && changesObj.corrections.currentValue) {
             let corr = changesObj.corrections.currentValue;
             let tileClipping = {
-                min:
-                Number.isInteger(corr.tileClipping.min) ? corr.tileClipping.min : minClip,
-                max:
-                Number.isInteger(corr.tileClipping.max) ? corr.tileClipping.max : maxClip
+                min: Number.isInteger(corr.tileClipping.min) ? corr.tileClipping.min : minClip,
+                max: Number.isInteger(corr.tileClipping.max) ? corr.tileClipping.max : maxClip
             };
 
-            Object.assign(
-                this.options.clipping.rgb,
-                {min: tileClipping.min, max: tileClipping.max}
-            );
-            Object.assign(
-                this.options.clipping.red,
-                {
-                    min: Number.isInteger(corr.bandClipping.redMin) ?
-                        corr.bandClipping.redMin : tileClipping.min,
-                    max: Number.isInteger(corr.bandClipping.redMax) ?
-                        corr.bandClipping.redMax : tileClipping.max
-                }
-            );
-            Object.assign(
-                this.options.clipping.green,
-                {
-                    min: Number.isInteger(corr.bandClipping.greenMin) ?
-                        corr.bandClipping.greenMin : tileClipping.min,
-                    max: Number.isInteger(corr.bandClipping.greenMax) ?
-                        corr.bandClipping.greenMax : tileClipping.max
-                }
-            );
-            Object.assign(
-                this.options.clipping.blue,
-                {
-                    min: Number.isInteger(corr.bandClipping.blueMin) ?
-                        corr.bandClipping.blueMin : tileClipping.min,
-                    max: Number.isInteger(corr.bandClipping.blueMax) ?
-                        corr.bandClipping.blueMax : tileClipping.max
-                }
-            );
+            Object.assign(this.options.clipping.rgb, {
+                min: tileClipping.min,
+                max: tileClipping.max
+            });
+            Object.assign(this.options.clipping.red, {
+                min: Number.isInteger(corr.bandClipping.redMin)
+                    ? corr.bandClipping.redMin
+                    : tileClipping.min,
+                max: Number.isInteger(corr.bandClipping.redMax)
+                    ? corr.bandClipping.redMax
+                    : tileClipping.max
+            });
+            Object.assign(this.options.clipping.green, {
+                min: Number.isInteger(corr.bandClipping.greenMin)
+                    ? corr.bandClipping.greenMin
+                    : tileClipping.min,
+                max: Number.isInteger(corr.bandClipping.greenMax)
+                    ? corr.bandClipping.greenMax
+                    : tileClipping.max
+            });
+            Object.assign(this.options.clipping.blue, {
+                min: Number.isInteger(corr.bandClipping.blueMin)
+                    ? corr.bandClipping.blueMin
+                    : tileClipping.min,
+                max: Number.isInteger(corr.bandClipping.blueMax)
+                    ? corr.bandClipping.blueMax
+                    : tileClipping.max
+            });
             if (this.graph && this.plots) {
-                this.graph.setData(this.plots).setOptions(this.options).render();
+                this.graph
+                    .setData(this.plots)
+                    .setOptions(this.options)
+                    .render();
             }
         }
     }
@@ -175,36 +177,30 @@ class ChannelHistogramController {
 
         let histogramRange = _.range(0, 256);
 
-        let redPlot = histogramRange.map((redXKey) => {
+        let redPlot = histogramRange.map(redXKey => {
             let redX = parseInt(redXKey, 10);
             let redY = parseInt(redBand[redXKey.toString()] ? redBand[redXKey] : 0, 10);
             rgbSum[redXKey] = redY;
-            return {x: redX, y: redY};
+            return { x: redX, y: redY };
         });
-        let greenPlot = histogramRange.map((greenXKey) => {
+        let greenPlot = histogramRange.map(greenXKey => {
             let greenX = parseInt(greenXKey, 10);
             let greenY = parseInt(greenBand[greenXKey.toString()] ? greenBand[greenXKey] : 0, 10);
-            rgbSum[greenXKey] =
-                rgbSum[greenXKey] ?
-                rgbSum[greenXKey] + greenY :
-                greenY;
-            return {x: greenX, y: greenY};
+            rgbSum[greenXKey] = rgbSum[greenXKey] ? rgbSum[greenXKey] + greenY : greenY;
+            return { x: greenX, y: greenY };
         });
-        let bluePlot = histogramRange.map((blueXKey) => {
+        let bluePlot = histogramRange.map(blueXKey => {
             let blueX = parseInt(blueXKey, 10);
             let blueY = parseInt(blueBand[blueXKey.toString()] ? blueBand[blueXKey] : 0, 10);
-            rgbSum[blueXKey] =
-                rgbSum[blueXKey] ?
-                rgbSum[blueXKey] + blueY :
-                blueY;
-            return {x: blueX, y: blueY};
+            rgbSum[blueXKey] = rgbSum[blueXKey] ? rgbSum[blueXKey] + blueY : blueY;
+            return { x: blueX, y: blueY };
         });
 
-        let rgbPlot = Object.keys(rgbSum).map((aggXKey) => {
+        let rgbPlot = Object.keys(rgbSum).map(aggXKey => {
             let aggX = parseInt(aggXKey, 10);
             let aggY = parseInt(rgbSum[aggXKey], 10);
             maxY = aggY > maxY ? aggY : maxY;
-            return {x: aggX, y: aggY};
+            return { x: aggX, y: aggY };
         });
 
         return {

@@ -16,8 +16,14 @@ const ShapeFilterComponent = {
 
 class ShapeFilterController {
     constructor(
-        $rootScope, $scope, $location, $q, $ngRedux,
-        shapesService, modalService, mapService
+        $rootScope,
+        $scope,
+        $location,
+        $q,
+        $ngRedux,
+        shapesService,
+        modalService,
+        mapService
     ) {
         $rootScope.autoInject(this, arguments);
     }
@@ -33,10 +39,7 @@ class ShapeFilterController {
         this.shapeSearch = '';
         this.open = false;
 
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            ShapeActions
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), ShapeActions)(this);
         this.$scope.$on('$destroy', () => {
             this.getMap().then(m => {
                 m.deleteGeojson('AOI');
@@ -45,7 +48,7 @@ class ShapeFilterController {
             unsubscribe();
         });
 
-        this.shapeRequest = this.getShapes().then((shapes) => {
+        this.shapeRequest = this.getShapes().then(shapes => {
             this.shapes = shapes;
             this.filteredShapes = shapes;
             this.shapeSearch = '';
@@ -55,7 +58,7 @@ class ShapeFilterController {
                 this.setShapeFromParam(this.paramValue);
             }
         });
-        this.shapeRequest.catch((err) => {
+        this.shapeRequest.catch(err => {
             this.error = err;
         });
     }
@@ -80,7 +83,7 @@ class ShapeFilterController {
 
     setShapeFromParam(param) {
         if (this.shapes && this.shapes.length) {
-            const paramShape = _.first(this.shapes.filter((shape) => shape.id === this.paramValue));
+            const paramShape = _.first(this.shapes.filter(shape => shape.id === this.paramValue));
             if (paramShape) {
                 this.onSelectShape(paramShape);
             }
@@ -89,7 +92,7 @@ class ShapeFilterController {
 
     setShapeFromShape(bindShape) {
         if (this.shapes && this.shapes.length) {
-            const boundShape = _.first(this.shapes.filter((shape) => shape.id === bindShape.id));
+            const boundShape = _.first(this.shapes.filter(shape => shape.id === bindShape.id));
             if (boundShape) {
                 this.onSelectShape(boundShape);
             }
@@ -98,9 +101,8 @@ class ShapeFilterController {
 
     onSearchChange() {
         if (this.shapeSearch.length) {
-            this.filteredShapes = _.filter(this.shapes, (shape) => {
-                return shape.properties.name.toLowerCase()
-                    .includes(this.shapeSearch.toLowerCase());
+            this.filteredShapes = _.filter(this.shapes, shape => {
+                return shape.properties.name.toLowerCase().includes(this.shapeSearch.toLowerCase());
             });
         } else {
             this.filteredShapes = this.shapes;
@@ -109,23 +111,18 @@ class ShapeFilterController {
 
     getShapes() {
         const pageSize = 30;
-        return this.shapesService.fetchShapes({pageSize}).then((response) => {
+        return this.shapesService.fetchShapes({ pageSize }).then(response => {
             let shapes = response.features;
             let promises = [];
             let pages = Math.ceil(response.count / pageSize);
-            for (
-                let i = 1;
-                i < pages;
-                i = i + 1
-            ) {
-                promises.push(
-                    this.shapesService.fetchShapes({page: i, pageSize})
-                );
+            for (let i = 1; i < pages; i = i + 1) {
+                promises.push(this.shapesService.fetchShapes({ page: i, pageSize }));
             }
-            return this.$q.all(promises).then((responses) => {
-                shapes = responses.map((geojson) => geojson.features)
+            return this.$q.all(promises).then(responses => {
+                shapes = responses
+                    .map(geojson => geojson.features)
                     .reduce((acc, features) => acc.concat(features), shapes);
-                shapes = _.sortBy(shapes, [(s) => s.properties.name]);
+                shapes = _.sortBy(shapes, [s => s.properties.name]);
                 return shapes;
             });
         });
@@ -139,9 +136,9 @@ class ShapeFilterController {
 
         const filterParams = {};
         filterParams[this.filter.param] = shape;
-        this.onFilterChange({filter: this.filter, filterParams});
+        this.onFilterChange({ filter: this.filter, filterParams });
         if (this.selectedShape) {
-            this.getMap().then((m) => {
+            this.getMap().then(m => {
                 m.setGeojson('AOI', this.selectedShape);
             });
         }
@@ -163,7 +160,7 @@ class ShapeFilterController {
 
         const filterParams = {};
         filterParams[this.filter.param] = null;
-        this.onFilterChange({filter: this.filter, filterParams});
+        this.onFilterChange({ filter: this.filter, filterParams });
     }
 
     onClearSearch(event) {
@@ -193,9 +190,11 @@ class ShapeFilterController {
             component: 'rfVectorImportModal',
             resolve: {}
         });
-        modal.result.then(() => {
-            this.getShapes();
-        }).catch(() => {});
+        modal.result
+            .then(() => {
+                this.getShapes();
+            })
+            .catch(() => {});
     }
 
     startCreateShape() {
@@ -204,24 +203,33 @@ class ShapeFilterController {
                 m.deleteGeojson('AOI');
             });
             this.startDrawing(resolve, reject, 'edit');
-        }).then((geojson) => {
-            let modal = this.modalService.open({
-                component: 'rfVectorNameModal',
-                resolve: {
-                    shape: geojson
-                }
-            }, true, true);
-            return modal.result.then((shapes) => {
-                this.shapes = this.shapes.concat(shapes);
-                this.onSearchChange();
-                let shape = _.first(shapes);
-                this.onSelectShape(shape);
-            }).catch(() => {});
-        }, () => {
-            this.getMap().then(m => {
-                m.setGeojson('AOI', this.selectedShape);
-            });
-        });
+        }).then(
+            geojson => {
+                let modal = this.modalService.open(
+                    {
+                        component: 'rfVectorNameModal',
+                        resolve: {
+                            shape: geojson
+                        }
+                    },
+                    true,
+                    true
+                );
+                return modal.result
+                    .then(shapes => {
+                        this.shapes = this.shapes.concat(shapes);
+                        this.onSearchChange();
+                        let shape = _.first(shapes);
+                        this.onSelectShape(shape);
+                    })
+                    .catch(() => {});
+            },
+            () => {
+                this.getMap().then(m => {
+                    m.setGeojson('AOI', this.selectedShape);
+                });
+            }
+        );
     }
 }
 

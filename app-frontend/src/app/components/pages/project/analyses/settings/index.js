@@ -4,10 +4,4 @@ import maskingPage from './masking';
 import publishingPage from './publishing';
 import permissionsPage from './permissions';
 
-export default [
-    settingsPage,
-    optionsPage,
-    maskingPage,
-    publishingPage,
-    permissionsPage
-];
+export default [settingsPage, optionsPage, maskingPage, publishingPage, permissionsPage];

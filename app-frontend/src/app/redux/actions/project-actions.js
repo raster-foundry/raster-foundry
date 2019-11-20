@@ -26,5 +26,7 @@ export function setLayerId(id) {
 }
 
 export default {
-    setProjectMap, setProjectId, setLayerId
+    setProjectMap,
+    setProjectId,
+    setLayerId
 };

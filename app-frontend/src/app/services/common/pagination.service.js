@@ -1,6 +1,6 @@
 /* global _ */
 
-export default (app) => {
+export default app => {
     class PaginationService {
         constructor($state) {
             this.$state = $state;
@@ -26,8 +26,10 @@ export default (app) => {
         }
 
         updatePageParam(page, search, sort, extraParams = {}) {
-            let replace = !this.$state.params.page ||
-                !this.$state.params.search || !this.$state.params.search;
+            let replace =
+                !this.$state.params.page ||
+                !this.$state.params.search ||
+                !this.$state.params.search;
 
             this.$state.go(
                 this.$state.$current.name,
@@ -38,8 +40,6 @@ export default (app) => {
                 }
             );
         }
-
-
     }
 
     app.service('paginationService', PaginationService);

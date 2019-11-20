@@ -1,9 +1,16 @@
 /* global BUILDCONFIG */
-import {Set} from 'immutable';
+import { Set } from 'immutable';
 class LabBrowseAnalysesController {
     constructor(
-        $scope, $state, $log,
-        analysisService, authService, localStorage, modalService, exportService, paginationService
+        $scope,
+        $state,
+        $log,
+        analysisService,
+        authService,
+        localStorage,
+        modalService,
+        exportService,
+        paginationService
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -40,45 +47,57 @@ class LabBrowseAnalysesController {
         this.search = search && search.length ? search : null;
         delete this.fetchError;
         this.analyses = [];
-        const currentQuery = this.analysisService.fetchAnalyses({
-            pageSize: 10,
-            page: page - 1,
-            sort: this.serializeSort(),
-            search: this.search,
-            ownershipType: this.currentOwnershipFilter
-        }).then(paginatedResponse => {
-            this.analyses = paginatedResponse.results;
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, search, this.serializeSort());
-            this.checkAnalysesExports(this.analyses);
-            if (this.currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
+        const currentQuery = this.analysisService
+            .fetchAnalyses({
+                pageSize: 10,
+                page: page - 1,
+                sort: this.serializeSort(),
+                search: this.search,
+                ownershipType: this.currentOwnershipFilter
+            })
+            .then(
+                paginatedResponse => {
+                    this.analyses = paginatedResponse.results;
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page, search, this.serializeSort());
+                    this.checkAnalysesExports(this.analyses);
+                    if (this.currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
+                }
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
         this.currentQuery = currentQuery;
     }
 
     shouldShowPlaceholder() {
-        return !this.currentQuery &&
+        return (
+            !this.currentQuery &&
             !this.fetchError &&
             (!this.search || !this.search.length) &&
             this.analyses &&
-            this.analyses.length === 0;
+            this.analyses.length === 0
+        );
     }
 
     shouldShowEmptySearch() {
-        return !this.currentQuery &&
+        return (
+            !this.currentQuery &&
             !this.fetchError &&
-            this.search && this.search.length &&
-            this.analyses && !this.analyses.length;
+            this.search &&
+            this.search.length &&
+            this.analyses &&
+            !this.analyses.length
+        );
     }
 
     formatAnalysisVisibility(visibility) {
@@ -114,8 +133,7 @@ class LabBrowseAnalysesController {
     onSortChange(field) {
         if (field === this.sortingField) {
             // Toggle sorting direction if the same field is being used
-            this.sortingDirection =
-                this.sortingDirection === 'asc' ? 'desc' : 'asc';
+            this.sortingDirection = this.sortingDirection === 'asc' ? 'desc' : 'asc';
         } else {
             this.sortingField = field;
             this.sortingDirection = this.defaultSortingDirection;
@@ -129,12 +147,11 @@ class LabBrowseAnalysesController {
             component: 'rfFeedbackModal',
             resolve: {
                 title: () => `Delete ${this.selected.size} analyses?`,
-                subtitle: () =>
-                    'Deleting analyses cannot be undone.',
+                subtitle: () => 'Deleting analyses cannot be undone.',
                 content: () =>
-                    '<h2>Do you wish to continue?</h2>'
-                    + '<p>Future attempts to access this '
-                    + 'analysis will fail.',
+                    '<h2>Do you wish to continue?</h2>' +
+                    '<p>Future attempts to access this ' +
+                    'analysis will fail.',
                 /* feedbackIconType : default, success, danger, warning */
                 feedbackIconType: () => 'danger',
                 feedbackIcon: () => 'icon-warning',
@@ -144,19 +161,24 @@ class LabBrowseAnalysesController {
             }
         });
 
-        modal.result.then(() => {
-            // TODO: use $q.all instead
-            this.selected.forEach((id) => {
-                this.analysisService.deleteAnalysis(id).then(() => {
-                    this.selected = this.selected.delete(id);
-                    if (this.selected.size === 0) {
-                        this.fetchPage();
-                    }
-                }, () => {
-                    this.fetchPage();
+        modal.result
+            .then(() => {
+                // TODO: use $q.all instead
+                this.selected.forEach(id => {
+                    this.analysisService.deleteAnalysis(id).then(
+                        () => {
+                            this.selected = this.selected.delete(id);
+                            if (this.selected.size === 0) {
+                                this.fetchPage();
+                            }
+                        },
+                        () => {
+                            this.fetchPage();
+                        }
+                    );
                 });
-            });
-        }).catch(() => {});
+            })
+            .catch(() => {});
     }
 
     toggleAnalysisSelection(id) {
@@ -168,12 +190,14 @@ class LabBrowseAnalysesController {
     }
 
     onAnalysisExportModalClick(analysis) {
-        this.modalService.open({
-            component: 'rfExportAnalysisDownloadModal',
-            resolve: {
-                analysis: () => analysis
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfExportAnalysisDownloadModal',
+                resolve: {
+                    analysis: () => analysis
+                }
+            })
+            .result.catch(() => {});
     }
 
     checkAnalysesExports(analysesList) {
@@ -183,18 +207,18 @@ class LabBrowseAnalysesController {
     }
 
     checkAnalysisExport(analysisId) {
-        this.exportService.query(
-            {
+        this.exportService
+            .query({
                 sort: 'createdAt,desc',
                 pageSize: '20',
                 page: 0,
                 analysis: analysisId
-            }
-        ).then(firstPageExports => {
-            if (firstPageExports.results.find(r => r.toolRunId === analysisId)) {
-                this.analysesExports[analysisId] = firstPageExports.count;
-            }
-        });
+            })
+            .then(firstPageExports => {
+                if (firstPageExports.results.find(r => r.toolRunId === analysisId)) {
+                    this.analysesExports[analysisId] = firstPageExports.count;
+                }
+            });
     }
 
     handleOwnershipFilterChange(newFilterValue) {
@@ -202,5 +226,6 @@ class LabBrowseAnalysesController {
     }
 }
 
-export default angular.module('pages.lab.browse.analyses', [])
+export default angular
+    .module('pages.lab.browse.analyses', [])
     .controller('LabBrowseAnalysesController', LabBrowseAnalysesController);

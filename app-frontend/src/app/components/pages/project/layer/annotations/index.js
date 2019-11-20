@@ -7,7 +7,7 @@ import turfCenter from '@turf/center';
 import tpl from './index.html';
 import AnnotationActions from '_redux/actions/annotation-actions';
 import ProjectActions from '_redux/actions/project-actions';
-import {propertiesToAnnotationFeature, wrapFeatureCollection} from '_redux/annotation-utils';
+import { propertiesToAnnotationFeature, wrapFeatureCollection } from '_redux/annotation-utils';
 
 const RED = '#E57373';
 const BLUE = '#3388FF';
@@ -16,8 +16,19 @@ const mapLayerName = 'Project Layer';
 
 class LayerAnnotationsController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $rootScope, $scope, $anchorScroll, $timeout, $element, $window, $ngRedux,
-        mapService, hotkeys, localStorage, projectService
+        $log,
+        $state,
+        $rootScope,
+        $scope,
+        $anchorScroll,
+        $timeout,
+        $element,
+        $window,
+        $ngRedux,
+        mapService,
+        hotkeys,
+        localStorage,
+        projectService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -31,18 +42,15 @@ class LayerAnnotationsController {
         let visibleAnnotations = annotations ? annotations.toArray() : [];
         if (filter === 'Unlabeled') {
             visibleAnnotations = visibleAnnotations.filter(
-                (annotation) => annotation.properties.label === ''
+                annotation => annotation.properties.label === ''
             );
         } else if (filter !== 'All') {
             visibleAnnotations = visibleAnnotations.filter(
-                (annotation) => annotation.properties.label === filter
+                annotation => annotation.properties.label === filter
             );
         }
         let persistedLabels = state.projects.labels;
-        let labels = [
-            {name: 'All'},
-            ...persistedLabels.map(label => ({name: label}))
-        ];
+        let labels = [{ name: 'All' }, ...persistedLabels.map(label => ({ name: label }))];
         let annotationShapefileProps = state.projects.annotationShapefileProps;
 
         return {
@@ -62,13 +70,10 @@ class LayerAnnotationsController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis,
-            {
-                ...ProjectActions,
-                ...AnnotationActions
-            }
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis, {
+            ...ProjectActions,
+            ...AnnotationActions
+        })(this);
 
         this.$scope.$on('$destroy', unsubscribe);
 
@@ -88,11 +93,11 @@ class LayerAnnotationsController {
 
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
 
-        let userListener = this.$scope.$watch('$ctrl.user', (user) => {
+        let userListener = this.$scope.$watch('$ctrl.user', user => {
             if (user) {
                 this.fetchAnnotations();
                 this.fetchLabels();
-                this.$scope.$watch('$ctrl.visibleAnnotations', (annotations) => {
+                this.$scope.$watch('$ctrl.visibleAnnotations', annotations => {
                     if (annotations) {
                         this.syncMapWithState();
                     }
@@ -100,9 +105,9 @@ class LayerAnnotationsController {
                 userListener();
             }
         });
-        this.$scope.$watch('$ctrl.editingAnnotation', (id) => {
+        this.$scope.$watch('$ctrl.editingAnnotation', id => {
             if (id) {
-                this.$scope.$evalAsync(()=>{
+                this.$scope.$evalAsync(() => {
                     this.$anchorScroll('anchor' + id);
                 });
             }
@@ -115,7 +120,7 @@ class LayerAnnotationsController {
         if (this.editingAnnotation) {
             this.finishEditingAnnotation();
         }
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             this.annotations.forEach((annotation, id) => mapWrapper.deleteGeojson(id));
             mapWrapper.deleteLayers('draw');
             mapWrapper.deleteLayers('highlight');
@@ -161,8 +166,8 @@ class LayerAnnotationsController {
             annotationsToRemove.forEach(id => mapWrapper.deleteGeojson(id));
             // set all, because they might have updated
             newAnnotations
-                .map((id) => this.getAnnotationOptions(this.annotations.get(id)))
-                .forEach(({annotation, options}) => {
+                .map(id => this.getAnnotationOptions(this.annotations.get(id)))
+                .forEach(({ annotation, options }) => {
                     mapWrapper.setGeojson(annotation.id, annotation, options);
                 });
         });
@@ -173,57 +178,65 @@ class LayerAnnotationsController {
             annotation,
             options: {
                 pointToLayer: (geoJsonPoint, latlng) => {
-                    return L.marker(latlng, {'icon': L.divIcon({'className': 'annotate-marker'})});
+                    return L.marker(latlng, { icon: L.divIcon({ className: 'annotate-marker' }) });
                 },
                 onEachFeature: (feature, currentLayer) => {
-                    currentLayer.bindPopup(
-                        `
+                    currentLayer
+                        .bindPopup(
+                            `
                     <label class="leaflet-popup-label">Label:<br/>
                     <p>${feature.properties.label}</p></label><br/>
                     <label class="leaflet-popup-label">Description:<br/>
                     <p>${feature.properties.description || 'No description'}</p></label>
                     `,
-                        {closeButton: false}
-                    ).on('mouseover', (e) => {
-                        if (!this.sidebarDisabled && !this.clickedId && !this.editingAnnotation) {
-                            this.hoveredId = feature.id;
-                            this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
-                            this.$anchorScroll('anchor' + this.hoveredId.toString());
-                            this.$scope.$evalAsync();
-                        }
-                    }).on('mouseout', (e) => {
-                        if (!this.sidebarDisabled && !this.clickedId) {
-                            delete this.hoveredId;
-                            this.setLayerStyle(e.target, BLUE, 'annotate-marker');
-                            this.$scope.$evalAsync();
-                        }
-                    }).on('click', (e) => {
-                        this.getMap().then((mapWrapper) => {
-                            mapWrapper.map.panTo(e.target.getBounds().getCenter());
-                            if (!this.sidebarDisabled && !this.editingAnnotation) {
-                                delete this.hoveredId;
-                                if (this.clickedId !== feature.id) {
-                                    const resetPreviousLayerStyle = () => {
-                                        let layer = _.first(mapWrapper.getGeojson(this.clickedId));
-                                        if (layer) {
-                                            this.setLayerStyle(
-                                                layer, BLUE, 'annotate-marker'
-                                            );
-                                        }
-                                    };
-                                    resetPreviousLayerStyle();
-                                    this.clickedId = feature.id;
-                                    this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
-                                    this.$anchorScroll('anchor' + this.clickedId.toString());
-                                    this.$scope.$evalAsync();
-                                } else {
-                                    delete this.clickedId;
-                                    this.setLayerStyle(e.target, BLUE, 'annotate-marker');
-                                    this.$scope.$evalAsync();
-                                }
+                            { closeButton: false }
+                        )
+                        .on('mouseover', e => {
+                            if (
+                                !this.sidebarDisabled &&
+                                !this.clickedId &&
+                                !this.editingAnnotation
+                            ) {
+                                this.hoveredId = feature.id;
+                                this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
+                                this.$anchorScroll('anchor' + this.hoveredId.toString());
+                                this.$scope.$evalAsync();
                             }
+                        })
+                        .on('mouseout', e => {
+                            if (!this.sidebarDisabled && !this.clickedId) {
+                                delete this.hoveredId;
+                                this.setLayerStyle(e.target, BLUE, 'annotate-marker');
+                                this.$scope.$evalAsync();
+                            }
+                        })
+                        .on('click', e => {
+                            this.getMap().then(mapWrapper => {
+                                mapWrapper.map.panTo(e.target.getBounds().getCenter());
+                                if (!this.sidebarDisabled && !this.editingAnnotation) {
+                                    delete this.hoveredId;
+                                    if (this.clickedId !== feature.id) {
+                                        const resetPreviousLayerStyle = () => {
+                                            let layer = _.first(
+                                                mapWrapper.getGeojson(this.clickedId)
+                                            );
+                                            if (layer) {
+                                                this.setLayerStyle(layer, BLUE, 'annotate-marker');
+                                            }
+                                        };
+                                        resetPreviousLayerStyle();
+                                        this.clickedId = feature.id;
+                                        this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
+                                        this.$anchorScroll('anchor' + this.clickedId.toString());
+                                        this.$scope.$evalAsync();
+                                    } else {
+                                        delete this.clickedId;
+                                        this.setLayerStyle(e.target, BLUE, 'annotate-marker');
+                                        this.$scope.$evalAsync();
+                                    }
+                                }
+                            });
                         });
-                    });
                 }
             }
         };
@@ -232,14 +245,14 @@ class LayerAnnotationsController {
     deleteClickedHighlight() {
         delete this.hoveredId;
         delete this.clickedId;
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             mapWrapper.deleteLayers('highlight');
         });
     }
 
     clearLabelFilter() {
-        this.labelInputs = [{'name': 'All', 'id': 0}];
-        this.filterLabel = {'name': 'All'};
+        this.labelInputs = [{ name: 'All', id: 0 }];
+        this.filterLabel = { name: 'All' };
         this.filterAnnotations('All');
     }
 
@@ -248,12 +261,12 @@ class LayerAnnotationsController {
     }
 
     updateLabelInputs(features) {
-        return [{'name': 'All', 'id': 0}].concat(
+        return [{ name: 'All', id: 0 }].concat(
             _.chain(features)
                 .map(f => {
                     return {
-                        'name': f.properties.label,
-                        'id': f.properties.label + new Date().getTime().toString()
+                        name: f.properties.label,
+                        id: f.properties.label + new Date().getTime().toString()
                     };
                 })
                 .uniqBy('name')
@@ -265,7 +278,7 @@ class LayerAnnotationsController {
     onClearAnnotation() {
         let answer = this.$window.confirm('Delete ALL annotations from this project?');
         if (answer) {
-            this.getMap().then((mapWrapper) => {
+            this.getMap().then(mapWrapper => {
                 // eslint-disable-next-line
                 let mappedAnnotations = mapWrapper._geoJsonMap.keySeq().toArray();
                 mappedAnnotations.forEach(id => mapWrapper.deleteGeojson(id));
@@ -293,10 +306,12 @@ class LayerAnnotationsController {
 
     addEmptyAnnotation(shape) {
         let labelFromFilter = this.filterLabel.name === 'All' ? '' : this.filterLabel.name;
-        const label = this.annotationTemplate ?
-            this.annotationTemplate.properties.label : labelFromFilter;
-        const description = this.annotationTemplate ?
-            this.annotationTemplate.properties.description : '';
+        const label = this.annotationTemplate
+            ? this.annotationTemplate.properties.label
+            : labelFromFilter;
+        const description = this.annotationTemplate
+            ? this.annotationTemplate.properties.description
+            : '';
 
         let annotationCollection = wrapFeatureCollection(
             propertiesToAnnotationFeature({
@@ -327,54 +342,58 @@ class LayerAnnotationsController {
                 };
             },
             pointToLayer: (geoJsonPoint, latlng) => {
-                return L.marker(latlng, {'icon': L.divIcon({'className': 'annotate-marker'})});
+                return L.marker(latlng, { icon: L.divIcon({ className: 'annotate-marker' }) });
             },
             onEachFeature: (feature, layer) => {
-                layer.bindPopup(
-                    `
+                layer
+                    .bindPopup(
+                        `
                     <label class="leaflet-popup-label">Label:<br/>
                     <p>${feature.properties.label}</p></label><br/>
                     <label class="leaflet-popup-label">Description:<br/>
                     <p>${feature.properties.description || 'No description'}</p></label>
                     `,
-                    {closeButton: false}
-                ).on('mouseover', (e) => {
-                    if (!this.sidebarDisabled && !this.clickedId) {
-                        this.hoveredId = feature.id;
-                        this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
-                        this.$anchorScroll('anchor' + this.hoveredId.toString());
-                        this.$scope.$evalAsync();
-                    }
-                }).on('mouseout', (e) => {
-                    if (!this.sidebarDisabled && !this.clickedId) {
-                        delete this.hoveredId;
-                        this.setLayerStyle(e.target, BLUE, 'annotate-marker');
-                        this.$scope.$evalAsync();
-                    }
-                }).on('click', (e) => {
-                    this.getMap().then((mapWrapper) => {
-                        mapWrapper.map.panTo(e.target.getBounds().getCenter());
-                        if (!this.sidebarDisabled) {
-                            delete this.hoveredId;
-                            if (this.clickedId !== feature.id) {
-                                let prevLayer = Object
-                                    .values(mapWrapper.getLayers('Annotation')[0]._layers)
-                                    .filter((l) => l.feature.id === this.clickedId);
-                                if (prevLayer.length) {
-                                    this.setLayerStyle(prevLayer[0], BLUE, 'annotate-marker');
-                                }
-                                this.clickedId = feature.id;
-                                this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
-                                this.$anchorScroll('anchor' + this.clickedId.toString());
-                                this.$scope.$evalAsync();
-                            } else {
-                                delete this.clickedId;
-                                this.setLayerStyle(e.target, BLUE, 'annotate-marker');
-                                this.$scope.$evalAsync();
-                            }
+                        { closeButton: false }
+                    )
+                    .on('mouseover', e => {
+                        if (!this.sidebarDisabled && !this.clickedId) {
+                            this.hoveredId = feature.id;
+                            this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
+                            this.$anchorScroll('anchor' + this.hoveredId.toString());
+                            this.$scope.$evalAsync();
                         }
+                    })
+                    .on('mouseout', e => {
+                        if (!this.sidebarDisabled && !this.clickedId) {
+                            delete this.hoveredId;
+                            this.setLayerStyle(e.target, BLUE, 'annotate-marker');
+                            this.$scope.$evalAsync();
+                        }
+                    })
+                    .on('click', e => {
+                        this.getMap().then(mapWrapper => {
+                            mapWrapper.map.panTo(e.target.getBounds().getCenter());
+                            if (!this.sidebarDisabled) {
+                                delete this.hoveredId;
+                                if (this.clickedId !== feature.id) {
+                                    let prevLayer = Object.values(
+                                        mapWrapper.getLayers('Annotation')[0]._layers
+                                    ).filter(l => l.feature.id === this.clickedId);
+                                    if (prevLayer.length) {
+                                        this.setLayerStyle(prevLayer[0], BLUE, 'annotate-marker');
+                                    }
+                                    this.clickedId = feature.id;
+                                    this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
+                                    this.$anchorScroll('anchor' + this.clickedId.toString());
+                                    this.$scope.$evalAsync();
+                                } else {
+                                    delete this.clickedId;
+                                    this.setLayerStyle(e.target, BLUE, 'annotate-marker');
+                                    this.$scope.$evalAsync();
+                                }
+                            }
+                        });
                     });
-                });
             }
         });
     }
@@ -385,23 +404,23 @@ class LayerAnnotationsController {
             target.feature.geometry.type === 'Polygon' ||
             target.feature.geometry.type === 'MultiPolygon'
         ) {
-            target.setStyle({'color': color});
+            target.setStyle({ color: color });
         } else if (target.feature.geometry.type === 'Point') {
-            target.setIcon(L.divIcon({'className': iconClass}));
+            target.setIcon(L.divIcon({ className: iconClass }));
         }
     }
 
     disableTransformHandler(mapWrapper) {
-        if (!_.isEmpty(mapWrapper.getLayers('draw')[0])
-            && mapWrapper.getLayers('draw')[0].transform) {
+        if (
+            !_.isEmpty(mapWrapper.getLayers('draw')[0]) &&
+            mapWrapper.getLayers('draw')[0].transform
+        ) {
             mapWrapper.getLayers('draw')[0].transform.disable();
         }
     }
 
     updateFilterAndMapRender(label) {
-        if (this.filterLabel.name !== 'All'
-            && this.filterLabel.name !== label
-        ) {
+        if (this.filterLabel.name !== 'All' && this.filterLabel.name !== label) {
             this.filterLabel.name = label;
             this.onFilterChange(this.filterLabel);
         } else if (this.filterLabel.name === label) {
@@ -498,28 +517,28 @@ class LayerAnnotationsController {
                 combo: 'up',
                 description: 'Move annotation north',
                 callback: () => {
-                    this.transformDrawlayer('translate', {direction: 'up'});
+                    this.transformDrawlayer('translate', { direction: 'up' });
                 }
             },
             {
                 combo: 'down',
                 description: 'Move annotation south',
                 callback: () => {
-                    this.transformDrawlayer('translate', {direction: 'down'});
+                    this.transformDrawlayer('translate', { direction: 'down' });
                 }
             },
             {
                 combo: 'left',
                 description: 'Move annotation west',
                 callback: () => {
-                    this.transformDrawlayer('translate', {direction: 'left'});
+                    this.transformDrawlayer('translate', { direction: 'left' });
                 }
             },
             {
                 combo: 'right',
                 description: 'Move annotation east',
                 callback: () => {
-                    this.transformDrawlayer('translate', {direction: 'right'});
+                    this.transformDrawlayer('translate', { direction: 'right' });
                 }
             },
             {
@@ -565,5 +584,4 @@ const component = {
 export default angular
     .module('components.pages.project.layer.annotations', ['cfp.hotkeys'])
     .controller(LayerAnnotationsController.name, LayerAnnotationsController)
-    .component('rfProjectLayerAnnotationsPage', component)
-    .name;
+    .component('rfProjectLayerAnnotationsPage', component).name;

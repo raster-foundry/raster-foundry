@@ -1,12 +1,9 @@
 import tpl from './index.html';
 
-class AnalysesPublishingController {
-
-}
+class AnalysesPublishingController {}
 
 const component = {
-    bindings: {
-    },
+    bindings: {},
     templateUrl: tpl,
     controller: AnalysesPublishingController.name
 };
@@ -14,5 +11,4 @@ const component = {
 export default angular
     .module('components.pages.project.analyses.publishing', [])
     .controller(AnalysesPublishingController.name, AnalysesPublishingController)
-    .component('rfProjectAnalysesPublishingPage', component)
-    .name;
+    .component('rfProjectAnalysesPublishingPage', component).name;

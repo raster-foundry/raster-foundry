@@ -13,8 +13,14 @@ const DatasourceItemComponent = {
 
 class DatasourceItemController {
     constructor(
-        $rootScope, $scope, $attrs, $log, $state,
-        authService, modalService, datasourceService
+        $rootScope,
+        $scope,
+        $attrs,
+        $log,
+        $state,
+        authService,
+        modalService,
+        datasourceService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -26,8 +32,8 @@ class DatasourceItemController {
         this.isGlobal = this.datasource.owner === 'default';
 
         this.$scope.$watch(
-            () => this.selected({project: this.project}),
-            (selected) => {
+            () => this.selected({ project: this.project }),
+            selected => {
                 this.selectedStatus = selected;
             }
         );
@@ -44,23 +50,29 @@ class DatasourceItemController {
     }
 
     toggleSelected(event) {
-        this.onSelect({project: this.project, selected: !this.selectedStatus});
+        this.onSelect({ project: this.project, selected: !this.selectedStatus });
         event.stopPropagation();
     }
 
     onOpenDatasourceDeleteModal() {
-        this.modalService.open({
-            component: 'rfDatasourceDeleteModal',
-            resolve: {
-                datasource: () => this.datasource
-            }
-        }).result.then(() => {
-            this.datasourceService.deleteDatasource(this.datasource.id).then(res => {
-                this.$state.reload();
-            }, (err) => {
-                this.$log.debug('error deleting datasource', err);
-            });
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfDatasourceDeleteModal',
+                resolve: {
+                    datasource: () => this.datasource
+                }
+            })
+            .result.then(() => {
+                this.datasourceService.deleteDatasource(this.datasource.id).then(
+                    res => {
+                        this.$state.reload();
+                    },
+                    err => {
+                        this.$log.debug('error deleting datasource', err);
+                    }
+                );
+            })
+            .catch(() => {});
     }
 }
 

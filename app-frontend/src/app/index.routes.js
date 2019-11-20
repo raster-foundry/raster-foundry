@@ -20,10 +20,6 @@ import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
 import projectsEditTpl from './pages/projects/edit/edit.html';
 
-import projectsEditColorTpl from './pages/projects/edit/color/color.html';
-import projectsEditColormodeTpl from './pages/projects/edit/colormode/colormode.html';
-import projectsAdvancedColorTpl from './pages/projects/edit/advancedcolor/advancedcolor.html';
-import projectsColorAdjustTpl from './pages/projects/edit/advancedcolor/adjust/adjust.html';
 import projectsListTpl from './pages/projects/list/list.html';
 import projectsScenesTpl from './pages/projects/edit/scenes/scenes.html';
 import projectsSceneBrowserTpl from './pages/projects/edit/browse/browse.html';
@@ -307,8 +303,11 @@ function projectStatesV2($stateProvider) {
                 onAnalysisUpdate: null
             },
             resolve: {
-                analysis: ['$transition$', ($transition$) => $transition$.params().analysis],
-                onAnalysisUpdate: ['$transition$', ($transition$) => $transition$.params().onAnalysisUpdate]
+                analysis: ['$transition$', $transition$ => $transition$.params().analysis],
+                onAnalysisUpdate: [
+                    '$transition$',
+                    $transition$ => $transition$.params().onAnalysisUpdate
+                ]
             }
         })
         .state('project.analyses.compare', {
@@ -437,34 +436,6 @@ function projectEditStates($stateProvider) {
                 }
             },
             redirectTo: 'projects.edit.scenes'
-        })
-        .state('projects.edit.colormode', {
-            title: 'Project: Color Mode',
-            url: '/colormode',
-            templateUrl: projectsEditColormodeTpl,
-            controller: 'ProjectsEditColormodeController',
-            controllerAs: '$ctrl'
-        })
-        .state('projects.edit.color', {
-            title: 'Project: Color Correct',
-            url: '/color',
-            templateUrl: projectsEditColorTpl,
-            controller: 'ProjectsEditColorController',
-            controllerAs: '$ctrl'
-        })
-        .state('projects.edit.advancedcolor', {
-            title: 'Project: Color Correct',
-            url: '/advancedcolor',
-            templateUrl: projectsAdvancedColorTpl,
-            controller: 'ProjectsAdvancedColorController',
-            controllerAs: '$ctrl'
-        })
-        .state('projects.edit.advancedcolor.adjust', {
-            title: 'Project: Color Correct',
-            url: '/adjust',
-            templateUrl: projectsColorAdjustTpl,
-            controller: 'ProjectsColorAdjustController',
-            controllerAs: '$ctrl'
         })
         .state('projects.edit.scenes', {
             title: 'Project: Scenes',

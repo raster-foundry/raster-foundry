@@ -158,7 +158,7 @@ class NewExportController {
             .open({
                 component: 'rfConfirmationModal',
                 resolve: {
-                    title: () => 'You don\'t have Dropbox credential set',
+                    title: () => "You don't have Dropbox credential set",
                     content: () => 'Go to your API connections page and set one?',
                     confirmText: () => 'Add Dropbox credential',
                     cancelText: () => 'Cancel'

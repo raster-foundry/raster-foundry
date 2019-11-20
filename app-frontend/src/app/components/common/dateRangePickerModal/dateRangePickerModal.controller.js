@@ -38,8 +38,9 @@ export default class DateRangePickerModalController {
     }
 
     checkRange() {
-        return this._range.start.isBefore(this._range.end) ||
-            this._range.start.isSame(this._range.end);
+        return (
+            this._range.start.isBefore(this._range.end) || this._range.start.isSame(this._range.end)
+        );
     }
 
     setInitStartEndValues() {
@@ -94,10 +95,10 @@ export default class DateRangePickerModalController {
     }
 
     bindInputChangeEvents() {
-        this.startInput.on('change blur', (e) => {
+        this.startInput.on('change blur', e => {
             this.resetDateDisplay(e.target.value, this.startInput, 'start');
         });
-        this.endInput.on('change blur', (e) => {
+        this.endInput.on('change blur', e => {
             this.resetDateDisplay(e.target.value, this.endInput, 'end');
         });
     }
@@ -107,9 +108,17 @@ export default class DateRangePickerModalController {
             this.isRangeValid = this.checkRange();
             if (this.isRangeValid) {
                 this.resetDateDisplay(
-                    this._range.start.format('MM/DD/YYYY'), this.startInput, 'start', false);
+                    this._range.start.format('MM/DD/YYYY'),
+                    this.startInput,
+                    'start',
+                    false
+                );
                 this.resetDateDisplay(
-                    this._range.end.format('MM/DD/YYYY'), this.endInput, 'end', false);
+                    this._range.end.format('MM/DD/YYYY'),
+                    this.endInput,
+                    'end',
+                    false
+                );
             }
         }, 0);
     }
@@ -167,6 +176,6 @@ export default class DateRangePickerModalController {
     }
 
     closeWithData(data) {
-        this.close({$value: data});
+        this.close({ $value: data });
     }
 }

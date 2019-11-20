@@ -1,9 +1,9 @@
 /* global $, BUILDCONFIG */
 /* eslint-disable camelcase */
 
-export default (app) => {
+export default app => {
     class GeocodeService {
-        constructor() { }
+        constructor() {}
 
         getLocationSuggestions(query) {
             const baseUrl = 'https://autocomplete.geocoder.cit.api.here.com/6.2/suggest.json';

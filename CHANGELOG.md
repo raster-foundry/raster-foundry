@@ -10,6 +10,8 @@
 
 ### Removed
 
+- Complex color correction (saturation, per-band clipping, contrast adjustment, etc.) [#5245](https://github.com/raster-foundry/raster-foundry/pull/5245)
+
 ### Fixed
 
 - Fixed usage of license types for STAC exports [\#5240](https://github.com/raster-foundry/raster-foundry/pull/5240)

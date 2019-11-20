@@ -1,5 +1,5 @@
 /* globals BUILDCONFIG */
-export default (app) => {
+export default app => {
     class ThumbnailService {
         constructor(authService) {
             'ngInject';

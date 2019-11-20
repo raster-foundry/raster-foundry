@@ -1,4 +1,4 @@
-export default (app) => {
+export default app => {
     class ProjectHistogramService {
         constructor($http, authService, APP_CONFIG) {
             'ngInject';
@@ -13,8 +13,6 @@ export default (app) => {
                 scenes
             );
         }
-
-
     }
 
     app.service('projectHistogramService', ProjectHistogramService);

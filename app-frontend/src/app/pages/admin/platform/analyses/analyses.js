@@ -2,10 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 
 class Controller {
-    constructor(
-        authService,
-        platform, organizations, members
-    ) {
+    constructor(authService, platform, organizations, members) {
         this.authService = authService;
         this.platform = platform;
         this.organizations = organizations;
@@ -13,11 +10,10 @@ class Controller {
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.debouncedSearch = _.debounce(this.onSearch.bind(this), 500, {
+            leading: false,
+            trailing: true
+        });
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
 
@@ -41,8 +37,7 @@ class Controller {
     }
 
     // page = 0, search = ''
-    fetchPage() {
-    }
+    fetchPage() {}
 }
 
 const Module = angular.module('pages.platform.analyses', []);

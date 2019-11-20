@@ -27,20 +27,23 @@ class StaticMapController {
         this.hasTileLoadingError = false;
         this.tileLoadingErrors = new Map();
         this.tileLoadingStatus = new Map();
-        this.mapOptions = Object.assign({
-            static: true,
-            zoomControl: false,
-            worldCopyJump: true,
-            minZoom: 2,
-            scrollWheelZoom: false,
-            doubleClickZoom: false,
-            dragging: false,
-            touchZoom: false,
-            boxZoom: false,
-            keyboard: false,
-            tap: false,
-            maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
-        }, this.options);
+        this.mapOptions = Object.assign(
+            {
+                static: true,
+                zoomControl: false,
+                worldCopyJump: true,
+                minZoom: 2,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                dragging: false,
+                touchZoom: false,
+                boxZoom: false,
+                keyboard: false,
+                tap: false,
+                maxZoom: BUILDCONFIG.VISUAL_MAX_ZOOM
+            },
+            this.options
+        );
     }
 
     $postLink() {
@@ -51,7 +54,7 @@ class StaticMapController {
 
     $onChanges(changes) {
         if (changes.options && changes.options.currentValue) {
-            this.mapService.getMap(this.mapId).then((mapWrapper) => {
+            this.mapService.getMap(this.mapId).then(mapWrapper => {
                 mapWrapper.changeOptions(
                     Object.assign({}, this.mapOptions, changes.options.currentValue)
                 );
@@ -103,16 +106,20 @@ class StaticMapController {
     setLoading(layerId, status) {
         this.tileLoadingStatus.set(layerId, status);
         this.$scope.$evalAsync(() => {
-            this.isLoadingTiles =
-                Array.from(this.tileLoadingStatus.values()).reduce((acc, cur) => acc || cur, false);
+            this.isLoadingTiles = Array.from(this.tileLoadingStatus.values()).reduce(
+                (acc, cur) => acc || cur,
+                false
+            );
         });
     }
 
     setLoadingError(layerId, status) {
         this.tileLoadingErrors.set(layerId, status);
         this.$scope.$evalAsync(() => {
-            this.hasTileLoadingError =
-                Array.from(this.tileLoadingErrors.values()).reduce((acc, cur) => acc || cur, false);
+            this.hasTileLoadingError = Array.from(this.tileLoadingErrors.values()).reduce(
+                (acc, cur) => acc || cur,
+                false
+            );
         });
     }
 }

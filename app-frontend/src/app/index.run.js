@@ -1,10 +1,22 @@
 /* global BUILDCONFIG */
 import $ from 'jquery';
 function runBlock(
-    $rootScope, jwtHelper, $state, $location, $window, APP_CONFIG,
-    $ngRedux, $timeout, $transitions,
-    authService, localStorage, rollbarWrapperService, intercomService,
-    featureFlags, perUserFeatureFlags, modalService
+    $rootScope,
+    jwtHelper,
+    $state,
+    $location,
+    $window,
+    APP_CONFIG,
+    $ngRedux,
+    $timeout,
+    $transitions,
+    authService,
+    localStorage,
+    rollbarWrapperService,
+    intercomService,
+    featureFlags,
+    perUserFeatureFlags,
+    modalService
 ) {
     'ngInject';
     let flagsPromise;
@@ -23,14 +35,12 @@ function runBlock(
         $state.go('error');
     }
 
-
-    $transitions.onStart({}, (transition) => {
+    $transitions.onStart({}, transition => {
         const toState = transition.to();
         const fromState = transition.from();
         function setupState(route) {
             let appName = BUILDCONFIG.APP_NAME;
-            $window.document.title = toState.title ?
-                `${appName} - ${toState.title}` : appName;
+            $window.document.title = toState.title ? `${appName} - ${toState.title}` : appName;
 
             let idToken = localStorage.get('idToken');
             let accessToken = localStorage.get('accessToken');
@@ -59,7 +69,8 @@ function runBlock(
                 intercomService.bootWithUser(authService.getProfile());
                 if (toState.redirectTo) {
                     return transition.router.stateService.target(
-                        toState.redirectTo, Object.assign({}, transition.params())
+                        toState.redirectTo,
+                        Object.assign({}, transition.params())
                     );
                 }
             } else if (idToken && accessToken) {
@@ -85,8 +96,8 @@ function runBlock(
 
         if (
             toState.name !== fromState.name &&
-                toState.redirectTo !== fromState.name &&
-                toState.resolve
+            toState.redirectTo !== fromState.name &&
+            toState.resolve
         ) {
             $rootScope.isLoadingResolves = true;
         }
@@ -95,32 +106,32 @@ function runBlock(
         // is easier, or refactor FeatureFlags to deal in promises.
         // Note that on initial login, the feature flags get populated in the AuthService.
         if (flagsPromise) {
-            return flagsPromise.then(
-                () => setupState({path: $location.path(), search: $location.search()})
-            ).catch(e => {
-                if (toState.name === 'error') {
-                    return true;
-                }
-                return transition.router.stateService.target('error');
-            });
+            return flagsPromise
+                .then(() => setupState({ path: $location.path(), search: $location.search() }))
+                .catch(e => {
+                    if (toState.name === 'error') {
+                        return true;
+                    }
+                    return transition.router.stateService.target('error');
+                });
         }
-        return setupState({path: $location.path(), search: $location.search()});
+        return setupState({ path: $location.path(), search: $location.search() });
     });
 
-    $transitions.onSuccess({}, (transition) => {
+    $transitions.onSuccess({}, transition => {
         $rootScope.isLoadingResolves = false;
         modalService.closeActiveModal();
     });
 
-    $rootScope.autoInject = function (context, args) {
+    $rootScope.autoInject = function(context, args) {
         context.constructor.$inject.forEach((injectable, idx) => {
             switch (injectable) {
-            case '$element':
-            case '$document':
-                context[injectable] = $(args[idx]);
-                break;
-            default:
-                context[injectable] = args[idx];
+                case '$element':
+                case '$document':
+                    context[injectable] = $(args[idx]);
+                    break;
+                default:
+                    context[injectable] = args[idx];
             }
         });
     };

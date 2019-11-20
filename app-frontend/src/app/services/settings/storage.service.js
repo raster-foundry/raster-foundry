@@ -1,5 +1,5 @@
 /* globals window*/
-export default (app) => {
+export default app => {
     class Storage {
         constructor(storage) {
             this.storage = storage;

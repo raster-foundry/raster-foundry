@@ -14,13 +14,15 @@ class ShareProjectController {
 
     $onInit() {
         this.assetLogo = assetLogo;
-        this.projectPromise.then((project) => {
-            this.project = project;
-            this.fitToProject(project);
-        }).catch(e => {
-            this.$log.error('There was an error fetching the project', e);
-            this.$state.go('shareProject.error', {error: e});
-        });
+        this.projectPromise
+            .then(project => {
+                this.project = project;
+                this.fitToProject(project);
+            })
+            .catch(e => {
+                this.$log.error('There was an error fetching the project', e);
+                this.$state.go('shareProject.error', { error: e });
+            });
     }
 
     getMap() {

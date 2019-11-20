@@ -3,7 +3,7 @@ import annotateSidebarItemTpl from './annotateSidebarItem.html';
 require('./annotateSidebarItem.scss');
 
 import AnnotationActions from '_redux/actions/annotation-actions';
-import {wrapFeatureCollection} from '_redux/annotation-utils';
+import { wrapFeatureCollection } from '_redux/annotation-utils';
 
 const AnnotateSidebarItemComponent = {
     templateUrl: annotateSidebarItemTpl,
@@ -15,9 +15,7 @@ const AnnotateSidebarItemComponent = {
 };
 
 class AnnotateSidebarItemController {
-    constructor(
-        $rootScope, $log, $scope, $timeout, $ngRedux, $window
-    ) {
+    constructor($rootScope, $log, $scope, $timeout, $ngRedux, $window) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -38,14 +36,13 @@ class AnnotateSidebarItemController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            AnnotationActions
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), AnnotationActions)(
+            this
+        );
         this.$scope.$on('$destroy', unsubscribe);
         this.minMatchedLabelLength = 3;
         this.maxMatchedLabels = 4;
-        let watch = this.$scope.$watch('$ctrl.annotationId', (annotationId) => {
+        let watch = this.$scope.$watch('$ctrl.annotationId', annotationId => {
             if (annotationId && !this.annotation && this.annotations) {
                 this.annotation = this.annotations.get(annotationId);
                 watch();
@@ -96,11 +93,13 @@ class AnnotateSidebarItemController {
     }
 
     onQaCheck(qa) {
-        this.updateAnnotation(Object.assign({}, this.annotation, {
-            properties: Object.assign({}, this.annotation.properties, {
-                quality: qa
+        this.updateAnnotation(
+            Object.assign({}, this.annotation, {
+                properties: Object.assign({}, this.annotation.properties, {
+                    quality: qa
+                })
             })
-        }));
+        );
     }
 
     onLabelNameChange() {
@@ -113,7 +112,7 @@ class AnnotateSidebarItemController {
 
     matchLabelName(labelName) {
         let normalizedLabel = labelName.toString().toUpperCase();
-        this.labelInputsMatch = this.labels.filter((label) => {
+        this.labelInputsMatch = this.labels.filter(label => {
             return label.toUpperCase().includes(normalizedLabel);
         });
         if (this.labelInputsMatch.length) {

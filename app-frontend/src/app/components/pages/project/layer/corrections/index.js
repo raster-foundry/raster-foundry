@@ -48,8 +48,13 @@ const betaOptions = {
 
 class LayerCorrectionsController {
     constructor(
-        $rootScope, $state, $timeout,
-        projectService, paginationService, colorCorrectService, mapService
+        $rootScope,
+        $state,
+        $timeout,
+        projectService,
+        paginationService,
+        colorCorrectService,
+        mapService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -137,7 +142,6 @@ class LayerCorrectionsController {
         this.updateSingleGammaProxy();
     }
 
-
     ensureSigmoidalContrastValues() {
         this.ensureValues('sigmoidalContrast', ['alpha', 'beta']);
     }
@@ -148,11 +152,12 @@ class LayerCorrectionsController {
 
     // avg(rgb channel values) -> single gamma value
     updateSingleGammaProxy() {
-        this.singleGammaProxy = ((
-            this.correction.gamma.redGamma +
-            this.correction.gamma.greenGamma +
-            this.correction.gamma.blueGamma
-        ) / 3).toFixed(2);
+        this.singleGammaProxy = (
+            (this.correction.gamma.redGamma +
+                this.correction.gamma.greenGamma +
+                this.correction.gamma.blueGamma) /
+            3
+        ).toFixed(2);
     }
 
     // proxy -> rgb channel values
@@ -241,14 +246,11 @@ class LayerCorrectionsController {
 
     persistChanges(scenes = this.selections.toArray()) {
         if (scenes.length) {
-            this.colorCorrectService.bulkUpdateForLayer(
-                this.project.id,
-                this.layer.id,
-                scenes,
-                this.correction
-            ).then(() => {
-                this.setMapLayers();
-            });
+            this.colorCorrectService
+                .bulkUpdateForLayer(this.project.id, this.layer.id, scenes, this.correction)
+                .then(() => {
+                    this.setMapLayers();
+                });
         }
     }
 
@@ -257,29 +259,31 @@ class LayerCorrectionsController {
         // this.getIngestingSceneCount();
         delete this.fetchError;
         this.sceneList = [];
-        const currentQuery = this.projectService.getProjectLayerScenes(
-            this.project.id,
-            this.layer.id,
-            {
+        const currentQuery = this.projectService
+            .getProjectLayerScenes(this.project.id, this.layer.id, {
                 pageSize: this.projectService.scenePageSize,
                 page: page - 1
-            }
-        ).then((paginatedResponse) => {
-            this.sceneList = paginatedResponse.results;
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
+            })
+            .then(
+                paginatedResponse => {
+                    this.sceneList = paginatedResponse.results;
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page);
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
+                }
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
         this.currentQuery = currentQuery;
         return currentQuery;
     }
@@ -308,5 +312,4 @@ const component = {
 export default angular
     .module('components.pages.project.layer.corrections', [])
     .controller(LayerCorrectionsController.name, LayerCorrectionsController)
-    .component('rfProjectLayerCorrectionsPage', component)
-    .name;
+    .component('rfProjectLayerCorrectionsPage', component).name;

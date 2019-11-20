@@ -191,7 +191,7 @@ class LayerExportCreateController {
                     .then(() => {})
                     .catch(err => {
                         this.$window.alert(
-                            'There was an error adding this layer\'s ' +
+                            "There was an error adding this layer's " +
                                 ' export AOI as vector data. Please try again later'
                         );
                         this.$log.error(err);
@@ -236,9 +236,8 @@ class LayerExportCreateController {
                 this.authService.user.dropboxCredential.length;
             if (hasDropbox) {
                 let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
-                this.exportSource = `dropbox:///${appName}/projects/${this.project.id}/layer/${
-                    this.layer.id
-                }`;
+                /* eslint-disable-next-line max-len */
+                this.exportSource = `dropbox:///${appName}/projects/${this.project.id}/layer/${this.layer.id}`;
             } else {
                 this.displayDropboxModal();
             }
@@ -250,7 +249,7 @@ class LayerExportCreateController {
             .open({
                 component: 'rfConfirmationModal',
                 resolve: {
-                    title: () => 'You don\'t have Dropbox credential set',
+                    title: () => "You don't have Dropbox credential set",
                     content: () => 'Go to your API connections page and set one?',
                     confirmText: () => 'Add Dropbox credential',
                     cancelText: () => 'Cancel'

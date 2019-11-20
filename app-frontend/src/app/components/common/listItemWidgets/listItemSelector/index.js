@@ -28,7 +28,7 @@ class ListItemSelectorController {
         $event.stopPropagation();
         $event.preventDefault();
         if (!this.disableSelection) {
-            this.onSelect({id: this.id});
+            this.onSelect({ id: this.id });
         }
     }
 }
@@ -45,7 +45,7 @@ const component = {
     templateUrl: tpl
 };
 
-export default angular.module('components.common.listItemWidgets.listItemSelector', [])
+export default angular
+    .module('components.common.listItemWidgets.listItemSelector', [])
     .component('rfListItemSelector', component)
-    .controller(ListItemSelectorController.name, ListItemSelectorController)
-    .name;
+    .controller(ListItemSelectorController.name, ListItemSelectorController).name;

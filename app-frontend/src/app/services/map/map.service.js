@@ -1,4 +1,4 @@
-import {Map, Set} from 'immutable';
+import { Map, Set } from 'immutable';
 import _ from 'lodash';
 
 /* eslint no-unused-vars: 0 */
@@ -8,7 +8,13 @@ import _ from 'lodash';
 class MapWrapper {
     // MapWrapper is a bare es6 class, so does not use angular injections
     constructor( // eslint-disable-next-line
-        $q, leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
+        $q,
+        leafletMap,
+        mapId,
+        imageOverlayService,
+        datasourceService,
+        options,
+        thumbnailService
     ) {
         this.$q = $q;
         this.thumbnailService = thumbnailService;
@@ -39,20 +45,14 @@ class MapWrapper {
         this.baseMaps = {};
 
         let basemapLayers = BUILDCONFIG.BASEMAPS.layers;
-        Object.keys(basemapLayers).forEach((basemapName) => {
+        Object.keys(basemapLayers).forEach(basemapName => {
             let basemaps = basemapLayers[basemapName];
-            let basemapOptions = Object.assign(
-                {pane: 'basemap'},
-                basemaps.properties
-            );
-            this.baseMaps[basemapName] = L.tileLayer(
-                basemaps.url,
-                basemapOptions
-            );
+            let basemapOptions = Object.assign({ pane: 'basemap' }, basemaps.properties);
+            this.baseMaps[basemapName] = L.tileLayer(basemaps.url, basemapOptions);
         });
-        let defaultBasemap = BUILDCONFIG.BASEMAPS.default ?
-            BUILDCONFIG.BASEMAPS.default :
-            this.baseMaps[Object.keys(this.baseMaps)[0]];
+        let defaultBasemap = BUILDCONFIG.BASEMAPS.default
+            ? BUILDCONFIG.BASEMAPS.default
+            : this.baseMaps[Object.keys(this.baseMaps)[0]];
         this.setBasemap(defaultBasemap);
 
         this.changeOptions(this.options);
@@ -76,11 +76,11 @@ class MapWrapper {
         ];
 
         if (options && options.static) {
-            mapInteractionOptions.map((option) => {
+            mapInteractionOptions.map(option => {
                 option.disable();
             });
         } else {
-            mapInteractionOptions.map((option) => {
+            mapInteractionOptions.map(option => {
                 option.enable();
             });
         }
@@ -154,7 +154,7 @@ class MapWrapper {
      */
     on(event, callback) {
         // wrap callback to track listeners internally
-        let callbackWrapper = (e) => callback(e, this);
+        let callbackWrapper = e => callback(e, this);
         let callbackId = this._callbackCounter;
         this._callbackCounter = this._callbackCounter + 1;
         this._callbacks = this._callbacks.set(callbackId, [event, callbackWrapper]);
@@ -199,8 +199,12 @@ class MapWrapper {
 
         if (features) {
             for (let feature of features) {
-                if (feature.geometries || feature.geometry ||
-                    feature.features || feature.coordinates) {
+                if (
+                    feature.geometries ||
+                    feature.geometry ||
+                    feature.features ||
+                    feature.coordinates
+                ) {
                     this.addGeojson(id, feature, allOptions);
                 }
             }
@@ -225,9 +229,7 @@ class MapWrapper {
 
         this._geoJsonLayerGroup.addLayer(layer);
         if (this._geoJsonMap.has(id)) {
-            this._geoJsonMap = this._geoJsonMap.set(
-                id, this._geoJsonMap.get(id).concat(layer)
-            );
+            this._geoJsonMap = this._geoJsonMap.set(id, this._geoJsonMap.get(id).concat(layer));
         } else {
             this._geoJsonMap = this._geoJsonMap.set(id, [layer]);
         }
@@ -235,10 +237,10 @@ class MapWrapper {
     }
 
     rectifyCoords(latlongs) {
-        return latlongs.map((multipolygon) => {
-            return multipolygon.map((polygon) => {
-                return polygon.map((cord) => {
-                    return {lng: cord.lng > 0 ? cord.lng - 360 : cord.lng, lat: cord.lat};
+        return latlongs.map(multipolygon => {
+            return multipolygon.map(polygon => {
+                return polygon.map(cord => {
+                    return { lng: cord.lng > 0 ? cord.lng - 360 : cord.lng, lat: cord.lat };
                 });
             });
         });
@@ -253,9 +255,11 @@ class MapWrapper {
         //       less off center. In order for a scene to not trigger rectification, it
         //       would need to cover 60+ degrees of longitude
         const differenceThreshold = 30;
-        return bounds &&
-              Math.abs(bounds.getEast() + bounds.getWest()) < differenceThreshold &&
-              afterArea < beforeArea;
+        return (
+            bounds &&
+            Math.abs(bounds.getEast() + bounds.getWest()) < differenceThreshold &&
+            afterArea < beforeArea
+        );
     }
 
     rectifyLayerCoords(currentLayer) {
@@ -345,10 +349,7 @@ class MapWrapper {
             this._toggleableLayers = this._toggleableLayers.delete(id);
         }
 
-        let layerList = [
-            ...this.getLayers(id),
-            ...[layer]
-        ];
+        let layerList = [...this.getLayers(id), ...[layer]];
         if (options.showLayer) {
             this._layerGroup.addLayer(layer);
             this._layerMap = this._layerMap.set(id, layerList);
@@ -381,7 +382,7 @@ class MapWrapper {
 
         if (Array.isArray(layer)) {
             this._layerMap = this._layerMap.set(id, layer);
-            layer.map((layerItem) => {
+            layer.map(layerItem => {
                 this._layerGroup.addLayer(layerItem);
             });
             return this;
@@ -409,7 +410,7 @@ class MapWrapper {
             // add layers to this._hiddenLayerMap
             this._hiddenLayerMap = this._hiddenLayerMap.set(id, allLayers);
             // remove layers from this._layerMap
-            layers.forEach((layer) => {
+            layers.forEach(layer => {
                 this._layerGroup.removeLayer(layer);
             });
             this._layerMap = this._layerMap.delete(id);
@@ -431,7 +432,7 @@ class MapWrapper {
             allLayers = layers ? hiddenLayers.concat(layers) : hiddenLayers;
             // add layers to this._layerMap
             this._layerMap = this._layerMap.set(id, allLayers);
-            hiddenLayers.forEach((layer) => {
+            hiddenLayers.forEach(layer => {
                 this._layerGroup.addLayer(layer);
             });
             // remove layers from this._hiddenLayerMap
@@ -450,7 +451,7 @@ class MapWrapper {
     layerHasId(layer, id) {
         let hiddenLayers = this._hiddenLayerMap.get(id);
         let layers = this._layerMap.get(id);
-        return hiddenLayers && hiddenLayers.includes(layer) || layers && layers.includes(layer);
+        return (hiddenLayers && hiddenLayers.includes(layer)) || (layers && layers.includes(layer));
     }
 
     /** Get the visibility of layers matching an id
@@ -514,64 +515,47 @@ class MapWrapper {
 
         let options = Object.assign({}, thumbnailOptions);
 
-        let footprintGeojson = Object.assign(
-            {},
-            scene.dataFootprint,
-            {
-                properties: {
-                    options: {
-                        stroke: 1,
-                        fillOpacity: 0,
-                        weight: 2,
-                        interactive: false
-                    }
+        let footprintGeojson = Object.assign({}, scene.dataFootprint, {
+            properties: {
+                options: {
+                    stroke: 1,
+                    fillOpacity: 0,
+                    weight: 2,
+                    interactive: false
                 }
             }
-        );
+        });
 
         if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();
 
-            this.$q.all({
-                url: repository.service.getPreview(scene),
-                datasource: repository.service.getDatasource(scene)
-            }).then(({url, datasource}) => {
-                let overlay = this.imageOverlayService.createNewImageOverlay(
-                    url,
-                    imageBounds,
-                    {
+            this.$q
+                .all({
+                    url: repository.service.getPreview(scene),
+                    datasource: repository.service.getDatasource(scene)
+                })
+                .then(({ url, datasource }) => {
+                    let overlay = this.imageOverlayService.createNewImageOverlay(url, imageBounds, {
                         opacity: 1,
-                        dataMask: repository.service.skipThumbnailClipping ?
-                            scene.tileFootprint : scene.dataFootprint,
+                        dataMask: repository.service.skipThumbnailClipping
+                            ? scene.tileFootprint
+                            : scene.dataFootprint,
                         thumbnail: url,
                         attribution: `${datasource.name} `
+                    });
+                    if (!options.persist) {
+                        this.setLayer('thumbnail', overlay);
+                    } else {
+                        this.persistedThumbnails = this.persistedThumbnails.set(scene.id, overlay);
+                        this.setLayer('Selected Scenes', this.persistedThumbnails.toArray(), true);
                     }
-                );
-                if (!options.persist) {
-                    this.setLayer('thumbnail', overlay);
-                } else {
-                    this.persistedThumbnails = this.persistedThumbnails.set(scene.id, overlay);
-                    this.setLayer(
-                        'Selected Scenes',
-                        this.persistedThumbnails.toArray(),
-                        true
-                    );
-                }
-                this.setGeojson(
-                    'thumbnail',
-                    footprintGeojson,
-                    {rectify: true}
-                );
-            });
+                    this.setGeojson('thumbnail', footprintGeojson, { rectify: true });
+                });
         } else if (scene.dataFootprint) {
             this.deleteLayers('thumbnail');
-            this.setGeojson(
-                'thumbnail',
-                footprintGeojson,
-                {rectify: true}
-            );
+            this.setGeojson('thumbnail', footprintGeojson, { rectify: true });
         }
         return this;
     }
@@ -630,11 +614,9 @@ class MapWrapper {
     }
 }
 
-export default (app) => {
+export default app => {
     class MapService {
-        constructor(
-          $q, imageOverlayService, datasourceService, thumbnailService
-        ) {
+        constructor($q, imageOverlayService, datasourceService, thumbnailService) {
             'ngInject';
             this.maps = new Map();
             this._mapPromises = new Map();
@@ -646,14 +628,19 @@ export default (app) => {
 
         // Leaflet components should self-register using this method.
         registerMap(map, id, options) {
-            let mapWrapper =
-                new MapWrapper(
-                    this.$q, map, id, this.imageOverlayService, this.datasourceService,
-                    options, this.thumbnailService);
+            let mapWrapper = new MapWrapper(
+                this.$q,
+                map,
+                id,
+                this.imageOverlayService,
+                this.datasourceService,
+                options,
+                this.thumbnailService
+            );
             this.maps = this.maps.set(id, mapWrapper);
             // if any promises , resolve them
             if (this._mapPromises.has(id)) {
-                this._mapPromises.get(id).forEach((promise) => {
+                this._mapPromises.get(id).forEach(promise => {
                     promise.resolve(mapWrapper);
                 });
                 this._mapPromises.delete(id);
@@ -663,24 +650,21 @@ export default (app) => {
 
         deregisterMap(id) {
             // unregister all listeners on the map
-            this.getMap(id).then((mapWrapper) => {
+            this.getMap(id).then(mapWrapper => {
                 if (this._mapPromises.has(id)) {
-                    this._mapPromises.get(id).forEach((promise) => {
+                    this._mapPromises.get(id).forEach(promise => {
                         promise.reject('Map has been deleted');
                     });
                 }
                 // eslint-disable-next-line no-underscore-dangle
-                mapWrapper._callbacks.forEach(
-                    (value, key) => {
-                        mapWrapper.off(key);
-                    }
-                );
+                mapWrapper._callbacks.forEach((value, key) => {
+                    mapWrapper.off(key);
+                });
                 this.maps = this.maps.delete(id);
             });
             // delete reference to map
             // if any promises, resolve them with a failure
         }
-
 
         getMap(id) {
             let deferred = this.$q.defer();

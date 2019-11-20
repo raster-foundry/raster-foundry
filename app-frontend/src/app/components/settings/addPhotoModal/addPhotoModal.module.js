@@ -1,7 +1,6 @@
 import angular from 'angular';
 import addPhotoModalTpl from './addPhotoModal.html';
 
-
 const AddPhotoModalComponent = {
     templateUrl: addPhotoModalTpl,
     controller: 'AddPhotoModalController',
@@ -30,26 +29,30 @@ class AddPhotoModalController {
 
     initSteps() {
         this.steps = [];
-        this.steps = this.steps.concat([{
-            name: 'UPLOAD',
-            previous: () => false,
-            allowPrevious: () => false,
-            next: () => 'PREVIEW',
-            allowNext: () => this.selectedPhoto,
-            allowClose: () => true
-        }, {
-            name: 'PREVIEW',
-            previous: () => 'UPLOAD',
-            allowPrevious: () => true,
-            next: () => 'UPLOAD_PROGRESS',
-            allowNext: () => true,
-            allowClose: () => true
-        }, {
-            name: 'UPLOAD_PROGRESS',
-            onEnter: () => this.startLogoUpload(),
-            allowDone: () => !this.uploadInProgress && this.uploadDone,
-            onExit: () => this.finishUpload()
-        }]);
+        this.steps = this.steps.concat([
+            {
+                name: 'UPLOAD',
+                previous: () => false,
+                allowPrevious: () => false,
+                next: () => 'PREVIEW',
+                allowNext: () => this.selectedPhoto,
+                allowClose: () => true
+            },
+            {
+                name: 'PREVIEW',
+                previous: () => 'UPLOAD',
+                allowPrevious: () => true,
+                next: () => 'UPLOAD_PROGRESS',
+                allowNext: () => true,
+                allowClose: () => true
+            },
+            {
+                name: 'UPLOAD_PROGRESS',
+                onEnter: () => this.startLogoUpload(),
+                allowDone: () => !this.uploadInProgress && this.uploadDone,
+                onExit: () => this.finishUpload()
+            }
+        ]);
 
         this.setCurrentStep(this.steps[0]);
     }
@@ -69,19 +72,24 @@ class AddPhotoModalController {
         this.uploadInProgress = true;
 
         let self = this;
-        this.Upload.base64DataUrl(this.selectedPhoto).then((base64) => {
-            self.organizationService.addOrganizationLogo(
-                self.organizationId,
-                base64.replace('data:image/png;base64,', '')
-            ).then(resp => {
-                self.uploadDone = true;
-                self.uploadInProgress = false;
-                self.uploadedOrganization = resp;
-            }, (err) => {
-                self.uploadDone = false;
-                self.uploadInProgress = false;
-                self.currentError = err.data;
-            });
+        this.Upload.base64DataUrl(this.selectedPhoto).then(base64 => {
+            self.organizationService
+                .addOrganizationLogo(
+                    self.organizationId,
+                    base64.replace('data:image/png;base64,', '')
+                )
+                .then(
+                    resp => {
+                        self.uploadDone = true;
+                        self.uploadInProgress = false;
+                        self.uploadedOrganization = resp;
+                    },
+                    err => {
+                        self.uploadDone = false;
+                        self.uploadInProgress = false;
+                        self.currentError = err.data;
+                    }
+                );
         });
     }
 
@@ -155,10 +163,10 @@ class AddPhotoModalController {
 
     preventInterruptions() {
         if (!this.closeCanceller) {
-            this.closeCanceller = this.$scope.$on('modal.closing', (e) => {
+            this.closeCanceller = this.$scope.$on('modal.closing', e => {
                 e.preventDefault();
             });
-            this.locationChangeCanceller = this.$scope.$on('$locationChangeStart', (event) => {
+            this.locationChangeCanceller = this.$scope.$on('$locationChangeStart', event => {
                 event.preventDefault();
             });
         }
@@ -181,12 +189,11 @@ class AddPhotoModalController {
     }
 
     closeWithData(data) {
-        this.close({$value: data});
+        this.close({ $value: data });
     }
 }
 
-const AddPhotoModalModule = angular.module('components.settings.addPhotoModal',
-    ['ngFileUpload']);
+const AddPhotoModalModule = angular.module('components.settings.addPhotoModal', ['ngFileUpload']);
 
 AddPhotoModalModule.component('rfAddPhotoModal', AddPhotoModalComponent);
 AddPhotoModalModule.controller('AddPhotoModalController', AddPhotoModalController);

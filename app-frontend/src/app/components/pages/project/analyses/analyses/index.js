@@ -505,7 +505,10 @@ class AnalysesListController {
     }
 
     zoomToSelected() {
-        const geoms = this.selected.valueSeq().toArray().map(s => s.layerGeometry);
+        const geoms = this.selected
+            .valueSeq()
+            .toArray()
+            .map(s => s.layerGeometry);
         const bounds = L.geoJSON(geoms).getBounds();
         this.getMap().then(map => {
             map.map.fitBounds(bounds);
@@ -514,7 +517,7 @@ class AnalysesListController {
 
     showSelected() {
         this.visible = this.visible.union(this.selected.keySeq().toArray());
-        this.syncMapLayersToVisible()
+        this.syncMapLayersToVisible();
     }
 
     hideSelected() {

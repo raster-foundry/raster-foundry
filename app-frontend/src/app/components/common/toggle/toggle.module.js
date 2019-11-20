@@ -33,7 +33,7 @@ class ToggleController {
     toggle($event) {
         $event.stopPropagation();
         $event.preventDefault();
-        this.onChange({value: !this.currentValue});
+        this.onChange({ value: !this.currentValue });
     }
 }
 

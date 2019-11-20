@@ -4,9 +4,18 @@ import autoInject from '_appRoot/autoInject';
 
 class UserController {
     constructor(
-        authService, teamService,
-        user, userRoles, organizations, teams,
-        projects, rasters, vectors, datasources, templates, analyses
+        authService,
+        teamService,
+        user,
+        userRoles,
+        organizations,
+        teams,
+        projects,
+        rasters,
+        vectors,
+        datasources,
+        templates,
+        analyses
     ) {
         'ngInject';
         this.authService = authService;
@@ -33,87 +42,73 @@ UserModule.resolve = {
         }
         return false;
     },
-    userRoles: (authService) => {
+    userRoles: authService => {
         return authService.fetchUserRoles();
     },
     platform: (userRoles, platformService) => {
-        const platformRole = userRoles.find(r =>
-            r.groupType === 'PLATFORM'
-        );
+        const platformRole = userRoles.find(r => r.groupType === 'PLATFORM');
 
         return platformService.getPlatform(platformRole.groupId);
     },
-    organizationRoles: (userRoles) => {
+    organizationRoles: userRoles => {
         return _.uniqBy(userRoles, r => r.groupId).filter(r => r.groupType === 'ORGANIZATION');
     },
     organizations: ($q, organizationRoles, organizationService) => {
         return $q.all(organizationRoles.map(r => organizationService.getOrganization(r.groupId)));
     },
-    teamRoles: (userRoles) => {
+    teamRoles: userRoles => {
         return _.uniqBy(userRoles, r => r.groupId).filter(r => r.groupType === 'TEAM');
     },
     teams: ($q, teamRoles, teamService) => {
         return $q.all(teamRoles.map(r => teamService.getTeam(r.groupId)));
     },
     projects: (user, projectService) => {
-        return projectService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'owned'
-            }
-        );
+        return projectService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'owned'
+        });
     },
     rasters: (user, sceneService) => {
-        return sceneService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'owned'
-            }
-        );
+        return sceneService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'owned'
+        });
     },
     vectors: (user, shapesService) => {
-        return shapesService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'owned'
-            }
-        );
+        return shapesService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'owned'
+        });
     },
     datasources: (user, datasourceService) => {
-        return datasourceService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'owned'
-            }
-        );
+        return datasourceService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'owned'
+        });
     },
     templates: (user, analysisService) => {
-        return analysisService.fetchTemplates(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'owned'
-            }
-        );
+        return analysisService.fetchTemplates({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'owned'
+        });
     },
     analyses: (user, analysisService) => {
-        return analysisService.fetchAnalyses(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: 1,
-                ownershipType: 'owned'
-            }
-        );
+        return analysisService.fetchAnalyses({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: 1,
+            ownershipType: 'owned'
+        });
     }
 };
 autoInject(UserModule);

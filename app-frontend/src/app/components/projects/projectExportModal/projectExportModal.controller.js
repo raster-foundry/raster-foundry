@@ -10,10 +10,7 @@ export default class ProjectExportModalController {
         this.projectId = this.resolve.project.id;
         this.zoom = this.resolve.zoom;
         this.exportType = 'S3';
-        this.exportTypes = [
-            {label: 'S3'},
-            {label: 'Dropbox'}
-        ];
+        this.exportTypes = [{ label: 'S3' }, { label: 'Dropbox' }];
         this.exportSuccess = false;
         this.exportFailure = false;
         this.zoomSlider = {
@@ -40,9 +37,10 @@ export default class ProjectExportModalController {
     }
 
     createExport() {
-        let extraOptions = this.exportType.label === 'Dropbox' ?
-            { source: `dropbox:///raster-foundry/${this.projectId}.tif` } :
-            {};
+        let extraOptions =
+            this.exportType.label === 'Dropbox'
+                ? { source: `dropbox:///raster-foundry/${this.projectId}.tif` }
+                : {};
         this.projectService
             .export(this.projectId, this.zoom, this.exportType.label, extraOptions)
             .then(

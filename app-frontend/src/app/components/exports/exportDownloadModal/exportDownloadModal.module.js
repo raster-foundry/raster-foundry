@@ -5,10 +5,9 @@ import ExportDownloadModalController from './exportDownloadModal.controller.js';
 const ExportDownloadModalModule = angular.module('components.projects.exportDownloadModal', []);
 
 ExportDownloadModalModule.controller(
-    'ExportDownloadModalController', ExportDownloadModalController
+    'ExportDownloadModalController',
+    ExportDownloadModalController
 );
-ExportDownloadModalModule.component(
-    'rfExportDownloadModal', ExportDownloadModalComponent
-);
+ExportDownloadModalModule.component('rfExportDownloadModal', ExportDownloadModalComponent);
 
 export default ExportDownloadModalModule;

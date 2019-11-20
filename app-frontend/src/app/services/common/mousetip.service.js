@@ -1,11 +1,13 @@
 /* global $, _ */
 
-export default (app) => {
+export default app => {
     class MousetipService {
         constructor($compile, $document) {
             this.$compile = $compile;
             this.$document = $document;
-            this.throttledReposition = _.throttle(this.setPosition.bind(this), 16, {leading: true});
+            this.throttledReposition = _.throttle(this.setPosition.bind(this), 16, {
+                leading: true
+            });
         }
 
         set(content) {

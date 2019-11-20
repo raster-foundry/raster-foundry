@@ -1,23 +1,27 @@
 import typeToReducer from 'type-to-reducer';
-import {Map} from 'immutable';
+import { Map } from 'immutable';
 import _ from 'lodash';
 
 import {
-    NODE_PREVIEWS, NODE_SET_ERROR, NODE_UPDATE_SOFT, NODE_UPDATE_HARD, NODE_INIT
+    NODE_PREVIEWS,
+    NODE_SET_ERROR,
+    NODE_UPDATE_SOFT,
+    NODE_UPDATE_HARD,
+    NODE_INIT
 } from '../actions/node-actions';
 
 export const nodeReducer = typeToReducer({
     [NODE_INIT]: (state, action) => {
-        return Object.assign({}, state, {nodes: action.payload});
+        return Object.assign({}, state, { nodes: action.payload });
     },
     [NODE_PREVIEWS]: {
-        START_PREVIEW: (state) => {
+        START_PREVIEW: state => {
             return Object.assign({}, state, {
                 selectingNode: 'preview',
                 selectedNode: null
             });
         },
-        START_COMPARE: (state) => {
+        START_COMPARE: state => {
             return Object.assign({}, state, {
                 selectingNode: 'compare',
                 selectedNode: null
@@ -56,14 +60,14 @@ export const nodeReducer = typeToReducer({
                 previewNodes: [...action.nodes]
             });
         },
-        CANCEL_SELECT: (state) => {
+        CANCEL_SELECT: state => {
             return Object.assign({}, state, {
                 preventSelecting: false,
                 selectingNode: null,
                 selectedNode: null
             });
         },
-        PAUSE_SELECT: (state) => {
+        PAUSE_SELECT: state => {
             return Object.assign({}, state, {
                 preventSelecting: true
             });
@@ -88,10 +92,10 @@ export const nodeReducer = typeToReducer({
         });
     },
     [NODE_UPDATE_HARD]: {
-        PENDING: (state) => {
+        PENDING: state => {
             return state;
         },
-        REJECTED: (state) => {
+        REJECTED: state => {
             return state;
         },
         FULFILLED: (state, action) => {
@@ -121,10 +125,10 @@ export const nodeReducer = typeToReducer({
         }
     },
     [NODE_UPDATE_SOFT]: {
-        PENDING: (state) => {
+        PENDING: state => {
             return state;
         },
-        REJECTED: (state) => {
+        REJECTED: state => {
             return state;
         },
         FULFILLED: (state, action) => {

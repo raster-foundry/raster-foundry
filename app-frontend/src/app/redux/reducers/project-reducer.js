@@ -2,7 +2,10 @@
 import typeToReducer from 'type-to-reducer';
 
 import {
-    PROJECT_SET_MAP, PROJECT_SET_ID, PROJECT_EDIT_LAYER, PROJECT_LAYER_SET_ID
+    PROJECT_SET_MAP,
+    PROJECT_SET_ID,
+    PROJECT_EDIT_LAYER,
+    PROJECT_LAYER_SET_ID
 } from '_redux/actions/project-actions';
 const GREEN = '#81C784';
 
@@ -30,23 +33,24 @@ export const projectReducer = typeToReducer({
     [PROJECT_EDIT_LAYER]: {
         START: (state, action) => {
             const geometry = action.payload.geometry;
-            const options = Object.assign({
-                draggable: true,
-                fillColor: GREEN,
-                color: GREEN,
-                opacity: 0.9,
-                pane: 'editable'
-            }, action.payload.options);
+            const options = Object.assign(
+                {
+                    draggable: true,
+                    fillColor: GREEN,
+                    color: GREEN,
+                    opacity: 0.9,
+                    pane: 'editable'
+                },
+                action.payload.options
+            );
             const mapWrapper = state.projectMap;
             let editHandler;
             if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
-                let coordinates = geometry.type === 'Polygon' ?
-                    geometry.coordinates[0].map(c => [c[1], c[0]]) :
-                    geometry.coordinates[0][0].map(c => [c[1], c[0]]);
-                let polygonLayer = L.polygon(
-                    coordinates,
-                    options
-                );
+                let coordinates =
+                    geometry.type === 'Polygon'
+                        ? geometry.coordinates[0].map(c => [c[1], c[0]])
+                        : geometry.coordinates[0][0].map(c => [c[1], c[0]]);
+                let polygonLayer = L.polygon(coordinates, options);
                 mapWrapper.setLayer('draw', polygonLayer, false);
                 if (_.get(action, 'payload.meta.panTo')) {
                     mapWrapper.map.panTo(polygonLayer.getCenter());
@@ -57,10 +61,10 @@ export const projectReducer = typeToReducer({
                 editHandler.enable();
             } else if (geometry.type === 'Point') {
                 let markerLayer = L.marker([geometry.coordinates[1], geometry.coordinates[0]], {
-                    'icon': L.divIcon({
-                        'className': 'annotate-clone-marker'
+                    icon: L.divIcon({
+                        className: 'annotate-clone-marker'
                     }),
-                    'draggable': true
+                    draggable: true
                 });
                 mapWrapper.setLayer('draw', markerLayer, false);
                 if (_.get(action, 'payload.meta.panTo')) {
@@ -71,7 +75,7 @@ export const projectReducer = typeToReducer({
                 editHandler
             });
         },
-        FINISH: (state) => {
+        FINISH: state => {
             let editHandler = state.editHandler;
             // eslint-disable-next-line
             if (editHandler && editHandler._enabled) {

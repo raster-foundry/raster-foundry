@@ -65,9 +65,7 @@ export default app => {
                     resolve(
                         files.map(f => {
                             // eslint-disable-next-line
-                            return `${BUILDCONFIG.API_HOST}/api/exports/${
-                                exportObject.id
-                            }/files/${f}?token=${token}`;
+                            return `${BUILDCONFIG.API_HOST}/api/exports/${exportObject.id}/files/${f}?token=${token}`;
                         })
                     );
                 });

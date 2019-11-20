@@ -1,17 +1,15 @@
 /* global BUILDCONFIG */
-export default (app) => {
+export default app => {
     /**
      * Represents a layer that can be added to the map
      * with various transformations
      */
     class Layer {
-
         /**
          * Creates a layer from a scene -- this may need to be expanded
          * @param {object} $http injected angular $http service
          * @param {object} $q promise service
          * @param {object} authService service for auth, used to get token for layers
-         * @param {object} colorCorrectService color correction service
          * @param {object} projectService project service
          * @param {object} APP_CONFIG config of application
          * @param {object} scene response from the API, optional
@@ -23,9 +21,18 @@ export default (app) => {
          * @param {object} bands keys = band type, values = band number
          */
         constructor( // eslint-disable-line max-params
-            $http, $q, authService, colorCorrectService, projectService, APP_CONFIG,
-            scene, projectId, projectMosaic = true, gammaCorrect = true, sigmoidCorrect = true,
-            colorClipCorrect = true, bands = {red: 3, green: 2, blue: 1}
+            $http,
+            $q,
+            authService,
+            projectService,
+            APP_CONFIG,
+            scene,
+            projectId,
+            projectMosaic = true,
+            gammaCorrect = true,
+            sigmoidCorrect = true,
+            colorClipCorrect = true,
+            bands = { red: 3, green: 2, blue: 1 }
         ) {
             this.$http = $http;
             this.$q = $q;
@@ -35,7 +42,6 @@ export default (app) => {
             this.gammaCorrect = gammaCorrect;
             this.sigmoidCorrect = sigmoidCorrect;
             this.colorClipCorrect = colorClipCorrect;
-            this.colorCorrectService = colorCorrectService;
             this.projectService = projectService;
             this.bands = bands;
             this.projectId = projectId;
@@ -46,21 +52,15 @@ export default (app) => {
         }
 
         /** Function to return bounds from either the project or the scene
-          *
-          * @return {object} Leaflet latLngBounds
-          */
+         *
+         * @return {object} Leaflet latLngBounds
+         */
         getBounds() {
             if (this.projectMosaic) {
-                this.projectService.getProjectCorners(this.projectId).then((data) => {
+                this.projectService.getProjectCorners(this.projectId).then(data => {
                     this.bounds = L.latLngBounds(
-                        L.latLng(
-                            data.lowerLeftLat,
-                            data.lowerLeftLon
-                        ),
-                        L.latLng(
-                            data.upperRightLat,
-                            data.upperRightLon
-                        )
+                        L.latLng(data.lowerLeftLat, data.lowerLeftLon),
+                        L.latLng(data.upperRightLat, data.upperRightLon)
                     );
                 });
             } else {
@@ -83,11 +83,11 @@ export default (app) => {
          */
         getMosaicTileLayer() {
             if (this._mosaicTiles) {
-                return this.$q((resolve) => {
+                return this.$q(resolve => {
                     resolve(this._mosaicTiles);
                 });
             }
-            return this.getMosaicLayerURL().then((url) => {
+            return this.getMosaicLayerURL().then(url => {
                 let options = {
                     bounds: this.bounds,
                     maxNativeZoom: BUILDCONFIG.TILES_MAX_ZOOM,
@@ -101,18 +101,9 @@ export default (app) => {
         getMosaicLayerURL(params = {}) {
             params.token = this.authService.token();
             let formattedParams = L.Util.getParamString(params);
-            return this.$q((resolve) => {
+            return this.$q(resolve => {
                 resolve(`${this.tileServer}/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
             });
-        }
-
-        /**
-         * Return this layer's color correction object
-         *
-         * @returns {Promise} Promise for result from color correction service
-         */
-        getColorCorrection() {
-            return this.colorCorrectService.get(this.scene.id, this.projectId);
         }
 
         /**
@@ -133,12 +124,11 @@ export default (app) => {
     }
 
     class LayerService {
-        constructor($http, $q, authService, colorCorrectService, projectService, APP_CONFIG) {
+        constructor($http, $q, authService, projectService, APP_CONFIG) {
             'ngInject';
             this.$http = $http;
             this.$q = $q;
             this.authService = authService;
-            this.colorCorrectService = colorCorrectService;
             this.projectService = projectService;
             this.APP_CONFIG = APP_CONFIG;
         }
@@ -151,9 +141,16 @@ export default (app) => {
          * @returns {Layer} layer created
          */
         layerFromScene(scene, projectId, projectMosaic = false) {
-            return new Layer(this.$http, this.$q, this.authService,
-                this.colorCorrectService, this.projectService, this.APP_CONFIG,
-                scene, projectId, projectMosaic);
+            return new Layer(
+                this.$http,
+                this.$q,
+                this.authService,
+                this.projectService,
+                this.APP_CONFIG,
+                scene,
+                projectId,
+                projectMosaic
+            );
         }
     }
 

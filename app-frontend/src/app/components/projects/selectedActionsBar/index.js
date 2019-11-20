@@ -1,6 +1,5 @@
 import tpl from './index.html';
-class SelectedActionsBar {
-}
+class SelectedActionsBar {}
 
 const component = {
     bindings: {
@@ -16,5 +15,4 @@ const component = {
 export default angular
     .module('components.projects.selectedActionsBar', [])
     .controller(SelectedActionsBar.name, SelectedActionsBar)
-    .component('rfSelectedActionsBar', component)
-    .name;
+    .component('rfSelectedActionsBar', component).name;

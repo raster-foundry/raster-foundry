@@ -23,7 +23,7 @@ class ColormapModalController {
 
     $onInit() {
         this.selectMode = 'form';
-        this.$scope.$watch('$ctrl.selectMode', (mode) => {
+        this.$scope.$watch('$ctrl.selectMode', mode => {
             if (mode === 'file') {
                 delete this.uploadError;
                 this.$scope.$evalAsync(this.bindUploadEvent.bind(this));
@@ -46,22 +46,27 @@ class ColormapModalController {
             this.maxPixelValue = this.histMax;
         }
         this.breakpoints = _.clone(this.resolve.breakpoints) || [
-            {value: this.minPixelValue, color: '#ffffff'},
-            {value: this.maxPixelValue, color: '#000000'}
+            { value: this.minPixelValue, color: '#ffffff' },
+            { value: this.maxPixelValue, color: '#000000' }
         ];
         // this.updateHistogramColors();
         this.plot = this.resolve.plot;
 
-        this.getGraph().then((graph) => {
-            this.$scope.$watch('$ctrl.breakpoints', (breakpoints) => {
-                if (breakpoints && breakpoints.length) {
-                    graph.setData({histogram: this.plot, breakpoints})
-                        .setOptions(this.options)
-                        .render();
-                } else {
-                    graph.setData().render();
-                }
-            }, true);
+        this.getGraph().then(graph => {
+            this.$scope.$watch(
+                '$ctrl.breakpoints',
+                breakpoints => {
+                    if (breakpoints && breakpoints.length) {
+                        graph
+                            .setData({ histogram: this.plot, breakpoints })
+                            .setOptions(this.options)
+                            .render();
+                    } else {
+                        graph.setData().render();
+                    }
+                },
+                true
+            );
         });
     }
 
@@ -90,13 +95,12 @@ class ColormapModalController {
         this.graph = this.graphService.register(elem, this.graphId, this.options);
     }
 
-
     bindUploadEvent() {
-        $('#btn-upload').change((e) => {
+        $('#btn-upload').change(e => {
             let upload = e.target.files[0];
             if (upload) {
                 let reader = new FileReader();
-                reader.onload = (event) => {
+                reader.onload = event => {
                     try {
                         delete this.uploadError;
                         const result = JSON.parse(event.target.result.replace(/'/g, '"'));
@@ -132,7 +136,7 @@ class ColormapModalController {
         if (colors.map) {
             return colors.map((color, index) => {
                 if (colorRegex.test(color)) {
-                    return {value: index, color: color};
+                    return { value: index, color: color };
                 }
                 throw new Error(
                     `${color} is not a valid hex color code. Colors must be in the form '#aaaaaa'.`
@@ -157,8 +161,9 @@ class ColormapModalController {
     redistributePixelValues() {
         this.breakpoints = this.breakpoints.map((breakpoint, index) => {
             return Object.assign({}, breakpoint, {
-                value: (this.maxPixelValue - this.minPixelValue) *
-                    (index / (this.breakpoints.length - 1)) +
+                value:
+                    (this.maxPixelValue - this.minPixelValue) *
+                        (index / (this.breakpoints.length - 1)) +
                     this.minPixelValue
             });
         });
@@ -176,12 +181,15 @@ class ColormapModalController {
 
     calculateHistogramColors() {
         let range = this.histMax - this.histMin;
-        let data = this.breakpoints.map((bp) => {
-            let offset = (bp.value - this.histMin) / range * 100;
-            return {offset: offset, color: bp.color};
-        }).sort((a, b) => a.offset - b.offset).map((bp) => {
-            return {offset: `${bp.offset}%`, color: bp.color};
-        });
+        let data = this.breakpoints
+            .map(bp => {
+                let offset = ((bp.value - this.histMin) / range) * 100;
+                return { offset: offset, color: bp.color };
+            })
+            .sort((a, b) => a.offset - b.offset)
+            .map(bp => {
+                return { offset: `${bp.offset}%`, color: bp.color };
+            });
 
         return data;
     }
@@ -189,31 +197,34 @@ class ColormapModalController {
     updateHistogramGradient(data) {
         let svg = d3.select(this.api.getElement().children()[0]);
         const selectedDef = svg.select('defs')[0];
-        let defs = selectedDef && selectedDef.length ?
-            svg.select('defs') : svg.append('defs');
+        let defs = selectedDef && selectedDef.length ? svg.select('defs') : svg.append('defs');
         const lg = defs.selectAll('linearGradient')[0];
-        let linearGradient = lg && lg.length ?
-            defs.selectAll('linearGradient') : defs.append('linearGradient');
+        let linearGradient =
+            lg && lg.length ? defs.selectAll('linearGradient') : defs.append('linearGradient');
 
-        linearGradient.attr('id', 'line-gradient-modal')
+        linearGradient
+            .attr('id', 'line-gradient-modal')
             .attr('gradientUnits', 'userSpaceOnUse')
-            .attr('x1', '0%').attr('y1', 0)
-            .attr('x2', '100%').attr('y2', 0)
+            .attr('x1', '0%')
+            .attr('y1', 0)
+            .attr('x2', '100%')
+            .attr('y2', 0)
             .selectAll('stop')
             .data(data)
-            .enter().append('stop')
-            .attr('offset', (d) => d.offset)
-            .attr('stop-color', (d) => d.color)
-            .attr('stop-opacity', (d) => Number.isFinite(d.opacity) ? d.opacity : 1.0);
+            .enter()
+            .append('stop')
+            .attr('offset', d => d.offset)
+            .attr('stop-color', d => d.color)
+            .attr('stop-opacity', d => (Number.isFinite(d.opacity) ? d.opacity : 1.0));
         this.$scope.$evalAsync();
     }
 
     closeWithBreakpoints() {
         const bpMap = {};
-        this.breakpoints.forEach(({value, color}) => {
+        this.breakpoints.forEach(({ value, color }) => {
             bpMap[value] = color;
         });
-        this.close({$value: bpMap});
+        this.close({ $value: bpMap });
     }
 }
 

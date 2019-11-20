@@ -1,7 +1,7 @@
 import angular from 'angular';
 import classifyNodeTpl from './classifyNode.html';
 
-import { getNodeDefinition} from '_redux/node-utils';
+import { getNodeDefinition } from '_redux/node-utils';
 import NodeActions from '_redux/actions/node-actions';
 
 const ClassifyNodeComponent = {
@@ -13,10 +13,7 @@ const ClassifyNodeComponent = {
 };
 
 class ClassifyNodeController {
-    constructor(
-        $rootScope, $log, $scope, $ngRedux, modalService,
-        reclassifyService
-    ) {
+    constructor($rootScope, $log, $scope, $ngRedux, modalService, reclassifyService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -36,10 +33,7 @@ class ClassifyNodeController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            NodeActions
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), NodeActions)(this);
         this.$scope.$on('$destroy', unsubscribe);
     }
 
@@ -56,7 +50,7 @@ class ClassifyNodeController {
      *     "128.0": 0,
      *     "255.0": 1
      * });
-    * */
+     * */
     classmapToBreaks(classmap) {
         return Object.keys(classmap).map((b, i, keys) => {
             const prev = keys[i - 1];
@@ -93,17 +87,19 @@ class ClassifyNodeController {
             }
         });
 
-        modal.result.then(breaks => {
-            const classmap = this.breaksToClassmap(breaks);
-            this.updateNode({
-                payload: Object.assign({}, this.node, {
-                    classMap: {
-                        classifications: classmap
-                    }
-                }),
-                hard: true
-            });
-        }).catch(() => {});
+        modal.result
+            .then(breaks => {
+                const classmap = this.breaksToClassmap(breaks);
+                this.updateNode({
+                    payload: Object.assign({}, this.node, {
+                        classMap: {
+                            classifications: classmap
+                        }
+                    }),
+                    hard: true
+                });
+            })
+            .catch(() => {});
     }
 }
 

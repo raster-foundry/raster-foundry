@@ -21,16 +21,18 @@ class SidebarTeamListController {
     }
 
     $onInit() {
-        this.displayTeams = this.paginatedResponse.results.length <= this.displayLimit ?
-            this.paginatedResponse.results :
-            this.paginatedResponse.results.slice(this.displayLimit - 1);
+        this.displayTeams =
+            this.paginatedResponse.results.length <= this.displayLimit
+                ? this.paginatedResponse.results
+                : this.paginatedResponse.results.slice(this.displayLimit - 1);
         if (this.showOrgLogo) {
             this.getOrganizations();
         }
     }
 
     getOrganizations() {
-        this.orgURIs = this.displayTeams.map(team => team.organizationId)
+        this.orgURIs = this.displayTeams
+            .map(team => team.organizationId)
             .filter((val, idx, self) => self.indexOf(val) === idx)
             .reduce((obj, orgId) => {
                 obj[orgId] = '';
@@ -47,7 +49,7 @@ class SidebarTeamListController {
     cacheBustUri(uri) {
         return `${uri}?${new Date().getTime()}`;
     }
-  }
+}
 
 const SidebarTeamListModule = angular.module('components.sidebarTeamList', []);
 

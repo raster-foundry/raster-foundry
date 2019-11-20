@@ -1,12 +1,9 @@
 import tpl from './index.html';
 
-class AnalysesCompareController {
-
-}
+class AnalysesCompareController {}
 
 const component = {
-    bindings: {
-    },
+    bindings: {},
     templateUrl: tpl,
     controller: AnalysesCompareController.name
 };
@@ -14,5 +11,4 @@ const component = {
 export default angular
     .module('components.pages.project.analyses.compare', [])
     .controller(AnalysesCompareController.name, AnalysesCompareController)
-    .component('rfProjectAnalysesComparePage', component)
-    .name;
+    .component('rfProjectAnalysesComparePage', component).name;

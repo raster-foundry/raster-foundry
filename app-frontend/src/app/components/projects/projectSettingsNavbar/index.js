@@ -7,8 +7,7 @@ class ProjectSettingsNavbarController {
 }
 
 const component = {
-    bindings: {
-    },
+    bindings: {},
     templateUrl: tpl,
     controller: ProjectSettingsNavbarController.name
 };
@@ -16,5 +15,4 @@ const component = {
 export default angular
     .module('components.projects', [])
     .controller(ProjectSettingsNavbarController.name, ProjectSettingsNavbarController)
-    .component('rfProjectSettingsNavbar', component)
-    .name;
+    .component('rfProjectSettingsNavbar', component).name;

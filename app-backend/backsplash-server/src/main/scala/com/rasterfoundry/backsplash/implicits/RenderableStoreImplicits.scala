@@ -73,12 +73,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
     val colorCorrectParameters = ColorCorrect.Params(
       0, // red
       1, // green
-      2, // blue
-      mosaicDefinition.colorCorrections.gamma,
-      mosaicDefinition.colorCorrections.bandClipping,
-      mosaicDefinition.colorCorrections.tileClipping,
-      mosaicDefinition.colorCorrections.sigmoidalContrast,
-      mosaicDefinition.colorCorrections.saturation
+      2 // blue
     )
 
     mosaicDefinition.datasource match {
@@ -175,7 +170,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
                 List(ovr.redBand, ovr.greenBand, ovr.blueBand)
               } getOrElse { List(0, 1, 2) }
               val colorCorrectParams =
-                ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
+                ColorCorrect.Params(0, 1, 2)
               logger.debug(s"Chosen color correction: ${colorCorrectParams}")
               (tracingContext,
                List(

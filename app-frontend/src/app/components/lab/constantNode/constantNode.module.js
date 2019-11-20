@@ -2,7 +2,7 @@ import angular from 'angular';
 import constantNodeTpl from './constantNode.html';
 
 import NodeActions from '_redux/actions/node-actions';
-import {getNodeDefinition} from '_redux/node-utils';
+import { getNodeDefinition } from '_redux/node-utils';
 
 const ConstantNodeComponent = {
     templateUrl: constantNodeTpl,
@@ -25,13 +25,10 @@ class ConstantNodeController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            NodeActions
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), NodeActions)(this);
         this.$scope.$on('$destroy', unsubscribe);
 
-        this.$scope.$watch('$ctrl.node', (node) => {
+        this.$scope.$watch('$ctrl.node', node => {
             if (node && node.constant) {
                 this.value = +node.constant;
             }
@@ -66,7 +63,6 @@ class ConstantNodeController {
         });
     }
 }
-
 
 const ConstantNodeModule = angular.module('components.lab.constantNode', []);
 

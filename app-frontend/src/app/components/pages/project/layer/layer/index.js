@@ -19,5 +19,4 @@ const component = {
 export default angular
     .module('components.pages.project.layer.page', [])
     .controller(ProjectLayerController.name, ProjectLayerController)
-    .component('rfProjectLayerPage', component)
-    .name;
+    .component('rfProjectLayerPage', component).name;
