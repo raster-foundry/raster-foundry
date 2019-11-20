@@ -60,7 +60,7 @@ object ColorCorrect extends LazyLogging {
             .getOrElse(false)) {
         0
       } else if (dOld == 0) {
-        // When dOld is nothing (normalipixelValueation is meaningless in this context), we still need to clamp
+        // When dOld is nothing we still need to clamp
         val v = {
           if (pixelValue > newMax) newMax
           else if (pixelValue < newMin) newMin
