@@ -254,15 +254,18 @@ class LayerColormodeController {
             this.layerBuffer.singleBandOptions.dataType = scheme.type;
             this.layerBuffer.singleBandOptions.extraNoData = _.filter(masked, isFinite);
             if (scheme.type !== 'CATEGORICAL') {
+                /* eslint-disable-next-line max-len */
                 this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService.colorStopsToProportionalArray(
                     this.activeColorScheme.colors
                 );
             } else if (scheme.breaks) {
+                /* eslint-disable-next-line max-len */
                 this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService.schemeFromBreaksAndColors(
                     this.activeColorScheme.breaks,
                     this.activeColorScheme.colors
                 );
             } else {
+                /* eslint-disable-next-line max-len */
                 this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService.colorsToSequentialScheme(
                     this.colorSchemeService.colorStopsToProportionalArray(
                         this.activeColorScheme.colors

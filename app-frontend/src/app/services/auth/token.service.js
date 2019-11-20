@@ -73,6 +73,7 @@ export default app => {
             );
         }
 
+        /* eslint-disable */
         createApiToken(code) {
             return this.auth0Token.create({
                 grant_type: 'authorization_code',
@@ -81,6 +82,7 @@ export default app => {
                 code
             }).$promise;
         }
+        /* eslint-enable */
 
         queryApiTokens(params = {}) {
             return this.ApiToken.query(params).$promise;

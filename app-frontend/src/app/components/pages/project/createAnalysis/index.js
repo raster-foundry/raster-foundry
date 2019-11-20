@@ -134,11 +134,13 @@ class ProjectCreateAnalysisPageController {
             return this.userService
                 .getUserById(template.owner)
                 .then(user => {
+                    /* eslint-disable max-len */
                     const owner =
                         user.personalInfo.firstName.trim() && user.personalInfo.lastName.trim()
                             ? `${user.personalInfo.firstName.trim()} ${user.personalInfo.lastName.trim()}`
                             : user.name || 'Anonymous';
                     return [template.id, owner];
+                    /* eslint-enable max-len */
                 })
                 .catch(e => {
                     return [template.id, this.BUILDCONFIG.APP_NAME];

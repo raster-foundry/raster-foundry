@@ -36,6 +36,7 @@ export default class Frame {
             // eslint-disable-next-line no-underscore-dangle
             'div',
             'leaflet-frame',
+            /* eslint-disable-next-line */
             map._controlContainer
         );
 
@@ -85,6 +86,7 @@ export default class Frame {
                 // eslint-disable-next-line no-underscore-dangle
                 'div',
                 `leaflet-frame ${this.options.classes.join(' ')}`,
+                /* eslint-disable-next-line */
                 frame._container
             );
         }

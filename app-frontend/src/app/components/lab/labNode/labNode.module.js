@@ -200,6 +200,7 @@ class LabNodeController {
                     })
                     .then(mapToken => {
                         this.publishModal(
+                            /* eslint-disable-next-line */
                             `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${this.nodeId}`
                         );
                     });
