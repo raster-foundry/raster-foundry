@@ -124,6 +124,7 @@ export default app => {
                 if (key === 'maxAcquisitionDatetime' && params[key]) {
                     return {
                         type: 'DateRangeFilter',
+                        /* eslint-disable-next-line camelcase */
                         field_name: 'acquired',
                         config: {
                             gte: params.minAcquisitionDatetime,
@@ -133,6 +134,7 @@ export default app => {
                 } else if (key === 'maxCloudCover' && params[key]) {
                     return {
                         type: 'RangeFilter',
+                        /* eslint-disable-next-line camelcase */
                         field_name: 'cloud_cover',
                         config: {
                             gte: params.minCloudCover || 0,
@@ -142,6 +144,7 @@ export default app => {
                 } else if (key === 'maxSunAzimuth' && params[key]) {
                     return {
                         type: 'RangeFilter',
+                        /* eslint-disable-next-line camelcase */
                         field_name: 'sun_azimuth',
                         config: {
                             gte: params.minSunAzimuth || 0,
@@ -151,6 +154,7 @@ export default app => {
                 } else if (key === 'maxSunElevation' && params[key]) {
                     return {
                         type: 'RangeFilter',
+                        /* eslint-disable-next-line camelcase */
                         field_name: 'sun_elevation',
                         config: {
                             gte: params.minSunElevation || 0,
@@ -168,6 +172,7 @@ export default app => {
 
             let geometryFilter = {
                 type: 'GeometryFilter',
+                /* eslint-disable-next-line camelcase */
                 field_name: 'geometry'
             };
 
@@ -189,6 +194,7 @@ export default app => {
             }
 
             return {
+                /* eslint-disable-next-line camelcase */
                 item_types: ds,
                 filter: {
                     type: 'AndFilter',

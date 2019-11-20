@@ -34,6 +34,7 @@ export default app => {
         }
 
         doBoot(user) {
+            /* eslint-disable-next-line camelcase */
             const bootData = Object.assign(user, { app_id: this.appId });
             Intercom('boot', bootData);
         }

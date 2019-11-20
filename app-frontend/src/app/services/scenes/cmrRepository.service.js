@@ -138,6 +138,7 @@ export default app => {
                 return () => {
                     return this.$q((resolve, reject) => {
                         axios(baseUrl, {
+                            /* eslint-disable camelcase */
                             params: {
                                 // Some short_names that work:
                                 // MYD09A1, MOD09A1, MOD14A2, Landsat7_ETM_Plus_C1
@@ -150,6 +151,7 @@ export default app => {
                                 page_num: page,
                                 sort_key: '-start_date'
                             }
+                            /* eslint-enable camelcase */
                         }).then(
                             response => {
                                 page += 1;

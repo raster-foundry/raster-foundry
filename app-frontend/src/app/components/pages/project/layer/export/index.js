@@ -236,6 +236,7 @@ class LayerExportCreateController {
                 this.authService.user.dropboxCredential.length;
             if (hasDropbox) {
                 let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+                /* eslint-disable-next-line max-len */
                 this.exportSource = `dropbox:///${appName}/projects/${this.project.id}/layer/${this.layer.id}`;
             } else {
                 this.displayDropboxModal();

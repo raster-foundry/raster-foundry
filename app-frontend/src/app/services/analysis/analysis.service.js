@@ -450,6 +450,7 @@ export default app => {
                     i => !i
                 )
             );
+            /* eslint-disable-next-line max-len */
             return `${this.tileServer}/${projectId}/analyses/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
 

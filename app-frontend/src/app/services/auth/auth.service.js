@@ -209,10 +209,11 @@ export default app => {
 
             const nonce = this.randomString(35);
             this.localStorage.set('nonce', nonce);
-            // eslint-disable-next-line
+            /* eslint-disable max-len */
             const tentantUrl = `https://${
                 this.APP_CONFIG.auth0Domain
             }/authorize/?client_id=${clientId}&response_type=token id_token&scope=openid profile email&redirect_uri=${this.getBaseURL()}/login&connection=${connection}&nonce=${nonce}`;
+            /* eslint-enable max-len */
             window.location = tentantUrl;
         }
 
@@ -222,12 +223,13 @@ export default app => {
 
             const nonce = this.randomString(35);
             this.localStorage.set('nonce', nonce);
-            // eslint-disable-next-line
+            /* eslint-disable max-len */
             const tentantUrl = `https://${
                 this.APP_CONFIG.auth0Domain
             }/authorize/?client_id=${clientId}&response_type=code&scope=openid offline_access&redirect_uri=${this.getBaseURL()}/user/me/settings/api-tokens&connection=${connection}&nonce=${nonce}&audience=https://${
                 this.APP_CONFIG.auth0Domain
             }/api/v2/&device=${name}`;
+            /* eslint-enable max-len */
             window.location = tentantUrl;
         }
 

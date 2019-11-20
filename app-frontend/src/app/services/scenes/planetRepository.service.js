@@ -175,14 +175,16 @@ export default app => {
                                     res => {
                                         if (res.status === 200) {
                                             fetchedScenes = res.data.features.length;
+                                            /* eslint-disable-next-line max-len */
                                             scenePages = this.planetLabsService.planetFeatureToScene(
                                                 res.data
                                             );
                                             let scenes = scenePages.shift() || [];
-                                            // eslint-disable-next-line
+                                            /* eslint-disable no-underscore-dangle */
                                             nextLink =
                                                 res.data.features.length === 250 &&
                                                 res.data._links._next;
+                                            /* eslint-enable no-underscore-dangle */
                                             resolve({
                                                 scenes,
                                                 hasNext: !!nextLink || scenePages.length,
@@ -208,16 +210,18 @@ export default app => {
                                 .then(
                                     res => {
                                         if (res.status === 200) {
+                                            /* eslint-disable-next-line max-len */
                                             scenePages = this.planetLabsService.planetFeatureToScene(
                                                 res.data
                                             );
                                             fetchedScenes =
                                                 fetchedScenes + res.data.features.length;
                                             let scenes = scenePages.shift();
-                                            // eslint-disable-next-line
+                                            /* eslint-disable no-underscore-dangle */
                                             nextLink =
                                                 res.data.features.length === 250 &&
                                                 res.data._links._next;
+                                            /* eslint-enable no-underscore-dangle */
                                             resolve({
                                                 scenes,
                                                 hasNext: !!nextLink || scenePages.length,
