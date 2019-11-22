@@ -44,8 +44,16 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
     }
   }
 
-  def getBacksplashInfo(path: String): IO[BacksplashGeoTiffInfo] = {
-    IO(BacksplashGeotiffReader.getBacksplashGeotiffInfo(path))
+  def getBacksplashInfo(
+      id: UUID,
+      path: String): IO[Either[Throwable, BacksplashGeoTiffInfo]] = {
+    IO(BacksplashGeotiffReader.getBacksplashGeotiffInfo(path)).attempt map {
+      case l @ Left(_) =>
+        logger.error(
+          s"""Scene(id='$id'): Failed to fetch geotiff for path "$path".""")
+        l
+      case r => r
+    }
   }
 
   // presence of the ingest location is guaranteed by the filter in the sql string
@@ -91,17 +99,29 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
 
       implicit val contextShift: ContextShift[IO] = rasterIO
 
-      val response = scenesToUpdate.parTraverse {
+      val metadataIOs = scenesToUpdate.parTraverse {
         case (id, uri) =>
           for {
-            backsplashInfo <- getBacksplashInfo(uri)
-            rmdResult <- insertRasterSourceMetadata(id, uri, backsplashInfo)
-            geotiffResult <- insertGeotiffInfo(id, backsplashInfo)
+            backsplashInfo <- getBacksplashInfo(id, uri)
+            rmdResult <- backsplashInfo.traverse(
+              insertRasterSourceMetadata(id, uri, _))
+            geotiffResult <- backsplashInfo.traverse(insertGeotiffInfo(id, _))
           } yield (rmdResult, geotiffResult)
       }
 
-      response
-        .map(rsm => println(s"Inserted metadata for ${rsm.length} resources"))
+      metadataIOs
+        .map(metadataInserts => {
+          val (lefts, rights) =
+            metadataInserts partition {
+              case (Right(_), Right(_)) => false
+              case _                    => true
+            }
+          if (lefts.length > 0) {
+            logger.error(
+              s"Failed to insert metadata for ${lefts.length} resources")
+          }
+          logger.info(s"Inserted metadata for ${rights.length} resources")
+        })
     }
   }
 }

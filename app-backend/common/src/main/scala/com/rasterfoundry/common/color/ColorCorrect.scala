@@ -87,8 +87,8 @@ object ColorCorrect extends LazyLogging {
       specificBand.fold(allBands)(Some(_)).fold(Some(tileDefault))(x => Some(x))
 
   def normalize(rgbTile: MultibandTile,
-                          layerNormalizeArgs: Map[String, ClipBounds],
-                          noDataValue: Option[Double]): MultibandTile = {
+                layerNormalizeArgs: Map[String, ClipBounds],
+                noDataValue: Option[Double]): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val tileCellType = UByteConstantNoDataCellType
     val (dstRed, dstGreen, dstBlue) = (
