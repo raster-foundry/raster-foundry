@@ -112,7 +112,10 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
       metadataIOs
         .map(metadataInserts => {
           val (lefts, rights) =
-            metadataInserts.partition(t => t._1.isLeft || t._2.isLeft)
+            metadataInserts partition {
+              case (Right(_), Right(_)) => false
+              case _                    => true
+            }
           if (lefts.length > 0) {
             logger.error(
               s"Failed to insert metadata for ${lefts.length} resources")
