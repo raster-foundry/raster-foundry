@@ -15,6 +15,7 @@
 ### Fixed
 
 - Fixed usage of license types for STAC exports [\#5240](https://github.com/raster-foundry/raster-foundry/pull/5240)
+- Fix metadata backfill batch job [\#5249](https://github.com/raster-foundry/raster-foundry/pull/5249)
 
 ### Security
 
