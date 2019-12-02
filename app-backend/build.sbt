@@ -218,8 +218,6 @@ lazy val apiDependencies = Seq(
   Dependencies.akkaHttpCors,
   Dependencies.akkaCirceJson,
   Dependencies.awsStsSdk,
-  Dependencies.betterFiles,
-  Dependencies.betterFiles,
   Dependencies.dropbox,
   Dependencies.scalaCheck
 )
