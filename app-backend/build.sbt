@@ -207,7 +207,6 @@ lazy val apiSettings = sharedSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
   cancelable in Global := true,
-  resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
   test in assembly := {}
 )
@@ -243,7 +242,6 @@ lazy val common = project
       Dependencies.elasticacheClient,
       Dependencies.geotrellisS3,
       Dependencies.geotrellisSpark,
-      Dependencies.geotrellisGeotools,
       Dependencies.geotrellisVectorTestkit,
       Dependencies.logbackClassic % Runtime,
       Dependencies.mamlJvm,
