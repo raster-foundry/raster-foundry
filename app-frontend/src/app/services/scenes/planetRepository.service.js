@@ -158,7 +158,10 @@ export default app => {
                     let coordsStrings = bboxString.split(',');
                     let coords = _.map(coordsStrings, str => parseFloat(str));
                     // Leaflet expects nested coordinate arrays
-                    bboxCoords = [[coords[1], coords[0]], [coords[3], coords[2]]];
+                    bboxCoords = [
+                        [coords[1], coords[0]],
+                        [coords[3], coords[2]]
+                    ];
                 }
 
                 const bbox = L.latLngBounds(bboxCoords);

@@ -21,8 +21,7 @@ class ProjectsSceneBrowserController {
         authService,
         featureFlags,
         RasterFoundryRepository,
-        PlanetRepository,
-        CMRRepository
+        PlanetRepository
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -42,13 +41,6 @@ class ProjectsSceneBrowserController {
             this.repositories.push({
                 label: 'Planet Labs',
                 service: this.PlanetRepository
-            });
-        }
-
-        if (this.featureFlags.isOnByDefault('external-source-browse-cmr')) {
-            this.repositories.push({
-                label: 'NASA CMR',
-                service: this.CMRRepository
             });
         }
 
@@ -107,7 +99,10 @@ class ProjectsSceneBrowserController {
             let coordsStrings = bboxString.split(',');
             let coords = _.map(coordsStrings, str => parseFloat(str));
             // Leaflet expects nested coordinate arrays
-            bbox = [[coords[1], coords[0]], [coords[3], coords[2]]];
+            bbox = [
+                [coords[1], coords[0]],
+                [coords[3], coords[2]]
+            ];
         }
         return bbox;
     }
@@ -118,7 +113,10 @@ class ProjectsSceneBrowserController {
         } else if (this.project && this.project.extent) {
             this.bounds = L.geoJSON(this.project.extent).getBounds();
         } else {
-            this.bounds = [[-30, -90], [50, 0]];
+            this.bounds = [
+                [-30, -90],
+                [50, 0]
+            ];
         }
         this.getMap().then(browseMap => {
             browseMap.map.fitBounds(this.bounds);

@@ -1895,12 +1895,9 @@ var _xamzrequire = (function e(t, n, r) {
                                                 );
                                             };
                                             lengthAccumulator.on('end', checkContentLengthAndEmit);
-                                            httpStream.pipe(lengthAccumulator).pipe(
-                                                stream,
-                                                {
-                                                    end: false
-                                                }
-                                            );
+                                            httpStream.pipe(lengthAccumulator).pipe(stream, {
+                                                end: false
+                                            });
                                         } else {
                                             httpStream.pipe(stream);
                                         }
@@ -10093,7 +10090,7 @@ var _xamzrequire = (function e(t, n, r) {
                             othCtor = other.constructor;
                         if (
                             objCtor != othCtor &&
-                            ('constructor' in object && 'constructor' in other) &&
+                            'constructor' in object && 'constructor' in other &&
                             !(
                                 typeof objCtor == 'function' &&
                                 objCtor instanceof objCtor &&
@@ -10128,7 +10125,7 @@ var _xamzrequire = (function e(t, n, r) {
                           }
                           if (
                               (typeof Ctor == 'function' && Ctor.prototype === object) ||
-                              (typeof object != 'function' && (length && isLength(length)))
+                              (typeof object != 'function' && length && isLength(length))
                           ) {
                               return shimKeys(object);
                           }

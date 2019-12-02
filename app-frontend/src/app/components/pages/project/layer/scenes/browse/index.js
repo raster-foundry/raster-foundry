@@ -23,8 +23,7 @@ class LayerScenesBrowseController {
         sceneService,
         projectService,
         RasterFoundryRepository,
-        PlanetRepository,
-        CMRRepository
+        PlanetRepository
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -47,13 +46,6 @@ class LayerScenesBrowseController {
             this.repositories.push({
                 label: 'Planet Labs',
                 service: this.PlanetRepository
-            });
-        }
-
-        if (this.featureFlags.isOnByDefault('external-source-browse-cmr')) {
-            this.repositories.push({
-                label: 'NASA CMR',
-                service: this.CMRRepository
             });
         }
 
@@ -124,7 +116,10 @@ class LayerScenesBrowseController {
         } else if (this.project && this.project.extent) {
             this.bounds = L.geoJSON(this.project.extent).getBounds();
         } else {
-            this.bounds = [[-30, -90], [50, 0]];
+            this.bounds = [
+                [-30, -90],
+                [50, 0]
+            ];
         }
         this.getMap().then(mapContainer => {
             mapContainer.map.fitBounds(this.bounds);
@@ -251,7 +246,10 @@ class LayerScenesBrowseController {
             let coordsStrings = bboxString.split(',');
             let coords = _.map(coordsStrings, str => parseFloat(str));
             // Leaflet expects nested coordinate arrays
-            bbox = [[coords[1], coords[0]], [coords[3], coords[2]]];
+            bbox = [
+                [coords[1], coords[0]],
+                [coords[3], coords[2]]
+            ];
         }
         return bbox;
     }
@@ -329,7 +327,10 @@ class LayerScenesBrowseController {
             this.selected = this.selected.clear();
         } else {
             this.selected = this.selected.merge(
-                _.filter(this.sceneList.map(s => [s.id, s]), s => !s.inLayer)
+                _.filter(
+                    this.sceneList.map(s => [s.id, s]),
+                    s => !s.inLayer
+                )
             );
         }
         this.updateSelectText();
@@ -413,14 +414,6 @@ class LayerScenesBrowseController {
             });
             this.scenesOnMap = newSceneIds;
         });
-    }
-
-    showDateWarning() {
-        return (
-            this.currentRepository &&
-            this.currentRepository.label === 'NASA CMR' &&
-            this.currentRepository.service.showDateWarning
-        );
     }
 }
 

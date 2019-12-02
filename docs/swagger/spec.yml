@@ -1948,54 +1948,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /projects/{projectID}/annotations/shapefile:
-    x-resource: Projects
-    get:
-      summary: 'Get a url for project default layer annotations exported to a shapefile'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/projectID'
-        - $ref: '#/parameters/exportAll'
-      responses:
-        200:
-          description: 'Annotations retrieved successfully'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-
-    post:
-      summary: 'Import annotations from a shapefile to project default layer'
-      tags:
-        - Imagery
-      consumes:
-        - multipart/form-data
-      parameters:
-        - $ref: '#/parameters/projectID'
-        - in: formData
-          name: name
-          type: file
-          description: The shapefile to upload
-      responses:
-        201:
-          description: 'Annotations imported successfully'
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AnnotationFeature'
-        400:
-          description: 'Some records could not be parsed to annotations'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
 
   /projects/{projectID}/annotations/{annotationID}:
     x-resouce: Projects
@@ -2999,55 +2951,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /projects/{projectID}/layers/{layerID}/annotations/shapefile:
-    x-resource: Projects
-    get:
-      summary: 'Get a url for project layer annotations exported to a shapefile'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/projectID'
-        - $ref: '#/parameters/layerID'
-        - $ref: '#/parameters/exportAll'
-      responses:
-        200:
-          description: 'Annotations retrieved successfully'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      summary: 'Import annotations from a shapefile to project layer'
-      tags:
-        - Imagery
-      consumes:
-        - multipart/form-data
-      parameters:
-        - $ref: '#/parameters/projectID'
-        - $ref: '#/parameters/layerID'
-        - in: formData
-          name: name
-          type: file
-          description: The shapefile to upload
-      responses:
-        201:
-          description: 'Annotations imported successfully'
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AnnotationFeature'
-        400:
-          description: 'Some records could not be parsed to annotations'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
 
   /projects/{projectID}/layers/{layerID}/annotations/{annotationID}/:
     x-resouce: Projects
@@ -4472,35 +4375,6 @@ paths:
               $ref: '#/definitions/ShapeFeatureCollection'
         400:
           description: 'Invalid object'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-
-  /shapes/upload:
-    x-resource: Projects
-    post:
-      summary: 'Create shapes belonging to the current user using POSTed data'
-      tags:
-        - Imagery
-      consumes:
-        - multipart/form-data
-      parameters:
-        - name: name
-          in: formData
-          type: file
-          required: true
-      responses:
-        201:
-          description: 'GeoJSON shapes successfully created'
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ShapeFeatureCollection'
-        400:
-          description: 'Invalid shape structure'
           schema:
             $ref: '#/definitions/Error'
         default:

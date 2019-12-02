@@ -130,7 +130,10 @@ export default app => {
                         _.times(pageCount, idx => {
                             return this.datasourceService
                                 .query({ sort: 'name,asc', page: idx + 1 })
-                                .then(resp => resp, error => error);
+                                .then(
+                                    resp => resp,
+                                    error => error
+                                );
                         })
                     );
 
@@ -269,11 +272,18 @@ export default app => {
           Returns a function which adds the given RF scenes to the project
          */
         addToProject(projectId, scenes) {
-            return this.projectService.addScenes(projectId, scenes.map(scene => scene.id));
+            return this.projectService.addScenes(
+                projectId,
+                scenes.map(scene => scene.id)
+            );
         }
 
         addToLayer(projectId, layerId, scenes) {
-            return this.projectService.addScenesToLayer(projectId, layerId, scenes.map(s => s.id));
+            return this.projectService.addScenesToLayer(
+                projectId,
+                layerId,
+                scenes.map(s => s.id)
+            );
         }
 
         getScenePermissions(scene) {

@@ -63,17 +63,19 @@ class ProjectAnalysisQuickeditController {
         };
         let nodes = [root];
         const addToCount = node =>
-            (({
-                mask: () => {
-                    nodeIds.mask = nodeIds.mask.add(node.id);
-                },
-                layerSrc: () => {
-                    nodeIds.source = nodeIds.source.add(node.id);
-                },
-                const: () => {
-                    nodeIds.const = nodeIds.const.add(node.id);
-                }
-            }[node.type || node.apply] || (() => {}))());
+            ((
+                {
+                    mask: () => {
+                        nodeIds.mask = nodeIds.mask.add(node.id);
+                    },
+                    layerSrc: () => {
+                        nodeIds.source = nodeIds.source.add(node.id);
+                    },
+                    const: () => {
+                        nodeIds.const = nodeIds.const.add(node.id);
+                    }
+                }[node.type || node.apply] || (() => {})
+            )());
         while (nodes.length) {
             const node = nodes.pop();
             addToCount(node);

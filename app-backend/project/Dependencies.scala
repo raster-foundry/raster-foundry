@@ -30,7 +30,6 @@ object Version {
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
   val flyway = "5.2.4"
-  val geotools = "17.1"
   val geotrellisContrib = "3.16.1-M3"
   val geotrellis = "3.0.0-M3"
   val geotrellisServer = "3.4.0-9-geeb1ede-SNAPSHOT"
@@ -105,13 +104,11 @@ object Dependencies {
   val flyway = "org.flywaydb" % "flyway-core" % Version.flyway
   val geotrellisContribVLM = "com.azavea.geotrellis" %% "geotrellis-contrib-vlm" % Version.geotrellisContrib
   val geotrellisContribGDAL = "com.azavea.geotrellis" %% "geotrellis-contrib-gdal" % Version.geotrellisContrib
-  val geotrellisGeotools = "org.locationtech.geotrellis" %% "geotrellis-geotools" % Version.geotrellis
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea.geotrellis" %% "geotrellis-server-core" % Version.geotrellisServer
   val geotrellisProj4 = "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellis
   val geotrellisServerOgc = "com.azavea.geotrellis" %% "geotrellis-server-ogc" % Version.geotrellisServer
-  val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
   val geotrellisServerStac = "com.azavea.geotrellis" %% "geotrellis-server-stac" % Version.geotrellisServer
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis

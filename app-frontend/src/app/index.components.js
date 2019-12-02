@@ -29,7 +29,6 @@ export default angular.module('index.components', [
     ...sceneComponents,
 
     // vector components
-    require('./components/vectors/vectorImportModal/vectorImportModal.module.js').default.name,
     require('./components/vectors/shapeItem/shapeItem.module.js').default.name,
     require('./components/vectors/vectorNameModal/vectorNameModal.module.js').default.name,
 

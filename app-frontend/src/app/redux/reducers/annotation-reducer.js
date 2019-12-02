@@ -15,9 +15,6 @@ import {
     ANNOTATIONS_DELETE,
     ANNOTATIONS_BULK_CREATE,
     ANNOTATIONS_TRANSFORM_DRAWLAYER,
-    ANNOTATIONS_UPLOAD_SHAPEFILE,
-    ANNOTATIONS_IMPORT_SHAPEFILE,
-    ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE,
     fetchAnnotations,
     updateAnnotation,
     fetchLabels
@@ -60,56 +57,6 @@ export const annotationReducer = typeToReducer({
     // action.payload should contain the returned annotations (in the fulfilled case)
     // not clear what comes back in pending
     // error body in rejected.action.payload
-    [ANNOTATIONS_UPLOAD_SHAPEFILE]: {
-        PENDING: state => {
-            return Object.assign({}, state, {
-                fetchingAnnotations: true,
-                uploadAnnotationsError: null
-            });
-        },
-        REJECTED: (state, action) => {
-            return Object.assign({}, state, {
-                uploadAnnotationsError: action.payload.response.data
-            });
-        },
-        FULFILLED: (state, action) => {
-            let annotationShapefileProps = action.payload.data;
-            return Object.assign({}, state, {
-                annotationShapefileProps,
-                fetchingAnnotations: false,
-                uploadAnnotationsError: null
-            });
-        }
-    },
-    [ANNOTATIONS_IMPORT_SHAPEFILE]: {
-        PENDING: state => {
-            return Object.assign({}, state, {
-                fetchingAnnotations: true,
-                uploadAnnotationsError: null
-            });
-        },
-        REJECTED: (state, action) => {
-            return Object.assign({}, state, {
-                uploadAnnotationsError: action.payload.response.data
-            });
-        },
-        FULFILLED: (state, action) => {
-            let annotations = state.annotations;
-            let newAnnotations = action.payload.data;
-            newAnnotations.forEach(annotation => {
-                annotations = annotations.set(annotation.id, annotation);
-            });
-            return Object.assign({}, state, {
-                annotations,
-                fetchingAnnotations: false,
-                annotationShapefileProps: [],
-                uploadAnnotationsError: null
-            });
-        }
-    },
-    [ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE]: state => {
-        return Object.assign({}, state, { annotationShapefileProps: [] });
-    },
     [ANNOTATIONS_FETCH]: {
         PENDING: state => {
             return Object.assign({}, state, {

@@ -36,9 +36,10 @@ class AnnotateSidebarItemController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), AnnotationActions)(
-            this
-        );
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            AnnotationActions
+        )(this);
         this.$scope.$on('$destroy', unsubscribe);
         this.minMatchedLabelLength = 3;
         this.maxMatchedLabels = 4;

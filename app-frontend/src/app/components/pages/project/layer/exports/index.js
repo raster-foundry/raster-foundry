@@ -276,7 +276,10 @@ class LayerExportsController {
         if (this.selected.has(id)) {
             this.selected = this.selected.delete(id);
         } else {
-            this.selected = this.selected.set(id, this.exportList.find(e => e.id === id));
+            this.selected = this.selected.set(
+                id,
+                this.exportList.find(e => e.id === id)
+            );
         }
         this.updateSelectText();
     }

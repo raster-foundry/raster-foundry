@@ -24,7 +24,10 @@ angular.element(document).ready(function() {
                 '$http',
                 $http => {
                     let url = `${BUILDCONFIG.API_HOST}/config`;
-                    return $http.get(url).then(result => result, error => ({ error: error }));
+                    return $http.get(url).then(
+                        result => result,
+                        error => ({ error: error })
+                    );
                 }
             ]
         }
