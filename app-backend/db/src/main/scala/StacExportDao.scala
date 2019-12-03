@@ -17,7 +17,7 @@ object StacExportDao extends Dao[StacExport] {
   val selectF: Fragment = sql"""
       SELECT
         id, created_at, created_by, modified_at, owner,
-        name, export_location, export_status, layer_definitions,
+        name, license, export_location, export_status, layer_definitions,
         task_statuses
       FROM
     """ ++ tableF
@@ -44,12 +44,12 @@ object StacExportDao extends Dao[StacExport] {
     val newExport = newStacExport.toStacExport(user)
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, owner,
-      name, export_location, export_status, layer_definitions,
+      name, license, export_location, export_status, layer_definitions,
       task_statuses)
     VALUES
       (${newExport.id}, ${newExport.createdAt}, ${newExport.createdBy}, ${newExport.modifiedAt},
-      ${newExport.owner}, ${newExport.name}, ${newExport.exportLocation},${newExport.exportStatus},
-      ${newExport.layerDefinitions}, ${newExport.taskStatuses})
+      ${newExport.owner}, ${newExport.name}, ${newExport.license}, ${newExport.exportLocation},
+      ${newExport.exportStatus}, ${newExport.layerDefinitions}, ${newExport.taskStatuses})
     """).update.withUniqueGeneratedKeys[StacExport](
       "id",
       "created_at",
@@ -57,6 +57,7 @@ object StacExportDao extends Dao[StacExport] {
       "modified_at",
       "owner",
       "name",
+      "license",
       "export_location",
       "export_status",
       "layer_definitions",

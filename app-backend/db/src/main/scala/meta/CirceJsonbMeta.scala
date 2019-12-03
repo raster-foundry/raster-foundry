@@ -107,4 +107,7 @@ trait CirceJsonbMeta {
 
   implicit val backsplashGeoTiffInfoMeta: Meta[BacksplashGeoTiffInfo] =
     CirceJsonbMeta[BacksplashGeoTiffInfo]
+
+  implicit val stacExportLicenseMeta: Meta[StacExportLicense] =
+    CirceJsonbMeta[StacExportLicense]
 }

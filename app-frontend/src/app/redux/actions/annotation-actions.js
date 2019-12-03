@@ -1,7 +1,10 @@
 import {
-    getProjectAnnotationsRequest, createProjectAnnotationsRequest, updateProjectAnnotationRequest,
-    getProjectLabelsRequest, clearProjectAnnotationsRequest, deleteProjectAnnotationRequest,
-    uploadShapefileOnly, uploadShapefileWithProps
+    getProjectAnnotationsRequest,
+    createProjectAnnotationsRequest,
+    updateProjectAnnotationRequest,
+    getProjectLabelsRequest,
+    clearProjectAnnotationsRequest,
+    deleteProjectAnnotationRequest
 } from '_api/annotations';
 
 // IF YOU ADD CONSTANTS:
@@ -21,9 +24,6 @@ export const ANNOTATIONS_EDIT = 'ANNOTATIONS_EDIT';
 export const ANNOTATIONS_BULK_CREATE = 'ANNOTATIONS_BULK_CREATE';
 export const ANNOTATIONS_SIDEBAR = 'ANNOTATIONS_SIDEBAR';
 export const ANNOTATIONS_TRANSFORM_DRAWLAYER = 'ANNOTATIONS_TRANSFORM_DRAWLAYER';
-export const ANNOTATIONS_UPLOAD_SHAPEFILE = 'ANNOTATIONS_UPLOAD_SHAPEFILE';
-export const ANNOTATIONS_IMPORT_SHAPEFILE = 'ANNOTATIONS_IMPORT_SHAPEFILE';
-export const ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE = 'ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE';
 
 export const ANNOTATIONS_ACTION_PREFIX = 'ANNOTATIONS';
 
@@ -50,11 +50,9 @@ export function fetchAnnotations(page) {
         const state = getState();
         dispatch({
             type: ANNOTATIONS_FETCH,
-            payload: getProjectAnnotationsRequest(
-                state, {
-                    page: page ? page : 0
-                }
-            ),
+            payload: getProjectAnnotationsRequest(state, {
+                page: page ? page : 0
+            }),
             meta: {
                 state
             }
@@ -80,32 +78,6 @@ export function createAnnotations(annotations, edit, panTo) {
                 edit,
                 panTo
             }
-        });
-    };
-}
-
-export function uploadShapefile(shapefile) {
-    return (dispatch, getState) => {
-        dispatch({
-            type: ANNOTATIONS_UPLOAD_SHAPEFILE,
-            payload: uploadShapefileOnly(getState(), shapefile)
-        });
-    };
-}
-
-export function deleteShapeFileUpload() {
-    return (dispatch, getState) => {
-        dispatch({
-            type: ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE
-        });
-    };
-}
-
-export function importShapefileWithProps(shapefile, matchedKeys) {
-    return (dispatch, getState) => {
-        dispatch({
-            type: ANNOTATIONS_IMPORT_SHAPEFILE,
-            payload: uploadShapefileWithProps(getState(), shapefile, matchedKeys)
         });
     };
 }
@@ -180,7 +152,7 @@ export function deleteAnnotation(annotationId) {
     }
     // eslint-disable-next-line
     console.error('Cannot delete an annotation without an id');
-    return {type: ''};
+    return { type: '' };
 }
 
 export function bulkCreateAnnotations(annotation) {
@@ -200,17 +172,26 @@ export function transformDrawlayer(transform, options) {
     return {
         type: `${ANNOTATIONS_TRANSFORM_DRAWLAYER}`,
         payload: {
-            transform, options
+            transform,
+            options
         }
     };
 }
 
 export default {
-    resetAnnotations, enableSidebar, disableSidebar,
-    fetchAnnotations, fetchLabels,
-    createAnnotations, updateAnnotation, filterAnnotations,
-    clearAnnotations, editAnnotation, finishEditingAnnotation,
-    deleteAnnotation, bulkCreateAnnotations, finishBulkCreate,
-    transformDrawlayer, uploadShapefile, importShapefileWithProps,
-    deleteShapeFileUpload
+    resetAnnotations,
+    enableSidebar,
+    disableSidebar,
+    fetchAnnotations,
+    fetchLabels,
+    createAnnotations,
+    updateAnnotation,
+    filterAnnotations,
+    clearAnnotations,
+    editAnnotation,
+    finishEditingAnnotation,
+    deleteAnnotation,
+    bulkCreateAnnotations,
+    finishBulkCreate,
+    transformDrawlayer
 };

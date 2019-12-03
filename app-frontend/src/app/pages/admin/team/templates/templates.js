@@ -3,9 +3,17 @@ import _ from 'lodash';
 
 class Controller {
     constructor(
-        $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        platform, organization, members
+        $scope,
+        $stateParams,
+        $log,
+        $window,
+        modalService,
+        organizationService,
+        teamService,
+        authService,
+        platform,
+        organization,
+        members
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -22,11 +30,10 @@ class Controller {
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.debouncedSearch = _.debounce(this.onSearch.bind(this), 500, {
+            leading: false,
+            trailing: true
+        });
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
@@ -53,8 +60,7 @@ class Controller {
     }
 
     // page = 0, search = ''
-    fetchPage() {
-    }
+    fetchPage() {}
 }
 
 const Module = angular.module('pages.team.templates', []);

@@ -27,7 +27,7 @@ class VectorNameModalController {
         const userRequest = this.authService.getCurrentUser();
 
         return userRequest.then(
-            (user) => {
+            user => {
                 let info = {
                     props: {
                         name: this.shapeName,
@@ -36,12 +36,14 @@ class VectorNameModalController {
                     id: this.resolve.shape.features[0].id
                 };
                 let shape = this.toMultiPolygon(this.resolve.shape, info);
-                return this.shapesService.createShape(shape)
-                    .then((shapes) => {
-                        this.close({$value: shapes.map(s => s.toJSON())});
-                    }, () => {
+                return this.shapesService.createShape(shape).then(
+                    shapes => {
+                        this.close({ $value: shapes.map(s => s.toJSON()) });
+                    },
+                    () => {
                         this.error = true;
-                    });
+                    }
+                );
             },
             () => {
                 this.error = true;

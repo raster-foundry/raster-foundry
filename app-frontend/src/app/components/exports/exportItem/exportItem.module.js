@@ -27,12 +27,14 @@ class ExportItemController {
     }
 
     openDownloadModal() {
-        this.modalService.open({
-            component: 'rfExportDownloadModal',
-            resolve: {
-                export: () => this.export
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfExportDownloadModal',
+                resolve: {
+                    export: () => this.export
+                }
+            })
+            .result.catch(() => {});
     }
 }
 

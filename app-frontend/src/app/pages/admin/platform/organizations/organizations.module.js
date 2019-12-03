@@ -3,8 +3,16 @@ import _ from 'lodash';
 
 class PlatformOrganizationsController {
     constructor(
-        $state, modalService, $stateParams, $scope, $log, $window,
-        platformService, organizationService, authService, paginationService,
+        $state,
+        modalService,
+        $stateParams,
+        $scope,
+        $log,
+        $window,
+        platformService,
+        organizationService,
+        authService,
+        paginationService,
         platform
     ) {
         'ngInject';
@@ -21,20 +29,21 @@ class PlatformOrganizationsController {
         delete this.fetchError;
         this.results = [];
         const currentQuery = this.platformService
-            .getOrganizations(
-                this.$stateParams.platformId,
-                page - 1,
-                this.search
-            ).then(paginatedResponse => {
-                this.results = paginatedResponse.results;
-                this.pagination = this.paginationService.buildPagination(paginatedResponse);
-                this.paginationService.updatePageParam(page, this.search);
-                this.buildOptions();
-            }, (e) => {
-                if (this.currentQuery === currentQuery) {
-                    this.fetchError = e;
+            .getOrganizations(this.$stateParams.platformId, page - 1, this.search)
+            .then(
+                paginatedResponse => {
+                    this.results = paginatedResponse.results;
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page, this.search);
+                    this.buildOptions();
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
                 }
-            }).finally(() => {
+            )
+            .finally(() => {
                 if (this.currentQuery === currentQuery) {
                     delete this.currentQuery;
                 }
@@ -58,7 +67,6 @@ class PlatformOrganizationsController {
         });
     }
 
-
     itemsForOrg(organization) {
         /* eslint-disable */
         let actions = [];
@@ -77,7 +85,7 @@ class PlatformOrganizationsController {
                     this.activateOrganization(organization);
                 }
             });
-        };
+        }
         return actions;
         /* eslint-enable */
     }
@@ -93,29 +101,29 @@ class PlatformOrganizationsController {
             }
         });
 
-        modal.result.then(() => {
-            this.organizationService.deactivate(
-                this.$stateParams.platformId, organization.id
-            ).then(
-                () => {
-                    this.fetchPage(this.pagination.currentPage);
-                },
-                (err) => {
-                    this.$log.debug('error deactivating organization', err);
-                    this.fetchPage(this.pagination.currentPage);
-                }
-            );
-        }).catch(() => {});
+        modal.result
+            .then(() => {
+                this.organizationService
+                    .deactivate(this.$stateParams.platformId, organization.id)
+                    .then(
+                        () => {
+                            this.fetchPage(this.pagination.currentPage);
+                        },
+                        err => {
+                            this.$log.debug('error deactivating organization', err);
+                            this.fetchPage(this.pagination.currentPage);
+                        }
+                    );
+            })
+            .catch(() => {});
     }
 
     activateOrganization(organization) {
-        this.organizationService.activate(
-            this.$stateParams.platformId, organization.id
-        ).then(
+        this.organizationService.activate(this.$stateParams.platformId, organization.id).then(
             () => {
                 this.fetchPage(this.pagination.currentPage);
             },
-            (err) => {
+            err => {
                 this.$log.debug('error activating organization', err);
                 this.fetchPage(this.pagination.currentPage);
             }
@@ -123,15 +131,18 @@ class PlatformOrganizationsController {
     }
 
     newOrgModal() {
-        this.modalService.open({
-            component: 'rfOrganizationModal'
-        }).result.then((result) => {
-            this.platformService
-                .createOrganization(this.$stateParams.platformId, result.name, 'ACTIVE')
-                .then(() => {
-                    this.fetchPage();
-                });
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfOrganizationModal'
+            })
+            .result.then(result => {
+                this.platformService
+                    .createOrganization(this.$stateParams.platformId, result.name, 'ACTIVE')
+                    .then(() => {
+                        this.fetchPage();
+                    });
+            })
+            .catch(() => {});
     }
 
     toggleOrgNameEdit(orgId, isEdit) {
@@ -142,14 +153,18 @@ class PlatformOrganizationsController {
 
     finishOrgNameEdit(org) {
         if (this.nameBuffer && this.nameBuffer.length && org.name !== this.nameBuffer) {
-            let orgUpdated = Object.assign({}, org, {name: this.nameBuffer});
+            let orgUpdated = Object.assign({}, org, { name: this.nameBuffer });
             this.organizationService
                 .updateOrganization(orgUpdated.platformId, orgUpdated.id, orgUpdated)
-                .then(resp => {
-                    this.organizations[this.organizations.indexOf(org)] = resp;
-                }, () => {
-                    this.$window.alert('Organization\'s name cannot be updated at the moment.');
-                }).finally(() => {
+                .then(
+                    resp => {
+                        this.organizations[this.organizations.indexOf(org)] = resp;
+                    },
+                    () => {
+                        this.$window.alert("Organization's name cannot be updated at the moment.");
+                    }
+                )
+                .finally(() => {
                     delete this.editOrgId;
                     delete this.isEditOrgName;
                     this.nameBuffer = '';
@@ -169,7 +184,8 @@ class PlatformOrganizationsController {
 
 const PlatformOrganizationsModule = angular.module('pages.platform.organizations', []);
 PlatformOrganizationsModule.controller(
-    'PlatformOrganizationsController', PlatformOrganizationsController
+    'PlatformOrganizationsController',
+    PlatformOrganizationsController
 );
 
 export default PlatformOrganizationsModule;

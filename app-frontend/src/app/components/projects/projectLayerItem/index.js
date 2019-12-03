@@ -5,14 +5,7 @@ import projectLayerPlaceholder from '../../../../assets/images/transparent.svg';
 import projectLayerItemTpl from './index.html';
 
 class ProjectLayerItemController {
-    constructor(
-        $rootScope,
-        $scope,
-        projectService,
-        mapService,
-        mapUtilsService,
-        userService
-    ) {
+    constructor($rootScope, $scope, projectService, mapService, mapUtilsService, userService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
         this.projectLayerPlaceholder = projectLayerPlaceholder;
@@ -45,12 +38,7 @@ class ProjectLayerItemController {
 
     fitProjectLayerExtent() {
         this.getMap().then(mapWrapper => {
-            this.mapUtilsService.fitMapToProjectLayer(
-                mapWrapper,
-                this.item,
-                this.project,
-                -2
-            );
+            this.mapUtilsService.fitMapToProjectLayer(mapWrapper, this.item, this.project, -2);
             mapWrapper.map.invalidateSize();
         });
     }
@@ -102,5 +90,4 @@ const ProjectLayerItemComponent = {
 export default angular
     .module('components.projects.projectLayerItem', [])
     .controller('ProjectLayerItemController', ProjectLayerItemController)
-    .component('rfProjectLayerItem', ProjectLayerItemComponent)
-    .name;
+    .component('rfProjectLayerItem', ProjectLayerItemComponent).name;

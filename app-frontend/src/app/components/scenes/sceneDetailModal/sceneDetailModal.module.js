@@ -200,14 +200,14 @@ class SceneDetailModalController {
 
     getMaxBound(field) {
         switch (field) {
-        case 'cloudCover':
-            return 100;
-        case 'sunAzimuth':
-            return 360;
-        case 'sunElevation':
-            return 180;
-        default:
-            throw new Error(`Tried to fetch max bound for invalid field: ${field}`);
+            case 'cloudCover':
+                return 100;
+            case 'sunAzimuth':
+                return 360;
+            case 'sunElevation':
+                return 180;
+            default:
+                throw new Error(`Tried to fetch max bound for invalid field: ${field}`);
         }
     }
 

@@ -5,12 +5,9 @@ import PlanetSceneDetailModalController from './planetSceneDetailModal.controlle
 const PlanetSceneDetailModalModule = angular.module('components.scenes.planetSceneDetailModal', []);
 
 PlanetSceneDetailModalModule.controller(
-  'PlanetSceneDetailModalController',
-  PlanetSceneDetailModalController
+    'PlanetSceneDetailModalController',
+    PlanetSceneDetailModalController
 );
-PlanetSceneDetailModalModule.component(
-  'rfPlanetSceneDetailModal',
-  PlanetSceneDetailModalComponent
-);
+PlanetSceneDetailModalModule.component('rfPlanetSceneDetailModal', PlanetSceneDetailModalComponent);
 
 export default PlanetSceneDetailModalModule;

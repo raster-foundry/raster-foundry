@@ -32,44 +32,44 @@ class MeasurementPopupController {
 
     calculateUnitsAndNumber() {
         switch (this.unitType) {
-        case 'imperial':
-            if (this.measurementType && this.measurementType === 'Area') {
-                const sqft = this.measurement * 10.7639;
-                const sqMiToSqFt = 27878400;
-                if (sqft > sqMiToSqFt) {
-                    this.calculatedMeasurment = sqft / sqMiToSqFt;
-                    this.unit = 'square miles';
+            case 'imperial':
+                if (this.measurementType && this.measurementType === 'Area') {
+                    const sqft = this.measurement * 10.7639;
+                    const sqMiToSqFt = 27878400;
+                    if (sqft > sqMiToSqFt) {
+                        this.calculatedMeasurment = sqft / sqMiToSqFt;
+                        this.unit = 'square miles';
+                    } else {
+                        this.calculatedMeasurment = sqft;
+                        this.unit = 'square feet';
+                    }
                 } else {
-                    this.calculatedMeasurment = sqft;
-                    this.unit = 'square feet';
+                    const feet = this.measurement * 3.28084;
+                    const miToFt = 5280;
+                    if (feet > miToFt) {
+                        this.unit = 'miles';
+                        this.calculatedMeasurment = feet / miToFt;
+                    } else {
+                        this.unit = 'feet';
+                        this.calculatedMeasurment = feet;
+                    }
                 }
-            } else {
-                const feet = this.measurement * 3.28084;
-                const miToFt = 5280;
-                if (feet > miToFt) {
-                    this.unit = 'miles';
-                    this.calculatedMeasurment = feet / miToFt;
+                break;
+            default:
+                let order = Math.floor(Math.log(this.measurement) / Math.LN10 + 0.000000001);
+                if (this.measurementType && this.measurementType === 'Area') {
+                    let isLarge = order > 6;
+                    this.unit = isLarge ? 'square kilometers' : 'square meters';
+                    this.calculatedMeasurment = isLarge
+                        ? this.measurement / Math.pow(10, 6)
+                        : this.measurement;
                 } else {
-                    this.unit = 'feet';
-                    this.calculatedMeasurment = feet;
+                    let isLarge = order > 3;
+                    this.unit = isLarge ? 'kilometers' : 'meters';
+                    this.calculatedMeasurment = isLarge
+                        ? this.measurement / Math.pow(10, 3)
+                        : this.measurement;
                 }
-            }
-            break;
-        default:
-            let order = Math.floor(Math.log(this.measurement) / Math.LN10 + 0.000000001);
-            if (this.measurementType && this.measurementType === 'Area') {
-                let isLarge = order > 6;
-                this.unit = isLarge ? 'square kilometers' : 'square meters';
-                this.calculatedMeasurment = isLarge ?
-                    this.measurement / Math.pow(10, 6) :
-                    this.measurement;
-            } else {
-                let isLarge = order > 3;
-                this.unit = isLarge ? 'kilometers' : 'meters';
-                this.calculatedMeasurment = isLarge ?
-                    this.measurement / Math.pow(10, 3) :
-                    this.measurement;
-            }
         }
     }
 
@@ -81,11 +81,7 @@ class MeasurementPopupController {
 
 const MeasurePopupModule = angular.module('components.map.measurementPopup', []);
 
-MeasurePopupModule.controller(
-    'MeasurementPopupController', MeasurementPopupController
-);
-MeasurePopupModule.component(
-    'rfMeasurementPopup', MeasurementPopupComponent
-);
+MeasurePopupModule.controller('MeasurementPopupController', MeasurementPopupController);
+MeasurePopupModule.component('rfMeasurementPopup', MeasurementPopupComponent);
 
 export default MeasurePopupModule;

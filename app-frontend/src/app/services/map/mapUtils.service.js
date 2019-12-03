@@ -52,7 +52,7 @@ export default app => {
          * @returns {numeric} x-coordinate of tile
          */
         lng2Tile(lng, zoom) {
-            return Math.floor((lng + 180) / 360 * Math.pow(2, zoom + 2));
+            return Math.floor(((lng + 180) / 360) * Math.pow(2, zoom + 2));
         }
 
         /**
@@ -65,12 +65,12 @@ export default app => {
          */
         lat2Tile(lat, zoom) {
             return Math.floor(
-                (1 -
+                ((1 -
                     Math.log(
-                        Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)
+                        Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)
                     ) /
                         Math.PI) /
-                    2 *
+                    2) *
                     Math.pow(2, zoom + 2)
             );
         }
@@ -84,7 +84,7 @@ export default app => {
          * @returns {numeric} lng point of tile NE corner
          */
         tile2Lng(x, zoom) {
-            return x / Math.pow(2, zoom + 2) * 360 - 180;
+            return (x / Math.pow(2, zoom + 2)) * 360 - 180;
         }
 
         /**
@@ -96,8 +96,8 @@ export default app => {
          * @returns {numeric} lat point of tile NE corner
          */
         tile2Lat(y, zoom) {
-            let n = Math.PI - 2 * Math.PI * y / Math.pow(2, zoom + 2);
-            return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+            let n = Math.PI - (2 * Math.PI * y) / Math.pow(2, zoom + 2);
+            return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
         }
     }
 

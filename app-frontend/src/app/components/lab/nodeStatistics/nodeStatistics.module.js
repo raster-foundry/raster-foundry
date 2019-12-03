@@ -12,7 +12,6 @@ const NodeStatisticsComponent = {
     }
 };
 
-
 class NodeStatisticsController {
     constructor($rootScope, $scope, $ngRedux, $filter) {
         'ngInject';
@@ -39,9 +38,9 @@ class NodeStatisticsController {
         });
 
         this.digitCount = 5;
-        this.emptyStats = { };
+        this.emptyStats = {};
         this.visibleStats = ['mean', 'median', 'mode', 'stddev', 'zmin', 'zmax'];
-        this.visibleStats.forEach((stat) => {
+        this.visibleStats.forEach(stat => {
             this.emptyStats[stat] = '';
         });
     }

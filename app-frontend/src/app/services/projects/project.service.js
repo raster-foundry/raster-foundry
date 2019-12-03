@@ -731,13 +731,6 @@ export default app => {
             return this.Project.updateSceneOrder({ projectId }, sceneIds).$promise;
         }
 
-        getAnnotationShapefile(projectId) {
-            return this.$http({
-                method: 'GET',
-                url: `${BUILDCONFIG.API_HOST}/api/projects/${projectId}/annotations/shapefile`
-            });
-        }
-
         setProjectColorMode(projectId, bands) {
             return this.Project.colorMode({ projectId }, bands).$promise;
         }

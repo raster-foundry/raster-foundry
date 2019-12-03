@@ -13,23 +13,40 @@ const TemplateCreateModalComponent = {
 };
 
 const allowedOps = [
-    '+', '-', '*', '/',
-    '==', '!=', '>', '<', '>=', '<=',
-    'and', 'or', 'xor',
+    '+',
+    '-',
+    '*',
+    '/',
+    '==',
+    '!=',
+    '>',
+    '<',
+    '>=',
+    '<=',
+    'and',
+    'or',
+    'xor',
     '^',
-    'sqrt', 'log10',
-    'ceil', 'floor', 'round',
+    'sqrt',
+    'log10',
+    'ceil',
+    'floor',
+    'round',
     'abs',
-    'sin', 'cos', 'tan',
-    'asin', 'acos', 'atan',
-    'sinh', 'cosh', 'tanh',
+    'sin',
+    'cos',
+    'tan',
+    'asin',
+    'acos',
+    'atan',
+    'sinh',
+    'cosh',
+    'tanh',
     'atan2'
 ];
 
 class TemplateCreateModalController {
-    constructor(
-        $scope, $state, uuid4, analysisService, datasourceLicenseService
-    ) {
+    constructor($scope, $state, uuid4, analysisService, datasourceLicenseService) {
         'ngInject';
         this.$scope = $scope;
         this.$state = $state;
@@ -42,7 +59,7 @@ class TemplateCreateModalController {
         this.initFromExisting(this.resolve.existingTemplate);
         this.isProcessing = false;
         this.definitionExpression = '';
-        this.datasourceLicenseService.getLicenses({pageSize: 10000}).then( licenses => {
+        this.datasourceLicenseService.getLicenses({ pageSize: 10000 }).then(licenses => {
             this.availableLicenses = licenses.results;
         });
     }
@@ -53,35 +70,41 @@ class TemplateCreateModalController {
 
     updateTemplate() {
         this.isProcessing = true;
-        let updated = Object.assign({},
-                                    this.resolve.existingTemplate,
-                                    this.templateBuffer);
-        return this.analysisService.updateTemplate(updated).then( () => {
-            this.close({ $value: updated });
-            this.$state.go('lab.browse.templates');
-        }).catch(e => {
-            this.currentParsingError = 'Could not update template from provided parameters';
-        }).finally(() => {
-            this.isProcessing = false;
-        });
+        let updated = Object.assign({}, this.resolve.existingTemplate, this.templateBuffer);
+        return this.analysisService
+            .updateTemplate(updated)
+            .then(() => {
+                this.close({ $value: updated });
+                this.$state.go('lab.browse.templates');
+            })
+            .catch(e => {
+                this.currentParsingError = 'Could not update template from provided parameters';
+            })
+            .finally(() => {
+                this.isProcessing = false;
+            });
     }
 
     createTemplate() {
         let expressionTree = null;
-        require.ensure(['mathjs'], (require) => {
-            const mathjs = require('mathjs');
-            expressionTree = mathjs.parse(this.definitionExpression);
-            this.templateBuffer.definition = this.expressionTreeToMAML(expressionTree);
-            this.analysisService.createTemplate(this.templateBuffer).then(template => {
-                this.dismiss();
-                this.$state.go('lab.startAnalysis', { templateid: template.id });
-            });
-        }, (error) => {
-            this.currentError =
-                'There was an error fetching dependencies. Please try again later.';
-            this.isProcessing = false;
-            throw new Error('Error fetching math.js dependency. Check webpack config');
-        });
+        require.ensure(
+            ['mathjs'],
+            require => {
+                const mathjs = require('mathjs');
+                expressionTree = mathjs.parse(this.definitionExpression);
+                this.templateBuffer.definition = this.expressionTreeToMAML(expressionTree);
+                this.analysisService.createTemplate(this.templateBuffer).then(template => {
+                    this.dismiss();
+                    this.$state.go('lab.startAnalysis', { templateid: template.id });
+                });
+            },
+            error => {
+                this.currentError =
+                    'There was an error fetching dependencies. Please try again later.';
+                this.isProcessing = false;
+                throw new Error('Error fetching math.js dependency. Check webpack config');
+            }
+        );
     }
 
     flushBuffer() {
@@ -126,53 +149,53 @@ class TemplateCreateModalController {
         };
 
         switch (tree.type) {
-        case 'AssignmentNode':
-            return this.expressionTreeToMAML(tree.object, tree.value.value);
-        case 'ConstantNode':
-            Object.assign(mamlNode, {
-                type: 'const',
-                constant: tree.value,
-                metadata: {
-                    label: tree.value
-                }
-            });
-            break;
-        case 'OperatorNode':
-            if (allowedOps.indexOf(tree.op) >= 0) {
-                mamlNode.apply = tree.op;
-                mamlNode.metadata.label = tree.fn;
-                mamlNode.metadata.collapsable = allowCollapse;
+            case 'AssignmentNode':
+                return this.expressionTreeToMAML(tree.object, tree.value.value);
+            case 'ConstantNode':
+                Object.assign(mamlNode, {
+                    type: 'const',
+                    constant: tree.value,
+                    metadata: {
+                        label: tree.value
+                    }
+                });
                 break;
-            }
-            return false;
-        case 'FunctionNode':
-            mamlNode.apply = tree.fn.name;
-            mamlNode.metadata.label = tree.fn.name;
-            if (mamlNode.apply === 'classify') {
-                const classifications = tree.args[1];
-                tree.args = [ tree.args[0] ];
-                mamlNode.classMap = {
-                    classifications: this.objectNodeToClassifications(classifications)
-                };
-            }
-            break;
-        case 'ParenthesisNode':
-            return this.expressionTreeToMAML(tree.content, null, false);
-        case 'SymbolNode':
-            if (tree.name.startsWith('_')) {
-                mamlNode.type = 'const';
-                mamlNode.metadata.label = tree.name.substring(1);
-                if (value) {
-                    mamlNode.constant = parseFloat(value);
+            case 'OperatorNode':
+                if (allowedOps.indexOf(tree.op) >= 0) {
+                    mamlNode.apply = tree.op;
+                    mamlNode.metadata.label = tree.fn;
+                    mamlNode.metadata.collapsable = allowCollapse;
+                    break;
                 }
-            } else {
-                mamlNode.type = 'projectSrc';
-                mamlNode.metadata.label = tree.name;
-            }
-            mamlNode.id = this.getSymbolId(mamlNode.metadata.label);
-            break;
-        default:
-            return false;
+                return false;
+            case 'FunctionNode':
+                mamlNode.apply = tree.fn.name;
+                mamlNode.metadata.label = tree.fn.name;
+                if (mamlNode.apply === 'classify') {
+                    const classifications = tree.args[1];
+                    tree.args = [tree.args[0]];
+                    mamlNode.classMap = {
+                        classifications: this.objectNodeToClassifications(classifications)
+                    };
+                }
+                break;
+            case 'ParenthesisNode':
+                return this.expressionTreeToMAML(tree.content, null, false);
+            case 'SymbolNode':
+                if (tree.name.startsWith('_')) {
+                    mamlNode.type = 'const';
+                    mamlNode.metadata.label = tree.name.substring(1);
+                    if (value) {
+                        mamlNode.constant = parseFloat(value);
+                    }
+                } else {
+                    mamlNode.type = 'projectSrc';
+                    mamlNode.metadata.label = tree.name;
+                }
+                mamlNode.id = this.getSymbolId(mamlNode.metadata.label);
+                break;
+            default:
+                return false;
         }
 
         if (tree.args && tree.args.length) {
@@ -209,44 +232,51 @@ class TemplateCreateModalController {
         } else if (!bracesBalanced) {
             this.currentParsingError = 'The braces in this expression are not balanced';
         }
-        return (this.templateBuffer.title && this.definitionExpression && parensBalanced) ||
-            this.editing;
+        return (
+            (this.templateBuffer.title && this.definitionExpression && parensBalanced) ||
+            this.editing
+        );
     }
 
     validateParenDepth() {
         const expressionArray = this.definitionExpression.split('');
-        const result = expressionArray.reduce((acc, c) => {
-            if (acc.continue) {
-                let d = acc.depth;
-                if (c === '(') {
-                    d += 1;
-                } else if (c === ')') {
-                    d -= 1;
+        const result = expressionArray.reduce(
+            (acc, c) => {
+                if (acc.continue) {
+                    let d = acc.depth;
+                    if (c === '(') {
+                        d += 1;
+                    } else if (c === ')') {
+                        d -= 1;
+                    }
+                    return { depth: d, continue: d >= 0 };
                 }
-                return { depth: d, continue: d >= 0};
-            }
-            return acc;
-        }, { depth: 0, continue: true });
+                return acc;
+            },
+            { depth: 0, continue: true }
+        );
         return result.continue && result.depth === 0;
     }
 
     validateBraceDepth() {
         const expressionArray = this.definitionExpression.split('');
-        const result = expressionArray.reduce((acc, c) => {
-            if (acc.continue) {
-                let d = acc.depth;
-                if (c === '{') {
-                    d += 1;
-                } else if (c === '}') {
-                    d -= 1;
+        const result = expressionArray.reduce(
+            (acc, c) => {
+                if (acc.continue) {
+                    let d = acc.depth;
+                    if (c === '{') {
+                        d += 1;
+                    } else if (c === '}') {
+                        d -= 1;
+                    }
+                    return { depth: d, continue: d >= 0 };
                 }
-                return { depth: d, continue: d >= 0};
-            }
-            return acc;
-        }, { depth: 0, continue: true });
+                return acc;
+            },
+            { depth: 0, continue: true }
+        );
         return result.continue && result.depth === 0;
     }
-
 
     initFromExisting(template) {
         if (template) {
@@ -255,9 +285,9 @@ class TemplateCreateModalController {
                 description: this.resolve.existingTemplate.description || '',
                 singleSource: this.resolve.existingTemplate.singleSource,
                 visibility: this.resolve.existingTemplate.visibility,
-                license: this.resolve.existingTemplate.license ?
-                    this.resolve.existingTemplate.license :
-                    null
+                license: this.resolve.existingTemplate.license
+                    ? this.resolve.existingTemplate.license
+                    : null
             };
             this.editing = true;
         } else {
@@ -278,9 +308,10 @@ class TemplateCreateModalController {
 }
 
 const TemplateCreateModalModule = angular.module('components.lab.templateCreateModal', []);
-TemplateCreateModalModule.controller('TemplateCreateModalController',
-                                     TemplateCreateModalController);
-TemplateCreateModalModule.component('rfTemplateCreateModal',
-                                    TemplateCreateModalComponent);
+TemplateCreateModalModule.controller(
+    'TemplateCreateModalController',
+    TemplateCreateModalController
+);
+TemplateCreateModalModule.component('rfTemplateCreateModal', TemplateCreateModalComponent);
 
 export default TemplateCreateModalModule;

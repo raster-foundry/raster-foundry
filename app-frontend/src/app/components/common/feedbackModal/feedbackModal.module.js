@@ -15,8 +15,6 @@ const FeedbackModalComponent = {
 
 const FeedbackModalModule = angular.module('components.common.feedbackModal', []);
 
-FeedbackModalModule.component(
-    'rfFeedbackModal', FeedbackModalComponent
-);
+FeedbackModalModule.component('rfFeedbackModal', FeedbackModalComponent);
 
 export default FeedbackModalModule;

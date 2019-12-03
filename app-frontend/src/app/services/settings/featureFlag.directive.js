@@ -11,7 +11,7 @@
  *          ...
  *      </div>
  */
-export default (app) => {
+export default app => {
     class FeatureFlagDirective {
         constructor(featureFlags, $interpolate) {
             this.featureFlags = featureFlags;
@@ -26,36 +26,41 @@ export default (app) => {
 
         compile(tElement, tAttrs) {
             let hasHideAttribute = 'featureFlagHide' in tAttrs;
-            tElement[0].textContent = ' featureFlag: ' + tAttrs.featureFlag +
-                ' is ' + (hasHideAttribute ? 'on' : 'off') + ' ';
-            return (
-                $scope, element, attrs, ctrl, $transclude
-            ) => {
+            tElement[0].textContent =
+                ' featureFlag: ' +
+                tAttrs.featureFlag +
+                ' is ' +
+                (hasHideAttribute ? 'on' : 'off') +
+                ' ';
+            return ($scope, element, attrs, ctrl, $transclude) => {
                 let featureEl;
                 let childScope;
-                $scope.$watch(() => {
-                    let featureFlag = this.$interpolate(attrs.featureFlag)($scope);
-                    return this.featureFlags.isOnByDefault(featureFlag);
-                }, (isEnabled) => {
-                    let showElement = hasHideAttribute ? !isEnabled : isEnabled;
+                $scope.$watch(
+                    () => {
+                        let featureFlag = this.$interpolate(attrs.featureFlag)($scope);
+                        return this.featureFlags.isOnByDefault(featureFlag);
+                    },
+                    isEnabled => {
+                        let showElement = hasHideAttribute ? !isEnabled : isEnabled;
 
-                    if (showElement) {
-                        childScope = $scope.$new();
-                        $transclude(childScope, (clone) => {
-                            featureEl = clone;
-                            element.after(featureEl).remove();
-                        });
-                    } else {
-                        if (childScope) {
-                            childScope.$destroy();
-                            childScope = null;
-                        }
-                        if (featureEl) {
-                            featureEl.after(element).remove();
-                            featureEl = null;
+                        if (showElement) {
+                            childScope = $scope.$new();
+                            $transclude(childScope, clone => {
+                                featureEl = clone;
+                                element.after(featureEl).remove();
+                            });
+                        } else {
+                            if (childScope) {
+                                childScope.$destroy();
+                                childScope = null;
+                            }
+                            if (featureEl) {
+                                featureEl.after(element).remove();
+                                featureEl = null;
+                            }
                         }
                     }
-                });
+                );
             };
         }
 
@@ -65,8 +70,5 @@ export default (app) => {
         }
     }
 
-    app.directive(
-        'featureFlag',
-        FeatureFlagDirective.factory
-    );
+    app.directive('featureFlag', FeatureFlagDirective.factory);
 };

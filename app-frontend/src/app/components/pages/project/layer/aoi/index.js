@@ -85,8 +85,7 @@ class ProjectLayerAoiController {
             .getProjectLayers(this.project.id, { pageSize: 30, page: page - 1 })
             .then(paginatedResponse => {
                 fetchedList = paginatedResponse.results;
-                this.itemList = fetchedList
-                    .filter(fl => fl.geometry && fl.id !== this.layer.id);
+                this.itemList = fetchedList.filter(fl => fl.geometry && fl.id !== this.layer.id);
                 if (this.itemList.length) {
                     this.onSelect(this.layer.id);
                 }
@@ -179,7 +178,7 @@ class ProjectLayerAoiController {
             .catch(err => {
                 this.$log.error(err);
                 this.$window.alert(
-                    'There was an error updating this layer\'s AOI.' + ' Please try again later'
+                    "There was an error updating this layer's AOI." + ' Please try again later'
                 );
             });
     }
@@ -228,7 +227,7 @@ class ProjectLayerAoiController {
                     })
                     .catch(err => {
                         this.$window.alert(
-                            'There was an error adding this layer\'s AOI as vector data.' +
+                            "There was an error adding this layer's AOI as vector data." +
                                 ' Please try again later'
                         );
                         this.$log.error(err);

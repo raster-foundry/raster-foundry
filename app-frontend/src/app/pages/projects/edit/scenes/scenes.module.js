@@ -3,9 +3,18 @@ import angular from 'angular';
 
 class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $timeout,
-        modalService, projectService, RasterFoundryRepository, uploadService,
-        sceneService, authService, paginationService, mapUtilsService,
+        $log,
+        $state,
+        $scope,
+        $timeout,
+        modalService,
+        projectService,
+        RasterFoundryRepository,
+        uploadService,
+        sceneService,
+        authService,
+        paginationService,
+        mapUtilsService,
         platform
     ) {
         'ngInject';
@@ -27,10 +36,10 @@ class ProjectsScenesController {
         // eslint-disable-next-line
         let thisItem = this;
         this.treeOptions = {
-            dragStart: function (e) {
+            dragStart: function(e) {
                 thisItem.onSceneDragStart(e);
             },
-            dropped: function (e) {
+            dropped: function(e) {
                 thisItem.onSceneDropped(e.source.nodesScope.$modelValue);
             }
         };
@@ -40,28 +49,31 @@ class ProjectsScenesController {
         this.getIngestingSceneCount();
         delete this.fetchError;
         this.sceneList = [];
-        const currentQuery = this.projectService.getProjectScenes(
-            this.projectId,
-            {
+        const currentQuery = this.projectService
+            .getProjectScenes(this.projectId, {
                 pageSize: this.projectService.scenePageSize,
                 page: page - 1
-            }
-        ).then((paginatedResponse) => {
-            this.sceneList = paginatedResponse.results;
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
+            })
+            .then(
+                paginatedResponse => {
+                    this.sceneList = paginatedResponse.results;
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page);
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
+                }
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
         this.currentQuery = currentQuery;
         return currentQuery;
     }
@@ -72,12 +84,11 @@ class ProjectsScenesController {
                 ingested: false,
                 pageSize: 0
             });
-            this.pendingIngestRequest.then((paginatedResponse) => {
+            this.pendingIngestRequest.then(paginatedResponse => {
                 this.ingesting = this.paginationService.buildPagination(paginatedResponse);
             });
         }
     }
-
 
     onSceneDragStart(e) {
         this.setDragPlaceholderHeight(e);
@@ -91,8 +102,8 @@ class ProjectsScenesController {
 
     onSceneDropped(orderedScenes) {
         // get order using paginator
-        this.sceneList = this.sceneList.map(
-            (scene, index) => Object.assign(scene, {sceneOrder: index})
+        this.sceneList = this.sceneList.map((scene, index) =>
+            Object.assign(scene, { sceneOrder: index })
         );
         let orderedSceneIds = orderedScenes.map(s => s.id);
         this.updateSceneOrder(orderedSceneIds);
@@ -119,7 +130,7 @@ class ProjectsScenesController {
 
         arrayMove(
             this.sceneList,
-            this.sceneList.findIndex((s) => s.id === scene.id),
+            this.sceneList.findIndex(s => s.id === scene.id),
             p
         );
         this.onSceneDropped(this.sceneList);
@@ -150,16 +161,18 @@ class ProjectsScenesController {
     }
 
     shareModal(project) {
-        this.modalService.open({
-            component: 'rfPermissionModal',
-            resolve: {
-                object: () => project,
-                permissionsBase: () => 'projects',
-                objectType: () => 'PROJECT',
-                objectName: () => project.name,
-                platform: () => this.platform
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfPermissionModal',
+                resolve: {
+                    object: () => project,
+                    permissionsBase: () => 'projects',
+                    objectType: () => 'PROJECT',
+                    objectName: () => project.name,
+                    platform: () => this.platform
+                }
+            })
+            .result.catch(() => {});
     }
 
     openImportModal() {
@@ -171,9 +184,11 @@ class ProjectsScenesController {
             }
         });
 
-        activeModal.result.then(results => {
-            this.checkPendingImports();
-        }).catch(() => {});
+        activeModal.result
+            .then(results => {
+                this.checkPendingImports();
+            })
+            .catch(() => {});
     }
 
     updateSceneOrder(orderedSceneIds) {
@@ -185,29 +200,31 @@ class ProjectsScenesController {
     gotoBrowse() {
         this.$parent.getMap().then(mapWrapper => {
             const bbox = mapWrapper.map.getBounds();
-            this.$state.go('projects.edit.browse', {sceneid: null, bbox: bbox.toBBoxString()});
+            this.$state.go('projects.edit.browse', { sceneid: null, bbox: bbox.toBBoxString() });
         });
     }
 
     sceneOrderTracker(scene) {
-        Object.assign(scene, {'$$hashKey': scene.id});
+        Object.assign(scene, { $$hashKey: scene.id });
         return scene.$$hashKey;
     }
 
     checkPendingImports() {
-        this.uploadService.query({
-            uploadStatus: 'UPLOADED',
-            projectId: this.projectId,
-            pageSize: 0
-        }).then(uploads => {
-            this.pendingImports = uploads.count;
-        });
+        this.uploadService
+            .query({
+                uploadStatus: 'UPLOADED',
+                projectId: this.projectId,
+                pageSize: 0
+            })
+            .then(uploads => {
+                this.pendingImports = uploads.count;
+            });
     }
 
     setHoveredScene(scene) {
         if (scene !== this.hoveredScene) {
             this.hoveredScene = scene;
-            this.$parent.getMap().then((map) => {
+            this.$parent.getMap().then(map => {
                 if (scene.sceneType !== 'COG' && scene.statusFields.ingestStatus === 'INGESTED') {
                     this.$parent.setHoveredScene(scene);
                 } else {
@@ -219,9 +236,11 @@ class ProjectsScenesController {
 
     removeHoveredScene() {
         if (this.hoveredScene) {
-            this.$parent.getMap().then((map) => {
-                if (this.hoveredScene.sceneType !== 'COG' &&
-                    this.hoveredScene.statusFields.ingestStatus === 'INGESTED') {
+            this.$parent.getMap().then(map => {
+                if (
+                    this.hoveredScene.sceneType !== 'COG' &&
+                    this.hoveredScene.statusFields.ingestStatus === 'INGESTED'
+                ) {
                     this.$parent.removeHoveredScene();
                 } else {
                     map.deleteThumbnail();
@@ -232,19 +251,19 @@ class ProjectsScenesController {
     }
 
     downloadSceneModal(scene) {
-        this.modalService.open({
-            component: 'rfSceneDownloadModal',
-            resolve: {
-                scene: () => scene
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfSceneDownloadModal',
+                resolve: {
+                    scene: () => scene
+                }
+            })
+            .result.catch(() => {});
     }
 }
 
 const ProjectsScenesModule = angular.module('pages.projects.edit.scenes', ['ui.tree']);
 
-ProjectsScenesModule.controller(
-    'ProjectsScenesController', ProjectsScenesController
-);
+ProjectsScenesModule.controller('ProjectsScenesController', ProjectsScenesController);
 
 export default ProjectsScenesModule;

@@ -1,6 +1,6 @@
 /* globals BUILDCONFIG */
 
-export default (app) => {
+export default app => {
     class TokenService {
         constructor($resource, $q, $log, APP_CONFIG, authService) {
             'ngInject';
@@ -10,9 +10,11 @@ export default (app) => {
             this.authService = authService;
 
             this.ApiToken = $resource(
-                `${BUILDCONFIG.API_HOST}/api/tokens/:id`, {
+                `${BUILDCONFIG.API_HOST}/api/tokens/:id`,
+                {
                     id: '@id'
-                }, {
+                },
+                {
                     query: {
                         method: 'GET',
                         cache: false,
@@ -25,9 +27,11 @@ export default (app) => {
             );
 
             this.MapToken = $resource(
-                `${BUILDCONFIG.API_HOST}/api/map-tokens/:id`, {
+                `${BUILDCONFIG.API_HOST}/api/map-tokens/:id`,
+                {
                     id: '@id'
-                }, {
+                },
+                {
                     create: {
                         method: 'POST'
                     },
@@ -42,10 +46,13 @@ export default (app) => {
                     update: {
                         method: 'PUT'
                     }
-                });
+                }
+            );
 
             this.analysisMapToken = $resource(
-                `${BUILDCONFIG.API_HOST}/api/map-tokens/`, {}, {
+                `${BUILDCONFIG.API_HOST}/api/map-tokens/`,
+                {},
+                {
                     create: {
                         method: 'POST'
                     },
@@ -57,7 +64,8 @@ export default (app) => {
 
             this.auth0Token = $resource(
                 `https://${APP_CONFIG.auth0Domain}/oauth/token`,
-                {}, {
+                {},
+                {
                     create: {
                         method: 'POST'
                     }
@@ -65,14 +73,16 @@ export default (app) => {
             );
         }
 
+        /* eslint-disable */
         createApiToken(code) {
             return this.auth0Token.create({
-                'grant_type': 'authorization_code',
-                'client_id': this.APP_CONFIG.clientId,
-                'redirect_uri': `${this.authService.getBaseURL()}/user/me/settings/api-tokens`,
+                grant_type: 'authorization_code',
+                client_id: this.APP_CONFIG.clientId,
+                redirect_uri: `${this.authService.getBaseURL()}/user/me/settings/api-tokens`,
                 code
             }).$promise;
         }
+        /* eslint-enable */
 
         queryApiTokens(params = {}) {
             return this.ApiToken.query(params).$promise;
@@ -100,8 +110,8 @@ export default (app) => {
 
         getOrCreateProjectMapToken(project) {
             return this.$q((resolve, reject) => {
-                this.queryMapTokens({project: project.id}).then((response) => {
-                    let token = response.results.find((el) => el.name === project.name);
+                this.queryMapTokens({ project: project.id }).then(response => {
+                    let token = response.results.find(el => el.name === project.name);
                     if (token) {
                         resolve(token);
                     } else {
@@ -109,14 +119,17 @@ export default (app) => {
                             name: project.name,
                             project: project.id,
                             organizationId: project.organizationId
-                        }).then((res) => {
-                            // TODO: Toast this
-                            this.$log.debug('token created!', res);
-                            resolve(res);
-                        }, (err) => {
-                            // TODO: Toast this
-                            reject('error creating token', err);
-                        });
+                        }).then(
+                            res => {
+                                // TODO: Toast this
+                                this.$log.debug('token created!', res);
+                                resolve(res);
+                            },
+                            err => {
+                                // TODO: Toast this
+                                reject('error creating token', err);
+                            }
+                        );
                     }
                 });
             });
@@ -142,17 +155,20 @@ export default (app) => {
 
         getOrCreateAnalysisMapToken(params) {
             let deferred = this.$q.defer();
-            this.getAnalysisMapTokens().then((res) => {
+            this.getAnalysisMapTokens().then(res => {
                 let token = this.findToken(res, params);
                 if (token) {
                     deferred.resolve(token);
                 } else {
-                    this.createAnalysisMapToken(params).then((response) => {
-                        this.$log.debug('token created!', response);
-                        deferred.resolve(response);
-                    }, (error) => {
-                        deferred.reject('error creating token', error);
-                    });
+                    this.createAnalysisMapToken(params).then(
+                        response => {
+                            this.$log.debug('token created!', response);
+                            deferred.resolve(response);
+                        },
+                        error => {
+                            deferred.reject('error creating token', error);
+                        }
+                    );
                 }
             });
             return deferred.promise;

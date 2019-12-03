@@ -450,9 +450,8 @@ export default app => {
                     i => !i
                 )
             );
-            return `${
-                this.tileServer
-            }/${projectId}/analyses/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
+            /* eslint-disable-next-line max-len */
+            return `${this.tileServer}/${projectId}/analyses/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         transformWmPointToLatLngArray(wmPoint) {

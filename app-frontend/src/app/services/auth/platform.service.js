@@ -1,21 +1,19 @@
 /* globals BUILDCONFIG */
 
-export default (app) => {
+export default app => {
     class PlatformService {
-        constructor(
-            $resource
-        ) {
+        constructor($resource) {
             'ngInject';
             this.Platform = $resource(
                 `${BUILDCONFIG.API_HOST}/api/platforms/:id`,
-                {id: '@id'}, {
+                { id: '@id' },
+                {
                     members: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/members`,
                         method: 'GET'
                     },
                     addUser: {
-                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
-                            'members',
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` + 'members',
                         method: 'POST',
                         isArray: true
                     },
@@ -42,41 +40,39 @@ export default (app) => {
         }
 
         setUserRole(platformId, user) {
-            return this.Platform.addUser({
-                platformId
-            }, {
-                userId: user.id,
-                groupRole: user.groupRole
-            }).$promise;
+            return this.Platform.addUser(
+                {
+                    platformId
+                },
+                {
+                    userId: user.id,
+                    groupRole: user.groupRole
+                }
+            ).$promise;
         }
 
         getPlatform(platformId) {
-            return this.Platform
-                .get({id: platformId})
-                .$promise;
+            return this.Platform.get({ id: platformId }).$promise;
         }
 
         getMembers(platformId, page, search) {
-            return this.Platform
-                .members({id: platformId, page, search, pageSize: 10})
-                .$promise;
+            return this.Platform.members({ id: platformId, page, search, pageSize: 10 }).$promise;
         }
 
         getOrganizations(platformId, page, search) {
-            return this.Platform
-                .organizations({id: platformId, page, search, pageSize: 10})
+            return this.Platform.organizations({ id: platformId, page, search, pageSize: 10 })
                 .$promise;
         }
 
-
         createOrganization(platformId, name, status) {
-            return this.Platform
-                .createOrganization({id: platformId}, {platformId, name, status})
-                .$promise;
+            return this.Platform.createOrganization(
+                { id: platformId },
+                { platformId, name, status }
+            ).$promise;
         }
 
         deactivatePlatform(platformId) {
-            return this.Platform.setPlatformStatus({id: platformId}, {isActive: false});
+            return this.Platform.setPlatformStatus({ id: platformId }, { isActive: false });
         }
 
         updatePlatform(params) {

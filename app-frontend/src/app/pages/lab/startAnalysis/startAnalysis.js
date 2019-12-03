@@ -1,10 +1,7 @@
 import LabActions from '_redux/actions/lab-actions';
 
 class LabStartAnalysisController {
-    constructor(
-        $rootScope, $log, $state, $scope, $ngRedux,
-        analysisService
-    ) {
+    constructor($rootScope, $log, $state, $scope, $ngRedux, analysisService) {
         $rootScope.autoInject(this, arguments);
     }
 
@@ -47,19 +44,25 @@ class LabStartAnalysisController {
             this.analysis.name = this.template.title;
         }
         let analysisPromise = this.analysisService.createAnalysis(this.analysis);
-        analysisPromise.then(analysis => {
-            this.$state.go('lab.analysis', {analysisid: analysis.id});
-        }, () => {
-            this.setWarning(
-                `There was an error creating a analysis with the specified inputs.
+        analysisPromise
+            .then(
+                analysis => {
+                    this.$state.go('lab.analysis', { analysisid: analysis.id });
+                },
+                () => {
+                    this.setWarning(
+                        `There was an error creating a analysis with the specified inputs.
                  Please verify that all inputs are defined.`
-            );
-        }).finally(() => {
-            this.createInProgress = false;
-        });
+                    );
+                }
+            )
+            .finally(() => {
+                this.createInProgress = false;
+            });
         return analysisPromise;
     }
 }
 
-export default angular.module('pages.lab.startAnalysis', [])
+export default angular
+    .module('pages.lab.startAnalysis', [])
     .controller('LabStartAnalysisController', LabStartAnalysisController);

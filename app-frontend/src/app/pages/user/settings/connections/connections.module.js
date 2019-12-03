@@ -2,8 +2,15 @@
 
 class ConnectionsController {
     constructor(
-        $log, $state, $interval, modalService, $location,
-        dropboxService, authService, userService, APP_CONFIG
+        $log,
+        $state,
+        $interval,
+        modalService,
+        $location,
+        dropboxService,
+        authService,
+        userService,
+        APP_CONFIG
     ) {
         'ngInject';
 
@@ -20,7 +27,7 @@ class ConnectionsController {
     }
 
     $onInit() {
-        this.authService.getCurrentUser().then((user) => {
+        this.authService.getCurrentUser().then(user => {
             this.user = user;
             this.dropboxConnected = Boolean(user.dropboxCredential);
             this.userPlanetCredential = user.planetCredential;
@@ -31,35 +38,40 @@ class ConnectionsController {
         function calculateOffsets(w, h) {
             // yanked https://stackoverflow.com/questions/4068373/center-a-popup-window-on-screen
             // Fixes dual-screen position                         Most browsers      Firefox
-            let dualScreenLeft = typeof window.screenLeft !== 'undefined' ?
-                window.screenLeft : screen.left;
-            let dualScreenTop = typeof window.screenTop !== 'undefined' ?
-                window.screenTop : screen.top;
+            let dualScreenLeft =
+                typeof window.screenLeft !== 'undefined' ? window.screenLeft : screen.left;
+            let dualScreenTop =
+                typeof window.screenTop !== 'undefined' ? window.screenTop : screen.top;
 
-            let width = (
-                window.innerWidth ? window.innerWidth : document.documentElement.clientWidth
-            ) ? document.documentElement.clientWidth : screen.width;
-            let height = (
-                window.innerHeight ? window.innerHeight : document.documentElement.clientHeight
-            ) ? document.documentElement.clientHeight : screen.height;
+            let width = (window.innerWidth
+              ? window.innerWidth
+              : document.documentElement.clientWidth)
+                ? document.documentElement.clientWidth
+                : screen.width;
+            let height = (window.innerHeight
+              ? window.innerHeight
+              : document.documentElement.clientHeight)
+                ? document.documentElement.clientHeight
+                : screen.height;
 
             let left = width / 2 - w / 2 + dualScreenLeft;
             let top = height / 2 - h / 2 + dualScreenTop;
-            return {left: left, top: top};
+            return { left: left, top: top };
         }
 
         let offsets = calculateOffsets(500, 500);
-        let origin = `${this.$location.protocol()}://${this.$location.host()}` +
+        let origin =
+            `${this.$location.protocol()}://${this.$location.host()}` +
             `${this.$location.port() !== 443 ? ':' + this.$location.port() : ''}`;
-        let dropboxOauthUrl = 'https://dropbox.com/oauth2/authorize?response_type=code' +
+        let dropboxOauthUrl =
+            'https://dropbox.com/oauth2/authorize?response_type=code' +
             `&client_id=${this.config.dropboxClientId}` +
             `&redirect_uri=${origin}/callback`;
 
         let authWindow = window.open(
             dropboxOauthUrl,
             '_blank',
-            'toolbar=0,status=0,width=500,height=500,' +
-                `left=${offsets.left},top=${offsets.top}`
+            'toolbar=0,status=0,width=500,height=500,' + `left=${offsets.left},top=${offsets.top}`
         );
 
         let interval = this.$interval(() => {
@@ -95,16 +107,18 @@ class ConnectionsController {
                 content: () =>
                     '<div class="text-center">' +
                     'This is only neccessary if you have revoked ' +
-                    'RasterFoundry\'s access to your Dropbox account.' +
+                    "RasterFoundry's access to your Dropbox account." +
                     '</div>',
                 confirmText: () => 'Reconnect',
                 cancelText: () => 'Cancel'
             }
         });
 
-        modal.result.then(() => {
-            this.connectToDropbox();
-        }).catch(() => {});
+        modal.result
+            .then(() => {
+                this.connectToDropbox();
+            })
+            .catch(() => {});
     }
 
     onDropboxError(uri) {
@@ -124,15 +138,20 @@ class ConnectionsController {
             }
         });
 
-        modal.result.then(() => {
-            this.connectToDropbox();
-        }).catch(() => {});
+        modal.result
+            .then(() => {
+                this.connectToDropbox();
+            })
+            .catch(() => {});
     }
 
     onDropboxCallback(uri) {
-        this.dropboxService.confirmCode(uri).then(() => {
-            this.dropboxConnected = true;
-        }, () => this.onDropboxError(uri));
+        this.dropboxService.confirmCode(uri).then(
+            () => {
+                this.dropboxConnected = true;
+            },
+            () => this.onDropboxError(uri)
+        );
     }
 
     connectToPlanet() {
@@ -144,14 +163,22 @@ class ConnectionsController {
             }
         });
 
-        modal.result.then((token) => {
-            this.user.planetCredential = token;
-            this.userService.updateOwnUser(this.user).then(() => {
-                this.userPlanetCredential = token;
-            }, (err) => {
-                this.$log.log('There was an error updating the user with a planet api token', err);
-            });
-        }).catch(() => {});
+        modal.result
+            .then(token => {
+                this.user.planetCredential = token;
+                this.userService.updateOwnUser(this.user).then(
+                    () => {
+                        this.userPlanetCredential = token;
+                    },
+                    err => {
+                        this.$log.log(
+                            'There was an error updating the user with a planet api token',
+                            err
+                        );
+                    }
+                );
+            })
+            .catch(() => {});
     }
 }
 

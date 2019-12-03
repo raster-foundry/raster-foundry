@@ -4,8 +4,7 @@ import os
 import re
 import shutil
 import tempfile
-import urllib
-from urlparse import urlparse
+from urllib.parse import (urlparse, unquote, quote)
 
 import boto3
 from dropbox.dropbox import Dropbox
@@ -188,7 +187,7 @@ def upload_tifs(tifs, user_id, scene_id, bucket_name=None):
         key = os.path.join(s3_directory, filename)
         logger.info('Uploading %s => bucket: %s, key: %s', tif, bucket, key)
 
-        s3_uris.append('s3://{}/{}'.format(bucket, urllib.quote(key)))
+        s3_uris.append('s3://{}/{}'.format(bucket, quote(key)))
         with open(tif, 'rb') as inf:
             s3_client.put_object(
                 Bucket=bucket,
@@ -201,7 +200,7 @@ def upload_tifs(tifs, user_id, scene_id, bucket_name=None):
 def s3_upload_export(local_path, source):
     object_acl = None if os.getenv('DATA_BUCKET') in source else 'bucket-owner-full-control'
     s3_client = boto3.client('s3')
-    (bucket, key) = s3_bucket_and_key_from_url(urllib.unquote(source))
+    (bucket, key) = s3_bucket_and_key_from_url(unquote(source))
     logger.info('Uploading %s => bucket: %s, key: %s', local_path, bucket, key)
     with open(local_path, 'rb') as inf:
         if object_acl:

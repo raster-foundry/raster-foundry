@@ -3,8 +3,16 @@ import pagination from 'angular-ui-bootstrap/src/pagination';
 
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
-        $log, $state, modalService, $scope,
-        paginationService, projectService, userService, authService, platform, user
+        $log,
+        $state,
+        modalService,
+        $scope,
+        paginationService,
+        projectService,
+        userService,
+        authService,
+        platform,
+        user
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -22,55 +30,61 @@ class ProjectsListController {
         this.search = search && search.length ? search : null;
         delete this.fetchError;
         this.results = [];
-        let currentQuery = this.projectService.query({
-            sort: 'createdAt,desc',
-            pageSize: 10,
-            page: page - 1,
-            ownershipType: this.currentOwnershipFilter,
-            search: this.search
-        }).then(paginatedResponse => {
-            this.results = paginatedResponse.results;
-            this.results.forEach((project) => {
-                this.getProjectScenesCount(project);
+        let currentQuery = this.projectService
+            .query({
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: page - 1,
+                ownershipType: this.currentOwnershipFilter,
+                search: this.search
+            })
+            .then(
+                paginatedResponse => {
+                    this.results = paginatedResponse.results;
+                    this.results.forEach(project => {
+                        this.getProjectScenesCount(project);
+                    });
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page, this.search, null, {
+                        ownership: this.currentOwnershipFilter
+                    });
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
+                }
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
             });
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, this.search, null, {
-                ownership: this.currentOwnershipFilter
-            });
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
         this.currentQuery = currentQuery;
     }
 
     shouldShowPlaceholder() {
-        return !this.currentQuery &&
+        return (
+            !this.currentQuery &&
             !this.fetchError &&
             (!this.search || !this.search.length) &&
             this.pagination &&
-            this.pagination.count === 0;
-    }
-
-    getProjectScenesCount(project) {
-        this.projectService.getProjectSceneCount({projectId: project.id}).then(
-            (sceneResult) => {
-                let bupdate = this.results.find((b) => b.id === project.id);
-                bupdate.scenes = sceneResult.count;
-            }
+            this.pagination.count === 0
         );
     }
 
+    getProjectScenesCount(project) {
+        this.projectService.getProjectSceneCount({ projectId: project.id }).then(sceneResult => {
+            let bupdate = this.results.find(b => b.id === project.id);
+            bupdate.scenes = sceneResult.count;
+        });
+    }
+
     viewProjectDetail(project) {
-        this.$state.go('^.detail', {project: project, projectid: project.id});
+        this.$state.go('^.detail', { project: project, projectid: project.id });
     }
 
     createNewProject() {
@@ -78,11 +92,13 @@ class ProjectsListController {
             component: 'rfProjectCreateModal'
         });
 
-        modal.result.then((data) => {
-            if (data && data.reloadProjectList) {
-                this.fetchPage(1);
-            }
-        }).catch(() => {});
+        modal.result
+            .then(data => {
+                if (data && data.reloadProjectList) {
+                    this.fetchPage(1);
+                }
+            })
+            .catch(() => {});
     }
 
     handleOwnershipFilterChange(newFilterValue) {

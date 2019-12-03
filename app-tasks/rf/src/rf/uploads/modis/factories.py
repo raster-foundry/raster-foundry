@@ -3,7 +3,7 @@ from functools import partial
 import logging
 import os
 import uuid
-import urllib
+from urllib.parse import unquote
 
 from rf.models import Band
 from rf.models import Scene
@@ -120,7 +120,7 @@ def create_scene(hdf_url, temp_directory, user_id, datasource):
     get_band_func = partial(get_image_band, modis_config=config)
     for local_path, remote_path in zip(tifs, s3_uris):
 
-        image = create_geotiff_image(local_path, urllib.unquote(s3_uris[0]),
+        image = create_geotiff_image(local_path, unquote(s3_uris[0]),
                                      scene=scene.id, owner=user_id, band_create_function=get_band_func)
         images.append(image)
     scene.images = images
@@ -137,7 +137,7 @@ def get_image_band(filepath, modis_config=None):
         modis_config (dict): dictionary of configuration for a particular MODIS datasource
         filepath (str): path to file to get image band for
     """
-    bands = modis_config['bands'].values()
+    bands = list(modis_config['bands'].values())
     if not bands:
         logger.warn('Could not find bands for file: %s', filepath)
     return bands

@@ -1,4 +1,4 @@
-export default (app) => {
+export default app => {
     class Config {
         constructor(env, $resource) {
             this.env = env;

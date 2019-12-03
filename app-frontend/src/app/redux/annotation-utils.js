@@ -1,11 +1,16 @@
 export function propertiesToAnnotationFeature({
-    geometry, label = '', description = '', organizationId
+    geometry,
+    label = '',
+    description = '',
+    organizationId
 }) {
     return {
         type: 'Feature',
         geometry,
         properties: {
-            label, organizationId, description
+            label,
+            organizationId,
+            description
         }
     };
 }

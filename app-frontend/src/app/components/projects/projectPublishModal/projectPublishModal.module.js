@@ -13,10 +13,7 @@ const ProjectPublishModalComponent = {
 };
 
 class ProjectPublishModalController {
-    constructor(
-        $q, $log, $window, $state, $timeout,
-        projectService, tokenService, authService
-    ) {
+    constructor($q, $log, $window, $state, $timeout, projectService, tokenService, authService) {
         'ngInject';
 
         this.$q = $q;
@@ -49,8 +46,7 @@ class ProjectPublishModalController {
         let sharePolicies = [
             {
                 label: 'Private',
-                description:
-                `Only you and those you create tokens for
+                description: `Only you and those you create tokens for
                  will be able to view tiles for this project`,
                 enum: 'PRIVATE',
                 active: false,
@@ -59,8 +55,7 @@ class ProjectPublishModalController {
             },
             {
                 label: 'Organization',
-                description:
-                `Users in your organization will be able to use
+                description: `Users in your organization will be able to use
                  their own tokens to view tiles for this project`,
                 enum: 'ORGANIZATION',
                 active: false,
@@ -79,14 +74,12 @@ class ProjectPublishModalController {
 
         if (!this.resolve.templateTitle) {
             this.project = this.resolve.project;
-            this.sharePolicies = sharePolicies.map(
-                (policy) => {
-                    let isActive = policy.enum === this.resolve.project.tileVisibility;
-                    policy.active = isActive;
-                    return policy;
-                }
-            );
-            this.activePolicy = this.sharePolicies.find((policy) => policy.active);
+            this.sharePolicies = sharePolicies.map(policy => {
+                let isActive = policy.enum === this.resolve.project.tileVisibility;
+                policy.active = isActive;
+                return policy;
+            });
+            this.activePolicy = this.sharePolicies.find(policy => policy.active);
             this.updateShareUrl();
         }
 
@@ -99,7 +92,7 @@ class ProjectPublishModalController {
     }
 
     updateShareUrl() {
-        this.projectService.getProjectShareURL(this.project).then((url) => {
+        this.projectService.getProjectShareURL(this.project).then(url => {
             this.shareUrl = url;
         });
     }
@@ -124,15 +117,18 @@ class ProjectPublishModalController {
             if (this.project.owner.id) {
                 this.project.owner = this.project.owner.id;
             }
-            this.projectService.updateProject(this.project).then((res) => {
-                this.$log.debug(res);
-            }, (err) => {
-                // TODO: Toast this
-                this.$log.debug('Error while updating project share policy', err);
-                this.activePolicy.active = false;
-                oldPolicy.active = true;
-                this.activePolicy = oldPolicy;
-            });
+            this.projectService.updateProject(this.project).then(
+                res => {
+                    this.$log.debug(res);
+                },
+                err => {
+                    // TODO: Toast this
+                    this.$log.debug('Error while updating project share policy', err);
+                    this.activePolicy.active = false;
+                    oldPolicy.active = true;
+                    this.activePolicy = oldPolicy;
+                }
+            );
         }
         this.hydrateTileUrls();
     }
@@ -157,13 +153,11 @@ class ProjectPublishModalController {
                 this.tileLayerUrls.arcGIS = `${arcGISUrl}`;
                 this.tileLayerUrls.standard = `${zxyUrl}`;
             } else {
-                this.tokenService.getOrCreateProjectMapToken(this.project).then(
-                    (mapToken) => {
-                        this.mapToken = mapToken;
-                        this.tileLayerUrls.standard = `${zxyUrl}&mapToken=${mapToken.id}`;
-                        this.tileLayerUrls.arcGIS = `${arcGISUrl}&mapToken=${mapToken.id}`;
-                    }
-                );
+                this.tokenService.getOrCreateProjectMapToken(this.project).then(mapToken => {
+                    this.mapToken = mapToken;
+                    this.tileLayerUrls.standard = `${zxyUrl}&mapToken=${mapToken.id}`;
+                    this.tileLayerUrls.arcGIS = `${arcGISUrl}&mapToken=${mapToken.id}`;
+                });
             }
         }
     }
@@ -181,11 +175,10 @@ class ProjectPublishModalController {
 const ProjectPublishModalModule = angular.module('components.projects.projectPublishModal', []);
 
 ProjectPublishModalModule.controller(
-    'ProjectPublishModalController', ProjectPublishModalController
+    'ProjectPublishModalController',
+    ProjectPublishModalController
 );
 
-ProjectPublishModalModule.component(
-    'rfProjectPublishModal', ProjectPublishModalComponent
-);
+ProjectPublishModalModule.component('rfProjectPublishModal', ProjectPublishModalComponent);
 
 export default ProjectPublishModalModule;

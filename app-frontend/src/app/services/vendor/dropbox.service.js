@@ -1,14 +1,16 @@
 /* globals BUILDCONFIG document */
 import _ from 'lodash';
 
-export default (app) => {
+export default app => {
     class DropboxService {
         constructor($resource, authService) {
             'ngInject';
 
             this.authService = authService;
             this.DropboxSetup = $resource(
-                `${BUILDCONFIG.API_HOST}/api/users/dropbox-setup`, {}, {
+                `${BUILDCONFIG.API_HOST}/api/users/dropbox-setup`,
+                {},
+                {
                     confirm: {
                         method: 'POST'
                     }
@@ -20,12 +22,15 @@ export default (app) => {
             let uri = document.createElement('a');
             uri.href = href;
             let code = _.last(uri.search.split('='));
-            return this.DropboxSetup.confirm({
-                userid: this.authService.getProfile().sub
-            }, {
-                authorizationCode: code,
-                redirectURI: uri.origin + uri.pathname
-            }).$promise;
+            return this.DropboxSetup.confirm(
+                {
+                    userid: this.authService.getProfile().sub
+                },
+                {
+                    authorizationCode: code,
+                    redirectURI: uri.origin + uri.pathname
+                }
+            ).$promise;
         }
     }
 

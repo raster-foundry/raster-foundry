@@ -1,45 +1,54 @@
 import typeToReducer from 'type-to-reducer';
-import {OrderedMap, OrderedSet} from 'immutable';
+import { OrderedMap, OrderedSet } from 'immutable';
 import _ from 'lodash';
 
 import {
-    ANNOTATIONS_RESET, ANNOTATIONS_SIDEBAR,
-    ANNOTATIONS_FETCH, ANNOTATIONS_LABELS_FETCH,
-    ANNOTATIONS_CREATE, ANNOTATIONS_UPDATE, ANNOTATIONS_FILTER,
-    ANNOTATIONS_CLEAR, ANNOTATIONS_EDIT, ANNOTATIONS_DELETE,
+    ANNOTATIONS_RESET,
+    ANNOTATIONS_SIDEBAR,
+    ANNOTATIONS_FETCH,
+    ANNOTATIONS_LABELS_FETCH,
+    ANNOTATIONS_CREATE,
+    ANNOTATIONS_UPDATE,
+    ANNOTATIONS_FILTER,
+    ANNOTATIONS_CLEAR,
+    ANNOTATIONS_EDIT,
+    ANNOTATIONS_DELETE,
     ANNOTATIONS_BULK_CREATE,
     ANNOTATIONS_TRANSFORM_DRAWLAYER,
-    ANNOTATIONS_UPLOAD_SHAPEFILE,
-    ANNOTATIONS_IMPORT_SHAPEFILE,
-    ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE,
-
-    fetchAnnotations, updateAnnotation, fetchLabels
+    fetchAnnotations,
+    updateAnnotation,
+    fetchLabels
 } from '_redux/actions/annotation-actions';
 
-import {
-    PROJECT_EDIT_LAYER
-} from '_redux/actions/project-actions';
+import { PROJECT_EDIT_LAYER } from '_redux/actions/project-actions';
 
 export const annotationReducer = typeToReducer({
-    [ANNOTATIONS_RESET]: (state) => {
+    [ANNOTATIONS_RESET]: state => {
         return Object.assign({}, state, {
-            projectId: null, projectMap: null, editHandler: null,
+            projectId: null,
+            projectMap: null,
+            editHandler: null,
 
-            annotations: new OrderedMap(), editingAnnotation: null,
-            fetchingAnnotations: false, fetchingAnnotationsError: null,
-            sidebarDisabled: false, annotationTemplate: null,
-            creatingAnnotations: false, creatingAnnotationsError: false,
+            annotations: new OrderedMap(),
+            editingAnnotation: null,
+            fetchingAnnotations: false,
+            fetchingAnnotationsError: null,
+            sidebarDisabled: false,
+            annotationTemplate: null,
+            creatingAnnotations: false,
+            creatingAnnotationsError: false,
 
-            labels: [], filter: 'All'
+            labels: [],
+            filter: 'All'
         });
     },
     [ANNOTATIONS_SIDEBAR]: {
-        ENABLE: (state) => {
+        ENABLE: state => {
             return Object.assign({}, state, {
                 sidebarDisabled: false
             });
         },
-        DISABLE: (state) => {
+        DISABLE: state => {
             return Object.assign({}, state, {
                 sidebarDisabled: true
             });
@@ -48,58 +57,8 @@ export const annotationReducer = typeToReducer({
     // action.payload should contain the returned annotations (in the fulfilled case)
     // not clear what comes back in pending
     // error body in rejected.action.payload
-    [ANNOTATIONS_UPLOAD_SHAPEFILE]: {
-        PENDING: (state) => {
-            return Object.assign({}, state, {
-                fetchingAnnotations: true,
-                uploadAnnotationsError: null
-            });
-        },
-        REJECTED: (state, action) => {
-            return Object.assign(
-                {}, state, {uploadAnnotationsError: action.payload.response.data}
-            );
-        },
-        FULFILLED: (state, action) => {
-            let annotationShapefileProps = action.payload.data;
-            return Object.assign({}, state, {
-                annotationShapefileProps,
-                fetchingAnnotations: false,
-                uploadAnnotationsError: null
-            });
-        }
-    },
-    [ANNOTATIONS_IMPORT_SHAPEFILE]: {
-        PENDING: (state) => {
-            return Object.assign({}, state, {
-                fetchingAnnotations: true,
-                uploadAnnotationsError: null
-            });
-        },
-        REJECTED: (state, action) => {
-            return Object.assign(
-                {}, state, {uploadAnnotationsError: action.payload.response.data}
-            );
-        },
-        FULFILLED: (state, action) => {
-            let annotations = state.annotations;
-            let newAnnotations = action.payload.data;
-            newAnnotations.forEach(annotation => {
-                annotations = annotations.set(annotation.id, annotation);
-            });
-            return Object.assign({}, state, {
-                annotations,
-                fetchingAnnotations: false,
-                annotationShapefileProps: [],
-                uploadAnnotationsError: null
-            });
-        }
-    },
-    [ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE]: (state) => {
-        return Object.assign({}, state, {annotationShapefileProps: []});
-    },
     [ANNOTATIONS_FETCH]: {
-        PENDING: (state) => {
+        PENDING: state => {
             return Object.assign({}, state, {
                 fetchingAnnotations: true,
                 fetchingAnnotationsError: null
@@ -129,11 +88,11 @@ export const annotationReducer = typeToReducer({
         }
     },
     [ANNOTATIONS_LABELS_FETCH]: {
-        PENDING: (state) => {
+        PENDING: state => {
             return state;
         },
         REJECTED: (state, action) => {
-            return Object.assign({}, state, {fetchingAnnotationsError: action.payload});
+            return Object.assign({}, state, { fetchingAnnotationsError: action.payload });
         },
         FULFILLED: (state, action) => {
             let filters = action.payload.data;
@@ -141,11 +100,11 @@ export const annotationReducer = typeToReducer({
             if (unlabeledFilter > -1) {
                 filters[unlabeledFilter] = 'Unlabeled';
             }
-            return Object.assign({}, state, {labels: action.payload.data});
+            return Object.assign({}, state, { labels: action.payload.data });
         }
     },
     [ANNOTATIONS_CREATE]: {
-        PENDING: (state) => {
+        PENDING: state => {
             return Object.assign({}, state, {
                 creatingAnnotations: true,
                 creatingAnnotationsError: false
@@ -164,10 +123,13 @@ export const annotationReducer = typeToReducer({
             let newAnnotations = action.payload.data.features;
             let annotations = state.annotations;
             let labels = new OrderedSet(state.labels);
-            newAnnotations.forEach((annotation) => {
+            newAnnotations.forEach(annotation => {
                 annotations = annotations.set(annotation.id, annotation);
-                labels = labels.add(annotation.properties && annotation.properties.label ?
-                                    annotation.properties.label : 'Unlabeled');
+                labels = labels.add(
+                    annotation.properties && annotation.properties.label
+                        ? annotation.properties.label
+                        : 'Unlabeled'
+                );
             });
             if (newAnnotations.length === 1 && action.meta.edit) {
                 action.asyncDispatch({
@@ -176,20 +138,16 @@ export const annotationReducer = typeToReducer({
                     meta: action.meta
                 });
             }
-            return Object.assign(
-                {},
-                state,
-                {
-                    creatingAnnotations: false,
-                    creatingAnnotationsError: false,
-                    annotations,
-                    labels: labels.toArray()
-                }
-            );
+            return Object.assign({}, state, {
+                creatingAnnotations: false,
+                creatingAnnotationsError: false,
+                annotations,
+                labels: labels.toArray()
+            });
         }
     },
     [ANNOTATIONS_UPDATE]: {
-        PENDING: (state) => {
+        PENDING: state => {
             return state;
         },
         REJECTED: (state, action) => {
@@ -209,13 +167,13 @@ export const annotationReducer = typeToReducer({
         }
     },
     [ANNOTATIONS_CLEAR]: {
-        PENDING: (state) => {
+        PENDING: state => {
             return state;
         },
-        REJECTED: (state) => {
+        REJECTED: state => {
             return state;
         },
-        FULFILLED: (state) => {
+        FULFILLED: state => {
             return Object.assign({}, state, {
                 annotations: new OrderedMap(),
                 labels: []
@@ -223,10 +181,10 @@ export const annotationReducer = typeToReducer({
         }
     },
     [ANNOTATIONS_DELETE]: {
-        PENDING: (state) => {
+        PENDING: state => {
             return state;
         },
-        REJECTED: (state) => {
+        REJECTED: state => {
             return state;
         },
         FULFILLED: (state, action) => {
@@ -239,7 +197,7 @@ export const annotationReducer = typeToReducer({
         }
     },
     [ANNOTATIONS_FILTER]: (state, action) => {
-        return Object.assign({}, state, {filter: action.payload});
+        return Object.assign({}, state, { filter: action.payload });
     },
     [ANNOTATIONS_EDIT]: {
         START: (state, action) => {
@@ -250,8 +208,7 @@ export const annotationReducer = typeToReducer({
             mapWrapper.deleteLayers('highlight');
             // disable transform handler
             let drawLayer = _.first(mapWrapper.getLayers('draw'));
-            if (!_.isEmpty(drawLayer)
-                && drawLayer.transform) {
+            if (!_.isEmpty(drawLayer) && drawLayer.transform) {
                 drawLayer.transform.disable();
             }
 
@@ -287,14 +244,10 @@ export const annotationReducer = typeToReducer({
                 drawLayer.transform.disable();
             }
 
-            let {geometry} = drawLayer.toGeoJSON();
-            let updatedAnnotation = Object.assign(
-                {},
-                action.payload,
-                {
-                    geometry
-                }
-            );
+            let { geometry } = drawLayer.toGeoJSON();
+            let updatedAnnotation = Object.assign({}, action.payload, {
+                geometry
+            });
             action.asyncDispatch({
                 type: `${PROJECT_EDIT_LAYER}_FINISH`
             });
@@ -314,7 +267,7 @@ export const annotationReducer = typeToReducer({
                 sidebarDisabled: true
             });
         },
-        FINISH: (state) => {
+        FINISH: state => {
             return Object.assign({}, state, {
                 annotationTemplate: null,
                 sidebarDisabled: false
@@ -322,23 +275,68 @@ export const annotationReducer = typeToReducer({
         }
     },
     [ANNOTATIONS_TRANSFORM_DRAWLAYER]: (state, action) => {
-        let {transform, options} = action.payload;
+        let { transform, options } = action.payload;
         let drawLayer = _.first(state.projectMap.getLayers('draw'));
         let drawnGeojson = drawLayer && drawLayer.toGeoJSON();
-        if (!drawnGeojson || drawnGeojson.geometry && drawnGeojson.geometry.type !== 'Polygon') {
+        if (!drawnGeojson || (drawnGeojson.geometry && drawnGeojson.geometry.type !== 'Polygon')) {
             return state;
         }
         state.projectMap.deleteLayers('highlight');
 
-        if (!_.isEmpty(drawLayer)
-            && drawLayer.transform) {
+        if (!_.isEmpty(drawLayer) && drawLayer.transform) {
             drawLayer.transform.disable();
         }
 
         switch (transform) {
-        case 'rotate':
-            if (!_.isEmpty(drawLayer)
-                && drawLayer.transform) {
+            case 'rotate':
+                if (!_.isEmpty(drawLayer) && drawLayer.transform) {
+                    action.asyncDispatch({
+                        type: `${PROJECT_EDIT_LAYER}_FINISH`
+                    });
+                    action.asyncDispatch({
+                        type: `${PROJECT_EDIT_LAYER}_START`,
+                        payload: {
+                            geometry: drawnGeojson.geometry,
+                            options: {}
+                        }
+                    });
+                } else {
+                    let coordinates = _.map(drawnGeojson.geometry.coordinates[0], c => {
+                        return [c[1], c[0]];
+                    });
+                    let polygonLayer = L.polygon(coordinates, {
+                        transform: true,
+                        fillColor: '#ff4433',
+                        color: '#ff4433',
+                        opacity: 0.5
+                    });
+                    state.projectMap.setLayer('draw', polygonLayer, false);
+                    polygonLayer.transform.enable({ rotation: true, scaling: true });
+                    state.projectMap.map.panTo(polygonLayer.getCenter());
+                }
+                return state;
+            case 'translate':
+                let coordinates = _.map(drawnGeojson.geometry.coordinates[0], c => {
+                    let point = state.projectMap.map.latLngToContainerPoint(L.latLng(c[1], c[0]));
+                    switch (options.direction) {
+                        case 'up':
+                            point.y -= 5;
+                            break;
+                        case 'down':
+                            point.y += 5;
+                            break;
+                        case 'left':
+                            point.x -= 5;
+                            break;
+                        case 'right':
+                            point.x += 5;
+                            break;
+                        default:
+                    }
+                    let coors = state.projectMap.map.containerPointToLatLng(point);
+                    return [coors.lng, coors.lat];
+                });
+                drawnGeojson.geometry.coordinates = [coordinates];
                 action.asyncDispatch({
                     type: `${PROJECT_EDIT_LAYER}_FINISH`
                 });
@@ -349,64 +347,11 @@ export const annotationReducer = typeToReducer({
                         options: {}
                     }
                 });
-            } else {
-                let coordinates = _.map(drawnGeojson.geometry.coordinates[0], (c) => {
-                    return [c[1], c[0]];
-                });
-                let polygonLayer = L.polygon(
-                    coordinates,
-                    {
-                        'transform': true,
-                        'fillColor': '#ff4433',
-                        'color': '#ff4433',
-                        'opacity': 0.5
-                    }
-                );
-                state.projectMap.setLayer('draw', polygonLayer, false);
-                polygonLayer.transform.enable({rotation: true, scaling: true});
-                state.projectMap.map.panTo(polygonLayer.getCenter());
-            }
-            return state;
-        case 'translate':
-            let coordinates =
-                _.map(drawnGeojson.geometry.coordinates[0], (c) => {
-                    let point = state.projectMap.map.latLngToContainerPoint(
-                        L.latLng(c[1], c[0])
-                    );
-                    switch (options.direction) {
-                    case 'up':
-                        point.y -= 5;
-                        break;
-                    case 'down':
-                        point.y += 5;
-                        break;
-                    case 'left':
-                        point.x -= 5;
-                        break;
-                    case 'right':
-                        point.x += 5;
-                        break;
-                    default:
-                    }
-                    let coors = state.projectMap.map.containerPointToLatLng(point);
-                    return [coors.lng, coors.lat];
-                });
-            drawnGeojson.geometry.coordinates = [coordinates];
-            action.asyncDispatch({
-                type: `${PROJECT_EDIT_LAYER}_FINISH`
-            });
-            action.asyncDispatch({
-                type: `${PROJECT_EDIT_LAYER}_START`,
-                payload: {
-                    geometry: drawnGeojson.geometry,
-                    options: {}
-                }
-            });
-            return state;
-        default:
-            // eslint-disable-next-line
-            console.error(`Unsupported draw layer transform: ${transform}`);
-            return state;
+                return state;
+            default:
+                // eslint-disable-next-line
+                console.error(`Unsupported draw layer transform: ${transform}`);
+                return state;
         }
     }
 });

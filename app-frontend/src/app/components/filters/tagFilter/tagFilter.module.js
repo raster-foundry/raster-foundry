@@ -14,20 +14,16 @@ const tagFilterComponent = {
 class TagFilterController {
     constructor($location) {
         this.$location = $location;
-        this.selectedOption = {value: null};
+        this.selectedOption = { value: null };
     }
 
     $onChanges(changes) {
         if (changes.filter && changes.filter.currentValue) {
             this.filter = changes.filter.currentValue;
             let paramValue = this.$location.search()[this.filter.param];
-            let option = _.first(
-                this.filter.options.filter(o => o.value === paramValue)
-            );
+            let option = _.first(this.filter.options.filter(o => o.value === paramValue));
             if (!option) {
-                option = _.first(
-                    this.filter.options.filter(o => o.value === null)
-                );
+                option = _.first(this.filter.options.filter(o => o.value === null));
             }
             this.selectOption(option);
         }
@@ -37,9 +33,8 @@ class TagFilterController {
         this.selectedOption = option;
         const filterParams = {};
         filterParams[this.filter.param] = option.value;
-        this.onFilterChange({filter: this.filter, filterParams});
+        this.onFilterChange({ filter: this.filter, filterParams });
     }
-
 }
 
 const TagFilterModule = angular.module('components.filters.tagFilter', []);

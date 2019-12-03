@@ -9,10 +9,21 @@ const mapLayerName = 'Project Layer';
 
 class LayerScenesBrowseController {
     constructor(
-        $rootScope, $location, $state, $scope, $timeout,
-        mapService, featureFlags, authService, planetLabsService, sessionStorage,
-        modalService, sceneService, projectService,
-        RasterFoundryRepository, PlanetRepository, CMRRepository
+        $rootScope,
+        $location,
+        $state,
+        $scope,
+        $timeout,
+        mapService,
+        featureFlags,
+        authService,
+        planetLabsService,
+        sessionStorage,
+        modalService,
+        sceneService,
+        projectService,
+        RasterFoundryRepository,
+        PlanetRepository
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -38,13 +49,6 @@ class LayerScenesBrowseController {
             });
         }
 
-        if (this.featureFlags.isOnByDefault('external-source-browse-cmr')) {
-            this.repositories.push({
-                label: 'NASA CMR',
-                service: this.CMRRepository
-            });
-        }
-
         this.projectScenesReady = false;
         this.registerClick = true;
         this.sceneList = [];
@@ -52,7 +56,7 @@ class LayerScenesBrowseController {
         this.planetThumbnailUrls = new Map();
         this.scenesBeingAdded = new Set();
 
-        this.setBboxParam = _.debounce((bbox) => {
+        this.setBboxParam = _.debounce(bbox => {
             this.$location.search('bbox', bbox).replace();
         }, 500);
         this.debouncedSceneFetch = _.debounce(this.fetchNextScenes.bind(this), 500);
@@ -68,7 +72,7 @@ class LayerScenesBrowseController {
         this.getMap().then(mapContainer => {
             mapContainer.deleteLayers('filterBboxLayer');
             mapContainer.deleteThumbnail();
-            this.scenesOnMap.forEach((id) => {
+            this.scenesOnMap.forEach(id => {
                 mapContainer.deleteGeojson(id);
             });
             this.mapListeners.forEach(listener => {
@@ -112,12 +116,15 @@ class LayerScenesBrowseController {
         } else if (this.project && this.project.extent) {
             this.bounds = L.geoJSON(this.project.extent).getBounds();
         } else {
-            this.bounds = [[-30, -90], [50, 0]];
+            this.bounds = [
+                [-30, -90],
+                [50, 0]
+            ];
         }
         this.getMap().then(mapContainer => {
             mapContainer.map.fitBounds(this.bounds);
             this.mapListeners = [
-                mapContainer.on('contextmenu', ($event) => {
+                mapContainer.on('contextmenu', $event => {
                     $event.originalEvent.preventDefault();
                     return false;
                 }),
@@ -146,66 +153,79 @@ class LayerScenesBrowseController {
         this.sceneCount = null;
         let factoryFn = this.bboxFetchFactory;
         let fetchScenes = this.fetchNextScenesForBbox;
-        this.fetchNextScenesForBbox().then(({scenes, hasNext, count}) => {
-            if (fetchScenes === this.fetchNextScenesForBbox &&
-                factoryFn === this.bboxFetchFactory) {
-                this.fetchingScenes = false;
-                this.fetchError = false;
-                this.sceneList = this.sceneList.concat(scenes);
-                this.sceneActions = this.sceneActions.merge(
-                    new Map(
-                        scenes.map(
-                            this.addSceneActions.bind(this))));
-                this.hasNext = hasNext;
-                this.sceneCount = count;
-            }
-        }, (err) => {
-            if (fetchScenes === this.fetchNextScenesForBbox &&
-                factoryFn === this.bboxFetchFactory) {
-                this.fetchingScenes = false;
-                if (err !== 'No more scenes to fetch') {
-                    this.fetchError = err;
+        this.fetchNextScenesForBbox().then(
+            ({ scenes, hasNext, count }) => {
+                if (
+                    fetchScenes === this.fetchNextScenesForBbox &&
+                    factoryFn === this.bboxFetchFactory
+                ) {
+                    this.fetchingScenes = false;
+                    this.fetchError = false;
+                    this.sceneList = this.sceneList.concat(scenes);
+                    this.sceneActions = this.sceneActions.merge(
+                        new Map(scenes.map(this.addSceneActions.bind(this)))
+                    );
+                    this.hasNext = hasNext;
+                    this.sceneCount = count;
                 }
-                this.hasNext = false;
+            },
+            err => {
+                if (
+                    fetchScenes === this.fetchNextScenesForBbox &&
+                    factoryFn === this.bboxFetchFactory
+                ) {
+                    this.fetchingScenes = false;
+                    if (err !== 'No more scenes to fetch') {
+                        this.fetchError = err;
+                    }
+                    this.hasNext = false;
+                }
             }
-        });
+        );
     }
 
     addSceneActions(scene) {
         // details, view layers, hide (unapprove), remove (delete from layer)
-        let actions = [{
-            icons: [
-                {
-                    icon: 'icon-eye',
-                    isActive: () => this.visibleScenes.has(scene.id)
-                }, {
-                    icon: 'icon-eye-off',
-                    isActive: () => !this.visibleScenes.has(scene.id)
-                }
-            ],
-            name: 'Preview',
-            tooltip: 'Show image boundaries on map',
-            callback: () => this.toggleVisibleScene(scene),
-            menu: false
-        }];
+        let actions = [
+            {
+                icons: [
+                    {
+                        icon: 'icon-eye',
+                        isActive: () => this.visibleScenes.has(scene.id)
+                    },
+                    {
+                        icon: 'icon-eye-off',
+                        isActive: () => !this.visibleScenes.has(scene.id)
+                    }
+                ],
+                name: 'Preview',
+                tooltip: 'Show image boundaries on map',
+                callback: () => this.toggleVisibleScene(scene),
+                menu: false
+            }
+        ];
 
         if (this.hasDownloadPermission(scene)) {
             actions.unshift({
                 icon: 'icon-download',
                 name: 'Download',
                 tooltip: 'Download raw image data',
-                callback: () => this.modalService.open({
-                    component: 'rfSceneDownloadModal',
-                    resolve: {
-                        scene: () => scene
-                    }
-                }).result.catch(() => {}),
+                callback: () =>
+                    this.modalService
+                        .open({
+                            component: 'rfSceneDownloadModal',
+                            resolve: {
+                                scene: () => scene
+                            }
+                        })
+                        .result.catch(() => {}),
                 menu: false
             });
         } else {
             actions.unshift({
                 icon: 'icon-item-lock',
-                name: 'This imagery requires additional access ' +
+                name:
+                    'This imagery requires additional access ' +
                     `${this.currentRepository.service.permissionSource}`,
                 title: 'Download raw image data',
                 menu: false
@@ -240,8 +260,8 @@ class LayerScenesBrowseController {
 
         this.sceneList = [];
         this.sceneActions = new Map();
-        this.getMap().then((mapWrapper) => {
-            if (this.bboxCoords || this.queryParams && this.queryParams.bbox) {
+        this.getMap().then(mapWrapper => {
+            if (this.bboxCoords || (this.queryParams && this.queryParams.bbox)) {
                 this.fetchNextScenesForBbox = this.bboxFetchFactory(
                     this.bboxCoords || this.queryParams.bbox
                 );
@@ -293,8 +313,13 @@ class LayerScenesBrowseController {
 
     allVisibleSelected() {
         let sceneSet = new Set(this.sceneList.map(s => s.id).filter(s => !s.inLayer));
-        return this.selected.size &&
-            this.selected.keySeq().toSet().intersect(sceneSet).size === sceneSet.size;
+        return (
+            this.selected.size &&
+            this.selected
+                .keySeq()
+                .toSet()
+                .intersect(sceneSet).size === sceneSet.size
+        );
     }
 
     selectAll() {
@@ -302,7 +327,10 @@ class LayerScenesBrowseController {
             this.selected = this.selected.clear();
         } else {
             this.selected = this.selected.merge(
-                _.filter(this.sceneList.map(s => [s.id, s]), s => !s.inLayer)
+                _.filter(
+                    this.sceneList.map(s => [s.id, s]),
+                    s => !s.inLayer
+                )
             );
         }
         this.updateSelectText();
@@ -333,28 +361,32 @@ class LayerScenesBrowseController {
 
     addScenesToLayer() {
         // add spinner to all scenes which are in this.scenesBeingAdded
-        let addedScenes = this.selected.filterNot((scene) => this.scenesBeingAdded.has(scene.id));
+        let addedScenes = this.selected.filterNot(scene => this.scenesBeingAdded.has(scene.id));
         let addedSceneIds = addedScenes.keySeq().toSet();
         this.scenesBeingAdded = this.scenesBeingAdded.union(addedSceneIds);
-        this.currentAddRequest = this.currentRepository
-            .service
+        this.currentAddRequest = this.currentRepository.service
             .addToLayer(this.project.id, this.layer.id, addedScenes.valueSeq().toArray())
-            .then(() => {
-                this.scenesBeingAdded = this.scenesBeingAdded.subtract(addedSceneIds);
-                this.selected = this.selected.filterNot((s, id) => addedSceneIds.has(id));
-                this.sceneList.filter(s => addedSceneIds.has(s.id)).forEach(s => {
-                    s.inProject = true;
-                    s.inLayer = true;
-                });
-                this.removeMapLayers().then(() => this.setMapLayers());
-            }, (e) => {
-                this.scenesBeingAdded.subtract(addedSceneIds);
-                this.errorAddingScenes =
-                    'There was an error adding scenes to the layer. Please try again.';
-                this.$timeout(() => {
-                    delete this.errorAddingScenes;
-                }, 5);
-            });
+            .then(
+                () => {
+                    this.scenesBeingAdded = this.scenesBeingAdded.subtract(addedSceneIds);
+                    this.selected = this.selected.filterNot((s, id) => addedSceneIds.has(id));
+                    this.sceneList
+                        .filter(s => addedSceneIds.has(s.id))
+                        .forEach(s => {
+                            s.inProject = true;
+                            s.inLayer = true;
+                        });
+                    this.removeMapLayers().then(() => this.setMapLayers());
+                },
+                e => {
+                    this.scenesBeingAdded.subtract(addedSceneIds);
+                    this.errorAddingScenes =
+                        'There was an error adding scenes to the layer. Please try again.';
+                    this.$timeout(() => {
+                        delete this.errorAddingScenes;
+                    }, 5);
+                }
+            );
     }
 
     toggleVisibleScene(scene) {
@@ -373,21 +405,15 @@ class LayerScenesBrowseController {
             // find scenes to be added
             let newSceneIds = this.visibleScenes.keySeq().toSet();
             let removedSceneIds = this.scenesOnMap.subtract(newSceneIds);
-            let addedScenes = this.visibleScenes.filterNot((s) => this.scenesOnMap.has(s.id));
-            removedSceneIds.forEach((id) => {
+            let addedScenes = this.visibleScenes.filterNot(s => this.scenesOnMap.has(s.id));
+            removedSceneIds.forEach(id => {
                 map.deleteGeojson(id);
             });
-            addedScenes.forEach((scene) => {
+            addedScenes.forEach(scene => {
                 map.setGeojson(scene.id, this.sceneService.getStyledFootprint(scene));
             });
             this.scenesOnMap = newSceneIds;
         });
-    }
-
-    showDateWarning() {
-        return this.currentRepository &&
-            this.currentRepository.label === 'NASA CMR' &&
-            this.currentRepository.service.showDateWarning;
     }
 }
 
@@ -403,5 +429,4 @@ const component = {
 export default angular
     .module('components.pages.project.layers.scenes.browse', [])
     .controller(LayerScenesBrowseController.name, LayerScenesBrowseController)
-    .component('rfProjectLayerScenesBrowsePage', component)
-    .name;
+    .component('rfProjectLayerScenesBrowsePage', component).name;

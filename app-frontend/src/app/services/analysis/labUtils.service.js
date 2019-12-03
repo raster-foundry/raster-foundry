@@ -41,7 +41,7 @@ export default app => {
                                   model="model"
                                   enable-sharing="data.enableSharing"
                     ></rf-lab-node>`,
-                initialize: function () {
+                initialize: function() {
                     _.bindAll(this, 'updateBox');
                     joint.dia.ElementView.prototype.initialize.apply(this, arguments);
                     this.model.on('change', this.updateBox, this);
@@ -54,7 +54,7 @@ export default app => {
 
                     this.updateBox();
                 },
-                render: function () {
+                render: function() {
                     joint.dia.ElementView.prototype.render.apply(this, arguments);
                     this.paper.$el.prepend(this.$box);
                     this.updateBox();
@@ -63,9 +63,9 @@ export default app => {
                         let origin = this.paper
                             ? this.paper.options.origin
                             : {
-                                x: 0,
-                                y: 0
-                            };
+                                  x: 0,
+                                  y: 0
+                              };
                         this.$box.css({
                             left: `${bbox.x * this.scale + origin.x}px`,
                             top: `${bbox.y * this.scale + origin.y}px`
@@ -78,9 +78,9 @@ export default app => {
                         let origin = this.paper
                             ? this.paper.options.origin
                             : {
-                                x: 0,
-                                y: 0
-                            };
+                                  x: 0,
+                                  y: 0
+                              };
                         this.$box.css({
                             left: `${bbox.x * this.scale + origin.x}px`,
                             top: `${bbox.y * this.scale + origin.y}px`,
@@ -90,7 +90,7 @@ export default app => {
                     });
                     return this;
                 },
-                updateBox: function () {
+                updateBox: function() {
                     let bbox = this.model.getBBox();
                     if (!_.isEqual(this.model, this.scope.model)) {
                         this.scope.nodeId = this.model.get('id');
@@ -100,9 +100,9 @@ export default app => {
                     let origin = this.paper
                         ? this.paper.options.origin
                         : {
-                            x: 0,
-                            y: 0
-                        };
+                              x: 0,
+                              y: 0
+                          };
 
                     this.$box.css({
                         width: `${bbox.width}px`,
@@ -113,7 +113,7 @@ export default app => {
 
                     this.scope.updateTick = new Date().getTime();
                 },
-                remove: function () {
+                remove: function() {
                     this.$box.remove();
                     this.scope.$destroy();
                 }

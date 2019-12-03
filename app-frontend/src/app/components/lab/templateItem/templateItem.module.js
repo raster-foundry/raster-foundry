@@ -29,16 +29,17 @@ class TemplateItemController {
         this.permissionsService
             .getEditableObjectPermissions('tools', 'TEMPLATE', template, this.authService.user)
             .then(permissions => {
-                this.permissions = permissions.map((p) => p.actionType);
+                this.permissions = permissions.map(p => p.actionType);
                 this.showShare = this.showDelete = false;
-                if (this.permissions
-                    .filter(p => ['*', 'edit'].includes(p.toLowerCase()))
-                    .length > 0) {
+                if (
+                    this.permissions.filter(p => ['*', 'edit'].includes(p.toLowerCase())).length > 0
+                ) {
                     this.showShare = true;
                 }
-                if (this.permissions
-                    .filter(p => ['*', 'delete'].includes(p.toLowerCase()))
-                    .length > 0) {
+                if (
+                    this.permissions.filter(p => ['*', 'delete'].includes(p.toLowerCase())).length >
+                    0
+                ) {
                     this.showDelete = true;
                 }
             });
@@ -48,27 +49,28 @@ class TemplateItemController {
         if (this.BUILDCONFIG.PLATFORM_USERS.includes(this.templateData.owner)) {
             this.templateOwner = this.BUILDCONFIG.APP_NAME;
         } else {
-            this.userService.getUserById(this.templateData.owner).then(user => {
-                this.setTemplateOwnerDisplay(user);
-            }, err => {
-                this.$log.error(err);
-                this.templateOwner = this.BUILDCONFIG.APP_NAME;
-            });
+            this.userService.getUserById(this.templateData.owner).then(
+                user => {
+                    this.setTemplateOwnerDisplay(user);
+                },
+                err => {
+                    this.$log.error(err);
+                    this.templateOwner = this.BUILDCONFIG.APP_NAME;
+                }
+            );
         }
     }
 
     onClickDeleteTemplate() {
-        this.onTemplateDelete({templateId: this.templateData.id});
+        this.onTemplateDelete({ templateId: this.templateData.id });
     }
 
     setTemplateOwnerDisplay(user) {
-        this.templateOwner = user.personalInfo.firstName.trim() &&
-            user.personalInfo.lastName.trim() ?
-            `${user.personalInfo.firstName.trim()} ${user.personalInfo.lastName.trim()}` :
-            user.name || 'Anonymous';
+        this.templateOwner =
+            user.personalInfo.firstName.trim() && user.personalInfo.lastName.trim()
+                ? `${user.personalInfo.firstName.trim()} ${user.personalInfo.lastName.trim()}`
+                : user.name || 'Anonymous';
     }
-
-
 }
 
 const TemplateItemModule = angular.module('components.lab.toolItem', []);

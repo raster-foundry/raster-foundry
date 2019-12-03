@@ -1,5 +1,5 @@
 /* global _ */
-import {Set} from 'immutable';
+import { Set } from 'immutable';
 
 export default class ColorSchemeBuilderController {
     constructor($scope) {
@@ -30,7 +30,7 @@ export default class ColorSchemeBuilderController {
                 this.getArraySchemeAsComparable(this.buffer)
             )
         ) {
-            this.buffer = [ ...incomingSchemeAsArray ];
+            this.buffer = [...incomingSchemeAsArray];
             // coerce color scheme to map, since it's initially set as an array in the dropdown
             this.onChange({
                 value: {
@@ -43,18 +43,17 @@ export default class ColorSchemeBuilderController {
     }
 
     getArraySchemeAsComparable(scheme) {
-        return [ ...scheme ]
-            .sort((a, b) => a.break - b.break)
-            .map(c => angular.toJson(c));
+        return [...scheme].sort((a, b) => a.break - b.break).map(c => angular.toJson(c));
     }
 
     getSchemeAsArray(sort = false) {
         const scheme = Object.keys(this.colorScheme).map(b => {
             return {
                 break: +b,
-                color: this.colorScheme[b].length === 7 ?
-                    this.colorScheme[b] :
-                    this.colorScheme[b].substr(0, this.colorScheme[b].length - 2),
+                color:
+                    this.colorScheme[b].length === 7
+                        ? this.colorScheme[b]
+                        : this.colorScheme[b].substr(0, this.colorScheme[b].length - 2),
                 masked: this.colorScheme[b].masked,
                 errors: []
             };
@@ -120,10 +119,7 @@ export default class ColorSchemeBuilderController {
     }
 
     validateBuffer() {
-        const validators = [
-            this.validateBufferBreaks,
-            this.validateBufferColors
-        ];
+        const validators = [this.validateBufferBreaks, this.validateBufferColors];
 
         this.clearBufferValidation();
 
@@ -134,7 +130,7 @@ export default class ColorSchemeBuilderController {
 
     validateBufferBreaks() {
         const hasNoDuplicates =
-            this.buffer.length === [ ...new Set(this.buffer.map(c => c.break))].length;
+            this.buffer.length === [...new Set(this.buffer.map(c => c.break))].length;
 
         const hasNoEmptyValues =
             this.buffer.length === this.buffer.filter(c => c.break !== '').length;
@@ -157,7 +153,7 @@ export default class ColorSchemeBuilderController {
 
     colorToBackground(color) {
         return {
-            'background': color
+            background: color
         };
     }
 
@@ -165,9 +161,8 @@ export default class ColorSchemeBuilderController {
         if (!this.maskedValues || !this.maskedValues.includes(colorBreak)) {
             this.maskedValues = [...(this.maskedValues || []), colorBreak];
         } else {
-            this.maskedValues = _.filter(this.maskedValues, (x) => x !== colorBreak);
+            this.maskedValues = _.filter(this.maskedValues, x => x !== colorBreak);
         }
         this.onBufferChanged();
     }
-
 }

@@ -12,7 +12,7 @@ if (!BUILDCONFIG.THEME || BUILDCONFIG.THEME === 'default') {
 
 import deferredBootstrapper from 'angular-deferred-bootstrap';
 
-angular.element(document).ready(function () {
+angular.element(document).ready(function() {
     deferredBootstrapper.bootstrap({
         element: document,
         module: 'rasterFoundry',
@@ -20,13 +20,16 @@ angular.element(document).ready(function () {
             strictDi: true
         },
         resolve: {
-            APP_CONFIG: ['$http', ($http) => {
-                let url = `${BUILDCONFIG.API_HOST}/config`;
-                return $http.get(url).then(
-                    (result) => result,
-                    (error) => ({error: error})
-                );
-            }]
+            APP_CONFIG: [
+                '$http',
+                $http => {
+                    let url = `${BUILDCONFIG.API_HOST}/config`;
+                    return $http.get(url).then(
+                        result => result,
+                        error => ({ error: error })
+                    );
+                }
+            ]
         }
     });
 });

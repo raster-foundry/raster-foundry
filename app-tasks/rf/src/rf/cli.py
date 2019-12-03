@@ -8,13 +8,8 @@ import click
 
 from .commands import (
     export,
-    find_aoi_projects,
     ingest_scene,
     process_upload,
-    reprocess_landsat_h,
-    reprocess_sentinel,
-    reprocess_geotiff_to_cog,
-    update_aoi_project,
 )
 
 logger = logging.getLogger('rf')
@@ -34,8 +29,3 @@ def run(verbose):
 run.add_command(export)
 run.add_command(process_upload)
 run.add_command(ingest_scene)
-run.add_command(find_aoi_projects)
-run.add_command(reprocess_landsat_h)
-run.add_command(reprocess_sentinel)
-run.add_command(reprocess_geotiff_to_cog)
-run.add_command(update_aoi_project)

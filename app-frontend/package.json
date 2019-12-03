@@ -20,7 +20,8 @@
         "test": "karma start karma.conf.js",
         "test-watch": "karma start karma.conf.js --auto-watch --no-single-run",
         "validate-api-spec": "swagger-cli validate /opt/swagger/spec.yml",
-        "validate-tile-spec": "swagger-cli validate /opt/swagger/tile-spec.yml"
+        "validate-tile-spec": "swagger-cli validate /opt/swagger/tile-spec.yml",
+        "format": "prettier --config .prettierrc --write 'src/**/*.js'"
     },
     "dependencies": {
         "@babel/runtime": "^7.1.2",
@@ -126,6 +127,7 @@
         "packageify": "~1.0.0",
         "phantomjs-prebuilt": "~2.1.7",
         "postcss-loader": "3.0.0",
+        "prettier": "^1.19.1",
         "rimraf": "~2.5.4",
         "sass-loader": "7.1.0",
         "sort-package-json": "~1.4.0",

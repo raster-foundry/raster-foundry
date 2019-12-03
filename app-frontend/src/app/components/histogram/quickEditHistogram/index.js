@@ -1,12 +1,5 @@
 import tpl from './index.html';
-import {
-    get,
-    debounce,
-    entries,
-    sortBy,
-    find,
-    filterNot
-} from 'lodash';
+import { get, debounce, entries, sortBy, find, filterNot } from 'lodash';
 
 import {
     breakpointsFromRenderDefinition,
@@ -144,12 +137,14 @@ class QuickEditHistogramController {
         if (breakpoint.options.style === 'bar') {
             this.breakpoints = this.rescaleInnerBreakpoints(breakpoint, value);
         } else {
-            const bp = find(this.breakpoints, (b) => b.id === breakpoint.id);
+            const bp = find(this.breakpoints, b => b.id === breakpoint.id);
             if (bp) {
                 bp.value = value;
             } else {
                 throw new Error(
-                    'onBreakpointChanged called with invalid breakpoint', breakpoint, value
+                    'onBreakpointChanged called with invalid breakpoint',
+                    breakpoint,
+                    value
                 );
             }
         }
@@ -165,10 +160,13 @@ class QuickEditHistogramController {
     }
 
     getBreakpointRange(breakpoints) {
-        return breakpoints.reduce((range, current) => ({
-            min: range.min < current.value ? range.min : current.value,
-            max: range.max > current.value ? range.max : current.value
-        }), {});
+        return breakpoints.reduce(
+            (range, current) => ({
+                min: range.min < current.value ? range.min : current.value,
+                max: range.max > current.value ? range.max : current.value
+            }),
+            {}
+        );
     }
 
     rescaleInnerBreakpoints(breakpoint, value) {

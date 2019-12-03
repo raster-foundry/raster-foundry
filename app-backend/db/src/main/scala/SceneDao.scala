@@ -342,20 +342,7 @@ object SceneDao
             ColorCorrect.Params(
               redBand,
               greenBand,
-              blueBand,
-              BandGamma(enabled = false, None, None, None),
-              PerBandClipping(
-                enabled = false,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None
-              ),
-              MultiBandClipping(enabled = false, None, None),
-              SigmoidalContrast(enabled = false, None, None),
-              Saturation(enabled = false, None)
+              blueBand
             ),
             scene.sceneType,
             scene.ingestLocation,

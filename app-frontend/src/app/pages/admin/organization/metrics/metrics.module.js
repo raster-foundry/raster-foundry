@@ -9,7 +9,8 @@ class OrganizationMetricsController {
 
 const OrganizationMetricsModule = angular.module('pages.organization.metrics', []);
 OrganizationMetricsModule.controller(
-    'OrganizationMetricsController', OrganizationMetricsController
+    'OrganizationMetricsController',
+    OrganizationMetricsController
 );
 
 export default OrganizationMetricsModule;

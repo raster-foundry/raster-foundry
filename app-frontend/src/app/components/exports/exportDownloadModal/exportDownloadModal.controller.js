@@ -14,14 +14,17 @@ export default class ExportDownloadModalController {
 
     fetchExportFiles() {
         this.isLoading = true;
-        this.exportService.getFiles(this.export).then(f => {
-            // @TODO: the extra filter can be removed once we aren't getting this extra file
-            // see issue #2090
-            this.exportFiles = f.filter(path => path.indexOf('RFUploadAccessTestFile') < 0);
-            this.isLoading = false;
-        }, () => {
-            this.isError = true;
-            this.isLoading = false;
-        });
+        this.exportService.getFiles(this.export).then(
+            f => {
+                // @TODO: the extra filter can be removed once we aren't getting this extra file
+                // see issue #2090
+                this.exportFiles = f.filter(path => path.indexOf('RFUploadAccessTestFile') < 0);
+                this.isLoading = false;
+            },
+            () => {
+                this.isError = true;
+                this.isLoading = false;
+            }
+        );
     }
 }

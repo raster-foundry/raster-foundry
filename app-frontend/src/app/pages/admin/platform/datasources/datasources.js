@@ -3,9 +3,17 @@ import _ from 'lodash';
 
 class Controller {
     constructor(
-        $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        platform, organizations, members
+        $scope,
+        $stateParams,
+        $log,
+        $window,
+        modalService,
+        organizationService,
+        teamService,
+        authService,
+        platform,
+        organizations,
+        members
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -22,11 +30,10 @@ class Controller {
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.debouncedSearch = _.debounce(this.onSearch.bind(this), 500, {
+            leading: false,
+            trailing: true
+        });
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
 
@@ -48,7 +55,6 @@ class Controller {
             hasPrevious: data.hasPrevious
         };
     }
-
 
     fetchPage() {
         this.loading = false;

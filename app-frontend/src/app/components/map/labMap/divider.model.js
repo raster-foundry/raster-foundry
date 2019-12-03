@@ -1,7 +1,7 @@
 export default class Divider {
     constructor(position, options) {
         this._position = position ? position : 0.5;
-        this._options = options ? options : {dividerClasses: [], grabberClasses: []};
+        this._options = options ? options : { dividerClasses: [], grabberClasses: [] };
         this._dragging = false;
     }
 
@@ -30,13 +30,15 @@ export default class Divider {
             'div',
             `leaflet-frame-divider ${
                 this._options.dividerClasses ? this._options.dividerClasses.join(' ') : ''
-            }`, this._frame._container
+            }`,
+            this._frame._container
         );
         /* eslint-enable */
         this._grabber = L.DomUtil.create(
             'div',
             `leaflet-frame-grabber ${
-              this._options.grabberClasses ? this._options.grabberClasses.join(' ') : ''}`,
+                this._options.grabberClasses ? this._options.grabberClasses.join(' ') : ''
+            }`,
             this._container
         );
         L.DomUtil.create('span', 'icon-gripper', this._grabber);

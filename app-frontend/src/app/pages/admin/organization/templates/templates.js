@@ -3,9 +3,18 @@ import _ from 'lodash';
 
 class OrganizationTemplatesController {
     constructor(
-        $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        platform, organization, members, teams
+        $scope,
+        $stateParams,
+        $log,
+        $window,
+        modalService,
+        organizationService,
+        teamService,
+        authService,
+        platform,
+        organization,
+        members,
+        teams
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -23,11 +32,10 @@ class OrganizationTemplatesController {
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.debouncedSearch = _.debounce(this.onSearch.bind(this), 500, {
+            leading: false,
+            trailing: true
+        });
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
@@ -53,15 +61,14 @@ class OrganizationTemplatesController {
         };
     }
 
-
-    fetchPage() {
-    }
+    fetchPage() {}
 }
 
-const OrganizationTemplatesModule =
-    angular.module('pages.organization.templates', []);
+const OrganizationTemplatesModule = angular.module('pages.organization.templates', []);
 
-OrganizationTemplatesModule
-    .controller('OrganizationTemplatesController', OrganizationTemplatesController);
+OrganizationTemplatesModule.controller(
+    'OrganizationTemplatesController',
+    OrganizationTemplatesController
+);
 
 export default OrganizationTemplatesModule;

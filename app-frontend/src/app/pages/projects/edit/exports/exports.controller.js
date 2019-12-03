@@ -27,33 +27,37 @@ export default class ExportController {
         this.isLoadingExports = true;
         // save off selected scenes so you don't lose them during the refresh
         this.exportList = [];
-        this.projectService.listExports(
-            {
+        this.projectService
+            .listExports({
                 sort: 'createdAt,desc',
                 pageSize: '10',
                 page: requestPage,
                 project: this.project.id,
                 layer: this.project.defaultLayerId
-            }
-        ).then(exportResult => {
-            this.lastExportResult = exportResult;
-            this.currentPage = exportResult.page + 1;
-            let replace = !this.$state.params.page;
-            this.$state.transitionTo(
-                this.$state.$current.name,
-                {
-                    projectid: this.project.id, page: this.currentPage
+            })
+            .then(
+                exportResult => {
+                    this.lastExportResult = exportResult;
+                    this.currentPage = exportResult.page + 1;
+                    let replace = !this.$state.params.page;
+                    this.$state.transitionTo(
+                        this.$state.$current.name,
+                        {
+                            projectid: this.project.id,
+                            page: this.currentPage
+                        },
+                        {
+                            location: replace ? 'replace' : true,
+                            notify: false
+                        }
+                    );
+                    this.exportList = this.lastExportResult.results;
+                    this.isLoadingExports = false;
                 },
-                {
-                    location: replace ? 'replace' : true,
-                    notify: false
+                () => {
+                    this.errorMsg = 'Server error.';
+                    this.isLoadingExports = false;
                 }
             );
-            this.exportList = this.lastExportResult.results;
-            this.isLoadingExports = false;
-        }, () => {
-            this.errorMsg = 'Server error.';
-            this.isLoadingExports = false;
-        });
     }
 }

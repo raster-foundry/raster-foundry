@@ -4,7 +4,8 @@ import ProjectsOrderScenesController from './order.controller.js';
 const ProjectsOrderScenesModule = angular.module('pages.projects.edit.order', []);
 
 ProjectsOrderScenesModule.controller(
-    'ProjectsOrderScenesController', ProjectsOrderScenesController
+    'ProjectsOrderScenesController',
+    ProjectsOrderScenesController
 );
 
 export default ProjectsOrderScenesModule;

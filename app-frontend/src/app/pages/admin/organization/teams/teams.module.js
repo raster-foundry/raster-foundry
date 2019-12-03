@@ -3,9 +3,19 @@ import _ from 'lodash';
 
 class OrganizationTeamsController {
     constructor(
-        $scope, $state, $log, $window,
-        modalService, organizationService, teamService, authService, paginationService,
-        platform, organization, user, userRoles
+        $scope,
+        $state,
+        $log,
+        $window,
+        modalService,
+        organizationService,
+        teamService,
+        authService,
+        paginationService,
+        platform,
+        organization,
+        user,
+        userRoles
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -26,20 +36,24 @@ class OrganizationTeamsController {
         this.results = [];
         const currentQuery = this.organizationService
             .getTeams(this.platform.id, this.organization.id, page - 1, this.search)
-            .then(paginatedResponse => {
-                this.results = paginatedResponse.results;
-                this.pagination = this.paginationService.buildPagination(paginatedResponse);
-                this.paginationService.updatePageParam(page, this.search);
-                this.buildOptions();
-                this.fetchTeamUsers();
-                if (this.currentQuery === currentQuery) {
-                    delete this.fetchError;
+            .then(
+                paginatedResponse => {
+                    this.results = paginatedResponse.results;
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page, this.search);
+                    this.buildOptions();
+                    this.fetchTeamUsers();
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
                 }
-            }, (e) => {
-                if (this.currentQuery === currentQuery) {
-                    this.fetchError = e;
-                }
-            }).finally(() => {
+            )
+            .finally(() => {
                 if (this.currentQuery === currentQuery) {
                     delete this.currentQuery;
                 }
@@ -48,7 +62,7 @@ class OrganizationTeamsController {
     }
 
     buildOptions() {
-        this.results.forEach((team) => {
+        this.results.forEach(team => {
             Object.assign(team, {
                 options: {
                     items: this.itemsForTeam(team)
@@ -66,12 +80,11 @@ class OrganizationTeamsController {
         this.results.forEach(team => {
             this.teamService
                 .getMembers(this.platform.id, this.organization.id, team.id)
-                .then((paginatedUsers) => {
+                .then(paginatedUsers => {
                     team.fetchedUsers = paginatedUsers;
                 });
         });
     }
-
 
     itemsForTeam(team) {
         /* eslint-disable */
@@ -79,21 +92,24 @@ class OrganizationTeamsController {
             {
                 label: 'Add User',
                 callback: () => {
-                    this.modalService.open({
-                        component: 'rfAddUserModal',
-                        resolve: {
-                            platformId: () => this.organization.platformId,
-                            organizationId: () => this.organization.id,
-                            teamId: () => team.id,
-                            groupType: () => 'team'
-                        }
-                    }).result.then(() => {
-                        this.teamService
-                            .getMembers(this.platform.id, this.organization.id, team.id)
-                            .then((paginatedUsers) => {
-                                team.fetchedUsers = paginatedUsers;
-                            });
-                    }).catch(() => {});
+                    this.modalService
+                        .open({
+                            component: 'rfAddUserModal',
+                            resolve: {
+                                platformId: () => this.organization.platformId,
+                                organizationId: () => this.organization.id,
+                                teamId: () => team.id,
+                                groupType: () => 'team'
+                            }
+                        })
+                        .result.then(() => {
+                            this.teamService
+                                .getMembers(this.platform.id, this.organization.id, team.id)
+                                .then(paginatedUsers => {
+                                    team.fetchedUsers = paginatedUsers;
+                                });
+                        })
+                        .catch(() => {});
                 },
                 classes: []
             },
@@ -107,14 +123,12 @@ class OrganizationTeamsController {
                         component: 'rfFeedbackModal',
                         resolve: {
                             title: () => 'Delete team?',
-                            subtitle: ()=> 
-                                'Deleting teams cannot be '
-                                + 'undone.',
-                            content: () => 
-                            '<h2>Do you wish to continue?</h2>'
-                            + '<p>Anything shared with this '
-                            + 'team will no longer be '
-                            + 'accessible by its members.',
+                            subtitle: () => 'Deleting teams cannot be ' + 'undone.',
+                            content: () =>
+                                '<h2>Do you wish to continue?</h2>' +
+                                '<p>Anything shared with this ' +
+                                'team will no longer be ' +
+                                'accessible by its members.',
                             /* feedbackIconType : default, success, danger, warning */
                             feedbackIconType: () => 'danger',
                             feedbackIcon: () => 'icon-warning',
@@ -124,17 +138,21 @@ class OrganizationTeamsController {
                         }
                     });
 
-                    modal.result.then(() => {
-                        this.teamService.deactivateTeam(this.platform.id, this.organization.id, team.id).then(
-                            () => {
-                                this.fetchPage(this.pagination.currentPage);
-                            },
-                            (err) => {
-                                this.$log.debug('error deleting team', err);
-                                this.fetchPage(this.pagination.currentPage);
-                            }
-                        );
-                    }).catch(() => {});
+                    modal.result
+                        .then(() => {
+                            this.teamService
+                                .deactivateTeam(this.platform.id, this.organization.id, team.id)
+                                .then(
+                                    () => {
+                                        this.fetchPage(this.pagination.currentPage);
+                                    },
+                                    err => {
+                                        this.$log.debug('error deleting team', err);
+                                        this.fetchPage(this.pagination.currentPage);
+                                    }
+                                );
+                        })
+                        .catch(() => {});
                 },
                 classes: ['color-danger']
             }
@@ -143,16 +161,19 @@ class OrganizationTeamsController {
     }
 
     newTeamModal() {
-        this.modalService.open({
-            component: 'rfTeamModal'
-        }).result.then((result) => {
-            // eslint-disable-next-line
-            this.teamService
-                .createTeam(this.platform.id, this.organization.id, result.name)
-                .then(() => {
-                    this.fetchPage(this.pagination.currentPage);
-                });
-        }).catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfTeamModal'
+            })
+            .result.then(result => {
+                // eslint-disable-next-line
+                this.teamService
+                    .createTeam(this.platform.id, this.organization.id, result.name)
+                    .then(() => {
+                        this.fetchPage(this.pagination.currentPage);
+                    });
+            })
+            .catch(() => {});
     }
 
     toggleTeamNameEdit(teamId, isEdit) {
@@ -163,14 +184,18 @@ class OrganizationTeamsController {
 
     finishTeamNameEdit(team) {
         if (this.nameBuffer && this.nameBuffer.length && team.name !== this.nameBuffer) {
-            let teamUpdated = Object.assign({}, team, {name: this.nameBuffer});
+            let teamUpdated = Object.assign({}, team, { name: this.nameBuffer });
             this.teamService
                 .updateTeam(this.platform.id, this.organization.id, team.id, teamUpdated)
-                .then(resp => {
-                    this.teams[this.teams.indexOf(team)] = resp;
-                }, () => {
-                    this.$window.alert('Team\'s name cannot be updated at the moment.');
-                }).finally(() => {
+                .then(
+                    resp => {
+                        this.teams[this.teams.indexOf(team)] = resp;
+                    },
+                    () => {
+                        this.$window.alert("Team's name cannot be updated at the moment.");
+                    }
+                )
+                .finally(() => {
                     delete this.editTeamId;
                     delete this.isEditTeamName;
                     this.nameBuffer = '';

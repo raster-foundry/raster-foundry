@@ -1,11 +1,9 @@
 import _ from 'lodash';
 import tpl from './index.html';
-import {Set} from 'immutable';
+import { Set } from 'immutable';
 
 class ProjectLayersNavController {
-    constructor(
-        $rootScope, $state, $scope, $transitions, $log
-    ) {
+    constructor($rootScope, $state, $scope, $transitions, $log) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -49,18 +47,18 @@ class ProjectLayersNavController {
         }
 
         if (stateCurrent.name.includes('project.analyses.visualize')) {
-            this.navs.push({
-                title: 'Analyses',
-                sref: `project.analyses({projectId: '${this.project.id}'})`
-            },
-            {
-                title: 'Data visualizations'
-            });
+            this.navs.push(
+                {
+                    title: 'Analyses',
+                    sref: `project.analyses({projectId: '${this.project.id}'})`
+                },
+                {
+                    title: 'Data visualizations'
+                }
+            );
         }
 
-        if (stateCurrent.name === 'project.layer' ||
-            stateCurrent.name.includes('project.layer.')
-        ) {
+        if (stateCurrent.name === 'project.layer' || stateCurrent.name.includes('project.layer.')) {
             this.navs.push({
                 title: this.layer && this.layer.name,
                 sref: `project.layer({
@@ -107,5 +105,4 @@ const component = {
 export default angular
     .module('components.pages.projects.navbar', [])
     .controller(ProjectLayersNavController.name, ProjectLayersNavController)
-    .component('rfProjectLayersNav', component)
-    .name;
+    .component('rfProjectLayersNav', component).name;

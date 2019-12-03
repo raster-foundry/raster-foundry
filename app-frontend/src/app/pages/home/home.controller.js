@@ -13,15 +13,19 @@ class HomeController {
     }
 
     openCreateProjectModal() {
-        this.modalService.open({
-            component: 'rfProjectCreateModal'
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfProjectCreateModal'
+            })
+            .result.catch(() => {});
     }
 
     openTemplateCreateModal() {
-        this.modalService.open({
-            component: 'rfTemplateCreateModal'
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfTemplateCreateModal'
+            })
+            .result.catch(() => {});
     }
 }
 

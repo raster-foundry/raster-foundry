@@ -7,17 +7,14 @@ const analysisLayerName = 'Analysis Viz';
 const offset = -2;
 
 class AnalysisMapItemController {
-    constructor(
-        $rootScope, $state, $scope, $log, $timeout,
-        analysisService, mapService
-    ) {
+    constructor($rootScope, $state, $scope, $log, $timeout, analysisService, mapService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
         this.analysisLayerName = analysisLayerName;
-        this.mapOptions = {attributionControl: false};
+        this.mapOptions = { attributionControl: false };
         this.mapId = `analysis-viz-${this.analysisId}`;
         this.offset = offset;
         this.setAnalysisAndTiles();
@@ -73,5 +70,4 @@ const component = {
 export default angular
     .module('components.projects.analysisMapItem', [])
     .controller(AnalysisMapItemController.name, AnalysisMapItemController)
-    .component('rfAnalysisMapItem', component)
-    .name;
+    .component('rfAnalysisMapItem', component).name;

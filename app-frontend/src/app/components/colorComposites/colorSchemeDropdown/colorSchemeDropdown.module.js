@@ -26,16 +26,14 @@ class ColorSchemeDropdownController {
     }
 
     $onInit() {
-        this.bins = [0, ...[ ...Array(1 + MAX_BINS - MIN_BINS).keys()].map(b => b + MIN_BINS)];
+        this.bins = [0, ...[...Array(1 + MAX_BINS - MIN_BINS).keys()].map(b => b + MIN_BINS)];
 
-        this.filterToValidSchemes = (value) => {
+        this.filterToValidSchemes = value => {
             const schemeValue = _.get(this, 'state.schemeType.value');
             const bins = _.get(this, 'state.blending.bins', 0);
-            return value.type === schemeValue &&
-                (bins === 0 ||
-                 Object.keys(value).length >= bins);
+            return value.type === schemeValue && (bins === 0 || Object.keys(value).length >= bins);
         };
-        this.$element.on('wheel', (event) => {
+        this.$element.on('wheel', event => {
             event.stopPropagation();
         });
     }
@@ -81,9 +79,7 @@ class ColorSchemeDropdownController {
     getStateFromColorSchemeOptions() {
         let stateToReturn = {};
         if (this._colorSchemeOptions && this._colorSchemeOptions.colorScheme) {
-            const scheme = this.colorSchemeService.matchSingleBandOptions(
-                this._colorSchemeOptions
-            );
+            const scheme = this.colorSchemeService.matchSingleBandOptions(this._colorSchemeOptions);
 
             if (scheme) {
                 stateToReturn.scheme = scheme;
@@ -126,7 +122,8 @@ class ColorSchemeDropdownController {
         if (this.state) {
             return {
                 colorScheme: this.colorSchemeService.colorStopsToProportionalArray(
-                    this.state.scheme.colors, this.state.reversed
+                    this.state.scheme.colors,
+                    this.state.reversed
                 ),
                 dataType: this.state.schemeType.value,
                 colorBins: this.state.blending.bins,
@@ -138,13 +135,9 @@ class ColorSchemeDropdownController {
 
     moveToView(view) {
         if (STATES.includes(view)) {
-            this.state = Object.assign(
-                {},
-                this.state,
-                {
-                    view: view
-                }
-            );
+            this.state = Object.assign({}, this.state, {
+                view: view
+            });
         }
     }
 
@@ -174,11 +167,7 @@ class ColorSchemeDropdownController {
                 { schemeType }
             );
         } else {
-            this.state = Object.assign(
-                {},
-                this.state,
-                { schemeType }
-            );
+            this.state = Object.assign({}, this.state, { schemeType });
         }
         if (ELASTIC_NAV) {
             this.moveToView('MAIN');
@@ -186,16 +175,12 @@ class ColorSchemeDropdownController {
     }
 
     setBlending(bins) {
-        this.state = Object.assign(
-            {},
-            this.state,
-            {
-                blending: {
-                    label: this.getBlendingLabel(bins),
-                    bins
-                }
+        this.state = Object.assign({}, this.state, {
+            blending: {
+                label: this.getBlendingLabel(bins),
+                bins
             }
-        );
+        });
         if (ELASTIC_NAV) {
             this.moveToView('MAIN');
         }
@@ -205,11 +190,7 @@ class ColorSchemeDropdownController {
     }
 
     setScheme(scheme) {
-        this.state = Object.assign(
-            {},
-            this.state,
-            { scheme }
-        );
+        this.state = Object.assign({}, this.state, { scheme });
         this.reflectState();
     }
 
@@ -224,11 +205,7 @@ class ColorSchemeDropdownController {
     getSchemeClass(scheme) {
         if (this.state) {
             return {
-                selected:
-                _.isEqual(
-                    this.state.scheme.colors,
-                    scheme.colors
-                )
+                selected: _.isEqual(this.state.scheme.colors, scheme.colors)
             };
         }
         return {};
@@ -285,10 +262,7 @@ class ColorSchemeDropdownController {
 
 const ColorSchemeDropdownModule = angular.module('components.colorSchemeDropdown', []);
 
-ColorSchemeDropdownModule.component(
-    'rfColorSchemeDropdown',
-    ColorSchemeDropdownComponent
-);
+ColorSchemeDropdownModule.component('rfColorSchemeDropdown', ColorSchemeDropdownComponent);
 
 ColorSchemeDropdownModule.controller(
     'ColorSchemeDropdownController',

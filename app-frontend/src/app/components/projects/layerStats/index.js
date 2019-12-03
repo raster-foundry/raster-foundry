@@ -19,5 +19,4 @@ const component = {
 export default angular
     .module('components.projects.layerStats', [])
     .controller(LayerStatsController.name, LayerStatsController)
-    .component('rfLayerStats', component)
-    .name;
+    .component('rfLayerStats', component).name;

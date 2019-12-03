@@ -1,14 +1,16 @@
 /* globals BUILDCONFIG */
 
-export default (app) => {
+export default app => {
     class ToolTagService {
         constructor($resource) {
             'ngInject';
 
             this.ToolTag = $resource(
-                `${BUILDCONFIG.API_HOST}/api/tool-tags/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/tool-tags/:id/`,
+                {
                     id: '@properties.id'
-                }, {
+                },
+                {
                     query: {
                         method: 'GET',
                         cache: false

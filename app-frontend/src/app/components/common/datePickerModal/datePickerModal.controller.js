@@ -50,6 +50,6 @@ export default class DatePickerModalController {
     }
 
     closeWithData(data) {
-        this.close({$value: data});
+        this.close({ $value: data });
     }
 }

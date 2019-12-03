@@ -3,10 +3,20 @@ import _ from 'lodash';
 
 class Controller {
     constructor(
-        $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        RasterFoundryRepository, sceneService, paginationService,
-        platform, organizations, members
+        $scope,
+        $stateParams,
+        $log,
+        $window,
+        modalService,
+        organizationService,
+        teamService,
+        authService,
+        RasterFoundryRepository,
+        sceneService,
+        paginationService,
+        platform,
+        organizations,
+        members
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -18,11 +28,10 @@ class Controller {
         this.searchTerm = '';
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
 
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.debouncedSearch = _.debounce(this.onSearch.bind(this), 500, {
+            leading: false,
+            trailing: true
+        });
 
         this.repository = {
             name: 'Raster Foundry',
@@ -39,8 +48,8 @@ class Controller {
 
     fetchPage(page = this.$stateParams.page || 1) {
         this.loading = true;
-        this.sceneService.query(
-            {
+        this.sceneService
+            .query({
                 sort: 'createdAt,desc',
                 pageSize: 10,
                 ownershipType: 'inherited',
@@ -48,14 +57,15 @@ class Controller {
                 groupId: this.platform.id,
                 search: this.searchTerm,
                 page: page - 1
-            }
-        ).then(paginatedResponse => {
-            this.results = paginatedResponse.results;
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-        }).finally(() => {
-            this.loading = false;
-        });
+            })
+            .then(paginatedResponse => {
+                this.results = paginatedResponse.results;
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                this.paginationService.updatePageParam(page);
+            })
+            .finally(() => {
+                this.loading = false;
+            });
     }
 }
 

@@ -14,6 +14,16 @@
 
 ### Security
 
+## [1.33.0](https://github.com/raster-foundry/raster-foundry/compare/1.32.1...1.33.0)
+### Removed
+- CMR and Shapefile support [\#5247](https://github.com/raster-foundry/raster-foundry/pull/5247)
+- Complex color correction (saturation, per-band clipping, contrast adjustment, etc.) [#5245](https://github.com/raster-foundry/raster-foundry/pull/5245)
+
+### Fixed
+
+- Fixed usage of license types for STAC exports [\#5240](https://github.com/raster-foundry/raster-foundry/pull/5240)
+- Fix metadata backfill batch job [\#5249](https://github.com/raster-foundry/raster-foundry/pull/5249)
+
 ## [1.32.1](https://github.com/raster-foundry/raster-foundry/compare/1.32.0...1.32.1)
 
 ### Fixed

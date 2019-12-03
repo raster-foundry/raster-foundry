@@ -1,14 +1,22 @@
 /* global BUILDCONFIG, HELPCONFIG, _ */
 
-let assetLogo = BUILDCONFIG.LOGOFILE ?
-    require(`../../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
-    require('../../../../assets/images/raster-foundry-logo.svg');
+let assetLogo = BUILDCONFIG.LOGOFILE
+    ? require(`../../../../assets/images/${BUILDCONFIG.LOGOFILE}`)
+    : require('../../../../assets/images/raster-foundry-logo.svg');
 
 assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
 export default class NavBarController {
     constructor( // eslint-disable-line max-params
-        $rootScope, $scope, $log, $state, $document, $sce, $timeout, APP_CONFIG, authService
+        $rootScope,
+        $scope,
+        $log,
+        $state,
+        $document,
+        $sce,
+        $timeout,
+        APP_CONFIG,
+        authService
     ) {
         'ngInject';
         if (APP_CONFIG.error) {
@@ -44,11 +52,13 @@ export default class NavBarController {
             let isSuperuser = resp.isSuperuser;
             this.currentUgrPromise = this.authService.fetchUserRoles().then(res => {
                 this.platformId = res.find(r => r.groupType === 'PLATFORM').groupId;
-                let isPlatOrgAdmin = res.filter((ugr) => {
-                    return ugr.groupType === 'PLATFORM' &&
+                let isPlatOrgAdmin = res.filter(ugr => {
+                    return (
+                        ugr.groupType === 'PLATFORM' &&
                         ugr.groupRole === 'ADMIN' &&
                         ugr.membershipStatus === 'APPROVED' &&
-                        ugr.isActive;
+                        ugr.isActive
+                    );
                 }).length;
                 this.showAdmin = isPlatOrgAdmin || isSuperuser;
             });
@@ -65,7 +75,7 @@ export default class NavBarController {
     }
 
     initPlyr() {
-        require(['plyr/dist/plyr.js', 'plyr/dist/plyr.css'], (require) => {
+        require(['plyr/dist/plyr.js', 'plyr/dist/plyr.css'], require => {
             this.$timeout(() => {
                 const Plyr = require('plyr/dist/plyr.js');
                 require('plyr/dist/plyr.css');
@@ -74,8 +84,7 @@ export default class NavBarController {
                 this.plyr.on('exitfullscreen', this.onExitFullscreen.bind(this));
                 this.showVideo = true;
             }, 100);
-        }, (error) => {
-        });
+        }, error => {});
     }
 
     onEnterFullscreen() {

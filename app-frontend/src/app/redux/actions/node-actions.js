@@ -1,5 +1,5 @@
-import {authedRequest} from '_api/authentication';
-import {Promise} from 'es6-promise';
+import { authedRequest } from '_api/authentication';
+import { Promise } from 'es6-promise';
 import _ from 'lodash';
 
 export const NODE_PREVIEWS = 'NODE_PREVIEWS';
@@ -39,17 +39,20 @@ export function selectNode(nodeId) {
             dispatch({
                 type: `${NODE_PREVIEWS}_PAUSE_SELECT`
             });
-            createNodeMetadata(state, {node: selectedNode})
-                .then((metadata) => {
-                    return _.merge({}, selectedNode, {metadata});
+            createNodeMetadata(state, { node: selectedNode })
+                .then(metadata => {
+                    return _.merge({}, selectedNode, { metadata });
                 })
-                .then((updatedNode) => {
+                .then(updatedNode => {
                     const updatedAnalysis = astFromNodes(labState, [updatedNode]);
-                    const nodeUpdateRequest = authedRequest({
-                        method: 'put',
-                        url: `${state.api.apiUrl}/api/tool-runs/${labState.analysis.id}`,
-                        data: updatedAnalysis
-                    }, state);
+                    const nodeUpdateRequest = authedRequest(
+                        {
+                            method: 'put',
+                            url: `${state.api.apiUrl}/api/tool-runs/${labState.analysis.id}`,
+                            data: updatedAnalysis
+                        },
+                        state
+                    );
                     dispatch({
                         type: NODE_UPDATE_HARD,
                         meta: {
@@ -59,12 +62,14 @@ export function selectNode(nodeId) {
                         payload: nodeUpdateRequest
                     });
                     return nodeUpdateRequest.then(() => updatedNode);
-                }).then((updatedNode) => {
+                })
+                .then(updatedNode => {
                     dispatch({
                         type: `${NODE_PREVIEWS}_SELECT_NODE`,
                         nodeId: updatedNode.id
                     });
-                }).catch((error) => {
+                })
+                .catch(error => {
                     // eslint-disable-next-line
                     console.log('Error while updating nodes before preview', error);
                     dispatch({
@@ -86,50 +91,53 @@ export function compareNodes(nodeIds) {
         const state = getState();
         const labState = state.lab;
         const nodes = labState.nodes;
-        const selectedNodes = nodeIds.map((id) => nodes.get(id));
-        const missingRenderDefs = selectedNodes.filter((node) => !node.metadata.renderDefinition);
+        const selectedNodes = nodeIds.map(id => nodes.get(id));
+        const missingRenderDefs = selectedNodes.filter(node => !node.metadata.renderDefinition);
         if (missingRenderDefs.length) {
             dispatch({
                 type: `${NODE_PREVIEWS}_PAUSE_SELECT`
             });
-            const renderDefPromises = missingRenderDefs.map((node) => {
-                return createNodeMetadata(state, {node})
-                    .then((metadata) => {
-                        return _.merge({}, node, {metadata});
+            const renderDefPromises = missingRenderDefs.map(node => {
+                return createNodeMetadata(state, { node }).then(metadata => {
+                    return _.merge({}, node, { metadata });
+                });
+            });
+            Promise.all(renderDefPromises)
+                .then(nodesToUpdate => {
+                    const updatedNodes = nodesToUpdate;
+                    const updatedAnalysis = astFromNodes(labState, updatedNodes);
+                    const nodeUpdateRequest = authedRequest(
+                        {
+                            method: 'put',
+                            url: `${state.api.apiUrl}/api/tool-runs/${labState.analysis.id}`,
+                            data: updatedAnalysis
+                        },
+                        state
+                    );
+                    dispatch({
+                        type: NODE_UPDATE_HARD,
+                        meta: {
+                            nodes: updatedNodes,
+                            analysis: updatedAnalysis
+                        },
+                        payload: nodeUpdateRequest
                     });
-            });
-            Promise.all(
-                renderDefPromises
-            ).then((nodesToUpdate) => {
-                const updatedNodes = nodesToUpdate;
-                const updatedAnalysis = astFromNodes(labState, updatedNodes);
-                const nodeUpdateRequest = authedRequest({
-                    method: 'put',
-                    url: `${state.api.apiUrl}/api/tool-runs/${labState.analysis.id}`,
-                    data: updatedAnalysis
-                }, state);
-                dispatch({
-                    type: NODE_UPDATE_HARD,
-                    meta: {
-                        nodes: updatedNodes,
-                        analysis: updatedAnalysis
-                    },
-                    payload: nodeUpdateRequest
+                    return nodeUpdateRequest.then(() => nodesToUpdate);
+                })
+                .then(updatedNodes => {
+                    dispatch({
+                        type: `${NODE_PREVIEWS}_COMPARE_NODES`,
+                        nodes: updatedNodes
+                    });
+                })
+                .catch(error => {
+                    // eslint-disable-next-line
+                    console.log('Error while updating nodes before preview', error);
+                    dispatch({
+                        type: `${NODE_PREVIEWS}_ERROR`,
+                        error: error
+                    });
                 });
-                return nodeUpdateRequest.then(() => nodesToUpdate);
-            }).then((updatedNodes) => {
-                dispatch({
-                    type: `${NODE_PREVIEWS}_COMPARE_NODES`,
-                    nodes: updatedNodes
-                });
-            }).catch((error) => {
-                // eslint-disable-next-line
-                console.log('Error while updating nodes before preview', error);
-                dispatch({
-                    type: `${NODE_PREVIEWS}_ERROR`,
-                    error: error
-                });
-            });
         } else {
             dispatch({
                 type: `${NODE_PREVIEWS}_COMPARE_NODES`,
@@ -145,7 +153,7 @@ export function cancelNodeSelect() {
     };
 }
 
-export function setNodeError({nodeId, error}) {
+export function setNodeError({ nodeId, error }) {
     return {
         type: NODE_SET_ERROR,
         nodeId,
@@ -153,7 +161,7 @@ export function setNodeError({nodeId, error}) {
     };
 }
 
-export function updateNode({payload, hard = false}) {
+export function updateNode({ payload, hard = false }) {
     // TODO handle multiple updates close to each other better
     //      currently histograms do not reflect reality if you
     //      update a second time before the histogram finished fetching.
@@ -165,11 +173,14 @@ export function updateNode({payload, hard = false}) {
         let promise;
         let updatedNode = payload;
         let updatedAnalysis = astFromNodes(labState, [updatedNode]);
-        promise = authedRequest({
-            method: 'put',
-            url: `${state.api.apiUrl}/api/tool-runs/${labState.analysis.id}`,
-            data: updatedAnalysis
-        }, getState()).then(() => {
+        promise = authedRequest(
+            {
+                method: 'put',
+                url: `${state.api.apiUrl}/api/tool-runs/${labState.analysis.id}`,
+                data: updatedAnalysis
+            },
+            getState()
+        ).then(() => {
             return updatedAnalysis;
         });
         dispatch({
@@ -191,6 +202,12 @@ export function initNodes(payload) {
 }
 
 export default {
-    startNodePreview, startNodeCompare, selectNode, cancelNodeSelect, compareNodes,
-    setNodeError, updateNode, initNodes
+    startNodePreview,
+    startNodeCompare,
+    selectNode,
+    cancelNodeSelect,
+    compareNodes,
+    setNodeError,
+    updateNode,
+    initNodes
 };

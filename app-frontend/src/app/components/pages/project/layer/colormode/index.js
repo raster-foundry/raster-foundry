@@ -61,18 +61,20 @@ class LayerColormodeController {
     }
 
     initColorModes() {
-        this.projectService.getProjectLayerScenes(this.project.id, this.layer.id, {
-            page: 0,
-            pageSize: 1
-        })
+        this.projectService
+            .getProjectLayerScenes(this.project.id, this.layer.id, {
+                page: 0,
+                pageSize: 1
+            })
             .then(paginatedResponse => {
-                this.pagination = this.paginationService.buildPagination(
-                    paginatedResponse
-                );
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
                 const firstScene = _.first(paginatedResponse.results);
                 if (firstScene) {
-                    return this.colorCorrectService
-                        .getForLayer(firstScene.id, this.layer.id, this.project.id);
+                    return this.colorCorrectService.getForLayer(
+                        firstScene.id,
+                        this.layer.id,
+                        this.project.id
+                    );
                 }
                 return this.$q.resolve();
             })
@@ -87,8 +89,8 @@ class LayerColormodeController {
                     blueBand: correction.blueBand,
                     mode: correction.mode ? correction.mode : 'multi'
                 };
-                this.unifiedCompositesRequest = this.fetchUnifiedComposites(true)
-                    .then(composites => {
+                this.unifiedCompositesRequest = this.fetchUnifiedComposites(true).then(
+                    composites => {
                         this.unifiedComposites = {
                             ...this.defaultColorModes,
                             ...composites
@@ -96,7 +98,8 @@ class LayerColormodeController {
                         this.initLayerBuffer();
                         this.isLoading = false;
                         this.activeColorModeKey = this.initActiveColorMode();
-                    });
+                    }
+                );
             });
     }
 
@@ -161,14 +164,11 @@ class LayerColormodeController {
     }
 
     initSingleBandDefaults() {
-        const scheme =
-            this.activeColorScheme || this.colorSchemeService.defaultColorSchemes[0];
+        const scheme = this.activeColorScheme || this.colorSchemeService.defaultColorSchemes[0];
         this.defaultSingleBandOptions = {
             band: 0,
             dataType: scheme.type,
-            colorScheme: this.colorSchemeService.colorStopsToProportionalArray(
-                scheme.colors
-            ),
+            colorScheme: this.colorSchemeService.colorStopsToProportionalArray(scheme.colors),
             colorBins: 0,
             legendOrientation: 'left',
             extraNoData: []
@@ -179,7 +179,7 @@ class LayerColormodeController {
         if (!this.datasourceRequest || force) {
             this.datasourceRequest = this.projectService
                 .getProjectLayerDatasources(this.project.id, this.layer.id)
-                .then((datasources) => {
+                .then(datasources => {
                     this.bands = this.datasourceService.getUnifiedBands(datasources);
                     return datasources;
                 });
@@ -195,7 +195,6 @@ class LayerColormodeController {
         }
         return this.unifiedCompositeRequest;
     }
-
 
     hasNoBands(datasource) {
         return !datasource.bands.length;
@@ -243,9 +242,7 @@ class LayerColormodeController {
     }
 
     getFullyQualifiedColorScheme() {
-        return this.colorSchemeService.colorsToDiscreteScheme(
-            this.activeColorScheme.colors
-        );
+        return this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
     }
 
     setActiveColorScheme(scheme, masked, save = false) {
@@ -257,23 +254,23 @@ class LayerColormodeController {
             this.layerBuffer.singleBandOptions.dataType = scheme.type;
             this.layerBuffer.singleBandOptions.extraNoData = _.filter(masked, isFinite);
             if (scheme.type !== 'CATEGORICAL') {
-                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService
-                    .colorStopsToProportionalArray(
-                        this.activeColorScheme.colors
-                    );
+                /* eslint-disable-next-line max-len */
+                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService.colorStopsToProportionalArray(
+                    this.activeColorScheme.colors
+                );
             } else if (scheme.breaks) {
-                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService
-                    .schemeFromBreaksAndColors(
-                        this.activeColorScheme.breaks,
-                        this.activeColorScheme.colors
-                    );
+                /* eslint-disable-next-line max-len */
+                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService.schemeFromBreaksAndColors(
+                    this.activeColorScheme.breaks,
+                    this.activeColorScheme.colors
+                );
             } else {
-                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService
-                    .colorsToSequentialScheme(
-                        this.colorSchemeService.colorStopsToProportionalArray(
-                            this.activeColorScheme.colors
-                        )
-                    );
+                /* eslint-disable-next-line max-len */
+                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService.colorsToSequentialScheme(
+                    this.colorSchemeService.colorStopsToProportionalArray(
+                        this.activeColorScheme.colors
+                    )
+                );
             }
             if (save) {
                 this.updateLayerFromBuffer();
@@ -283,8 +280,8 @@ class LayerColormodeController {
 
     shouldShowColorScheme() {
         return (
-            this.layerBuffer.singleBandOptions &&
-                this.layerBuffer.singleBandOptions.dataType === 'SEQUENTIAL' ||
+            (this.layerBuffer.singleBandOptions &&
+                this.layerBuffer.singleBandOptions.dataType === 'SEQUENTIAL') ||
             this.layerBuffer.singleBandOptions.dataType === 'DIVERGING'
         );
     }
@@ -298,14 +295,16 @@ class LayerColormodeController {
     }
 
     updateLayerFromBuffer() {
-        this.projectService.updateLayer({
-            ...this.layerBuffer,
-            projectId: this.project.id,
-            layerId: this.layer.id
-        }).then(() => {
-            this.layer = this.layerBuffer;
-            this.setMapLayers();
-        });
+        this.projectService
+            .updateLayer({
+                ...this.layerBuffer,
+                projectId: this.project.id,
+                layerId: this.layer.id
+            })
+            .then(() => {
+                this.layer = this.layerBuffer;
+                this.setMapLayers();
+            });
     }
 
     onSchemeColorsChange({ schemeColors, masked }) {
@@ -381,13 +380,10 @@ class LayerColormodeController {
                     this.savingCorrection = false;
                 });
         } else if (this.unifiedCompositesRequest) {
-            this.unifiedCompositesRequest.then(
-                this.saveCorrection().bind(this),
-                error => {
-                    this.$log.error(error);
-                    this.savingCorrection = false;
-                }
-            );
+            this.unifiedCompositesRequest.then(this.saveCorrection().bind(this), error => {
+                this.$log.error(error);
+                this.savingCorrection = false;
+            });
         }
     }
 
@@ -410,9 +406,9 @@ class LayerColormodeController {
 
     correctionsDisabled() {
         return (
-            this.layerBuffer && this.layerBuffer.isSingleBand ||
+            (this.layerBuffer && this.layerBuffer.isSingleBand) ||
             !this.layerBuffer ||
-            this.pagination && this.pagination.count > this.projectService.scenePageSize
+            (this.pagination && this.pagination.count > this.projectService.scenePageSize)
         );
     }
 

@@ -1,4 +1,2 @@
 import projectSceneItem from './projectSceneItem';
-export default [
-    projectSceneItem
-];
+export default [projectSceneItem];

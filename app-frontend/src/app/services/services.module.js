@@ -33,7 +33,6 @@ require('./vendor/planetLabs.service.js').default(shared);
 require('./vendor/aws-sdk-s3.module.js');
 
 // projects
-require('./projects/colorCorrect.service').default(shared);
 require('./projects/colorScheme.service').default(shared);
 require('./projects/project.service').default(shared);
 require('./projects/edit.service').default(shared);
@@ -51,7 +50,6 @@ require('./scenes/upload.service').default(shared);
 require('./scenes/datasource.service').default(shared);
 require('./scenes/rasterFoundryRepository.service').default(shared);
 require('./scenes/planetRepository.service').default(shared);
-require('./scenes/cmrRepository.service').default(shared);
 require('./scenes/datasourceLicense.service').default(shared);
 
 // map
@@ -73,6 +71,5 @@ require('./common/url.filter').default(shared);
 require('./common/orgStatus.filter').default(shared);
 require('./common/pagination.service').default(shared);
 require('./common/graph.service').default(shared);
-
 
 export default shared;

@@ -1,7 +1,6 @@
 class ErrorController {
-    constructor( // eslint-disable-line max-params
-        $window, $state, APP_CONFIG, $interval, config
-    ) {
+    constructor($window, $state, APP_CONFIG, $interval, config) {
+        // eslint-disable-line max-params
         'ngInject';
 
         this.config = config;

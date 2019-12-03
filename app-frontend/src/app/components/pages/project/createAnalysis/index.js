@@ -6,8 +6,16 @@ import tpl from './index.html';
 
 class ProjectCreateAnalysisPageController {
     constructor(
-        $rootScope, $q, $state, $timeout, uuid4,
-        projectService, paginationService, analysisService, modalService, userService
+        $rootScope,
+        $q,
+        $state,
+        $timeout,
+        uuid4,
+        projectService,
+        paginationService,
+        analysisService,
+        modalService,
+        userService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -31,12 +39,14 @@ class ProjectCreateAnalysisPageController {
         } else {
             this.currentQuery = this.projectService
                 .getProjectLayer(this.project.id, this.project.defaultLayerId)
-                .then((defaultLayer) => {
+                .then(defaultLayer => {
                     delete this.currentQuery;
                     this.layerList = [defaultLayer];
                     this.layerActions = new Map(
-                        this.layerList.map(this.createLayerActions.bind(this)));
-                }).catch(e => {
+                        this.layerList.map(this.createLayerActions.bind(this))
+                    );
+                })
+                .catch(e => {
                     delete this.currentQuery;
                     this.fetchError = e;
                 });
@@ -82,32 +92,36 @@ class ProjectCreateAnalysisPageController {
             params.ownershipType = this.currentOwnershipFilter;
         }
 
-        let currentQuery = this.analysisService.fetchTemplates(params).then(paginatedResponse => {
-            this.templateList = paginatedResponse.results;
-            this.itemActions = new Map(this.templateList.map(this.addItemActions.bind(this)));
-            this.fetchCreators(this.templateList).then((creators) => {
-                if (creators.has(_.get(_.first(this.templateList), 'id'))) {
-                    this.templateCreators = creators;
+        let currentQuery = this.analysisService
+            .fetchTemplates(params)
+            .then(paginatedResponse => {
+                this.templateList = paginatedResponse.results;
+                this.itemActions = new Map(this.templateList.map(this.addItemActions.bind(this)));
+                this.fetchCreators(this.templateList).then(creators => {
+                    if (creators.has(_.get(_.first(this.templateList), 'id'))) {
+                        this.templateCreators = creators;
+                    }
+                });
+                // TODO fetch template owner information using
+                // userService like in templateItem.module.js
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                this.paginationService.updatePageparam(page, this.search, null, {
+                    ownership: this.currentOwnershipFilter
+                });
+                if (this.currentTemplateQuery === currentQuery) {
+                    delete this.templateFetchError;
+                }
+            })
+            .catch(e => {
+                if (this.currentQuery === currentQuery) {
+                    this.templateFetchError = e;
+                }
+            })
+            .finally(() => {
+                if (this.currentTemplateQuery === currentQuery) {
+                    delete this.currentTemplateQuery;
                 }
             });
-            // TODO fetch template owner information using
-            // userService like in templateItem.module.js
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageparam(page, this.search, null, {
-                ownership: this.currentOwnershipFilter
-            });
-            if (this.currentTemplateQuery === currentQuery) {
-                delete this.templateFetchError;
-            }
-        }).catch(e => {
-            if (this.currentQuery === currentQuery) {
-                this.templateFetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentTemplateQuery === currentQuery) {
-                delete this.currentTemplateQuery;
-            }
-        });
 
         this.currentTemplateQuery = currentQuery;
     }
@@ -117,37 +131,42 @@ class ProjectCreateAnalysisPageController {
             if (template.owner === 'default') {
                 return this.$q.resolve([template.id, this.BUILDCONFIG.APP_NAME]);
             }
-            return this.userService.getUserById(template.owner).then(user => {
-                const owner = user.personalInfo.firstName.trim() &&
-                    user.personalInfo.lastName.trim() ?
-                    `${user.personalInfo.firstName.trim()} ${user.personalInfo.lastName.trim()}` :
-                    user.name || 'Anonymous';
-                return [template.id, owner];
-            }).catch(e => {
-                return [template.id, this.BUILDCONFIG.APP_NAME];
-            });
+            return this.userService
+                .getUserById(template.owner)
+                .then(user => {
+                    /* eslint-disable max-len */
+                    const owner =
+                        user.personalInfo.firstName.trim() && user.personalInfo.lastName.trim()
+                            ? `${user.personalInfo.firstName.trim()} ${user.personalInfo.lastName.trim()}`
+                            : user.name || 'Anonymous';
+                    return [template.id, owner];
+                    /* eslint-enable max-len */
+                })
+                .catch(e => {
+                    return [template.id, this.BUILDCONFIG.APP_NAME];
+                });
         });
-        return this.$q.all(ownerPromises).then(
-            (templatesAndOwners) => {
-                return new Map(
-                    templatesAndOwners
-                        .filter(([id, owner]) => owner)
-                        .map(([id, owner]) => {
-                            return [id, `Created by: ${owner}`];
-                        })
-                );
-            }
-        );
+        return this.$q.all(ownerPromises).then(templatesAndOwners => {
+            return new Map(
+                templatesAndOwners
+                    .filter(([id, owner]) => owner)
+                    .map(([id, owner]) => {
+                        return [id, `Created by: ${owner}`];
+                    })
+            );
+        });
     }
 
     addItemActions(item) {
-        let actions = [{
-            icon: 'icon-share',
-            name: 'View algorithm',
-            tooltip: 'View algorithm',
-            callback: (event) => this.confirmViewAnalysis(event, item),
-            menu: false
-        }];
+        let actions = [
+            {
+                icon: 'icon-share',
+                name: 'View algorithm',
+                tooltip: 'View algorithm',
+                callback: event => this.confirmViewAnalysis(event, item),
+                menu: false
+            }
+        ];
         if (item.description) {
             actions.push({
                 icon: 'icon-help',
@@ -190,10 +209,11 @@ class ProjectCreateAnalysisPageController {
                 cancelText: () => 'Go back'
             }
         });
-        modal.result.then(() => {
-            this.$state.go('lab.startAnalysis', {templateid: template.id});
-        }).catch(() => {
-        });
+        modal.result
+            .then(() => {
+                this.$state.go('lab.startAnalysis', { templateid: template.id });
+            })
+            .catch(() => {});
     }
 
     onAnalysisClick(event, template) {
@@ -212,36 +232,41 @@ class ProjectCreateAnalysisPageController {
                     title: () => 'Create analyses',
                     content: () =>
                         '<div class="text-center">' +
-                        'This will create new analysis for each layer you\'ve selected on' +
+                        "This will create new analysis for each layer you've selected on" +
                         `your project using the "${template.title}" template` +
                         '</div>',
                     confirmText: () => 'Create analyses',
                     cancelText: () => 'Go back'
                 }
             });
-            modal.result.then(() => {
-                const creationPromises = this.layerList.map((layer) => {
-                    const layerTemplate = this.createLayerAnalysis(layer, template);
-                    return this.analysisService.createAnalysis(layerTemplate);
+            modal.result
+                .then(() => {
+                    const creationPromises = this.layerList.map(layer => {
+                        const layerTemplate = this.createLayerAnalysis(layer, template);
+                        return this.analysisService.createAnalysis(layerTemplate);
+                    });
+                    this.creationPromise = this.$q.all(creationPromises);
+                    return this.creationPromise;
+                })
+                .then(() => {
+                    this.$state.go('project.analyses');
+                })
+                .catch(error => {
+                    if (
+                        !error ||
+                        (typeof error === 'string' &&
+                            (error.includes('backdrop') || error.includes('escape')))
+                    ) {
+                        return;
+                    }
+                    this.createError = true;
+                    this.$timeout(() => {
+                        delete this.createError;
+                    }, 10000);
+                })
+                .finally(() => {
+                    delete this.creationPromise;
                 });
-                this.creationPromise = this.$q.all(creationPromises);
-                return this.creationPromise;
-            }).then(() => {
-                this.$state.go('project.analyses');
-            }).catch((error) => {
-                if (!error || typeof error === 'string' &&
-                    (error.includes('backdrop') ||
-                     error.includes('escape'))
-                ) {
-                    return;
-                }
-                this.createError = true;
-                this.$timeout(() => {
-                    delete this.createError;
-                }, 10000);
-            }).finally(() => {
-                delete this.creationPromise;
-            });
         }
     }
 
@@ -256,16 +281,18 @@ class ProjectCreateAnalysisPageController {
             projectId: this.project.id,
             projectLayerId: layer.id,
             templateId: template.id,
-            executionParameters: layer.geometry ? {
-                id: this.uuid4.generate(),
-                args: [_.cloneDeep(template.definition)],
-                mask: this.reprojectGeometry(layer.geometry),
-                apply: 'mask',
-                metadata: {
-                    label: 'Layer Mask',
-                    collapsable: false
-                }
-            } : _.cloneDeep(template.definition)
+            executionParameters: layer.geometry
+                ? {
+                      id: this.uuid4.generate(),
+                      args: [_.cloneDeep(template.definition)],
+                      mask: this.reprojectGeometry(layer.geometry),
+                      apply: 'mask',
+                      metadata: {
+                          label: 'Layer Mask',
+                          collapsable: false
+                      }
+                  }
+                : _.cloneDeep(template.definition)
         };
         let root = analysis.executionParameters;
         let nodes = root.args ? [...root.args] : [];
@@ -289,17 +316,16 @@ class ProjectCreateAnalysisPageController {
     reprojectGeometry(geom) {
         // assume single multipolygon feature
         if (geom.type.toLowerCase() !== 'multipolygon') {
-            throw new Error('Tried to reproject a shape that isn\'t a multipolygon');
+            throw new Error("Tried to reproject a shape that isn't a multipolygon");
         }
 
         const polygons = geom.coordinates[0];
         const reprojected = Object.assign({}, geom, {
             coordinates: [
-                polygons.map(
-                    polygon =>
-                        polygon
-                            .map(([lng, lat]) => L.CRS.EPSG3857.project({lat, lng}))
-                            .map(({x, y}) => [x, y])
+                polygons.map(polygon =>
+                    polygon
+                        .map(([lng, lat]) => L.CRS.EPSG3857.project({ lat, lng }))
+                        .map(({ x, y }) => [x, y])
                 )
             ]
         });
@@ -307,7 +333,7 @@ class ProjectCreateAnalysisPageController {
     }
 
     removeLayers() {
-        this.layerList = _.filter(this.layerList, (l) => !this.selected.has(l.id));
+        this.layerList = _.filter(this.layerList, l => !this.selected.has(l.id));
         this.selected = this.selected.clear();
     }
 
@@ -320,9 +346,7 @@ class ProjectCreateAnalysisPageController {
     }
 
     allVisibleSelected() {
-        return this.layerList &&
-            this.selected.size &&
-            this.selected.size === this.layerList.length;
+        return this.layerList && this.selected.size && this.selected.size === this.layerList.length;
     }
 
     aoiRequiredModal(layer) {
@@ -331,7 +355,7 @@ class ProjectCreateAnalysisPageController {
                 component: 'rfFeedbackModal',
                 resolve: {
                     title: () => 'No AOI defined',
-                    content: () =>`
+                    content: () => `
                         <h2>
                             Creating an analyses requires an AOI
                         </h2>
@@ -350,7 +374,7 @@ class ProjectCreateAnalysisPageController {
     }
 
     goToAoiDef(id) {
-        this.$state.go('project.layer.aoi', {layerId: id, projectId: this.project.id});
+        this.$state.go('project.layer.aoi', { layerId: id, projectId: this.project.id });
     }
 }
 
@@ -367,5 +391,4 @@ const component = {
 export default angular
     .module('components.pages.projects.createAnalysis', [])
     .controller(ProjectCreateAnalysisPageController.name, ProjectCreateAnalysisPageController)
-    .component('rfProjectCreateAnalysisPage', component)
-    .name;
+    .component('rfProjectCreateAnalysisPage', component).name;

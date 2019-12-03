@@ -20,8 +20,15 @@ const SceneItemComponent = {
 
 class SceneItemController {
     constructor(
-        $rootScope, $scope, $attrs, $element, $timeout, $document,
-        modalService, sceneService, authService
+        $rootScope,
+        $scope,
+        $attrs,
+        $element,
+        $timeout,
+        $document,
+        modalService,
+        sceneService,
+        authService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -46,7 +53,7 @@ class SceneItemController {
                 this.$scope.$evalAsync();
             });
         });
-        this.$scope.$watch('$ctrl.scene.sceneOrder', (val) => {
+        this.$scope.$watch('$ctrl.scene.sceneOrder', val => {
             if (this.orderingInProgress) {
                 this.manualOrderValue = val + 1;
             }
@@ -70,21 +77,19 @@ class SceneItemController {
 
     updateThumbnails() {
         if (this.scene.sceneType === 'COG') {
-            this.sceneService.cogThumbnail(
-                this.scene.id,
-                this.authService.token(),
-                128,
-                128
-            ).then(res => {
-                // Because 504s aren't rejections, apparently
-                if (_.isString(res)) {
-                    this.thumbnail = `data:image/png;base64,${res}`;
-                }
-            }).catch(() => {
-                this.imageError = true;
-            });
+            this.sceneService
+                .cogThumbnail(this.scene.id, this.authService.token(), 128, 128)
+                .then(res => {
+                    // Because 504s aren't rejections, apparently
+                    if (_.isString(res)) {
+                        this.thumbnail = `data:image/png;base64,${res}`;
+                    }
+                })
+                .catch(() => {
+                    this.imageError = true;
+                });
         } else {
-            this.repository.service.getThumbnail(this.scene).then((thumbnail) => {
+            this.repository.service.getThumbnail(this.scene).then(thumbnail => {
                 this.thumbnail = thumbnail;
             });
         }
@@ -93,7 +98,7 @@ class SceneItemController {
     toggleSelected(event) {
         this.selectedStatus = !this.selectedStatus;
         if (this.onSelect) {
-            this.onSelect({scene: this.scene, selected: this.selectedStatus});
+            this.onSelect({ scene: this.scene, selected: this.selectedStatus });
             if (event) {
                 event.stopPropagation();
             }
@@ -127,13 +132,15 @@ class SceneItemController {
 
     openSceneDetailModal(e) {
         e.stopPropagation();
-        this.modalService.open({
-            component: 'rfSceneDetailModal',
-            resolve: {
-                scene: () => this.scene,
-                repository: () => this.repository
-            }
-        }).result.catch(() => {});
+        this.modalService
+            .open({
+                component: 'rfSceneDetailModal',
+                resolve: {
+                    scene: () => this.scene,
+                    repository: () => this.repository
+                }
+            })
+            .result.catch(() => {});
     }
 
     onManualOrderToggle(event) {
@@ -165,7 +172,7 @@ class SceneItemController {
     }
 
     onManualOrderConfirm() {
-        this.onMove({scene: this.scene, position: this.manualOrderValue - 1});
+        this.onMove({ scene: this.scene, position: this.manualOrderValue - 1 });
         this.onManualOrderToggle();
     }
 

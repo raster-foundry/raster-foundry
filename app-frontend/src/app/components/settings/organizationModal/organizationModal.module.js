@@ -31,9 +31,11 @@ class OrganizationModalController {
     }
 
     onAdd() {
-        this.close({$value: {
-            name: this.form.name.$modelValue
-        }});
+        this.close({
+            $value: {
+                name: this.form.name.$modelValue
+            }
+        });
     }
 }
 

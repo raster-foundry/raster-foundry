@@ -60,7 +60,7 @@ class TeamModalController {
             });
         }
 
-        this.close({$value: result});
+        this.close({ $value: result });
     }
 }
 

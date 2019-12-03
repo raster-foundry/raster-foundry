@@ -10,7 +10,7 @@ class NotificationController {
     }
 
     $onInit() {
-        this.authService.getCurrentUser().then((user) => {
+        this.authService.getCurrentUser().then(user => {
             this.user = user;
             this.userBuffer = _.cloneDeep(this.user);
         });
@@ -28,13 +28,17 @@ class NotificationController {
             this.userBuffer.emailNotifications = false;
             this.userBuffer.personalInfo.emailNotifications = false;
         }
-        this.userService.updateOwnUser(this.userBuffer).then(res => {
-            this.user = res;
-        }, () => {
-            this.$window.alert(
-                `Email notification preference cannot be changed at this time.
-                Please try again later.`);
-        });
+        this.userService.updateOwnUser(this.userBuffer).then(
+            res => {
+                this.user = res;
+            },
+            () => {
+                this.$window.alert(
+                    `Email notification preference cannot be changed at this time.
+                Please try again later.`
+                );
+            }
+        );
     }
 }
 

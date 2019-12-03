@@ -14,9 +14,7 @@ const NodeSelectorComponent = {
 };
 
 class NodeSelectorController {
-    constructor(
-        $rootScope, $log, $element, $scope, $timeout, $document, $ngRedux
-    ) {
+    constructor($rootScope, $log, $element, $scope, $timeout, $document, $ngRedux) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -24,11 +22,14 @@ class NodeSelectorController {
     mapStateToThis(state) {
         const nodes = state.lab.nodes;
 
-        let nodeArray = nodes ?
-            nodes.toArray().filter((node) => {
-                return node.type !== 'const';
-            }).map(({id, metadata}) => ({id, label: metadata.label})) :
-            [];
+        let nodeArray = nodes
+            ? nodes
+                  .toArray()
+                  .filter(node => {
+                      return node.type !== 'const';
+                  })
+                  .map(({ id, metadata }) => ({ id, label: metadata.label }))
+            : [];
         this.updateSelected(nodes, this.selected.id ? this.selected.id : this.selected);
 
         return {
@@ -38,10 +39,7 @@ class NodeSelectorController {
     }
 
     $onInit() {
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            NodeActions
-        )(this);
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis.bind(this), NodeActions)(this);
         this.$scope.$on('$destroy', unsubscribe);
     }
 
@@ -132,7 +130,7 @@ class NodeSelectorController {
 
     onNodeSelect(node) {
         this.selected = node.id;
-        this.onSelect({node: node.id});
+        this.onSelect({ node: node.id });
         this.showSearch = false;
         this.selectFilter = '';
         this.$timeout(() => this.setPosition(this.position), 100);

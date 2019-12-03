@@ -1,19 +1,29 @@
 /* globals BUILDCONFIG Auth0Lock heap $ window Uint8Array*/
 import ApiActions from '_redux/actions/api-actions';
 
-let assetLogo = BUILDCONFIG.LOGOFILE ?
-    require(`../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
-    require('../../../assets/images/raster-foundry-logo.svg');
+let assetLogo = BUILDCONFIG.LOGOFILE
+    ? require(`../../../assets/images/${BUILDCONFIG.LOGOFILE}`)
+    : require('../../../assets/images/raster-foundry-logo.svg');
 
 assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
-export default (app) => {
+export default app => {
     class AuthService {
         constructor( // eslint-disable-line max-params
-            jwtHelper, $q, $timeout, featureFlagOverrides, featureFlags,
-            perUserFeatureFlags, $state, APP_CONFIG, localStorage,
-            rollbarWrapperService, intercomService, $resource, $ngRedux, $location
-
+            jwtHelper,
+            $q,
+            $timeout,
+            featureFlagOverrides,
+            featureFlags,
+            perUserFeatureFlags,
+            $state,
+            APP_CONFIG,
+            localStorage,
+            rollbarWrapperService,
+            intercomService,
+            $resource,
+            $ngRedux,
+            $location
         ) {
             'ngInject';
             this.localStorage = localStorage;
@@ -31,7 +41,7 @@ export default (app) => {
             this.APP_CONFIG = APP_CONFIG;
             this.redirectConnection = BUILDCONFIG.REDIRECT_CONNECTION;
             this._redux = {};
-            $ngRedux.connect((state) => {
+            $ngRedux.connect(state => {
                 return {
                     apiToken: state.api.apiToken,
                     apiUrl: state.api.apiUrl,
@@ -46,24 +56,28 @@ export default (app) => {
 
             this.pendingReauth = null;
 
-            this.User = $resource(`${BUILDCONFIG.API_HOST}/api/users/:id`, {
-                id: '@id'
-            }, {
-                query: {
-                    method: 'GET',
-                    cache: false
+            this.User = $resource(
+                `${BUILDCONFIG.API_HOST}/api/users/:id`,
+                {
+                    id: '@id'
                 },
-                get: {
-                    method: 'GET',
-                    cache: false
-                },
-                roles: {
-                    method: 'GET',
-                    cache: false,
-                    url: `${BUILDCONFIG.API_HOST}/api/users/me/roles`,
-                    isArray: true
+                {
+                    query: {
+                        method: 'GET',
+                        cache: false
+                    },
+                    get: {
+                        method: 'GET',
+                        cache: false
+                    },
+                    roles: {
+                        method: 'GET',
+                        cache: false,
+                        url: `${BUILDCONFIG.API_HOST}/api/users/me/roles`,
+                        isArray: true
+                    }
                 }
-            });
+            );
         }
 
         initAuth0(APP_CONFIG) {
@@ -85,19 +99,24 @@ export default (app) => {
                     logo: assetLogo,
                     primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
                 },
-                additionalSignUpFields: [{
-                    name: 'companyName',
-                    placeholder: 'Company name'
-                }, {
-                    name: 'companySize',
-                    placeholder: 'How large is your company?'
-                }, {
-                    name: 'reference',
-                    placeholder: 'How\'d you find out about us?'
-                }, {
-                    name: 'phoneNumber',
-                    placeholder: 'Phone Number'
-                }],
+                additionalSignUpFields: [
+                    {
+                        name: 'companyName',
+                        placeholder: 'Company name'
+                    },
+                    {
+                        name: 'companySize',
+                        placeholder: 'How large is your company?'
+                    },
+                    {
+                        name: 'reference',
+                        placeholder: "How'd you find out about us?"
+                    },
+                    {
+                        name: 'phoneNumber',
+                        placeholder: 'Phone Number'
+                    }
+                ],
                 allowedConnections: ['Username-Password-Authentication', 'google-oauth2']
             };
 
@@ -124,11 +143,15 @@ export default (app) => {
             };
 
             this.resetLock = new Auth0Lock(
-                APP_CONFIG.clientId, APP_CONFIG.auth0Domain, passResetOptions
+                APP_CONFIG.clientId,
+                APP_CONFIG.auth0Domain,
+                passResetOptions
             );
 
             this.loginLock = new Auth0Lock(
-                APP_CONFIG.clientId, APP_CONFIG.auth0Domain, loginOptions
+                APP_CONFIG.clientId,
+                APP_CONFIG.auth0Domain,
+                loginOptions
             );
 
             let tokenCreateOptions = {
@@ -160,7 +183,9 @@ export default (app) => {
             };
 
             this.tokenCreateLock = new Auth0Lock(
-                APP_CONFIG.clientId, APP_CONFIG.auth0Domain, tokenCreateOptions
+                APP_CONFIG.clientId,
+                APP_CONFIG.auth0Domain,
+                tokenCreateOptions
             );
 
             this.tokenCreateLock.on('authenticated', this.onTokenCreated.bind(this));
@@ -184,8 +209,11 @@ export default (app) => {
 
             const nonce = this.randomString(35);
             this.localStorage.set('nonce', nonce);
-            // eslint-disable-next-line
-            const tentantUrl = `https://${this.APP_CONFIG.auth0Domain}/authorize/?client_id=${clientId}&response_type=token id_token&scope=openid profile email&redirect_uri=${this.getBaseURL()}/login&connection=${connection}&nonce=${nonce}`;
+            /* eslint-disable max-len */
+            const tentantUrl = `https://${
+                this.APP_CONFIG.auth0Domain
+            }/authorize/?client_id=${clientId}&response_type=token id_token&scope=openid profile email&redirect_uri=${this.getBaseURL()}/login&connection=${connection}&nonce=${nonce}`;
+            /* eslint-enable max-len */
             window.location = tentantUrl;
         }
 
@@ -195,8 +223,13 @@ export default (app) => {
 
             const nonce = this.randomString(35);
             this.localStorage.set('nonce', nonce);
-            // eslint-disable-next-line
-            const tentantUrl = `https://${this.APP_CONFIG.auth0Domain}/authorize/?client_id=${clientId}&response_type=code&scope=openid offline_access&redirect_uri=${this.getBaseURL()}/user/me/settings/api-tokens&connection=${connection}&nonce=${nonce}&audience=https://${this.APP_CONFIG.auth0Domain}/api/v2/&device=${name}`;
+            /* eslint-disable max-len */
+            const tentantUrl = `https://${
+                this.APP_CONFIG.auth0Domain
+            }/authorize/?client_id=${clientId}&response_type=code&scope=openid offline_access&redirect_uri=${this.getBaseURL()}/user/me/settings/api-tokens&connection=${connection}&nonce=${nonce}&audience=https://${
+                this.APP_CONFIG.auth0Domain
+            }/api/v2/&device=${name}`;
+            /* eslint-enable max-len */
             window.location = tentantUrl;
         }
 
@@ -209,7 +242,7 @@ export default (app) => {
                         this.loginLock.show();
                     }
                 } else if (!this.jwtHelper.isTokenExpired(accessToken)) {
-                    this.onLogin({accessToken, idToken});
+                    this.onLogin({ accessToken, idToken });
                     this.localStorage.remove('authUrlRestore');
                 } else if (this.jwtHelper.isTokenExpired(accessToken)) {
                     this.localStorage.remove('accessToken');
@@ -243,8 +276,8 @@ export default (app) => {
 
         getCurrentUser() {
             let id = this.getProfile().sub;
-            let promise = this.User.get({id: id}).$promise;
-            promise.then((user) => {
+            let promise = this.User.get({ id: id }).$promise;
+            promise.then(user => {
                 this.user = user;
             });
             return promise;
@@ -270,23 +303,25 @@ export default (app) => {
                     tileUrl: this.APP_CONFIG.tileServerLocation,
                     user
                 });
-                if (typeof heap !== 'undefined' &&
+                if (
+                    typeof heap !== 'undefined' &&
                     typeof heap.identify === 'function' &&
                     typeof heap.addUserProperties === 'function' &&
                     typeof heap.addEventProperties === 'function'
-                   ) {
+                ) {
                     heap.identify(this.profile.email);
                     heap.addUserProperties({
-                        'organization': user.organizationId,
-                        'impersonated': this.profile.impersonated || false,
-                        'impersonator': this.profile.impersonated ?
-                            this.profile.impersonator.email : null
+                        organization: user.organizationId,
+                        impersonated: this.profile.impersonated || false,
+                        impersonator: this.profile.impersonated
+                            ? this.profile.impersonator.email
+                            : null
                     });
-                    heap.addEventProperties({'Logged In': 'true'});
+                    heap.addEventProperties({ 'Logged In': 'true' });
                 }
             });
 
-            this.fetchUserRoles().then((response) => {
+            this.fetchUserRoles().then(response => {
                 this.userRoles = response;
             });
 
@@ -294,7 +329,7 @@ export default (app) => {
 
             this.featureFlagOverrides.setUser(this.profile);
             // Flags set in the `/config` endpoint; default.
-            let configFlags = this.featureFlags.get().map((flag) => flag.key);
+            let configFlags = this.featureFlags.get().map(flag => flag.key);
             // Now that we've authenticated, trigger an override of the default
             // feature flags from `/conf` with per-user flags from `/feature-flags
             this.featureFlags.set(this.perUserFeatureFlags.load()).then(() => {
@@ -304,10 +339,11 @@ export default (app) => {
                 // the only per-user flags that the endpoint supports are based on the
                 // user's organization, so we need to keep this around to provide more
                 // granular control over per-user feature flags.
-                let userFlags = this.profile.user_metadata &&
-                    this.profile.user_metadata.featureFlags ?
-                    this.profile.user_metadata.featureFlags : [];
-                let flagOverrides = userFlags.filter((flag) => {
+                let userFlags =
+                    this.profile.user_metadata && this.profile.user_metadata.featureFlags
+                        ? this.profile.user_metadata.featureFlags
+                        : [];
+                let flagOverrides = userFlags.filter(flag => {
                     return configFlags.includes(flag.key);
                 });
                 this.featureFlags.set(flagOverrides);
@@ -366,13 +402,17 @@ export default (app) => {
             let profileName = (profile, dpr) =>
                 (dpr.name !== profile.email ? dpr.name : null) ||
                 (dpr.nickname !== profile.email ? dpr.nickname : null) ||
-                (dpr.given_name || '' + dpr.family_name || '') || null;
+                dpr.given_name || '' + dpr.family_name || '' ||
+                null;
 
             let p = this.getProfile();
-            return profileName(p, p) ||
-                p.delegatedProfile && profileName(p, p.delegatedProfile) ||
-                p.email || p.delegatedProfile && p.delegatedProfile.email ||
-                p.sub;
+            return (
+                profileName(p, p) ||
+                (p.delegatedProfile && profileName(p, p.delegatedProfile)) ||
+                p.email ||
+                (p.delegatedProfile && p.delegatedProfile.email) ||
+                p.sub
+            );
         }
 
         token(force = false) {
@@ -440,7 +480,7 @@ export default (app) => {
                             });
                         });
 
-                        this.fetchUserRoles().then((response) => {
+                        this.fetchUserRoles().then(response => {
                             this.userRoles = response;
                         });
                     }
@@ -477,7 +517,7 @@ export default (app) => {
             const random = window.crypto.getRandomValues(bytes);
             const result = [];
             const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._~';
-            random.forEach(function (c) {
+            random.forEach(function(c) {
                 result.push(charset[c % charset.length]);
             });
             return result.join('');
@@ -489,13 +529,16 @@ export default (app) => {
 
         isEffectiveAdmin(groupIds) {
             const ids = [].concat(groupIds || []);
-            return this.user &&
-                this.user.isSuperuser ||
+            return (
+                (this.user && this.user.isSuperuser) ||
                 !!this.userRoles.find(r => {
-                    return r.groupRole === 'ADMIN' &&
+                    return (
+                        r.groupRole === 'ADMIN' &&
                         ids.includes(r.groupId) &&
-                        r.membershipStatus === 'APPROVED';
-                });
+                        r.membershipStatus === 'APPROVED'
+                    );
+                })
+            );
         }
     }
 

@@ -6,7 +6,6 @@ const TAB = 9;
 const ENTER = 13;
 
 export default class MapSearchModalController {
-
     constructor($rootScope, $scope, $state, $element, $timeout, geocodeService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -17,7 +16,6 @@ export default class MapSearchModalController {
         this.isError = false;
         this.query = '';
         this.activeResultIndex = -1;
-
     }
 
     $postLink() {
@@ -69,11 +67,11 @@ export default class MapSearchModalController {
         ) {
             const suggestion = this.results.suggestions[this.activeResultIndex];
             if (suggestion.coordinateFlag) {
-                this.close({$value: suggestion});
+                this.close({ $value: suggestion });
             } else {
                 const locationId = suggestion.locationId;
                 this.geocodeService.getLocation(locationId).then(l => {
-                    this.close({$value: l.response.view[0].result[0].location});
+                    this.close({ $value: l.response.view[0].result[0].location });
                 });
             }
         }
@@ -82,11 +80,13 @@ export default class MapSearchModalController {
     search() {
         if (this.isCoordinatePair(this.query)) {
             this.results = {
-                suggestions: [{
-                    label: `Go to coordinates: ${this.query}`,
-                    coordinateFlag: true,
-                    coords: this.extractCoordinatePair(this.query)
-                }]
+                suggestions: [
+                    {
+                        label: `Go to coordinates: ${this.query}`,
+                        coordinateFlag: true,
+                        coords: this.extractCoordinatePair(this.query)
+                    }
+                ]
             };
         } else {
             this.isLoading = true;
@@ -101,11 +101,7 @@ export default class MapSearchModalController {
     }
 
     activateFirstResult() {
-        if (
-            this.results &&
-            this.results.suggestions &&
-            this.results.suggestions.length
-        ) {
+        if (this.results && this.results.suggestions && this.results.suggestions.length) {
             this.activeResultIndex = 0;
         } else {
             this.activeResultIndex = -1;
@@ -121,35 +117,41 @@ export default class MapSearchModalController {
     }
 
     shouldShowResults() {
-        return this.query &&
+        return (
+            this.query &&
             this.results &&
             this.results.suggestions &&
-            this.results.suggestions.length;
+            this.results.suggestions.length
+        );
     }
 
     shouldShowLoadingMessage() {
-        return this.query &&
-            this.isLoading &&
-            !this.results;
+        return this.query && this.isLoading && !this.results;
     }
 
     shouldShowNoResultsMessage() {
-        return this.query &&
+        return (
+            this.query &&
             !this.isLoading &&
             this.results &&
             this.results.suggestions &&
-            !this.results.suggestions.length;
+            !this.results.suggestions.length
+        );
     }
 
     isCoordinatePair(searchString) {
         const cleanedStrings = this.extractCoordinatePair(searchString);
-        return cleanedStrings.length === 2 &&
+        return (
+            cleanedStrings.length === 2 &&
             !isNaN(cleanedStrings[0]) &&
             !isNaN(cleanedStrings[1]) &&
             cleanedStrings[0].length &&
             cleanedStrings[1].length &&
-            +cleanedStrings[0] >= -90 && +cleanedStrings[0] <= 90 &&
-            +cleanedStrings[1] >= -180 && +cleanedStrings[1] <= 180 ;
+            +cleanedStrings[0] >= -90 &&
+            +cleanedStrings[0] <= 90 &&
+            +cleanedStrings[1] >= -180 &&
+            +cleanedStrings[1] <= 180
+        );
     }
 
     extractCoordinatePair(searchString) {

@@ -26,5 +26,4 @@ const component = {
 export default angular
     .module('components.common.listItemWidgets.listItemActions', [])
     .controller(ListItemActionsController.name, ListItemActionsController)
-    .component('rfListItemActions', component)
-    .name;
+    .component('rfListItemActions', component).name;

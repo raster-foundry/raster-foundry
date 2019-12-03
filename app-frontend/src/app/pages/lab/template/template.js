@@ -1,7 +1,8 @@
 // Placeholder for lab template view/edit route controller
 class LabTemplateController {
-    constructor() { }
+    constructor() {}
 }
 
-export default angular.module('pages.lab.template', [])
+export default angular
+    .module('pages.lab.template', [])
     .controller('LabTemplateController', LabTemplateController);

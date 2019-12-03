@@ -1,6 +1,6 @@
 /* globals BUILDCONFIG */
 
-export default (app) => {
+export default app => {
     class DatasourceLicenseService {
         constructor($resource, $q, $cacheFactory, authService) {
             'ngInject';
@@ -10,9 +10,11 @@ export default (app) => {
             this.$cacheFactory = $cacheFactory;
 
             this.DatasourceLicense = $resource(
-                `${BUILDCONFIG.API_HOST}/api/licenses/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/licenses/:id/`,
+                {
                     id: '@properties.id'
-                }, {
+                },
+                {
                     query: {
                         method: 'GET',
                         cache: false
@@ -30,7 +32,7 @@ export default (app) => {
         }
 
         getLicense(id) {
-            return this.DatasourceLicense.get({id}).$promise;
+            return this.DatasourceLicense.get({ id }).$promise;
         }
     }
 

@@ -1,7 +1,6 @@
 export default class ProjectsMaskingController {
-    constructor( // eslint-disable-line max-params
-        $log, $state
-    ) {
+    constructor($log, $state) {
+        // eslint-disable-line max-params
         'ngInject';
         this.$log = $log;
         this.$state = $state;
