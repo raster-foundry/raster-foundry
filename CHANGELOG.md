@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Support semantic segmentation stac exports [](https://github.com/raster-foundry/raster-foundry/pull/)
 
 ### Changed
 
