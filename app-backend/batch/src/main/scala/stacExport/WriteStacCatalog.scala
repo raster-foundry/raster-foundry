@@ -52,7 +52,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       Utils.getLabelCollection(exportDef, catalog, layerCollection)
 
     val annotations = ObjectWithAbsolute(
-      s"$layerCollectionPrefix/${labelCollection.id}/data.json",
+      s"$layerCollectionPrefix/${labelCollection.id}/data.geojson",
       sceneTaskAnnotation.annotations
     )
 
