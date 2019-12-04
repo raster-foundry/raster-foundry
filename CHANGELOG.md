@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Unified file extension for label item assets and label item asset links [#5252](https://github.com/raster-foundry/raster-foundry/pull/5252)
+
 ### Security
 
 ## [1.33.0](https://github.com/raster-foundry/raster-foundry/compare/1.32.1...1.33.0)
