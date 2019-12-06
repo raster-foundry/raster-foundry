@@ -588,7 +588,7 @@ object AnnotationDao extends Dao[Annotation] {
       annotations.machine_generated,
       annotations.confidence,
       annotations.quality,
-      ST_INTERSECTION(annotations.geometry, tasks.geometry) as geometry,
+      ST_INTERSECTION(ST_MAKEVALID(annotations.geometry), tasks.geometry) as geometry,
       annotations.annotation_group,
       annotations.labeled_by,
       annotations.verified_by,
