@@ -20,7 +20,7 @@ object TaskDao extends Dao[Task] {
   type MaybeEmptyUnionedGeomExtent =
     Option[Projected[Geometry]] :: Option[Double] :: Option[Double] :: Option[
       Double
-    ] :: Option[Double] :: Option[Double] :: HNil
+    ] :: Option[Double] :: HNil
 
   val tableName = "tasks"
   val joinTableF =
