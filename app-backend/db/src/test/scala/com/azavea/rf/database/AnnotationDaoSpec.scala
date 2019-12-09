@@ -399,6 +399,87 @@ class AnnotationDaoSpec
       }
     }
   }
+  test("list segmentation annotations from a layer by task status") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            (projectAgGroupCreate): (Project.Create, AnnotationGroup.Create),
+            annoAndTaskFeatureCreate: (Task.TaskFeatureCreate,
+                                       List[Annotation.Create]),
+            labelValidateTeamCreate: (Team.Create, Team.Create),
+            labelValidateTeamUgrCreate: (UserGroupRole.Create,
+                                         UserGroupRole.Create)
+        ) =>
+          {
+            val (taskFeatureCreate, annotationsCreate) =
+              annoAndTaskFeatureCreate
+            val (projectCreate, annotationGroupCreate) = projectAgGroupCreate
+            val labelName = "Car"
+            val labelId = UUID.randomUUID()
+            val labelGroupId = UUID.randomUUID()
+            val connIO = for {
+              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              updatedDbProject <- fixupProjectExtrasUpdate(
+                labelValidateTeamCreate,
+                labelValidateTeamUgrCreate,
+                dbOrg,
+                dbUser,
+                dbPlatform,
+                dbProject,
+                Some(List((labelId, labelName, labelGroupId))),
+                Some(Map(labelGroupId -> "Car Group"))
+              )
+              collection <- TaskDao.insertTasks(
+                Task.TaskFeatureCollectionCreate(
+                  features = List(
+                    fixupTaskFeatureCreate(taskFeatureCreate, updatedDbProject)
+                      .withStatus(TaskStatus.Labeled)
+                  )
+                ),
+                dbUser
+              )
+              feature = collection.features.head
+              annotationGroup <- AnnotationGroupDao.createAnnotationGroup(
+                dbProject.id,
+                annotationGroupCreate.copy(name = "label"),
+                dbUser)
+              updatedAnnotationsCreate = annotationsCreate.map(annoCreate => {
+                annoCreate.copy(
+                  label = labelId.toString(),
+                  geometry = Some(feature.geometry),
+                  taskId = Some(feature.id),
+                  annotationGroup = Some(annotationGroup.id)
+                )
+              })
+              insertedAnnotations <- AnnotationDao.insertAnnotations(
+                updatedAnnotationsCreate,
+                dbProject.id,
+                dbUser
+              )
+              listedAnnotations <- AnnotationDao
+                .listSegmentationLayerAnnotationsByTaskStatus(
+                  dbProject.id,
+                  dbProject.defaultLayerId,
+                  List("LABELED")
+                )
+            } yield { (insertedAnnotations, listedAnnotations) }
+
+            val (dbAnnotations, listed) = connIO.transact(xa).unsafeRunSync
+            dbAnnotations.length == listed.length &&
+            listed.map(_.label).toSet == Set(labelName) &&
+            true
+          }
+      }
+    }
+  }
 
   test("list classification annotations from a layer by task status") {
     check {

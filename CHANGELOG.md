@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Support semantic segmentation stac exports [\#5253](https://github.com/raster-foundry/raster-foundry/pull/5253)
 
 ### Changed
 
@@ -19,7 +20,7 @@
 ## [1.33.0](https://github.com/raster-foundry/raster-foundry/compare/1.32.1...1.33.0)
 ### Removed
 - CMR and Shapefile support [\#5247](https://github.com/raster-foundry/raster-foundry/pull/5247)
-- Complex color correction (saturation, per-band clipping, contrast adjustment, etc.) [#5245](https://github.com/raster-foundry/raster-foundry/pull/5245)
+- Complex color correction (saturation, per-band clipping, contrast adjustment, etc.) [\#5245](https://github.com/raster-foundry/raster-foundry/pull/5245)
 
 ### Fixed
 

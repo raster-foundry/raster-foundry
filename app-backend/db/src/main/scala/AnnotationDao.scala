@@ -564,6 +564,62 @@ object AnnotationDao extends Dao[Annotation] {
       })
   }
 
+  def listSegmentationLayerAnnotationsByTaskStatus(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[List[Annotation]] = {
+    val taskStatusF: Fragment =
+      taskStatuses.map(TaskStatus.fromString(_)).toNel match {
+        case Some(taskStatusNel) =>
+          fr"AND" ++ Fragments.in(fr"tasks.status", taskStatusNel)
+        case _ => fr""
+      }
+    (fr"""
+    SELECT
+      annotations.id,
+      annotations.project_id,
+      annotations.created_at,
+      annotations.created_by,
+      annotations.modified_at,
+      annotations.owner,
+      project_labels.name,
+      annotations.description,
+      annotations.machine_generated,
+      annotations.confidence,
+      annotations.quality,
+      ST_INTERSECTION(ST_MAKEVALID(annotations.geometry), tasks.geometry) as geometry,
+      annotations.annotation_group,
+      annotations.labeled_by,
+      annotations.verified_by,
+      annotations.project_layer_id,
+      annotations.task_id
+    FROM annotations
+    JOIN annotation_groups AS ag
+    ON ag.id = annotations.annotation_group
+      AND ag.project_id = ${projectId}
+      AND ag.project_layer_id = ${layerId}
+      AND ag.name = 'label'
+    JOIN tasks
+    ON tasks.id = annotations.task_id
+       AND tasks.project_id = ${projectId}
+       AND tasks.project_layer_id = ${layerId}
+       AND annotations.project_id = ${projectId}
+       AND annotations.project_layer_id = ${layerId}
+    """ ++ taskStatusF ++ fr"""
+    JOIN (
+      SELECT labels.id, labels.name
+      FROM
+          projects,
+          jsonb_to_recordset((projects.extras->'annotate')::jsonb ->'labels') AS labels(id uuid, name text)
+      WHERE projects.id = ${projectId}
+    ) project_labels
+    ON project_labels.id::uuid = annotations.label::uuid
+     """)
+      .query[Annotation]
+      .to[List]
+  }
+
   def getLayerAnnotationJsonByTaskStatus(
       projectId: UUID,
       layerId: UUID,
@@ -578,6 +634,16 @@ object AnnotationDao extends Dao[Annotation] {
       ).map(annoFC => Some(annoFC.asJson))
     case MLProjectType.ObjectDetection =>
       listDetectionLayerAnnotationsByTaskStatus(
+        projectId,
+        layerId,
+        taskStatuses
+      ).map(annotations => {
+        Some(
+          AnnotationFeatureCollection(annotations.map(_.toGeoJSONFeature)).asJson
+        )
+      })
+    case MLProjectType.SemanticSegmentation =>
+      listSegmentationLayerAnnotationsByTaskStatus(
         projectId,
         layerId,
         taskStatuses
