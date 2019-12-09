@@ -9,11 +9,18 @@ import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
+import geotrellis.vector.{Geometry, Projected}
+import shapeless._
 
 import java.time.Instant
 import java.util.UUID
 
 object TaskDao extends Dao[Task] {
+
+  type MaybeEmptyUnionedGeomExtent =
+    Option[Projected[Geometry]] :: Option[Double] :: Option[Double] :: Option[
+      Double
+    ] :: Option[Double] :: Option[Double] :: HNil
 
   val tableName = "tasks"
   val joinTableF =
@@ -487,7 +494,7 @@ object TaskDao extends Dao[Task] {
       taskStatuses: List[String]
   ): ConnectionIO[Option[UnionedGeomExtent]] =
     Dao
-      .QueryBuilder[UnionedGeomExtent](
+      .QueryBuilder[MaybeEmptyUnionedGeomExtent](
         fr"""
     SELECT
       ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry,
@@ -504,7 +511,12 @@ object TaskDao extends Dao[Task] {
       .filter(fr"project_id = $projectId")
       .filter(fr"project_layer_id = $layerId")
       .filter(taskStatusF(taskStatuses))
-      .selectOption
+      .select map {
+      case Some(geom) :: Some(xMin) :: Some(yMin) :: Some(xMax) :: Some(yMax) :: HNil =>
+        Some(UnionedGeomExtent(geom, xMin, yMin, xMax, yMax))
+      case _ =>
+        None
+    }
 
   def listTaskGeomByStatus(
       user: User,
@@ -520,7 +532,8 @@ object TaskDao extends Dao[Task] {
       .whereAndOpt(
         Some(fr"project_layer_id = ${layerId}"),
         Some(fr"project_id = ${projectId}"),
-        taskStatusF(statusO.toList map { _.toString })) ++ fr"GROUP BY status")
+        taskStatusF(statusO.toList map { _.toString })
+      ) ++ fr"GROUP BY status")
       .query[UnionedGeomWithStatus]
       .to[List]
       .map(geomWithStatusList => {
