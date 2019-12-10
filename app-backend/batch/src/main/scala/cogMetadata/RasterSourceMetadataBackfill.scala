@@ -85,6 +85,7 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
   }
 
   def runJob(args: List[String]) = {
+    val threads = args.headOption.map(Integer.parseInt(_)).getOrElse(4)
 
     RFTransactor.xaResource.use { transactor =>
       implicit val xa = transactor
@@ -92,7 +93,8 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
 
       val rasterIO: ContextShift[IO] = IO.contextShift(
         ExecutionContext.fromExecutor(
-          Executors.newCachedThreadPool(
+          Executors.newFixedThreadPool(
+            threads,
             new ThreadFactoryBuilder().setNameFormat("backfill-%d").build()
           )
         ))
