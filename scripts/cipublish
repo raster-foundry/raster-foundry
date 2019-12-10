@@ -56,6 +56,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/package-${GIT_COMMIT}.zip"
             rm "${DIR}/../app-lambda/package.zip"
 
+	    echo "Generating typescript interface stubs from Scala datamodel"
+	    docker-compose -f docker-compose.test.yml \
+			   run --rm \
+			   panrec
+
             # Build publishable sbt projects as SNAPSHOT artifacts and
             # publish to Sonatype OSSRH (Snapshot Repository).
             if [ "$(whoami)" == "jenkins" ]; then
