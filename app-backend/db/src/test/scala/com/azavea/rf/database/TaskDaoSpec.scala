@@ -431,8 +431,10 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val connIO = for {
@@ -543,8 +545,10 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val connIO = for {
@@ -635,8 +639,10 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val connIO = for {
@@ -729,8 +735,10 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val connIO = for {
@@ -801,7 +809,7 @@ class TaskDaoSpec
             platform: Platform,
             projectCreate: Project.Create,
             taskFeaturesCreateOne: Task.TaskFeatureCollectionCreate,
-            taskFeaturesCreateTwo: Task.TaskFeatureCollectionCreate,
+            taskFeaturesCreateTwo: Task.TaskFeatureCollectionCreate
         ) =>
           {
             val connIO = for {
@@ -812,15 +820,19 @@ class TaskDaoSpec
                 projectCreate
               )
               collectionOne <- TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(taskFeaturesCreateOne,
-                                            dbProject,
-                                            Some(TaskStatus.Labeled)),
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreateOne,
+                  dbProject,
+                  Some(TaskStatus.Labeled)
+                ),
                 dbUser
               )
               collectionTwo <- TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(taskFeaturesCreateTwo,
-                                            dbProject,
-                                            Some(TaskStatus.Validated)),
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreateTwo,
+                  dbProject,
+                  Some(TaskStatus.Validated)
+                ),
                 dbUser
               )
               fetched <- TaskDao.listLayerTasksByStatus(
@@ -832,6 +844,38 @@ class TaskDaoSpec
 
             val (colOne, colTwo, listed) = connIO.transact(xa).unsafeRunSync
             colOne.features.length + colTwo.features.length == listed.length
+          }
+      }
+    }
+  }
+
+  test("create a geometric extent even when no tasks returned in query") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create
+        ) =>
+          {
+            val connIO = for {
+              (_, _, _, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              unionedExtent <- TaskDao.createUnionedGeomExtent(
+                dbProject.id,
+                dbProject.defaultLayerId,
+                Nil
+              )
+            } yield unionedExtent
+
+            val result = connIO.transact(xa).unsafeRunSync
+            result should be(None: Option[UnionedGeomExtent])
+            true
           }
       }
     }
