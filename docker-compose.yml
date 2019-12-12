@@ -122,6 +122,7 @@ services:
     command: rf
     links:
       - postgres:database.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
 
   xray:
     image: amazon/aws-xray-daemon
