@@ -14,6 +14,7 @@
 ### Fixed
 
 - Unified file extension for label item assets and label item asset links [#5252](https://github.com/raster-foundry/raster-foundry/pull/5252)
+- Added index to annotations `task_id` column to make deleting tasks way faster [#5255](https://github.com/raster-foundry/raster-foundry/pull/5255)
 - Explicitly handled case where aggregation of tasks doesn't return geometry statistics in STAC export [#5256](https://github.com/raster-foundry/raster-foundry/pull/5256)
 
 ### Security
