@@ -14,7 +14,8 @@ Point = Tuple[float, float]
 
 def transform_point_curried(tup: (Proj, Proj, Point)) -> Point:
     (src_proj, dst_proj, (x, y)) = tup
-    return transform(src_proj, dst_proj, x, y)
+    (y, x) = transform(src_proj, dst_proj, x, y)
+    return (x, y)
 
 
 def transform_point_seq(
