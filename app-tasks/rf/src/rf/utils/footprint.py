@@ -10,6 +10,7 @@ from shapely.geometry import shape, MultiPolygon, Polygon
 from shapely.ops import cascaded_union
 
 Point = Tuple[float, float]
+DOWNSAMPLE_FACTOR: float = 8.0
 
 
 def transform_point_curried(tup: (Proj, Proj, Point)) -> Point:
@@ -40,15 +41,19 @@ def complex_footprint(tif_path: str) -> MultiPolygon:
     with rasterio.open(tif_path, "r") as ds:
         band = ds.read(
             1,
-            out_shape=(int(ds.height / 8.0), int(ds.width / 8.0)),
+            out_shape=(
+                int(ds.height / DOWNSAMPLE_FACTOR),
+                int(ds.width / DOWNSAMPLE_FACTOR),
+            ),
             resampling=Resampling.bilinear,
         )
+    downsampled_transform = ds.transform * ds.transform.scale(DOWNSAMPLE_FACTOR)
     print("band is read")
     src_proj = Proj(ds.crs["init"])
     dst_proj = Proj("EPSG:4326")
     print("calculating shapes")
     data_mask = (band > 0).astype(np.uint8)
-    polys = shapes(data_mask, transform=ds.transform)
+    polys = shapes(data_mask, transform=downsampled_transform)
     print("shapes calculated, doing big ol' union")
     multipoly = cascaded_union([shape(x[0]) for x in polys if x[1] == 1])
     print("transforming polygons")
