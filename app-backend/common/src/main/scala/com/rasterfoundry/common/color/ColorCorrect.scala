@@ -55,9 +55,7 @@ object ColorCorrect extends LazyLogging {
       val dNew = newMax - newMin
       val dOld = oldMax - oldMin
 
-      if (noDataValue
-            .map(nd => (nd - pixelValue).abs < 0.00000001)
-            .getOrElse(false)) {
+      if (noDataValue.exists(nd => (nd - pixelValue).abs < 0.00000001)) {
         0
       } else if (dOld == 0) {
         // When dOld is nothing we still need to clamp
@@ -168,10 +166,21 @@ object ColorCorrect extends LazyLogging {
       val iMaxMin: Array[(Int, Int)] = Array.ofDim(3)
       cfor(0)(_ < _rgbHist.length, _ + 1) { index =>
         val hst = _rgbHist(index)
+        val statsOption = hst.statistics()
         val imin = hst.minValue().map(_.toInt).getOrElse(0)
         val imax = hst.maxValue().map(_.toInt).getOrElse(255)
-        logger.trace(s"Histogram Min/Max: ${imin}/${imax}")
-        iMaxMin(index) = (imin, imax)
+        (imin, imax, statsOption) match {
+          case (0, 255, _) => iMaxMin(index) = (0, 255)
+          case (_, _, Some(stats)) => {
+            // assuming a normal distribution, clips lowest/highest 2%
+            val newMin = stats.mean + (stats.stddev * -2.05)
+            val newMax = stats.mean + (stats.stddev * 2.05)
+            iMaxMin(index) = (if (newMin < 0) 0 else newMin.toInt, newMax.toInt)
+          }
+          case (min, max, _) => iMaxMin(index) = (min, max)
+        }
+        logger.trace(s"Histogram Min/Max: ${iMaxMin(index)}")
+
         isCorrected = {
           if (range.contains(imin) && range.contains(imax)) true
           else false
