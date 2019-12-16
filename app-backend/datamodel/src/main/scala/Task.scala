@@ -184,7 +184,7 @@ object Task {
 
   case class TaskGridFeatureCreate(
       properties: TaskGridCreateProperties,
-      geometry: Projected[Geometry],
+      geometry: Option[Projected[Geometry]],
       _type: String = "Feature"
   )
 
