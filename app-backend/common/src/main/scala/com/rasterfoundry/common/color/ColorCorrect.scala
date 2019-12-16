@@ -169,14 +169,19 @@ object ColorCorrect extends LazyLogging {
         val statsOption = hst.statistics()
         val imin = hst.minValue().map(_.toInt).getOrElse(0)
         val imax = hst.maxValue().map(_.toInt).getOrElse(255)
+
+        // if data is a byte raster (0, 255) don't do anything
+        // else if stats are available, clip assuming a normal distribution
+        // else use the histogram's min/max
         (imin, imax, statsOption) match {
           case (0, 255, _) => iMaxMin(index) = (0, 255)
-          case (_, _, Some(stats)) => {
-            // assuming a normal distribution, clips lowest/highest 2%
+          case (_, _, Some(stats)) =>
+            // assuming a normal distribution, clips 2nd and 98th percentiles of values
             val newMin = stats.mean + (stats.stddev * -2.05)
             val newMax = stats.mean + (stats.stddev * 2.05)
+            // assume non-negative values, otherwise visualization is weird
+            // I think this happens because the distribution is non-normal
             iMaxMin(index) = (if (newMin < 0) 0 else newMin.toInt, newMax.toInt)
-          }
           case (min, max, _) => iMaxMin(index) = (min, max)
         }
         logger.trace(s"Histogram Min/Max: ${iMaxMin(index)}")
