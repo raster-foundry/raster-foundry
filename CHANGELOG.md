@@ -4,6 +4,7 @@
 
 ### Added
 - Support semantic segmentation stac exports [\#5253](https://github.com/raster-foundry/raster-foundry/pull/5253)
+- Added default clipping of non-byte rasters to middle 96 percent of values assuming a normal distribution [\#5264](https://github.com/raster-foundry/raster-foundry/pull/5264)
 
 ### Changed
 
