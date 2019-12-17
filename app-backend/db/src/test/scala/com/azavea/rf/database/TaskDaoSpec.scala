@@ -4,6 +4,7 @@ import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.common.Generators.Implicits._
 
+import cats.data.NonEmptyList
 import cats.implicits._
 import doobie.ConnectionIO
 import doobie.implicits._
@@ -135,12 +136,19 @@ class TaskDaoSpec
                 )
                 createdScene <- maybeSceneData traverse {
                   case (datasourceCreate, sceneCreate) =>
-                    fixupDatasource(datasourceCreate, dbUser) flatMap { ds =>
-                      SceneDao.insert(
+                    for {
+                      ds <- fixupDatasource(datasourceCreate, dbUser)
+                      created <- SceneDao.insert(
                         fixupSceneCreate(dbUser, ds, sceneCreate),
                         dbUser
                       )
-                    }
+                      _ <- ProjectDao.addScenesToProject(
+                        NonEmptyList(created.id, Nil),
+                        dbProject.id,
+                        dbProject.defaultLayerId,
+                        true
+                      )
+                    } yield created
                 }
                 taskCount <- TaskDao.insertTasksByGrid(
                   fixupTaskPropertiesCreate(taskPropertiesCreate, dbProject),

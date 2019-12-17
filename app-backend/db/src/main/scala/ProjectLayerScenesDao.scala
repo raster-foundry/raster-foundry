@@ -167,5 +167,5 @@ object ProjectLayerScenesDao extends Dao[Scene] {
     JOIN scenes_to_layers stl
     ON s.id = stl.scene_id
     WHERE stl.project_layer_id = ${layerId}
-  """).query[Projected[Geometry]].option
+  """).query[Option[Projected[Geometry]]].unique
 }
