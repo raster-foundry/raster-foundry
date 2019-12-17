@@ -114,11 +114,18 @@ class TaskDaoSpec
             orgCreate: Organization.Create,
             platform: Platform,
             projectCreate: Project.Create,
+            maybeSceneData: Option[(Datasource.Create, Scene.Create)],
             taskPropertiesCreate: Task.TaskPropertiesCreate,
             taskGridFeatureCreate: Task.TaskGridFeatureCreate
         ) =>
           {
-            val connIO: ConnectionIO[Int] =
+            val connIO: ConnectionIO[
+              (
+                  Option[Scene.WithRelated],
+                  com.rasterfoundry.datamodel.Task.TaskGridFeatureCreate,
+                  Int
+              )
+            ] =
               for {
                 (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
                   userCreate,
@@ -126,19 +133,37 @@ class TaskDaoSpec
                   platform,
                   projectCreate
                 )
+                createdScene <- maybeSceneData traverse {
+                  case (datasourceCreate, sceneCreate) =>
+                    fixupDatasource(datasourceCreate, dbUser) flatMap { ds =>
+                      SceneDao.insert(
+                        fixupSceneCreate(dbUser, ds, sceneCreate),
+                        dbUser
+                      )
+                    }
+                }
                 taskCount <- TaskDao.insertTasksByGrid(
                   fixupTaskPropertiesCreate(taskPropertiesCreate, dbProject),
                   taskGridFeatureCreate,
                   dbUser
                 )
-              } yield { taskCount }
+              } yield { (createdScene, taskGridFeatureCreate, taskCount) }
 
-            val taskCount = connIO.transact(xa).unsafeRunSync
+            val (createdScene, gridFeatures, taskCount) =
+              connIO.transact(xa).unsafeRunSync
 
-            assert(
-              taskCount > 0,
-              "Task grid generation resulted in at least one inserted task"
-            )
+            (createdScene, gridFeatures.geometry) match {
+              case (_, Some(_)) | (Some(_), None) =>
+                assert(
+                  taskCount > 0,
+                  "Task grid generation resulted in at least one inserted task"
+                )
+              case _ =>
+                assert(
+                  taskCount == 0,
+                  "Task grid created should not occur without a geometry"
+                )
+            }
             true
           }
       }
