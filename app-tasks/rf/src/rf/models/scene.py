@@ -14,15 +14,36 @@ logger = logging.getLogger(__name__)
 
 class Scene(BaseModel):
 
-    URL_PATH = '/api/scenes/'
+    URL_PATH = "/api/scenes/"
 
-    def __init__(self, visibility, tags,
-                 datasource, sceneMetadata, name, thumbnailStatus, boundaryStatus,
-                 ingestStatus, metadataFiles, sunAzimuth=None, sunElevation=None,
-                 cloudCover=None, acquisitionDate=None, id=None, thumbnails=None,
-                 tileFootprint=None, dataFootprint=None, images=None, createdAt=None,
-                 modifiedAt=None, createdBy=None, ingestLocation=None,
-                 owner=None, sceneType="AVRO", metadataFields=None):
+    def __init__(
+        self,
+        visibility,
+        tags,
+        datasource,
+        sceneMetadata,
+        name,
+        thumbnailStatus,
+        boundaryStatus,
+        ingestStatus,
+        metadataFiles,
+        sunAzimuth=None,
+        sunElevation=None,
+        cloudCover=None,
+        acquisitionDate=None,
+        id=None,
+        thumbnails=None,
+        tileFootprint=None,
+        dataFootprint=None,
+        images=None,
+        createdAt=None,
+        modifiedAt=None,
+        createdBy=None,
+        ingestLocation=None,
+        owner=None,
+        sceneType="AVRO",
+        metadataFields=None,
+    ):
         """Create a new Scene
 
         Args:
@@ -75,17 +96,19 @@ class Scene(BaseModel):
         self.metadataFields = metadataFields
 
     def __repr__(self):
-        return '<Scene: {}>'.format(self.name)
+        return "<Scene: {}>".format(self.name)
 
     @classmethod
     def from_dict(cls, d):
-        statuses = d.get('statusFields')
-        filter_fields = d.get('filterFields')
-        images = [Image.from_dict(image) for image in d.get('images')]
-        thumbnails = [Thumbnail.from_dict(thumbnail) for thumbnail in d.get('thumbnails')]
+        statuses = d.get("statusFields")
+        filter_fields = d.get("filterFields")
+        images = [Image.from_dict(image) for image in d.get("images")]
+        thumbnails = [
+            Thumbnail.from_dict(thumbnail) for thumbnail in d.get("thumbnails")
+        ]
 
-        tile_footprint_dict = d.get('tileFootprint')
-        data_footprint_dict = d.get('dataFootprint')
+        tile_footprint_dict = d.get("tileFootprint")
+        data_footprint_dict = d.get("dataFootprint")
 
         if tile_footprint_dict:
             tile_footprint = Footprint.from_dict(tile_footprint_dict)
@@ -97,62 +120,91 @@ class Scene(BaseModel):
             data_footprint = None
 
         return cls(
-            d.get('visibility'),
-            d.get('tags'), d.get('datasource')['id'], d.get('sceneMetadata'), d.get('name'), statuses.get('thumbnailStatus'),
-            statuses.get('boundaryStatus'), statuses.get('ingestStatus'), d.get('metadataFiles'),
-            filter_fields.get('sunAzimuth'), filter_fields.get('sunElevation'), filter_fields.get('cloudCover'),
-            filter_fields.get('acquisitionDate'), d.get('id'), thumbnails, tile_footprint, data_footprint,
-            images, d.get('createdAt'), d.get('modifiedAt'), d.get('createdBy'),
-            d.get('ingestLocation', ''), owner=d.get('owner'), sceneType=d.get('sceneType'),
-            metadataFields=d.get('metadataFields')
+            d.get("visibility"),
+            d.get("tags"),
+            d.get("datasource")["id"],
+            d.get("sceneMetadata"),
+            d.get("name"),
+            statuses.get("thumbnailStatus"),
+            statuses.get("boundaryStatus"),
+            statuses.get("ingestStatus"),
+            d.get("metadataFiles"),
+            filter_fields.get("sunAzimuth"),
+            filter_fields.get("sunElevation"),
+            filter_fields.get("cloudCover"),
+            filter_fields.get("acquisitionDate"),
+            d.get("id"),
+            thumbnails,
+            tile_footprint,
+            data_footprint,
+            images,
+            d.get("createdAt"),
+            d.get("modifiedAt"),
+            d.get("createdBy"),
+            d.get("ingestLocation", ""),
+            owner=d.get("owner"),
+            sceneType=d.get("sceneType"),
+            metadataFields=d.get("metadataFields"),
         )
 
     def to_dict(self):
         filterFields = {}
-        statusFields = dict(thumbnailStatus=self.thumbnailStatus,
-                            boundaryStatus=self.boundaryStatus,
-                            ingestStatus=self.ingestStatus)
+        statusFields = dict(
+            thumbnailStatus=self.thumbnailStatus,
+            boundaryStatus=self.boundaryStatus,
+            ingestStatus=self.ingestStatus,
+        )
         scene_dict = dict(
             visibility=self.visibility,
-            tags=self.tags, datasource=self.datasource, sceneMetadata=self.sceneMetadata, filterFields=filterFields,
-            name=self.name, statusFields=statusFields, metadataFiles=self.metadataFiles,
-            ingestLocation=self.ingestLocation, owner=self.owner, sceneType=self.sceneType,
-            metadataFields=self.metadataFields)
+            tags=self.tags,
+            datasource=self.datasource,
+            sceneMetadata=self.sceneMetadata,
+            filterFields=filterFields,
+            name=self.name,
+            statusFields=statusFields,
+            metadataFiles=self.metadataFiles,
+            ingestLocation=self.ingestLocation,
+            owner=self.owner,
+            sceneType=self.sceneType,
+            metadataFields=self.metadataFields,
+        )
 
         if self.sunAzimuth:
-            filterFields['sunAzimuth'] = self.sunAzimuth
+            filterFields["sunAzimuth"] = self.sunAzimuth
         if self.sunElevation:
-            filterFields['sunElevation'] = self.sunElevation
+            filterFields["sunElevation"] = self.sunElevation
         if self.cloudCover is not None:
-            filterFields['cloudCover'] = self.cloudCover
+            filterFields["cloudCover"] = self.cloudCover
         if self.acquisitionDate:
-            filterFields['acquisitionDate'] = self.acquisitionDate
+            filterFields["acquisitionDate"] = self.acquisitionDate
         if self.id:
-            scene_dict['id'] = self.id
+            scene_dict["id"] = self.id
 
         if self.thumbnails:
-            scene_dict['thumbnails'] = [thumbnail.to_dict() for thumbnail in self.thumbnails]
+            scene_dict["thumbnails"] = [
+                thumbnail.to_dict() for thumbnail in self.thumbnails
+            ]
         else:
-            scene_dict['thumbnails'] = []
+            scene_dict["thumbnails"] = []
 
         if self.images:
-            scene_dict['images'] = [image.to_dict() for image in self.images]
+            scene_dict["images"] = [image.to_dict() for image in self.images]
         else:
-            scene_dict['images'] = []
+            scene_dict["images"] = []
 
         if self.tileFootprint:
-            scene_dict['tileFootprint'] = self.tileFootprint.to_dict()
+            scene_dict["tileFootprint"] = self.tileFootprint.to_dict()
         if self.dataFootprint:
-            scene_dict['dataFootprint'] = self.dataFootprint.to_dict()
+            scene_dict["dataFootprint"] = self.dataFootprint.to_dict()
 
         if self.createdAt:
-            scene_dict['createdAt'] = self.createdAt
+            scene_dict["createdAt"] = self.createdAt
 
         if self.modifiedAt:
-            scene_dict['modifiedAt'] = self.modifiedAt
+            scene_dict["modifiedAt"] = self.modifiedAt
 
         if self.createdBy:
-            scene_dict['createdBy'] = self.createdBy
+            scene_dict["createdBy"] = self.createdBy
 
         return scene_dict
 
@@ -163,19 +215,14 @@ class Scene(BaseModel):
             if exc.response.status_code != 409:
                 raise
             else:
-                logger.info('Tried to create duplicate object: %s', self)
+                logger.info("Tried to create duplicate object: %s", self)
                 return None
 
     def get_extent(self):
         """Helper method to return extent of scene"""
 
-        assert self.tileFootprint, 'Must have tile footprint to extract extent'
+        assert self.tileFootprint, "Must have tile footprint to extract extent"
         coords = self.tileFootprint.multipolygon[0][0]
         longitudes = [coord[0] for coord in coords]
         latitudes = [coord[1] for coord in coords]
-        return [
-            min(longitudes),
-            min(latitudes),
-            max(longitudes),
-            max(latitudes)
-        ]
+        return [min(longitudes), min(latitudes), max(longitudes), max(latitudes)]

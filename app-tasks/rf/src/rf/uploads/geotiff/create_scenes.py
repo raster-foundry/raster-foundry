@@ -81,8 +81,8 @@ def create_geotiff_scene(
         metadataFiles,
         owner=owner,
         sceneType=sceneType,
-        dataFootprint=Footprint(mapping(data_footprint)['coordinates']),
-        tileFootprint=Footprint(mapping(tile_footprint)['coordinates']),
+        dataFootprint=Footprint(mapping(data_footprint)["coordinates"]),
+        tileFootprint=Footprint(mapping(tile_footprint)["coordinates"]),
         **sceneKwargs
     )
 

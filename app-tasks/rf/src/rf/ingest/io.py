@@ -1,8 +1,11 @@
 """Utilities for transforming public scenes into COGs"""
 
-from rf.ingest.settings import (landsat8_band_order, sentinel2_band_order,
-                                landsat8_datasource_id,
-                                sentinel2_datasource_id)
+from rf.ingest.settings import (
+    landsat8_band_order,
+    sentinel2_band_order,
+    landsat8_datasource_id,
+    sentinel2_datasource_id,
+)
 from rf.utils import cog
 from rf.utils.io import get_tempdir
 
@@ -12,9 +15,9 @@ import logging
 import os
 from urllib.parse import quote_plus
 
-DATA_BUCKET = os.getenv('DATA_BUCKET')
+DATA_BUCKET = os.getenv("DATA_BUCKET")
 
-s3client = boto3.client('s3')
+s3client = boto3.client("s3")
 logger = logging.getLogger(__name__)
 
 
@@ -39,9 +42,16 @@ def create_cog(image_locations, scene, same_path=False):
         cog_path = cog.convert_to_cog(merged_tif, local_dir)
         if same_path:
             updated_scene = upload_tif(
-                cog_path, scene,
-                os.path.join('user-uploads', scene.owner, '{}_COG.tif'.format(scene.id)),
-                os.path.join('user-uploads', quote_plus(scene.owner), '{}_COG.tif'.format(scene.id))
+                cog_path,
+                scene,
+                os.path.join(
+                    "user-uploads", scene.owner, "{}_COG.tif".format(scene.id)
+                ),
+                os.path.join(
+                    "user-uploads",
+                    quote_plus(scene.owner),
+                    "{}_COG.tif".format(scene.id),
+                ),
             )
         else:
             updated_scene = upload_tif(cog_path, scene)
@@ -49,18 +59,18 @@ def create_cog(image_locations, scene, same_path=False):
         return updated_scene
 
 
-def upload_tif(tif_path, scene, key='', ingest_location=''):
+def upload_tif(tif_path, scene, key="", ingest_location=""):
     if len(key) == 0:
-        key = os.path.join('public-cogs', '{}_COG.tif'.format(scene.id))
+        key = os.path.join("public-cogs", "{}_COG.tif".format(scene.id))
 
-    s3uri = 's3://{}/{}'.format(DATA_BUCKET, key)
-    ingestUri = 's3://{}/{}'.format(DATA_BUCKET, ingest_location)
-    logger.info('Uploading tif to S3 at %s', s3uri)
-    with open(tif_path, 'rb') as inf:
+    s3uri = "s3://{}/{}".format(DATA_BUCKET, key)
+    ingestUri = "s3://{}/{}".format(DATA_BUCKET, ingest_location)
+    logger.info("Uploading tif to S3 at %s", s3uri)
+    with open(tif_path, "rb") as inf:
         s3client.put_object(Bucket=DATA_BUCKET, Key=key, Body=inf)
-    logger.info('Tif uploaded successfully')
+    logger.info("Tif uploaded successfully")
     scene.ingestLocation = s3uri if len(ingest_location) == 0 else ingestUri
-    scene.sceneType = 'COG'
+    scene.sceneType = "COG"
     return scene
 
 
@@ -71,5 +81,6 @@ def sort_key(datasource_id, band):
         return landsat8_band_order[band.name]
     else:
         raise ValueError(
-            'Trying to run public COG ingest for scene with mysterious datasource',
-            datasource_id)
+            "Trying to run public COG ingest for scene with mysterious datasource",
+            datasource_id,
+        )
