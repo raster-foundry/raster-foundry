@@ -548,7 +548,7 @@ class ProjectDaoSpec
                 fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
               acrs <- ProjectDao.addPermissionsMany(projectInsert1.id,
                                                     acrListToInsert)
-              _ = logger.info(s"ACRS Added: $acrs")
+              _ = logger.debug(s"ACRS Added: $acrs")
               action = Random.shuffle(acrListToInsert.map(_.actionType)).head
               isPermitted1 <- ProjectDao.authorized(dbGrantedUser,
                                                     ObjectType.Project,
