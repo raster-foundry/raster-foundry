@@ -272,7 +272,13 @@ object TaskDao extends Dao[Task] {
       taskGridFeatureCreate: Task.TaskGridFeatureCreate,
       user: User
   ): ConnectionIO[Int] = {
-    (insertF ++ fr"""
+    for {
+      geomO <- taskGridFeatureCreate.geometry match {
+        case Some(g) => Option(g).pure[ConnectionIO]
+        case None    => ProjectDao.getFootprint(taskProperties.projectId)
+      }
+      gridInsert <- geomO map { geom =>
+        (insertF ++ fr"""
         SELECT
           uuid_generate_v4(),
           NOW(),
@@ -289,7 +295,7 @@ object TaskDao extends Dao[Task] {
           SELECT (
             ST_Dump(
               ST_MakeGrid(
-                ${taskGridFeatureCreate.geometry},
+                ${geom},
                 ${taskGridFeatureCreate.properties.xSizeMeters},
                 ${taskGridFeatureCreate.properties.ySizeMeters}
               )
@@ -297,6 +303,10 @@ object TaskDao extends Dao[Task] {
           ).geom AS cell
         ) q
     """).update.run
+      } getOrElse {
+        0.pure[ConnectionIO]
+      }
+    } yield gridInsert
   }
 
   def isLockingUserOrUnlocked(taskId: UUID, user: User): ConnectionIO[Boolean] =

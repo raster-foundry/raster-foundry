@@ -16,7 +16,8 @@ class BaseModel(object):
      - creating a new object via the API
      - loading objects from JSON
     """
-    HOST = os.getenv('RF_HOST')
+
+    HOST = os.getenv("RF_HOST")
     URL_PATH = None
 
     @classmethod
@@ -26,7 +27,7 @@ class BaseModel(object):
         Raises:
             requests.exceptions.HTTPError
         """
-        url = '{HOST}{URL_PATH}{id}'.format(HOST=cls.HOST, URL_PATH=cls.URL_PATH, id=id)
+        url = "{HOST}{URL_PATH}{id}".format(HOST=cls.HOST, URL_PATH=cls.URL_PATH, id=id)
         session = get_session()
         response = session.get(url)
         response.raise_for_status()
@@ -35,10 +36,10 @@ class BaseModel(object):
 
     @classmethod
     def from_dict(cls, d):
-        raise NotImplementedError('from_dict is not implemented for this derived class')
+        raise NotImplementedError("from_dict is not implemented for this derived class")
 
     def to_dict(self):
-        raise NotImplementedError('to_dict is not implemented for this derived class')
+        raise NotImplementedError("to_dict is not implemented for this derived class")
 
     def to_json(self):
         return json.dumps(self.to_dict())
@@ -48,25 +49,29 @@ class BaseModel(object):
         return cls.from_dict(json_string)
 
     def create(self):
-        url = '{HOST}{URL_PATH}'.format(HOST=self.HOST, URL_PATH=self.URL_PATH)
+        url = "{HOST}{URL_PATH}".format(HOST=self.HOST, URL_PATH=self.URL_PATH)
         session = get_session()
         response = session.post(url, json=self.to_dict())
         try:
             response.raise_for_status()
         except:
-            logger.exception('Unable to create object via API: %s', response.text)
-            logger.exception('Attempted to POST: \n%s\n', self.to_json())
-            logger.exception('Response was: %s', response.content)
+            logger.exception("Unable to create object via API: %s", response.text)
+            logger.exception("Attempted to POST: \n%s\n", self.to_json())
+            logger.exception("Response was: %s", response.content)
             raise
         return self.from_dict(response.json())
 
     def update(self):
-        url = '{HOST}{URL_PATH}{id}/'.format(HOST=self.HOST, URL_PATH=self.URL_PATH, id=self.id)
+        url = "{HOST}{URL_PATH}{id}/".format(
+            HOST=self.HOST, URL_PATH=self.URL_PATH, id=self.id
+        )
         session = get_session()
         response = session.put(url, json=self.to_dict())
         try:
             response.raise_for_status()
         except:
-            logger.exception('Unable to update: %s with %s', response.text, self.to_dict())
+            logger.exception(
+                "Unable to update: %s with %s", response.text, self.to_dict()
+            )
             raise
         return response

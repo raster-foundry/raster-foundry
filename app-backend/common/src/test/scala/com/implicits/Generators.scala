@@ -968,7 +968,7 @@ object Generators extends ArbitraryInstances {
   private def taskGridFeatureCreateGen: Gen[Task.TaskGridFeatureCreate] =
     for {
       properties <- taskGridCreatePropertiesGen
-      geometry <- projectedMultiPolygonGen3857
+      geometry <- Gen.option(projectedMultiPolygonGen3857)
     } yield {
       Task.TaskGridFeatureCreate(properties, geometry)
     }

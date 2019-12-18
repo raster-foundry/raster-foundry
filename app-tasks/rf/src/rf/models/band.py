@@ -4,7 +4,6 @@ from .base import BaseModel
 
 
 class Band(BaseModel):
-
     def __init__(self, name, number, wavelength):
         """Create a new Band. Created band is a python representation of the Band.Create
         case class in the scala datamodel
@@ -20,13 +19,11 @@ class Band(BaseModel):
         self.wavelength = wavelength
 
     def __repr__(self):
-        return '<Band: {name}-{number}>'.format(name=self.name, number=self.number)
+        return "<Band: {name}-{number}>".format(name=self.name, number=self.number)
 
     @classmethod
     def from_dict(cls, d):
-        return cls(
-            d.get('name'), d.get('number'), d.get('wavelength')
-        )
+        return cls(d.get("name"), d.get("number"), d.get("wavelength"))
 
     def to_dict(self):
-        return {'name': self.name, 'number': self.number, 'wavelength': self.wavelength}
+        return {"name": self.name, "number": self.number, "wavelength": self.wavelength}

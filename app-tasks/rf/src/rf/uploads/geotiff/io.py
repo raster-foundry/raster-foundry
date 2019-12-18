@@ -54,7 +54,7 @@ def get_geotiff_size_bytes(tif_path):
 
 
 def s3_url(bucket, key):
-    return 's3://{bucket}/{key}'.format(bucket=bucket, key=key)
+    return "s3://{bucket}/{key}".format(bucket=bucket, key=key)
 
 
 def get_geotiff_dimensions(tif_path):

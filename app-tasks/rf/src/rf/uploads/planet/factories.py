@@ -26,9 +26,18 @@ class PlanetSceneFactory(object):
     ```
     """
 
-    def __init__(self, planet_ids, datasource, upload_id, client,
-                 project_id=None, layer_id=None, visibility=Visibility.PRIVATE, tags=[],
-                 owner=None):
+    def __init__(
+        self,
+        planet_ids,
+        datasource,
+        upload_id,
+        client,
+        project_id=None,
+        layer_id=None,
+        visibility=Visibility.PRIVATE,
+        tags=[],
+        owner=None,
+    ):
         self.upload_id = upload_id
         self.isProjectUpload = project_id is not None
         self.project_id = project_id
@@ -47,13 +56,17 @@ class PlanetSceneFactory(object):
         # an ingest. Otherwise, set the status to NOTINGESTED, so that the status
         # will be updated when the scene is added to this upload's project
         for planet_id in set(self.planet_ids):
-            logger.info('Preparing to copy planet asset to s3: %s', planet_id)
+            logger.info("Preparing to copy planet asset to s3: %s", planet_id)
             with get_tempdir() as prefix:
                 planet_feature, temp_tif_file = self.copy_asset_to_s3(prefix, planet_id)
                 planet_key = self.client.auth.value
                 planet_scene = create_planet_scene(
-                    planet_feature, self.datasource, planet_key,
-                    self.visibility, self.tags, self.owner
+                    planet_feature,
+                    self.datasource,
+                    planet_key,
+                    self.visibility,
+                    self.tags,
+                    self.owner,
                 )
                 yield planet_scene
 
@@ -70,35 +83,43 @@ class PlanetSceneFactory(object):
             dict: geojson for the overview of the planet tif
         """
 
-        split_id = planet_id.split(':')
+        split_id = planet_id.split(":")
         item_type = split_id[0]
         item_id = split_id[1]
         if len(split_id) == 2:
             asset_type = None
         elif len(split_id) == 3:
             asset_type = split_id[2]
-        logger.info('Retrieving item type %s with id %s', item_type, item_id)
+        logger.info("Retrieving item type %s with id %s", item_type, item_id)
         item = self.get_item(item_id, item_type)
-        item_id = item['id']
+        item_id = item["id"]
 
         assets = self.get_assets_by_id(item_id, item_type)
         asset_type = PlanetSceneFactory.get_asset_type(assets, asset_type)
-        updated_assets = self.activate_asset_and_wait(asset_type, assets, item_id, item_type)
+        updated_assets = self.activate_asset_and_wait(
+            asset_type, assets, item_id, item_type
+        )
 
-        temp_tif_file = self.download_planet_tif(prefix, asset_type, updated_assets, item_id)
+        temp_tif_file = self.download_planet_tif(
+            prefix, asset_type, updated_assets, item_id
+        )
         full_path_to_temp_tif = os.path.join(prefix, temp_tif_file)
         cog.add_overviews(full_path_to_temp_tif)
         cog_path = cog.convert_to_cog(full_path_to_temp_tif, prefix)
-        bucket, s3_path = self.upload_planet_tif(asset_type, item_id, item_type, cog_path)
+        bucket, s3_path = self.upload_planet_tif(
+            asset_type, item_id, item_type, cog_path
+        )
 
         analytic_xml = self.get_analytic_xml(assets, item_id, item_type)
-        reflectance_coefficients = PlanetSceneFactory.get_reflectance_coefficients(analytic_xml)
-        item['properties'].update(reflectance_coefficients)
+        reflectance_coefficients = PlanetSceneFactory.get_reflectance_coefficients(
+            analytic_xml
+        )
+        item["properties"].update(reflectance_coefficients)
 
-        item['added_props'] = {}
-        item['added_props']['localPath'] = cog_path
-        item['added_props']['s3Location'] = 's3://{}/{}'.format(bucket, s3_path)
-        item['added_props']['asset_type'] = asset_type
+        item["added_props"] = {}
+        item["added_props"]["localPath"] = cog_path
+        item["added_props"]["s3Location"] = "s3://{}/{}".format(bucket, s3_path)
+        item["added_props"]["asset_type"] = asset_type
 
         # Return the json representation of the item
         return item, temp_tif_file
@@ -128,7 +149,7 @@ class PlanetSceneFactory(object):
         Returns:
             dict
         """
-        logger.info('Requesting asset from Planet: %s, %s', item_id, item_type)
+        logger.info("Requesting asset from Planet: %s, %s", item_id, item_type)
         assets = self.client.get_assets_by_id(item_type, item_id).get()
         return assets
 
@@ -144,7 +165,7 @@ class PlanetSceneFactory(object):
             item
         """
         item = self.client.get_item(item_type, item_id)
-        logger.info('Retrieved Item: %s', item)
+        logger.info("Retrieved Item: %s", item)
         return item.get()
 
     @retry(wait_fixed=5000, stop_max_attempt_number=5)
@@ -171,8 +192,10 @@ class PlanetSceneFactory(object):
         Returns:
             str
         """
-        assets = self.activate_asset_and_wait('analytic_xml', asset_dict, item_id, item_type)
-        xml_loc = assets['analytic_xml']['location']
+        assets = self.activate_asset_and_wait(
+            "analytic_xml", asset_dict, item_id, item_type
+        )
+        xml_loc = assets["analytic_xml"]["location"]
         response = requests.get(xml_loc)
         return minidom.parseString(response.text)
 
@@ -190,11 +213,13 @@ class PlanetSceneFactory(object):
         nodes = xml_doc.getElementsByTagName("ps:bandSpecificMetadata")
         for node in nodes:
             bn = node.getElementsByTagName("ps:bandNumber")[0].firstChild.data
-            if bn not in ['1', '2', '3', '4', '5']:
+            if bn not in ["1", "2", "3", "4", "5"]:
                 continue
             i = int(bn)
-            value = node.getElementsByTagName("ps:reflectanceCoefficient")[0].firstChild.data
-            key = 'band_{}_reflectance_coeff'.format(i)
+            value = node.getElementsByTagName("ps:reflectanceCoefficient")[
+                0
+            ].firstChild.data
+            key = "band_{}_reflectance_coeff".format(i)
             coefficients[key] = float(value)
         return coefficients
 
@@ -213,13 +238,18 @@ class PlanetSceneFactory(object):
         if acceptable_type:
             acceptable_types = [acceptable_type]
         else:
-            acceptable_types = ['analytic', 'basic_analytic', 'analytic_dn', 'basic_analytic_dn']
-        logger.info('Determining Analytics Asset Type')
+            acceptable_types = [
+                "analytic",
+                "basic_analytic",
+                "analytic_dn",
+                "basic_analytic_dn",
+            ]
+        logger.info("Determining Analytics Asset Type")
         for acceptable_type in acceptable_types:
             if acceptable_type in asset_dict:
-                logger.info('Found acceptable type: %s', acceptable_type)
+                logger.info("Found acceptable type: %s", acceptable_type)
                 return acceptable_type
-        raise Exception('No acceptable asset types found: %s', list(asset_dict.keys()))
+        raise Exception("No acceptable asset types found: %s", list(asset_dict.keys()))
 
     def activate_asset_and_wait(self, asset_type, assets, item_id, item_type):
         """Activate and asset to prepare for it to download
@@ -235,14 +265,18 @@ class PlanetSceneFactory(object):
         """
         self.activate(asset_type, assets)
         try_number = 0
-        logger.info('Activating asset for %s', item_id)
-        while assets[asset_type]['status'] != 'active':
+        logger.info("Activating asset for %s", item_id)
+        while assets[asset_type]["status"] != "active":
             if try_number % 5 == 0 and try_number > 0:
-                logger.info('Status after %s tries: %s', try_number, assets[asset_type]['status'])
+                logger.info(
+                    "Status after %s tries: %s",
+                    try_number,
+                    assets[asset_type]["status"],
+                )
             assets = self.get_assets_by_id(item_id, item_type)
             time.sleep(15)
 
-        logger.info('Asset activated: %s', item_id)
+        logger.info("Asset activated: %s", item_id)
         return assets
 
     def download_planet_tif(self, prefix, asset_type, assets, item_id):
@@ -257,17 +291,17 @@ class PlanetSceneFactory(object):
             str
         """
 
-        base_fname = '{}.tif'.format(item_id)
+        base_fname = "{}.tif".format(item_id)
         out_path = os.path.join(prefix, base_fname)
-        logger.info('Downloading asset: %s to %s', item_id, out_path)
+        logger.info("Downloading asset: %s to %s", item_id, out_path)
 
         try:
             body = self.download_asset(asset_type, assets)
         except Exception:
-            logger.exception('Failed to download asset %s with %s', asset_type, assets)
+            logger.exception("Failed to download asset %s with %s", asset_type, assets)
             raise
 
-        with open(out_path, 'wb') as outf:
+        with open(out_path, "wb") as outf:
             body.write(file=outf)
 
         return base_fname
@@ -284,14 +318,18 @@ class PlanetSceneFactory(object):
         Returns:
             (str, str)
         """
-        s3_client = boto3.client('s3')
-        s3_path = 'user-uploads/{}/{}/{}-{}-{}.tif'.format(self.owner, self.upload_id, item_type, item_id, asset_type)
-        bucket = os.getenv('DATA_BUCKET')
-        logger.info('Copying asset: %s (%s => s3://%s/%s)', item_id, temp_tif_file, bucket, s3_path)
-        with open(temp_tif_file, 'rb') as inf:
-            s3_client.put_object(
-                Bucket=bucket,
-                Body=inf,
-                Key=s3_path
-            )
+        s3_client = boto3.client("s3")
+        s3_path = "user-uploads/{}/{}/{}-{}-{}.tif".format(
+            self.owner, self.upload_id, item_type, item_id, asset_type
+        )
+        bucket = os.getenv("DATA_BUCKET")
+        logger.info(
+            "Copying asset: %s (%s => s3://%s/%s)",
+            item_id,
+            temp_tif_file,
+            bucket,
+            s3_path,
+        )
+        with open(temp_tif_file, "rb") as inf:
+            s3_client.put_object(Bucket=bucket, Body=inf, Key=s3_path)
         return bucket, s3_path

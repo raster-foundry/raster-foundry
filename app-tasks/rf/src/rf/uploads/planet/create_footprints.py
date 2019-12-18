@@ -9,7 +9,7 @@ def bbox_from_planet_feature(planet_feature):
     """
 
     # it's a geojson polygon, so drill in
-    coords = planet_feature['geometry']['coordinates'][0]
+    coords = planet_feature["geometry"]["coordinates"][0]
     xs = [p[0] for p in coords]
     ys = [p[1] for p in coords]
     min_x = min(xs)
@@ -17,8 +17,14 @@ def bbox_from_planet_feature(planet_feature):
     min_y = min(ys)
     max_y = max(ys)
 
-    return [[[[min_x, min_y],
-              [max_x, min_y],
-              [max_x, max_y],
-              [min_x, max_y],
-              [min_x, min_y]]]]
+    return [
+        [
+            [
+                [min_x, min_y],
+                [max_x, min_y],
+                [max_x, max_y],
+                [min_x, max_y],
+                [min_x, min_y],
+            ]
+        ]
+    ]
