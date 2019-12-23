@@ -51,10 +51,14 @@ def complex_footprint(tif_path: str) -> MultiPolygon:
             ),
             resampling=Resampling.bilinear,
         )
+    nodata = ds.nodata
     downsampled_transform = ds.transform * ds.transform.scale(DOWNSAMPLE_FACTOR)
     src_proj = Proj(ds.crs)
     dst_proj = Proj({"init": "EPSG:4326"})
-    data_mask = (band > 0).astype(np.uint8)
+    if nodata is not None:
+        data_mask = (band != nodata).astype(np.uint8)
+    else:
+        data_mask = (band > 0).astype(np.uint8)
     polys = shapes(data_mask, transform=downsampled_transform)
     footprint = cascaded_union([shape(x[0]) for x in polys if x[1] == 1]).simplify(0.05)
     # if it has an __iter__ attribute, it's probably a multipolygon, so reproject all
