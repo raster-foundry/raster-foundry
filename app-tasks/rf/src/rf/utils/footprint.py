@@ -56,8 +56,13 @@ def complex_footprint(tif_path: str) -> MultiPolygon:
     dst_proj = Proj({"init": "EPSG:4326"})
     data_mask = (band > 0).astype(np.uint8)
     polys = shapes(data_mask, transform=downsampled_transform)
-    multipoly = cascaded_union([shape(x[0]) for x in polys if x[1] == 1])
-    transformed = [
-        transform_poly(src_proj, dst_proj, p) for p in multipoly.simplify(0.05)
-    ]
+    footprint = cascaded_union([shape(x[0]) for x in polys if x[1] == 1]).simplify(0.05)
+    # if it has an __iter__ attribute, it's probably a multipolygon, so reproject all
+    # the component polygons
+    if hasattr(footprint, "__iter__"):
+        transformed = [transform_poly(src_proj, dst_proj, p) for p in footprint]
+    # otherwise assume it's a simple polygon, and just put its reprojection
+    # into a list
+    else:
+        transformed = [transform_poly(src_proj, dst_proj, footprint)]
     return MultiPolygon(transformed)
