@@ -4,6 +4,7 @@ import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.common.Generators.Implicits._
 
+import cats.data.NonEmptyList
 import cats.implicits._
 import doobie.ConnectionIO
 import doobie.implicits._
@@ -114,11 +115,18 @@ class TaskDaoSpec
             orgCreate: Organization.Create,
             platform: Platform,
             projectCreate: Project.Create,
+            maybeSceneData: Option[(Datasource.Create, Scene.Create)],
             taskPropertiesCreate: Task.TaskPropertiesCreate,
             taskGridFeatureCreate: Task.TaskGridFeatureCreate
         ) =>
           {
-            val connIO: ConnectionIO[Int] =
+            val connIO: ConnectionIO[
+              (
+                  Option[Scene.WithRelated],
+                  com.rasterfoundry.datamodel.Task.TaskGridFeatureCreate,
+                  Int
+              )
+            ] =
               for {
                 (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
                   userCreate,
@@ -126,19 +134,44 @@ class TaskDaoSpec
                   platform,
                   projectCreate
                 )
+                createdScene <- maybeSceneData traverse {
+                  case (datasourceCreate, sceneCreate) =>
+                    for {
+                      ds <- fixupDatasource(datasourceCreate, dbUser)
+                      created <- SceneDao.insert(
+                        fixupSceneCreate(dbUser, ds, sceneCreate),
+                        dbUser
+                      )
+                      _ <- ProjectDao.addScenesToProject(
+                        NonEmptyList(created.id, Nil),
+                        dbProject.id,
+                        dbProject.defaultLayerId,
+                        true
+                      )
+                    } yield created
+                }
                 taskCount <- TaskDao.insertTasksByGrid(
                   fixupTaskPropertiesCreate(taskPropertiesCreate, dbProject),
                   taskGridFeatureCreate,
                   dbUser
                 )
-              } yield { taskCount }
+              } yield { (createdScene, taskGridFeatureCreate, taskCount) }
 
-            val taskCount = connIO.transact(xa).unsafeRunSync
+            val (createdScene, gridFeatures, taskCount) =
+              connIO.transact(xa).unsafeRunSync
 
-            assert(
-              taskCount > 0,
-              "Task grid generation resulted in at least one inserted task"
-            )
+            (createdScene, gridFeatures.geometry) match {
+              case (_, Some(_)) | (Some(_), None) =>
+                assert(
+                  taskCount > 0,
+                  "Task grid generation resulted in at least one inserted task"
+                )
+              case _ =>
+                assert(
+                  taskCount == 0,
+                  "Task grid created should not occur without a geometry"
+                )
+            }
             true
           }
       }
@@ -431,8 +464,10 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val connIO = for {
@@ -543,8 +578,10 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val connIO = for {
@@ -635,8 +672,10 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val connIO = for {
@@ -729,8 +768,10 @@ class TaskDaoSpec
             projectCreate: Project.Create,
             taskFeatureCreate: Task.TaskFeatureCreate,
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val connIO = for {
@@ -801,7 +842,7 @@ class TaskDaoSpec
             platform: Platform,
             projectCreate: Project.Create,
             taskFeaturesCreateOne: Task.TaskFeatureCollectionCreate,
-            taskFeaturesCreateTwo: Task.TaskFeatureCollectionCreate,
+            taskFeaturesCreateTwo: Task.TaskFeatureCollectionCreate
         ) =>
           {
             val connIO = for {
@@ -812,15 +853,19 @@ class TaskDaoSpec
                 projectCreate
               )
               collectionOne <- TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(taskFeaturesCreateOne,
-                                            dbProject,
-                                            Some(TaskStatus.Labeled)),
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreateOne,
+                  dbProject,
+                  Some(TaskStatus.Labeled)
+                ),
                 dbUser
               )
               collectionTwo <- TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(taskFeaturesCreateTwo,
-                                            dbProject,
-                                            Some(TaskStatus.Validated)),
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreateTwo,
+                  dbProject,
+                  Some(TaskStatus.Validated)
+                ),
                 dbUser
               )
               fetched <- TaskDao.listLayerTasksByStatus(
@@ -832,6 +877,38 @@ class TaskDaoSpec
 
             val (colOne, colTwo, listed) = connIO.transact(xa).unsafeRunSync
             colOne.features.length + colTwo.features.length == listed.length
+          }
+      }
+    }
+  }
+
+  test("create a geometric extent even when no tasks returned in query") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create
+        ) =>
+          {
+            val connIO = for {
+              (_, _, _, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              unionedExtent <- TaskDao.createUnionedGeomExtent(
+                dbProject.id,
+                dbProject.defaultLayerId,
+                Nil
+              )
+            } yield unionedExtent
+
+            val result = connIO.transact(xa).unsafeRunSync
+            result should be(None: Option[UnionedGeomExtent])
+            true
           }
       }
     }

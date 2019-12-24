@@ -12,7 +12,7 @@ from rf.utils.io import (
     IngestStatus,
     upload_tifs,
     s3_bucket_and_key_from_url,
-    get_tempdir
+    get_tempdir,
 )
 
 from urllib.parse import unquote
@@ -36,6 +36,7 @@ class GeoTiffS3SceneFactory(object):
             # connection to S3
     ```
     """
+
     def __init__(self, upload):
         """Args:
             upload (Upload): instance of upload model to create scenes for
@@ -46,10 +47,10 @@ class GeoTiffS3SceneFactory(object):
         self.owner = upload.owner
         self.visibility = Visibility.PRIVATE
         self.datasource = self._upload.datasource
-        self.acquisitionDate = self._upload.metadata.get('acquisitionDate')
-        self.cloudCover = self._upload.metadata.get('cloudCover', 0)
+        self.acquisitionDate = self._upload.metadata.get("acquisitionDate")
+        self.cloudCover = self._upload.metadata.get("cloudCover", 0)
         self.fileType = upload.fileType
-        self.tags = self._upload.metadata.get('tags') or ['']
+        self.tags = self._upload.metadata.get("tags") or [""]
         self.keep_in_source_bucket = self._upload.keepInSourceBucket
 
     def generate_scenes(self):
@@ -57,40 +58,54 @@ class GeoTiffS3SceneFactory(object):
         Returns:
             Generator of Scenes
         """
-        s3 = boto3.resource('s3')
+        s3 = boto3.resource("s3")
         for infile in self.files:
             # We can't use the temp file as a context manager because it'll be opened/closed multiple
             # times and by default is deleted when it's closed. So we use try/finally to ensure that
             # it gets cleaned up.
             bucket_name, key = s3_bucket_and_key_from_url(infile)
             filename = os.path.basename(key)
-            logger.info('Downloading %s => %s', infile, filename)
+            logger.info("Downloading %s => %s", infile, filename)
             bucket = s3.Bucket(bucket_name)
             with get_tempdir() as tempdir:
                 tmp_fname = os.path.join(tempdir, filename)
                 bucket.download_file(key, tmp_fname)
 
-                if self.fileType == 'NON_SPATIAL':
+                if self.fileType == "NON_SPATIAL":
                     tmp_fname = cog.georeference_file(tmp_fname)
 
                 cog.add_overviews(tmp_fname)
                 cog_path = cog.convert_to_cog(tmp_fname, tempdir)
-                scene = self.create_geotiff_scene(tmp_fname, os.path.splitext(filename)[0])
+                scene = self.create_geotiff_scene(
+                    tmp_fname, os.path.splitext(filename)[0]
+                )
                 if self.keep_in_source_bucket:
-                    scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id, bucket_name)[0]
+                    scene.ingestLocation = upload_tifs(
+                        [cog_path], self.owner, scene.id, bucket_name
+                    )[0]
                 else:
-                    scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id)[0]
-                images = [self.create_geotiff_image(
-                    tmp_fname, unquote(scene.ingestLocation), scene, cog_path
-                )]
+                    scene.ingestLocation = upload_tifs(
+                        [cog_path], self.owner, scene.id
+                    )[0]
+                images = [
+                    self.create_geotiff_image(
+                        tmp_fname, unquote(scene.ingestLocation), scene, cog_path
+                    )
+                ]
 
             scene.thumbnails = []
             scene.images = images
             yield scene
 
     def create_geotiff_image(self, tif_path, source_uri, scene, filename):
-        return create_geotiff_image(tif_path, source_uri, scene=scene.id,
-                                    filename=filename, visibility=self.visibility, owner=self.owner)
+        return create_geotiff_image(
+            tif_path,
+            source_uri,
+            scene=scene.id,
+            filename=filename,
+            visibility=self.visibility,
+            owner=self.owner,
+        )
 
     def create_geotiff_scene(self, tif_path, name):
         # Always COGs, now and forever
@@ -105,5 +120,5 @@ class GeoTiffS3SceneFactory(object):
             name=name,
             owner=self.owner,
             ingestStatus=ingestStatus,
-            sceneType='COG'
+            sceneType="COG",
         )

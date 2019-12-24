@@ -6,8 +6,8 @@ from html.parser import HTMLParser
 
 logger = logging.getLogger(__name__)
 
-EARTHDATA_USER = os.getenv('RF_EARTHDATA_USER')
-EARTHDATA_PASS = os.getenv('RF_EARTHDATA_PASS')
+EARTHDATA_USER = os.getenv("RF_EARTHDATA_USER")
+EARTHDATA_PASS = os.getenv("RF_EARTHDATA_PASS")
 
 
 def get_stream(session, url, auth, previous_tries):
@@ -34,12 +34,13 @@ def get_stream(session, url, auth, previous_tries):
 
 class LinkFinder(HTMLParser):
     """Simple parser to find download link for MODIS data"""
+
     def __init__(self):
         self.reset()
         self.download_link = None
 
     def handle_starttag(self, tag, attrs):
-        if attrs and attrs[0][0] == 'href':
+        if attrs and attrs[0][0] == "href":
             self.download_link = attrs[0][1]
 
 
@@ -56,8 +57,8 @@ def download_hdf(url, outdir):
     stream = get_stream(session, url, auth, [])
     chunk_size = 1024
     try:
-        with open(download_path, 'wb') as f:
-            logger.info('Saving %s' % download_path)
+        with open(download_path, "wb") as f:
+            logger.info("Saving %s" % download_path)
             for chunk in stream.iter_content(chunk_size):
                 f.write(chunk)
     except:

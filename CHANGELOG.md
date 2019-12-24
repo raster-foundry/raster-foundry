@@ -14,10 +14,22 @@
 
 ### Security
 
+## [1.34.0](https://github.com/raster-foundry/raster-foundry/compare/1.33.0...1.34.0)
+
+### Added
+- Support semantic segmentation stac exports [\#5253](https://github.com/raster-foundry/raster-foundry/pull/5253)
+- Added default clipping of non-byte rasters to middle 96 percent of values assuming a normal distribution [\#5264](https://github.com/raster-foundry/raster-foundry/pull/5264)
+
+### Fixed
+- Unified file extension for label item assets and label item asset links [#5252](https://github.com/raster-foundry/raster-foundry/pull/5252)
+- Added index to annotations `task_id` column to make deleting tasks way faster [#5255](https://github.com/raster-foundry/raster-foundry/pull/5255)
+- Explicitly handled case where aggregation of tasks doesn't return geometry statistics in STAC export [#5256](https://github.com/raster-foundry/raster-foundry/pull/5256)
+- Fixed upload processing bug that caused all scenes with simple footprints to fail upload processing [#5268](https://github.com/raster-foundry/raster-foundry/pull/5268)
+
 ## [1.33.0](https://github.com/raster-foundry/raster-foundry/compare/1.32.1...1.33.0)
 ### Removed
 - CMR and Shapefile support [\#5247](https://github.com/raster-foundry/raster-foundry/pull/5247)
-- Complex color correction (saturation, per-band clipping, contrast adjustment, etc.) [#5245](https://github.com/raster-foundry/raster-foundry/pull/5245)
+- Complex color correction (saturation, per-band clipping, contrast adjustment, etc.) [\#5245](https://github.com/raster-foundry/raster-foundry/pull/5245)
 
 ### Fixed
 

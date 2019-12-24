@@ -7,9 +7,16 @@ from .io import get_geotiff_size_bytes, get_geotiff_resolution
 from .create_bands import create_geotiff_bands
 
 
-def create_geotiff_image(tif_path, sourceuri, filename=None,
-                         visibility=Visibility.PRIVATE, imageMetadata={}, scene=None,
-                         owner=None, band_create_function=create_geotiff_bands):
+def create_geotiff_image(
+    tif_path,
+    sourceuri,
+    filename=None,
+    visibility=Visibility.PRIVATE,
+    imageMetadata={},
+    scene=None,
+    owner=None,
+    band_create_function=create_geotiff_bands,
+):
     """Create an Image object from a GeoTIFF.
 
     Args:
@@ -35,5 +42,5 @@ def create_geotiff_image(tif_path, sourceuri, filename=None,
         get_geotiff_resolution(tif_path)[0],
         [],
         scene=scene,
-        owner=owner
+        owner=owner,
     )

@@ -1,17 +1,16 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.common.SceneToLayer
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import cats._
-import cats.implicits._
-import com.rasterfoundry.datamodel.{Order, PageRequest}
-import java.util.UUID
+import geotrellis.vector.{Geometry, Projected}
 
-import com.rasterfoundry.common.SceneToLayer
+import java.util.UUID
 
 object ProjectLayerScenesDao extends Dao[Scene] {
   val tableName =
@@ -45,7 +44,8 @@ object ProjectLayerScenesDao extends Dao[Scene] {
 
   def listLayerScenesRaw(
       layerId: UUID,
-      splitOptionsO: Option[SplitOptions] = None): ConnectionIO[List[Scene]] = {
+      splitOptionsO: Option[SplitOptions] = None
+  ): ConnectionIO[List[Scene]] = {
     val sceneParams = splitOptionsO match {
       case Some(splitOptions: SplitOptions) =>
         CombinedSceneQueryParams(
@@ -141,7 +141,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
     }
   }
 
-  def createUnionedGeomExtent(
+  def getUnionedGeomExtent(
       layerId: UUID
   ): ConnectionIO[Option[UnionedGeomExtent]] =
     (fr"""
@@ -156,4 +156,16 @@ object ProjectLayerScenesDao extends Dao[Scene] {
     ON s.id = stl.scene_id
     WHERE stl.project_layer_id = ${layerId}
   """).query[UnionedGeomExtent].option
+
+  def getUnionedGeomFootprint(
+      layerId: UUID
+  ): ConnectionIO[Option[Projected[Geometry]]] =
+    (fr"""
+    SELECT
+      ST_Transform(ST_Union(s.data_footprint), 4326) AS geometry
+    FROM scenes s
+    JOIN scenes_to_layers stl
+    ON s.id = stl.scene_id
+    WHERE stl.project_layer_id = ${layerId}
+  """).query[Option[Projected[Geometry]]].unique
 }

@@ -95,6 +95,8 @@ services:
 
   batch:
     image: raster-foundry-batch
+    ports:
+      - "9040:9040"
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-backend/batch/target/scala-2.12/batch-assembly.jar:/opt/raster-foundry/jars/batch-assembly.jar
@@ -120,6 +122,7 @@ services:
     command: rf
     links:
       - postgres:database.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
 
   xray:
     image: amazon/aws-xray-daemon

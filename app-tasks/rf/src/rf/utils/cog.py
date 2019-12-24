@@ -1,59 +1,85 @@
 """Utilities for transforming public scenes into COGs"""
 
-from rf.ingest.settings import (landsat8_band_order, sentinel2_band_order,
-                                landsat8_datasource_id,
-                                sentinel2_datasource_id)
+from rf.ingest.settings import (
+    landsat8_band_order,
+    sentinel2_band_order,
+    landsat8_datasource_id,
+    sentinel2_datasource_id,
+)
 from rf.utils.io import s3_bucket_and_key_from_url
 
 import boto3
 import rasterio
 
 import logging
-from multiprocessing import (cpu_count, Pool)
+from multiprocessing import cpu_count, Pool
 import os
 import subprocess
 
-DATA_BUCKET = os.getenv('DATA_BUCKET')
+DATA_BUCKET = os.getenv("DATA_BUCKET")
 
-s3client = boto3.client('s3')
+s3client = boto3.client("s3")
 logger = logging.getLogger(__name__)
 
 
 def georeference_file(file_path):
-    logger.info('Georeferencing %s', file_path)
+    logger.info("Georeferencing %s", file_path)
     with rasterio.open(file_path) as ds:
         width = ds.width
         height = ds.height
 
     output_dir, source_filename = os.path.split(file_path)
-    translated_tiff = os.path.join(output_dir, '{}-referenced.tif'.format(source_filename.split('.')[0]))
+    translated_tiff = os.path.join(
+        output_dir, "{}-referenced.tif".format(source_filename.split(".")[0])
+    )
     translate_command = [
-        'gdal_translate',
-        '-a_ullr', '0', str(height), str(width), '0',
-        '-a_srs', 'epsg:3857',
-        file_path, translated_tiff
+        "gdal_translate",
+        "-a_ullr",
+        "0",
+        str(height),
+        str(width),
+        "0",
+        "-a_srs",
+        "epsg:3857",
+        file_path,
+        translated_tiff,
     ]
-    logger.debug('Running translate command: %s', translate_command)
+    logger.debug("Running translate command: %s", translate_command)
     subprocess.check_call(translate_command)
     return translated_tiff
 
 
 def add_overviews(tif_path):
-    logger.info('Adding overviews to %s', tif_path)
+    logger.info("Adding overviews to %s", tif_path)
     overviews_command = [
-        'gdaladdo', '-r', 'average', '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
-        tif_path
+        "gdaladdo",
+        "-r",
+        "average",
+        "--config",
+        "COMPRESS_OVERVIEW",
+        "DEFLATE",
+        tif_path,
     ]
     subprocess.check_call(overviews_command)
 
 
 def convert_to_cog(tif_with_overviews_path, local_dir):
-    logger.info('Converting %s to a cog', tif_with_overviews_path)
-    out_path = os.path.join(local_dir, 'cog.tif')
+    logger.info("Converting %s to a cog", tif_with_overviews_path)
+    out_path = os.path.join(local_dir, "cog.tif")
     cog_command = [
-        'gdal_translate', tif_with_overviews_path, '-co', 'TILED=YES', '-co',
-        'COMPRESS=DEFLATE', '-co', 'COPY_SRC_OVERVIEWS=YES', '-co', 'BIGTIFF=IF_SAFER',
-        '-co', 'PREDICTOR=2', out_path
+        "gdal_translate",
+        tif_with_overviews_path,
+        "-co",
+        "TILED=YES",
+        "-co",
+        "COMPRESS=DEFLATE",
+        "-co",
+        "COPY_SRC_OVERVIEWS=YES",
+        "-co",
+        "BIGTIFF=IF_SAFER",
+        "-co",
+        "PREDICTOR=2",
+        out_path,
     ]
     subprocess.check_call(cog_command)
     return out_path
@@ -75,30 +101,38 @@ def fetch_image(location, filename, local_dir):
       ValueError: Invalid URL schema in location
     """
     bucket, key = s3_bucket_and_key_from_url(location)
-    if bucket.startswith('sentinel'):
-        extra_kwargs = {'RequestPayer': 'requester'}
+    if bucket.startswith("sentinel"):
+        extra_kwargs = {"RequestPayer": "requester"}
     else:
         extra_kwargs = {}
     # both sentinel and landsat have these uris in bucket.s3.amazonaws.com/...,
     # so bucket and key from url does a bad job splitting correctly. follow up
     # by splitting on '.' and taking the first one
-    bucket = bucket.split('.')[0]
-    logger.info('Fetching image from bucket %s with key %s', bucket, key)
+    bucket = bucket.split(".")[0]
+    logger.info("Fetching image from bucket %s with key %s", bucket, key)
     dst = os.path.join(local_dir, filename)
-    with open(dst, 'wb') as outf:
+    with open(dst, "wb") as outf:
         outf.write(
-            s3client.get_object(Bucket=bucket, Key=key,
-                                **extra_kwargs)['Body'].read())
+            s3client.get_object(Bucket=bucket, Key=key, **extra_kwargs)["Body"].read()
+        )
 
 
 def merge_tifs(local_tif_paths, local_dir):
-    logger.info('Merging {} tif paths'.format(len(local_tif_paths)))
-    logger.debug('The files are:\n%s', '\n'.join(local_tif_paths))
-    merged_path = os.path.join(local_dir, 'merged.tif')
+    logger.info("Merging {} tif paths".format(len(local_tif_paths)))
+    logger.debug("The files are:\n%s", "\n".join(local_tif_paths))
+    merged_path = os.path.join(local_dir, "merged.tif")
     merge_command = [
-                        'gdal_merge.py', '-o', merged_path, '-separate', '-co', 'COMPRESS=DEFLATE',
-                        '-co', 'PREDICTOR=2', '-co', 'BIGTIFF=IF_SAFER'
-                    ] + local_tif_paths
+        "gdal_merge.py",
+        "-o",
+        merged_path,
+        "-separate",
+        "-co",
+        "COMPRESS=DEFLATE",
+        "-co",
+        "PREDICTOR=2",
+        "-co",
+        "BIGTIFF=IF_SAFER",
+    ] + local_tif_paths
     subprocess.check_call(merge_command)
     return merged_path
 
@@ -110,56 +144,76 @@ def sort_key(datasource_id, band):
         return landsat8_band_order[band.name]
     else:
         raise ValueError(
-            'Trying to run public COG ingest for scene with mysterious datasource',
-            datasource_id)
+            "Trying to run public COG ingest for scene with mysterious datasource",
+            datasource_id,
+        )
 
 
 def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
     src_fname = os.path.split(src_path)[-1]
-    src_fname_ext = src_fname.split('.')[-1]
-    dst_fname = src_fname.replace(src_fname_ext, 'warped.tif')
+    src_fname_ext = src_fname.split(".")[-1]
+    dst_fname = src_fname.replace(src_fname_ext, "warped.tif")
     dst_path = os.path.join(local_dir, dst_fname)
     if src_x == dst_x and src_y == dst_y:
         logger.info(
-            'No need to reproject for %s, already in target resolution',
-            src_path)
+            "No need to reproject for %s, already in target resolution", src_path
+        )
         subprocess.check_call(
-            ['gdal_translate', '-co', 'COMPRESS=DEFLATE', '-co', 'BIGTIFF=IF_SAFER', src_path, dst_path])
+            [
+                "gdal_translate",
+                "-co",
+                "COMPRESS=DEFLATE",
+                "-co",
+                "BIGTIFF=IF_SAFER",
+                src_path,
+                dst_path,
+            ]
+        )
     # if there are any resolution difference, including if they're weird, like a
     # greater x resolution and lesser y resolution, reproject to the same size
     else:
         # Landsat 8 / Sentinel-2 images have a bunch of single band components
         x_rat = int(src_x / dst_x)
         y_rat = int(src_y / dst_y)
-        logger.info('Resampling %s', src_fname)
-        logger.info('Increasing x resolution by %sx, y resolution by %sx',
-                    x_rat, y_rat)
+        logger.info("Resampling %s", src_fname)
+        logger.info("Increasing x resolution by %sx, y resolution by %sx", x_rat, y_rat)
         # No need to throw in -wo for the compression options, since we're doing all
         # of the bands at once
-        subprocess.check_call([
-            'gdalwarp', '-co', 'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2',
-            '-co', 'BIGTIFF=IF_SAFER', '-tr',
-            str(dst_x),
-            str(dst_y), src_path, dst_path
-        ])
+        subprocess.check_call(
+            [
+                "gdalwarp",
+                "-co",
+                "COMPRESS=DEFLATE",
+                "-co",
+                "PREDICTOR=2",
+                "-co",
+                "BIGTIFF=IF_SAFER",
+                "-tr",
+                str(dst_x),
+                str(dst_y),
+                src_path,
+                dst_path,
+            ]
+        )
     return dst_path
 
 
 def warp_tifs(local_tif_paths, local_dir, parallel=True):
-    logger.info('Getting metadata for tifs')
+    logger.info("Getting metadata for tifs")
     sources = [rasterio.open(p) for p in local_tif_paths]
     # a is x resoution, e is y resolution
     paths_with_resolutions = [
-        (path, source.meta['transform'].a, source.meta['transform'].e)
+        (path, source.meta["transform"].a, source.meta["transform"].e)
         for path, source in zip(local_tif_paths, sources)
     ]
     # assume cells are square to find the minimum -- this could be wrong, but isn't for any
     # of the imagery we know we're using
     min_resolution = sorted(paths_with_resolutions, key=lambda x: x[1])[0]
-    tupled = [(src_path, local_dir, src_x, min_resolution[1], src_y,
-               min_resolution[2])
-              for src_path, src_x, src_y in paths_with_resolutions]
-    logger.info('Resampling to maximum available resolution')
+    tupled = [
+        (src_path, local_dir, src_x, min_resolution[1], src_y, min_resolution[2])
+        for src_path, src_x, src_y in paths_with_resolutions
+    ]
+    logger.info("Resampling to maximum available resolution")
     pool = Pool(cpu_count())
     try:
         warped_paths = pool.map(resample_tif_uncurried, tupled)

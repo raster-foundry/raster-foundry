@@ -41,7 +41,7 @@ object DatabaseIO {
   ): ConnectionIO[Option[ExportData]] = {
     for {
       scenes <- ProjectLayerScenesDao.listLayerScenesRaw(layerId)
-      scenesGeomExtentOption <- ProjectLayerScenesDao.createUnionedGeomExtent(
+      scenesGeomExtentOption <- ProjectLayerScenesDao.getUnionedGeomExtent(
         layerId)
       tasks <- TaskDao.listLayerTasksByStatus(projectId, layerId, taskStatuses)
       tasksGeomExtentOption <- TaskDao.createUnionedGeomExtent(

@@ -1,19 +1,33 @@
 import logging
 import uuid
 
-from rf.models import Scene
+from rf.models import Footprint, Scene
 from rf.utils.io import IngestStatus, JobStatus, Visibility
+from rf.utils.footprint import complex_footprint
+from shapely.geometry import mapping, MultiPolygon, Polygon
 
 from .io import get_geotiff_metadata, get_geotiff_name
 
 logger = logging.getLogger(__name__)
 
 
-def create_geotiff_scene(tif_path, datasource, acquisitionDate=None, cloudCover=0,
-                         visibility=Visibility.PRIVATE, tags=[],
-                         sceneMetadata=None, name=None, thumbnailStatus=JobStatus.QUEUED,
-                         boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.TOBEINGESTED,
-                         metadataFiles=[], owner=None, sceneType="COG", **kwargs):
+def create_geotiff_scene(
+    tif_path,
+    datasource,
+    acquisitionDate=None,
+    cloudCover=0,
+    visibility=Visibility.PRIVATE,
+    tags=[],
+    sceneMetadata=None,
+    name=None,
+    thumbnailStatus=JobStatus.QUEUED,
+    boundaryStatus=JobStatus.QUEUED,
+    ingestStatus=IngestStatus.TOBEINGESTED,
+    metadataFiles=[],
+    owner=None,
+    sceneType="COG",
+    **kwargs
+):
     """Returns scenes that can be created via API given a local path to a geotiff.
 
     Does not create Images because those require a Source URI, which this doesn't know about. Use
@@ -35,22 +49,24 @@ def create_geotiff_scene(tif_path, datasource, acquisitionDate=None, cloudCover=
     Returns:
         List[Scene]
     """
-    logger.info('Generating Scene from %s', tif_path)
+    logger.info("Generating Scene from %s", tif_path)
 
     # Start with default values
     sceneMetadata = sceneMetadata if sceneMetadata else get_geotiff_metadata(tif_path)
     name = name if name else get_geotiff_name(tif_path)
 
     sceneKwargs = {
-        'sunAzimuth': None,  # TODO: Calculate from acquisitionDate and tif center.
-        'sunElevation': None,  # TODO: Same
-        'cloudCover': cloudCover,
-        'acquisitionDate': acquisitionDate,
-        'id': str(uuid.uuid4()),
-        'thumbnails': None
+        "sunAzimuth": None,  # TODO: Calculate from acquisitionDate and tif center.
+        "sunElevation": None,  # TODO: Same
+        "cloudCover": cloudCover,
+        "acquisitionDate": acquisitionDate,
+        "id": str(uuid.uuid4()),
+        "thumbnails": None,
     }
     # Override defaults with kwargs
     sceneKwargs.update(kwargs)
+    data_footprint = complex_footprint(tif_path)
+    tile_footprint = MultiPolygon([Polygon.from_bounds(*data_footprint.bounds)])
 
     # Construct Scene
     scene = Scene(
@@ -65,6 +81,8 @@ def create_geotiff_scene(tif_path, datasource, acquisitionDate=None, cloudCover=
         metadataFiles,
         owner=owner,
         sceneType=sceneType,
+        dataFootprint=Footprint(mapping(data_footprint)["coordinates"]),
+        tileFootprint=Footprint(mapping(tile_footprint)["coordinates"]),
         **sceneKwargs
     )
 

@@ -12,6 +12,8 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import geotrellis.proj4.{CRS, WebMercator}
+import geotrellis.vector.{Geometry, Projected}
 import io.circe._
 import io.circe.syntax._
 import java.sql.Timestamp
@@ -275,6 +277,18 @@ object ProjectDao
       case _ => 0.pure[ConnectionIO]
     }
   }
+
+  def getFootprint(projectId: UUID): ConnectionIO[Option[Projected[Geometry]]] =
+    for {
+      projectO <- ProjectDao.getProjectById(projectId)
+      footprint <- projectO traverse { project =>
+        ProjectLayerScenesDao.getUnionedGeomFootprint(project.defaultLayerId)
+      }
+    } yield {
+      footprint.flatten map { fp =>
+        fp.reproject(CRS.fromEpsgCode(fp.srid), WebMercator)(3857)
+      }
+    }
 
   def updateProjectExtentIO(projectId: UUID): ConnectionIO[Int] = {
     val updateQueryIO =

@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 # RGB bands. I'm assuming than the panchromatic band has a width equal to the
 # sum of the other four bands (RGB + NIR).
 band_data_lookup = {
-    'nir': ('Near Infrared', [670, 760]),
-    'red': ('Red', [590, 670]),
-    'green': ('Green', [490, 590]),
-    'blue': ('Blue', [400, 490]),
-    'pan': ('Panchromatic', [400, 760]),
-    'gray': ('Gray', [0, 0]),
-    'alpha': ('Alpha', [0, 0])
+    "nir": ("Near Infrared", [670, 760]),
+    "red": ("Red", [590, 670]),
+    "green": ("Green", [490, 590]),
+    "blue": ("Blue", [400, 490]),
+    "pan": ("Panchromatic", [400, 760]),
+    "gray": ("Gray", [0, 0]),
+    "alpha": ("Alpha", [0, 0]),
 }
 
 
@@ -48,13 +48,13 @@ def create_geotiff_bands(tif_path):
         for band in src.indexes:
             colorinterp = src.colorinterp(band)
             if colorinterp == ColorInterp.undefined:
-                band_data = band_data_lookup['nir']
+                band_data = band_data_lookup["nir"]
             elif colorinterp.name in band_data_lookup:
                 band_data = band_data_lookup[colorinterp.name]
             else:
                 # If we get a name for a layer that we can't map to anything, log
                 # and ignore it.
-                logger.warning('Could not map layer with name %s', colorinterp.name)
+                logger.warning("Could not map layer with name %s", colorinterp.name)
                 continue
             bands.append(Band(band_data[0], band, band_data[1]))
     return bands
