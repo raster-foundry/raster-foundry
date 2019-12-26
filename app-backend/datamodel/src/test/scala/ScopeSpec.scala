@@ -1,9 +1,9 @@
 package com.rasterfoundry.datamodel
 
-import org.scalatest.FunSuite
-import org.scalacheck.Arbitrary
-import org.typelevel.discipline.scalatest.Discipline
 import cats.kernel.laws.discipline.MonoidTests
+import org.scalacheck.Arbitrary
+import org.scalatest.FunSuite
+import org.typelevel.discipline.scalatest.Discipline
 
 class ScopeSpec extends FunSuite with Discipline {
 
@@ -18,4 +18,7 @@ class ScopeSpec extends FunSuite with Discipline {
   }
 
   checkAll("Scope.MonoidLaws", MonoidTests[Scope].monoid)
+
+  // TODO test ser-de
+  // TODO test some permissions relationships
 }

@@ -6,17 +6,21 @@ sealed abstract class Scope {
   val actions: Set[String]
 }
 
-class SimpleScope(val actions: Set[String]) extends Scope
+sealed abstract class QuantitativeLimit {
+  val limit: Option[Long]
+}
+
+sealed class SimpleScope(val actions: Set[String]) extends Scope
 object SimpleScope {
-  def apply(actions: String*): SimpleScope =
+  private[datamodel] def apply(actions: String*): SimpleScope =
     new SimpleScope(actions.toSet)
 }
 
-class ComplexScope(scopes: Set[Scope]) extends Scope {
+sealed class ComplexScope(scopes: Set[Scope]) extends Scope {
   val actions = scopes flatMap { _.actions }
 }
 object ComplexScope {
-  def apply(scopes: Scope*): ComplexScope =
+  private[datamodel] def apply(scopes: Scope*): ComplexScope =
     new ComplexScope(scopes.toSet)
 }
 
@@ -28,46 +32,88 @@ object Scope {
   }
 
   implicit val monoidScope = new Monoid[Scope] {
-    def empty = NoAccess
+    def empty = Scopes.NoAccess
     def combine(x: Scope, y: Scope): Scope =
       ComplexScope(x, y)
   }
+
+}
+
+object Scopes {
 
   private def makeCRUDScopes(prefix: String): Set[String] =
     Set(":read", ":create", ":update", ":delete") map { s =>
       prefix ++ s
     }
 
-  // Separate scoped down upload permissions because most users don't need
-  // to be able to edit uploads (since the system user does that in upload
-  // processing)
   case object Uploader
       extends SimpleScope(
         Set("uploads:read", "uploads:create", "uploads:delete")
       )
+
   case object UploadsCRUD
       extends ComplexScope(Set(Uploader, SimpleScope("uploads:delete")))
 
   case object ScenesCRUD extends SimpleScope(makeCRUDScopes("scenes"))
 
+  case object ScenesMultiPlayer extends SimpleScope(Set("scenes:share"))
+
+  case object ScenesFullAccess
+      extends ComplexScope(Set(ScenesCRUD, ScenesMultiPlayer))
+
   case object ProjectsCRUD extends SimpleScope(makeCRUDScopes("projects"))
 
-  // Not creating a separate permission for getting an export's files, since
-  // I can't currently imagine a case where someone would be allowed to view a
-  // project's exports but not download their files
   case object ProjectExport
       extends SimpleScope(Set("projects:listExports", "projects:createExport"))
 
-  case object ProjectsCRUDMultiPlayer
-      extends ComplexScope(
-        Set(ProjectsCRUD, SimpleScope("projects:share"))
+  case object ProjectAnnotate
+      extends SimpleScope(
+        Set(
+          "projects:createAnnotation",
+          "projects:deleteAnnotation",
+          "projects:editAnnotation"
+        )
       )
 
-  case object ProjectsFullAccess
-      extends ComplexScope(Set(ProjectsCRUDMultiPlayer, ProjectExport))
+  case object DatasourcesCRUD extends SimpleScope(makeCRUDScopes("datasources"))
 
-  // users with this scope aren't allowed to do anything
-  case object NoAccess extends Scope {
-    val actions = Set.empty
-  }
+  case object ProjectsMultiPlayer extends SimpleScope(Set("projects:share"))
+
+  case object ProjectsFullAccess
+      extends ComplexScope(
+        Set(ProjectsCRUD, ProjectsMultiPlayer, ProjectExport, ProjectAnnotate)
+      )
+
+  case object ShapesCRUD extends SimpleScope(makeCRUDScopes("shapes"))
+
+  case object ShapesMultiPlayer extends SimpleScope(Set("shapes:share"))
+
+  case object ShapesFullAccess
+      extends ComplexScope(Set(ShapesCRUD, ShapesMultiPlayer))
+
+  case object TemplatesCRUD extends SimpleScope(makeCRUDScopes("templates"))
+  case object TemplatesMultiPlayer extends SimpleScope(Set("templates:share"))
+  case object TemplatesFullAccess
+      extends ComplexScope(Set(TemplatesCRUD, TemplatesMultiPlayer))
+
+  case object AnalysesCRUD extends SimpleScope(makeCRUDScopes("analyses"))
+  case object AnalysesMultiPlayer extends SimpleScope(Set("analyses:share"))
+  case object AnalysesFullAccess
+      extends ComplexScope(Set(AnalysesCRUD, AnalysesMultiPlayer))
+
+  case object NoAccess extends SimpleScope(Set.empty)
+
+  case object RasterFoundryUser
+      extends ComplexScope(
+        Set(
+          AnalysesFullAccess,
+          DatasourcesCRUD,
+          ProjectsFullAccess,
+          ScenesFullAccess,
+          ShapesFullAccess,
+          TemplatesFullAccess,
+          Uploader,
+          SimpleScope("teams:read", "organizations:read")
+        )
+      )
 }
