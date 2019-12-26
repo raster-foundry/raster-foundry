@@ -81,6 +81,7 @@ object Dependencies {
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % Version.caffeine
   val catsCore = "org.typelevel" %% "cats-core" % Version.cats
   val catsEffect = "org.typelevel" %% "cats-effect" % Version.catsEffect
+  val catsLaws = "org.typelevel" %% "cats-laws" % Version.cats % Test
   val catsMeow = "com.olegpy" %% "meow-mtl" % Version.catsMeow
   val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % Version.catsScalacheck % "test"
   val circeCore = "io.circe" %% "circe-core" % Version.circe
