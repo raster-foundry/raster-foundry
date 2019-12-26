@@ -46,6 +46,8 @@ object Scopes {
       prefix ++ s
     }
 
+  case object NoAccess extends SimpleScope(Set.empty)
+
   case object Uploader
       extends SimpleScope(
         Set("uploads:read", "uploads:create", "uploads:delete")
@@ -101,8 +103,6 @@ object Scopes {
   case object AnalysesFullAccess
       extends ComplexScope(Set(AnalysesCRUD, AnalysesMultiPlayer))
 
-  case object NoAccess extends SimpleScope(Set.empty)
-
   case object RasterFoundryUser
       extends ComplexScope(
         Set(
@@ -113,7 +113,18 @@ object Scopes {
           ShapesFullAccess,
           TemplatesFullAccess,
           Uploader,
+          // Regular users can view their teams and organizations, but can do nothing
+          // else in that domain
           SimpleScope("teams:read", "organizations:read")
         )
       )
+
+  // TODO
+  case object RasterFoundryTeamAdmin extends ComplexScope(Set.empty)
+
+  // TODO
+  case object RasterFoundryOrganizationAdmin extends ComplexScope(Set.empty)
+
+  // TODO
+  case object RasterFoundryPlatformAdmin extends ComplexScope(Set.empty)
 }
