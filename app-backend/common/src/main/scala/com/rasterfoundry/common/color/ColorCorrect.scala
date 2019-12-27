@@ -174,7 +174,7 @@ object ColorCorrect extends LazyLogging {
         // else if stats are available, clip assuming a normal distribution
         // else use the histogram's min/max
         (imin, imax, statsOption) match {
-          case (0, 255, _) => iMaxMin(index) = (0, 255)
+          case (0, 255, _)         => iMaxMin(index) = (0, 255)
           case (_, _, Some(stats)) =>
             // assuming a normal distribution, clips 2nd and 98th percentiles of values
             val newMin = stats.mean + (stats.stddev * -2.05)

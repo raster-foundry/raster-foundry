@@ -2,8 +2,10 @@ package com.rasterfoundry.datamodel
 
 import cats.{Eq, Monoid}
 import cats.implicits._
-import _root_.io.circe.{Decoder, Encoder, Json}
-import scala.util.{Failure, Success, Try}
+import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, Json}
+import io.circe.parser._
+
+import scala.util.{Failure, Success}
 
 case class Action(domain: String, action: String, limit: Option[Long]) {
   def repr: String =
@@ -15,17 +17,22 @@ case class Action(domain: String, action: String, limit: Option[Long]) {
 }
 
 object Action {
-  private[datamodel] def fromString(s: String): Try[Action] =
-    s.split(":").toList match {
-      case domain :: action :: Nil =>
-        Success(Action(domain, action, None))
-      case domain :: action :: lim :: Nil =>
-        Success(Action(domain, action, Some(lim.toLong)))
-      case result =>
-        Failure(
-          new Exception(s"Cannot build an action from split string: $result")
-        )
-    }
+  implicit val decAction: Decoder[Action] = Decoder.decodeString.emapTry {
+    (s: String) =>
+      s.split(":").toList match {
+        case domain :: action :: Nil =>
+          Success(Action(domain, action, None))
+        case domain :: action :: lim :: Nil =>
+          Success(Action(domain, action, Some(lim.toLong)))
+        case result =>
+          Failure(
+            DecodingFailure(
+              s"Cannot build an action from split string: $result",
+              List()
+            )
+          )
+      }
+  }
 }
 
 sealed abstract class Scope {
@@ -34,11 +41,26 @@ sealed abstract class Scope {
 
 sealed class SimpleScope(
     val actions: Set[Action]
-) extends Scope
+) extends Scope {
+  override def toString: String = actions map { _.repr } mkString (";")
+}
 
 object SimpleScope {
   def unapply(simpleScope: SimpleScope): Option[Set[Action]] =
     Some(simpleScope.actions)
+
+  def fromEithers(
+      actions: List[Either[DecodingFailure, Action]]
+  ): Either[DecodingFailure, SimpleScope] = {
+    val failures = actions.filter(_.isLeft)
+    if (!failures.isEmpty) {
+      Left(DecodingFailure(failures.mkString(";"), List()))
+    } else {
+      actions.sequence map { acts =>
+        new SimpleScope(acts.toSet)
+      }
+    }
+  }
 }
 
 sealed class ComplexScope(scopes: Set[Scope]) extends Scope {
@@ -54,35 +76,6 @@ object ComplexScope {
 }
 
 object Scope {
-
-  private[datamodel] def fromString(s: String): Try[Scope] = s match {
-    case "uploader"                  => Success(Scopes.Uploader)
-    case "analyses:crud"             => Success(Scopes.AnalysesCRUD)
-    case "analyses:multiplayer"      => Success(Scopes.AnalysesMultiPlayer)
-    case "datasources:crud"          => Success(Scopes.DatasourcesCRUD)
-    case "organizations:userAdmin"   => Success(Scopes.OrganizationsUserAdmin)
-    case "projects:exportFullAccess" => Success(Scopes.ProjectExport)
-    case "projects:fullAccess"       => Success(Scopes.ProjectsFullAccess)
-    case "organizations:admin"       => Success(Scopes.RasterFoundryOrganizationAdmin)
-    case "teams:admin"               => Success(Scopes.RasterFoundryTeamAdmin)
-    case "scenes:crud"               => Success(Scopes.ScenesCRUD)
-    case "scenes:multiplayer"        => Success(Scopes.ScenesMultiPlayer)
-    case "shapes:fullAccess"         => Success(Scopes.ShapesFullAccess)
-    case "teams:edit"                => Success(Scopes.TeamsEdit)
-    case "templates:crud"            => Success(Scopes.TemplatesCRUD)
-    case "templates:multiplayer"     => Success(Scopes.TemplatesMultiPlayer)
-    case "uploads:crud"              => Success(Scopes.UploadsCRUD)
-    case s =>
-      (s.split(";").toList match {
-        case List("") => Success(List.empty)
-        case actions =>
-          actions traverse { scopePart =>
-            Action.fromString(scopePart)
-          }
-      }).map { scopeParts =>
-        new SimpleScope(scopeParts.toSet)
-      }
-  }
 
   implicit val eqScope = new Eq[Scope] {
     def eqv(x: Scope, y: Scope): Boolean =
@@ -127,9 +120,38 @@ object Scope {
     }
   }
 
-  implicit val decScope: Decoder[Scope] = Decoder.decodeString.emapTry {
-    (s: String) =>
-      Scope.fromString(s)
+  implicit val decScope: Decoder[Scope] = new Decoder[Scope] {
+    def apply(c: HCursor): Decoder.Result[Scope] = c.value.asString match {
+      case Some("uploader")             => Right(Scopes.Uploader)
+      case Some("analyses:crud")        => Right(Scopes.AnalysesCRUD)
+      case Some("analyses:multiplayer") => Right(Scopes.AnalysesMultiPlayer)
+      case Some("datasources:crud")     => Right(Scopes.DatasourcesCRUD)
+      case Some("organizations:userAdmin") =>
+        Right(Scopes.OrganizationsUserAdmin)
+      case Some("projects:exportFullAccess") => Right(Scopes.ProjectExport)
+      case Some("projects:fullAccess")       => Right(Scopes.ProjectsFullAccess)
+      case Some("organizations:admin") =>
+        Right(Scopes.RasterFoundryOrganizationAdmin)
+      case Some("teams:admin")           => Right(Scopes.RasterFoundryTeamAdmin)
+      case Some("scenes:crud")           => Right(Scopes.ScenesCRUD)
+      case Some("scenes:multiplayer")    => Right(Scopes.ScenesMultiPlayer)
+      case Some("shapes:fullAccess")     => Right(Scopes.ShapesFullAccess)
+      case Some("teams:edit")            => Right(Scopes.TeamsEdit)
+      case Some("templates:crud")        => Right(Scopes.TemplatesCRUD)
+      case Some("templates:multiplayer") => Right(Scopes.TemplatesMultiPlayer)
+      case Some("uploads:crud")          => Right(Scopes.UploadsCRUD)
+      case Some(s) =>
+        SimpleScope.fromEithers((s.split(";").toList match {
+          case List("") => List.empty
+          case actions =>
+            actions.map(
+              act =>
+                decode[Action](s""""$act"""")
+                  .leftMap(err => DecodingFailure(err.getMessage, Nil))
+            )
+        }))
+      case _ => Left(DecodingFailure("Scope", c.history))
+    }
   }
 }
 
