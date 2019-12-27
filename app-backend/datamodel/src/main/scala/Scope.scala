@@ -253,8 +253,8 @@ object Scopes {
           Uploader,
           // Regular users can view their teams and organizations, but can do nothing
           // else in that domain
-          new SimpleScope(Set("team", "organizations") map {
-            makeAction(_, "read")
+          new SimpleScope(Set("teams", "organizations") flatMap { domain =>
+            Set(makeAction(domain, "read"), makeAction(domain, "readUsers"))
           })
         )
       )
