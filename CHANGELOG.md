@@ -4,6 +4,8 @@
 
 ### Added
 
+- Created a composable and flexible datamodel for user scopes [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270)
+
 ### Changed
 
 ### Deprecated
