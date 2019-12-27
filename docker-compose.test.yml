@@ -92,7 +92,7 @@ services:
     working_dir: /usr/local/src
 
   panrec:
-    image: jisantuc/panrec:latest
+    image: jisantuc/panrec:ba13f43
     volumes:
       - ./stubs:/opt/data/out
       - ./app-backend:/opt/data/app-backend
