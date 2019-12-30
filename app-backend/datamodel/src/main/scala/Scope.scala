@@ -7,53 +7,19 @@ import io.circe.parser._
 
 import scala.util.{Failure, Success, Try}
 
-sealed abstract class Domain(repr: String, val validActions: Set[Action]) {
+sealed abstract class Domain(repr: String) {
   override def toString: String = repr
 }
 object Domain {
-  val crudActions: Set[Action] =
-    Set(Action.Create, Action.Read, Action.Update, Action.Delete)
-  case object Uploads
-      extends Domain("uploads", crudActions ++ Set(Action.Share))
-  case object Scenes extends Domain("scenes", crudActions ++ Set(Action.Share))
-  case object Projects
-      extends Domain(
-        "projects",
-        crudActions ++ Set(
-          Action.Share,
-          Action.ListExports,
-          Action.CreateExport,
-          Action.CreateAnnotation,
-          Action.DeleteAnnotation,
-          Action.UpdateAnnotation
-        )
-      )
-  case object Datasources extends Domain("datasources", crudActions)
-  case object Shapes extends Domain("shapes", crudActions ++ Set(Action.Share))
-  case object Templates
-      extends Domain("templates", crudActions ++ Set(Action.Share))
-  case object Analyses
-      extends Domain("analyses", crudActions ++ Set(Action.Share))
-  case object Teams
-      extends Domain(
-        "teams",
-        crudActions ++ Set(
-          Action.AddUser,
-          Action.RemoveUser,
-          Action.UpdateUserRole,
-          Action.ReadUsers
-        )
-      )
-  case object Organizations
-      extends Domain(
-        "organizations",
-        crudActions ++ Set(
-          Action.AddUser,
-          Action.RemoveUser,
-          Action.UpdateUserRole,
-          Action.ReadUsers
-        )
-      )
+  case object Uploads extends Domain("uploads")
+  case object Scenes extends Domain("scenes")
+  case object Projects extends Domain("projects")
+  case object Datasources extends Domain("datasources")
+  case object Shapes extends Domain("shapes")
+  case object Templates extends Domain("templates")
+  case object Analyses extends Domain("analyses")
+  case object Teams extends Domain("teams")
+  case object Organizations extends Domain("organizations")
 
   def fromStringTry(s: String): Try[Domain] = s match {
     case "uploads"       => Success(Uploads)
@@ -118,7 +84,7 @@ object Action {
   * (e.g. teams:createExport:-4), it at least prevents the creation of permissions
   * that are one typo away from valid (e.g. projects:createExpert).
   */
-class ScopedAction(domain: Domain, action: Action, limit: Option[Long]) {
+case class ScopedAction(domain: Domain, action: Action, limit: Option[Long]) {
   def repr: String =
     s"$domain:$action" ++ {
       limit map { lim =>
@@ -128,29 +94,18 @@ class ScopedAction(domain: Domain, action: Action, limit: Option[Long]) {
 }
 
 object ScopedAction {
-  def apply(
-      domain: Domain,
-      action: Action,
-      limit: Option[Long]
-  ): Try[ScopedAction] =
-    if (domain.validActions.contains(action)) {
-      Success(new ScopedAction(domain, action, limit))
-    } else {
-      Failure(new Exception(s"Domain $domain does not support action $action"))
-    }
-
   implicit val decScopedAction: Decoder[ScopedAction] =
     Decoder.decodeString.emapTry { (s: String) =>
       s.split(":").toList match {
         case domain :: action :: Nil =>
-          ((Domain.fromStringTry(domain), Action.fromStringTry(action)) mapN {
+          (Domain.fromStringTry(domain), Action.fromStringTry(action)) mapN {
             case (dom, act) =>
               ScopedAction(dom, act, None)
-          }).flatten
+          }
         case domain :: action :: lim :: Nil =>
-          ((Domain.fromStringTry(domain), Action.fromStringTry(action)) mapN {
+          (Domain.fromStringTry(domain), Action.fromStringTry(action)) mapN {
             case (dom, act) => ScopedAction(dom, act, Some(lim.toLong))
-          }).flatten
+          }
         case result =>
           Failure(
             DecodingFailure(
@@ -294,7 +249,7 @@ object Scopes {
       action: Action,
       limit: Option[Long] = None
   ): ScopedAction =
-    new ScopedAction(domain, action, limit)
+    ScopedAction(domain, action, limit)
 
   case object NoAccess extends SimpleScope(Set.empty)
 
@@ -335,7 +290,7 @@ object Scopes {
         Set(
           Action.CreateAnnotation,
           Action.DeleteAnnotation,
-          Action.UpdateAnnotation
+          Action.UpdateAnnotation,
         ) map {
           makeScopedAction(Domain.Projects, _)
         }
@@ -441,8 +396,7 @@ object Scopes {
         Set(
           RasterFoundryOrganizationAdmin,
           new SimpleScope(
-            Set(makeScopedAction(Domain.Organizations, Action.Create))
-          )
+            Set(makeScopedAction(Domain.Organizations, Action.Create)))
         )
       )
 }

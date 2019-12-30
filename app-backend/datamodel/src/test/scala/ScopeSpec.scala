@@ -42,11 +42,9 @@ class ScopeSpec
           Action.AddUser,
           Action.RemoveUser,
           Action.UpdateUserRole
-        ) suchThat { act =>
-          domain.validActions contains act
-        }
+        )
         limit <- Arbitrary.arbitrary[Option[Long]]
-      } yield new ScopedAction(domain, action, limit)
+      } yield ScopedAction(domain, action, limit)
     }
 
   def cannedPolicyGen: Gen[Scope] = Gen.oneOf(
