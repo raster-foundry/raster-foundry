@@ -1919,7 +1919,7 @@ paths:
 
 
   /projects/{projectID}/annotations/{annotationID}:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: 'Get an annotation belonging to a project default layer'
       tags:
@@ -2922,7 +2922,7 @@ paths:
 
 
   /projects/{projectID}/layers/{layerID}/annotations/{annotationID}/:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: 'Get an annotation belonging to a project layer'
       tags:
@@ -4352,7 +4352,7 @@ paths:
             $ref: '#/definitions/Error'
 
   /shapes/{shapeID}:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: Get a specific shape
       tags:
