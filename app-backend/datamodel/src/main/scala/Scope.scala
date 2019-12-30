@@ -74,6 +74,16 @@ object Action {
   }
 }
 
+/** A ScopedAction is a combination of a domain, an action, and a limit.
+  *
+  * Domains are an enum containing all of the area of the application that can
+  * have permissions attached to them.
+  * Actions are an enum containing all of the things it's possible to do in any
+  * domain.
+  * While making these enums doesn't prevent the creation of bonkers permissions
+  * (e.g. teams:createExport:-4), it at least prevents the creation of permissions
+  * that are one typo away from valid (e.g. projects:createExpert).
+  */
 case class ScopedAction(domain: Domain, action: Action, limit: Option[Long]) {
   def repr: String =
     s"$domain:$action" ++ {
