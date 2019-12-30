@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Removed unused route and fixed spelling in Swagger spec [#5273](https://github.com/raster-foundry/raster-foundry/pull/5273)
+
 ### Security
 
 ## [1.34.0](https://github.com/raster-foundry/raster-foundry/compare/1.33.0...1.34.0)
