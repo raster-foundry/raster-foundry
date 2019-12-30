@@ -13,26 +13,29 @@ class ScopeSpec
     with Checkers
     with ArbitraryInstances {
 
-  implicit val arbAction: Arbitrary[Action] = Arbitrary[Action] {
-    for {
-      domain <- Gen.oneOf(
-        "projects",
-        "scenes",
-        "shapes",
-        "templates",
-        "teams",
-        "organizations",
-        "datasources"
-      )
-      action <- Gen.oneOf(
-        "read",
-        "edit",
-        "create",
-        "delete"
-      )
-      limit <- Arbitrary.arbitrary[Option[Long]]
-    } yield Action(domain, action, limit)
-  }
+  implicit val arbScopedAction: Arbitrary[ScopedAction] =
+    Arbitrary[ScopedAction] {
+      for {
+        domain <- Gen.oneOf(
+          Domain.Uploads,
+          Domain.Scenes,
+          Domain.Projects,
+          Domain.Datasources,
+          Domain.Shapes,
+          Domain.Templates,
+          Domain.Analyses,
+          Domain.Teams,
+          Domain.Organizations
+        )
+        action <- Gen.oneOf(
+          "read",
+          "edit",
+          "create",
+          "delete"
+        )
+        limit <- Arbitrary.arbitrary[Option[Long]]
+      } yield ScopedAction(domain, action, limit)
+    }
 
   def cannedPolicyGen: Gen[Scope] = Gen.oneOf(
     Scopes.Uploader,
@@ -60,7 +63,7 @@ class ScopeSpec
   implicit val arbScope: Arbitrary[Scope] = Arbitrary[Scope] {
     for {
       scope <- Gen.oneOf(
-        Arbitrary.arbitrary[Set[Action]] map { new SimpleScope(_) },
+        Arbitrary.arbitrary[Set[ScopedAction]] map { new SimpleScope(_) },
         cannedPolicyGen
       )
     } yield scope
