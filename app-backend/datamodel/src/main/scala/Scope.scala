@@ -35,7 +35,46 @@ object Domain {
   }
 }
 
-case class ScopedAction(domain: Domain, action: String, limit: Option[Long]) {
+sealed abstract class Action(repr: String) {
+  override def toString: String = repr
+}
+
+object Action {
+  case object Read extends Action("read")
+  case object Create extends Action("create")
+  case object Delete extends Action("delete")
+  case object Update extends Action("update")
+  case object Share extends Action("share")
+  case object ListExports extends Action("listExports")
+  case object CreateExport extends Action("createExport")
+  case object CreateAnnotation extends Action("createAnnotation")
+  case object DeleteAnnotation extends Action("deleteAnnotation")
+  case object UpdateAnnotation extends Action("updateAnnotation")
+  case object ReadUsers extends Action("readUsers")
+  case object AddUser extends Action("addUser")
+  case object RemoveUser extends Action("removeUser")
+  case object UpdateUserRole extends Action("updateUserRole")
+
+  def fromStringTry(s: String): Try[Action] = s match {
+    case "read"             => Success(Read)
+    case "create"           => Success(Create)
+    case "delete"           => Success(Delete)
+    case "update"           => Success(Update)
+    case "share"            => Success(Share)
+    case "listExports"      => Success(ListExports)
+    case "createExport"     => Success(CreateExport)
+    case "createAnnotation" => Success(CreateAnnotation)
+    case "deleteAnnotation" => Success(DeleteAnnotation)
+    case "updateAnnotation" => Success(UpdateAnnotation)
+    case "readUsers"        => Success(ReadUsers)
+    case "addUser"          => Success(AddUser)
+    case "removeUser"       => Success(RemoveUser)
+    case "updateUserRole"   => Success(UpdateUserRole)
+    case _                  => Failure(new Exception(s"Cannot parse Action from string $s"))
+  }
+}
+
+case class ScopedAction(domain: Domain, action: Action, limit: Option[Long]) {
   def repr: String =
     s"$domain:$action" ++ {
       limit map { lim =>
@@ -49,12 +88,13 @@ object ScopedAction {
     Decoder.decodeString.emapTry { (s: String) =>
       s.split(":").toList match {
         case domain :: action :: Nil =>
-          Domain.fromStringTry(domain) map { dom =>
-            ScopedAction(dom, action, None)
+          (Domain.fromStringTry(domain), Action.fromStringTry(action)) mapN {
+            case (dom, act) =>
+              ScopedAction(dom, act, None)
           }
         case domain :: action :: lim :: Nil =>
-          Domain.fromStringTry(domain) map { dom =>
-            ScopedAction(dom, action, Some(lim.toLong))
+          (Domain.fromStringTry(domain), Action.fromStringTry(action)) mapN {
+            case (dom, act) => ScopedAction(dom, act, Some(lim.toLong))
           }
         case result =>
           Failure(
@@ -136,7 +176,7 @@ object Scope {
       case Scopes.ScenesCRUD             => Json.fromString("scenes:crud")
       case Scopes.ScenesMultiPlayer      => Json.fromString("scenes:multiplayer")
       case Scopes.ShapesFullAccess       => Json.fromString("shapes:fullAccess")
-      case Scopes.TeamsEdit              => Json.fromString("teams:edit")
+      case Scopes.TeamsUpdate            => Json.fromString("teams:update")
       case Scopes.TemplatesCRUD          => Json.fromString("templates:crud")
       case Scopes.TemplatesMultiPlayer =>
         Json.fromString("templates:multiplayer")
@@ -168,7 +208,7 @@ object Scope {
       case Some("scenes:crud")           => Right(Scopes.ScenesCRUD)
       case Some("scenes:multiplayer")    => Right(Scopes.ScenesMultiPlayer)
       case Some("shapes:fullAccess")     => Right(Scopes.ShapesFullAccess)
-      case Some("teams:edit")            => Right(Scopes.TeamsEdit)
+      case Some("teams:update")          => Right(Scopes.TeamsUpdate)
       case Some("templates:crud")        => Right(Scopes.TemplatesCRUD)
       case Some("templates:multiplayer") => Right(Scopes.TemplatesMultiPlayer)
       case Some("uploads:crud")          => Right(Scopes.UploadsCRUD)
@@ -190,13 +230,13 @@ object Scope {
 object Scopes {
 
   private def makeCRUDScopedActions(domain: Domain): Set[ScopedAction] =
-    Set("read", "create", "update", "delete") map { s =>
+    Set(Action.Read, Action.Create, Action.Update, Action.Delete) map { s =>
       makeScopedAction(domain, s)
     }
 
   private def makeScopedAction(
       domain: Domain,
-      action: String,
+      action: Action,
       limit: Option[Long] = None
   ): ScopedAction =
     ScopedAction(domain, action, limit)
@@ -205,7 +245,7 @@ object Scopes {
 
   case object Uploader
       extends SimpleScope(
-        Set("read", "create", "delete") map {
+        Set(Action.Read, Action.Update, Action.Delete) map {
           makeScopedAction(Domain.Uploads, _)
         }
       )
@@ -214,7 +254,7 @@ object Scopes {
       extends ComplexScope(
         Set(
           Uploader,
-          new SimpleScope(Set(makeScopedAction(Domain.Uploads, "delete")))
+          new SimpleScope(Set(makeScopedAction(Domain.Uploads, Action.Delete)))
         )
       )
 
@@ -222,7 +262,7 @@ object Scopes {
       extends SimpleScope(makeCRUDScopedActions(Domain.Scenes))
 
   case object ScenesMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Scenes, "share")))
+      extends SimpleScope(Set(makeScopedAction(Domain.Scenes, Action.Share)))
 
   case object ScenesFullAccess
       extends ComplexScope(Set(ScenesCRUD, ScenesMultiPlayer))
@@ -231,16 +271,16 @@ object Scopes {
       extends SimpleScope(makeCRUDScopedActions(Domain.Projects))
 
   case object ProjectExport
-      extends SimpleScope(Set("listExports", "createExport") map {
+      extends SimpleScope(Set(Action.ListExports, Action.CreateExport) map {
         makeScopedAction(Domain.Projects, _)
       })
 
   case object ProjectAnnotate
       extends SimpleScope(
         Set(
-          "createAnnotation",
-          "deleteAnnotation",
-          "editAnnotation"
+          Action.CreateAnnotation,
+          Action.DeleteAnnotation,
+          Action.UpdateAnnotation,
         ) map {
           makeScopedAction(Domain.Projects, _)
         }
@@ -250,7 +290,7 @@ object Scopes {
       extends SimpleScope(makeCRUDScopedActions(Domain.Datasources))
 
   case object ProjectsMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Projects, "share")))
+      extends SimpleScope(Set(makeScopedAction(Domain.Projects, Action.Share)))
 
   case object ProjectsFullAccess
       extends ComplexScope(
@@ -261,7 +301,7 @@ object Scopes {
       extends SimpleScope(makeCRUDScopedActions(Domain.Shapes))
 
   case object ShapesMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Shapes, "share")))
+      extends SimpleScope(Set(makeScopedAction(Domain.Shapes, Action.Share)))
 
   case object ShapesFullAccess
       extends ComplexScope(Set(ShapesCRUD, ShapesMultiPlayer))
@@ -269,14 +309,14 @@ object Scopes {
   case object TemplatesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Templates))
   case object TemplatesMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Templates, "share")))
+      extends SimpleScope(Set(makeScopedAction(Domain.Templates, Action.Share)))
   case object TemplatesFullAccess
       extends ComplexScope(Set(TemplatesCRUD, TemplatesMultiPlayer))
 
   case object AnalysesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Analyses))
   case object AnalysesMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Analyses, "share")))
+      extends SimpleScope(Set(makeScopedAction(Domain.Analyses, Action.Share)))
   case object AnalysesFullAccess
       extends ComplexScope(Set(AnalysesCRUD, AnalysesMultiPlayer))
 
@@ -295,8 +335,8 @@ object Scopes {
           new SimpleScope(Set(Domain.Teams, Domain.Organizations) flatMap {
             domain =>
               Set(
-                makeScopedAction(domain, "read"),
-                makeScopedAction(domain, "readUsers")
+                makeScopedAction(domain, Action.Read),
+                makeScopedAction(domain, Action.Read)
               )
           })
         )
@@ -304,21 +344,21 @@ object Scopes {
 
   case object TeamsUserAdmin
       extends SimpleScope(
-        Set("addUser", "removeUser", "editUserRole") map {
+        Set(Action.AddUser, Action.RemoveUser, Action.UpdateUserRole) map {
           makeScopedAction(Domain.Teams, _)
         }
       )
 
   case object OrganizationsUserAdmin
       extends SimpleScope(
-        Set("addUser", "removeUser", "editUserRole") map {
+        Set(Action.AddUser, Action.RemoveUser, Action.UpdateUserRole) map {
           makeScopedAction(Domain.Organizations, _)
         }
       )
 
-  case object TeamsEdit
+  case object TeamsUpdate
       extends SimpleScope(
-        Set("edit", "delete") map {
+        Set(Action.Update, Action.Delete) map {
           makeScopedAction(Domain.Teams, _)
         }
       )
@@ -328,7 +368,7 @@ object Scopes {
         Set(
           RasterFoundryUser,
           TeamsUserAdmin,
-          TeamsEdit
+          TeamsUpdate
         )
       )
 
@@ -337,7 +377,7 @@ object Scopes {
         Set(
           RasterFoundryTeamAdmin,
           OrganizationsUserAdmin,
-          new SimpleScope(Set(makeScopedAction(Domain.Teams, "create")))
+          new SimpleScope(Set(makeScopedAction(Domain.Teams, Action.Create)))
         )
       )
 
@@ -345,7 +385,8 @@ object Scopes {
       extends ComplexScope(
         Set(
           RasterFoundryOrganizationAdmin,
-          new SimpleScope(Set(makeScopedAction(Domain.Organizations, "create")))
+          new SimpleScope(
+            Set(makeScopedAction(Domain.Organizations, Action.Create)))
         )
       )
 }

@@ -28,10 +28,20 @@ class ScopeSpec
           Domain.Organizations
         )
         action <- Gen.oneOf(
-          "read",
-          "edit",
-          "create",
-          "delete"
+          Action.Read,
+          Action.Create,
+          Action.Delete,
+          Action.Update,
+          Action.Share,
+          Action.ListExports,
+          Action.CreateExport,
+          Action.CreateAnnotation,
+          Action.DeleteAnnotation,
+          Action.UpdateAnnotation,
+          Action.ReadUsers,
+          Action.AddUser,
+          Action.RemoveUser,
+          Action.UpdateUserRole
         )
         limit <- Arbitrary.arbitrary[Option[Long]]
       } yield ScopedAction(domain, action, limit)
@@ -50,7 +60,7 @@ class ScopeSpec
     Scopes.ScenesCRUD,
     Scopes.ScenesMultiPlayer,
     Scopes.ShapesFullAccess,
-    Scopes.TeamsEdit,
+    Scopes.TeamsUpdate,
     Scopes.TemplatesCRUD,
     Scopes.TemplatesMultiPlayer,
     Scopes.UploadsCRUD
