@@ -112,149 +112,171 @@ trait SceneRoutes
   }
 
   def listScenes: Route = authenticate { user =>
-    (withPagination & sceneQueryParameters) { (page, sceneParams) =>
-      complete {
-        SceneWithRelatedDao
-          .listAuthorizedScenes(page, sceneParams, user)
-          .transact(xa)
-          .unsafeToFuture
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Read, None), user) {
+      (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+        complete {
+          SceneWithRelatedDao
+            .listAuthorizedScenes(page, sceneParams, user)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }
 
   def createScene: Route = authenticate { user =>
-    entity(as[Scene.Create]) { newScene =>
-      val tileFootprint = (newScene.sceneType,
-                           newScene.ingestLocation,
-                           newScene.tileFootprint) match {
-        case (Some(SceneType.COG), Some(ingestLocation), None) => {
-          logger.debug(s"Ingest location is: $ingestLocation")
-          logger.info(s"Generating Footprint for Newly Added COG")
-          Some(CogUtils.getTiffExtent(ingestLocation))
-        }
-        case (_, _, tf @ Some(_)) => {
-          logger.info("Not generating footprint, already exists")
-          tf
-        }
-        case _ => None
-      }
-
-      val histogram: Option[Array[Histogram[Double]]] =
-        (newScene.sceneType, newScene.ingestLocation) match {
-          case (Some(SceneType.COG), Some(ingestLocation)) =>
-            CogUtils.histogramFromUri(ingestLocation)
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Create, None), user) {
+      entity(as[Scene.Create]) { newScene =>
+        val tileFootprint = (
+          newScene.sceneType,
+          newScene.ingestLocation,
+          newScene.tileFootprint
+        ) match {
+          case (Some(SceneType.COG), Some(ingestLocation), None) => {
+            logger.debug(s"Ingest location is: $ingestLocation")
+            logger.info(s"Generating Footprint for Newly Added COG")
+            Some(CogUtils.getTiffExtent(ingestLocation))
+          }
+          case (_, _, tf @ Some(_)) => {
+            logger.info("Not generating footprint, already exists")
+            tf
+          }
           case _ => None
         }
 
-      val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
-        case (Some(_), None) => tileFootprint
-        case _               => newScene.dataFootprint
-      }
+        val histogram: Option[Array[Histogram[Double]]] =
+          (newScene.sceneType, newScene.ingestLocation) match {
+            case (Some(SceneType.COG), Some(ingestLocation)) =>
+              CogUtils.histogramFromUri(ingestLocation)
+            case _ => None
+          }
 
-      val updatedScene = newScene.copy(dataFootprint = dataFootprint,
-                                       tileFootprint = tileFootprint)
+        val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
+          case (Some(_), None) => tileFootprint
+          case _               => newScene.dataFootprint
+        }
 
-      val insertedScene = (histogram,
-                           newScene.sceneType,
-                           !newScene.ingestLocation.isEmpty) match {
-        case (Some(hist), Some(SceneType.COG), true) =>
-          for {
-            insertedScene <- SceneDao.insert(updatedScene, user)
-            _ <- parse(hist.toJson.toString) traverse { parsed =>
-              LayerAttributeDao
-                .insertLayerAttribute(
-                  LayerAttribute(insertedScene.id.toString,
-                                 0,
-                                 "histogram",
-                                 parsed)
-                )
-            } map { _.toOption }
-          } yield insertedScene
-        case (_, _, false) =>
-          SceneDao.insert(updatedScene, user)
-        case _ =>
-          throw new IllegalArgumentException(
-            "Unable to generate histograms for scene. Please verify that appropriate " ++
-              "overviews exist. Histogram generation requires an overview smaller than 600x600.")
-      }
-      val histogramAndInsertFut =
-        insertedScene.transact(xa).unsafeToFuture()
+        val updatedScene = newScene
+          .copy(dataFootprint = dataFootprint, tileFootprint = tileFootprint)
 
-      onSuccess(histogramAndInsertFut) { scene =>
-        if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested)
-          kickoffSceneIngest(scene.id)
-        complete((StatusCodes.Created, scene))
+        val insertedScene = (
+          histogram,
+          newScene.sceneType,
+          !newScene.ingestLocation.isEmpty
+        ) match {
+          case (Some(hist), Some(SceneType.COG), true) =>
+            for {
+              insertedScene <- SceneDao.insert(updatedScene, user)
+              _ <- parse(hist.toJson.toString) traverse { parsed =>
+                LayerAttributeDao
+                  .insertLayerAttribute(
+                    LayerAttribute(
+                      insertedScene.id.toString,
+                      0,
+                      "histogram",
+                      parsed
+                    )
+                  )
+              } map {
+                _.toOption
+              }
+            } yield insertedScene
+          case (_, _, false) =>
+            SceneDao.insert(updatedScene, user)
+          case _ =>
+            throw new IllegalArgumentException(
+              "Unable to generate histograms for scene. Please verify that appropriate " ++
+                "overviews exist. Histogram generation requires an overview smaller than 600x600."
+            )
+        }
+        val histogramAndInsertFut =
+          insertedScene.transact(xa).unsafeToFuture()
+
+        onSuccess(histogramAndInsertFut) { scene =>
+          if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested)
+            kickoffSceneIngest(scene.id)
+          complete((StatusCodes.Created, scene))
+        }
       }
     }
   }
 
   def getScene(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      SceneDao
-        .authQuery(user, ObjectType.Scene)
-        .filter(sceneId)
-        .exists
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      rejectEmptyResponse {
-        complete {
-          SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Read, None), user) {
+      authorizeAsync {
+        SceneDao
+          .authQuery(user, ObjectType.Scene)
+          .filter(sceneId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture
+          }
         }
       }
     }
   }
 
   def updateScene(sceneId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      SceneDao
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[Scene]) { updatedScene =>
-        onSuccess(
-          SceneDao
-            .update(updatedScene, sceneId, user)
-            .transact(xa)
-            .unsafeToFuture) {
-          completeSingleOrNotFound(_)
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Update, None), user) {
+      authorizeAuthResultAsync {
+        SceneDao
+          .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Scene]) { updatedScene =>
+          onSuccess(
+            SceneDao
+              .update(updatedScene, sceneId, user)
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            completeSingleOrNotFound(_)
+          }
         }
       }
     }
   }
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      SceneDao
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.Delete)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      val response = for {
-        result <- SceneDao.query.filter(sceneId).delete.transact(xa)
-        _ <- SceneDao.deleteCache(sceneId).transact(xa)
-      } yield result
-      onSuccess(response.unsafeToFuture) {
-        completeSingleOrNotFound
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Delete, None), user) {
+      authorizeAuthResultAsync {
+        SceneDao
+          .authorized(user, ObjectType.Scene, sceneId, ActionType.Delete)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        val response = for {
+          result <- SceneDao.query.filter(sceneId).delete.transact(xa)
+          _ <- SceneDao.deleteCache(sceneId).transact(xa)
+        } yield result
+        onSuccess(response.unsafeToFuture) {
+          completeSingleOrNotFound
+        }
       }
     }
   }
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      SceneWithRelatedDao
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.Download)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
-        SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture) {
-        scene =>
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Download, None), user) {
+      authorizeAuthResultAsync {
+        SceneWithRelatedDao
+          .authorized(user, ObjectType.Scene, sceneId, ActionType.Download)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture
+        ) { scene =>
           complete {
             val retrievedScene = scene.getOrElse {
               throw new Exception(
-                "Scene does not exist or is not accessible by this user")
+                "Scene does not exist or is not accessible by this user"
+              )
             }
             val s3Client = S3()
             val whitelist = List(s"s3://$dataBucket")
@@ -276,67 +298,135 @@ trait SceneRoutes
                 }
             }
           }
+        }
       }
     }
   }
 
   def listScenePermissions(sceneId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      SceneDao
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
+    authorizeScope(
+      ScopedAction(Domain.Scenes, Action.ReadPermissions, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
         SceneDao
-          .getPermissions(sceneId)
-          .transact(xa)
-          .unsafeToFuture
-      }
-    }
-  }
-
-  def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
-    entity(as[List[ObjectAccessControlRule]]) { acrList =>
-      authorizeAsync {
-        (SceneDao
-           .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit) map {
-           _.toBoolean
-         },
-         acrList traverse { acr =>
-           SceneDao.isValidPermission(acr, user)
-         } map { _.foldLeft(true)(_ && _) }).tupled
-          .map({ authTup =>
-            authTup._1 && authTup._2
-          })
+          .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
       } {
         complete {
           SceneDao
-            .replacePermissions(sceneId, acrList)
+            .getPermissions(sceneId)
             .transact(xa)
             .unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Share, None), user) {
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+        authorizeAsync {
+          (
+            SceneDao
+              .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit) map {
+              _.toBoolean
+            },
+            acrList traverse { acr =>
+              SceneDao.isValidPermission(acr, user)
+            } map {
+              _.foldLeft(true)(_ && _)
+            }
+          ).tupled
+            .map({ authTup =>
+              authTup._1 && authTup._2
+            })
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            SceneDao
+              .replacePermissions(sceneId, acrList)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
   }
 
   def addScenePermission(sceneId: UUID): Route = authenticate { user =>
-    entity(as[ObjectAccessControlRule]) { acr =>
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Share, None), user) {
+      entity(as[ObjectAccessControlRule]) { acr =>
+        authorizeAsync {
+          (
+            SceneDao
+              .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit) map {
+              _.toBoolean
+            },
+            SceneDao.isValidPermission(acr, user)
+          ).tupled
+            .map(authTup => authTup._1 && authTup._2)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            SceneDao
+              .addPermission(sceneId, acr)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+  }
+
+  def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Scenes, Action.ReadPermissions, None),
+      user
+    ) {
       authorizeAsync {
-        (SceneDao
-           .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit) map {
-           _.toBoolean
-         },
-         SceneDao.isValidPermission(acr, user)).tupled
-          .map(authTup => authTup._1 && authTup._2)
+        SceneDao
+          .authQuery(user, ObjectType.Scene)
+          .filter(sceneId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          SceneWithRelatedDao
+            .unsafeGetScene(sceneId)
+            .transact(xa)
+            .unsafeToFuture
+        ) { scene =>
+          scene.owner == user.id match {
+            case true => complete(List("*"))
+            case false =>
+              complete {
+                SceneDao
+                  .listUserActions(user, sceneId)
+                  .transact(xa)
+                  .unsafeToFuture
+              }
+          }
+        }
+      }
+    }
+  }
+
+  def deleteScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Scenes, Action.Share, None), user) {
+      authorizeAuthResultAsync {
+        SceneDao
+          .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
       } {
         complete {
           SceneDao
-            .addPermission(sceneId, acr)
+            .deletePermissions(sceneId)
             .transact(xa)
             .unsafeToFuture
         }
@@ -344,98 +434,77 @@ trait SceneRoutes
     }
   }
 
-  def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      SceneDao
-        .authQuery(user, ObjectType.Scene)
-        .filter(sceneId)
-        .exists
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
-        SceneWithRelatedDao
-          .unsafeGetScene(sceneId)
-          .transact(xa)
-          .unsafeToFuture
-      ) { scene =>
-        scene.owner == user.id match {
-          case true => complete(List("*"))
-          case false =>
-            complete {
-              SceneDao
-                .listUserActions(user, sceneId)
-                .transact(xa)
-                .unsafeToFuture
-            }
-        }
-      }
-    }
-  }
-
-  def deleteScenePermissions(sceneId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      SceneDao
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
-        SceneDao
-          .deletePermissions(sceneId)
-          .transact(xa)
-          .unsafeToFuture
-      }
-    }
-  }
-
   def getSceneDatasource(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      SceneDao
-        .authQuery(user, ObjectType.Scene)
-        .filter(sceneId)
-        .exists
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
-        DatasourceDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) {
-        datasourceO =>
-          complete { datasourceO }
+    authorizeScope(ScopedAction(Domain.Datasources, Action.Read, None), user) {
+      authorizeAsync {
+        SceneDao
+          .authQuery(user, ObjectType.Scene)
+          .filter(sceneId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          DatasourceDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture
+        ) { datasourceO =>
+          complete {
+            datasourceO
+          }
+        }
       }
     }
   }
 
   def getSentinelMetadata(sceneId: UUID, metadataUrl: String): Route =
     authenticate { user =>
-      authorizeAsync {
-        val authorizedIO = for {
-          auth <- SceneDao.authorized(user,
-                                      ObjectType.Scene,
-                                      sceneId,
-                                      ActionType.View) map { _.toBoolean }
-          datasource <- DatasourceDao.getSceneDatasource(sceneId)
-        } yield {
-          auth && (datasource map { (ds: Datasource) =>
-            Some(ds.id) == Some(UUID.fromString(sentinel2DatasourceId))
-          } getOrElse { false })
-        }
-        authorizedIO.transact(xa).unsafeToFuture
-      } {
-        onSuccess(
-          SceneDao
-            .getSentinelMetadata(metadataUrl)
-            .transact(xa)
-            .unsafeToFuture) { (s3Object, metaData) =>
-          metaData.getContentType() match {
-            case "application/json" =>
-              complete(HttpResponse(
-                entity = HttpEntity(ContentTypes.`application/json`, s3Object)))
-            case "application/xml" =>
-              complete(HttpResponse(
-                entity = HttpEntity(ContentTypes.`text/xml(UTF-8)`, s3Object)))
-            case _ =>
-              complete(StatusCodes.UnsupportedMediaType)
+      authorizeScope(
+        ScopedAction(Domain.Scenes, Action.ReadSentinelMetadata, None),
+        user
+      ) {
+        authorizeAsync {
+          val authorizedIO = for {
+            auth <- SceneDao.authorized(
+              user,
+              ObjectType.Scene,
+              sceneId,
+              ActionType.View
+            ) map {
+              _.toBoolean
+            }
+            datasource <- DatasourceDao.getSceneDatasource(sceneId)
+          } yield {
+            auth && (datasource map { (ds: Datasource) =>
+              Some(ds.id) == Some(UUID.fromString(sentinel2DatasourceId))
+            } getOrElse {
+              false
+            })
+          }
+          authorizedIO.transact(xa).unsafeToFuture
+        } {
+          onSuccess(
+            SceneDao
+              .getSentinelMetadata(metadataUrl)
+              .transact(xa)
+              .unsafeToFuture
+          ) { (s3Object, metaData) =>
+            metaData.getContentType() match {
+              case "application/json" =>
+                complete(
+                  HttpResponse(
+                    entity =
+                      HttpEntity(ContentTypes.`application/json`, s3Object)
+                  )
+                )
+              case "application/xml" =>
+                complete(
+                  HttpResponse(
+                    entity =
+                      HttpEntity(ContentTypes.`text/xml(UTF-8)`, s3Object)
+                  )
+                )
+              case _ =>
+                complete(StatusCodes.UnsupportedMediaType)
+            }
           }
         }
       }

@@ -11,27 +11,49 @@ sealed abstract class Domain(repr: String) {
   override def toString: String = repr
 }
 object Domain {
-  case object Uploads extends Domain("uploads")
-  case object Scenes extends Domain("scenes")
-  case object Projects extends Domain("projects")
-  case object Datasources extends Domain("datasources")
-  case object Shapes extends Domain("shapes")
-  case object Templates extends Domain("templates")
   case object Analyses extends Domain("analyses")
-  case object Teams extends Domain("teams")
+  case object AnnotationGroups extends Domain("annotationGroups")
+  case object AnnotationUploads extends Domain("annotationUploads")
+  case object Datasources extends Domain("datasources")
+  case object Exports extends Domain("exports")
+  case object FeatureFlags extends Domain("featureFlags")
+  case object Licenses extends Domain("licenses")
+  case object MapTokens extends Domain("map-tokens")
   case object Organizations extends Domain("organizations")
+  case object Platforms extends Domain("platforms")
+  case object Projects extends Domain("projects")
+  case object Scenes extends Domain("scenes")
+  case object Shapes extends Domain("shapes")
+  case object StacExports extends Domain("stacExports")
+  case object Teams extends Domain("teams")
+  case object Templates extends Domain("templates")
+  case object Thumbnails extends Domain("thumbnails")
+  case object Tokens extends Domain("tokens")
+  case object Uploads extends Domain("uploads")
+  case object Users extends Domain("users")
 
   def fromStringTry(s: String): Try[Domain] = s match {
-    case "uploads"       => Success(Uploads)
-    case "scenes"        => Success(Scenes)
-    case "projects"      => Success(Projects)
-    case "datasources"   => Success(Datasources)
-    case "shapes"        => Success(Shapes)
-    case "templates"     => Success(Templates)
-    case "analyses"      => Success(Analyses)
-    case "teams"         => Success(Teams)
-    case "organizations" => Success(Organizations)
-    case _               => Failure(new Exception(s"Cannot parse Domain from string $s"))
+    case "analyses"          => Success(Analyses)
+    case "annotationGroups"  => Success(AnnotationGroups)
+    case "annotationUploads" => Success(AnnotationUploads)
+    case "datasources"       => Success(Datasources)
+    case "exports"           => Success(Exports)
+    case "featureFlags"      => Success(FeatureFlags)
+    case "licenses"          => Success(Licenses)
+    case "mapTokens"         => Success(MapTokens)
+    case "organizations"     => Success(Organizations)
+    case "platforms"         => Success(Platforms)
+    case "projects"          => Success(Projects)
+    case "scenes"            => Success(Scenes)
+    case "shapes"            => Success(Shapes)
+    case "stacExports"       => Success(StacExports)
+    case "teams"             => Success(Teams)
+    case "templates"         => Success(Templates)
+    case "thumbnails"        => Success(Thumbnails)
+    case "tokens"            => Success(Tokens)
+    case "uploads"           => Success(Uploads)
+    case "users"             => Success(Users)
+    case _                   => Failure(new Exception(s"Cannot parse Domain from string $s"))
   }
 }
 
@@ -40,37 +62,79 @@ sealed abstract class Action(repr: String) {
 }
 
 object Action {
-  case object Read extends Action("read")
-  case object Create extends Action("create")
-  case object Delete extends Action("delete")
-  case object Update extends Action("update")
-  case object Share extends Action("share")
-  case object ListExports extends Action("listExports")
-  case object CreateExport extends Action("createExport")
-  case object CreateAnnotation extends Action("createAnnotation")
-  case object DeleteAnnotation extends Action("deleteAnnotation")
-  case object UpdateAnnotation extends Action("updateAnnotation")
-  case object ReadUsers extends Action("readUsers")
+  case object AddScenes extends Action("addScenes")
   case object AddUser extends Action("addUser")
+  case object ColorCorrect extends Action("colorCorrect")
+  case object Create extends Action("create")
+  case object CreateAnnotation extends Action("createAnnotation")
+  case object CreateExport extends Action("createExport")
+  case object CreateScopes extends Action("createScopes")
+  case object CreateTaskGrid extends Action("createTaskGrid")
+  case object CreateTasks extends Action("createTasks")
+  case object Delete extends Action("delete")
+  case object DeleteAnnotation extends Action("deleteAnnotation")
+  case object DeleteScopes extends Action("deleteScopes")
+  case object DeleteTasks extends Action("deleteTasks")
+  case object Download extends Action("download")
+  case object EditScenes extends Action("editScenes")
+  case object ListExports extends Action("listExports")
+  case object ListUsers extends Action("listUsers")
+  case object Read extends Action("read")
+  case object ReadPermissions extends Action("readPermissions")
+  case object ReadScopes extends Action("readScopes")
+  case object ReadSelf extends Action("readSelf")
+  case object ReadSentinelMetadata extends Action("readSentinelMetadata")
+  case object ReadTasks extends Action("readTasks")
+  case object ReadThumbnail extends Action("readThumbnail")
+  case object ReadUsers extends Action("readUsers")
   case object RemoveUser extends Action("removeUser")
+  case object Search extends Action("search")
+  case object Share extends Action("share")
+  case object Update extends Action("update")
+  case object UpdateAnnotation extends Action("updateAnnotation")
+  case object UpdateDropbox extends Action("updateDropbox")
+  case object UpdateScopes extends Action("updateScopes")
+  case object UpdateSelf extends Action("updateSelf")
+  case object UpdateTasks extends Action("updateTasks")
   case object UpdateUserRole extends Action("updateUserRole")
 
   def fromStringTry(s: String): Try[Action] = s match {
-    case "read"             => Success(Read)
-    case "create"           => Success(Create)
-    case "delete"           => Success(Delete)
-    case "update"           => Success(Update)
-    case "share"            => Success(Share)
-    case "listExports"      => Success(ListExports)
-    case "createExport"     => Success(CreateExport)
-    case "createAnnotation" => Success(CreateAnnotation)
-    case "deleteAnnotation" => Success(DeleteAnnotation)
-    case "updateAnnotation" => Success(UpdateAnnotation)
-    case "readUsers"        => Success(ReadUsers)
-    case "addUser"          => Success(AddUser)
-    case "removeUser"       => Success(RemoveUser)
-    case "updateUserRole"   => Success(UpdateUserRole)
-    case _                  => Failure(new Exception(s"Cannot parse Action from string $s"))
+    case "addScenes"            => Success(AddScenes)
+    case "addUser"              => Success(AddUser)
+    case "colorCorrect"         => Success(ColorCorrect)
+    case "create"               => Success(Create)
+    case "createAnnotation"     => Success(CreateAnnotation)
+    case "createExport"         => Success(CreateExport)
+    case "createScopes"         => Success(CreateScopes)
+    case "createTaskGrid"       => Success(CreateTaskGrid)
+    case "createTasks"          => Success(CreateTasks)
+    case "delete"               => Success(Delete)
+    case "deleteAnnotation"     => Success(DeleteAnnotation)
+    case "deleteScopes"         => Success(DeleteScopes)
+    case "deleteTasks"          => Success(DeleteTasks)
+    case "download"             => Success(Download)
+    case "editScenes"           => Success(EditScenes)
+    case "listExports"          => Success(ListExports)
+    case "listUsers"            => Success(ListUsers)
+    case "read"                 => Success(Read)
+    case "readUsers"            => Success(ReadUsers)
+    case "readPermissions"      => Success(ReadPermissions)
+    case "readScopes"           => Success(ReadScopes)
+    case "readSelf"             => Success(ReadSelf)
+    case "readSentinelMetadata" => Success(ReadSentinelMetadata)
+    case "readTasks"            => Success(ReadTasks)
+    case "readThumbnail"        => Success(ReadThumbnail)
+    case "removeUser"           => Success(RemoveUser)
+    case "search"               => Success(Search)
+    case "share"                => Success(Share)
+    case "update"               => Success(Update)
+    case "updateAnnotation"     => Success(UpdateAnnotation)
+    case "updateDropbox"        => Success(UpdateDropbox)
+    case "updateScopes"         => Success(UpdateScopes)
+    case "updateSelf"           => Success(UpdateSelf)
+    case "updateTasks"          => Success(UpdateTasks)
+    case "updateUserRole"       => Success(UpdateUserRole)
+    case _                      => Failure(new Exception(s"Cannot parse Action from string $s"))
   }
 }
 
@@ -172,28 +236,13 @@ object Scope {
 
   implicit val encScope: Encoder[Scope] = new Encoder[Scope] {
     def apply(thing: Scope): Json = thing match {
-      case Scopes.Uploader            => Json.fromString("uploader")
-      case Scopes.AnalysesCRUD        => Json.fromString("analyses:crud")
-      case Scopes.AnalysesMultiPlayer => Json.fromString("analyses:multiplayer")
-      case Scopes.DatasourcesCRUD     => Json.fromString("datasources:crud")
-      case Scopes.OrganizationsUserAdmin =>
-        Json.fromString("organizations:userAdmin")
-      case Scopes.ProjectExport      => Json.fromString("projects:exportFullAccess")
-      case Scopes.ProjectsFullAccess => Json.fromString("projects:fullAccess")
-      case Scopes.RasterFoundryOrganizationAdmin =>
+      case Scopes.OrganizationAdmin =>
         Json.fromString("organizations:admin")
       case Scopes.RasterFoundryUser =>
         Json.fromString("platformUser")
-      case Scopes.RasterFoundryPlatformAdmin => Json.fromString("platforms:admin")
-      case Scopes.RasterFoundryTeamAdmin => Json.fromString("teams:admin")
-      case Scopes.ScenesCRUD             => Json.fromString("scenes:crud")
-      case Scopes.ScenesMultiPlayer      => Json.fromString("scenes:multiplayer")
-      case Scopes.ShapesFullAccess       => Json.fromString("shapes:fullAccess")
-      case Scopes.TeamsUpdate            => Json.fromString("teams:update")
-      case Scopes.TemplatesCRUD          => Json.fromString("templates:crud")
-      case Scopes.TemplatesMultiPlayer =>
-        Json.fromString("templates:multiplayer")
-      case Scopes.UploadsCRUD => Json.fromString("uploads:crud")
+      case Scopes.RasterFoundryPlatformAdmin =>
+        Json.fromString("platforms:admin")
+      case Scopes.RasterFoundryTeamsAdmin => Json.fromString("teams:admin")
       case SimpleScope(actions) =>
         Json.fromString((actions map { action =>
           action.repr
@@ -207,26 +256,11 @@ object Scope {
 
   implicit val decScope: Decoder[Scope] = new Decoder[Scope] {
     def apply(c: HCursor): Decoder.Result[Scope] = c.value.asString match {
-      case Some("uploader")             => Right(Scopes.Uploader)
-      case Some("analyses:crud")        => Right(Scopes.AnalysesCRUD)
-      case Some("analyses:multiplayer") => Right(Scopes.AnalysesMultiPlayer)
-      case Some("datasources:crud")     => Right(Scopes.DatasourcesCRUD)
-      case Some("organizations:userAdmin") =>
-        Right(Scopes.OrganizationsUserAdmin)
-      case Some("projects:exportFullAccess") => Right(Scopes.ProjectExport)
-      case Some("projects:fullAccess")       => Right(Scopes.ProjectsFullAccess)
       case Some("organizations:admin") =>
-        Right(Scopes.RasterFoundryOrganizationAdmin)
-      case Some("platformUser") => Right(Scopes.RasterFoundryUser)
-      case Some("platforms:admin") => Right (Scopes.RasterFoundryPlatformAdmin)
-      case Some("teams:admin")           => Right(Scopes.RasterFoundryTeamAdmin)
-      case Some("scenes:crud")           => Right(Scopes.ScenesCRUD)
-      case Some("scenes:multiplayer")    => Right(Scopes.ScenesMultiPlayer)
-      case Some("shapes:fullAccess")     => Right(Scopes.ShapesFullAccess)
-      case Some("teams:update")          => Right(Scopes.TeamsUpdate)
-      case Some("templates:crud")        => Right(Scopes.TemplatesCRUD)
-      case Some("templates:multiplayer") => Right(Scopes.TemplatesMultiPlayer)
-      case Some("uploads:crud")          => Right(Scopes.UploadsCRUD)
+        Right(Scopes.OrganizationAdmin)
+      case Some("platformUser")    => Right(Scopes.RasterFoundryUser)
+      case Some("platforms:admin") => Right(Scopes.RasterFoundryPlatformAdmin)
+      case Some("teams:admin")     => Right(Scopes.RasterFoundryTeamsAdmin)
       case Some(s) =>
         SimpleScope.fromEithers((s.split(";").toList match {
           case List("") => List.empty
@@ -245,7 +279,14 @@ object Scope {
 object Scopes {
 
   private def makeCRUDScopedActions(domain: Domain): Set[ScopedAction] =
-    Set(Action.Read, Action.Create, Action.Update, Action.Delete) map { s =>
+    Set(
+      Action.Read,
+      Action.Create,
+      Action.Update,
+      Action.Delete,
+      Action.ReadPermissions,
+      Action.Share
+    ) map { s =>
       makeScopedAction(domain, s)
     }
 
@@ -258,150 +299,182 @@ object Scopes {
 
   case object NoAccess extends SimpleScope(Set.empty)
 
-  case object Uploader
-      extends SimpleScope(
-        Set(Action.Read, Action.Update, Action.Delete) map {
-          makeScopedAction(Domain.Uploads, _)
-        }
-      )
+  case object AnalysesCRUD
+      extends SimpleScope(makeCRUDScopedActions(Domain.Analyses))
 
-  case object UploadsCRUD
-      extends ComplexScope(
-        Set(
-          Uploader,
-          new SimpleScope(Set(makeScopedAction(Domain.Uploads, Action.Delete)))
-        )
-      )
+  case object AnnotationGroupsCRUD
+      extends SimpleScope(makeCRUDScopedActions(Domain.AnnotationGroups))
 
-  case object ScenesCRUD
-      extends SimpleScope(makeCRUDScopedActions(Domain.Scenes))
-
-  case object ScenesMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Scenes, Action.Share)))
-
-  case object ScenesFullAccess
-      extends ComplexScope(Set(ScenesCRUD, ScenesMultiPlayer))
-
-  case object ProjectsCRUD
-      extends SimpleScope(makeCRUDScopedActions(Domain.Projects))
-
-  case object ProjectExport
-      extends SimpleScope(Set(Action.ListExports, Action.CreateExport) map {
-        makeScopedAction(Domain.Projects, _)
-      })
-
-  case object ProjectAnnotate
-      extends SimpleScope(
-        Set(
-          Action.CreateAnnotation,
-          Action.DeleteAnnotation,
-          Action.UpdateAnnotation,
-        ) map {
-          makeScopedAction(Domain.Projects, _)
-        }
-      )
+  case object AnnotationUploadsCRUD
+      extends SimpleScope(makeCRUDScopedActions(Domain.AnnotationUploads))
 
   case object DatasourcesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Datasources))
 
-  case object ProjectsMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Projects, Action.Share)))
+  case object ExportsCRUD
+      extends SimpleScope(makeCRUDScopedActions(Domain.Exports))
 
-  case object ProjectsFullAccess
-      extends ComplexScope(
-        Set(ProjectsCRUD, ProjectsMultiPlayer, ProjectExport, ProjectAnnotate)
+  case object FeatureFlagsScope
+      extends SimpleScope(
+        Set(ScopedAction(Domain.FeatureFlags, Action.Read, None))
+      )
+
+  case object LicensesScope
+      extends SimpleScope(Set(ScopedAction(Domain.Licenses, Action.Read, None)))
+
+  case object MapTokensCRUD
+      extends SimpleScope(makeCRUDScopedActions(Domain.MapTokens))
+
+  case object OrganizationAdmin
+      extends SimpleScope(
+        Set(
+          ScopedAction(Domain.Organizations, Action.AddUser, None),
+          ScopedAction(Domain.Organizations, Action.Update, None)
+        )
+      )
+
+  case object OrganizationsMember
+      extends SimpleScope(
+        Set(Action.ListUsers, Action.Read, Action.Search)
+          .map(makeScopedAction(Domain.Organizations, _))
+      )
+
+  case object PlatformDomainAdminScope
+      extends SimpleScope(
+        Set(
+          ScopedAction(Domain.Organizations, Action.Create, None),
+          ScopedAction(Domain.Organizations, Action.Delete, None),
+          ScopedAction(Domain.Platforms, Action.AddUser, None),
+          ScopedAction(Domain.Platforms, Action.Create, None),
+          ScopedAction(Domain.Platforms, Action.Delete, None),
+          ScopedAction(Domain.Platforms, Action.ListUsers, None),
+          ScopedAction(Domain.Platforms, Action.Update, None)
+        )
+      )
+
+  case object PlatformDomainMemberScope
+      extends SimpleScope(
+        Set(ScopedAction(Domain.Platforms, Action.Read, None))
+      )
+
+  case object ProjectAnnotateScope
+      extends SimpleScope(
+        Set(
+          ScopedAction(Domain.Projects, Action.CreateAnnotation, None),
+          ScopedAction(Domain.Projects, Action.CreateTaskGrid, None),
+          ScopedAction(Domain.Projects, Action.CreateTasks, None),
+          ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
+          ScopedAction(Domain.Projects, Action.DeleteTasks, None),
+          ScopedAction(Domain.Projects, Action.UpdateAnnotation, None),
+          ScopedAction(Domain.Projects, Action.UpdateTasks, None),
+          ScopedAction(Domain.Projects, Action.ReadTasks, None)
+        )
+      )
+
+  case object ProjectsCRUD
+      extends SimpleScope(
+        Set(
+          Action.AddScenes,
+          Action.ColorCorrect
+        ).map(makeScopedAction(Domain.Projects, _)) ++ makeCRUDScopedActions(
+          Domain.Projects
+        )
+      )
+
+  case object ScenesCRUD
+      extends SimpleScope(
+        Set(
+          Action.Download,
+          Action.ReadThumbnail,
+          Action.ReadSentinelMetadata
+        ).map(makeScopedAction(Domain.Projects, _)) ++ makeCRUDScopedActions(
+          Domain.Projects
+        )
       )
 
   case object ShapesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Shapes))
 
-  case object ShapesMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Shapes, Action.Share)))
+  case object StacExportsCRUD
+      extends SimpleScope(makeCRUDScopedActions(Domain.StacExports))
 
-  case object ShapesFullAccess
-      extends ComplexScope(Set(ShapesCRUD, ShapesMultiPlayer))
+  case object TeamsCRUD extends SimpleScope(makeCRUDScopedActions(Domain.Teams))
 
   case object TemplatesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Templates))
-  case object TemplatesMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Templates, Action.Share)))
-  case object TemplatesFullAccess
-      extends ComplexScope(Set(TemplatesCRUD, TemplatesMultiPlayer))
 
-  case object AnalysesCRUD
-      extends SimpleScope(makeCRUDScopedActions(Domain.Analyses))
-  case object AnalysesMultiPlayer
-      extends SimpleScope(Set(makeScopedAction(Domain.Analyses, Action.Share)))
-  case object AnalysesFullAccess
-      extends ComplexScope(Set(AnalysesCRUD, AnalysesMultiPlayer))
+  case object TokensCRUD
+      extends SimpleScope(
+        Set(
+          Action.Delete,
+          Action.Read
+        ).map(makeScopedAction(Domain.Tokens, _))
+      )
 
+  case object UploadsCRUD
+      extends SimpleScope(makeCRUDScopedActions(Domain.Uploads))
+
+  case object UsersAdminScope
+      extends SimpleScope(
+        Set(
+          Action.CreateScopes,
+          Action.DeleteScopes,
+          Action.Read,
+          Action.ReadScopes,
+          Action.Search,
+          Action.Update,
+          Action.UpdateScopes
+        ).map(makeScopedAction(Domain.Users, _))
+      )
+
+  case object UserSelfScope
+      extends SimpleScope(
+        Set(Action.ReadSelf, Action.UpdateSelf, Action.UpdateDropbox)
+          .map(makeScopedAction(Domain.Users, _))
+      )
+
+  // Canned Scopes used in Database Migration
   case object RasterFoundryUser
       extends ComplexScope(
         Set(
-          AnalysesFullAccess,
+          AnalysesCRUD,
+          AnnotationGroupsCRUD,
+          AnnotationUploadsCRUD,
           DatasourcesCRUD,
-          ProjectsFullAccess,
-          ScenesFullAccess,
-          ShapesFullAccess,
-          TemplatesFullAccess,
-          Uploader,
-          // Regular users can view their teams and organizations, but can do nothing
-          // else in that domain
-          new SimpleScope(Set(Domain.Teams, Domain.Organizations) flatMap {
-            domain =>
-              Set(
-                makeScopedAction(domain, Action.Read),
-                makeScopedAction(domain, Action.Read)
-              )
-          })
+          ExportsCRUD,
+          FeatureFlagsScope,
+          LicensesScope,
+          MapTokensCRUD,
+          OrganizationsMember,
+          PlatformDomainMemberScope,
+          ProjectsCRUD,
+          ScenesCRUD,
+          ShapesCRUD,
+          StacExportsCRUD,
+          TeamsCRUD,
+          TemplatesCRUD,
+          TokensCRUD,
+          UploadsCRUD,
+          UserSelfScope,
+          ProjectAnnotateScope
         )
       )
 
-  case object TeamsUserAdmin
+  case object RasterFoundryTeamsAdmin
       extends SimpleScope(
-        Set(Action.AddUser, Action.RemoveUser, Action.UpdateUserRole) map {
-          makeScopedAction(Domain.Teams, _)
-        }
-      )
-
-  case object OrganizationsUserAdmin
-      extends SimpleScope(
-        Set(Action.AddUser, Action.RemoveUser, Action.UpdateUserRole) map {
-          makeScopedAction(Domain.Organizations, _)
-        }
-      )
-
-  case object TeamsUpdate
-      extends SimpleScope(
-        Set(Action.Update, Action.Delete) map {
-          makeScopedAction(Domain.Teams, _)
-        }
-      )
-
-  case object RasterFoundryTeamAdmin
-      extends ComplexScope(
-        Set(
-          RasterFoundryUser,
-          TeamsUserAdmin,
-          TeamsUpdate
-        )
+        RasterFoundryUser.actions
       )
 
   case object RasterFoundryOrganizationAdmin
       extends ComplexScope(
-        Set(
-          RasterFoundryTeamAdmin,
-          OrganizationsUserAdmin,
-          new SimpleScope(Set(makeScopedAction(Domain.Teams, Action.Create)))
-        )
+        Set(RasterFoundryUser, OrganizationAdmin, UsersAdminScope)
       )
 
   case object RasterFoundryPlatformAdmin
       extends ComplexScope(
         Set(
           RasterFoundryOrganizationAdmin,
-          new SimpleScope(
-            Set(makeScopedAction(Domain.Organizations, Action.Create)))
+          PlatformDomainAdminScope
         )
       )
 }

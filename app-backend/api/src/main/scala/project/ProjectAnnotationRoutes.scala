@@ -31,7 +31,14 @@ trait ProjectAnnotationRoutes
   def listAnnotations(projectId: UUID): Route = extractTokenHeader { tokenO =>
     extractMapTokenParam { mapTokenO =>
       (projectAuthFromMapTokenO(mapTokenO, projectId) |
-        projectAuthFromTokenO(tokenO, projectId) | projectIsPublic(projectId)) {
+        projectAuthFromTokenO(
+          tokenO,
+          projectId,
+          None,
+          ScopedAction(Domain.Projects, Action.Read, None)
+        ) | projectIsPublic(
+        projectId
+      )) {
         (withPagination & annotationQueryParams) {
           (page: PageRequest, queryParams: AnnotationQueryParameters) =>
             complete {
@@ -70,26 +77,33 @@ trait ProjectAnnotationRoutes
   }
 
   def createAnnotation(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[AnnotationFeatureCollectionCreate]) { fc =>
-        val annotationsCreate = fc.features map { _.toAnnotationCreate }
-        onSuccess(
-          AnnotationDao
-            .insertAnnotations(annotationsCreate.toList, projectId, user)
-            .transact(xa)
-            .unsafeToFuture
-            .map { annotations: List[Annotation] =>
-              fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](
-                annotations
-              )
-            }
-        ) { createdAnnotation =>
-          complete((StatusCodes.Created, createdAnnotation))
+    authorizeScope(
+      ScopedAction(Domain.Projects, Action.CreateAnnotation, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AnnotationFeatureCollectionCreate]) { fc =>
+          val annotationsCreate = fc.features map {
+            _.toAnnotationCreate
+          }
+          onSuccess(
+            AnnotationDao
+              .insertAnnotations(annotationsCreate.toList, projectId, user)
+              .transact(xa)
+              .unsafeToFuture
+              .map { annotations: List[Annotation] =>
+                fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](
+                  annotations
+                )
+              }
+          ) { createdAnnotation =>
+            complete((StatusCodes.Created, createdAnnotation))
+          }
         }
       }
     }
@@ -97,21 +111,25 @@ trait ProjectAnnotationRoutes
 
   def getAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate {
     user =>
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          complete {
-            AnnotationDao
-              .getAnnotationById(projectId, annotationId)
-              .transact(xa)
-              .unsafeToFuture
-              .map {
-                _ map { _.toGeoJSONFeature }
-              }
+      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.View)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete {
+              AnnotationDao
+                .getAnnotationById(projectId, annotationId)
+                .transact(xa)
+                .unsafeToFuture
+                .map {
+                  _ map {
+                    _.toGeoJSONFeature
+                  }
+                }
+            }
           }
         }
       }
@@ -119,28 +137,70 @@ trait ProjectAnnotationRoutes
 
   def updateAnnotation(projectId: UUID): Route =
     authenticate { user =>
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[Annotation.GeoJSON]) {
-          updatedAnnotation: Annotation.GeoJSON =>
-            onSuccess(
-              AnnotationDao
-                .updateAnnotation(projectId, updatedAnnotation.toAnnotation)
-                .transact(xa)
-                .unsafeToFuture
-            ) { count =>
-              completeSingleOrNotFound(count)
-            }
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.UpdateAnnotation, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(
+              user,
+              ObjectType.Project,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[Annotation.GeoJSON]) {
+            updatedAnnotation: Annotation.GeoJSON =>
+              onSuccess(
+                AnnotationDao
+                  .updateAnnotation(projectId, updatedAnnotation.toAnnotation)
+                  .transact(xa)
+                  .unsafeToFuture
+              ) { count =>
+                completeSingleOrNotFound(count)
+              }
+          }
         }
       }
     }
 
   def deleteAnnotation(projectId: UUID, annotationId: UUID): Route =
     authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(
+              user,
+              ObjectType.Project,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          onSuccess(
+            AnnotationDao
+              .deleteById(projectId, annotationId)
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            completeSingleOrNotFound
+          }
+        }
+      }
+    }
+
+  def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
+      user
+    ) {
       authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
@@ -149,69 +209,21 @@ trait ProjectAnnotationRoutes
       } {
         onSuccess(
           AnnotationDao
-            .deleteById(projectId, annotationId)
+            .deleteByProjectLayer(projectId)
             .transact(xa)
             .unsafeToFuture
         ) {
-          completeSingleOrNotFound
+          completeSomeOrNotFound
         }
-      }
-    }
-
-  def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
-        AnnotationDao
-          .deleteByProjectLayer(projectId)
-          .transact(xa)
-          .unsafeToFuture
-      ) {
-        completeSomeOrNotFound
       }
     }
   }
 
   def listAnnotationGroups(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
-        AnnotationGroupDao
-          .listForProject(projectId)
-          .transact(xa)
-          .unsafeToFuture
-      }
-    }
-  }
-
-  def createAnnotationGroup(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[AnnotationGroup.Create]) { agCreate =>
-        complete {
-          AnnotationGroupDao
-            .createAnnotationGroup(projectId, agCreate, user)
-            .transact(xa)
-            .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
-    user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationGroups, Action.Read, None),
+      user
+    ) {
       authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
@@ -220,9 +232,56 @@ trait ProjectAnnotationRoutes
       } {
         complete {
           AnnotationGroupDao
-            .getAnnotationGroup(projectId, agId)
+            .listForProject(projectId)
             .transact(xa)
             .unsafeToFuture
+
+        }
+      }
+    }
+  }
+
+  def createAnnotationGroup(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationGroups, Action.Create, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AnnotationGroup.Create]) { agCreate =>
+          complete {
+            AnnotationGroupDao
+              .createAnnotationGroup(projectId, agCreate, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+  }
+
+  def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationGroups, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.View)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            AnnotationGroupDao
+              .getAnnotationGroup(projectId, agId)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
   }
@@ -231,35 +290,50 @@ trait ProjectAnnotationRoutes
       projectId: UUID,
       annotationGroupId: UUID
   ): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
-        AnnotationGroupDao
-          .getAnnotationGroupSummary(annotationGroupId)
+    authorizeScope(
+      ScopedAction(Domain.AnnotationGroups, Action.Read, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
           .unsafeToFuture
+      } {
+        complete {
+          AnnotationGroupDao
+            .getAnnotationGroupSummary(annotationGroupId)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }
 
   def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
     user =>
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[AnnotationGroup]) { annotationGroup =>
-          complete {
-            AnnotationGroupDao
-              .updateAnnotationGroup(projectId, annotationGroup, agId)
-              .transact(xa)
-              .unsafeToFuture
+      authorizeScope(
+        ScopedAction(Domain.AnnotationGroups, Action.Update, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(
+              user,
+              ObjectType.Project,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[AnnotationGroup]) { annotationGroup =>
+            complete {
+              AnnotationGroupDao
+                .updateAnnotationGroup(projectId, annotationGroup, agId)
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
       }
@@ -267,17 +341,27 @@ trait ProjectAnnotationRoutes
 
   def deleteAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
     user =>
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          AnnotationGroupDao
-            .deleteAnnotationGroup(projectId, agId)
+      authorizeScope(
+        ScopedAction(Domain.AnnotationGroups, Action.Delete, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(
+              user,
+              ObjectType.Project,
+              projectId,
+              ActionType.Annotate
+            )
             .transact(xa)
             .unsafeToFuture
+        } {
+          complete {
+            AnnotationGroupDao
+              .deleteAnnotationGroup(projectId, agId)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
   }

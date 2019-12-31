@@ -233,9 +233,11 @@ trait ProjectRoutes
                           pathPrefix("uploads") {
                             pathEndOrSingleSlash {
                               get {
-                                listGeojsonUploads(projectId,
-                                                   layerId,
-                                                   annotationGroupId)
+                                listGeojsonUploads(
+                                  projectId,
+                                  layerId,
+                                  annotationGroupId
+                                )
                               } ~
                                 post {
                                   createGeojsonUpload(
@@ -496,26 +498,30 @@ trait ProjectRoutes
   }
 
   def listProjects: Route = authenticate { user =>
-    (withPagination & projectQueryParameters) {
-      (page, projectQueryParameters) =>
-        complete {
-          ProjectDao
-            .listProjects(page, projectQueryParameters, user)
-            .transact(xa)
-            .unsafeToFuture
-        }
+    authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+      (withPagination & projectQueryParameters) {
+        (page, projectQueryParameters) =>
+          complete {
+            ProjectDao
+              .listProjects(page, projectQueryParameters, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
+      }
     }
   }
 
   def createProject: Route = authenticate { user =>
-    entity(as[Project.Create]) { newProject =>
-      onSuccess(
-        ProjectDao
-          .insertProject(newProject, user)
-          .transact(xa)
-          .unsafeToFuture
-      ) { project =>
-        complete(StatusCodes.Created, project)
+    authorizeScope(ScopedAction(Domain.Projects, Action.Create, None), user) {
+      entity(as[Project.Create]) { newProject =>
+        onSuccess(
+          ProjectDao
+            .insertProject(newProject, user)
+            .transact(xa)
+            .unsafeToFuture
+        ) { project =>
+          complete(StatusCodes.Created, project)
+        }
       }
     }
   }
@@ -527,7 +533,8 @@ trait ProjectRoutes
           projectAuthFromTokenO(
             tokenO,
             projectId,
-            projectQueryParams.analysisId
+            projectQueryParams.analysisId,
+            ScopedAction(Domain.Projects, Action.Read, None)
           ) |
           projectIsPublic(projectId)) {
           complete {
@@ -538,18 +545,37 @@ trait ProjectRoutes
   }
 
   def updateProject(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[Project]) { updatedProject =>
+    authorizeScope(ScopedAction(Domain.Projects, Action.Update, None), user) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Project]) { updatedProject =>
+          onSuccess(
+            ProjectDao
+              .updateProject(updatedProject, projectId)
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            completeSingleOrNotFound
+          }
+        }
+      }
+    }
+  }
+
+  def deleteProject(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Projects, Action.Delete, None), user) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Delete)
+          .transact(xa)
+          .unsafeToFuture
+      } {
         onSuccess(
-          ProjectDao
-            .updateProject(updatedProject, projectId)
-            .transact(xa)
-            .unsafeToFuture
+          ProjectDao.deleteProject(projectId).transact(xa).unsafeToFuture
         ) {
           completeSingleOrNotFound
         }
@@ -557,158 +583,8 @@ trait ProjectRoutes
     }
   }
 
-  def deleteProject(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Delete)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(ProjectDao.deleteProject(projectId).transact(xa).unsafeToFuture) {
-        completeSingleOrNotFound
-      }
-    }
-  }
-
   def listLabels(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
-        AnnotationDao.listProjectLabels(projectId).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate {
-    user =>
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          val acceptSceneIO = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            rowsAffected <- SceneToLayerDao
-              .acceptScene(project.defaultLayerId, sceneId)
-          } yield { rowsAffected }
-
-          acceptSceneIO.transact(xa).unsafeToFuture
-        }
-      }
-  }
-
-  def acceptScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[List[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
-
-        val acceptScenesIO = for {
-          project <- ProjectDao.unsafeGetProjectById(projectId)
-          rowsAffected <- SceneToLayerDao
-            .acceptScenes(project.defaultLayerId, sceneIds)
-        } yield { rowsAffected }
-
-        onSuccess(acceptScenesIO.transact(xa).unsafeToFuture) { _ =>
-          complete(StatusCodes.NoContent)
-        }
-      }
-    }
-  }
-
-  def listProjectScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      (withPagination & projectSceneQueryParameters) { (page, sceneParams) =>
-        complete {
-          val sceneListIO = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            scenes <- ProjectLayerScenesDao.listLayerScenes(
-              project.defaultLayerId,
-              page,
-              sceneParams
-            )
-          } yield scenes
-          sceneListIO.transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
-    (projectQueryParameters) { projectQueryParams =>
-      authorizeAsync {
-        val authorized = for {
-          authProject <- ProjectDao
-            .authorized(user, ObjectType.Project, projectId, ActionType.View)
-          authResult <- (authProject, projectQueryParams.analysisId) match {
-            case (AuthFailure(), Some(analysisId: UUID)) =>
-              ToolRunDao
-                .authorizeReferencedProject(user, analysisId, projectId)
-            case (_, _) => Applicative[ConnectionIO].pure(authProject.toBoolean)
-          }
-        } yield authResult
-        authorized.transact(xa).unsafeToFuture
-      } {
-        complete {
-          val datasourcesIO = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            datasources <- ProjectLayerDatasourcesDao
-              .listProjectLayerDatasources(project.defaultLayerId)
-          } yield datasources
-          datasourcesIO
-            .transact(xa)
-            .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  /** Set the manually defined z-ordering for scenes within a given project */
-  def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[Seq[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
-
-        val setOrderIO = for {
-          project <- ProjectDao.unsafeGetProjectById(projectId)
-          updatedOrder <- SceneToLayerDao
-            .setManualOrder(project.defaultLayerId, sceneIds)
-        } yield { updatedOrder }
-
-        onSuccess(setOrderIO.transact(xa).unsafeToFuture) { _ =>
-          complete(StatusCodes.NoContent)
-        }
-      }
-    }
-  }
-
-  /** Get the color correction paramters for a project/scene pairing */
-  def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
-    authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
@@ -716,148 +592,131 @@ trait ProjectRoutes
           .unsafeToFuture
       } {
         complete {
-          val getColorCorrectParamsIO = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            params <- SceneToLayerDao.getColorCorrectParams(
-              project.defaultLayerId,
-              sceneId
-            )
-          } yield { params }
-
-          getColorCorrectParamsIO.transact(xa).unsafeToFuture
+          AnnotationDao.listProjectLabels(projectId).transact(xa).unsafeToFuture
         }
       }
     }
+  }
 
-  /** Set color correction parameters for a project/scene pairing */
-  def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
-    authenticate { user =>
+  def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.AddScenes, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            val acceptSceneIO = for {
+              project <- ProjectDao.unsafeGetProjectById(projectId)
+              rowsAffected <- SceneToLayerDao
+                .acceptScene(project.defaultLayerId, sceneId)
+            } yield {
+              rowsAffected
+            }
+
+            acceptSceneIO.transact(xa).unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def acceptScenes(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Projects, Action.AddScenes, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
       } {
-        entity(as[ColorCorrect.Params]) { ccParams =>
-          val setColorCorrectParamsIO = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            stl <- SceneToLayerDao.setColorCorrectParams(
-              project.defaultLayerId,
-              sceneId,
-              ccParams
-            )
-          } yield { stl }
+        entity(as[List[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
 
-          onSuccess(setColorCorrectParamsIO.transact(xa).unsafeToFuture) { _ =>
+          val acceptScenesIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            rowsAffected <- SceneToLayerDao
+              .acceptScenes(project.defaultLayerId, sceneIds)
+          } yield {
+            rowsAffected
+          }
+
+          onSuccess(acceptScenesIO.transact(xa).unsafeToFuture) { _ =>
             complete(StatusCodes.NoContent)
           }
         }
       }
     }
-
-  def setProjectColorMode(projectId: UUID) = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[ProjectColorModeParams]) { colorBands =>
-        val setProjectColorBandsIO = for {
-          project <- ProjectDao.unsafeGetProjectById(projectId)
-          rowsAffected <- SceneToLayerDao
-            .setProjectLayerColorBands(project.defaultLayerId, colorBands)
-        } yield { rowsAffected }
-
-        onSuccess(setProjectColorBandsIO.transact(xa).unsafeToFuture) { _ =>
-          complete(StatusCodes.NoContent)
-        }
-      }
-    }
   }
 
-  /** Set color correction parameters for a list of scenes */
-  def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate {
-    user =>
+  def listProjectScenes(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
           .unsafeToFuture
       } {
-        entity(as[BatchParams]) { params =>
-          val setColorCorrectParamsBatchIO = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            stl <- SceneToLayerDao
-              .setColorCorrectParamsBatch(project.defaultLayerId, params)
-          } yield { stl }
-
-          onSuccess(setColorCorrectParamsBatchIO.transact(xa).unsafeToFuture) {
-            _ =>
-              complete(StatusCodes.NoContent)
+        (withPagination & projectSceneQueryParameters) { (page, sceneParams) =>
+          complete {
+            val sceneListIO = for {
+              project <- ProjectDao.unsafeGetProjectById(projectId)
+              scenes <- ProjectLayerScenesDao.listLayerScenes(
+                project.defaultLayerId,
+                page,
+                sceneParams
+              )
+            } yield scenes
+            sceneListIO.transact(xa).unsafeToFuture
           }
-        }
-      }
-  }
-
-  /** Get the information which defines mosaicing behavior for each scene in a given project */
-  def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      rejectEmptyResponse {
-        complete {
-          val getMosaicDefinitionIO = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            result <- SceneToLayerDao
-              .getMosaicDefinition(project.defaultLayerId)
-          } yield { result }
-
-          getMosaicDefinitionIO
-            .transact(xa)
-            .unsafeToFuture
         }
       }
     }
   }
 
-  def addProjectScenes(projectId: UUID, layerIdO: Option[UUID] = None): Route =
-    authenticate { user =>
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[NonEmptyList[UUID]]) { sceneIds =>
-          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-            complete(StatusCodes.RequestEntityTooLarge)
+  def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Datasources, Action.Read, None), user) {
+      (projectQueryParameters) { projectQueryParams =>
+        authorizeAsync {
+          val authorized = for {
+            authProject <- ProjectDao
+              .authorized(user, ObjectType.Project, projectId, ActionType.View)
+            authResult <- (authProject, projectQueryParams.analysisId) match {
+              case (AuthFailure(), Some(analysisId: UUID)) =>
+                ToolRunDao
+                  .authorizeReferencedProject(user, analysisId, projectId)
+              case (_, _) =>
+                Applicative[ConnectionIO].pure(authProject.toBoolean)
+            }
+          } yield authResult
+          authorized.transact(xa).unsafeToFuture
+        } {
+          complete {
+            val datasourcesIO = for {
+              project <- ProjectDao.unsafeGetProjectById(projectId)
+              datasources <- ProjectLayerDatasourcesDao
+                .listProjectLayerDatasources(project.defaultLayerId)
+            } yield datasources
+            datasourcesIO
+              .transact(xa)
+              .unsafeToFuture
           }
-
-          val scenesAdded = for {
-            project <- ProjectDao.unsafeGetProjectById(projectId)
-            layerId = ProjectDao.getProjectLayerId(layerIdO, project)
-            addedScenes <- ProjectDao.addScenesToProject(
-              sceneIds,
-              projectId,
-              layerId,
-              true
-            )
-          } yield addedScenes
-
-          complete { scenesAdded.transact(xa).unsafeToFuture }
         }
       }
     }
+  }
 
-  def updateProjectScenes(
-      projectId: UUID,
-      layerIdO: Option[UUID] = None
-  ): Route =
-    authenticate { user =>
+  /** Set the manually defined z-ordering for scenes within a given project */
+  def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Projects, Action.ColorCorrect, None),
+      user
+    ) {
       authorizeAuthResultAsync {
         ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
@@ -869,22 +728,246 @@ trait ProjectRoutes
             complete(StatusCodes.RequestEntityTooLarge)
           }
 
-          sceneIds.toList.toNel match {
-            case Some(ids) =>
-              val replaceIO = for {
-                project <- ProjectDao.unsafeGetProjectById(projectId)
-                layerId = ProjectDao.getProjectLayerId(layerIdO, project)
-                replacement <- ProjectDao.replaceScenesInProject(
-                  ids,
-                  projectId,
-                  layerId
-                )
-              } yield replacement
+          val setOrderIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            updatedOrder <- SceneToLayerDao
+              .setManualOrder(project.defaultLayerId, sceneIds)
+          } yield {
+            updatedOrder
+          }
 
-              complete {
-                replaceIO.transact(xa).unsafeToFuture()
-              }
-            case _ => complete(StatusCodes.BadRequest)
+          onSuccess(setOrderIO.transact(xa).unsafeToFuture) { _ =>
+            complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+  }
+
+  /** Get the color correction paramters for a project/scene pairing */
+  def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.ColorCorrect, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.View)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            val getColorCorrectParamsIO = for {
+              project <- ProjectDao.unsafeGetProjectById(projectId)
+              params <- SceneToLayerDao.getColorCorrectParams(
+                project.defaultLayerId,
+                sceneId
+              )
+            } yield {
+              params
+            }
+
+            getColorCorrectParamsIO.transact(xa).unsafeToFuture
+          }
+        }
+      }
+    }
+
+  /** Set color correction parameters for a project/scene pairing */
+  def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.ColorCorrect, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[ColorCorrect.Params]) { ccParams =>
+            val setColorCorrectParamsIO = for {
+              project <- ProjectDao.unsafeGetProjectById(projectId)
+              stl <- SceneToLayerDao.setColorCorrectParams(
+                project.defaultLayerId,
+                sceneId,
+                ccParams
+              )
+            } yield {
+              stl
+            }
+
+            onSuccess(setColorCorrectParamsIO.transact(xa).unsafeToFuture) {
+              _ =>
+                complete(StatusCodes.NoContent)
+            }
+          }
+        }
+      }
+    }
+
+  def setProjectColorMode(projectId: UUID) = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Projects, Action.ColorCorrect, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[ProjectColorModeParams]) { colorBands =>
+          val setProjectColorBandsIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            rowsAffected <- SceneToLayerDao
+              .setProjectLayerColorBands(project.defaultLayerId, colorBands)
+          } yield {
+            rowsAffected
+          }
+
+          onSuccess(setProjectColorBandsIO.transact(xa).unsafeToFuture) { _ =>
+            complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+  }
+
+  /** Set color correction parameters for a list of scenes */
+  def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.ColorCorrect, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[BatchParams]) { params =>
+            val setColorCorrectParamsBatchIO = for {
+              project <- ProjectDao.unsafeGetProjectById(projectId)
+              stl <- SceneToLayerDao
+                .setColorCorrectParamsBatch(project.defaultLayerId, params)
+            } yield {
+              stl
+            }
+
+            onSuccess(setColorCorrectParamsBatchIO.transact(xa).unsafeToFuture) {
+              _ =>
+                complete(StatusCodes.NoContent)
+            }
+          }
+        }
+      }
+  }
+
+  /** Get the information which defines mosaicing behavior for each scene in a given project */
+  def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            val getMosaicDefinitionIO = for {
+              project <- ProjectDao.unsafeGetProjectById(projectId)
+              result <- SceneToLayerDao
+                .getMosaicDefinition(project.defaultLayerId)
+            } yield {
+              result
+            }
+
+            getMosaicDefinitionIO
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+  }
+
+  def addProjectScenes(projectId: UUID, layerIdO: Option[UUID] = None): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.AddScenes, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[NonEmptyList[UUID]]) { sceneIds =>
+            if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+              complete(StatusCodes.RequestEntityTooLarge)
+            }
+
+            val scenesAdded = for {
+              project <- ProjectDao.unsafeGetProjectById(projectId)
+              layerId = ProjectDao.getProjectLayerId(layerIdO, project)
+              addedScenes <- ProjectDao.addScenesToProject(
+                sceneIds,
+                projectId,
+                layerId,
+                true
+              )
+            } yield addedScenes
+
+            complete {
+              scenesAdded.transact(xa).unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+
+  def updateProjectScenes(
+      projectId: UUID,
+      layerIdO: Option[UUID] = None
+  ): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.EditScenes, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[Seq[UUID]]) { sceneIds =>
+            if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+              complete(StatusCodes.RequestEntityTooLarge)
+            }
+
+            sceneIds.toList.toNel match {
+              case Some(ids) =>
+                val replaceIO = for {
+                  project <- ProjectDao.unsafeGetProjectById(projectId)
+                  layerId = ProjectDao.getProjectLayerId(layerIdO, project)
+                  replacement <- ProjectDao.replaceScenesInProject(
+                    ids,
+                    projectId,
+                    layerId
+                  )
+                } yield replacement
+
+                complete {
+                  replaceIO.transact(xa).unsafeToFuture()
+                }
+              case _ => complete(StatusCodes.BadRequest)
+            }
           }
         }
       }
@@ -894,147 +977,171 @@ trait ProjectRoutes
       projectId: UUID,
       layerIdO: Option[UUID] = None
   ): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[Seq[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
+    authorizeScope(ScopedAction(Domain.Projects, Action.EditScenes, None), user) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Seq[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
 
-        val deleteIO = for {
-          project <- ProjectDao.unsafeGetProjectById(projectId)
-          layerId = ProjectDao.getProjectLayerId(layerIdO, project)
-          deletion <- ProjectDao
-            .deleteScenesFromProject(sceneIds.toList, projectId, layerId)
-        } yield deletion
-        onSuccess(deleteIO.transact(xa).unsafeToFuture) { _ =>
-          complete(StatusCodes.NoContent)
+          val deleteIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            layerId = ProjectDao.getProjectLayerId(layerIdO, project)
+            deletion <- ProjectDao
+              .deleteScenesFromProject(sceneIds.toList, projectId, layerId)
+          } yield deletion
+          onSuccess(deleteIO.transact(xa).unsafeToFuture) { _ =>
+            complete(StatusCodes.NoContent)
+          }
         }
       }
     }
   }
 
   def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
+    authorizeScope(
+      ScopedAction(Domain.Projects, Action.ReadPermissions, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
         ProjectDao
-          .getPermissions(projectId)
-          .transact(xa)
-          .unsafeToFuture
-      }
-    }
-  }
-
-  def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
-    entity(as[List[ObjectAccessControlRule]]) { acrList =>
-      authorizeAsync {
-        (
-          ProjectDao.authorized(
-            user,
-            ObjectType.Project,
-            projectId,
-            ActionType.Edit
-          ) map { _.toBoolean },
-          acrList traverse { acr =>
-            ProjectDao.isValidPermission(acr, user)
-          } map { _.foldLeft(true)(_ && _) }
-        ).tupled
-          .map({ authTup =>
-            authTup._1 && authTup._2
-          })
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
       } {
         complete {
           ProjectDao
-            .replacePermissions(projectId, acrList)
+            .getPermissions(projectId)
             .transact(xa)
             .unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Projects, Action.Share, None), user) {
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+        authorizeAsync {
+          (
+            ProjectDao.authorized(
+              user,
+              ObjectType.Project,
+              projectId,
+              ActionType.Edit
+            ) map {
+              _.toBoolean
+            },
+            acrList traverse { acr =>
+              ProjectDao.isValidPermission(acr, user)
+            } map {
+              _.foldLeft(true)(_ && _)
+            }
+          ).tupled
+            .map({ authTup =>
+              authTup._1 && authTup._2
+            })
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            ProjectDao
+              .replacePermissions(projectId, acrList)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
   }
 
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
-    entity(as[ObjectAccessControlRule]) { acr =>
-      authorizeAsync {
-        (
-          ProjectDao.authorized(
-            user,
-            ObjectType.Project,
-            projectId,
-            ActionType.Edit
-          ) map { _.toBoolean },
-          ProjectDao.isValidPermission(acr, user)
-        ).tupled
-          .map({ authTup =>
-            authTup._1 && authTup._2
-          })
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          ProjectDao
-            .addPermission(projectId, acr)
+    authorizeScope(ScopedAction(Domain.Projects, Action.Share, None), user) {
+      entity(as[ObjectAccessControlRule]) { acr =>
+        authorizeAsync {
+          (
+            ProjectDao.authorized(
+              user,
+              ObjectType.Project,
+              projectId,
+              ActionType.Edit
+            ) map {
+              _.toBoolean
+            },
+            ProjectDao.isValidPermission(acr, user)
+          ).tupled
+            .map({ authTup =>
+              authTup._1 && authTup._2
+            })
             .transact(xa)
             .unsafeToFuture
+        } {
+          complete {
+            ProjectDao
+              .addPermission(projectId, acr)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
   }
 
   def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      user.isSuperuser match {
-        case true => complete(List("*"))
-        case false =>
-          onSuccess(
-            ProjectDao
-              .unsafeGetProjectById(projectId)
-              .transact(xa)
-              .unsafeToFuture
-          ) { project =>
-            project.owner == user.id match {
-              case true => complete(List("*"))
-              case false =>
-                complete {
-                  ProjectDao
-                    .listUserActions(user, projectId)
-                    .transact(xa)
-                    .unsafeToFuture
-                }
+    authorizeScope(
+      ScopedAction(Domain.Projects, Action.ReadPermissions, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        user.isSuperuser match {
+          case true => complete(List("*"))
+          case false =>
+            onSuccess(
+              ProjectDao
+                .unsafeGetProjectById(projectId)
+                .transact(xa)
+                .unsafeToFuture
+            ) { project =>
+              project.owner == user.id match {
+                case true => complete(List("*"))
+                case false =>
+                  complete {
+                    ProjectDao
+                      .listUserActions(user, projectId)
+                      .transact(xa)
+                      .unsafeToFuture
+                  }
+              }
             }
-          }
+        }
       }
     }
   }
 
   def deleteProjectPermissions(projectId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
+    authorizeScope(ScopedAction(Domain.Projects, Action.Share, None), user) {
+      authorizeAuthResultAsync {
         ProjectDao
-          .deletePermissions(projectId)
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
+      } {
+        complete {
+          ProjectDao
+            .deletePermissions(projectId)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }

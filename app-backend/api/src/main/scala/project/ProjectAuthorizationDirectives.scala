@@ -32,8 +32,10 @@ trait ProjectAuthorizationDirectives extends Authentication with Directives {
     }
   }
 
-  def projectAuthFromMapTokenO(mapTokenO: Option[UUID],
-                               projectId: UUID): Directive0 = {
+  def projectAuthFromMapTokenO(
+      mapTokenO: Option[UUID],
+      projectId: UUID
+  ): Directive0 = {
     mapTokenO map { mapToken =>
       authorizeAsync {
         MapTokenDao
@@ -48,9 +50,12 @@ trait ProjectAuthorizationDirectives extends Authentication with Directives {
     } getOrElse { reject(AuthorizationFailedRejection) }
   }
 
-  def projectAuthFromTokenO(tokenO: Option[String],
-                            projectId: UUID,
-                            analysisId: Option[UUID] = None): Directive0 = {
+  def projectAuthFromTokenO(
+      tokenO: Option[String],
+      projectId: UUID,
+      analysisId: Option[UUID] = None,
+      scopedAction: ScopedAction
+  ): Directive0 = {
     authorizeAsync {
       tokenO map { token =>
         verifyJWT(token.split(" ").last) traverse {
@@ -58,17 +63,19 @@ trait ProjectAuthorizationDirectives extends Authentication with Directives {
             val userId = jwtClaims.getStringClaim("sub")
             for {
               user <- UserDao.unsafeGetUserById(userId)
-              projectAuth <- ProjectDao.authorized(user,
-                                                   ObjectType.Project,
-                                                   projectId,
-                                                   ActionType.View)
+              projectAuth <- ProjectDao.authorized(
+                user,
+                ObjectType.Project,
+                projectId,
+                ActionType.View
+              )
               authResult <- (projectAuth, analysisId) match {
                 case (AuthFailure(), Some(id: UUID)) =>
                   ToolRunDao.authorizeReferencedProject(user, id, projectId)
                 case (_, _) =>
                   Applicative[ConnectionIO].pure(projectAuth.toBoolean)
               }
-            } yield authResult
+            } yield authResult && user.scope.actions.contains(scopedAction)
         } map {
           case Right(result) => result
           case Left(_)       => false

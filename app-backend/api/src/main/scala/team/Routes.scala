@@ -39,24 +39,31 @@ trait TeamRoutes
   }
 
   def getTeam(teamId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      val authIO = for {
-        teamMember <- OptionT.liftF[ConnectionIO, Boolean](
-          TeamDao.userIsMember(user, teamId))
-        team <- OptionT[ConnectionIO, Team](TeamDao.getTeamById(teamId))
-        organization <- OptionT[ConnectionIO, Organization](
-          OrganizationDao.getOrganizationById(team.organizationId)
-        )
-        platformAdmin <- OptionT.liftF[ConnectionIO, Boolean](
-          PlatformDao.userIsAdmin(user, organization.platformId))
-        organizationMember <- OptionT.liftF[ConnectionIO, Boolean](
-          OrganizationDao.userIsMember(user, organization.id))
-      } yield { teamMember || organizationMember || platformAdmin }
-      authIO.value.map(_.getOrElse(false)).transact(xa).unsafeToFuture
-    } {
-      rejectEmptyResponse {
-        complete {
-          TeamDao.getTeamById(teamId).transact(xa).unsafeToFuture
+    authorizeScope(ScopedAction(Domain.Teams, Action.Read, None), user) {
+      authorizeAsync {
+        val authIO = for {
+          teamMember <- OptionT.liftF[ConnectionIO, Boolean](
+            TeamDao.userIsMember(user, teamId)
+          )
+          team <- OptionT[ConnectionIO, Team](TeamDao.getTeamById(teamId))
+          organization <- OptionT[ConnectionIO, Organization](
+            OrganizationDao.getOrganizationById(team.organizationId)
+          )
+          platformAdmin <- OptionT.liftF[ConnectionIO, Boolean](
+            PlatformDao.userIsAdmin(user, organization.platformId)
+          )
+          organizationMember <- OptionT.liftF[ConnectionIO, Boolean](
+            OrganizationDao.userIsMember(user, organization.id)
+          )
+        } yield {
+          teamMember || organizationMember || platformAdmin
+        }
+        authIO.value.map(_.getOrElse(false)).transact(xa).unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            TeamDao.getTeamById(teamId).transact(xa).unsafeToFuture
+          }
         }
       }
     }

@@ -1,7 +1,6 @@
 package com.rasterfoundry.akkautil
 
-import com.rasterfoundry.datamodel.AuthResult
-
+import com.rasterfoundry.datamodel.{AuthResult, ScopedAction, User}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{
   Directive0,
@@ -11,9 +10,9 @@ import akka.http.scaladsl.server.{
   StandardRoute
 }
 import akka.http.scaladsl.server.directives.{
-  RouteDirectives,
-  FutureDirectives,
   CompleteOrRecoverWithMagnet,
+  FutureDirectives,
+  RouteDirectives,
   SecurityDirectives
 }
 import io.circe._
@@ -50,11 +49,17 @@ trait CommonHandlers extends RouteDirectives {
     case x if x > 0 => complete(StatusCodes.NoContent)
     case _ =>
       throw new IllegalStateException(
-        s"Result expected to be 0 or positive, was $count")
+        s"Result expected to be 0 or positive, was $count"
+      )
+  }
+
+  def authorizeScope(scopedAction: ScopedAction, user: User): Directive0 = {
+    SecurityDirectives.authorize(user.scope.actions.contains(scopedAction))
   }
 
   def authorizeAuthResultAsync[T](
-      authFut: Future[AuthResult[T]]): Directive0 = {
+      authFut: Future[AuthResult[T]]
+  ): Directive0 = {
     SecurityDirectives.authorizeAsync { authFut map { _.toBoolean } }
   }
 

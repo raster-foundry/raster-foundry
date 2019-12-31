@@ -43,58 +43,74 @@ trait MapTokenRoutes
   }
 
   def listMapTokens: Route = authenticate { user =>
-    (withPagination & mapTokenQueryParams) { (page, mapTokenParams) =>
-      complete {
-        MapTokenDao
-          .listAuthorizedMapTokens(user, mapTokenParams, page)
-          .transact(xa)
-          .unsafeToFuture
+    authorizeScope(ScopedAction(Domain.MapTokens, Action.Read, None), user) {
+      (withPagination & mapTokenQueryParams) { (page, mapTokenParams) =>
+        complete {
+          MapTokenDao
+            .listAuthorizedMapTokens(user, mapTokenParams, page)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }
 
   def createMapToken: Route = authenticate { user =>
-    entity(as[MapToken.Create]) { newMapToken =>
-      authorizeAsync {
-        val authIO = (newMapToken.project, newMapToken.toolRun) match {
-          case (None, None) =>
-            Applicative[ConnectionIO].pure(false)
-          case (Some(projectId), None) =>
-            ProjectDao
-              .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-              .map(_.toBoolean)
-          case (None, Some(toolRunId)) =>
-            ToolRunDao
-              .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
-              .map(_.toBoolean)
-          case _ => Applicative[ConnectionIO].pure(false)
-        }
-        authIO.transact(xa).unsafeToFuture
-      } {
-        onSuccess(
-          MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture
-        ) { mapToken =>
-          complete((StatusCodes.Created, mapToken))
+    authorizeScope(ScopedAction(Domain.MapTokens, Action.Create, None), user) {
+      entity(as[MapToken.Create]) { newMapToken =>
+        authorizeAsync {
+          val authIO = (newMapToken.project, newMapToken.toolRun) match {
+            case (None, None) =>
+              Applicative[ConnectionIO].pure(false)
+            case (Some(projectId), None) =>
+              ProjectDao
+                .authorized(
+                  user,
+                  ObjectType.Project,
+                  projectId,
+                  ActionType.Edit
+                )
+                .map(_.toBoolean)
+            case (None, Some(toolRunId)) =>
+              ToolRunDao
+                .authorized(
+                  user,
+                  ObjectType.Analysis,
+                  toolRunId,
+                  ActionType.Edit
+                )
+                .map(_.toBoolean)
+            case _ => Applicative[ConnectionIO].pure(false)
+          }
+          authIO.transact(xa).unsafeToFuture
+        } {
+          onSuccess(
+            MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture
+          ) { mapToken =>
+            complete((StatusCodes.Created, mapToken))
+          }
         }
       }
     }
   }
 
   def getMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      MapTokenDao
-        .authorize(mapTokenId, user, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      get {
-        rejectEmptyResponse {
-          complete {
-            MapTokenDao.query
-              .filter(mapTokenId)
-              .selectOption
-              .transact(xa)
-              .unsafeToFuture
+    authorizeScope(ScopedAction(Domain.MapTokens, Action.Read, None), user) {
+      authorizeAsync {
+        MapTokenDao
+          .authorize(mapTokenId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        get {
+          rejectEmptyResponse {
+            complete {
+              MapTokenDao.query
+                .filter(mapTokenId)
+                .selectOption
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
       }
@@ -102,40 +118,44 @@ trait MapTokenRoutes
   }
 
   def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      MapTokenDao
-        .authorize(mapTokenId, user, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[MapToken]) { updatedMapToken =>
-        onSuccess(
-          MapTokenDao
-            .update(updatedMapToken, mapTokenId)
-            .transact(xa)
-            .unsafeToFuture
-        ) {
-          completeSingleOrNotFound
+    authorizeScope(ScopedAction(Domain.MapTokens, Action.Update, None), user) {
+      authorizeAsync {
+        MapTokenDao
+          .authorize(mapTokenId, user, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[MapToken]) { updatedMapToken =>
+          onSuccess(
+            MapTokenDao
+              .update(updatedMapToken, mapTokenId)
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            completeSingleOrNotFound
+          }
         }
       }
     }
   }
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      MapTokenDao
-        .authorize(mapTokenId, user, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
-        MapTokenDao.query
-          .filter(mapTokenId)
-          .delete
+    authorizeScope(ScopedAction(Domain.MapTokens, Action.Delete, None), user) {
+      authorizeAsync {
+        MapTokenDao
+          .authorize(mapTokenId, user, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
-      ) {
-        completeSingleOrNotFound
+      } {
+        onSuccess(
+          MapTokenDao.query
+            .filter(mapTokenId)
+            .delete
+            .transact(xa)
+            .unsafeToFuture
+        ) {
+          completeSingleOrNotFound
+        }
       }
     }
   }
