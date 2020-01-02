@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Clear Python Lambda function pip cache [#5274](https://github.com/raster-foundry/raster-foundry/pull/5274)
+
 ### Deprecated
 
 ### Removed
