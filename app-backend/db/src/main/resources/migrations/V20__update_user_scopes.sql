@@ -9,7 +9,7 @@ UPDATE public.users SET scopes = '""'::jsonb;
 UPDATE
    public.users 
 SET
-   scopes = 'platforms:admin'::jsonb 
+   scopes = '"platforms:admin"'::jsonb 
 WHERE
    id in 
    (
@@ -29,7 +29,7 @@ WHERE
 UPDATE
    public.users 
 SET
-   scopes = 'organizations:admin'::jsonb 
+   scopes = '"organizations:admin"'::jsonb 
 WHERE
    id in 
    (
@@ -49,7 +49,7 @@ WHERE
 UPDATE
    public.users 
 SET
-   scopes = 'teams:admin'::jsonb 
+   scopes = '"teams:admin"'::jsonb 
 WHERE
    id in 
    (
@@ -69,7 +69,7 @@ WHERE
 UPDATE
    public.users 
 SET
-   scopes = 'users:member'::jsonb 
+   scopes = '"users:member"'::jsonb 
 WHERE
    id in 
    (
