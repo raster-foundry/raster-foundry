@@ -4,6 +4,8 @@
 
 ### Added
 
+- Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
+
 ### Changed
 
 ### Deprecated
