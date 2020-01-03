@@ -4,15 +4,20 @@
 
 ### Added
 
+- Created a composable and flexible datamodel for user scopes [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270)
 - Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
 
 ### Changed
+
+- Clear Python Lambda function pip cache [#5274](https://github.com/raster-foundry/raster-foundry/pull/5274)
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- Removed unused route and fixed spelling in Swagger spec [#5273](https://github.com/raster-foundry/raster-foundry/pull/5273)
 
 ### Security
 

@@ -265,6 +265,7 @@ lazy val datamodel = project
     libraryDependencies ++= Seq(
       Dependencies.shapeless,
       Dependencies.catsCore,
+      Dependencies.catsLaws,
       Dependencies.monocleCore,
       Dependencies.circeGeneric,
       Dependencies.spray,

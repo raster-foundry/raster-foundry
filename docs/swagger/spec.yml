@@ -1513,37 +1513,6 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
-  /scenes/{sceneID}/thumbnail:
-    x-resource: Scenes
-    get:
-      summary: 'Get a thumbnail for this COG scene. Only works for scenes of type COG'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/sceneID'
-        - $ref: '#/parameters/redBand'
-        - $ref: '#/parameters/greenBand'
-        - $ref: '#/parameters/blueBand'
-        - $ref: '#/parameters/brightnessFloor'
-        - $ref: '#/parameters/queryAuthToken'
-        - $ref: '#/parameters/width'
-        - $ref: '#/parameters/height'
-      produces:
-        - image/png
-      responses:
-        200:
-          description: 'PNG of a thumbnail for this scene'
-          schema:
-            type: string
-            format: binary
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
 
   /projects/:
     x-resource: Projects
@@ -1950,7 +1919,7 @@ paths:
 
 
   /projects/{projectID}/annotations/{annotationID}:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: 'Get an annotation belonging to a project default layer'
       tags:
@@ -2953,7 +2922,7 @@ paths:
 
 
   /projects/{projectID}/layers/{layerID}/annotations/{annotationID}/:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: 'Get an annotation belonging to a project layer'
       tags:
@@ -4383,7 +4352,7 @@ paths:
             $ref: '#/definitions/Error'
 
   /shapes/{shapeID}:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: Get a specific shape
       tags:
