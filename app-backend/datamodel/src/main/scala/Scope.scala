@@ -183,7 +183,7 @@ object Scope {
       case Scopes.RasterFoundryOrganizationAdmin =>
         Json.fromString("organizations:admin")
       case Scopes.RasterFoundryUser =>
-        Json.fromString("users:member")
+        Json.fromString("platformUser")
       case Scopes.RasterFoundryPlatformAdmin => Json.fromString("platforms:admin")
       case Scopes.RasterFoundryTeamAdmin => Json.fromString("teams:admin")
       case Scopes.ScenesCRUD             => Json.fromString("scenes:crud")
@@ -217,7 +217,7 @@ object Scope {
       case Some("projects:fullAccess")       => Right(Scopes.ProjectsFullAccess)
       case Some("organizations:admin") =>
         Right(Scopes.RasterFoundryOrganizationAdmin)
-      case Some("users:member") => Right(Scopes.RasterFoundryUser)
+      case Some("platformUser") => Right(Scopes.RasterFoundryUser)
       case Some("platforms:admin") => Right (Scopes.RasterFoundryPlatformAdmin)
       case Some("teams:admin")           => Right(Scopes.RasterFoundryTeamAdmin)
       case Some("scenes:crud")           => Right(Scopes.ScenesCRUD)

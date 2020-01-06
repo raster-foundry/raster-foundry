@@ -69,7 +69,7 @@ WHERE
 UPDATE
    public.users 
 SET
-   scopes = '"users:member"'::jsonb 
+   scopes = '"platformUser"'::jsonb 
 WHERE
    id in 
    (
