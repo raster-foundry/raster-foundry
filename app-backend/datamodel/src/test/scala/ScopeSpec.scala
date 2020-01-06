@@ -63,7 +63,9 @@ class ScopeSpec
     Scopes.TeamsUpdate,
     Scopes.TemplatesCRUD,
     Scopes.TemplatesMultiPlayer,
-    Scopes.UploadsCRUD
+    Scopes.UploadsCRUD,
+    Scopes.RasterFoundryPlatformAdmin,
+    Scopes.RasterFoundryUser
   )
 
   // Not separating out into a separate object until we have more than
