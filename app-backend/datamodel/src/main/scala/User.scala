@@ -113,11 +113,9 @@ final case class User(
     isSuperuser: Boolean,
     isActive: Boolean,
     visibility: UserVisibility,
-    personalInfo: User.PersonalInfo
+    personalInfo: User.PersonalInfo,
+    scope: Scope
 ) {
-
-  // todo: fill in with real scopes when available
-  val scope: Scope = Scopes.NoAccess
 
   lazy val cacheKey: String = s"user:$id"
 
@@ -192,7 +190,8 @@ object User {
       role: UserRole = Viewer,
       email: String = "",
       name: String = "",
-      profileImageUri: String = ""
+      profileImageUri: String = "",
+      scope: Scope = Scopes.RasterFoundryUser
   ) {
     def toUser: User = {
       val now = new Timestamp(new java.util.Date().getTime)
@@ -210,7 +209,8 @@ object User {
         isSuperuser = false,
         isActive = true,
         UserVisibility.Private,
-        User.PersonalInfo()
+        User.PersonalInfo(),
+        scope
       )
     }
   }
@@ -221,7 +221,8 @@ object User {
       name: String,
       picture: String,
       platformId: UUID,
-      organizationId: UUID
+      organizationId: UUID,
+      scope: Scope = Scopes.RasterFoundryUser
   ) {
     def toUser: User = {
       val now = new Timestamp(new java.util.Date().getTime)
@@ -239,7 +240,8 @@ object User {
         isSuperuser = false,
         isActive = true,
         UserVisibility.Private,
-        User.PersonalInfo()
+        User.PersonalInfo(),
+        scope
       )
     }
   }
