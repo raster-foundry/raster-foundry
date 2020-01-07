@@ -18,7 +18,7 @@ object Domain {
   case object Exports extends Domain("exports")
   case object FeatureFlags extends Domain("featureFlags")
   case object Licenses extends Domain("licenses")
-  case object MapTokens extends Domain("map-tokens")
+  case object MapTokens extends Domain("mapTokens")
   case object Organizations extends Domain("organizations")
   case object Platforms extends Domain("platforms")
   case object Projects extends Domain("projects")
