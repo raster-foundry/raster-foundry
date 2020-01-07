@@ -146,7 +146,7 @@ trait UserRoutes
 
   def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate {
     user =>
-      authorizeScope(ScopedAction(Domain.Users, Action.Read, None), user) {
+      authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
         rejectEmptyResponse {
           val authId = URLDecoder.decode(authIdEncoded, "UTF-8")
           if (user.id == authId) {
@@ -192,7 +192,7 @@ trait UserRoutes
     }
 
   def getUserRoles: Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Users, Action.Read, None), user) {
+    authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
       complete {
         UserGroupRoleDao
           .listByUserWithRelated(user)
