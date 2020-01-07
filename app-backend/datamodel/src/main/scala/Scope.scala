@@ -388,7 +388,7 @@ object Scopes {
           Action.ReadThumbnail,
           Action.ReadSentinelMetadata
         ).map(makeScopedAction(Domain.Projects, _)) ++ makeCRUDScopedActions(
-          Domain.Projects
+          Domain.Scenes
         )
       )
 
