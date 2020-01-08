@@ -5,6 +5,7 @@
 ### Added
 
 - Created a composable and flexible datamodel for user scopes [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270)
+- Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
 - Added a migration to attach user scopes to users [#5275](https://github.com/raster-foundry/raster-foundry/pull/5275)
 
 ### Changed

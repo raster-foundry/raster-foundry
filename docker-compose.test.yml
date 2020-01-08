@@ -90,3 +90,17 @@ services:
     volumes:
       - ./:/usr/local/src
     working_dir: /usr/local/src
+
+  panrec:
+    image: jisantuc/panrec:ba13f43
+    volumes:
+      - ./stubs:/opt/data/out
+      - ./app-backend:/opt/data/app-backend
+    entrypoint: "./panrec"
+    command:
+      - "-i"
+      - "scala"
+      - "-o"
+      - "ts-interface"
+      - "/opt/data/app-backend/datamodel/src/main/scala"
+      - "/opt/data/out"

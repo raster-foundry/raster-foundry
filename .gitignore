@@ -121,3 +121,6 @@ scratch/
 stats.json
 app-lambda/opt/*
 /app-lambda/package.sh
+
+# Typescript stubs from panrec
+stubs/
