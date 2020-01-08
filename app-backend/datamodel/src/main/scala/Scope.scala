@@ -2,7 +2,7 @@ package com.rasterfoundry.datamodel
 
 import cats.{Eq, Monoid}
 import cats.implicits._
-import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, Json}
+import io.circe.{Decoder, DecodingFailure, Encoder, Error, HCursor, Json}
 import io.circe.parser._
 
 import scala.util.{Failure, Success, Try}
@@ -264,15 +264,19 @@ object Scope {
       case Some("teams:admin")     => Right(Scopes.RasterFoundryTeamsAdmin)
       case Some("annotateTasks")   => Right(Scopes.AnnotateTasksScope)
       case Some(s) =>
-        SimpleScope.fromEithers((s.split(";").toList match {
-          case List("") => List.empty
+        s.split(";").toList match {
+          case List("") => Right(Monoid[Scope].empty)
           case actions =>
-            actions.map(
-              act =>
-                decode[ScopedAction](s""""$act"""")
-                  .leftMap(err => DecodingFailure(err.getMessage, Nil))
-            )
-        }))
+            Monoid[Either[Error, Scope]]
+              .combineAll(
+                actions map { action =>
+                  (decode[ScopedAction](s""""$action"""") map { scopedAct =>
+                    new SimpleScope(Set(scopedAct))
+                  }).orElse(decode[Scope](s""""$action""""))
+                }
+              )
+              .leftMap(err => DecodingFailure(err.getMessage, Nil))
+        }
       case _ => Left(DecodingFailure("Scope", c.history))
     }
   }
