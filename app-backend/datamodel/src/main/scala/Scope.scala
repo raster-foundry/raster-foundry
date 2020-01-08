@@ -243,6 +243,7 @@ object Scope {
       case Scopes.RasterFoundryPlatformAdmin =>
         Json.fromString("platforms:admin")
       case Scopes.RasterFoundryTeamsAdmin => Json.fromString("teams:admin")
+      case Scopes.AnnotateTasksScope      => Json.fromString("annotateTasks")
       case SimpleScope(actions) =>
         Json.fromString((actions map { action =>
           action.repr
@@ -261,6 +262,7 @@ object Scope {
       case Some("platformUser")    => Right(Scopes.RasterFoundryUser)
       case Some("platforms:admin") => Right(Scopes.RasterFoundryPlatformAdmin)
       case Some("teams:admin")     => Right(Scopes.RasterFoundryTeamsAdmin)
+      case Some("annotateTasks")   => Right(Scopes.AnnotateTasksScope)
       case Some(s) =>
         SimpleScope.fromEithers((s.split(";").toList match {
           case List("") => List.empty
@@ -361,11 +363,17 @@ object Scopes {
       extends SimpleScope(
         Set(
           ScopedAction(Domain.Projects, Action.CreateAnnotation, None),
+          ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
+          ScopedAction(Domain.Projects, Action.UpdateAnnotation, None)
+        )
+      )
+
+  case object AnnotateTasksScope
+      extends SimpleScope(
+        Set(
           ScopedAction(Domain.Projects, Action.CreateTaskGrid, None),
           ScopedAction(Domain.Projects, Action.CreateTasks, None),
-          ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
           ScopedAction(Domain.Projects, Action.DeleteTasks, None),
-          ScopedAction(Domain.Projects, Action.UpdateAnnotation, None),
           ScopedAction(Domain.Projects, Action.UpdateTasks, None),
           ScopedAction(Domain.Projects, Action.ReadTasks, None)
         )
