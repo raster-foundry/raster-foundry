@@ -1,6 +1,8 @@
 package com.rasterfoundry.datamodel
 
+import cats.Eq
 import cats.kernel.laws.discipline.MonoidTests
+import io.circe.parser._
 import io.circe.testing.{ArbitraryInstances, CodecTests}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FunSuite
@@ -123,5 +125,21 @@ class ScopeSpec
   checkAll("Scope.MonoidLaws", MonoidTests[Scope].monoid)
   checkAll("Scope.CodecTests", CodecTests[Scope].codec)
 
+  test("decode a mix of simple and complex scopes") {
+    val decoded = decode[Scope](""""projects:read;annotateTasks"""").right.get
+    assert(
+      Eq[Scope].eqv(
+        decoded,
+        new ComplexScope(
+          Set(
+            Scopes.AnnotateTasksScope,
+            new SimpleScope(
+              Set(ScopedAction(Domain.Projects, Action.Read, None))
+            )
+          )
+        )
+      )
+    )
+  }
   // TODO test some permissions relationships
 }
