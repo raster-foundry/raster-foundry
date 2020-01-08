@@ -19,6 +19,7 @@
 ### Fixed
 
 - Removed unused route and fixed spelling in Swagger spec [#5273](https://github.com/raster-foundry/raster-foundry/pull/5273)
+- Fixed a bug in scope decoding that prevented applying simple scopes and canned policies to the same user [#5277](https://github.com/raster-foundry/raster-foundry/pull/5277)
 
 ### Security
 
