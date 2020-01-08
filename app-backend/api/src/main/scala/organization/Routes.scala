@@ -15,7 +15,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import java.util.UUID
 
 import cats.effect.IO
-
+import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction}
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
@@ -48,40 +48,53 @@ trait OrganizationRoutes
   }
 
   def getOrganization(orgId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        OrganizationDao
-          .viewFilter(user)
-          .filter(orgId)
-          .selectOption
-          .transact(xa)
-          .unsafeToFuture()
+    authorizeScope(ScopedAction(Domain.Organizations, Action.Read, None), user) {
+      rejectEmptyResponse {
+        complete {
+          OrganizationDao
+            .viewFilter(user)
+            .filter(orgId)
+            .selectOption
+            .transact(xa)
+            .unsafeToFuture()
+        }
       }
     }
   }
 
   def searchOrganizations(): Route = authenticate { user =>
-    searchParams { (searchParams) =>
-      complete {
-        OrganizationDao
-          .searchOrganizations(user, searchParams)
-          .transact(xa)
-          .unsafeToFuture
+    authorizeScope(
+      ScopedAction(Domain.Organizations, Action.Search, None),
+      user
+    ) {
+      searchParams { (searchParams) =>
+        complete {
+          OrganizationDao
+            .searchOrganizations(user, searchParams)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }
 
   def addOrganizationLogo(orgID: UUID): Route = authenticate { user =>
-    authorizeAsync(
-      OrganizationDao.userIsAdmin(user, orgID).transact(xa).unsafeToFuture()
+    authorizeScope(
+      ScopedAction(Domain.Organizations, Action.Update, None),
+      user
     ) {
-      entity(as[String]) { logoBase64 =>
-        onSuccess(
-          OrganizationDao
-            .addLogo(logoBase64, orgID, dataBucket)
-            .transact(xa)
-            .unsafeToFuture()) { organization =>
-          complete((StatusCodes.Created, organization))
+      authorizeAsync(
+        OrganizationDao.userIsAdmin(user, orgID).transact(xa).unsafeToFuture()
+      ) {
+        entity(as[String]) { logoBase64 =>
+          onSuccess(
+            OrganizationDao
+              .addLogo(logoBase64, orgID, dataBucket)
+              .transact(xa)
+              .unsafeToFuture()
+          ) { organization =>
+            complete((StatusCodes.Created, organization))
+          }
         }
       }
     }

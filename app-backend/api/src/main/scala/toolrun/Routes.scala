@@ -75,7 +75,12 @@ trait ToolRunRoutes
           (extractTokenHeader & extractMapTokenParam) { (tokenO, mapTokenO) =>
             (
               toolRunAuthProjectFromMapTokenO(mapTokenO, projectId) |
-                projectAuthFromTokenO(tokenO, projectId)
+                projectAuthFromTokenO(
+                  tokenO,
+                  projectId,
+                  None,
+                  ScopedAction(Domain.Analyses, Action.Read, None)
+                )
             ) {
               complete {
                 val userOQuery
@@ -118,33 +123,40 @@ trait ToolRunRoutes
           }
         case _ =>
           authenticate { user =>
-            complete {
-              ToolRunDao
-                .authQuery(
-                  user,
-                  ObjectType.Analysis,
-                  runParams.ownershipTypeParams.ownershipType,
-                  runParams.groupQueryParameters.groupType,
-                  runParams.groupQueryParameters.groupId
-                )
-                .filter(runParams)
-                .page(page)
-                .transact(xa)
-                .unsafeToFuture
+            authorizeScope(
+              ScopedAction(Domain.Analyses, Action.Read, None),
+              user
+            ) {
+              complete {
+                ToolRunDao
+                  .authQuery(
+                    user,
+                    ObjectType.Analysis,
+                    runParams.ownershipTypeParams.ownershipType,
+                    runParams.groupQueryParameters.groupType,
+                    runParams.groupQueryParameters.groupId
+                  )
+                  .filter(runParams)
+                  .page(page)
+                  .transact(xa)
+                  .unsafeToFuture
 
+              }
             }
           }
       }
   }
 
   def createToolRun: Route = authenticate { user =>
-    entity(as[ToolRun.Create]) { newRun =>
-      onSuccess(
-        ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture
-      ) { toolRun =>
-        {
-          complete {
-            (StatusCodes.Created, toolRun)
+    authorizeScope(ScopedAction(Domain.Analyses, Action.Create, None), user) {
+      entity(as[ToolRun.Create]) { newRun =>
+        onSuccess(
+          ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture
+        ) { toolRun =>
+          {
+            complete {
+              (StatusCodes.Created, toolRun)
+            }
           }
         }
       }
@@ -152,37 +164,58 @@ trait ToolRunRoutes
   }
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ToolRunDao
-        .authorized(user, ObjectType.Analysis, runId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      rejectEmptyResponse {
-        complete(
-          ToolRunDao.query
-            .filter(runId)
-            .selectOption
-            .transact(xa)
-            .unsafeToFuture
-        )
+    authorizeScope(ScopedAction(Domain.Analyses, Action.Read, None), user) {
+      authorizeAuthResultAsync {
+        ToolRunDao
+          .authorized(user, ObjectType.Analysis, runId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete(
+            ToolRunDao.query
+              .filter(runId)
+              .selectOption
+              .transact(xa)
+              .unsafeToFuture
+          )
+        }
       }
     }
   }
 
   def updateToolRun(runId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ToolRunDao
-        .authorized(user, ObjectType.Analysis, runId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[ToolRun]) { updatedRun =>
+    authorizeScope(ScopedAction(Domain.Analyses, Action.Update, None), user) {
+      authorizeAuthResultAsync {
+        ToolRunDao
+          .authorized(user, ObjectType.Analysis, runId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[ToolRun]) { updatedRun =>
+          onSuccess(
+            ToolRunDao
+              .updateToolRun(updatedRun, runId)
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            completeSingleOrNotFound
+          }
+        }
+      }
+    }
+  }
+
+  def deleteToolRun(runId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Analyses, Action.Delete, None), user) {
+      authorizeAuthResultAsync {
+        ToolRunDao
+          .authorized(user, ObjectType.Analysis, runId, ActionType.Delete)
+          .transact(xa)
+          .unsafeToFuture
+      } {
         onSuccess(
-          ToolRunDao
-            .updateToolRun(updatedRun, runId)
-            .transact(xa)
-            .unsafeToFuture
+          ToolRunDao.query.filter(runId).delete.transact(xa).unsafeToFuture
         ) {
           completeSingleOrNotFound
         }
@@ -190,137 +223,142 @@ trait ToolRunRoutes
     }
   }
 
-  def deleteToolRun(runId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ToolRunDao
-        .authorized(user, ObjectType.Analysis, runId, ActionType.Delete)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
-        ToolRunDao.query.filter(runId).delete.transact(xa).unsafeToFuture
-      ) {
-        completeSingleOrNotFound
-      }
-    }
-  }
-
   def listToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ToolRunDao
-        .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
+    authorizeScope(
+      ScopedAction(Domain.Analyses, Action.ReadPermissions, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
         ToolRunDao
-          .getPermissions(toolRunId)
-          .transact(xa)
-          .unsafeToFuture
-      }
-    }
-  }
-
-  def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
-    entity(as[List[ObjectAccessControlRule]]) { acrList =>
-      authorizeAsync {
-        (
-          ToolRunDao.authorized(
-            user,
-            ObjectType.Analysis,
-            toolRunId,
-            ActionType.Edit
-          ) map { _.toBoolean },
-          acrList traverse { acr =>
-            ToolRunDao.isValidPermission(acr, user)
-          } map { _.foldLeft(true)(_ && _) }
-        ).tupled
-          .map({ authTup =>
-            authTup._1 && authTup._2
-          })
+          .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
       } {
         complete {
           ToolRunDao
-            .replacePermissions(toolRunId, acrList)
+            .getPermissions(toolRunId)
             .transact(xa)
             .unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Analyses, Action.Share, None), user) {
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+        authorizeAsync {
+          (
+            ToolRunDao.authorized(
+              user,
+              ObjectType.Analysis,
+              toolRunId,
+              ActionType.Edit
+            ) map {
+              _.toBoolean
+            },
+            acrList traverse { acr =>
+              ToolRunDao.isValidPermission(acr, user)
+            } map {
+              _.foldLeft(true)(_ && _)
+            }
+          ).tupled
+            .map({ authTup =>
+              authTup._1 && authTup._2
+            })
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            ToolRunDao
+              .replacePermissions(toolRunId, acrList)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
   }
 
   def addToolRunPermission(toolRunId: UUID): Route = authenticate { user =>
-    entity(as[ObjectAccessControlRule]) { acr =>
-      authorizeAsync {
-        (
-          ToolRunDao
-            .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit) map {
-            _.toBoolean
-          },
-          ToolRunDao.isValidPermission(acr, user)
-        ).tupled
-          .map({ authTup =>
-            authTup._1 && authTup._2
-          })
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          ToolRunDao
-            .addPermission(toolRunId, acr)
+    authorizeScope(ScopedAction(Domain.Analyses, Action.Share, None), user) {
+      entity(as[ObjectAccessControlRule]) { acr =>
+        authorizeAsync {
+          (
+            ToolRunDao
+              .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit) map {
+              _.toBoolean
+            },
+            ToolRunDao.isValidPermission(acr, user)
+          ).tupled
+            .map({ authTup =>
+              authTup._1 && authTup._2
+            })
             .transact(xa)
             .unsafeToFuture
+        } {
+          complete {
+            ToolRunDao
+              .addPermission(toolRunId, acr)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
   }
 
   def listUserAnalysisActions(analysisId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ToolRunDao
-        .authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      user.isSuperuser match {
-        case true => complete(List("*"))
-        case false =>
-          onSuccess(
-            ToolRunDao.query
-              .filter(analysisId)
-              .select
-              .transact(xa)
-              .unsafeToFuture
-          ) { analysis =>
-            analysis.owner == user.id match {
-              case true => complete(List("*"))
-              case false =>
-                complete {
-                  ToolRunDao
-                    .listUserActions(user, analysisId)
-                    .transact(xa)
-                    .unsafeToFuture
-                }
+    authorizeScope(
+      ScopedAction(Domain.Analyses, Action.ReadPermissions, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        ToolRunDao
+          .authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        user.isSuperuser match {
+          case true => complete(List("*"))
+          case false =>
+            onSuccess(
+              ToolRunDao.query
+                .filter(analysisId)
+                .select
+                .transact(xa)
+                .unsafeToFuture
+            ) { analysis =>
+              analysis.owner == user.id match {
+                case true => complete(List("*"))
+                case false =>
+                  complete {
+                    ToolRunDao
+                      .listUserActions(user, analysisId)
+                      .transact(xa)
+                      .unsafeToFuture
+                  }
+              }
             }
-          }
+        }
       }
     }
   }
 
   def deleteToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
-    authorizeAuthResultAsync {
-      ToolRunDao
-        .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
+    authorizeScope(ScopedAction(Domain.Analyses, Action.Share, None), user) {
+      authorizeAuthResultAsync {
         ToolRunDao
-          .deletePermissions(toolRunId)
+          .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
+      } {
+        complete {
+          ToolRunDao
+            .deletePermissions(toolRunId)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }

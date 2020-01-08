@@ -110,4 +110,6 @@ trait CirceJsonbMeta {
 
   implicit val stacExportLicenseMeta: Meta[StacExportLicense] =
     CirceJsonbMeta[StacExportLicense]
+
+  implicit val scopesMeta: Meta[Scope] = CirceJsonbMeta[Scope]
 }
