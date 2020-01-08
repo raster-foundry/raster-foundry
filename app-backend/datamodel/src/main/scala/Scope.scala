@@ -2,7 +2,15 @@ package com.rasterfoundry.datamodel
 
 import cats.{Eq, Monoid}
 import cats.implicits._
-import io.circe.{Decoder, DecodingFailure, Encoder, Error, HCursor, Json}
+import io.circe.{
+  Decoder,
+  DecodingFailure,
+  Encoder,
+  Error,
+  HCursor,
+  Json,
+  ParsingFailure
+}
 import io.circe.parser._
 
 import scala.util.{Failure, Success, Try}
@@ -257,25 +265,21 @@ object Scope {
 
   implicit val decScope: Decoder[Scope] = new Decoder[Scope] {
     def apply(c: HCursor): Decoder.Result[Scope] = c.value.asString match {
-      case Some("organizations:admin") =>
-        Right(Scopes.OrganizationAdmin)
-      case Some("platformUser")    => Right(Scopes.RasterFoundryUser)
-      case Some("platforms:admin") => Right(Scopes.RasterFoundryPlatformAdmin)
-      case Some("teams:admin")     => Right(Scopes.RasterFoundryTeamsAdmin)
-      case Some("annotateTasks")   => Right(Scopes.AnnotateTasksScope)
       case Some(s) =>
-        s.split(";").toList match {
-          case List("") => Right(Monoid[Scope].empty)
-          case actions =>
-            Monoid[Either[Error, Scope]]
-              .combineAll(
-                actions map { action =>
-                  (decode[ScopedAction](s""""$action"""") map { scopedAct =>
-                    new SimpleScope(Set(scopedAct))
-                  }).orElse(decode[Scope](s""""$action""""))
-                }
-              )
-              .leftMap(err => DecodingFailure(err.getMessage, Nil))
+        Scopes.cannedPolicyFromString(s).orElse {
+          s.split(";").toList match {
+            case List("") => Right(Monoid[Scope].empty)
+            case actions =>
+              Monoid[Either[Error, Scope]]
+                .combineAll(
+                  actions map { action =>
+                    (decode[ScopedAction](s""""$action"""") map { scopedAct =>
+                      new SimpleScope(Set(scopedAct))
+                    }).orElse(Scopes.cannedPolicyFromString(action))
+                  }
+                )
+                .leftMap(err => DecodingFailure(err.getMessage, Nil))
+          }
         }
       case _ => Left(DecodingFailure("Scope", c.history))
     }
@@ -283,6 +287,18 @@ object Scope {
 }
 
 object Scopes {
+
+  def cannedPolicyFromString(s: String): Either[Error, Scope] = s match {
+    case "organizations:admin" =>
+      Right(Scopes.OrganizationAdmin)
+    case "platformUser"    => Right(Scopes.RasterFoundryUser)
+    case "platforms:admin" => Right(Scopes.RasterFoundryPlatformAdmin)
+    case "teams:admin"     => Right(Scopes.RasterFoundryTeamsAdmin)
+    case "annotateTasks"   => Right(Scopes.AnnotateTasksScope)
+    case _ =>
+      val message = s"$s is not a canned policy"
+      Left(ParsingFailure(message, new Exception(message)))
+  }
 
   private def makeCRUDScopedActions(domain: Domain): Set[ScopedAction] =
     Set(

@@ -127,12 +127,16 @@ class ScopeSpec
 
   test("decode a mix of simple and complex scopes") {
     val decoded = decode[Scope](""""projects:read;annotateTasks"""").right.get
-    Eq[Scope].eqv(
-      decoded,
-      new ComplexScope(
-        Set(
-          Scopes.AnnotateTasksScope,
-          new SimpleScope(Set(ScopedAction(Domain.Projects, Action.Read, None)))
+    assert(
+      Eq[Scope].eqv(
+        decoded,
+        new ComplexScope(
+          Set(
+            Scopes.AnnotateTasksScope,
+            new SimpleScope(
+              Set(ScopedAction(Domain.Projects, Action.Read, None))
+            )
+          )
         )
       )
     )
