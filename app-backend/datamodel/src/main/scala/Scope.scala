@@ -266,13 +266,6 @@ object Scope {
 
   implicit val decScope: Decoder[Scope] = new Decoder[Scope] {
     def apply(c: HCursor): Decoder.Result[Scope] = c.value.asString match {
-      case Some("organizations:admin") =>
-        Right(Scopes.OrganizationAdmin)
-      case Some("platformUser") => Right(Scopes.RasterFoundryUser)
-      case Some("groundworkUser") =>
-        Right(Scopes.GroundworkUser)
-      case Some("platforms:admin") => Right(Scopes.RasterFoundryPlatformAdmin)
-      case Some("teams:admin")     => Right(Scopes.RasterFoundryTeamsAdmin)
       case Some(s) =>
         Scopes.cannedPolicyFromString(s).orElse {
           s.split(";").toList match {
