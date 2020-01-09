@@ -244,7 +244,7 @@ object Scope {
 
   implicit val encScope: Encoder[Scope] = new Encoder[Scope] {
     def apply(thing: Scope): Json = thing match {
-      case Scopes.OrganizationAdmin =>
+      case Scopes.RasterFoundryOrganizationAdmin =>
         Json.fromString("organizations:admin")
       case Scopes.RasterFoundryUser =>
         Json.fromString("platformUser")
@@ -291,7 +291,7 @@ object Scopes {
 
   def cannedPolicyFromString(s: String): Either[Error, Scope] = s match {
     case "organizations:admin" =>
-      Right(Scopes.OrganizationAdmin)
+      Right(Scopes.RasterFoundryOrganizationAdmin)
     case "platformUser"    => Right(Scopes.RasterFoundryUser)
     case "groundworkUser"  => Right(Scopes.GroundworkUser)
     case "platforms:admin" => Right(Scopes.RasterFoundryPlatformAdmin)
