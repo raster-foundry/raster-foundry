@@ -248,6 +248,7 @@ object Scope {
         Json.fromString("organizations:admin")
       case Scopes.RasterFoundryUser =>
         Json.fromString("platformUser")
+      case Scopes.GroundworkUser => Json.fromString("groundworkUser")
       case Scopes.RasterFoundryPlatformAdmin =>
         Json.fromString("platforms:admin")
       case Scopes.RasterFoundryTeamsAdmin => Json.fromString("teams:admin")
@@ -265,6 +266,13 @@ object Scope {
 
   implicit val decScope: Decoder[Scope] = new Decoder[Scope] {
     def apply(c: HCursor): Decoder.Result[Scope] = c.value.asString match {
+      case Some("organizations:admin") =>
+        Right(Scopes.OrganizationAdmin)
+      case Some("platformUser") => Right(Scopes.RasterFoundryUser)
+      case Some("groundworkUser") =>
+        Right(Scopes.GroundworkUser)
+      case Some("platforms:admin") => Right(Scopes.RasterFoundryPlatformAdmin)
+      case Some("teams:admin")     => Right(Scopes.RasterFoundryTeamsAdmin)
       case Some(s) =>
         Scopes.cannedPolicyFromString(s).orElse {
           s.split(";").toList match {
@@ -292,6 +300,7 @@ object Scopes {
     case "organizations:admin" =>
       Right(Scopes.OrganizationAdmin)
     case "platformUser"    => Right(Scopes.RasterFoundryUser)
+    case "groundworkUser"  => Right(Scopes.GroundworkUser)
     case "platforms:admin" => Right(Scopes.RasterFoundryPlatformAdmin)
     case "teams:admin"     => Right(Scopes.RasterFoundryTeamsAdmin)
     case "annotateTasks"   => Right(Scopes.AnnotateTasksScope)
@@ -426,7 +435,12 @@ object Scopes {
   case object StacExportsCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.StacExports))
 
-  case object TeamsCRUD extends SimpleScope(makeCRUDScopedActions(Domain.Teams))
+  case object TeamsCRUD
+      extends SimpleScope(
+        Set(ScopedAction(Domain.Teams, Action.ListUsers, None)) ++ makeCRUDScopedActions(
+          Domain.Teams
+        )
+      )
 
   case object TemplatesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Templates))
@@ -504,5 +518,30 @@ object Scopes {
           RasterFoundryOrganizationAdmin,
           PlatformDomainAdminScope
         )
+      )
+
+  case object GroundworkUser
+      extends SimpleScope(
+        Set(
+          ScopedAction(Domain.Licenses, Action.Read, None),
+          ScopedAction(Domain.Scenes, Action.Read, None)
+        ) ++ Set(
+          Action.Read,
+          Action.Update,
+          Action.Delete,
+          Action.Create,
+          Action.CreateAnnotation,
+          Action.DeleteAnnotation,
+          Action.UpdateAnnotation,
+          Action.CreateTaskGrid,
+          Action.CreateTasks,
+          Action.DeleteTasks,
+          Action.UpdateTasks,
+          Action.ReadTasks,
+          Action.AddScenes
+        ).map(makeScopedAction(Domain.Projects, _, None)) ++
+          StacExportsCRUD.actions ++
+          UploadsCRUD.actions ++
+          UserSelfScope.actions
       )
 }
