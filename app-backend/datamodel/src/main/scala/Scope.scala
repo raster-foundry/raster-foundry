@@ -244,10 +244,11 @@ object Scope {
 
   implicit val encScope: Encoder[Scope] = new Encoder[Scope] {
     def apply(thing: Scope): Json = thing match {
-      case Scopes.OrganizationAdmin =>
+      case Scopes.RasterFoundryOrganizationAdmin =>
         Json.fromString("organizations:admin")
       case Scopes.RasterFoundryUser =>
         Json.fromString("platformUser")
+      case Scopes.GroundworkUser => Json.fromString("groundworkUser")
       case Scopes.RasterFoundryPlatformAdmin =>
         Json.fromString("platforms:admin")
       case Scopes.RasterFoundryTeamsAdmin => Json.fromString("teams:admin")
@@ -290,8 +291,9 @@ object Scopes {
 
   def cannedPolicyFromString(s: String): Either[Error, Scope] = s match {
     case "organizations:admin" =>
-      Right(Scopes.OrganizationAdmin)
+      Right(Scopes.RasterFoundryOrganizationAdmin)
     case "platformUser"    => Right(Scopes.RasterFoundryUser)
+    case "groundworkUser"  => Right(Scopes.GroundworkUser)
     case "platforms:admin" => Right(Scopes.RasterFoundryPlatformAdmin)
     case "teams:admin"     => Right(Scopes.RasterFoundryTeamsAdmin)
     case "annotateTasks"   => Right(Scopes.AnnotateTasksScope)
@@ -426,7 +428,12 @@ object Scopes {
   case object StacExportsCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.StacExports))
 
-  case object TeamsCRUD extends SimpleScope(makeCRUDScopedActions(Domain.Teams))
+  case object TeamsCRUD
+      extends SimpleScope(
+        Set(ScopedAction(Domain.Teams, Action.ListUsers, None)) ++ makeCRUDScopedActions(
+          Domain.Teams
+        )
+      )
 
   case object TemplatesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Templates))
@@ -504,5 +511,30 @@ object Scopes {
           RasterFoundryOrganizationAdmin,
           PlatformDomainAdminScope
         )
+      )
+
+  case object GroundworkUser
+      extends SimpleScope(
+        Set(
+          ScopedAction(Domain.Licenses, Action.Read, None),
+          ScopedAction(Domain.Scenes, Action.Read, None)
+        ) ++ Set(
+          Action.Read,
+          Action.Update,
+          Action.Delete,
+          Action.Create,
+          Action.CreateAnnotation,
+          Action.DeleteAnnotation,
+          Action.UpdateAnnotation,
+          Action.CreateTaskGrid,
+          Action.CreateTasks,
+          Action.DeleteTasks,
+          Action.UpdateTasks,
+          Action.ReadTasks,
+          Action.AddScenes
+        ).map(makeScopedAction(Domain.Projects, _, None)) ++
+          StacExportsCRUD.actions ++
+          UploadsCRUD.actions ++
+          UserSelfScope.actions
       )
 }

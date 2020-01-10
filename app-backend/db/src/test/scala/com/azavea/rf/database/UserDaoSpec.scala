@@ -60,7 +60,8 @@ class UserDaoSpec
               UserDao.createUserWithJWT(
                 creatingUser,
                 newUserFields,
-                GroupRole.Member
+                GroupRole.Member,
+                Scopes.RasterFoundryUser
               )
             }
             userRoles <- UserGroupRoleDao.listByUser(newUser)

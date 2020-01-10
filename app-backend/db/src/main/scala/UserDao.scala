@@ -86,7 +86,8 @@ object UserDao extends Dao[User] with Sanitization {
   def createUserWithJWT(
       creatingUser: User,
       jwtUser: User.JwtFields,
-      userRole: GroupRole
+      userRole: GroupRole,
+      scope: Scope
   ): ConnectionIO[(User, List[UserGroupRole])] = {
     for {
       organization <- OrganizationDao.query
@@ -100,7 +101,8 @@ object UserDao extends Dao[User] with Sanitization {
               Viewer,
               jwtUser.email,
               jwtUser.name,
-              jwtUser.picture
+              jwtUser.picture,
+              scope
             )
             create(newUser)
           case None =>
