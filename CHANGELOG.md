@@ -4,9 +4,8 @@
 
 ### Added
 
-- Created a composable and flexible datamodel for user scopes [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270)
+- Added scopes to the API, database, and user creation to control access to resources and endpoints [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270), [#5275](https://github.com/raster-foundry/raster-foundry/pull/5275), [#5278](https://github.com/raster-foundry/raster-foundry/pull/5278) [#5277](https://github.com/raster-foundry/raster-foundry/pull/5277)
 - Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
-- Added a migration to attach user scopes to users [#5275](https://github.com/raster-foundry/raster-foundry/pull/5275)
 
 ### Changed
 
@@ -19,7 +18,6 @@
 ### Fixed
 
 - Removed unused route and fixed spelling in Swagger spec [#5273](https://github.com/raster-foundry/raster-foundry/pull/5273)
-- Fixed a bug in scope decoding that prevented applying simple scopes and canned policies to the same user [#5277](https://github.com/raster-foundry/raster-foundry/pull/5277)
 
 ### Security
 
