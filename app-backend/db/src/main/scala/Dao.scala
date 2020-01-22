@@ -37,10 +37,12 @@ abstract class Dao[Model: Read: Write] extends Filterables {
 object Dao extends LazyLogging {
 
   implicit val logHandler: LogHandler = LogHandler {
-    case Success(s: String,
-                 a: List[Any],
-                 e1: FiniteDuration,
-                 e2: FiniteDuration) =>
+    case Success(
+        s: String,
+        a: List[Any],
+        e1: FiniteDuration,
+        e2: FiniteDuration
+        ) =>
       val queryString =
         s.lines.dropWhile(_.trim.isEmpty).toArray.mkString("\n  ")
       val logString = queryString
@@ -96,7 +98,8 @@ object Dao extends LazyLogging {
       selectF: Fragment,
       tableF: Fragment,
       filters: List[Option[Fragment]],
-      countFragment: Option[Fragment] = None) {
+      countFragment: Option[Fragment] = None
+  ) {
 
     val countF: Fragment =
       countFragment.getOrElse(fr"SELECT count(id) FROM" ++ tableF)
@@ -104,25 +107,28 @@ object Dao extends LazyLogging {
     val existF: Fragment = fr"SELECT 1 FROM" ++ tableF
 
     /** Add another filter to the query being constructed */
-    def filter[M >: Model, T](thing: T)(
-        implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
+    def filter[M >: Model, T](
+        thing: T
+    )(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
       this.copy(filters = filters ++ filterable.toFilters(thing))
 
-    def filter[M >: Model](thing: Fragment)(
-        implicit filterable: Filterable[M, Fragment]): QueryBuilder[Model] =
+    def filter[M >: Model](
+        thing: Fragment
+    )(implicit filterable: Filterable[M, Fragment]): QueryBuilder[Model] =
       thing match {
         case Fragment.empty => this
         case _              => this.copy(filters = filters ++ filterable.toFilters(thing))
       }
 
     def filter[M >: Model](id: UUID)(
-        implicit filterable: Filterable[M, Option[Fragment]])
-      : QueryBuilder[Model] = {
+        implicit filterable: Filterable[M, Option[Fragment]]
+    ): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
     def filter[M >: Model](
-        fragments: List[Option[Fragment]]): QueryBuilder[Model] = {
+        fragments: List[Option[Fragment]]
+    ): QueryBuilder[Model] = {
       this.copy(filters = filters ::: fragments)
     }
 
@@ -130,8 +136,10 @@ object Dao extends LazyLogging {
     def ownedBy[M >: Model](user: User, objectId: UUID): QueryBuilder[Model] =
       this.filter(objectId).filter(user)
 
-    def ownedByOrSuperUser[M >: Model](user: User,
-                                       objectId: UUID): QueryBuilder[Model] = {
+    def ownedByOrSuperUser[M >: Model](
+        user: User,
+        objectId: UUID
+    ): QueryBuilder[Model] = {
       if (user.isSuperuser) {
         this.filter(objectId)
       } else {
@@ -146,22 +154,24 @@ object Dao extends LazyLogging {
 
     def hasNext(pageRequest: PageRequest): ConnectionIO[Boolean] = {
       (existF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
-        pageRequest.copy(offset = pageRequest.offset + 1)))
-        .query[Boolean]
+        pageRequest.copy(offset = pageRequest.offset + 1)
+      )).query[Boolean]
         .to[List]
         .map(_.nonEmpty)
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page[T: Read](pageRequest: PageRequest,
-                      selectF: Fragment,
-                      countF: Fragment,
-                      orderClause: Map[String, Order],
-                      doCount: Boolean): ConnectionIO[PaginatedResponse[T]] = {
+    def page[T: Read](
+        pageRequest: PageRequest,
+        selectF: Fragment,
+        countF: Fragment,
+        orderClause: Map[String, Order],
+        doCount: Boolean
+    ): ConnectionIO[PaginatedResponse[T]] = {
       for {
         page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
-          pageRequest.copy(sort = orderClause ++ pageRequest.sort)))
-          .query[T]
+          pageRequest.copy(sort = orderClause ++ pageRequest.sort)
+        )).query[T]
           .to[List]
         (count: Int, hasNext: Boolean) <- doCount match {
           case true => {
@@ -180,23 +190,29 @@ object Dao extends LazyLogging {
       } yield {
         val hasPrevious = pageRequest.offset > 0
 
-        PaginatedResponse[T](count,
-                             hasPrevious,
-                             hasNext,
-                             pageRequest.offset,
-                             pageRequest.limit,
-                             page)
+        PaginatedResponse[T](
+          count,
+          hasPrevious,
+          hasNext,
+          pageRequest.offset,
+          pageRequest.limit,
+          page
+        )
       }
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest: PageRequest, orderClause: Map[String, Order])
-      : ConnectionIO[PaginatedResponse[Model]] =
+    def page(
+        pageRequest: PageRequest,
+        orderClause: Map[String, Order]
+    ): ConnectionIO[PaginatedResponse[Model]] =
       page(pageRequest, selectF, countF, orderClause, true)
 
-    def page(pageRequest: PageRequest,
-             orderClause: Map[String, Order],
-             doCount: Boolean): ConnectionIO[PaginatedResponse[Model]] =
+    def page(
+        pageRequest: PageRequest,
+        orderClause: Map[String, Order],
+        doCount: Boolean
+    ): ConnectionIO[PaginatedResponse[Model]] =
       page(pageRequest, selectF, countF, orderClause, doCount)
 
     def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] =
@@ -232,9 +248,19 @@ object Dao extends LazyLogging {
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT $limit")
         .query[Model]
 
+    /** Filter for objects of type model without a limit
+      *
+      * This is private so that consumers can't manipulate it directly.
+      * If you need an unlimited number of results, see the no argument
+      * list method or stream
+      */
+    private def noLimitListQ: Query0[Model] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*))
+        .query[Model]
+
     /**Provide a stream of responses */
     def stream: fs2.Stream[ConnectionIO, Model] =
-      listQ.stream
+      noLimitListQ.stream
 
     /** Provide a list of responses */
     def list(limit: Int): ConnectionIO[List[Model]] = {
@@ -250,20 +276,18 @@ object Dao extends LazyLogging {
         .query[Model]
 
     /** Provide a list of responses */
-    def list: ConnectionIO[List[Model]] = {
-      (selectF ++ Fragments.whereAndOpt(filters: _*))
-        .query[Model]
-        .to[List]
-    }
+    def list: ConnectionIO[List[Model]] = noLimitListQ.to[List]
 
     /** Provide a list of responses */
     def list(offset: Int, limit: Int): ConnectionIO[List[Model]] = {
       listQ(offset, limit).to[List]
     }
 
-    def list(offset: Int,
-             limit: Int,
-             orderClause: Fragment): ConnectionIO[List[Model]] = {
+    def list(
+        offset: Int,
+        limit: Int,
+        orderClause: Fragment
+    ): ConnectionIO[List[Model]] = {
       listQ(offset, limit, orderClause).to[List]
     }
 
@@ -290,7 +314,8 @@ object Dao extends LazyLogging {
     def delete: ConnectionIO[Int] = {
       deleteQOption
         .getOrElse(
-          throw new Exception("Unsafe delete - delete requires filters"))
+          throw new Exception("Unsafe delete - delete requires filters")
+        )
         .run
     }
 

@@ -15,7 +15,7 @@ import geotrellis.vector.{Geometry, Projected}
 import io.circe.Json
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
-import shapeless._
+import shapeless.{Annotation => _, _}
 
 import scala.util.Try
 import java.net.URI
@@ -315,9 +315,9 @@ class ProjectLiberation(tileHost: URI) {
 
   private def getProjectAnnotationGroupId(
       projectId: UUID
-  ): ConnectionIO[Either[FailureStage, UUID]] = ???
+  ): fs2.Stream[ConnectionIO, Either[FailureStage, UUID]] = ???
 
-  private def groundworkDataForAnnotation(
+  private def insertGroundworkDataForAnnotation(
       annotationProjectId: UUID,
       annotation: Annotation,
       classIds: List[UUID]
@@ -328,7 +328,7 @@ class ProjectLiberation(tileHost: URI) {
       projectId: UUID,
       annotationProjectId: UUID,
       classIds: List[UUID]
-  ): fs2.stream[ConnectionIO, Either[FailureStage, Unit]] = {
+  ): ConnectionIO[Either[FailureStage, Unit]] = {
     /*
  id                    | uuid                        | not null
  created_at            | timestamp without time zone | not null
@@ -343,26 +343,35 @@ class ProjectLiberation(tileHost: URI) {
     // - find one named "label"
     // - get (stream) all the annotations for that group
     // -
-    for {
-      annotationGroupId <- EitherT { getProjectAnnotationGroupId(project) }
-      _ <- EitherT {
-        AnnotationDao.query
-          .filter(fr"project_id = $projectId")
-          .filter(
-            AnnotationQueryParameters(
-              annotationGroup = Some(annotationGroupId)
+    type ConnectionIOStream[A] = fs2.Stream[ConnectionIO, A]
+    (for {
+      annotationGroupId <- EitherT { getProjectAnnotationGroupId(projectId) }
+      annotation <- EitherT
+        .liftF[ConnectionIOStream, FailureStage, Annotation] {
+          AnnotationDao.query
+            .filter(fr"project_id = $projectId")
+            .filter(
+              AnnotationQueryParameters(
+                annotationGroup = Some(annotationGroupId)
+              )
             )
-          )
-          .stream
-          .flatMap { annotation =>
-            groundworkDataForAnnotation(
-              annotationProjectId,
-              annotation,
-              classIds
-            )
-          }
+            .stream
+        }
+      _ <- EitherT.liftF[ConnectionIOStream, FailureStage, Unit] {
+        insertGroundworkDataForAnnotation(
+          annotationProjectId,
+          annotation,
+          classIds
+        )
       }
-    } yield ()
+    } yield ()).value.compile.to[List] map { results =>
+      val anyFailures = results.exists(_.isLeft)
+      if (anyFailures) {
+        Either.left[FailureStage, Unit](CreateLabels)
+      } else {
+        Right(())
+      }
+    }
   }
 
   private def updateTasks(
@@ -376,7 +385,7 @@ class ProjectLiberation(tileHost: URI) {
   ): ConnectionIO[Either[FailureStage, Unit]] = {
     // - remove annotations
     // - remove "label" annotation group
-    // - remove "annotate" tag
+    // - ~remove "annotate" tag~ -- keep it, and second and third runs will just fail
     // - remove "annotate" key from extras
     ???
   }
@@ -397,7 +406,9 @@ class ProjectLiberation(tileHost: URI) {
       classIds <- EitherT {
         createLabelClasses(extras, labelGroupIds.toSet)
       }
-      _ <- EitherT { createLabels(project.id, annotationProjectId, classIds) }
+      _ <- EitherT {
+        createLabels(project.id, annotationProjectId, classIds)
+      }
       _ <- EitherT { nukeStaleData(project) }
     } yield ()).value
   }
