@@ -232,6 +232,10 @@ object Dao extends LazyLogging {
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT $limit")
         .query[Model]
 
+    /**Provide a stream of responses */
+    def stream: fs2.Stream[ConnectionIO, Model] =
+      listQ.stream
+
     /** Provide a list of responses */
     def list(limit: Int): ConnectionIO[List[Model]] = {
       listQ(limit).to[List]

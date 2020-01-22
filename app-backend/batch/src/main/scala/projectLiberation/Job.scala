@@ -2,7 +2,7 @@ package com.rasterfoundry.batch.projectLiberation
 
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database.ProjectDao
+import com.rasterfoundry.database.{AnnotationDao, ProjectDao}
 import com.rasterfoundry.database.Implicits._
 
 import cats.data.EitherT
@@ -313,17 +313,73 @@ class ProjectLiberation(tileHost: URI) {
 
   }
 
+  private def getProjectAnnotationGroupId(
+      projectId: UUID
+  ): ConnectionIO[Either[FailureStage, UUID]] = ???
+
+  private def groundworkDataForAnnotation(
+      annotationProjectId: UUID,
+      annotation: Annotation,
+      classIds: List[UUID]
+  ): fs2.Stream[ConnectionIO, Unit] = ???
+
   // create annotation_labels from annotations table
   private def createLabels(
       projectId: UUID,
       annotationProjectId: UUID,
       classIds: List[UUID]
-  ): ConnectionIO[Either[FailureStage, Unit]] = ???
+  ): fs2.stream[ConnectionIO, Either[FailureStage, Unit]] = {
+    /*
+ id                    | uuid                        | not null
+ created_at            | timestamp without time zone | not null
+ created_by            | character varying(255)      | not null
+ annotation_project_id | uuid                        | not null
+ annotation_task_id    | uuid                        | not null
+
+ geometry              | geometry(Geometry,3857)     |
+     */
+    // flow:
+    // - get annotation groups for the project
+    // - find one named "label"
+    // - get (stream) all the annotations for that group
+    // -
+    for {
+      annotationGroupId <- EitherT { getProjectAnnotationGroupId(project) }
+      _ <- EitherT {
+        AnnotationDao.query
+          .filter(fr"project_id = $projectId")
+          .filter(
+            AnnotationQueryParameters(
+              annotationGroup = Some(annotationGroupId)
+            )
+          )
+          .stream
+          .flatMap { annotation =>
+            groundworkDataForAnnotation(
+              annotationProjectId,
+              annotation,
+              classIds
+            )
+          }
+      }
+    } yield ()
+  }
+
+  private def updateTasks(
+      projectId: UUID,
+      annotationProjectId: UUID
+  ): ConnectionIO[Unit] = ???
 
   // nuke annotate from extras
   private def nukeStaleData(
       project: Project
-  ): ConnectionIO[Either[FailureStage, Unit]] = ???
+  ): ConnectionIO[Either[FailureStage, Unit]] = {
+    // - remove annotations
+    // - remove "label" annotation group
+    // - remove "annotate" tag
+    // - remove "annotate" key from extras
+    ???
+  }
 
   // do all the stuff
   def liberateProject(
