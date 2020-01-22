@@ -18,6 +18,7 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.akkautil.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
@@ -27,6 +28,8 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.common._
+
+import scala.concurrent.Future
 
 trait ProjectRoutes
     extends Authentication
@@ -512,15 +515,23 @@ trait ProjectRoutes
   }
 
   def createProject: Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Projects, Action.Create, None), user) {
-      entity(as[Project.Create]) { newProject =>
-        onSuccess(
-          ProjectDao
-            .insertProject(newProject, user)
-            .transact(xa)
-            .unsafeToFuture
-        ) { project =>
-          complete(StatusCodes.Created, project)
+    val scopedAction = ScopedAction(Domain.Projects, Action.Create, None)
+    val userProjectCount = ProjectDao.query
+      .filter(fr"owner = ${user.id}")
+      .count
+      .transact(xa)
+      .unsafeToFuture
+    authorizeScopeLimit(userProjectCount, scopedAction, user) {
+      authorizeScope(scopedAction, user) {
+        entity(as[Project.Create]) { newProject =>
+          onSuccess(
+            ProjectDao
+              .insertProject(newProject, user)
+              .transact(xa)
+              .unsafeToFuture
+          ) { project =>
+            complete(StatusCodes.Created, project)
+          }
         }
       }
     }
@@ -1061,7 +1072,13 @@ trait ProjectRoutes
   }
 
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Projects, Action.Share, None), user) {
+    val shareCount =
+      ProjectDao.getShareCount(projectId, user.id).transact(xa).unsafeToFuture
+    authorizeScopeLimit(
+      shareCount,
+      ScopedAction(Domain.Projects, Action.Share, None),
+      user
+    ) {
       entity(as[ObjectAccessControlRule]) { acr =>
         authorizeAsync {
           (

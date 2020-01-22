@@ -43,8 +43,6 @@ val scalaOptions = Seq(
   * Shared settings across all subprojects
   */
 lazy val sharedSettings = Seq(
-  // https://github.com/lucidsoftware/neo-sbt-scalafmt
-  scalafmtOnCompile := true,
   scapegoatVersion in ThisBuild := "1.3.8",
   scalaVersion in ThisBuild := Version.scala,
   unusedCompileDependenciesFilter -= moduleFilter(
@@ -74,10 +72,10 @@ lazy val sharedSettings = Seq(
     .filterNot(_ == "-Ywarn-unused-import")),
   updateOptions := updateOptions.value.withGigahorse(false),
   externalResolvers := Seq(
-    "Geotoolkit Repo" at "http://maven.geotoolkit.org",
-    "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
+    "Geotoolkit Repo" at "https://maven.geotoolkit.org",
+    "Open Source Geospatial Foundation Repo" at "https://download.osgeo.org/webdav/geotools/",
     "boundless" at "https://repo.boundlessgeo.com/main/",
-    "imageio-ext Repository" at "http://maven.geo-solutions.it",
+    "imageio-ext Repository" at "https://maven.geo-solutions.it",
     DefaultMavenRepository,
     Resolver.sonatypeRepo("snapshots"),
     Resolver.bintrayRepo("azavea", "maven"),
@@ -85,7 +83,8 @@ lazy val sharedSettings = Seq(
     Resolver.bintrayRepo("guizmaii", "maven"),
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
-    "azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/",
+    ("azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/")
+      .withAllowInsecureProtocol(true),
     Resolver.bintrayRepo("naftoligug", "maven"),
     Resolver.bintrayRepo("colisweb", "maven"),
     Classpaths.sbtPluginReleases,

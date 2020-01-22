@@ -2,19 +2,8 @@ package com.rasterfoundry.akkautil
 
 import com.rasterfoundry.datamodel.{AuthResult, ScopedAction, User}
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.{
-  Directive0,
-  ExceptionHandler,
-  RequestContext,
-  RouteResult,
-  StandardRoute
-}
-import akka.http.scaladsl.server.directives.{
-  CompleteOrRecoverWithMagnet,
-  FutureDirectives,
-  RouteDirectives,
-  SecurityDirectives
-}
+import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives._
 import io.circe._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -55,6 +44,29 @@ trait CommonHandlers extends RouteDirectives {
 
   def authorizeScope(scopedAction: ScopedAction, user: User): Directive0 = {
     SecurityDirectives.authorize(user.scope.actions.contains(scopedAction))
+  }
+
+  def authorizeScopeLimit(
+      usedLimitFuture: Future[Long],
+      scopedAction: ScopedAction,
+      user: User
+  ): Directive0 = {
+    val userScopedAction = user.scope.actions.find(
+      s => s.domain == scopedAction.domain && s.action == scopedAction.action
+    )
+    val userLimitOption = userScopedAction.flatMap(_.limit)
+
+    // if user does not have an explicit scope limit, assume infinite
+    val isBelowLimit = usedLimitFuture.map { usedLimit =>
+      (userScopedAction, userLimitOption) match {
+        case (None, _)            => false
+        case (_, Some(userLimit)) => {
+          usedLimit < userLimit
+        }
+        case _                    => true
+      }
+    }
+    SecurityDirectives.authorizeAsync(isBelowLimit)
   }
 
   def authorizeAuthResultAsync[T](

@@ -245,6 +245,15 @@ object ProjectDao
     }
   }
 
+  def getShareCount(projectId: UUID, userId: String): ConnectionIO[Long] = {
+    val sharedUsers = ProjectDao.getPermissions(projectId).map { acrList =>
+      acrList.flatten.filter(_.subjectType == SubjectType.User).flatMap { acr =>
+        acr.subjectId
+      }
+    } map (subjects => subjects.filter(_ != userId))
+    sharedUsers.map(_.length.toLong)
+  }
+
   def updateSceneIngestStatus(projectLayerId: UUID): ConnectionIO[Int] = {
     val updateStatusQuery =
       sql"""
@@ -661,7 +670,7 @@ object ProjectDao
           case 0 => None
           case _ =>
             val stacClasses
-              : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
+                : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
               .groupBy(_.labelGroupName match {
                 case Some(groupName) if groupName.nonEmpty => groupName
                 case _                                     => "label"

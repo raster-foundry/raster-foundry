@@ -43,7 +43,7 @@ object Version {
   val postgis = "2.2.1"
   val rollbar = "1.4.0"
   val scaffeine = "2.0.0"
-  val scala = "2.12.8"
+  val scala = "2.12.10"
   val scalaCheck = "1.14.0"
   val scalacache = "0.27.0"
   val scalaLogging = "3.9.0"

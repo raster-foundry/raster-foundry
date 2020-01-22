@@ -1,0 +1,1 @@
+ALTER TABLE uploads ADD COLUMN  bytes_uploaded bigint NOT NULL default 0;

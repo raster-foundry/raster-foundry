@@ -1,5 +1,7 @@
 package com.rasterfoundry.datamodel
 
+import com.amazonaws.services.s3.AmazonS3URI
+import geotrellis.spark.io.s3.S3Client
 import io.circe._
 import io.circe.generic.JsonCodec
 
@@ -23,7 +25,8 @@ final case class Upload(
     projectId: Option[UUID],
     layerId: Option[UUID],
     source: Option[String],
-    keepInSourceBucket: Boolean
+    keepInSourceBucket: Boolean,
+    bytesUploaded: Long
 )
 
 object Upload {
@@ -31,6 +34,37 @@ object Upload {
   def tupled = (Upload.apply _).tupled
 
   def create = Upload.apply _
+
+  def getBytesUploaded(
+      s3Client: S3Client,
+      dataBucket: String,
+      files: List[String],
+      uploadStatus: UploadStatus,
+      uploadType: UploadType
+  ): Long = {
+
+    def getFilSizes: Long =
+      files
+        .map(new AmazonS3URI(_))
+        .filter(dataBucket == _.getBucket)
+        .map(
+          s3Uri =>
+            s3Client
+              .getObjectMetadata(s3Uri.getBucket, s3Uri.getKey)
+              .getContentLength
+        )
+        .sum
+
+    (uploadStatus, uploadType) match {
+      // If uploading or just created, don't calculate uploaded bytes
+      case (UploadStatus.Uploading, _) => 0
+      case (UploadStatus.Created, _)   => 0
+      case (_, UploadType.S3)          => getFilSizes
+      case (_, UploadType.Local)       => getFilSizes
+      // fall through case, any other upload that isn't S3
+      case (_, _) => 0
+    }
+  }
 
   @JsonCodec
   final case class Create(
@@ -50,7 +84,8 @@ object Upload {
     def toUpload(
         user: User,
         userPlatformAdmin: (UUID, Boolean),
-        ownerPlatform: Option[UUID]
+        ownerPlatform: Option[UUID],
+        bytesUploaded: Long
     ): Upload = {
       val id = UUID.randomUUID()
       val now = new Timestamp(new java.util.Date().getTime)
@@ -103,7 +138,8 @@ object Upload {
         this.projectId,
         this.layerId,
         this.source,
-        this.keepInSourceBucket.getOrElse(false)
+        this.keepInSourceBucket.getOrElse(false),
+        bytesUploaded
       )
     }
   }

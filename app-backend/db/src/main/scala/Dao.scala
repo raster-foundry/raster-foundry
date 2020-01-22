@@ -319,6 +319,10 @@ object Dao extends LazyLogging {
         .run
     }
 
+    def count: ConnectionIO[Long] = {
+      (countF ++ Fragments.whereAndOpt(filters: _*)).query[Long].unique
+    }
+
     def exists: ConnectionIO[Boolean] = {
       (existF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT 1")
         .query[Int]
