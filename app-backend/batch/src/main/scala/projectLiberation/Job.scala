@@ -2,10 +2,14 @@ package com.rasterfoundry.batch.projectLiberation
 
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database.{AnnotationDao, ProjectDao}
+import com.rasterfoundry.database.{
+  AnnotationDao,
+  AnnotationGroupDao,
+  ProjectDao
+}
 import com.rasterfoundry.database.Implicits._
 
-import cats.data.EitherT
+import cats.data.{EitherT, NonEmptyList}
 import cats.effect.IO
 import cats.implicits._
 import doobie.{ConnectionIO, Fragment}
@@ -22,6 +26,7 @@ import java.net.URI
 import java.util.UUID
 
 sealed abstract class FailureStage extends Throwable
+case object GetUniqueAnnotationGroup extends FailureStage
 case object GuessTaskSize extends FailureStage
 case object CreateAnnotationProject extends FailureStage
 case object CreateProjectTiles extends FailureStage
@@ -125,17 +130,26 @@ class ProjectLiberation(tileHost: URI) {
 
   private def getProjectTaskSizeMeters(
       project: Project
-  ): ConnectionIO[Either[FailureStage, Int]] = ???
+  ): ConnectionIO[Either[FailureStage, Int]] = fr"""
+    SELECT ceil(st_perimeter(geometry) / 4) from tasks
+    WHERE project_id = ${project.id}
+    LIMIT 1;
+  """.query[Int].option map { opt =>
+    Either.fromOption(opt, CreateAnnotationProject)
+  }
 
   // make an annotation project from the existing project
   private def createAnnotationProject(
       project: Project,
       extras: Json
   ): ConnectionIO[Either[FailureStage, UUID]] = {
-    val converted = projectToAnnotationProject(project, extras, ???)
-    converted traverse {
-      case createdBy :: name :: projectType :: taskSizeMeters :: aoi :: labelersId :: validatorsId :: projectId :: HNil =>
-        fr"""
+    (for {
+      taskSizeMeters <- EitherT { getProjectTaskSizeMeters(project) }
+      converted = projectToAnnotationProject(project, extras, taskSizeMeters)
+      result <- EitherT {
+        converted traverse {
+          case createdBy :: name :: projectType :: taskSizeMeters :: aoi :: labelersId :: validatorsId :: projectId :: HNil =>
+            fr"""
       insert into annotation_projects (
         uuid_generate_v4(),
         now(),
@@ -149,7 +163,9 @@ class ProjectLiberation(tileHost: URI) {
         $projectId
       );
       """.update.withUniqueGeneratedKeys[UUID]("id")
-    }
+        }
+      }
+    } yield result).value
 
   }
 
@@ -314,18 +330,81 @@ class ProjectLiberation(tileHost: URI) {
   }
 
   private def getProjectAnnotationGroupId(
-      projectId: UUID
-  ): fs2.Stream[ConnectionIO, Either[FailureStage, UUID]] = ???
+      projectId: UUID,
+      projectLayerId: UUID
+  ): ConnectionIO[Either[FailureStage, UUID]] =
+    AnnotationGroupDao.query
+      .filter(fr"name = 'label'")
+      .filter(fr"project_id = $projectId")
+      .filter(fr"project_layer_id = $projectLayerId")
+      .select
+      .map(_.id)
+      .attempt map { result =>
+      result.leftMap { _ =>
+        GetUniqueAnnotationGroup
+      }
+    }
+
+  private def createAnnotationLabelClasses(
+      labelId: UUID,
+      classes: NonEmptyList[UUID]
+  ): ConnectionIO[Unit] = {
+    val records = classes map { labelClass =>
+      fr"($labelId, $labelClass)"
+    }
+    Fragment.const(s"""
+      INSERT INTO annotation_labels_annotation_label_classes VALUES
+        ${records.intercalate(fr",")};
+    """).update.run map { _ =>
+      ()
+    }
+  }
 
   private def insertGroundworkDataForAnnotation(
       annotationProjectId: UUID,
       annotation: Annotation,
       classIds: List[UUID]
-  ): fs2.Stream[ConnectionIO, Unit] = ???
+  ): ConnectionIO[Either[FailureStage, Unit]] = {
+    // create label
+    // create label classes
+    val taskIdE = Either.fromOption(
+      annotation.taskId,
+      CreateLabels
+    )
+    val classesE = Either.fromTry(
+      Try { annotation.label.split(" ").map(UUID.fromString) }
+    ) leftMap { _ =>
+      CreateLabels: FailureStage
+    } flatMap { classes =>
+      Either.fromOption(
+        classes.intersect(classIds).toList.toNel,
+        CreateLabels: FailureStage
+      )
+    }
+
+    (for {
+      labelId <- EitherT {
+        taskIdE traverse { taskId =>
+          fr"""
+          INSERT INTO annotation_labels VALUES (
+            uuid_generate_v4(), now(), ${annotation.createdBy}, $annotationProjectId,
+            $taskId, ${annotation.geometry}
+          );
+        """.update.withUniqueGeneratedKeys[UUID]("id")
+        }
+      }
+      _ <- EitherT {
+        classesE traverse { classes =>
+          createAnnotationLabelClasses(labelId, classes)
+        }
+      }
+    } yield ()).value
+  }
 
   // create annotation_labels from annotations table
   private def createLabels(
       projectId: UUID,
+      annotationGroupId: UUID,
       annotationProjectId: UUID,
       classIds: List[UUID]
   ): ConnectionIO[Either[FailureStage, Unit]] = {
@@ -345,7 +424,6 @@ class ProjectLiberation(tileHost: URI) {
     // -
     type ConnectionIOStream[A] = fs2.Stream[ConnectionIO, A]
     (for {
-      annotationGroupId <- EitherT { getProjectAnnotationGroupId(projectId) }
       annotation <- EitherT
         .liftF[ConnectionIOStream, FailureStage, Annotation] {
           AnnotationDao.query
@@ -357,12 +435,14 @@ class ProjectLiberation(tileHost: URI) {
             )
             .stream
         }
-      _ <- EitherT.liftF[ConnectionIOStream, FailureStage, Unit] {
-        insertGroundworkDataForAnnotation(
-          annotationProjectId,
-          annotation,
-          classIds
-        )
+      _ <- EitherT {
+        fs2.Stream.eval {
+          insertGroundworkDataForAnnotation(
+            annotationProjectId,
+            annotation,
+            classIds
+          )
+        }
       }
     } yield ()).value.compile.to[List] map { results =>
       val anyFailures = results.exists(_.isLeft)
@@ -381,13 +461,24 @@ class ProjectLiberation(tileHost: URI) {
 
   // nuke annotate from extras
   private def nukeStaleData(
-      project: Project
+      project: Project,
+      annotationGroupId: UUID
   ): ConnectionIO[Either[FailureStage, Unit]] = {
     // - remove annotations
     // - remove "label" annotation group
     // - ~remove "annotate" tag~ -- keep it, and second and third runs will just fail
     // - remove "annotate" key from extras
-    ???
+    val removeAnnotateKey = fr"""
+        UPDATE projects SET extras = extras - 'annotate' where id = ${project.id}
+    """
+    (AnnotationDao.deleteByProjectLayer(project.id) *>
+      AnnotationGroupDao.query.filter(annotationGroupId).delete *>
+      removeAnnotateKey.update.run).attempt map { result =>
+      result.bimap(
+        _ => NukeStaleData,
+        _ => ()
+      )
+    }
   }
 
   // do all the stuff
@@ -396,6 +487,9 @@ class ProjectLiberation(tileHost: URI) {
   ): ConnectionIO[Either[FailureStage, Unit]] = {
     val extras = project.extras getOrElse { ().asJson }
     (for {
+      annotationGroupId <- EitherT {
+        getProjectAnnotationGroupId(project.id, project.defaultLayerId)
+      }
       annotationProjectId <- EitherT {
         createAnnotationProject(project, extras)
       }
@@ -407,9 +501,14 @@ class ProjectLiberation(tileHost: URI) {
         createLabelClasses(extras, labelGroupIds.toSet)
       }
       _ <- EitherT {
-        createLabels(project.id, annotationProjectId, classIds)
+        createLabels(
+          project.id,
+          annotationGroupId,
+          annotationProjectId,
+          classIds
+        )
       }
-      _ <- EitherT { nukeStaleData(project) }
+      _ <- EitherT { nukeStaleData(project, annotationGroupId) }
     } yield ()).value
   }
 }
