@@ -494,7 +494,6 @@ object ProjectLiberation extends Job {
       val runner = new ProjectLiberation(URI.create(tileHost))
       for {
         projects <- runner.getAnnotationProjects.transact(xa)
-        _ = println(s"Projects: ${projects map { _.id }}")
         results <- projects traverse { project =>
           runner.liberateProject(project).transact(xa)
         }
