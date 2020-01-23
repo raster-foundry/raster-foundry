@@ -451,7 +451,7 @@ class ProjectLiberation(tileHost: URI) {
 
   def liberateProject(
       project: Project
-  ): ConnectionIO[Either[FailureStage, Unit]] = {
+  ): ConnectionIO[Either[FailureStage, UUID]] = {
     val extras = project.extras getOrElse { ().asJson }
     (for {
       annotationGroupId <- EitherT {
@@ -476,7 +476,7 @@ class ProjectLiberation(tileHost: URI) {
         )
       }
       _ <- EitherT { nukeStaleData(project, annotationGroupId) }
-    } yield ()).value
+    } yield project.id) value
   }
 }
 
@@ -494,7 +494,7 @@ object ProjectLiberation extends Job {
           runner.liberateProject(project).transact(xa)
         }
       } yield {
-        val grouped = results.groupBy(identity).mapValues(_.size)
+        val grouped = results.groupBy(identity)
         println(s"Results: $grouped")
       }
     case _ =>
