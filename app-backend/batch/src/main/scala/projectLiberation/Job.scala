@@ -451,7 +451,7 @@ class ProjectLiberation(tileHost: URI) {
 
   def liberateProject(
       project: Project
-  ): ConnectionIO[Either[FailureStage, UUID]] = {
+  ): ConnectionIO[Either[(FailureStage, UUID), UUID]] = {
     val extras = project.extras getOrElse { ().asJson }
     (for {
       annotationGroupId <- EitherT {
@@ -476,7 +476,11 @@ class ProjectLiberation(tileHost: URI) {
         )
       }
       _ <- EitherT { nukeStaleData(project, annotationGroupId) }
-    } yield project.id) value
+    } yield project.id)
+      .leftMap({ err =>
+        (err, project.id)
+      })
+      .value
   }
 }
 
@@ -490,12 +494,23 @@ object ProjectLiberation extends Job {
       val runner = new ProjectLiberation(URI.create(tileHost))
       for {
         projects <- runner.getAnnotationProjects.transact(xa)
+        _ = println(s"Projects: ${projects map { _.id }}")
         results <- projects traverse { project =>
           runner.liberateProject(project).transact(xa)
         }
       } yield {
-        val grouped = results.groupBy(identity)
-        println(s"Results: $grouped")
+        val failures = results.collect {
+          case Left((err, projId)) => (err, projId)
+        }
+        val successes = results.collect {
+          case Right(projId) => projId
+        }
+        // surely there's a better way to do this :man_facepalming:
+        val groupedFailures = failures.groupBy(_._1).mapValues { values =>
+          values map { _._2 }
+        }
+        println(s"Failures: $groupedFailures")
+        println(s"Successes: $successes")
       }
     case _ =>
       IO.raiseError(new Exception("must provide a tileHost value"))
