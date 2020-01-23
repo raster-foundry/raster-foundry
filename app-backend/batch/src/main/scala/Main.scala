@@ -7,6 +7,7 @@ import com.rasterfoundry.batch.stacImport.ReadStacFeature
 import com.rasterfoundry.batch.stacExport.WriteStacCatalog
 import com.rasterfoundry.batch.notification.NotifyIngestStatus
 import com.rasterfoundry.batch.geojsonImport.ImportGeojsonFiles
+import com.rasterfoundry.batch.projectLiberation.ProjectLiberation
 
 object Main {
   val modules = Map[String, Array[String] => Unit](
@@ -19,6 +20,7 @@ object Main {
     WriteStacCatalog.name -> (WriteStacCatalog.main(_)),
     UpdateExportStatus.name -> (UpdateExportStatus.main(_)),
     ImportGeojsonFiles.name -> (ImportGeojsonFiles.main(_)),
+    ProjectLiberation.name -> (ProjectLiberation.main(_))
   )
 
   def main(args: Array[String]): Unit = {
@@ -28,7 +30,8 @@ object Main {
           case Some(main) => main(args.tail)
           case _ =>
             throw new Exception(
-              s"No job ${head} available (all available jobs: ${modules.keys.mkString(", ")})")
+              s"No job ${head} available (all available jobs: ${modules.keys.mkString(", ")})"
+            )
         }
       }
       case _ => throw new Exception(s"No options passed: ${args.toList}")

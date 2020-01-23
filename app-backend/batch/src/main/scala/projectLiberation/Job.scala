@@ -28,7 +28,6 @@ import java.util.UUID
 
 sealed abstract class FailureStage extends Throwable
 case object GetUniqueAnnotationGroup extends FailureStage
-case object GuessTaskSize extends FailureStage
 case object CreateAnnotationProject extends FailureStage
 case object CreateProjectTiles extends FailureStage
 case object CreateLabelClassGroups extends FailureStage
@@ -58,7 +57,7 @@ class ProjectLiberation(tileHost: URI) {
   // using only simple types so I don't have to write metas for custom types --
   // that work can happen when we create Daos / proper datamodels for these things
   type AnnotationProject =
-    String :: String :: String :: Int :: Option[
+    String :: String :: String :: Option[
       Projected[Geometry]
     ] :: Option[UUID] :: Option[UUID] :: Option[UUID] :: HNil
 
@@ -73,23 +72,22 @@ class ProjectLiberation(tileHost: URI) {
         createdBy: String,
         name: String,
         projectType: AnnotationProjectType,
-        taskSizeMeters: Int,
         aoi: Projected[Geometry],
         labelersId: UUID,
         validatorsId: UUID,
         projectId: UUID
-    ): AnnotationProject =
-      createdBy :: name :: projectType.repr :: taskSizeMeters :: Option(aoi) :: Option(
+    ): AnnotationProject = {
+      createdBy :: name :: projectType.repr :: Option(aoi) :: Option(
         labelersId
       ) :: Option(validatorsId) :: Option(projectId) :: HNil
+    }
   }
 
   def projectToAnnotationProject(
       project: Project,
-      extras: Json,
-      taskSizeMeters: Int
+      extras: Json
   ): Either[FailureStage, AnnotationProject] = {
-    val annotatePartial = root.extras.annotate
+    val annotatePartial = root.annotate
     val projectTypeLens = annotatePartial.projectType.string
     val labelersLens = annotatePartial.labelers.string
     val validatorsLens = annotatePartial.validators.string
@@ -102,7 +100,6 @@ class ProjectLiberation(tileHost: URI) {
         projectTypeLens.getOption(extras) flatMap {
           AnnotationProjectType.fromStringO _
         },
-        Option(taskSizeMeters),
         // this succeeds, even if we have a bad aoi or no aoi. I _think_ that's
         // the correct behavior?
         aoiLens
@@ -130,44 +127,30 @@ class ProjectLiberation(tileHost: URI) {
       )
       .list
 
-  private def getProjectTaskSizeMeters(
-      project: Project
-  ): ConnectionIO[Either[FailureStage, Int]] = fr"""
-    SELECT ceil(st_perimeter(geometry) / 4) from tasks
-    WHERE project_id = ${project.id}
-    LIMIT 1;
-  """.query[Int].option map { opt =>
-    Either.fromOption(opt, CreateAnnotationProject)
-  }
-
   // make an annotation project from the existing project
   private def createAnnotationProject(
       project: Project,
       extras: Json
   ): ConnectionIO[Either[FailureStage, UUID]] = {
-    (for {
-      taskSizeMeters <- EitherT { getProjectTaskSizeMeters(project) }
-      converted = projectToAnnotationProject(project, extras, taskSizeMeters)
-      result <- EitherT {
-        converted traverse {
-          case createdBy :: name :: projectType :: taskSizeMeters :: aoi :: labelersId :: validatorsId :: projectId :: HNil =>
-            fr"""
-      insert into annotation_projects (
+    val converted = projectToAnnotationProject(project, extras)
+    converted traverse {
+      case createdBy :: name :: projectType :: aoi :: labelersId :: validatorsId :: projectId :: HNil =>
+        fr"""
+      insert into annotation_projects
+        (id, created_at, created_by, name, project_type, aoi, labelers_team_id, validators_team_id, project_id)
+      VALUES (
         uuid_generate_v4(),
         now(),
         ${createdBy},
         $name,
-        $projectType,
-        $taskSizeMeters,
+        $projectType :: annotation_project_type,
         $aoi,
         $labelersId,
         $validatorsId,
         $projectId
       );
       """.update.withUniqueGeneratedKeys[UUID]("id")
-        }
-      }
-    } yield result).value
+    }
 
   }
 
@@ -179,17 +162,21 @@ class ProjectLiberation(tileHost: URI) {
     // i tried .adaptError(_ => CreateProjectTiles: FailureStage) instead of
     // the tortured either handling that this wound up with, but adaptError
     // is invariant in its type parameters
-    fr"""
-      INSERT INTO tiles (
+    val tileUrl = s"$tileHost/${project.id}/{z}/{x}/{y}"
+    val fragment = fr"""
+      INSERT INTO public.tiles
+        (id, name, url, is_default, is_overlay, layer_type, annotation_project_id)
+      VALUES (
         uuid_generate_v4(),
-        project.name,
-        s"$tileHost/${project.id}/{z}/{x}/{y}",
+        ${project.name},
+        $tileUrl,
         true,
         false,
-        'TMS',
+        'TMS' :: tile_layer_type,
         $annotationProjectId
       );
-    """.update.run.attempt map { result =>
+    """
+    fragment.update.run.attempt map { result =>
       result.bimap(_ => CreateProjectTiles: FailureStage, _ => ())
     }
   }
@@ -206,24 +193,26 @@ class ProjectLiberation(tileHost: URI) {
           val records = groupsMap.zipWithIndex map {
             case ((groupId, groupName), n) =>
               Fragment.const(
-                s"($groupId, $groupName, $annotationProjectId, $n)"
+                s"('$groupId', '$groupName', '$annotationProjectId', $n)"
               )
           }
           records.toList.toNel
         }
     } traverse {
       case recordsNel =>
-        Fragment.const(s"""
+        (Fragment.const(s"""
             INSERT INTO annotation_label_class_groups (
               id,
               name,
               annotation_project_id,
               idx
-            ) VALUES ${recordsNel.intercalate(fr",")};
-          """).update.withGeneratedKeys[UUID]("id").compile.to[List]
+            ) VALUES """) ++ recordsNel.intercalate(fr",")).update
+          .withGeneratedKeys[UUID]("id")
+          .compile
+          .to[List]
+    } map { opt =>
+      Either.fromOption(opt, CreateLabelClassGroups)
     }
-  } map { opt =>
-    Either.fromOption(opt, CreateLabelClassGroups)
   }
 
   private def getLabelClassInsertFragment(
@@ -276,9 +265,13 @@ class ProjectLiberation(tileHost: URI) {
             }
           )
           .leftMap { _ =>
-            CreateLabelClasses
+            {
+              CreateLabelClasses
+            }
           }
-    } getOrElse { Left(CreateLabelClasses) }
+    } getOrElse {
+      Left(CreateLabelClasses)
+    }
   }
 
   private def createLabelClasses(
@@ -298,7 +291,7 @@ class ProjectLiberation(tileHost: URI) {
     } map { _.toNel }
     fragmentsE match {
       case Right(Some(recordsNel)) =>
-        Fragment
+        (Fragment
           .const(s"""
             INSERT INTO annotation_label_classes (
               id,
@@ -308,9 +301,9 @@ class ProjectLiberation(tileHost: URI) {
               is_default,
               is_determinant,
               idx
-            ) VALUES ${recordsNel.intercalate(fr",")};
-          """)
-          .update
+            ) VALUES
+          """) ++ recordsNel
+          .intercalate(fr",")).update
           .withGeneratedKeys[UUID]("id")
           .compile
           .to[List]
@@ -353,10 +346,8 @@ class ProjectLiberation(tileHost: URI) {
     val records = classes map { labelClass =>
       fr"($labelId, $labelClass)"
     }
-    Fragment.const(s"""
-      INSERT INTO annotation_labels_annotation_label_classes VALUES
-        ${records.intercalate(fr",")};
-    """).update.run map { _ =>
+    (fr"INSERT INTO annotation_labels_annotation_label_classes VALUES" ++ records
+      .intercalate(fr",")).update.run map { _ =>
       ()
     }
   }
