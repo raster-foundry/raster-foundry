@@ -8,6 +8,7 @@ import com.rasterfoundry.database.{
   ProjectDao
 }
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
 
 import cats.data.{EitherT, NonEmptyList}
 import cats.effect.IO
@@ -102,7 +103,8 @@ class ProjectLiberation(tileHost: URI) {
           AnnotationProjectType.fromStringO _
         },
         Option(taskSizeMeters),
-        // this succeeds, even if we have a bad aoi or no aoi,
+        // this succeeds, even if we have a bad aoi or no aoi. I _think_ that's
+        // the correct behavior?
         aoiLens
           .getOption(extras) flatMap { _.as[Projected[Geometry]].toOption } orElse {
           project.extent
@@ -279,7 +281,6 @@ class ProjectLiberation(tileHost: URI) {
     } getOrElse { Left(CreateLabelClasses) }
   }
 
-  // maybe (UUID, name)?
   private def createLabelClasses(
       extras: Json,
       annotationLabelGroupIds: Set[UUID]
@@ -365,8 +366,6 @@ class ProjectLiberation(tileHost: URI) {
       annotation: Annotation,
       classIds: List[UUID]
   ): ConnectionIO[Either[FailureStage, Unit]] = {
-    // create label
-    // create label classes
     val taskIdE = Either.fromOption(
       annotation.taskId,
       CreateLabels
@@ -408,20 +407,7 @@ class ProjectLiberation(tileHost: URI) {
       annotationProjectId: UUID,
       classIds: List[UUID]
   ): ConnectionIO[Either[FailureStage, Unit]] = {
-    /*
- id                    | uuid                        | not null
- created_at            | timestamp without time zone | not null
- created_by            | character varying(255)      | not null
- annotation_project_id | uuid                        | not null
- annotation_task_id    | uuid                        | not null
-
- geometry              | geometry(Geometry,3857)     |
-     */
-    // flow:
-    // - get annotation groups for the project
-    // - find one named "label"
-    // - get (stream) all the annotations for that group
-    // -
+    // kind-projector isn't cooperating
     type ConnectionIOStream[A] = fs2.Stream[ConnectionIO, A]
     (for {
       annotation <- EitherT
@@ -454,20 +440,11 @@ class ProjectLiberation(tileHost: URI) {
     }
   }
 
-  private def updateTasks(
-      projectId: UUID,
-      annotationProjectId: UUID
-  ): ConnectionIO[Unit] = ???
-
   // nuke annotate from extras
   private def nukeStaleData(
       project: Project,
       annotationGroupId: UUID
   ): ConnectionIO[Either[FailureStage, Unit]] = {
-    // - remove annotations
-    // - remove "label" annotation group
-    // - ~remove "annotate" tag~ -- keep it, and second and third runs will just fail
-    // - remove "annotate" key from extras
     val removeAnnotateKey = fr"""
         UPDATE projects SET extras = extras - 'annotate' where id = ${project.id}
     """
@@ -481,7 +458,6 @@ class ProjectLiberation(tileHost: URI) {
     }
   }
 
-  // do all the stuff
   def liberateProject(
       project: Project
   ): ConnectionIO[Either[FailureStage, Unit]] = {
@@ -517,6 +493,20 @@ object ProjectLiberation extends Job {
 
   val name: String = "liberate-annotation-projects"
 
-  def runJob(args: List[String]): IO[Unit] = ???
-
+  def runJob(args: List[String]): IO[Unit] = args match {
+    case tileHost +: Nil =>
+      val xa = RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
+      val runner = new ProjectLiberation(URI.create(tileHost))
+      for {
+        projects <- runner.getAnnotationProjects.transact(xa)
+        results <- projects traverse { project =>
+          runner.liberateProject(project).transact(xa)
+        }
+      } yield {
+        val grouped = results.groupBy(identity).mapValues(_.size)
+        println(s"Results: $grouped")
+      }
+    case _ =>
+      IO.raiseError(new Exception("must provide a tileHost value"))
+  }
 }
