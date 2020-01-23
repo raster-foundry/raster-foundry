@@ -200,7 +200,7 @@ class ProjectLiberation(tileHost: URI) {
         }
     } traverse {
       case recordsNel =>
-        (Fragment.const(s"""
+        (Fragment.const("""
             INSERT INTO annotation_label_class_groups (
               id,
               name,
@@ -292,7 +292,7 @@ class ProjectLiberation(tileHost: URI) {
     fragmentsE match {
       case Right(Some(recordsNel)) =>
         (Fragment
-          .const(s"""
+          .const("""
             INSERT INTO annotation_label_classes (
               id,
               name,
