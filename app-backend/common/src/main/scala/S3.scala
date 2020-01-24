@@ -132,7 +132,7 @@ final case class S3(
       bucket: String,
       key: String,
       duration: Duration = Duration.ofDays(1),
-      method: HttpMethod = HttpMethod.Get
+      method: HttpMethod = HttpMethod.GET
   ): URL = {
     val expiration = LocalDateTime.now + duration
     val generatePresignedUrlRequest =
