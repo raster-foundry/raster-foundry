@@ -39,7 +39,9 @@ trait UploadRoutes
             pathEndOrSingleSlash {
               getUploadCredentials(uploadId)
             }
-          }
+          } ~ pathPrefix("signed-url") {
+          get { getSignedUploadUrl(uploadId) }
+        }
       }
   }
 
@@ -226,6 +228,22 @@ trait UploadRoutes
                 HttpChallenge("Bearer", "https://rasterfoundry.com")
               )
             )
+        }
+      }
+    }
+  }
+
+  def getSignedUploadUrl(uploadId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Uploads, Action.Read, None), user) {
+      authorizeAsync {
+        UploadDao.query
+          .ownedBy(user, uploadId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          UploadDao.getSignedPutURL(uploadId).transact(xa).unsafeToFuture()
         }
       }
     }

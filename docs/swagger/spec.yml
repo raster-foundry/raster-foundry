@@ -1197,6 +1197,28 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
+  /uploads/{uploadID}/signed-url:
+    x-resource: Uploads
+    get:
+      summary: 'Get a signed URL to upload data to'
+      tags:
+        - Authentication
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uploadID'
+      responses:
+        200:
+          description: 'A signed URL for HTTP PUT requests'
+          schema:
+            $ref: '#/definitions/UploadSignedUrlResponse'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
   /scenes/:
     x-resource: Scenes
     get:
@@ -7291,6 +7313,12 @@ definitions:
         $ref: '#/definitions/UploadCredentials'
       bucketPath:
         type: string
+  UploadSignedUrlResponse:
+    type: object
+    properties:
+      signedUrl:
+        type: string
+        format: uri
   SceneParams:
     type: object
     description: 'scene params'
