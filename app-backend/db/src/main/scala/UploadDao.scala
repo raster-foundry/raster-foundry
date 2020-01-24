@@ -156,6 +156,4 @@ object UploadDao extends Dao[Upload] {
       }
     }
   }
-
-  def getSignedPutURL(id: UUID): ConnectionIO[Upload.PutUrl] = ???
 }
