@@ -1,19 +1,22 @@
 package com.rasterfoundry.api.uploads
 
-import java.util.UUID
+import com.rasterfoundry.akkautil._
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.common.{AWSBatch, S3}
+import com.rasterfoundry.database.UploadDao
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.{AuthenticationFailedRejection, Route}
 import cats.effect.IO
-import com.rasterfoundry.akkautil._
-import com.rasterfoundry.common.AWSBatch
-import com.rasterfoundry.database.UploadDao
-import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel._
+import com.amazonaws.HttpMethod
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+
+import java.util.UUID
 
 trait UploadRoutes
     extends Authentication
@@ -21,8 +24,11 @@ trait UploadRoutes
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
-    with AWSBatch {
+    with AWSBatch
+    with Config {
   val xa: Transactor[IO]
+
+  val s3 = S3()
 
   val uploadRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -39,7 +45,9 @@ trait UploadRoutes
             pathEndOrSingleSlash {
               getUploadCredentials(uploadId)
             }
-          }
+          } ~ pathPrefix("signed-url") {
+          get { getSignedUploadUrl(uploadId) }
+        }
       }
   }
 
@@ -226,6 +234,27 @@ trait UploadRoutes
                 HttpChallenge("Bearer", "https://rasterfoundry.com")
               )
             )
+        }
+      }
+    }
+  }
+
+  def getSignedUploadUrl(uploadId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Uploads, Action.Read, None), user) {
+      authorizeAsync {
+        UploadDao.query
+          .ownedBy(user, uploadId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          val signed = s3.getSignedUrl(
+            dataBucket,
+            s"user-uploads/${user.id}/${uploadId}/${uploadId}.tif",
+            method = HttpMethod.PUT
+          )
+          Upload.PutUrl(s"$signed")
         }
       }
     }

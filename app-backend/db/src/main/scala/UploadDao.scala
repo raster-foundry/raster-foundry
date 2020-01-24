@@ -110,7 +110,7 @@ object UploadDao extends Dao[Upload] {
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
     (for {
       oldUpload <- oldUploadIO
-      newStatus <- upload.uploadStatus.pure[ConnectionIO]
+      newStatus = upload.uploadStatus
       nAffected <- recordUpdateIO
       userPlatform <- UserDao.unsafeGetUserPlatform(oldUpload.owner)
       owner <- UserDao.unsafeGetUserById(oldUpload.owner)
