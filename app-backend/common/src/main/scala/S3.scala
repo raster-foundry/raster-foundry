@@ -1,10 +1,5 @@
 package com.rasterfoundry.common
 
-import java.io.File
-import java.net._
-import java.time.{Duration, ZoneOffset}
-import java.util.Date
-
 import com.amazonaws.auth.{
   AWSCredentialsProvider,
   DefaultAWSCredentialsProviderChain
@@ -13,13 +8,18 @@ import com.amazonaws.HttpMethod
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
-import jp.ne.opt.chronoscala.Imports._
 import geotrellis.spark.io.s3.S3InputFormat
+import jp.ne.opt.chronoscala.Imports._
 import org.apache.commons.io.IOUtils
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+
+import java.io.File
+import java.net._
+import java.time.{Duration, ZoneOffset}
+import java.util.Date
 
 sealed trait S3Region
 final case class S3RegionEnum(s3Region: Regions) extends S3Region
@@ -132,7 +132,7 @@ final case class S3(
       bucket: String,
       key: String,
       duration: Duration = Duration.ofDays(1),
-      method: HttpMethod + HttpMethod.Get
+      method: HttpMethod = HttpMethod.Get
   ): URL = {
     val expiration = LocalDateTime.now + duration
     val generatePresignedUrlRequest =
