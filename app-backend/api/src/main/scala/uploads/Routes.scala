@@ -151,7 +151,6 @@ trait UploadRoutes
           newUpload.uploadType
         )
 
-        println(s"BYTES UPLOADED: $bytesUploaded")
 
         onSuccess(
           UploadDao
