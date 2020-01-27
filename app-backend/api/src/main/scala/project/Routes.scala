@@ -29,8 +29,6 @@ import doobie.util.transactor.Transactor
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.common._
 
-import scala.concurrent.Future
-
 trait ProjectRoutes
     extends Authentication
     with Config

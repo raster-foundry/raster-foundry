@@ -67,11 +67,13 @@ class DatasourceDaoSpec
   test("getting a datasource for a scene") {
     check {
       forAll(
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         platform: Platform,
-         datasourceCreate: Datasource.Create,
-         scene: Scene.Create) => {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            datasourceCreate: Datasource.Create,
+            scene: Scene.Create
+        ) => {
           val dsFetch = for {
             (userInsert, _, _) <- insertUserOrgPlatform(
               userCreate,
@@ -85,8 +87,10 @@ class DatasourceDaoSpec
           } yield { (fetched, dsInsert) }
 
           val (fetched, inserted) = dsFetch.transact(xa).unsafeRunSync
-          assert(fetched.get == inserted,
-                 "Fetched datasource did not equal inserted datasource")
+          assert(
+            fetched.get == inserted,
+            "Fetched datasource did not equal inserted datasource"
+          )
           true
         }
       )
@@ -283,7 +287,8 @@ class DatasourceDaoSpec
             datasource <- fixupDatasource(dsCreate, dbUser)
             _ <- UploadDao.insert(
               fixupUploadCreate(dbUser, dbProject, datasource, upload),
-              dbUser
+              dbUser,
+              0
             )
             isDeletable <- DatasourceDao.isDeletable(datasource.id, dbUser)
           } yield { (isDeletable, upload.uploadStatus) }
