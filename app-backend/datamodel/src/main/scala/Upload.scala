@@ -43,7 +43,7 @@ object Upload {
       uploadType: UploadType
   ): Long = {
 
-    def getFilSizes: Long =
+    def getFileSizes: Long =
       files
         .map(new AmazonS3URI(_))
         .filter(dataBucket == _.getBucket)
