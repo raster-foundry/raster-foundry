@@ -6,7 +6,7 @@
 
 - Added `signed-url` endpoint for uploads to send secure PUTs to s3 [#5290](https://github.com/raster-foundry/raster-foundry/pull/5290)
 - Added migration for annotate projects and related items [#5284](https://github.com/raster-foundry/raster-foundry/pull/5284)
-- Added scopes to the API, database, and user creation to control access to resources and endpoints [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270), [#5275](https://github.com/raster-foundry/raster-foundry/pull/5275), [#5278](https://github.com/raster-foundry/raster-foundry/pull/5278) [#5277](https://github.com/raster-foundry/raster-foundry/pull/5277)
+- Added scopes to the API, database, and user creation to control access to resources and endpoints [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270), [#5275](https://github.com/raster-foundry/raster-foundry/pull/5275), [#5278](https://github.com/raster-foundry/raster-foundry/pull/5278) [#5277](https://github.com/raster-foundry/raster-foundry/pull/5277), [#5292](https://github.com/raster-foundry/raster-foundry/pull/5292)
 - Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
 
 ### Changed

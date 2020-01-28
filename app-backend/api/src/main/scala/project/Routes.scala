@@ -18,6 +18,7 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.akkautil.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
@@ -512,7 +513,12 @@ trait ProjectRoutes
   }
 
   def createProject: Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Projects, Action.Create, None), user) {
+    val userProjectCount = ProjectDao.query
+      .filter(fr"owner = ${user.id}")
+      .count
+      .transact(xa)
+      .unsafeToFuture
+    authorizeScopeLimit(userProjectCount, Domain.Projects, Action.Create, user) {
       entity(as[Project.Create]) { newProject =>
         onSuccess(
           ProjectDao
@@ -1061,7 +1067,14 @@ trait ProjectRoutes
   }
 
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Projects, Action.Share, None), user) {
+    val shareCount =
+      ProjectDao.getShareCount(projectId, user.id).transact(xa).unsafeToFuture
+    authorizeScopeLimit(
+      shareCount,
+      Domain.Projects,
+      Action.Share,
+      user
+    ) {
       entity(as[ObjectAccessControlRule]) { acr =>
         authorizeAsync {
           (

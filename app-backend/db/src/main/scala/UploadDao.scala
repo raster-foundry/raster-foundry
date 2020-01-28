@@ -21,9 +21,14 @@ object UploadDao extends Dao[Upload] {
        id, created_at, created_by, modified_at,
        owner, upload_status, file_type, upload_type,
        files, datasource, metadata, visibility, project_id,
-       layer_id, source, keep_in_source_bucket
+       layer_id, source, keep_in_source_bucket, bytes_uploaded
     FROM
   """ ++ tableF
+
+  def getUserBytesUploaded(user: User): ConnectionIO[Long] =
+    fr"SELECT SUM(bytes_uploaded) FROM uploads WHERE owner = ${user.id}"
+      .query[Long]
+      .unique
 
   def getUploadById(uploadId: UUID): ConnectionIO[Option[Upload]] =
     query.filter(uploadId).selectOption
@@ -31,7 +36,11 @@ object UploadDao extends Dao[Upload] {
   def unsafeGetUploadById(uploadId: UUID): ConnectionIO[Upload] =
     query.filter(uploadId).select
 
-  def insert(newUpload: Upload.Create, user: User): ConnectionIO[Upload] =
+  def insert(
+      newUpload: Upload.Create,
+      user: User,
+      bytesUploaded: Long
+  ): ConnectionIO[Upload] =
     for {
       ownerPlatform <- newUpload.owner traverse { userId =>
         UserDao.unsafeGetUserPlatform(userId) map { _.id }
@@ -53,7 +62,8 @@ object UploadDao extends Dao[Upload] {
       upload = updatedUpload.toUpload(
         user,
         (userPlatform.id, userPlatformAdmin),
-        ownerPlatform
+        ownerPlatform,
+        bytesUploaded
       )
       insertedUpload <- (
         sql"""
@@ -61,12 +71,12 @@ object UploadDao extends Dao[Upload] {
          (id, created_at, created_by, modified_at,
           owner, upload_status, file_type, upload_type,
           files, datasource, metadata, visibility, project_id,
-          layer_id, source, keep_in_source_bucket)
+          layer_id, source, keep_in_source_bucket, bytes_uploaded)
        VALUES (
          ${upload.id}, ${upload.createdAt}, ${upload.createdBy}, ${upload.modifiedAt},
          ${upload.owner}, ${upload.uploadStatus}, ${upload.fileType}, ${upload.uploadType},
          ${upload.files}, ${upload.datasource}, ${upload.metadata}, ${upload.visibility}, ${upload.projectId},
-         ${upload.layerId}, ${upload.source}, ${upload.keepInSourceBucket}
+         ${upload.layerId}, ${upload.source}, ${upload.keepInSourceBucket}, ${upload.bytesUploaded}
        )
       """.update.withUniqueGeneratedKeys[Upload](
           "id",
@@ -84,7 +94,8 @@ object UploadDao extends Dao[Upload] {
           "project_id",
           "layer_id",
           "source",
-          "keep_in_source_bucket"
+          "keep_in_source_bucket",
+          "bytes_uploaded"
         )
       )
     } yield insertedUpload
@@ -106,7 +117,8 @@ object UploadDao extends Dao[Upload] {
           project_id = ${upload.projectId},
           layer_id = ${upload.layerId},
           source = ${upload.source},
-          keep_in_source_bucket = ${upload.keepInSourceBucket}
+          keep_in_source_bucket = ${upload.keepInSourceBucket},
+          bytes_uploaded = ${upload.bytesUploaded}
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
     (for {
       oldUpload <- oldUploadIO

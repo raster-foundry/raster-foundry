@@ -15,6 +15,7 @@ import com.amazonaws.HttpMethod
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import geotrellis.spark.io.s3.S3Client
 
 import java.util.UUID
 
@@ -90,7 +91,14 @@ trait UploadRoutes
   }
 
   def createUpload: Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Uploads, Action.Create, None), user) {
+    val userBytesUploaded =
+      UploadDao.getUserBytesUploaded(user).transact(xa).unsafeToFuture()
+    authorizeScopeLimit(
+      userBytesUploaded,
+      Domain.Uploads,
+      Action.Create,
+      user
+    ) {
       entity(as[Upload.Create]) { newUpload =>
         logger.debug(
           s"newUpload: ${newUpload.uploadType}, ${newUpload.source}, ${newUpload.fileType}"
@@ -136,8 +144,19 @@ trait UploadRoutes
             }
           }
 
+        val bytesUploaded = Upload.getBytesUploaded(
+          S3Client.DEFAULT,
+          dataBucket,
+          newUpload.files,
+          newUpload.uploadStatus,
+          newUpload.uploadType
+        )
+
         onSuccess(
-          UploadDao.insert(uploadToInsert, user).transact(xa).unsafeToFuture
+          UploadDao
+            .insert(uploadToInsert, user, bytesUploaded)
+            .transact(xa)
+            .unsafeToFuture
         ) { upload =>
           if (upload.uploadStatus == UploadStatus.Uploaded) {
             kickoffSceneImport(upload.id)
@@ -158,10 +177,20 @@ trait UploadRoutes
           .unsafeToFuture
       } {
         entity(as[Upload]) { updateUpload =>
+          val updatedBytesUploaded = Upload.getBytesUploaded(
+            S3Client.DEFAULT,
+            dataBucket,
+            updateUpload.files,
+            updateUpload.uploadStatus,
+            updateUpload.uploadType
+          )
           onSuccess {
             val x = for {
               u <- UploadDao.query.filter(uploadId).selectOption
-              c <- UploadDao.update(updateUpload, uploadId)
+              c <- UploadDao.update(
+                updateUpload.copy(bytesUploaded = updatedBytesUploaded),
+                uploadId
+              )
             } yield {
               (u, c) match {
                 case (Some(upload), 1) => {

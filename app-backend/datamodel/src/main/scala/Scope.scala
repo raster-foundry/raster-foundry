@@ -218,7 +218,7 @@ object SimpleScope {
 }
 
 sealed class ComplexScope(scopes: Set[Scope]) extends Scope {
-  val actions = scopes flatMap { _.actions }
+  val actions: Set[ScopedAction] = scopes flatMap { _.actions }
 }
 
 object ComplexScope {
@@ -517,12 +517,19 @@ object Scopes {
       extends SimpleScope(
         Set(
           ScopedAction(Domain.Licenses, Action.Read, None),
-          ScopedAction(Domain.Scenes, Action.Read, None)
+          ScopedAction(Domain.Scenes, Action.Read, None),
+          ScopedAction(Domain.Uploads, Action.Read, None),
+          ScopedAction(Domain.Uploads, Action.Create, Some(1e9.toLong)),
+          ScopedAction(Domain.Uploads, Action.Update, None),
+          ScopedAction(Domain.Uploads, Action.Delete, None),
+          ScopedAction(Domain.Uploads, Action.ReadPermissions, None),
+          ScopedAction(Domain.Uploads, Action.Share, None),
+          ScopedAction(Domain.Projects, Action.Create, Some(10.toLong)),
+          ScopedAction(Domain.Projects, Action.Share, Some(5.toLong))
         ) ++ Set(
           Action.Read,
           Action.Update,
           Action.Delete,
-          Action.Create,
           Action.CreateAnnotation,
           Action.DeleteAnnotation,
           Action.UpdateAnnotation,
@@ -534,7 +541,7 @@ object Scopes {
           Action.AddScenes
         ).map(makeScopedAction(Domain.Projects, _, None)) ++
           StacExportsCRUD.actions ++
-          UploadsCRUD.actions ++
-          UserSelfScope.actions
+          UserSelfScope.actions ++
+          FeatureFlagsScope.actions
       )
 }
