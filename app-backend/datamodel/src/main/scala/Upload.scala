@@ -59,8 +59,8 @@ object Upload {
       // If uploading or just created, don't calculate uploaded bytes
       case (UploadStatus.Uploading, _) => 0
       case (UploadStatus.Created, _)   => 0
-      case (_, UploadType.S3)          => getFilSizes
-      case (_, UploadType.Local)       => getFilSizes
+      case (_, UploadType.S3)          => getFileSizes
+      case (_, UploadType.Local)       => getFileSizes
       // fall through case, any other upload that isn't S3
       case (_, _) => 0
     }
