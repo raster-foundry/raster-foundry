@@ -245,14 +245,17 @@ object ProjectDao
     }
   }
 
-  def getShareCount(projectId: UUID, userId: String): ConnectionIO[Long] = {
-    val sharedUsers = ProjectDao.getPermissions(projectId).map { acrList =>
-      acrList.flatten.filter(_.subjectType == SubjectType.User).flatMap { acr =>
-        acr.subjectId
+  def getShareCount(projectId: UUID, userId: String): ConnectionIO[Long] =
+    ProjectDao
+      .getPermissions(projectId)
+      .map { acrList =>
+        acrList.collect {
+          case Some(ObjectAccessControlRule(subjType, Some(subjectId), _))
+              if subjType == SubjectType.User && subjectId != userId =>
+            subjectId
+        }
       }
-    } map (subjects => subjects.filter(_ != userId))
-    sharedUsers.map(_.length.toLong)
-  }
+      .map(_.distinct.length.toLong)
 
   def updateSceneIngestStatus(projectLayerId: UUID): ConnectionIO[Int] = {
     val updateStatusQuery =
