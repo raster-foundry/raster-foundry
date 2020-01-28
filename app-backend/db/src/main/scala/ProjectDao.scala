@@ -673,7 +673,7 @@ object ProjectDao
           case 0 => None
           case _ =>
             val stacClasses
-                : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
+              : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
               .groupBy(_.labelGroupName match {
                 case Some(groupName) if groupName.nonEmpty => groupName
                 case _                                     => "label"

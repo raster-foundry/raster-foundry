@@ -152,7 +152,6 @@ trait UploadRoutes
           newUpload.uploadType
         )
 
-
         onSuccess(
           UploadDao
             .insert(uploadToInsert, user, bytesUploaded)
