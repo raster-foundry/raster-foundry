@@ -67,7 +67,8 @@ module.exports = function (_path) {
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
                     PLATFORM_USERS: PLATFORM_USERS,
-                    EMBED_URI: JSON.stringify('')
+                    EMBED_URI: JSON.stringify(''),
+                    LOGOUT_REDIRECT_URL: JSON.stringify('')
                 },
                 'HELPCONFIG': {
                     HELP_DOCS: JSON.stringify(HELP_DOCS)

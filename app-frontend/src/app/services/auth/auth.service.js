@@ -402,7 +402,9 @@ export default app => {
             let profileName = (profile, dpr) =>
                 (dpr.name !== profile.email ? dpr.name : null) ||
                 (dpr.nickname !== profile.email ? dpr.nickname : null) ||
-                dpr.given_name || '' + dpr.family_name || '' ||
+                dpr.given_name ||
+                '' + dpr.family_name ||
+                '' ||
                 null;
 
             let p = this.getProfile();
@@ -423,6 +425,8 @@ export default app => {
         }
 
         logout() {
+            let logoutRedirectUrl = BUILDCONFIG.LOGOUT_REDIRECT_URL;
+
             if (typeof heap !== 'undefined' && typeof heap.removeEventProperty === 'function') {
                 heap.removeEventProperty('Logged In');
             }
@@ -434,7 +438,9 @@ export default app => {
             this.rollbarWrapperService.init();
             this.isLoggedIn = false;
             this.intercomService.shutdown();
-            this.$state.go('login');
+            return !!logoutRedirectUrl
+                ? window.location.replace(logoutRedirectUrl)
+                : this.$state.go('login');
         }
 
         clearAuthStorage() {

@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Logout can redirect to a custom URL [#5291](https://github.com/raster-foundry/raster-foundry/pull/5291)
+
 ### Deprecated
 
 ### Removed
