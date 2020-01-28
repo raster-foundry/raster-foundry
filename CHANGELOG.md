@@ -14,6 +14,12 @@
 
 ### Security
 
+## [1.34.1](https://github.com/raster-foundry/raster-foundry/compare/1.34.0...1.34.1)
+
+### Changed
+
+- Logout can redirect to a custom URL [#5291](https://github.com/raster-foundry/raster-foundry/pull/5291)
+
 ## [1.34.0](https://github.com/raster-foundry/raster-foundry/compare/1.33.0...1.34.0)
 
 ### Added
