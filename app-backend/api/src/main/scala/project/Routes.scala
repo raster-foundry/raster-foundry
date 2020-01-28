@@ -513,23 +513,20 @@ trait ProjectRoutes
   }
 
   def createProject: Route = authenticate { user =>
-    val scopedAction = ScopedAction(Domain.Projects, Action.Create, None)
     val userProjectCount = ProjectDao.query
       .filter(fr"owner = ${user.id}")
       .count
       .transact(xa)
       .unsafeToFuture
-    authorizeScopeLimit(userProjectCount, scopedAction, user) {
-      authorizeScope(scopedAction, user) {
-        entity(as[Project.Create]) { newProject =>
-          onSuccess(
-            ProjectDao
-              .insertProject(newProject, user)
-              .transact(xa)
-              .unsafeToFuture
-          ) { project =>
-            complete(StatusCodes.Created, project)
-          }
+    authorizeScopeLimit(userProjectCount, Domain.Projects, Action.Create, user) {
+      entity(as[Project.Create]) { newProject =>
+        onSuccess(
+          ProjectDao
+            .insertProject(newProject, user)
+            .transact(xa)
+            .unsafeToFuture
+        ) { project =>
+          complete(StatusCodes.Created, project)
         }
       }
     }
@@ -1074,7 +1071,8 @@ trait ProjectRoutes
       ProjectDao.getShareCount(projectId, user.id).transact(xa).unsafeToFuture
     authorizeScopeLimit(
       shareCount,
-      ScopedAction(Domain.Projects, Action.Share, None),
+      Domain.Projects,
+      Action.Share,
       user
     ) {
       entity(as[ObjectAccessControlRule]) { acr =>

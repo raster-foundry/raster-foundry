@@ -95,7 +95,8 @@ trait UploadRoutes
       UploadDao.getUserBytesUploaded(user).transact(xa).unsafeToFuture()
     authorizeScopeLimit(
       userBytesUploaded,
-      ScopedAction(Domain.Uploads, Action.Create, None),
+      Domain.Uploads,
+      Action.Create,
       user
     ) {
       entity(as[Upload.Create]) { newUpload =>
