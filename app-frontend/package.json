@@ -51,7 +51,7 @@
         "angular-ui-tree": "2.22.5",
         "angular-uuid4": "^0.3.1",
         "angularjs-slider": "~6.1.1",
-        "auth0-lock": "11.10.0",
+        "auth0-lock": "11.21.0",
         "axios": "^0.17.0",
         "bootstrap-sass": "~3.3.6",
         "d3": "5.7.0",
