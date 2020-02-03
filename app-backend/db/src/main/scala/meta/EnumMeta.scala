@@ -71,4 +71,11 @@ trait EnumMeta {
 
   implicit val taskStatusMeta: Meta[TaskStatus] =
     pgEnumString("task_status", TaskStatus.fromString, _.repr)
+
+  implicit val annotationProjectTypeMeta: Meta[AnnotationProjectType] =
+    pgEnumString(
+      "annotation_project_type",
+      AnnotationProjectType.fromString,
+      _.repr
+    )
 }
