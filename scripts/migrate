@@ -36,7 +36,6 @@ else
     pushd "$SCRIPTDIR/.." > /dev/null
     logInfo "Running migrations with docker-compose"
     FLYWAY_COMMAND="${1:-info}"
-    FLYWAY_OPTIONS="${@:2}"
-    ${MIGRATE_COMMAND} "${FLYWAY_OPTIONS}" "${FLYWAY_COMMAND}"
+    ${MIGRATE_COMMAND} "${FLYWAY_COMMAND}"
     popd > /dev/null
 fi
