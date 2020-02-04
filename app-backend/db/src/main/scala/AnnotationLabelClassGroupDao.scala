@@ -13,11 +13,11 @@ object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
   def selectF: Fragment =
     fr"SELECT id, name, annotation_project_id, idx FROM" ++ tableF
 
-  def insertAnnotationLabeClassGroup(
+  def insertAnnotationLabelClassGroup(
       groupCreate: AnnotationLabelClassGroup.Create,
       annotationProject: AnnotationProject,
       indexFallback: Int
-  ): ConnectionIO[AnnotationLabelClassGroup] = {
+  ): ConnectionIO[AnnotationLabelClassGroup.WithRelated] = {
     val index = groupCreate.index getOrElse indexFallback
     val groupIO = (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, name, annotation_project_id, idx) VALUES (
@@ -30,12 +30,12 @@ object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
     )
     for {
       labelClassGroup <- groupIO
-      _ <- groupCreate.classes traverse { labelClass =>
+      labelClasses <- groupCreate.classes traverse { labelClass =>
         AnnotationLabelClassDao.insertAnnotationLabelClass(
           labelClass,
           labelClassGroup
         )
       }
-    } yield labelClassGroup
+    } yield labelClassGroup.withLabelClasses(labelClasses)
   }
 }

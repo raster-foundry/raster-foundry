@@ -5,12 +5,23 @@ import io.circe._
 
 import java.util.UUID
 
-case class AnnotationLabelClassGroup(
+final case class AnnotationLabelClassGroup(
     id: UUID,
     name: String,
     annotationProjectId: UUID,
     index: Int
-)
+) {
+  def withLabelClasses(
+      classes: List[AnnotationLabelClass]
+  ): AnnotationLabelClassGroup.WithRelated =
+    AnnotationLabelClassGroup.WithRelated(
+      id,
+      name,
+      annotationProjectId,
+      index,
+      classes
+    )
+}
 
 object AnnotationLabelClassGroup {
   implicit val encAnnotationLabelClassGroup
@@ -18,7 +29,7 @@ object AnnotationLabelClassGroup {
   implicit val decAnnotationLabelClassGroup
       : Decoder[AnnotationLabelClassGroup] = deriveDecoder
 
-  case class Create(
+  final case class Create(
       name: String,
       index: Option[Int],
       classes: List[AnnotationLabelClass.Create]
@@ -29,4 +40,15 @@ object AnnotationLabelClassGroup {
         : Decoder[AnnotationLabelClassGroup.Create] = deriveDecoder
   }
 
+  final case class WithRelated(
+      id: UUID,
+      name: String,
+      annotationProjectId: UUID,
+      index: Int,
+      labelClasses: List[AnnotationLabelClass]
+  )
+
+  object WithRelated {
+    implicit val encWithRelated: Encoder[WithRelated] = deriveEncoder
+  }
 }

@@ -18,11 +18,10 @@ object AnnotationProjectDao extends Dao[AnnotationProject] {
     FROM
   """ ++ tableF
 
-  // TODO: insert annotation label class groups
   def insertAnnotationProject(
       newAnnotationProject: AnnotationProject.Create,
       user: User
-  ): ConnectionIO[AnnotationProject] = {
+  ): ConnectionIO[AnnotationProject.WithRelated] = {
     val projectInsert = (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, owner, name, project_type, task_size_meters,
        aoi, labelers_team_id, validators_team_id, project_id)
@@ -47,9 +46,17 @@ object AnnotationProjectDao extends Dao[AnnotationProject] {
 
     for {
       annotationProject <- projectInsert
-      _ <- newAnnotationProject.tileLayers traverse { layer =>
+      tileLayers <- newAnnotationProject.tileLayers traverse { layer =>
         TileLayerDao.insertTileLayer(layer, annotationProject)
       }
-    } yield annotationProject
+      labelClassGroups <- newAnnotationProject.labelClassGroups.zipWithIndex traverse {
+        case (classGroup, idx) =>
+          AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
+            classGroup,
+            annotationProject,
+            idx
+          )
+      }
+    } yield annotationProject.withRelated(tileLayers, labelClassGroups)
   }
 }
