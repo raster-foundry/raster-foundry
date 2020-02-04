@@ -18,7 +18,6 @@ object AnnotationProjectDao extends Dao[AnnotationProject] {
     FROM
   """ ++ tableF
 
-  // TODO: insert tile layers
   // TODO: insert annotation label class groups
   def insertAnnotationProject(
       newAnnotationProject: AnnotationProject.Create,

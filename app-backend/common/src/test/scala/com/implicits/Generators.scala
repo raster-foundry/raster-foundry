@@ -1022,10 +1022,20 @@ object Generators extends ArbitraryInstances {
       tileLayerTypeGen
     ).mapN(TileLayer.Create.apply _)
 
+  private def labelClassCreateGen: Gen[AnnotationLabelClass.Create] =
+    (
+      nonEmptyStringGen,
+      Gen.const("#AB34DE"),
+      Gen.option(arbitrary[Boolean]),
+      Gen.option(arbitrary[Boolean]),
+      Gen.choose(0, 100)
+    ).mapN(AnnotationLabelClass.Create.apply _)
+
   private def labelClassGroupGen: Gen[AnnotationLabelClassGroup.Create] =
     (
       nonEmptyStringGen,
-      Gen.option(Gen.choose(0, 1000))
+      Gen.option(Gen.choose(0, 1000)),
+      Gen.listOfN(3, labelClassCreateGen)
     ).mapN(AnnotationLabelClassGroup.Create.apply _)
 
   private def annotationProjectCreateGen: Gen[AnnotationProject.Create] =

@@ -14,18 +14,19 @@ case class AnnotationLabelClassGroup(
 
 object AnnotationLabelClassGroup {
   implicit val encAnnotationLabelClassGroup
-    : Encoder[AnnotationLabelClassGroup] = deriveEncoder
+      : Encoder[AnnotationLabelClassGroup] = deriveEncoder
   implicit val decAnnotationLabelClassGroup
-    : Decoder[AnnotationLabelClassGroup] = deriveDecoder
+      : Decoder[AnnotationLabelClassGroup] = deriveDecoder
 
   case class Create(
       name: String,
-      index: Option[Int]
+      index: Option[Int],
+      classes: List[AnnotationLabelClass.Create]
   )
 
   object Create {
     implicit val decAnnotationLabelClassGroupCreate
-      : Decoder[AnnotationLabelClassGroup.Create] = deriveDecoder
+        : Decoder[AnnotationLabelClassGroup.Create] = deriveDecoder
   }
 
 }
