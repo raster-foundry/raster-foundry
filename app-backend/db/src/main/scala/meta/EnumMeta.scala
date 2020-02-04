@@ -78,4 +78,11 @@ trait EnumMeta {
       AnnotationProjectType.fromString,
       _.repr
     )
+
+  implicit val tileLayerTypeMeta: Meta[TileLayerType] =
+    pgEnumString(
+      "tile_layer_type",
+      TileLayerType.fromString,
+      _.repr
+    )
 }
