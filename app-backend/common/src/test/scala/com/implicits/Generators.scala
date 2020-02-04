@@ -1016,7 +1016,7 @@ object Generators extends ArbitraryInstances {
   private def tileLayerCreateGen: Gen[TileLayer.Create] =
     (
       nonEmptyStringGen,
-      Gen.const(new URI("")),
+      nonEmptyStringGen,
       Gen.option(arbitrary[Boolean]),
       Gen.option(arbitrary[Boolean]),
       tileLayerTypeGen

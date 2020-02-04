@@ -3,13 +3,12 @@ package com.rasterfoundry.datamodel
 import io.circe.generic.semiauto._
 import io.circe._
 
-import java.net.URI
 import java.util.UUID
 
 final case class TileLayer(
     id: UUID,
     name: String,
-    url: URI,
+    url: String,
     default: Boolean,
     overlay: Boolean,
     layerType: TileLayerType,
@@ -22,7 +21,7 @@ object TileLayer {
 
   final case class Create(
       name: String,
-      url: URI,
+      url: String,
       default: Option[Boolean],
       overlay: Option[Boolean],
       layerType: TileLayerType
