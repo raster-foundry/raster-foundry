@@ -59,4 +59,7 @@ object AnnotationProjectDao extends Dao[AnnotationProject] {
       }
     } yield annotationProject.withRelated(tileLayers, labelClassGroups)
   }
+
+  def countUserProjects(user: User): ConnectionIO[Long] =
+    query.filter(user).count
 }
