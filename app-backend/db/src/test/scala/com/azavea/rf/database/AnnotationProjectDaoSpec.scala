@@ -16,14 +16,38 @@ class AnnotationProjectDaoSpec
   test("inserting an annotation project") {
     check {
       forAll(
-        (userCreate: User.Create,
-          annotationProjectCreate: AnnotationProject.Create) => {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create
+        ) => {
           val insertIO = for {
             user <- UserDao.create(userCreate)
-            inserted <- AnnotationProjectDao.insertAnnotationProject(annotationProjectCreate, user)
+            inserted <- AnnotationProjectDao
+              .insertAnnotationProject(annotationProjectCreate, user)
           } yield inserted
 
-          insertIO.transact(xa).map(_ => true).unsafeRunSync
+          val result = insertIO.transact(xa).unsafeRunSync
+
+          assert(
+            result.tileLayers.length == annotationProjectCreate.tileLayers.length,
+            "All the tile layers were inserted"
+          )
+          assert(
+            result.labelClassGroups.length == annotationProjectCreate.labelClassGroups.length,
+            "All the annotation class groups were inserted"
+          )
+          assert(
+            result.name == annotationProjectCreate.name &&
+              result.projectType == annotationProjectCreate.projectType &&
+              result.taskSizeMeters == annotationProjectCreate.taskSizeMeters &&
+              result.aoi == annotationProjectCreate.aoi &&
+              result.labelersTeamId == annotationProjectCreate.labelersTeamId &&
+              result.validatorsTeamId == annotationProjectCreate.validatorsTeamId &&
+              result.projectId == annotationProjectCreate.projectId,
+            "Created project respects data from project to create"
+          )
+
+          true
         }
       )
     }
