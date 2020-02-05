@@ -179,7 +179,7 @@ class ProjectDaoSpec
               projectPermissionIO.transact(xa).unsafeRunSync
 
             assert(
-              permissions.flatten.headOption == Some(acrInsert),
+              permissions.headOption == Some(acrInsert),
               "Inserting a permission to a project and get it back should return the same granted permission.")
             true
           }
@@ -364,7 +364,7 @@ class ProjectDaoSpec
               userActionsIO.transact(xa).unsafeRunSync
 
             val acrActionsDistinct =
-              permissionsBack.flatten.map(_.actionType.toString).distinct
+              permissionsBack.map(_.actionType.toString).distinct
 
             assert(
               acrActionsDistinct.diff(userActions).length == 0,
@@ -446,7 +446,7 @@ class ProjectDaoSpec
               listProjectsIO.transact(xa).unsafeRunSync
 
             val hasViewPermission =
-              permissionsBack.flatten.exists(_.actionType == ActionType.View)
+              permissionsBack.exists(_.actionType == ActionType.View)
 
             (hasViewPermission,
              projectInsert1.visibility,

@@ -250,7 +250,7 @@ object ProjectDao
       .getPermissions(projectId)
       .map { acrList =>
         acrList.collect {
-          case Some(ObjectAccessControlRule(subjType, Some(subjectId), _))
+          case ObjectAccessControlRule(subjType, Some(subjectId), _)
               if subjType == SubjectType.User && subjectId != userId =>
             subjectId
         }

@@ -97,12 +97,12 @@ trait ObjectPermissions[Model] {
 
   def acrStringsToList(
       acrs: List[String]
-  ): List[Option[ObjectAccessControlRule]] =
-    acrs.map(ObjectAccessControlRule.fromObjAcrString)
+  ): List[ObjectAccessControlRule] =
+    acrs.flatMap(ObjectAccessControlRule.fromObjAcrString)
 
   def getPermissions(
       id: UUID
-  ): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+  ): ConnectionIO[List[ObjectAccessControlRule]] =
     isValidObject(id) flatMap {
       case false => throw new Exception(s"Invalid ${tableName} object ${id}")
       case true =>
@@ -116,7 +116,7 @@ trait ObjectPermissions[Model] {
   def addPermission(
       id: UUID,
       acr: ObjectAccessControlRule
-  ): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+  ): ConnectionIO[List[ObjectAccessControlRule]] =
     for {
       permissions <- getPermissions(id)
       permExists = permissions.contains(Some(acr))
@@ -136,7 +136,7 @@ trait ObjectPermissions[Model] {
       id: UUID,
       acrList: List[ObjectAccessControlRule],
       replace: Boolean = false
-  ): ConnectionIO[List[Option[ObjectAccessControlRule]]] = {
+  ): ConnectionIO[List[ObjectAccessControlRule]] = {
     for {
       addPermissionsMany <- acrList match {
         case Nil if !replace =>
@@ -154,7 +154,7 @@ trait ObjectPermissions[Model] {
   def replacePermissions(
       id: UUID,
       acrList: List[ObjectAccessControlRule]
-  ): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+  ): ConnectionIO[List[ObjectAccessControlRule]] =
     addPermissionsMany(id, acrList, true)
 
   def deletePermissions(id: UUID): ConnectionIO[Int] =
@@ -169,7 +169,7 @@ trait ObjectPermissions[Model] {
       listUserActions <- listUserActionsF(user, id, groupIdString)
         .query[String]
         .to[List]
-      actions = acrStringsToList(listUserActions).flatten
+      actions = acrStringsToList(listUserActions)
         .map(_.actionType.toString)
         .distinct
     } yield { actions }

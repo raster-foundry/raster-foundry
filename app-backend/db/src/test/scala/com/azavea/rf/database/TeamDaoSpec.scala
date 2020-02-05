@@ -289,7 +289,7 @@ class TeamDaoSpec
           assert(deactivatedTeams.size == 1, "Deactivated team should exist")
           assert(activatedTeams.results.size == 0, "No team is active")
           assert(
-            Set(acrToInsert) == permissionAfterTeamDeactivate.flatten.toSet,
+            Set(acrToInsert) == permissionAfterTeamDeactivate.toSet,
             "Permissions exists after team deactivation"
           )
           true
