@@ -229,6 +229,20 @@ lazy val api = project
     libraryDependencies ++= apiDependencies ++ loggingDependencies
   })
 
+lazy val apiIntegrationTest = project
+  .in(file("api-it"))
+  .configs(IntegrationTest)
+  .dependsOn(db)
+  .settings({
+    libraryDependencies ++= Seq(
+      Dependencies.sttpCore,
+      Dependencies.sttpJson,
+      Dependencies.sttpCirce,
+      Dependencies.scalatest
+    )
+  })
+  .settings(Defaults.itSettings)
+
 /**
   * Common Settings
   */
@@ -265,7 +279,6 @@ lazy val datamodel = project
       Dependencies.shapeless,
       Dependencies.catsCore,
       Dependencies.catsLaws,
-      Dependencies.monocleCore,
       Dependencies.circeGeneric,
       Dependencies.spray,
       Dependencies.geotrellisRaster,
@@ -386,7 +399,8 @@ lazy val akkautil = project
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.nimbusJose,
-      Dependencies.akkahttp
+      Dependencies.akkahttp,
+      Dependencies.akkaCirceJson
     )
   })
 

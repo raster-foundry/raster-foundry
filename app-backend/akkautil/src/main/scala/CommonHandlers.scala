@@ -10,7 +10,10 @@ import com.rasterfoundry.datamodel.{
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives._
+import akka.http.scaladsl.server.directives.HeaderDirectives._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
+import io.circe.syntax._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -18,6 +21,8 @@ import scala.util.{Failure, Success}
 trait CommonHandlers extends RouteDirectives {
 
   implicit val ec: ExecutionContext
+
+  private val simulationHeaderName = "X-PolicySim"
 
   def completeWithOneOrFail(
       future: ⇒ Future[Int]
@@ -48,11 +53,25 @@ trait CommonHandlers extends RouteDirectives {
       )
   }
 
-  def authorizeScope(scopedAction: ScopedAction, user: User): Directive0 = {
-    SecurityDirectives.authorize(user.scope.actions.contains(scopedAction))
-  }
+  def maybeSim(scopedAction: ScopedAction,
+               user: User,
+               fallback: => Directive0): Directive0 =
+    optionalHeaderValueByName(simulationHeaderName) flatMap {
+      case Some("true") =>
+        complete {
+          Map("simResult" -> user.scope.actions.contains(scopedAction)).asJson
+        }
+      case _ =>
+        fallback
+    }
 
-  def authorizeScopeLimit(
+  def authorizeScope(scopedAction: ScopedAction, user: User): Directive0 =
+    maybeSim(
+      scopedAction,
+      user,
+      SecurityDirectives.authorize(user.scope.actions.contains(scopedAction)))
+
+  def authorizeScopeLimitDirective(
       usedLimitFuture: Future[Long],
       domain: Domain,
       action: Action,
@@ -74,6 +93,17 @@ trait CommonHandlers extends RouteDirectives {
     }
     SecurityDirectives.authorizeAsync(isBelowLimit)
   }
+
+  def authorizeScopeLimit(
+      usedLimitFuture: Future[Long],
+      domain: Domain,
+      action: Action,
+      user: User
+  ): Directive0 =
+    maybeSim(
+      ScopedAction(domain, action, None),
+      user,
+      authorizeScopeLimitDirective(usedLimitFuture, domain, action, user))
 
   def authorizeAuthResultAsync[T](
       authFut: Future[AuthResult[T]]
