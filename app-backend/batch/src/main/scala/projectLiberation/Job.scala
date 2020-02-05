@@ -33,6 +33,7 @@ case object CreateProjectTiles extends FailureStage
 case object CreateLabelClassGroups extends FailureStage
 case object CreateLabelClasses extends FailureStage
 case object CreateLabels extends FailureStage
+case object CopyPermissions extends FailureStage
 case object NukeStaleData extends FailureStage
 
 sealed abstract class AnnotationProjectType(val repr: String) {
@@ -69,7 +70,7 @@ class ProjectLiberation(tileHost: URI) {
     // the other benefit is getting to enforce non-optionality in apply where the hlist can still
     // hold options
     def apply(
-        createdBy: String,
+        owner: String,
         name: String,
         projectType: AnnotationProjectType,
         aoi: Projected[Geometry],
@@ -77,7 +78,7 @@ class ProjectLiberation(tileHost: URI) {
         validatorsId: UUID,
         projectId: UUID
     ): AnnotationProject = {
-      createdBy :: name :: projectType.repr :: Option(aoi) :: Option(
+      owner :: name :: projectType.repr :: Option(aoi) :: Option(
         labelersId
       ) :: Option(validatorsId) :: Option(projectId) :: HNil
     }
@@ -95,7 +96,7 @@ class ProjectLiberation(tileHost: URI) {
 
     Either.fromOption(
       (
-        Option(project.createdBy),
+        Option(project.owner),
         Option(project.name),
         projectTypeLens.getOption(extras) flatMap {
           AnnotationProjectType.fromStringO _
@@ -127,6 +128,27 @@ class ProjectLiberation(tileHost: URI) {
       )
       .list
 
+  private def addPermissions(
+      annotationProjectId: UUID,
+      permissions: List[ObjectAccessControlRule]
+  ): ConnectionIO[Either[FailureStage, Unit]] = {
+    val acrs = permissions map { _.toObjAcrString }
+    val attempt =
+      (fr"UPDATE annotation_projects SET acrs = $acrs WHERE id = $annotationProjectId").update.run.attempt
+    attempt.map({ result =>
+      result.bimap(_ => CopyPermissions, _ => ())
+    })
+  }
+
+  private def copyProjectPermissions(
+      project: Project,
+      annotationProjectId: UUID
+  ): ConnectionIO[Either[FailureStage, Unit]] =
+    for {
+      permissions <- ProjectDao.getPermissions(project.id)
+      result <- addPermissions(annotationProjectId, permissions)
+    } yield result
+
   // make an annotation project from the existing project
   private def createAnnotationProject(
       project: Project,
@@ -134,14 +156,14 @@ class ProjectLiberation(tileHost: URI) {
   ): ConnectionIO[Either[FailureStage, UUID]] = {
     val converted = projectToAnnotationProject(project, extras)
     converted traverse {
-      case createdBy :: name :: projectType :: aoi :: labelersId :: validatorsId :: projectId :: HNil =>
+      case owner :: name :: projectType :: aoi :: labelersId :: validatorsId :: projectId :: HNil =>
         fr"""
       insert into annotation_projects
-        (id, created_at, created_by, name, project_type, aoi, labelers_team_id, validators_team_id, project_id)
+        (id, created_at, owner, name, project_type, aoi, labelers_team_id, validators_team_id, project_id)
       VALUES (
         uuid_generate_v4(),
         now(),
-        ${createdBy},
+        ${owner},
         $name,
         $projectType :: annotation_project_type,
         $aoi,
@@ -377,7 +399,7 @@ class ProjectLiberation(tileHost: URI) {
         taskIdE traverse { taskId =>
           fr"""
           INSERT INTO annotation_labels VALUES (
-            uuid_generate_v4(), now(), ${annotation.createdBy}, $annotationProjectId,
+            uuid_generate_v4(), now(), ${annotation.owner}, $annotationProjectId,
             $taskId, ${annotation.geometry}
           );
         """.update.withUniqueGeneratedKeys[UUID]("id")
@@ -467,6 +489,7 @@ class ProjectLiberation(tileHost: URI) {
       classIds <- EitherT {
         createLabelClasses(extras, labelGroupIds.toSet)
       }
+      _ <- EitherT { copyProjectPermissions(project, annotationProjectId) }
       _ <- EitherT {
         createLabels(
           project.id,
