@@ -119,7 +119,7 @@ trait ObjectPermissions[Model] {
   ): ConnectionIO[List[ObjectAccessControlRule]] =
     for {
       permissions <- getPermissions(id)
-      permExists = permissions.contains(Some(acr))
+      permExists = permissions.contains(acr)
       addPermission <- permExists match {
         case true =>
           throw new Exception(
