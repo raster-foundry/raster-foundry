@@ -32,6 +32,9 @@ services:
 
   api-server:
     image: raster-foundry-api-server:${GIT_COMMIT:-latest}
+    env_file: .env
+    expose:
+      - 9000
     build:
       context: ./app-backend/api
       dockerfile: Dockerfile
