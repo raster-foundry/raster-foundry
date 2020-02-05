@@ -8,7 +8,11 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 
-object AnnotationProjectDao extends Dao[AnnotationProject] {
+import java.util.UUID
+
+object AnnotationProjectDao
+    extends Dao[AnnotationProject]
+    with ObjectPermissions[AnnotationProject] {
   val tableName = "annotation_projects"
 
   def selectF: Fragment = sql"""
@@ -17,6 +21,21 @@ object AnnotationProjectDao extends Dao[AnnotationProject] {
       aoi, labelers_team_id, validators_team_id, project_id
     FROM
   """ ++ tableF
+
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String],
+      groupTypeO: Option[GroupType],
+      groupIdO: Option[UUID]
+  ): Dao.QueryBuilder[AnnotationProject] = ???
+
+  def authorized(
+      user: User,
+      objectType: ObjectType,
+      objectId: UUID,
+      actionType: ActionType
+  ): ConnectionIO[AuthResult[AnnotationProject]] = ???
 
   def insertAnnotationProject(
       newAnnotationProject: AnnotationProject.Create,
