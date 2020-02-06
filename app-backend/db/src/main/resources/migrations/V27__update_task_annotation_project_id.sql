@@ -14,5 +14,3 @@ ALTER TABLE public.tasks VALIDATE CONSTRAINT annotation_project_id_not_null;
 ALTER TABLE public.tasks 
 DROP COLUMN project_id,
 DROP COLUMN project_layer_id;
-
-CREATE INDEX CONCURRENTLY annotation_project_id_idx ON tasks(annotation_project_id);
