@@ -216,7 +216,7 @@ class AuthorizationSpec
               insertManyAcrsIO.transact(xa).unsafeRunSync
 
             assert(
-              acrs.toSet == dbAcrs.flatten.toSet,
+              acrs.toSet == dbAcrs.toSet,
               "Inserting many ACRs should make those ACRs available to list")
             true
           }

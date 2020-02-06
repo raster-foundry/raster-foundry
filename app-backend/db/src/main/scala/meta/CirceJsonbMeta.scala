@@ -9,7 +9,6 @@ import io.circe.syntax._
 import cats.implicits._
 
 import scala.reflect.runtime.universe.TypeTag
-import java.net.URI
 
 import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import geotrellis.raster.{CellSize, GridExtent}
@@ -67,9 +66,6 @@ trait CirceJsonbMeta {
 
   implicit val bandMeta: Meta[List[Band]] =
     CirceJsonbMeta[List[Band]]
-
-  implicit val uriMeta: Meta[URI] =
-    CirceJsonbMeta[URI]
 
   implicit val PlatformPublicSettingsMeta: Meta[Platform.PublicSettings] =
     CirceJsonbMeta[Platform.PublicSettings]

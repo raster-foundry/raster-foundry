@@ -2,40 +2,49 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.Implicits._
+
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import cats.implicits._
+
 import java.util.UUID
 
 trait ObjectPermissions[Model] {
   def tableName: String
 
-  def authQuery(user: User,
-                objectType: ObjectType,
-                ownershipTypeO: Option[String] = None,
-                groupTypeO: Option[GroupType] = None,
-                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model]
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None
+  ): Dao.QueryBuilder[Model]
 
-  def authorized(user: User,
-                 objectType: ObjectType,
-                 objectId: UUID,
-                 actionType: ActionType): ConnectionIO[AuthResult[Model]]
+  def authorized(
+      user: User,
+      objectType: ObjectType,
+      objectId: UUID,
+      actionType: ActionType
+  ): ConnectionIO[AuthResult[Model]]
 
   def isValidObject(id: UUID): ConnectionIO[Boolean] =
     (tableName match {
-      case "projects"    => ProjectDao
-      case "scenes"      => SceneDao
-      case "datasources" => DatasourceDao
-      case "shapes"      => ShapeDao
-      case "tool_runs"   => ToolRunDao
-      case "tools"       => ToolDao
+      case "annotation_projects" => AnnotationProjectDao
+      case "projects"            => ProjectDao
+      case "scenes"              => SceneDao
+      case "datasources"         => DatasourceDao
+      case "shapes"              => ShapeDao
+      case "tool_runs"           => ToolRunDao
+      case "tools"               => ToolDao
       case "workspaces" | "templates" | "analyses" =>
         throw new Exception(s"${tableName} not yet supported")
     }).query.filter(id).exists
 
-  def isValidPermission(acr: ObjectAccessControlRule,
-                        user: User): ConnectionIO[Boolean] =
+  def isValidPermission(
+      acr: ObjectAccessControlRule,
+      user: User
+  ): ConnectionIO[Boolean] =
     (acr.subjectType, acr.subjectId, user) match {
       case (SubjectType.All, _, u) => u.isSuperuser.pure[ConnectionIO]
       case (SubjectType.Platform, Some(subjectId), user) =>
@@ -52,7 +61,8 @@ trait ObjectPermissions[Model] {
 
   def getPermissionsF(id: UUID): Fragment =
     Fragment.const(s"SELECT acrs FROM ${tableName}") ++ Fragments.whereAndOpt(
-      Some(fr"id = ${id}"))
+      Some(fr"id = ${id}")
+    )
 
   def appendPermissionF(id: UUID, acr: ObjectAccessControlRule): Fragment =
     Fragment.const(s"""
@@ -60,9 +70,11 @@ trait ObjectPermissions[Model] {
     SET acrs = array_append(acrs, '${acr.toObjAcrString}'::text)
   """) ++ Fragments.whereAndOpt((Some(fr"id = ${id}")))
 
-  def updatePermissionsF(id: UUID,
-                         acrList: List[ObjectAccessControlRule],
-                         replace: Boolean = false): Fragment = {
+  def updatePermissionsF(
+      id: UUID,
+      acrList: List[ObjectAccessControlRule],
+      replace: Boolean = false
+  ): Fragment = {
     val newAcrs: String = acrList match {
       case Nil => "'{}'::text[]"
       case _ =>
@@ -76,17 +88,21 @@ trait ObjectPermissions[Model] {
 
   def listUserActionsF(user: User, id: UUID, groupIdsF: String): Fragment =
     Fragment.const(
-      s"SELECT a.acrs from (SELECT UNNEST(acrs) acrs from ${tableName}") ++
+      s"SELECT a.acrs from (SELECT UNNEST(acrs) acrs from ${tableName}"
+    ) ++
       Fragments.whereAndOpt(Some(fr"id=${id}")) ++ Fragment.const(") a") ++
       Fragment.const(
-        s"WHERE a.acrs LIKE '%${user.id}%' OR a.acrs LIKE '%ALL%' OR ${groupIdsF}")
+        s"WHERE a.acrs LIKE '%${user.id}%' OR a.acrs LIKE '%ALL%' OR ${groupIdsF}"
+      )
 
   def acrStringsToList(
-      acrs: List[String]): List[Option[ObjectAccessControlRule]] =
-    acrs.map(ObjectAccessControlRule.fromObjAcrString)
+      acrs: List[String]
+  ): List[ObjectAccessControlRule] =
+    acrs.flatMap(ObjectAccessControlRule.fromObjAcrString)
 
   def getPermissions(
-      id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+      id: UUID
+  ): ConnectionIO[List[ObjectAccessControlRule]] =
     isValidObject(id) flatMap {
       case false => throw new Exception(s"Invalid ${tableName} object ${id}")
       case true =>
@@ -97,15 +113,18 @@ trait ObjectPermissions[Model] {
 
     }
 
-  def addPermission(id: UUID, acr: ObjectAccessControlRule)
-    : ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+  def addPermission(
+      id: UUID,
+      acr: ObjectAccessControlRule
+  ): ConnectionIO[List[ObjectAccessControlRule]] =
     for {
       permissions <- getPermissions(id)
-      permExists = permissions.contains(Some(acr))
+      permExists = permissions.contains(acr)
       addPermission <- permExists match {
         case true =>
           throw new Exception(
-            s"${acr.toObjAcrString} exists for ${tableName} ${id}")
+            s"${acr.toObjAcrString} exists for ${tableName} ${id}"
+          )
         case false =>
           appendPermissionF(id, acr).update
             .withUniqueGeneratedKeys[List[String]]("acrs")
@@ -113,10 +132,11 @@ trait ObjectPermissions[Model] {
       }
     } yield { addPermission }
 
-  def addPermissionsMany(id: UUID,
-                         acrList: List[ObjectAccessControlRule],
-                         replace: Boolean = false)
-    : ConnectionIO[List[Option[ObjectAccessControlRule]]] = {
+  def addPermissionsMany(
+      id: UUID,
+      acrList: List[ObjectAccessControlRule],
+      replace: Boolean = false
+  ): ConnectionIO[List[ObjectAccessControlRule]] = {
     for {
       addPermissionsMany <- acrList match {
         case Nil if !replace =>
@@ -131,8 +151,10 @@ trait ObjectPermissions[Model] {
     } yield { addPermissionsMany }
   }
 
-  def replacePermissions(id: UUID, acrList: List[ObjectAccessControlRule])
-    : ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+  def replacePermissions(
+      id: UUID,
+      acrList: List[ObjectAccessControlRule]
+  ): ConnectionIO[List[ObjectAccessControlRule]] =
     addPermissionsMany(id, acrList, true)
 
   def deletePermissions(id: UUID): ConnectionIO[Int] =
@@ -147,7 +169,7 @@ trait ObjectPermissions[Model] {
       listUserActions <- listUserActionsF(user, id, groupIdString)
         .query[String]
         .to[List]
-      actions = acrStringsToList(listUserActions).flatten
+      actions = acrStringsToList(listUserActions)
         .map(_.actionType.toString)
         .distinct
     } yield { actions }
@@ -155,9 +177,11 @@ trait ObjectPermissions[Model] {
   // TODO: in card #4020
   // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
 
-  def createVisibilityF(objectType: ObjectType,
-                        actionType: ActionType,
-                        tableName: String): Fragment =
+  def createVisibilityF(
+      objectType: ObjectType,
+      actionType: ActionType,
+      tableName: String
+  ): Fragment =
     (objectType, actionType) match {
       case (ObjectType.Shape, ActionType.View) =>
         Fragment.empty
@@ -170,10 +194,12 @@ trait ObjectPermissions[Model] {
         Fragment.empty
     }
 
-  def createInheritedF(user: User,
-                       actionType: ActionType,
-                       groupTypeO: Option[GroupType],
-                       groupIdO: Option[UUID]): Fragment =
+  def createInheritedF(
+      user: User,
+      actionType: ActionType,
+      groupTypeO: Option[GroupType],
+      groupIdO: Option[UUID]
+  ): Fragment =
     Fragment.const(s"""ARRAY(
     SELECT concat_ws(';', group_type, group_id, '${actionType.toString}')
     FROM user_group_roles
@@ -187,13 +213,15 @@ trait ObjectPermissions[Model] {
       }
     )
 
-  def queryObjectsF(user: User,
-                    objectType: ObjectType,
-                    actionType: ActionType,
-                    ownershipTypeO: Option[String] = None,
-                    groupTypeO: Option[GroupType] = None,
-                    groupIdO: Option[UUID] = None,
-                    tableNameO: Option[String] = None): Option[Fragment] = {
+  def queryObjectsF(
+      user: User,
+      objectType: ObjectType,
+      actionType: ActionType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None,
+      tableNameO: Option[String] = None
+  ): Option[Fragment] = {
     val tableName: String = tableNameO match {
       case Some(tableName) => s"${tableName}."
       case _               => ""
@@ -204,7 +232,8 @@ trait ObjectPermissions[Model] {
       createVisibilityF(objectType, actionType, tableName)
     val sharedF: Fragment =
       Fragment.const(
-        s"""ARRAY['ALL;;${actionType.toString}', 'USER;${user.id};${actionType.toString}']""")
+        s"""ARRAY['ALL;;${actionType.toString}', 'USER;${user.id};${actionType.toString}']"""
+      )
     val inheritedF: Fragment =
       createInheritedF(user, actionType, groupTypeO, groupIdO)
     val acrFilterF
@@ -221,18 +250,21 @@ trait ObjectPermissions[Model] {
           if (objectType == ObjectType.Scene) {
             Some(
               Fragment
-                .const(s"(${tableName}visibility)") ++ fr" != 'PUBLIC' AND ")
+                .const(s"(${tableName}visibility)") ++ fr" != 'PUBLIC' AND "
+            )
           } else {
             None
           }
         if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
           Some(
-            fr"(" ++ acrFilterF ++ fr") AND" ++ Fragment.const(
-              s"${tableName}owner") ++ fr"<> ${user.id}")
+            fr"(" ++ acrFilterF ++ fr") AND" ++ Fragment
+              .const(s"${tableName}owner") ++ fr"<> ${user.id}"
+          )
         } else {
           scenePublicExclude combine Some(
             acrFilterF ++ fr" AND " ++ Fragment
-              .const(s"${tableName}owner") ++ fr"<> ${user.id}")
+              .const(s"${tableName}owner") ++ fr"<> ${user.id}"
+          )
         }
       // shared to the requesting user due to group membership
       case Some("inherited") =>
@@ -242,7 +274,8 @@ trait ObjectPermissions[Model] {
           Some(
             Fragment
               .const(s"${tableName}visibility") ++ fr"!= 'PUBLIC' AND (" ++ inheritedF ++ Fragment
-              .const(s"&& ${tableName}acrs)"))
+              .const(s"&& ${tableName}acrs)")
+          )
         }
       // the default
       case _ =>
@@ -250,9 +283,11 @@ trait ObjectPermissions[Model] {
     }
   }
 
-  def authorizedF(user: User,
-                  objectType: ObjectType,
-                  actionType: ActionType): Option[Fragment] =
+  def authorizedF(
+      user: User,
+      objectType: ObjectType,
+      actionType: ActionType
+  ): Option[Fragment] =
     user.isSuperuser match {
       case true =>
         Some(fr"true")

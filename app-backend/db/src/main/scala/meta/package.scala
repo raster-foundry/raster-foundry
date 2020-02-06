@@ -1,14 +1,17 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
+
 import cats.implicits._
 import doobie._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
-import java.time.LocalDate
 
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
+
+import java.net.URI
+import java.time.LocalDate
 
 package object meta {
   trait RFMeta
@@ -22,6 +25,9 @@ package object meta {
 
     implicit val cellTypeMeta: Meta[CellType] =
       Meta[String].timap(CellType.fromName)(CellType.toName)
+
+    implicit val uriMeta: Meta[URI] =
+      Meta[String].timap(URI.create)(_.toASCIIString)
 
     implicit val timeRangeMeta: Meta[(LocalDate, LocalDate)] =
       Meta.Advanced

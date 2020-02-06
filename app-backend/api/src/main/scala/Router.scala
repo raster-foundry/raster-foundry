@@ -21,6 +21,7 @@ import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.license.LicenseRoutes
 import com.rasterfoundry.api.team.TeamRoutes
 import com.rasterfoundry.api.stac.StacRoutes
+import com.rasterfoundry.api.annotationProject.AnnotationProjectRoutes
 
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
@@ -55,10 +56,12 @@ trait Router
     with LicenseRoutes
     with TeamRoutes
     with PlatformRoutes
-    with StacRoutes {
+    with StacRoutes
+    with AnnotationProjectRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
-    allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
+    allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE)
+  )
 
   val routes = cors(settings) {
     pathPrefix("healthcheck") {
@@ -115,6 +118,9 @@ trait Router
           } ~
           pathPrefix("stac") {
             stacRoutes
+          } ~
+          pathPrefix("annotation-projects") {
+            annotationProjectRoutes
           }
       } ~
       pathPrefix("config") {
