@@ -107,3 +107,7 @@ services:
       - "ts-interface"
       - "/opt/data/app-backend/datamodel/src/main/scala"
       - "/opt/data/out"
+
+  integration-test:
+    build:
+      context:

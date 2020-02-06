@@ -57,6 +57,7 @@ object Version {
   val spark = "2.4.2"
   val spire = "0.16.0"
   val spray = "1.3.4"
+  val sttp = "1.5.19"
   val sup = "0.6.0"
   val openTracing = "0.0.6"
   val jaegerClient = "1.0.0"
@@ -124,7 +125,6 @@ object Dependencies {
   val jaegerClient = "io.jaegertracing" % "jaeger-client" % "1.0.0"
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
-  val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % "1.5.1-cats"
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val opentracing = "com.colisweb" %% "scala-opentracing" % Version.openTracing
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
@@ -142,9 +142,9 @@ object Dependencies {
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
   val log4jOverslf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j
   val slf4j = "org.slf4j" % "slf4j-api" % Version.slf4j
-  val sttpCore = "com.softwaremill.sttp" %% "core" % "1.5.12"
-  val sttpJson = "com.softwaremill.sttp" %% "json-common" % "1.5.12"
-  val sttpCirce = "com.softwaremill.sttp" %% "circe" % "1.5.12"
+  val sttpCore = "com.softwaremill.sttp" %% "core" % Version.sttp
+  val sttpJson = "com.softwaremill.sttp" %% "json-common" % Version.sttp
+  val sttpCirce = "com.softwaremill.sttp" %% "circe" % Version.sttp
   val spire = "org.typelevel" %% "spire" % Version.spire
   val decline = "com.monovore" %% "decline" % Version.decline
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
