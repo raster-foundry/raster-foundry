@@ -19,7 +19,8 @@ case class Task(
     status: TaskStatus,
     lockedBy: Option[String],
     lockedOn: Option[Instant],
-    geometry: Projected[Geometry]
+    geometry: Projected[Geometry],
+    annotationProjectId: UUID
 ) {
   def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
@@ -41,7 +42,8 @@ case class Task(
       this.status,
       this.lockedBy,
       this.lockedOn,
-      actions
+      actions,
+      this.annotationProjectId
     )
 }
 
@@ -58,13 +60,15 @@ object Task {
       status: TaskStatus,
       lockedBy: Option[String],
       lockedOn: Option[Instant],
-      actions: List[TaskActionStamp]
+      actions: List[TaskActionStamp],
+      annotationProjectId: UUID
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
         this.projectId,
         this.projectLayerId,
-        this.status
+        this.status,
+        this.annotationProjectId
       )
     }
   }
@@ -77,7 +81,8 @@ object Task {
   case class TaskPropertiesCreate(
       projectId: UUID,
       projectLayerId: UUID,
-      status: TaskStatus
+      status: TaskStatus,
+      annotationProjectId: UUID
   )
 
   object TaskPropertiesCreate {
@@ -140,7 +145,7 @@ object Task {
           (
             tfc._type,
             tfc.features
-        )
+          )
       )
 
     implicit val decTaskFeatureCollection: Decoder[TaskFeatureCollection] =
@@ -157,12 +162,12 @@ object Task {
 
   object TaskFeatureCollectionCreate {
     implicit val decTaskFeatureCollectionCreate
-      : Decoder[TaskFeatureCollectionCreate] =
+        : Decoder[TaskFeatureCollectionCreate] =
       Decoder.forProduct2("type", "features")(
         TaskFeatureCollectionCreate.apply _
       )
     implicit val encTaskFeatureCollectionCreate
-      : Encoder[TaskFeatureCollectionCreate] =
+        : Encoder[TaskFeatureCollectionCreate] =
       Encoder.forProduct2("type", "features")(
         tfc => (tfc._type, tfc.features)
       )
@@ -175,10 +180,10 @@ object Task {
 
   object TaskGridCreateProperties {
     implicit val encTaskGridCreateProperties
-      : Encoder[TaskGridCreateProperties] =
+        : Encoder[TaskGridCreateProperties] =
       deriveEncoder
     implicit val decTaskGridCreateProperties
-      : Decoder[TaskGridCreateProperties] =
+        : Decoder[TaskGridCreateProperties] =
       deriveDecoder
   }
 

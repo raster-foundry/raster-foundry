@@ -951,7 +951,15 @@ object Generators extends ArbitraryInstances {
       projectId <- uuidGen
       projectLayerId <- uuidGen
       status <- taskStatusGen
-    } yield { Task.TaskPropertiesCreate(projectId, projectLayerId, status) }
+      annotationProjectId <- uuidGen
+    } yield {
+      Task.TaskPropertiesCreate(
+        projectId,
+        projectLayerId,
+        status,
+        annotationProjectId
+      )
+    }
 
   private def taskFeatureCreateGen: Gen[Task.TaskFeatureCreate] =
     for {
