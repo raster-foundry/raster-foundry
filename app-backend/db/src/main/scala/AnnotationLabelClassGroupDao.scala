@@ -17,7 +17,7 @@ object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
       groupCreate: AnnotationLabelClassGroup.Create,
       annotationProject: AnnotationProject,
       indexFallback: Int
-  ): ConnectionIO[AnnotationLabelClassGroup.WithRelated] = {
+  ): ConnectionIO[AnnotationLabelClassGroup.WithLabelClasses] = {
     val index = groupCreate.index getOrElse indexFallback
     val groupIO = (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, name, annotation_project_id, idx) VALUES (

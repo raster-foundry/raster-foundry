@@ -21,7 +21,7 @@ final case class AnnotationProject(
 ) {
   def withRelated(
       tileLayers: List[TileLayer],
-      labelClassGroups: List[AnnotationLabelClassGroup.WithRelated]
+      labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses]
   ): AnnotationProject.WithRelated =
     AnnotationProject.WithRelated(
       id,
@@ -71,7 +71,7 @@ object AnnotationProject {
       validatorsTeamId: Option[UUID],
       projectId: Option[UUID],
       tileLayers: List[TileLayer],
-      labelClassGroups: List[AnnotationLabelClassGroup.WithRelated]
+      labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses]
   )
 
   object WithRelated {

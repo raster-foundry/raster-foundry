@@ -13,8 +13,8 @@ final case class AnnotationLabelClassGroup(
 ) {
   def withLabelClasses(
       classes: List[AnnotationLabelClass]
-  ): AnnotationLabelClassGroup.WithRelated =
-    AnnotationLabelClassGroup.WithRelated(
+  ): AnnotationLabelClassGroup.WithLabelClasses =
+    AnnotationLabelClassGroup.WithLabelClasses(
       id,
       name,
       annotationProjectId,
@@ -40,7 +40,7 @@ object AnnotationLabelClassGroup {
       : Decoder[AnnotationLabelClassGroup.Create] = deriveDecoder
   }
 
-  final case class WithRelated(
+  final case class WithLabelClasses(
       id: UUID,
       name: String,
       annotationProjectId: UUID,
@@ -48,7 +48,7 @@ object AnnotationLabelClassGroup {
       labelClasses: List[AnnotationLabelClass]
   )
 
-  object WithRelated {
-    implicit val encWithRelated: Encoder[WithRelated] = deriveEncoder
+  object WithLabelClasses {
+    implicit val encWithLabelClasses: Encoder[WithLabelClasses] = deriveEncoder
   }
 }
