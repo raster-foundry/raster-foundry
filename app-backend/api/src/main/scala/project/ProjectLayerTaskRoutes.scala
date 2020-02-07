@@ -99,6 +99,9 @@ trait ProjectLayerTaskRoutes
       }
   }
 
+  // TODO: TaskPropertiesCreate's last param needs to be a real annotate project's ID
+  // It is now just a regular project ID
+  // But this function will change after hooking tasks up with annotation projects
   def createLayerTaskGrid(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
       authorizeScope(
@@ -120,7 +123,8 @@ trait ProjectLayerTaskRoutes
                     Task.TaskPropertiesCreate(
                       projectId,
                       layerId,
-                      TaskStatus.Unlabeled
+                      TaskStatus.Unlabeled,
+                      projectId
                     ),
                     tgf,
                     user
