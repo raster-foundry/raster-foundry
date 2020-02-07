@@ -61,24 +61,24 @@ trait CommonHandlers extends RouteDirectives {
   def maybeSim(scopedAction: ScopedAction,
                user: User,
                fallback: => Directive0): Directive0 =
-  (optionalHeaderValueByName(simulationHeaderName) &
-    optionalHeaderValueByName(includeScopesHeaderName) &
-    optionalHeaderValueByName(excludeScopesHeaderName)).tflatMap({
-    case (Some("true"), include, exclude) =>
-      val extraScope = Decoder[Scope].decodeJson(include.asJson) getOrElse {
-        Scopes.NoAccess
-      }
-      val withoutScope = Decoder[Scope].decodeJson(exclude.asJson) getOrElse {
-        Scopes.NoAccess
-      }
-      val userActions =
-        (user.scope `combine` extraScope).actions.diff(withoutScope.actions)
-      complete {
-        Map("simResult" -> userActions.contains(scopedAction)).asJson
-      }
-    case _ =>
-      fallback
-  })
+    (optionalHeaderValueByName(simulationHeaderName) &
+      optionalHeaderValueByName(includeScopesHeaderName) &
+      optionalHeaderValueByName(excludeScopesHeaderName)).tflatMap({
+      case (Some("true"), include, exclude) =>
+        val extraScope = Decoder[Scope].decodeJson(include.asJson) getOrElse {
+          Scopes.NoAccess
+        }
+        val withoutScope = Decoder[Scope].decodeJson(exclude.asJson) getOrElse {
+          Scopes.NoAccess
+        }
+        val userActions =
+          (user.scope `combine` extraScope).actions.diff(withoutScope.actions)
+        complete {
+          Map("simResult" -> userActions.contains(scopedAction)).asJson
+        }
+      case _ =>
+        fallback
+    })
 
   def authorizeScope(scopedAction: ScopedAction, user: User): Directive0 =
     maybeSim(
