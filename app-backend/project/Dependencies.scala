@@ -3,7 +3,7 @@ import scala.util.Properties
 import sbt._
 
 object Version {
-  val akka = "2.5.11"
+  val akka = "2.5.16"
   val akkaCirceJson = "1.22.0"
   val akkaHttp = "10.1.5"
   val akkaHttpCors = "0.2.2"
@@ -24,6 +24,7 @@ object Version {
   val cats = "1.6.1"
   val catsEffect = "1.4.0"
   val catsMeow = "0.2.0"
+  val catsPar = "0.2.1"
   val catsScalacheck = "0.1.1"
   val chronoscala = "0.3.0"
   val circe = "0.11.1"
@@ -46,8 +47,10 @@ object Version {
   val hikariCP = "3.3.1"
   val http4s = "0.20.11"
   val jaegerClient = "1.0.0"
+  val jaegerCore = "1.0.0"
   val javaMail = "1.5.6"
   val json4s = "3.5.0"
+  val jsonSmart = "2.3"
   val jts = "1.16.0"
   val logback = "1.2.3"
   val maml = "0.4.0"
@@ -55,15 +58,19 @@ object Version {
   val nimbusJose = "0.6.0"
   val nimbusJoseJwt = "4.41.1"
   val openTracing = "0.0.6"
+  val opentracingApi = "0.33.0"
   val postgis = "2.2.1"
   val postgres = "42.2.5"
+  val refined = "0.9.9"
   val rollbar = "1.4.0"
   val scaffeine = "2.6.0"
   val scala = "2.12.10"
   val scalaCheck = "1.14.0"
   val scalaLogging = "3.9.0"
   val scalaTest = "3.0.1"
+  val scalaXml = "1.2.0"
   val scalacache = "0.27.0"
+  val scalajHttp = "2.4.1"
   val scapegoat = "1.3.7"
   val scopt = "3.5.0"
   val slf4j = "1.7.25"
@@ -76,21 +83,19 @@ object Version {
   val sttp = "1.5.19"
   val sup = "0.6.0"
   val typesafeConfig = "1.3.3"
-  val jsonSmart = "2.3"
-  val jaegerCore = "1.0.0"
-  val opentracingApi = "0.33.0"
-  val scalajHttp = "2.4.1"
-  val refined = "0.9.9"
+  val vault = "1.0.0"
 }
 
 object Dependencies {
+  val akkaActor = "com.typesafe.akka" %% "akka-actor" % Version.akka
   val akkaCirceJson = "de.heikoseeberger" %% "akka-http-circe" % Version.akkaCirceJson
-  val akkaHttpCors = "ch.megard" %% "akka-http-cors" % Version.akkaHttpCors
-  val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akkaSlf4j % Runtime
   val akkaHttp = "com.typesafe.akka" %% "akka-http" % Version.akkaHttp
   val akkaHttpCore = "com.typesafe.akka" %% "akka-http-core" % Version.akkaHttp
-  val akkastream = "com.typesafe.akka" %% "akka-stream" % Version.akka
+  val akkaHttpCors = "ch.megard" %% "akka-http-cors" % Version.akkaHttpCors
+  val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akkaSlf4j % Runtime
+  val akkaStream = "com.typesafe.akka" %% "akka-stream" % Version.akka
   val akkatestkit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
+  val apacheAvro = "org.apache.avro" % "avro" % Version.apacheAvro
   val apacheCommonsEmail = "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
   val apacheHttpClient = "org.apache.httpcomponents" % "httpclient" % Version.apacheHttpClient
   val apacheHttpCore = "org.apache.httpcomponents" % "httpcore" % Version.apacheHttpCore
@@ -110,6 +115,7 @@ object Dependencies {
   val catsKernel = "org.typelevel" %% "cats-kernel" % Version.cats
   val catsLaws = "org.typelevel" %% "cats-laws" % Version.cats % Test
   val catsMeow = "com.olegpy" %% "meow-mtl" % Version.catsMeow
+  val catsPar = "io.chrisdavenport" %% "cats-par" % Version.catsPar
   val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % Version.catsScalacheck % "test"
   val chronoscala = "jp.ne.opt" %% "chronoscala" % Version.chronoscala
   val circeCore = "io.circe" %% "circe-core" % Version.circe
@@ -150,16 +156,19 @@ object Dependencies {
   val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
   val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"
   val guava = "com.google.guava" % "guava" % Version.guava
+  val hadoop = "org.apache.hadoop" % "hadoop-common" % Version.hadoop
   val hikariCP = "com.zaxxer" % "HikariCP" % Version.hikariCP
-  val http4sCore = "org.http4s" %% "http4s-core" % Version.http4s
   val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
   val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
+  val http4sCore = "org.http4s" %% "http4s-core" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val http4sXml = "org.http4s" %% "http4s-scala-xml" % Version.http4s
   val jaegerClient = "io.jaegertracing" % "jaeger-client" % "1.0.0"
+  val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
   val javaMail = "com.sun.mail" % "javax.mail" % Version.javaMail
+  val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
   val log4jOverslf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
@@ -167,17 +176,21 @@ object Dependencies {
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val nimbusJoseJwt = "com.nimbusds" % "nimbus-jose-jwt" % Version.nimbusJoseJwt
   val opentracing = "com.colisweb" %% "scala-opentracing" % Version.openTracing
+  val opentracingApi = "io.opentracing" % "opentracing-api" % Version.opentracingApi
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
   val postgres = "org.postgresql" % "postgresql" % Version.postgres
+  val refined = "eu.timepit" %% "refined" % Version.refined
   val rollbar = "com.rollbar" % "rollbar-java" % Version.rollbar
   val scaffeine = "com.github.blemale" %% "scaffeine" % Version.scaffeine
   val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck % "test"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Version.scalaLogging
+  val scalaXml = "org.scala-lang.modules" %% "scala-xml" % Version.scalaXml
   val scalacacheCaffeine = "com.github.cb372" %% "scalacache-caffeine" % Version.scalacache
   val scalacacheCats = "com.github.cb372" %% "scalacache-cats-effect" % Version.scalacache
   val scalacacheCirce = "com.github.cb372" %% "scalacache-circe" % Version.scalacache
   val scalacacheCore = "com.github.cb372" %% "scalacache-core" % Version.scalacache
   val scalacacheMemcached = "com.github.cb372" %% "scalacache-memcached" % Version.scalacache intransitive ()
+  val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
@@ -194,11 +207,5 @@ object Dependencies {
   val sttpJson = "com.softwaremill.sttp" %% "json-common" % Version.sttp
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
   val typesafeConfig = "com.typesafe" % "config" % Version.typesafeConfig
-  val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
-  val opentracingApi = "io.opentracing" % "opentracing-api" % Version.opentracingApi
-  val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
-  val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
-  val hadoop = "org.apache.hadoop" % "hadoop-common" % Version.hadoop
-  val refined = "eu.timepit" %% "refined" % Version.refined
-  val apacheAvro = "org.apache.avro" % "avro" % Version.apacheAvro
+  val vault = "io.chrisdavenport" %% "vault" % Version.vault
 }

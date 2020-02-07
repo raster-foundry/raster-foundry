@@ -221,13 +221,42 @@ lazy val apiSettings = sharedSettings ++ Seq(
 )
 
 lazy val apiDependencies = Seq(
-  Dependencies.akkaSlf4j,
-  Dependencies.scalatest,
-  Dependencies.akkaHttpCors,
+  Dependencies.akkaActor,
   Dependencies.akkaCirceJson,
+  Dependencies.akkaHttp,
+  Dependencies.akkaHttpCore,
+  Dependencies.akkaHttpCors,
+  Dependencies.akkaSlf4j,
+  Dependencies.akkaStream,
+  Dependencies.akkaStream,
+  Dependencies.awsCoreSdk,
+  Dependencies.awsS3,
   Dependencies.awsStsSdk,
+  Dependencies.catsCore,
+  Dependencies.catsEffect,
+  Dependencies.catsFree,
+  Dependencies.circeCore,
+  Dependencies.circeGeneric,
+  Dependencies.circeParser,
+  Dependencies.doobieCore,
+  Dependencies.doobieFree,
+  Dependencies.doobieHikari,
   Dependencies.dropbox,
-  Dependencies.scalaCheck
+  Dependencies.geotrellisRaster,
+  Dependencies.geotrellisS3,
+  Dependencies.geotrellisVector,
+  Dependencies.guava,
+  Dependencies.hikariCP,
+  Dependencies.nimbusJose,
+  Dependencies.nimbusJoseJwt,
+  Dependencies.postgres,
+  Dependencies.scaffeine,
+  Dependencies.scalaCheck,
+  Dependencies.scalatest,
+  Dependencies.shapeless,
+  Dependencies.sourceCode,
+  Dependencies.spray,
+  Dependencies.typesafeConfig
 )
 
 lazy val api = project
@@ -576,7 +605,6 @@ lazy val backsplashExport =
     .settings(
       fork in run := true,
       libraryDependencies ++= Seq(
-        Dependencies.awsCoreSdk,
         Dependencies.awsS3,
         Dependencies.catsCore,
         Dependencies.catsEffect,
@@ -619,18 +647,49 @@ lazy val backsplashServer =
     .settings(fork in run := true)
     .settings({
       libraryDependencies ++= Seq(
+        Dependencies.awsS3,
+        Dependencies.catsCore,
+        Dependencies.catsEffect,
+        Dependencies.catsFree,
+        Dependencies.catsKernel,
         Dependencies.catsMeow,
+        Dependencies.catsPar,
+        Dependencies.circeCore,
+        Dependencies.circeGeneric,
+        Dependencies.circeParser,
+        Dependencies.doobieCore,
+        Dependencies.doobieFree,
+        Dependencies.doobieHikari,
+        Dependencies.fs2,
+        Dependencies.geotrellisContribVLM,
+        Dependencies.geotrellisProj4,
+        Dependencies.geotrellisRaster,
         Dependencies.geotrellisServer,
+        Dependencies.geotrellisServerOgc,
+        Dependencies.geotrellisServerOpenGIS,
+        Dependencies.geotrellisSpark,
+        Dependencies.geotrellisVector,
+        Dependencies.guava,
+        Dependencies.hikariCP,
         Dependencies.http4sBlaze,
         Dependencies.http4sCirce,
+        Dependencies.http4sCore,
         Dependencies.http4sDSL,
         Dependencies.http4sServer,
         Dependencies.http4sXml,
         Dependencies.mamlJvm,
-        Dependencies.sup,
-        Dependencies.scalacacheCore,
+        Dependencies.opentracing,
+        Dependencies.opentracingApi,
+        Dependencies.scalaXml,
+        Dependencies.scalacacheCaffeine,
         Dependencies.scalacacheCats,
-        Dependencies.scalacacheCaffeine
+        Dependencies.scalacacheCore,
+        Dependencies.shapeless,
+        Dependencies.sourceCode,
+        Dependencies.spray,
+        Dependencies.sup,
+        Dependencies.typesafeConfig,
+        Dependencies.vault
       ) ++ loggingDependencies
     })
     .settings({
