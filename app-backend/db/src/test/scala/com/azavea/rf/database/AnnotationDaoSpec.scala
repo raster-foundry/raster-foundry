@@ -325,17 +325,29 @@ class AnnotationDaoSpec
             userCreate: User.Create,
             orgCreate: Organization.Create,
             platform: Platform,
-            (projectAgGroupCreate): (Project.Create, AnnotationGroup.Create),
-            annoAndTaskFeatureCreate: (Task.TaskFeatureCreate,
-                                       List[Annotation.Create]),
+            (projectAgGroupCreate): (
+                Project.Create,
+                AnnotationGroup.Create,
+                AnnotationProject.Create
+            ),
+            annoAndTaskFeatureCreate: (
+                Task.TaskFeatureCreate,
+                List[Annotation.Create]
+            ),
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val (taskFeatureCreate, annotationsCreate) =
               annoAndTaskFeatureCreate
-            val (projectCreate, annotationGroupCreate) = projectAgGroupCreate
+            val (
+              projectCreate,
+              annotationGroupCreate,
+              annotationProjectCreate
+            ) = projectAgGroupCreate
             val labelName = "Car"
             val labelId = UUID.randomUUID()
             val labelGroupId = UUID.randomUUID()
@@ -356,11 +368,21 @@ class AnnotationDaoSpec
                 Some(List((labelId, labelName, labelGroupId))),
                 Some(Map(labelGroupId -> "Car Group"))
               )
+              dbAnnotationProj <- AnnotationProjectDao
+                .insertAnnotationProject(
+                  annotationProjectCreate.copy(
+                    projectId = Some(updatedDbProject.id)
+                  ),
+                  dbUser
+                )
               collection <- TaskDao.insertTasks(
                 Task.TaskFeatureCollectionCreate(
                   features = List(
-                    fixupTaskFeatureCreate(taskFeatureCreate, updatedDbProject)
-                      .withStatus(TaskStatus.Labeled)
+                    fixupTaskFeatureCreate(
+                      taskFeatureCreate,
+                      updatedDbProject,
+                      dbAnnotationProj
+                    ).withStatus(TaskStatus.Labeled)
                   )
                 ),
                 dbUser
@@ -369,7 +391,8 @@ class AnnotationDaoSpec
               annotationGroup <- AnnotationGroupDao.createAnnotationGroup(
                 dbProject.id,
                 annotationGroupCreate.copy(name = "label"),
-                dbUser)
+                dbUser
+              )
               updatedAnnotationsCreate = annotationsCreate.map(annoCreate => {
                 annoCreate.copy(
                   label = labelId.toString(),
@@ -406,17 +429,29 @@ class AnnotationDaoSpec
             userCreate: User.Create,
             orgCreate: Organization.Create,
             platform: Platform,
-            (projectAgGroupCreate): (Project.Create, AnnotationGroup.Create),
-            annoAndTaskFeatureCreate: (Task.TaskFeatureCreate,
-                                       List[Annotation.Create]),
+            (projectAgGroupCreate): (
+                Project.Create,
+                AnnotationGroup.Create,
+                AnnotationProject.Create
+            ),
+            annoAndTaskFeatureCreate: (
+                Task.TaskFeatureCreate,
+                List[Annotation.Create]
+            ),
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val (taskFeatureCreate, annotationsCreate) =
               annoAndTaskFeatureCreate
-            val (projectCreate, annotationGroupCreate) = projectAgGroupCreate
+            val (
+              projectCreate,
+              annotationGroupCreate,
+              annotationProjectCreate
+            ) = projectAgGroupCreate
             val labelName = "Car"
             val labelId = UUID.randomUUID()
             val labelGroupId = UUID.randomUUID()
@@ -437,11 +472,21 @@ class AnnotationDaoSpec
                 Some(List((labelId, labelName, labelGroupId))),
                 Some(Map(labelGroupId -> "Car Group"))
               )
+              dbAnnotationProj <- AnnotationProjectDao
+                .insertAnnotationProject(
+                  annotationProjectCreate.copy(
+                    projectId = Some(updatedDbProject.id)
+                  ),
+                  dbUser
+                )
               collection <- TaskDao.insertTasks(
                 Task.TaskFeatureCollectionCreate(
                   features = List(
-                    fixupTaskFeatureCreate(taskFeatureCreate, updatedDbProject)
-                      .withStatus(TaskStatus.Labeled)
+                    fixupTaskFeatureCreate(
+                      taskFeatureCreate,
+                      updatedDbProject,
+                      dbAnnotationProj
+                    ).withStatus(TaskStatus.Labeled)
                   )
                 ),
                 dbUser
@@ -450,7 +495,8 @@ class AnnotationDaoSpec
               annotationGroup <- AnnotationGroupDao.createAnnotationGroup(
                 dbProject.id,
                 annotationGroupCreate.copy(name = "label"),
-                dbUser)
+                dbUser
+              )
               updatedAnnotationsCreate = annotationsCreate.map(annoCreate => {
                 annoCreate.copy(
                   label = labelId.toString(),
@@ -486,19 +532,29 @@ class AnnotationDaoSpec
       forAll {
         (
             userOrgPlat: (User.Create, Organization.Create, Platform),
-            (projectAgGroupCreate): (Project.Create, AnnotationGroup.Create),
+            (projectAgGroupCreate): (
+                Project.Create,
+                AnnotationGroup.Create,
+                AnnotationProject.Create
+            ),
             annotationCreates: (Annotation.Create, Annotation.Create),
             taskFeatureCreates: (Task.TaskFeatureCreate, Task.TaskFeatureCreate),
             labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (UserGroupRole.Create,
-                                         UserGroupRole.Create)
+            labelValidateTeamUgrCreate: (
+                UserGroupRole.Create,
+                UserGroupRole.Create
+            )
         ) =>
           {
             val (userCreate, orgCreate, platform) = userOrgPlat
             val (taskFeatureCreateOne, taskFeatureCreateTwo) =
               taskFeatureCreates
             val (annotationCreateOne, annotationCreateTwo) = annotationCreates
-            val (projectCreate, annotationGroupCreate) = projectAgGroupCreate
+            val (
+              projectCreate,
+              annotationGroupCreate,
+              annotationProjectCreate
+            ) = projectAgGroupCreate
             val labelNameOne = "Finished"
             val labelIdOne = UUID.randomUUID()
             val labelNameTwo = "Partial"
@@ -525,20 +581,31 @@ class AnnotationDaoSpec
                 Some(
                   List(
                     (labelIdOne, labelNameOne, labelGroupIdOne),
-                    (labelIdTwo, labelNameTwo, labelGroupIdTwo),
-                  )),
+                    (labelIdTwo, labelNameTwo, labelGroupIdTwo)
+                  )
+                ),
                 Some(
                   Map(
                     labelGroupIdOne -> labelGroupNameOne,
                     labelGroupIdTwo -> labelGroupNameTwo
-                  ))
+                  )
+                )
               )
+              dbAnnotationProj <- AnnotationProjectDao
+                .insertAnnotationProject(
+                  annotationProjectCreate.copy(
+                    projectId = Some(updatedDbProject.id)
+                  ),
+                  dbUser
+                )
               taskCollectionOne <- TaskDao.insertTasks(
                 Task.TaskFeatureCollectionCreate(
                   features = List(
-                    fixupTaskFeatureCreate(taskFeatureCreateOne,
-                                           updatedDbProject)
-                      .withStatus(TaskStatus.Labeled)
+                    fixupTaskFeatureCreate(
+                      taskFeatureCreateOne,
+                      updatedDbProject,
+                      dbAnnotationProj
+                    ).withStatus(TaskStatus.Labeled)
                   )
                 ),
                 dbUser
@@ -546,9 +613,11 @@ class AnnotationDaoSpec
               taskCollectionTwo <- TaskDao.insertTasks(
                 Task.TaskFeatureCollectionCreate(
                   features = List(
-                    fixupTaskFeatureCreate(taskFeatureCreateTwo,
-                                           updatedDbProject)
-                      .withStatus(TaskStatus.Validated)
+                    fixupTaskFeatureCreate(
+                      taskFeatureCreateTwo,
+                      updatedDbProject,
+                      dbAnnotationProj
+                    ).withStatus(TaskStatus.Validated)
                   )
                 ),
                 dbUser
@@ -558,7 +627,8 @@ class AnnotationDaoSpec
               annotationGroup <- AnnotationGroupDao.createAnnotationGroup(
                 dbProject.id,
                 annotationGroupCreate.copy(name = "label"),
-                dbUser)
+                dbUser
+              )
               _ <- AnnotationDao.insertAnnotations(
                 List(
                   annotationCreateOne.copy(
@@ -591,12 +661,12 @@ class AnnotationDaoSpec
             listed.`type` == "FeatureCollection" &&
             listed.features.foldLeft(true)((acc, feature) => {
               acc &&
-              feature.properties.asJson.hcursor
-                .get[String](labelGroupNameOne)
-                .toOption == Some(labelNameOne) &&
-              feature.properties.asJson.hcursor
-                .get[String](labelGroupNameTwo)
-                .toOption == Some(labelNameTwo)
+                feature.properties.asJson.hcursor
+                  .get[String](labelGroupNameOne)
+                  .toOption == Some(labelNameOne) &&
+                feature.properties.asJson.hcursor
+                  .get[String](labelGroupNameTwo)
+                  .toOption == Some(labelNameTwo)
             }) &&
             true
           }

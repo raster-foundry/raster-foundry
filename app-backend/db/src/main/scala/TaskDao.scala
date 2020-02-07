@@ -295,7 +295,7 @@ object TaskDao extends Dao[Task] {
           null,
           null,
           cell,
-          ${taskProperties.annotationProjectId},
+          ${taskProperties.annotationProjectId}
         FROM (
           SELECT (
             ST_Dump(
