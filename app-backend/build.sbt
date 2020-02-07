@@ -59,6 +59,12 @@ lazy val sharedSettings = Seq(
     "io.jaegertracing",
     "jaeger-client"
   ),
+  undeclaredCompileDependenciesFilter -= moduleFilter(
+    "com.typesafe.scala-logging", "scala-logging"
+  ),
+  undeclaredCompileDependenciesFilter -= moduleFilter(
+    "org.slf4j", "slf4j-api"
+  ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
     "log4j" % "log4j",
@@ -254,22 +260,42 @@ lazy val common = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.apacheCommonsEmail,
+      Dependencies.apacheHttpClient,
+      Dependencies.apacheHttpCore,
+      Dependencies.awsBatchSdk,
+      Dependencies.awsCoreSdk,
+      Dependencies.awsS3,
+      Dependencies.catsCore,
+      Dependencies.catsKernel,
+      Dependencies.catsScalacheck,
+      Dependencies.chronoscala,
+      Dependencies.circeCore,
+      Dependencies.circeGeneric,
+      Dependencies.circeOptics,
+      Dependencies.circeParser,
+      Dependencies.circeTest,
+      Dependencies.commonsIO,
       Dependencies.elasticacheClient,
+      Dependencies.geotrellisContribVLM,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisRaster,
       Dependencies.geotrellisS3,
       Dependencies.geotrellisSpark,
+      Dependencies.geotrellisUtil,
+      Dependencies.geotrellisVector,
       Dependencies.geotrellisVectorTestkit,
+      Dependencies.javaMail,
       Dependencies.logbackClassic % Runtime,
       Dependencies.mamlJvm,
-      Dependencies.sparkCore,
-      Dependencies.circeCore,
-      Dependencies.circeParser,
-      Dependencies.circeOptics,
-      Dependencies.circeTest,
-      Dependencies.awsBatchSdk,
+      Dependencies.monocleCore,
       Dependencies.rollbar,
-      Dependencies.apacheCommonsEmail,
       Dependencies.scalaCheck,
-      Dependencies.catsScalacheck
+      Dependencies.shapeless,
+      Dependencies.sparkCore,
+      Dependencies.spireMath,
+      Dependencies.spray,
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
 
@@ -278,23 +304,28 @@ lazy val datamodel = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.shapeless,
+      Dependencies.awsS3,
       Dependencies.catsCore,
+      Dependencies.catsKernel,
       Dependencies.catsLaws,
-      Dependencies.circeGeneric,
-      Dependencies.spray,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisVector,
-      Dependencies.geotrellisProj4,
-      Dependencies.geotrellisContribGDAL,
-      Dependencies.geotrellisVectorTestkit,
-      Dependencies.geotrellisServerStac,
       Dependencies.circeCore,
-      Dependencies.circeParser,
-      Dependencies.circeOptics,
-      Dependencies.circeTest,
+      Dependencies.circeGeneric,
       Dependencies.circeGenericExtras,
-      Dependencies.scalaCheck
+      Dependencies.circeOptics,
+      Dependencies.circeParser,
+      Dependencies.circeTest,
+      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisS3,
+      Dependencies.geotrellisServerStac,
+      Dependencies.geotrellisVector,
+      Dependencies.geotrellisVectorTestkit,
+      Dependencies.monocleCore,
+      Dependencies.scalaCheck,
+      Dependencies.shapeless,
+      Dependencies.spireMath,
+      Dependencies.spray
     ) ++ loggingDependencies
   })
 
@@ -307,23 +338,46 @@ lazy val db = project
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.scalatest,
+      Dependencies.apacheCommonsEmail,
+      Dependencies.awsCoreSdk,
+      Dependencies.awsS3,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.catsFree,
+      Dependencies.catsKernel,
+      Dependencies.circeCore,
+      Dependencies.commonsCodec,
       Dependencies.doobieCore,
+      Dependencies.doobieFree,
       Dependencies.doobieHikari,
-      Dependencies.scalaCheck,
-      Dependencies.geotrellisContribGDAL,
-      Dependencies.geotrellisRaster,
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
-      Dependencies.scalacacheCats,
-      Dependencies.scalacacheCore,
-      Dependencies.scalacacheCaffeine,
-      Dependencies.scalacacheMemcached,
-      Dependencies.scalacacheCirce,
       Dependencies.elasticacheClient,
-      Dependencies.scalaCheck,
+      Dependencies.flyway % Test,
+      Dependencies.fs2,
+      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisS3,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisVector,
+      Dependencies.guava,
+      Dependencies.hikariCP,
+      Dependencies.mamlJvm,
       Dependencies.postgis,
-      Dependencies.flyway % Test
+      Dependencies.postgres,
+      Dependencies.scalaCheck,
+      Dependencies.scalaCheck,
+      Dependencies.scalacacheCaffeine,
+      Dependencies.scalacacheCats,
+      Dependencies.scalacacheCirce,
+      Dependencies.scalacacheCore,
+      Dependencies.scalacacheMemcached,
+      Dependencies.scalatest,
+      Dependencies.shapeless,
+      Dependencies.sourceCode,
+      Dependencies.spray,
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
 
