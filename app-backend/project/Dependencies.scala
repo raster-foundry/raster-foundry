@@ -8,6 +8,7 @@ object Version {
   val akkaHttp = "10.1.5"
   val akkaHttpCors = "0.2.2"
   val akkaSlf4j = "2.4.13"
+  val apacheAvro = "1.8.2"
   val apacheCommonsEmail = "1.5"
   val apacheHttpClient = "4.5.5"
   val apacheHttpCore = "4.4.9"
@@ -28,7 +29,7 @@ object Version {
   val circe = "0.11.1"
   val circeOptics = "0.11.0"
   val commonsCodec = "1.10"
-  val commonsIO = "2.5"
+  val commonsIO = "2.6"
   val decline = "0.6.0"
   val dnsJava = "2.1.8"
   val doobie = "0.7.0"
@@ -36,11 +37,11 @@ object Version {
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
   val flyway = "5.2.4"
-  val fs2 = "1.0.4"
+  val fs2 = "1.0.5"
   val geotrellis = "3.0.0-M3"
   val geotrellisContrib = "3.16.1-M3"
   val geotrellisServer = "3.4.0-9-geeb1ede-SNAPSHOT"
-  val guava = "16.0.1"
+  val guava = "20.0"
   val hadoop = "2.8.4"
   val hikariCP = "3.3.1"
   val http4s = "0.20.11"
@@ -57,7 +58,7 @@ object Version {
   val postgis = "2.2.1"
   val postgres = "42.2.5"
   val rollbar = "1.4.0"
-  val scaffeine = "2.0.0"
+  val scaffeine = "2.6.0"
   val scala = "2.12.10"
   val scalaCheck = "1.14.0"
   val scalaLogging = "3.9.0"
@@ -79,6 +80,7 @@ object Version {
   val jaegerCore = "1.0.0"
   val opentracingApi = "0.33.0"
   val scalajHttp = "2.4.1"
+  val refined = "0.9.9"
 }
 
 object Dependencies {
@@ -141,6 +143,7 @@ object Dependencies {
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea.geotrellis" %% "geotrellis-server-core" % Version.geotrellisServer
   val geotrellisServerOgc = "com.azavea.geotrellis" %% "geotrellis-server-ogc" % Version.geotrellisServer
+  val geotrellisServerOpenGIS = "com.azavea.geotrellis" %% "geotrellis-server-opengis" % Version.geotrellisServer
   val geotrellisServerStac = "com.azavea.geotrellis" %% "geotrellis-server-stac" % Version.geotrellisServer
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
@@ -195,4 +198,7 @@ object Dependencies {
   val opentracingApi = "io.opentracing" % "opentracing-api" % Version.opentracingApi
   val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
   val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
+  val hadoop = "org.apache.hadoop" % "hadoop-common" % Version.hadoop
+  val refined = "eu.timepit" %% "refined" % Version.refined
+  val apacheAvro = "org.apache.avro" % "avro" % Version.apacheAvro
 }
