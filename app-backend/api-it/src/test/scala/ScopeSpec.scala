@@ -70,12 +70,19 @@ object SimResponse {
   implicit val decSimResponse: Decoder[SimResponse] = deriveDecoder
 }
 
+final case class TokenResponse(id_token: String)
+
+object TokenResponse {
+  implicit val decTokenResponse: Decoder[TokenResponse] = deriveDecoder
+}
+
 class ScopeSpec extends FunSpec {
 
   private val config = ConfigFactory.load()
 
   val apiHost = config.getString("apiHost")
   val csvPath = config.getString("scopeITCSVLocation")
+  val refreshToken = config.getString("refreshToken")
 
   val bogusId = UUID.randomUUID
 
@@ -86,17 +93,35 @@ class ScopeSpec extends FunSpec {
 
   def makeRoute(path: String): Uri = {
     val cleaned = subUUID(path)
-    println(cleaned)
     val unsafeUri = URI.create(s"$apiHost$cleaned")
     val out = Uri(unsafeUri)
-    println(out)
     out
   }
 
-  def getAuthToken(refreshToken: String): String = ":("
+  val authTokenE: Either[String, TokenResponse] = {
+    val tokenRoute = makeRoute("/tokens/")
+    val response
+      : Id[Response[Either[DeserializationError[Error], TokenResponse]]] =
+      sttp
+        .post(tokenRoute)
+        .body(Map("refresh_token" -> refreshToken).asJson)
+        .response(asJson[TokenResponse])
+        .send()
+    response map { resp =>
+      resp.body match {
+        case Right(Right(tokenResp)) => Right(tokenResp)
+        case _                       => Left("could not get token")
+      }
+    }
+  }
 
-  def getBaseRequest(scope: Scope, expectSuccess: Boolean) = {
-    val root = sttp.header("X-PolicySim", "true").auth.bearer(getAuthToken(""))
+  def getBaseRequest(
+      tokenResp: TokenResponse,
+      scope: Scope,
+      expectSuccess: Boolean
+  ): RequestT[Empty, String, Nothing] = {
+    val root =
+      sttp.header("X-PolicySim", "true").auth.bearer(tokenResp.id_token)
     val scopeStringNoQuotes = scope.asJson.noSpaces.replace("\"", "")
     if (expectSuccess) {
       root.header("X-PolicySim-Include", scopeStringNoQuotes)
@@ -131,19 +156,21 @@ class ScopeSpec extends FunSpec {
     ("/datasources/{datasourceID}", "datasources:read", "get")
   )
 
-  def getSimResult(row: CsvRow, expectation: Boolean) = {
-    val base = getBaseRequest(row.scope, expectation)
+  def getSimResult(
+      baseRequest: RequestT[Empty, String, Nothing],
+      row: CsvRow,
+      expectation: Boolean
+  ) = {
     val requestUri = makeRoute(row.path)
     val response
-        : Id[Response[Either[DeserializationError[Error], SimResponse]]] =
-      addMethod(base, requestUri, row.verb).send()
-    println(response)
+      : Id[Response[Either[DeserializationError[Error], SimResponse]]] =
+      addMethod(baseRequest, requestUri, row.verb).send()
     // for some reason I'm not allowed to bail on the Id wrapper in the previous step, though I'd really
     // prefer to. this is a bit janky but I'm not sure what to do about it.
     val resultBody: Either[String, SimResponse] = response map { resp =>
       resp.body match {
         case Right(Right(simResp)) => Right(simResp)
-        case Left(err)             => Left("body deserialization failed")
+        case _                     => Left("body deserialization failed")
       }
     }
     assert(
@@ -152,23 +179,45 @@ class ScopeSpec extends FunSpec {
     )
   }
 
-  def expectAllowed(row: CsvRow) = getSimResult(row, true)
+  def expectAllowed(
+      baseRequest: RequestT[Empty, String, Nothing],
+      row: CsvRow
+  ) = getSimResult(baseRequest, row, true)
 
-  def expectForbidden(row: CsvRow): Unit = getSimResult(row, false)
+  def expectForbidden(
+      baseRequest: RequestT[Empty, String, Nothing],
+      row: CsvRow
+  ): Unit = getSimResult(baseRequest, row, false)
+
+  def inputDataFailureMessage(path: String, scope: String, verb: String) = s"""
+    | Problem in input data -- could not decode $path, $scope, and $verb
+    | into row types or base request construction failed""".trim.stripMargin
 
   describe("Policy simulation") {
     it("reports expected failure when relevant scopes are excluded") {
       forAll(routes) { (path: String, scope: String, verb: String) =>
-        CsvRow.fromStringsE(path, scope, verb) map { expectForbidden _ } getOrElse {
-          fail(s"Could not decode $path, $scope, and $verb into row types")
+        {
+          (for {
+            tokenResponse <- authTokenE
+            row <- CsvRow.fromStringsE(path, scope, verb)
+            baseRequest = getBaseRequest(tokenResponse, row.scope, false)
+          } yield { expectForbidden(baseRequest, row) }) getOrElse {
+            fail(inputDataFailureMessage(path, scope, verb))
+          }
         }
       }
     }
 
     it("reports expected success when relevant scopes are included") {
       forAll(routes) { (path: String, scope: String, verb: String) =>
-        CsvRow.fromStringsE(path, scope, verb) map { expectAllowed _ } getOrElse {
-          fail(s"Could not decode $path, $scope, and $verb into row types")
+        {
+          (for {
+            tokenResponse <- authTokenE
+            row <- CsvRow.fromStringsE(path, scope, verb)
+            baseRequest = getBaseRequest(tokenResponse, row.scope, true)
+          } yield { expectAllowed(baseRequest, row) }) getOrElse {
+            fail(inputDataFailureMessage(path, scope, verb))
+          }
         }
       }
     }
