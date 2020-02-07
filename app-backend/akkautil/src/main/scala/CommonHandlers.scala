@@ -5,12 +5,15 @@ import com.rasterfoundry.datamodel.{
   AuthResult,
   Domain,
   ScopedAction,
+  Scope,
+  Scopes,
   User
 }
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives._
 import akka.http.scaladsl.server.directives.HeaderDirectives._
+import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.syntax._
@@ -23,6 +26,8 @@ trait CommonHandlers extends RouteDirectives {
   implicit val ec: ExecutionContext
 
   private val simulationHeaderName = "X-PolicySim"
+  private val includeScopesHeaderName = "X-PolicySim-Include"
+  private val excludeScopesHeaderName = "X-PolicySim-Exclude"
 
   def completeWithOneOrFail(
       future: ⇒ Future[Int]
@@ -56,14 +61,24 @@ trait CommonHandlers extends RouteDirectives {
   def maybeSim(scopedAction: ScopedAction,
                user: User,
                fallback: => Directive0): Directive0 =
-    optionalHeaderValueByName(simulationHeaderName) flatMap {
-      case Some("true") =>
-        complete {
-          Map("simResult" -> user.scope.actions.contains(scopedAction)).asJson
-        }
-      case _ =>
-        fallback
-    }
+  (optionalHeaderValueByName(simulationHeaderName) &
+    optionalHeaderValueByName(includeScopesHeaderName) &
+    optionalHeaderValueByName(excludeScopesHeaderName)).tflatMap({
+    case (Some("true"), include, exclude) =>
+      val extraScope = Decoder[Scope].decodeJson(include.asJson) getOrElse {
+        Scopes.NoAccess
+      }
+      val withoutScope = Decoder[Scope].decodeJson(exclude.asJson) getOrElse {
+        Scopes.NoAccess
+      }
+      val userActions =
+        (user.scope `combine` extraScope).actions.diff(withoutScope.actions)
+      complete {
+        Map("simResult" -> userActions.contains(scopedAction)).asJson
+      }
+    case _ =>
+      fallback
+  })
 
   def authorizeScope(scopedAction: ScopedAction, user: User): Directive0 =
     maybeSim(
