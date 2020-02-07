@@ -14,6 +14,8 @@ git.gitTagToVersionNumber in ThisBuild := { tag: String =>
 
 cancelable in Global := true
 
+onChangedBuildSource := ReloadOnSourceChanges
+
 val scalaOptions = Seq(
   "-deprecation",
   "-unchecked",
