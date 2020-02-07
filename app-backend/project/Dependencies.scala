@@ -5,7 +5,7 @@ import sbt._
 object Version {
   val akka = "2.5.11"
   val akkaCirceJson = "1.22.0"
-  val akkaHttp = "10.0.11"
+  val akkaHttp = "10.1.5"
   val akkaHttpCors = "0.2.2"
   val akkaSlf4j = "2.4.13"
   val apacheCommonsEmail = "1.5"
@@ -20,8 +20,8 @@ object Version {
   val awsXrayRecorder = "2.3.0"
   val betterFiles = "3.4.0"
   val caffeine = "2.3.5"
-  val cats = "1.6.0"
-  val catsEffect = "1.3.0"
+  val cats = "1.6.1"
+  val catsEffect = "1.4.0"
   val catsMeow = "0.2.0"
   val catsScalacheck = "0.1.1"
   val chronoscala = "0.3.0"
@@ -52,6 +52,7 @@ object Version {
   val maml = "0.4.0"
   val monocle = "1.5.1-cats"
   val nimbusJose = "0.6.0"
+  val nimbusJoseJwt = "4.41.1"
   val openTracing = "0.0.6"
   val postgis = "2.2.1"
   val postgres = "42.2.5"
@@ -62,7 +63,6 @@ object Version {
   val scalaLogging = "3.9.0"
   val scalaTest = "3.0.1"
   val scalacache = "0.27.0"
-  val scalajHttp = "2.3.0"
   val scapegoat = "1.3.7"
   val scopt = "3.5.0"
   val slf4j = "1.7.25"
@@ -75,13 +75,18 @@ object Version {
   val sttp = "1.5.19"
   val sup = "0.6.0"
   val typesafeConfig = "1.3.3"
+  val jsonSmart = "2.3"
+  val jaegerCore = "1.0.0"
+  val opentracingApi = "0.33.0"
+  val scalajHttp = "2.4.1"
 }
 
 object Dependencies {
   val akkaCirceJson = "de.heikoseeberger" %% "akka-http-circe" % Version.akkaCirceJson
   val akkaHttpCors = "ch.megard" %% "akka-http-cors" % Version.akkaHttpCors
   val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akkaSlf4j % Runtime
-  val akkahttp = "com.typesafe.akka" %% "akka-http" % Version.akkaHttp
+  val akkaHttp = "com.typesafe.akka" %% "akka-http" % Version.akkaHttp
+  val akkaHttpCore = "com.typesafe.akka" %% "akka-http-core" % Version.akkaHttp
   val akkastream = "com.typesafe.akka" %% "akka-stream" % Version.akka
   val akkatestkit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
   val apacheCommonsEmail = "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
@@ -110,6 +115,7 @@ object Dependencies {
   val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Version.circe
   val circeOptics = "io.circe" %% "circe-optics" % Version.circeOptics
   val circeParser = "io.circe" %% "circe-parser" % Version.circe
+  val circeShapes = "io.circe" %% "circe-shapes" % Version.circe
   val circeTest = "io.circe" %% "circe-testing" % Version.circe % "test"
   val clistCore = "org.backuity.clist" %% "clist-core" % "3.5.0"
   val clistMacros = "org.backuity.clist" %% "clist-macros" % "3.5.0"
@@ -142,6 +148,7 @@ object Dependencies {
   val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"
   val guava = "com.google.guava" % "guava" % Version.guava
   val hikariCP = "com.zaxxer" % "HikariCP" % Version.hikariCP
+  val http4sCore = "org.http4s" %% "http4s-core" % Version.http4s
   val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
   val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
@@ -155,6 +162,7 @@ object Dependencies {
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % Version.monocle
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
+  val nimbusJoseJwt = "com.nimbusds" % "nimbus-jose-jwt" % Version.nimbusJoseJwt
   val opentracing = "com.colisweb" %% "scala-opentracing" % Version.openTracing
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
   val postgres = "org.postgresql" % "postgresql" % Version.postgres
@@ -183,4 +191,8 @@ object Dependencies {
   val sttpJson = "com.softwaremill.sttp" %% "json-common" % Version.sttp
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
   val typesafeConfig = "com.typesafe" % "config" % Version.typesafeConfig
+  val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
+  val opentracingApi = "io.opentracing" % "opentracing-api" % Version.opentracingApi
+  val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
+  val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
 }

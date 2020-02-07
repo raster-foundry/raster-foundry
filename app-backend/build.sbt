@@ -60,10 +60,12 @@ lazy val sharedSettings = Seq(
     "jaeger-client"
   ),
   undeclaredCompileDependenciesFilter -= moduleFilter(
-    "com.typesafe.scala-logging", "scala-logging"
+    "com.typesafe.scala-logging",
+    "scala-logging"
   ),
   undeclaredCompileDependenciesFilter -= moduleFilter(
-    "org.slf4j", "slf4j-api"
+    "org.slf4j",
+    "slf4j-api"
   ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
@@ -454,9 +456,22 @@ lazy val akkautil = project
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.akkaCirceJson,
+      Dependencies.akkaHttp,
+      Dependencies.akkaHttpCore,
+      Dependencies.awsS3,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.catsFree,
+      Dependencies.catsKernel,
+      Dependencies.circeCore,
+      Dependencies.doobieCore,
+      Dependencies.doobieFree,
+      Dependencies.jsonSmart,
       Dependencies.nimbusJose,
-      Dependencies.akkahttp,
-      Dependencies.akkaCirceJson
+      Dependencies.nimbusJoseJwt,
+      Dependencies.postgres,
+      Dependencies.typesafeConfig
     )
   })
 
@@ -502,15 +517,29 @@ lazy val backsplashExport =
     .settings(
       fork in run := true,
       libraryDependencies ++= Seq(
-        Dependencies.geotrellisServer,
-        Dependencies.geotrellisContribGDAL,
+        Dependencies.awsCoreSdk,
+        Dependencies.awsS3,
+        Dependencies.catsCore,
+        Dependencies.catsEffect,
+        Dependencies.circeCore,
+        Dependencies.circeParser,
+        Dependencies.circeShapes,
+        Dependencies.commonsIO,
         Dependencies.decline,
-        Dependencies.mamlJvm,
-        Dependencies.geotrellisS3,
+        Dependencies.geotrellisContribGDAL,
+        Dependencies.geotrellisContribVLM,
+        Dependencies.geotrellisProj4,
         Dependencies.geotrellisRaster,
+        Dependencies.geotrellisS3,
+        Dependencies.geotrellisServer,
         Dependencies.geotrellisSpark,
+        Dependencies.geotrellisVector,
+        Dependencies.mamlJvm,
         Dependencies.scalaCheck,
-        Dependencies.scalatest
+        Dependencies.scalajHttp,
+        Dependencies.scalatest,
+        Dependencies.shapeless,
+        Dependencies.typesafeConfig
       ) ++ loggingDependencies,
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
       addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
@@ -565,13 +594,27 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
     libraryDependencies ++= Seq(
       Dependencies.awsXrayRecorder,
       Dependencies.awsXraySdk,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.catsFree,
+      Dependencies.catsKernel,
+      Dependencies.circeCore,
+      Dependencies.circeGeneric,
+      Dependencies.circeParser,
       Dependencies.doobieCore,
+      Dependencies.doobieFree,
+      Dependencies.http4sCore,
       Dependencies.jaegerClient,
-      Dependencies.opentracing,
+      Dependencies.jaegerCore,
       Dependencies.nimbusJose,
-      Dependencies.scalacacheCore,
+      Dependencies.nimbusJoseJwt,
+      Dependencies.opentracing,
+      Dependencies.opentracingApi,
+      Dependencies.scalacacheCaffeine,
       Dependencies.scalacacheCats,
-      Dependencies.scalacacheCaffeine
+      Dependencies.scalacacheCore,
+      Dependencies.shapeless,
+      Dependencies.typesafeConfig
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
