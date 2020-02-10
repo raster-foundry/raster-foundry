@@ -20,10 +20,6 @@ import io.circe.generic.semiauto.deriveDecoder
 import io.circe.syntax._
 import org.scalatest.FunSpec
 import org.scalatest.prop.TableDrivenPropertyChecks._
-// Something in these two imports is killing map for Id from sttp.
-// It's not a sleepy problem.
-import zamblauskas.csv.parser._
-import zamblauskas.functional._
 
 import scala.io.Source
 
@@ -49,6 +45,7 @@ object Verb {
     }
 }
 
+// TODO parse these from csv file using scala-csv and unsafe row destructuring :man_shrugging:
 final case class UnparsedRow(path: String, scope: String, verb: String) {
   def tupled = (path, scope, verb)
 }
