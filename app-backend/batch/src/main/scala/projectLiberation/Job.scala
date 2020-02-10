@@ -155,8 +155,10 @@ class ProjectLiberation(tileHost: URI) {
       extras: Json
   ): ConnectionIO[Either[FailureStage, UUID]] = {
     val converted = projectToAnnotationProject(project, extras)
-    converted traverse {
-      case owner :: name :: projectType :: aoi :: labelersId :: validatorsId :: projectId :: HNil =>
+    converted match {
+      case Right(
+          owner :: name :: projectType :: aoi :: labelersId :: validatorsId :: projectId :: HNil
+          ) =>
         fr"""
       insert into annotation_projects
         (id, created_at, owner, name, project_type, aoi, labelers_team_id, validators_team_id, project_id)
@@ -171,7 +173,18 @@ class ProjectLiberation(tileHost: URI) {
         $validatorsId,
         $projectId
       );
-      """.update.withUniqueGeneratedKeys[UUID]("id")
+      """.update
+          .withUniqueGeneratedKeys[UUID]("id")
+          .attempt
+          .map({ result =>
+            result.leftMap({ err =>
+              println(s"Err in annotation project creation for ${project.id} was: $err")
+              CreateAnnotationProject
+            })
+          })
+      case Left(err) =>
+        println(s"Conversion failed for project: ${project.id}")
+        Either.left[FailureStage, UUID](err).pure[ConnectionIO]
     }
 
   }
