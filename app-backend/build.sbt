@@ -275,9 +275,10 @@ lazy val apiIntegrationTest = project
   .dependsOn(db)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.sttpCore,
-      Dependencies.sttpJson,
-      Dependencies.sttpCirce,
+      Dependencies.scalaCsv % "test",
+      Dependencies.sttpCore % "test",
+      Dependencies.sttpJson % "test",
+      Dependencies.sttpCirce % "test",
       Dependencies.scalatest
     )
   })

@@ -20,6 +20,7 @@ import io.circe.generic.semiauto.deriveDecoder
 import io.circe.syntax._
 import org.scalatest.FunSpec
 import org.scalatest.prop.TableDrivenPropertyChecks._
+import com.github.tototoshi.csv._
 
 import scala.io.Source
 
@@ -45,7 +46,6 @@ object Verb {
     }
 }
 
-// TODO parse these from csv file using scala-csv and unsafe row destructuring :man_shrugging:
 final case class UnparsedRow(path: String, scope: String, verb: String) {
   def tupled = (path, scope, verb)
 }
@@ -149,15 +149,11 @@ class ScopeSpec extends FunSpec {
       case Delete => request.delete(path)
     }).response(asJson[SimResponse])
 
-  // TODO
-  // - get the csv location from testing resources
-  // - read the csv into a `Table` -- http://www.scalatest.org/user_guide/table_driven_property_checks
-  // - get a bearer token from the api
-
-  // this will come from the csv in the real version, but just setting this up for now
-  def routes(rows: List[UnparsedRow]) = Table(
+  def routes(rows: List[Either[String, UnparsedRow]]) = Table(
     ("Path", "Domain:Action", "Verb"),
-    (rows map { _.tupled }): _*
+    (rows collect {
+      case Right(row) => row.tupled
+    }): _*
   )
 
   def getSimResult(
@@ -174,7 +170,9 @@ class ScopeSpec extends FunSpec {
     val resultBody: Either[String, SimResponse] = response map { resp =>
       resp.body match {
         case Right(Right(simResp)) => Right(simResp)
-        case _                     => Left("body deserialization failed")
+        case left =>
+          println(left)
+          Left("body deserialization failed")
       }
     }
     assert(
@@ -193,11 +191,11 @@ class ScopeSpec extends FunSpec {
       row: ParsedCsvRow
   ): Unit = getSimResult(baseRequest, row, false)
 
-  val unparsedRows = List(
-    UnparsedRow("/datasources/", "datasources:read", "get"),
-    UnparsedRow("/datasources/", "datasources:create", "post"),
-    UnparsedRow("/datasources/{datasourceID}", "datasources:read", "get")
-  )
+  val unparsedRows = CSVReader.open(csvPath).all().drop(1) map {
+    case p :: s :: v :: Nil => Right(UnparsedRow(p, s, v))
+    case r =>
+      Left(s"$r does not have exactly 3 entries and will not be checked.")
+  }
 
   def inputDataFailureMessage(path: String, scope: String, verb: String) = s"""
     | Problem in input data -- could not decode $path, $scope, and $verb

@@ -66,6 +66,7 @@ object Version {
   val scaffeine = "2.6.0"
   val scala = "2.12.10"
   val scalaCheck = "1.14.0"
+  val scalaCsv = "1.3.6"
   val scalaLogging = "3.9.0"
   val scalaTest = "3.0.1"
   val scalaXml = "1.2.0"
@@ -190,6 +191,7 @@ object Dependencies {
   val scalacacheCirce = "com.github.cb372" %% "scalacache-circe" % Version.scalacache
   val scalacacheCore = "com.github.cb372" %% "scalacache-core" % Version.scalacache
   val scalacacheMemcached = "com.github.cb372" %% "scalacache-memcached" % Version.scalacache intransitive ()
+  val scalaCsv = "com.github.tototoshi" %% "scala-csv" % Version.scalaCsv
   val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
