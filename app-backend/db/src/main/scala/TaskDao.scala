@@ -41,7 +41,8 @@ object TaskDao extends Dao[Task] {
       status,
       locked_by,
       locked_on,
-      geometry
+      geometry,
+      annotation_project_id
     FROM
     """
 
@@ -63,7 +64,8 @@ object TaskDao extends Dao[Task] {
           status,
           locked_by,
           locked_on,
-          geometry
+          geometry,
+          annotation_project_id
      )
      """
 
@@ -72,7 +74,8 @@ object TaskDao extends Dao[Task] {
       project_id = ${update.properties.projectId},
       project_layer_id = ${update.properties.projectLayerId},
       status = ${update.properties.status},
-      geometry = ${update.geometry}
+      geometry = ${update.geometry},
+      annotation_project_id = ${update.properties.annotationProjectId}
     WHERE
       id = $taskId
     """;
@@ -224,7 +227,7 @@ object TaskDao extends Dao[Task] {
     fr"""(
         ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id},
         ${tfc.properties.projectId}, ${tfc.properties.projectLayerId}, ${tfc.properties.status},
-        null, null, ${tfc.geometry}
+        null, null, ${tfc.geometry}, ${tfc.properties.annotationProjectId}
     )"""
   }
 
@@ -248,7 +251,8 @@ object TaskDao extends Dao[Task] {
           "status",
           "locked_by",
           "locked_on",
-          "geometry"
+          "geometry",
+          "annotation_project_id"
         )
         .compile
         .toList map { (tasks: List[Task]) =>
@@ -290,7 +294,8 @@ object TaskDao extends Dao[Task] {
           ${taskProperties.status},
           null,
           null,
-          cell
+          cell,
+          ${taskProperties.annotationProjectId}
         FROM (
           SELECT (
             ST_Dump(
@@ -567,7 +572,8 @@ object TaskDao extends Dao[Task] {
                 geomWithStatus.status,
                 None,
                 None,
-                List()
+                List(),
+                UUID.randomUUID()
               ),
               geomWithStatus.geometry
             )

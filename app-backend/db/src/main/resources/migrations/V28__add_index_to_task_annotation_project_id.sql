@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY IF NOT EXISTS annotation_project_id_idx ON tasks(annotation_project_id);

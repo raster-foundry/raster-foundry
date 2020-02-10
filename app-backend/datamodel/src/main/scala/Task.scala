@@ -19,7 +19,8 @@ case class Task(
     status: TaskStatus,
     lockedBy: Option[String],
     lockedOn: Option[Instant],
-    geometry: Projected[Geometry]
+    geometry: Projected[Geometry],
+    annotationProjectId: UUID
 ) {
   def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
@@ -41,7 +42,8 @@ case class Task(
       this.status,
       this.lockedBy,
       this.lockedOn,
-      actions
+      actions,
+      this.annotationProjectId
     )
 }
 
@@ -58,13 +60,15 @@ object Task {
       status: TaskStatus,
       lockedBy: Option[String],
       lockedOn: Option[Instant],
-      actions: List[TaskActionStamp]
+      actions: List[TaskActionStamp],
+      annotationProjectId: UUID
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
         this.projectId,
         this.projectLayerId,
-        this.status
+        this.status,
+        this.annotationProjectId
       )
     }
   }
@@ -77,7 +81,8 @@ object Task {
   case class TaskPropertiesCreate(
       projectId: UUID,
       projectLayerId: UUID,
-      status: TaskStatus
+      status: TaskStatus,
+      annotationProjectId: UUID
   )
 
   object TaskPropertiesCreate {
