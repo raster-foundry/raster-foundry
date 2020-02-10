@@ -30,16 +30,16 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         ./scripts/bootstrap --env
         ./scripts/bootstrap --sbtopts
 
-#        echo "Building static asset bundle"
-#        docker-compose \
-#            -f "${DIR}/../docker-compose.yml" \
-#            -f "${DIR}/../docker-compose.test.yml" \
-#            run --rm app-frontend install
-#        docker-compose \
-#            -f "${DIR}/../docker-compose.yml" \
-#            -f "${DIR}/../docker-compose.test.yml" \
-#            run --rm app-frontend run build
-#
+        echo "Building static asset bundle"
+        docker-compose \
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm app-frontend install
+        docker-compose \
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm app-frontend run build
+
         echo "Building JARs (batch, backsplash-export)"
         docker-compose \
             -f "${DIR}/../docker-compose.test.yml" \
