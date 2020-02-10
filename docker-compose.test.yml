@@ -32,9 +32,6 @@ services:
 
   api-server:
     image: raster-foundry-api-server:${GIT_COMMIT:-latest}
-    env_file: .env
-    expose:
-      - 9000
     build:
       context: ./app-backend/api
       dockerfile: Dockerfile
@@ -107,7 +104,3 @@ services:
       - "ts-interface"
       - "/opt/data/app-backend/datamodel/src/main/scala"
       - "/opt/data/out"
-
-  integration-test:
-    build:
-      context:
