@@ -171,7 +171,7 @@ class ScopeSpec extends FunSpec {
       resp.body match {
         case Right(Right(simResp)) => Right(simResp)
         case left =>
-          println(left)
+          println(s"Err was: $left")
           Left("body deserialization failed")
       }
     }
