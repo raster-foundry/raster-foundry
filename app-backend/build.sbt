@@ -91,6 +91,7 @@ lazy val sharedSettings = Seq(
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.bintrayRepo("guizmaii", "maven"),
+    Resolver.bintrayRepo("zamblauskas", "maven"), // for scala-csv-parser
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     ("azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/")
@@ -274,6 +275,7 @@ lazy val apiIntegrationTest = project
   .dependsOn(db)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.csvParser,
       Dependencies.sttpCore,
       Dependencies.sttpJson,
       Dependencies.sttpCirce,

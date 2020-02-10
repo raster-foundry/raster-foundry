@@ -31,6 +31,7 @@ object Version {
   val circeOptics = "0.11.0"
   val commonsCodec = "1.10"
   val commonsIO = "2.6"
+  val csvParser = "0.11.6"
   val decline = "0.6.0"
   val dnsJava = "2.1.8"
   val doobie = "0.7.0"
@@ -129,6 +130,7 @@ object Dependencies {
   val clistMacros = "org.backuity.clist" %% "clist-macros" % "3.5.0"
   val commonsCodec = "commons-codec" % "commons-codec" % Version.commonsCodec
   val commonsIO = "commons-io" % "commons-io" % Version.commonsIO
+  val csvParser = "zamblauskas" %% "scala-csv-parser" % Version.csvParser % "test"
   val decline = "com.monovore" %% "decline" % Version.decline
   val doobieCore = "org.tpolecat" %% "doobie-core" % Version.doobie
   val doobieFree = "org.tpolecat" %% "doobie-free" % Version.doobie

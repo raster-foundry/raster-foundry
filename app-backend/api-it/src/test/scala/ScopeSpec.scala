@@ -20,6 +20,12 @@ import io.circe.generic.semiauto.deriveDecoder
 import io.circe.syntax._
 import org.scalatest.FunSpec
 import org.scalatest.prop.TableDrivenPropertyChecks._
+// Something in these two imports is killing map for Id from sttp.
+// It's not a sleepy problem.
+import zamblauskas.csv.parser._
+import zamblauskas.functional._
+
+import scala.io.Source
 
 import java.net.URI
 import java.util.UUID
@@ -43,14 +49,17 @@ object Verb {
     }
 }
 
-final case class CsvRow(path: String, scope: Scope, verb: Verb)
+final case class UnparsedRow(path: String, scope: String, verb: String) {
+  def tupled = (path, scope, verb)
+}
 
-object CsvRow {
+final case class ParsedCsvRow(path: String, scope: Scope, verb: Verb)
+object ParsedCsvRow {
   def fromStringsE(
       pathS: String,
       scopeS: String,
       verbS: String
-  ): Either[DecodingFailure, CsvRow] = {
+  ): Either[DecodingFailure, ParsedCsvRow] = {
     // guess whether the compiler can find the implicits if I don't explicitly cast
     // Right(pathS) to Decoder.Result[String]
     // (and no, before you ask, Either.right[DecodingFailure, String] doesn't help)
@@ -59,7 +68,7 @@ object CsvRow {
       Decoder[Scope].decodeJson(scopeS.asJson),
       Verb.fromStringE(verbS): Decoder.Result[Verb]
     ).mapN {
-      case (p, sc, v) => CsvRow(p, sc, v)
+      case (p, sc, v) => ParsedCsvRow(p, sc, v)
     }
   }
 }
@@ -101,7 +110,7 @@ class ScopeSpec extends FunSpec {
   val authTokenE: Either[String, TokenResponse] = {
     val tokenRoute = makeRoute("/tokens/")
     val response
-      : Id[Response[Either[DeserializationError[Error], TokenResponse]]] =
+        : Id[Response[Either[DeserializationError[Error], TokenResponse]]] =
       sttp
         .post(tokenRoute)
         .body(Map("refresh_token" -> refreshToken).asJson)
@@ -149,21 +158,19 @@ class ScopeSpec extends FunSpec {
   // - get a bearer token from the api
 
   // this will come from the csv in the real version, but just setting this up for now
-  val routes = Table(
+  def routes(rows: List[UnparsedRow]) = Table(
     ("Path", "Domain:Action", "Verb"),
-    ("/datasources/", "datasources:read", "get"),
-    ("/datasources/", "datasources:create", "post"),
-    ("/datasources/{datasourceID}", "datasources:read", "get")
+    (rows map { _.tupled }): _*
   )
 
   def getSimResult(
       baseRequest: RequestT[Empty, String, Nothing],
-      row: CsvRow,
+      row: ParsedCsvRow,
       expectation: Boolean
   ) = {
     val requestUri = makeRoute(row.path)
     val response
-      : Id[Response[Either[DeserializationError[Error], SimResponse]]] =
+        : Id[Response[Either[DeserializationError[Error], SimResponse]]] =
       addMethod(baseRequest, requestUri, row.verb).send()
     // for some reason I'm not allowed to bail on the Id wrapper in the previous step, though I'd really
     // prefer to. this is a bit janky but I'm not sure what to do about it.
@@ -181,13 +188,19 @@ class ScopeSpec extends FunSpec {
 
   def expectAllowed(
       baseRequest: RequestT[Empty, String, Nothing],
-      row: CsvRow
+      row: ParsedCsvRow
   ) = getSimResult(baseRequest, row, true)
 
   def expectForbidden(
       baseRequest: RequestT[Empty, String, Nothing],
-      row: CsvRow
+      row: ParsedCsvRow
   ): Unit = getSimResult(baseRequest, row, false)
+
+  val unparsedRows = List(
+    UnparsedRow("/datasources/", "datasources:read", "get"),
+    UnparsedRow("/datasources/", "datasources:create", "post"),
+    UnparsedRow("/datasources/{datasourceID}", "datasources:read", "get")
+  )
 
   def inputDataFailureMessage(path: String, scope: String, verb: String) = s"""
     | Problem in input data -- could not decode $path, $scope, and $verb
@@ -195,30 +208,32 @@ class ScopeSpec extends FunSpec {
 
   describe("Policy simulation") {
     it("reports expected failure when relevant scopes are excluded") {
-      forAll(routes) { (path: String, scope: String, verb: String) =>
-        {
-          (for {
-            tokenResponse <- authTokenE
-            row <- CsvRow.fromStringsE(path, scope, verb)
-            baseRequest = getBaseRequest(tokenResponse, row.scope, false)
-          } yield { expectForbidden(baseRequest, row) }) getOrElse {
-            fail(inputDataFailureMessage(path, scope, verb))
+      forAll(routes(unparsedRows)) {
+        (path: String, scope: String, verb: String) =>
+          {
+            (for {
+              tokenResponse <- authTokenE
+              row <- ParsedCsvRow.fromStringsE(path, scope, verb)
+              baseRequest = getBaseRequest(tokenResponse, row.scope, false)
+            } yield { expectForbidden(baseRequest, row) }) getOrElse {
+              fail(inputDataFailureMessage(path, scope, verb))
+            }
           }
-        }
       }
     }
 
     it("reports expected success when relevant scopes are included") {
-      forAll(routes) { (path: String, scope: String, verb: String) =>
-        {
-          (for {
-            tokenResponse <- authTokenE
-            row <- CsvRow.fromStringsE(path, scope, verb)
-            baseRequest = getBaseRequest(tokenResponse, row.scope, true)
-          } yield { expectAllowed(baseRequest, row) }) getOrElse {
-            fail(inputDataFailureMessage(path, scope, verb))
+      forAll(routes(unparsedRows)) {
+        (path: String, scope: String, verb: String) =>
+          {
+            (for {
+              tokenResponse <- authTokenE
+              row <- ParsedCsvRow.fromStringsE(path, scope, verb)
+              baseRequest = getBaseRequest(tokenResponse, row.scope, true)
+            } yield { expectAllowed(baseRequest, row) }) getOrElse {
+              fail(inputDataFailureMessage(path, scope, verb))
+            }
           }
-        }
       }
     }
   }
