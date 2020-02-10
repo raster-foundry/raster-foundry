@@ -221,7 +221,7 @@ class ProjectLiberation(tileHost: URI) {
   private def createLabelGroups(
       extras: Json,
       annotationProjectId: UUID
-  ): ConnectionIO[Either[FailureStage, List[UUID]]] = {
+  ): ConnectionIO[Either[FailureStage, Map[UUID, UUID]]] = {
     val groupsLens = root.annotate.labelGroups.json
 
     groupsLens.getOption(extras) flatMap { _.as[Map[UUID, String]].toOption } flatMap {
@@ -229,8 +229,11 @@ class ProjectLiberation(tileHost: URI) {
         {
           val records = groupsMap.zipWithIndex map {
             case ((groupId, groupName), n) =>
-              Fragment.const(
-                s"('$groupId', '$groupName', '$annotationProjectId', $n)"
+              (
+                groupId,
+                Fragment.const(
+                  s"(uuid_generate_v4(), '$groupName', '$annotationProjectId', $n)"
+                )
               )
           }
           records.toList.toNel
@@ -243,13 +246,13 @@ class ProjectLiberation(tileHost: URI) {
               name,
               annotation_project_id,
               idx
-            ) VALUES """) ++ recordsNel.intercalate(fr",")).update
+            ) VALUES """) ++ recordsNel.map(_._2).intercalate(fr",")).update
           .withGeneratedKeys[UUID]("id")
           .compile
           .to[List]
           .attempt
           .map({
-            case Right(ids) => Right(ids)
+            case Right(ids) => Right(Map(recordsNel.map(_._1).toList.zip(ids):_*))
             case Left(err) =>
               println(
                 s"Err in label class group creation was: $err"
@@ -258,7 +261,7 @@ class ProjectLiberation(tileHost: URI) {
           })
     } map { opt =>
       opt getOrElse {
-        Either.left[FailureStage, List[UUID]](CreateLabelClassGroups)
+        Either.left[FailureStage, Map[UUID, UUID]](CreateLabelClassGroups)
       }
     }
   }
@@ -266,7 +269,7 @@ class ProjectLiberation(tileHost: URI) {
   private def getLabelClassInsertFragment(
       labelClassJson: Json,
       idx: Int,
-      annotationLabelGroupIds: Set[UUID]
+      annotationLabelGroupIds: Map[UUID, UUID]
   ): Either[FailureStage, Fragment] = {
     // why lenses instead of just decoding to a case class?
     // I have no idea what the evolution of the extras field looked like.
@@ -305,9 +308,10 @@ class ProjectLiberation(tileHost: URI) {
             Try {
               val labelGroupId = UUID.fromString(labelGroupIdString)
               val id = UUID.fromString(idString)
-              if (annotationLabelGroupIds.contains(labelGroupId)) {
-                fr"($id, $name, $labelGroupId, $hexCode, $default, $determinant, $idx)"
-              } else {
+              annotationLabelGroupIds.get(labelGroupId) map {
+                newLabelGroupId =>
+                  fr"($id, $name, $newLabelGroupId, $hexCode, $default, $determinant, $idx)"
+              } getOrElse {
                 throw CreateLabelClasses
               }
             }
@@ -324,7 +328,7 @@ class ProjectLiberation(tileHost: URI) {
 
   private def createLabelClasses(
       extras: Json,
-      annotationLabelGroupIds: Set[UUID]
+      annotationLabelGroupIds: Map[UUID, UUID]
   ): ConnectionIO[Either[FailureStage, List[UUID]]] = {
     val labelClassesLens = root.annotate.labels.each.json
     val fragmentsE = labelClassesLens
@@ -514,7 +518,7 @@ class ProjectLiberation(tileHost: URI) {
         createLabelGroups(extras, annotationProjectId)
       }
       classIds <- EitherT {
-        createLabelClasses(extras, labelGroupIds.toSet)
+        createLabelClasses(extras, labelGroupIds)
       }
       _ <- EitherT { copyProjectPermissions(project, annotationProjectId) }
       _ <- EitherT {
