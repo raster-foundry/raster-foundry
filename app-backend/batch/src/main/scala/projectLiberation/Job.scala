@@ -178,7 +178,9 @@ class ProjectLiberation(tileHost: URI) {
           .attempt
           .map({ result =>
             result.leftMap({ err =>
-              println(s"Err in annotation project creation for ${project.id} was: $err")
+              println(
+                s"Err in annotation project creation for ${project.id} was: $err"
+              )
               CreateAnnotationProject
             })
           })
@@ -245,8 +247,19 @@ class ProjectLiberation(tileHost: URI) {
           .withGeneratedKeys[UUID]("id")
           .compile
           .to[List]
+          .attempt
+          .map({
+            case Right(ids) => Right(ids)
+            case Left(err) =>
+              println(
+                s"Err in label class group creation was: $err"
+              )
+              Left(CreateLabelClassGroups)
+          })
     } map { opt =>
-      Either.fromOption(opt, CreateLabelClassGroups)
+      opt getOrElse {
+        Either.left[FailureStage, List[UUID]](CreateLabelClassGroups)
+      }
     }
   }
 
