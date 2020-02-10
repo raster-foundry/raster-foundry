@@ -4,6 +4,7 @@
 
 ### Added
 
+- Added a CSV-configurable scope checking integration test [#5297](https://github.com/raster-foundry/raster-foundry/pull/5297)
 - Added POST endpoint for annotation projects and their related fields [#5294](https://github.com/raster-foundry/raster-foundry/pull/5294)
 - Added `signed-url` endpoint for uploads to send secure PUTs to s3 [#5290](https://github.com/raster-foundry/raster-foundry/pull/5290)
 - Added migration for annotate projects and related items [#5284](https://github.com/raster-foundry/raster-foundry/pull/5284)
