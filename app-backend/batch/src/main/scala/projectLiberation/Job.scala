@@ -487,6 +487,7 @@ class ProjectLiberation(tileHost: URI) {
   def liberateProject(
       project: Project
   ): ConnectionIO[Either[(FailureStage, UUID), UUID]] = {
+    println(s"Liberating project: ${project.id}")
     val extras = project.extras getOrElse { ().asJson }
     (for {
       annotationGroupId <- EitherT {
