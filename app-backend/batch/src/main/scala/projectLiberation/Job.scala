@@ -252,7 +252,8 @@ class ProjectLiberation(tileHost: URI) {
           .to[List]
           .attempt
           .map({
-            case Right(ids) => Right(Map(recordsNel.map(_._1).toList.zip(ids):_*))
+            case Right(ids) =>
+              Right(Map(recordsNel.map(_._1).toList.zip(ids): _*))
             case Left(err) =>
               println(
                 s"Err in label class group creation was: $err"
@@ -270,7 +271,7 @@ class ProjectLiberation(tileHost: URI) {
       labelClassJson: Json,
       idx: Int,
       annotationLabelGroupIds: Map[UUID, UUID]
-  ): Either[FailureStage, Fragment] = {
+  ): Either[FailureStage, (UUID, Fragment)] = {
     // why lenses instead of just decoding to a case class?
     // I have no idea what the evolution of the extras field looked like.
     // my assumption is that it changed over time in ways that I won't be able
@@ -307,10 +308,12 @@ class ProjectLiberation(tileHost: URI) {
           .fromTry(
             Try {
               val labelGroupId = UUID.fromString(labelGroupIdString)
-              val id = UUID.fromString(idString)
-              annotationLabelGroupIds.get(labelGroupId) map {
-                newLabelGroupId =>
-                  fr"($id, $name, $newLabelGroupId, $hexCode, $default, $determinant, $idx)"
+              val initialId = UUID.fromString(idString)
+              annotationLabelGroupIds.get(labelGroupId) map { newLabelGroupId =>
+                (
+                  initialId,
+                  fr"(uuid_generate_v4(), $name, $newLabelGroupId, $hexCode, $default, $determinant, $idx)"
+                )
               } getOrElse {
                 throw CreateLabelClasses
               }
@@ -329,7 +332,7 @@ class ProjectLiberation(tileHost: URI) {
   private def createLabelClasses(
       extras: Json,
       annotationLabelGroupIds: Map[UUID, UUID]
-  ): ConnectionIO[Either[FailureStage, List[UUID]]] = {
+  ): ConnectionIO[Either[FailureStage, Map[UUID, UUID]]] = {
     val labelClassesLens = root.annotate.labels.each.json
     val fragmentsE = labelClassesLens
       .getAll(extras)
@@ -354,11 +357,12 @@ class ProjectLiberation(tileHost: URI) {
               is_determinant,
               idx
             ) VALUES
-          """) ++ recordsNel
+          """) ++ (recordsNel map { _._2 })
           .intercalate(fr",")).update
           .withGeneratedKeys[UUID]("id")
           .compile
           .to[List]
+          .map(ids => (Map(recordsNel.map(_._1).toList.zip(ids): _*)))
           .attempt
           .map { result =>
             result.leftMap { _ =>
@@ -369,7 +373,7 @@ class ProjectLiberation(tileHost: URI) {
         // truly astounding sometimes just how little the Scala compiler is able
         // (or willing) to infer.
         Either
-          .left[FailureStage, List[UUID]](CreateLabelClasses)
+          .left[FailureStage, Map[UUID, UUID]](CreateLabelClasses)
           .pure[ConnectionIO]
     }
 
@@ -407,7 +411,7 @@ class ProjectLiberation(tileHost: URI) {
   private def insertGroundworkDataForAnnotation(
       annotationProjectId: UUID,
       annotation: Annotation,
-      classIds: List[UUID]
+      classIds: Map[UUID, UUID]
   ): ConnectionIO[Either[FailureStage, Unit]] = {
     val taskIdE = Either.fromOption(
       annotation.taskId,
@@ -419,7 +423,7 @@ class ProjectLiberation(tileHost: URI) {
       CreateLabels: FailureStage
     } flatMap { classes =>
       Either.fromOption(
-        classes.intersect(classIds).toList.toNel,
+        classes.intersect(classIds.keys.toList).toList.toNel,
         CreateLabels: FailureStage
       )
     }
@@ -448,7 +452,7 @@ class ProjectLiberation(tileHost: URI) {
       projectId: UUID,
       annotationGroupId: UUID,
       annotationProjectId: UUID,
-      classIds: List[UUID]
+      classIds: Map[UUID, UUID]
   ): ConnectionIO[Either[FailureStage, Unit]] = {
     // kind-projector isn't cooperating
     type ConnectionIOStream[A] = fs2.Stream[ConnectionIO, A]
