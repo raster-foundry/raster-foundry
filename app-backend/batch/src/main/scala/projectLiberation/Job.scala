@@ -493,7 +493,10 @@ class ProjectLiberation(tileHost: URI) {
       annotationGroupId: UUID
   ): ConnectionIO[Either[FailureStage, Unit]] = {
     val removeAnnotateKey = fr"""
-        UPDATE projects SET extras = extras - 'annotate' where id = ${project.id}
+        UPDATE projects
+        SET extras = extras - 'annotate',
+            tags = array_remove(tags, 'annotate')
+        WHERE id = ${project.id}
     """
     (AnnotationDao.deleteByProjectLayer(project.id) *>
       AnnotationGroupDao.query.filter(annotationGroupId).delete *>
