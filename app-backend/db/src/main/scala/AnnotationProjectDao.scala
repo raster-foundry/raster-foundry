@@ -28,14 +28,38 @@ object AnnotationProjectDao
       ownershipTypeO: Option[String],
       groupTypeO: Option[GroupType],
       groupIdO: Option[UUID]
-  ): Dao.QueryBuilder[AnnotationProject] = ???
+  ): Dao.QueryBuilder[AnnotationProject] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[AnnotationProject](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[AnnotationProject](
+          selectF,
+          tableF,
+          List(
+            queryObjectsF(
+              user,
+              objectType,
+              ActionType.View,
+              ownershipTypeO,
+              groupTypeO,
+              groupIdO
+            )
+          )
+        )
+    }
 
   def authorized(
       user: User,
       objectType: ObjectType,
       objectId: UUID,
       actionType: ActionType
-  ): ConnectionIO[AuthResult[AnnotationProject]] = ???
+  ): ConnectionIO[AuthResult[AnnotationProject]] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .selectOption
+      .map(AuthResult.fromOption _)
 
   def insertAnnotationProject(
       newAnnotationProject: AnnotationProject.Create,
@@ -78,6 +102,30 @@ object AnnotationProjectDao
       }
     } yield annotationProject.withRelated(tileLayers, labelClassGroups)
   }
+
+  def annotationProjectByIdQuery(id: UUID): Query0[AnnotationProject] = {
+    (selectF ++ Fragments.whereAndOpt(Some(fr"id = ${id}")))
+      .query[AnnotationProject]
+  }
+
+  def getAnnotationProjectWithRelatedById(
+      id: UUID
+  ): ConnectionIO[Option[AnnotationProject.WithRelated]] =
+    for {
+      projectO <- annotationProjectByIdQuery(id).option
+      tileLayers <- TileLayerDao.listTileLayerByProjectId(id)
+      labelClassGroup <- AnnotationLabelClassGroupDao
+        .listLabelClassGroupProjectId(id)
+      labelClassGroupWithClass <- labelClassGroup traverse { group =>
+        AnnotationLabelClassDao
+          .listAnnotationLabelClassByGroupId(group.id)
+          .map(group.withLabelClasses(_))
+      }
+    } yield {
+      projectO map { project =>
+        project.withRelated(tileLayers, labelClassGroupWithClass)
+      }
+    }
 
   def countUserProjects(user: User): ConnectionIO[Long] =
     query.filter(user).count

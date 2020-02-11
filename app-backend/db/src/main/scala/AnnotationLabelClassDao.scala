@@ -6,6 +6,8 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 
+import java.util.UUID
+
 object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
   val tableName = "annotation_label_classes"
 
@@ -36,5 +38,13 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       "is_determinant",
       "idx"
     )
+  }
+
+  def listAnnotationLabelClassByGroupId(
+      groupId: UUID
+  ): ConnectionIO[List[AnnotationLabelClass]] = {
+    (selectF ++ Fragments.whereAndOpt(
+      Some(fr"annotation_label_group_id = ${groupId}")
+    )).query[AnnotationLabelClass].to[List]
   }
 }

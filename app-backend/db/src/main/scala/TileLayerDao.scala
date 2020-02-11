@@ -7,6 +7,8 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 
+import java.util.UUID
+
 object TileLayerDao extends Dao[TileLayer] {
   val tableName = "tiles"
 
@@ -35,4 +37,12 @@ object TileLayerDao extends Dao[TileLayer] {
       "layer_type",
       "annotation_project_id"
     )
+
+  def listTileLayerByProjectId(
+      projectId: UUID
+  ): ConnectionIO[List[TileLayer]] = {
+    (selectF ++ Fragments.whereAndOpt(
+      Some(fr"annotation_project_id = ${projectId}")
+    )).query[TileLayer].to[List]
+  }
 }

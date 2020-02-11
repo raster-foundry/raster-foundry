@@ -186,6 +186,8 @@ trait ObjectPermissions[Model] {
       case (ObjectType.Shape, ActionType.View) =>
         Fragment.empty
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
+          (ObjectType.AnnotationProject, ActionType.Export) |
+          (ObjectType.AnnotationProject, ActionType.Annotate) |
           (ObjectType.Project, ActionType.Export) |
           (ObjectType.Project, ActionType.Annotate) |
           (ObjectType.Analysis, ActionType.Export) =>

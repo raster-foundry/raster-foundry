@@ -12,17 +12,77 @@ import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
 
+import java.util.UUID
+
 trait AnnotationProjectRoutes extends CommonHandlers with Authentication {
 
   val xa: Transactor[IO]
 
   val annotationProjectRoutes: Route = {
     pathEndOrSingleSlash {
-      post {
-        createAnnotationProject
+      get {
+        listAnnotationProjects
+      } ~
+        post {
+          createAnnotationProject
+        }
+    } ~
+      pathPrefix(JavaUUID) { projectId =>
+        pathEndOrSingleSlash {
+          get {
+            getAnnotationProject(projectId)
+          } ~
+            put {
+              updateAnnotationProject(projectId)
+            } ~
+            delete {
+              deleteAnnotationProject(projectId)
+            }
+        } ~
+          pathPrefix("tasks") {
+            pathEndOrSingleSlash {
+              get {
+                listTasks(projectId)
+              } ~ post {
+                createTask(projectId)
+              } ~ delete {
+                deleteTasks(projectId)
+              }
+            } ~
+              pathPrefix("grid") {
+                post {
+                  createTaskGrid(projectId)
+                }
+              } ~
+              pathPrefix("user-stats") {
+                get {
+                  getTaskUserStats(projectId)
+                }
+              } ~
+              pathPrefix(JavaUUID) { taskId =>
+                pathEndOrSingleSlash {
+                  get {
+                    getTask(projectId, taskId)
+                  } ~ put {
+                    updateTask(projectId, taskId)
+                  } ~ delete {
+                    deleteTask(projectId, taskId)
+                  }
+                } ~ pathPrefix("lock") {
+                  pathEndOrSingleSlash {
+                    post {
+                      lockTask(projectId, taskId)
+                    } ~ delete {
+                      unlockTask(projectId, taskId)
+                    }
+                  }
+                }
+              }
+          }
       }
-    }
   }
+
+  def listAnnotationProjects: Route = ???
 
   def createAnnotationProject: Route = authenticate { user =>
     authorizeScopeLimit(
@@ -43,4 +103,56 @@ trait AnnotationProjectRoutes extends CommonHandlers with Authentication {
       }
     }
   }
+
+  def getAnnotationProject(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        AnnotationProjectDao
+          .authorized(
+            user,
+            ObjectType.AnnotationProject,
+            projectId,
+            ActionType.View
+          )
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            AnnotationProjectDao
+              .getAnnotationProjectWithRelatedById(projectId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+  }
+
+  def updateAnnotationProject(projectId: UUID): Route = ???
+
+  def deleteAnnotationProject(projectId: UUID): Route = ???
+
+  def listTasks(projectId: UUID): Route = ???
+
+  def createTask(projectId: UUID): Route = ???
+
+  def deleteTasks(projectId: UUID): Route = ???
+
+  def createTaskGrid(projectId: UUID): Route = ???
+
+  def getTaskUserStats(projectId: UUID): Route = ???
+
+  def getTask(projectId: UUID, taskId: UUID): Route = ???
+
+  def updateTask(projectId: UUID, taskId: UUID): Route = ???
+
+  def deleteTask(projectId: UUID, taskId: UUID): Route = ???
+
+  def lockTask(projectId: UUID, taskId: UUID): Route = ???
+
+  def unlockTask(projectId: UUID, taskId: UUID): Route = ???
 }
