@@ -1,8 +1,9 @@
 package com.rasterfoundry.api.annotationProject
 
-import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
-import com.rasterfoundry.database.AnnotationProjectDao
+import com.rasterfoundry.akkautil._
+import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
@@ -14,7 +15,12 @@ import doobie.implicits._
 
 import java.util.UUID
 
-trait AnnotationProjectRoutes extends CommonHandlers with Authentication {
+trait AnnotationProjectRoutes
+    extends CommonHandlers
+    with Authentication
+    with PaginationDirectives
+    with QueryParametersCommon
+    with AnnotationProjectTaskRoutes {
 
   val xa: Transactor[IO]
 
@@ -94,7 +100,7 @@ trait AnnotationProjectRoutes extends CommonHandlers with Authentication {
       entity(as[AnnotationProject.Create]) { newAnnotationProject =>
         onSuccess(
           AnnotationProjectDao
-            .insertAnnotationProject(newAnnotationProject, user)
+            .insert(newAnnotationProject, user)
             .transact(xa)
             .unsafeToFuture
         ) { annotationProject =>
@@ -123,7 +129,7 @@ trait AnnotationProjectRoutes extends CommonHandlers with Authentication {
         rejectEmptyResponse {
           complete {
             AnnotationProjectDao
-              .getAnnotationProjectWithRelatedById(projectId)
+              .getWithRelatedById(projectId)
               .transact(xa)
               .unsafeToFuture
           }
@@ -134,25 +140,32 @@ trait AnnotationProjectRoutes extends CommonHandlers with Authentication {
 
   def updateAnnotationProject(projectId: UUID): Route = ???
 
-  def deleteAnnotationProject(projectId: UUID): Route = ???
+  def deleteAnnotationProject(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.Delete, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        AnnotationProjectDao
+          .authorized(
+            user,
+            ObjectType.AnnotationProject,
+            projectId,
+            ActionType.Delete
+          )
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          AnnotationProjectDao
+            .deleteById(projectId)
+            .transact(xa)
+            .unsafeToFuture
+        ) {
+          completeSingleOrNotFound
+        }
+      }
+    }
+  }
 
-  def listTasks(projectId: UUID): Route = ???
-
-  def createTask(projectId: UUID): Route = ???
-
-  def deleteTasks(projectId: UUID): Route = ???
-
-  def createTaskGrid(projectId: UUID): Route = ???
-
-  def getTaskUserStats(projectId: UUID): Route = ???
-
-  def getTask(projectId: UUID, taskId: UUID): Route = ???
-
-  def updateTask(projectId: UUID, taskId: UUID): Route = ???
-
-  def deleteTask(projectId: UUID, taskId: UUID): Route = ???
-
-  def lockTask(projectId: UUID, taskId: UUID): Route = ???
-
-  def unlockTask(projectId: UUID, taskId: UUID): Route = ???
 }

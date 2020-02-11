@@ -7,6 +7,7 @@ import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
+import geotrellis.vector.{Geometry, Projected}
 
 import java.util.UUID
 
@@ -61,7 +62,7 @@ object AnnotationProjectDao
       .selectOption
       .map(AuthResult.fromOption _)
 
-  def insertAnnotationProject(
+  def insert(
       newAnnotationProject: AnnotationProject.Create,
       user: User
   ): ConnectionIO[AnnotationProject.WithRelated] = {
@@ -108,11 +109,14 @@ object AnnotationProjectDao
       .query[AnnotationProject]
   }
 
-  def getAnnotationProjectWithRelatedById(
+  def getById(id: UUID): ConnectionIO[Option[AnnotationProject]] =
+    annotationProjectByIdQuery(id).option
+
+  def getWithRelatedById(
       id: UUID
   ): ConnectionIO[Option[AnnotationProject.WithRelated]] =
     for {
-      projectO <- annotationProjectByIdQuery(id).option
+      projectO <- getById(id)
       tileLayers <- TileLayerDao.listTileLayerByProjectId(id)
       labelClassGroup <- AnnotationLabelClassGroupDao
         .listLabelClassGroupProjectId(id)
@@ -125,6 +129,28 @@ object AnnotationProjectDao
       projectO map { project =>
         project.withRelated(tileLayers, labelClassGroupWithClass)
       }
+    }
+
+  def deleteById(id: UUID): ConnectionIO[Int] =
+    query.filter(fr"id = ${id}").delete
+
+  def getFootprint(id: UUID): ConnectionIO[Option[Projected[Geometry]]] =
+    for {
+      annotationProjectO <- getById(id)
+      result <- annotationProjectO match {
+        case Some(annotationProject) =>
+          annotationProject.aoi match {
+            case Some(aoi) => Some(aoi).pure[ConnectionIO]
+            case _ =>
+              annotationProject.projectId match {
+                case Some(projectId) => ProjectDao.getFootprint(projectId)
+                case _               => None.pure[ConnectionIO]
+              }
+          }
+        case _ => None.pure[ConnectionIO]
+      }
+    } yield {
+      result
     }
 
   def countUserProjects(user: User): ConnectionIO[Long] =

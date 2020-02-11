@@ -948,14 +948,10 @@ object Generators extends ArbitraryInstances {
 
   private def taskPropertiesCreateGen: Gen[Task.TaskPropertiesCreate] =
     for {
-      projectId <- uuidGen
-      projectLayerId <- uuidGen
       status <- taskStatusGen
       annotationProjectId <- uuidGen
     } yield {
       Task.TaskPropertiesCreate(
-        projectId,
-        projectLayerId,
         status,
         annotationProjectId
       )

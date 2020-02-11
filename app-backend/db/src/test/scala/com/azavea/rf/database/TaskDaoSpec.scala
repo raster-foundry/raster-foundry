@@ -46,7 +46,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -99,7 +99,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -160,7 +160,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -235,7 +235,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -281,7 +281,7 @@ class TaskDaoSpec
                 projectCreate
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(projectId = Some(dbProject.id)),
                   dbUser
                 )
@@ -351,7 +351,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -431,7 +431,7 @@ class TaskDaoSpec
                 projectCreate
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(projectId = Some(dbProject.id)),
                   dbUser
                 )
@@ -511,7 +511,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -582,7 +582,7 @@ class TaskDaoSpec
                 dbProject
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(updatedDbProject.id)
                   ),
@@ -707,7 +707,7 @@ class TaskDaoSpec
                 dbProject
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(updatedDbProject.id)
                   ),
@@ -812,7 +812,7 @@ class TaskDaoSpec
                 dbProject
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(updatedDbProject.id)
                   ),
@@ -919,7 +919,7 @@ class TaskDaoSpec
                 dbProject
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(updatedDbProject.id)
                   ),
@@ -993,7 +993,7 @@ class TaskDaoSpec
                 projectCreate
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(dbProject.id)
                   ),

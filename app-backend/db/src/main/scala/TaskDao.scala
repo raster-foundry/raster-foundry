@@ -36,8 +36,6 @@ object TaskDao extends Dao[Task] {
       created_by,
       modified_at,
       owner,
-      project_id,
-      project_layer_id,
       status,
       locked_by,
       locked_on,
@@ -59,8 +57,6 @@ object TaskDao extends Dao[Task] {
           created_by,
           modified_at,
           owner,
-          project_id,
-          project_layer_id,
           status,
           locked_by,
           locked_on,
@@ -71,8 +67,6 @@ object TaskDao extends Dao[Task] {
 
   def updateF(taskId: UUID, update: Task.TaskFeatureCreate): Fragment =
     fr"UPDATE " ++ tableF ++ fr"""SET
-      project_id = ${update.properties.projectId},
-      project_layer_id = ${update.properties.projectLayerId},
       status = ${update.properties.status},
       geometry = ${update.geometry},
       annotation_project_id = ${update.properties.annotationProjectId}
@@ -162,10 +156,9 @@ object TaskDao extends Dao[Task] {
   def deleteTask(taskId: UUID): ConnectionIO[Int] =
     query.filter(taskId).delete
 
-  def tasksForProjectAndLayerQB(
+  def tasksForAnnotationProjectQB(
       queryParams: TaskQueryParameters,
-      projectId: UUID,
-      layerId: UUID
+      annotationProjectId: UUID
   ): Dao.QueryBuilder[Task] =
     Dao
       .QueryBuilder[Task](
@@ -175,13 +168,11 @@ object TaskDao extends Dao[Task] {
         Some(fr"SELECT count(distinct id) FROM" ++ joinTableF)
       )
       .filter(queryParams)
-      .filter(fr"project_id = $projectId")
-      .filter(fr"project_layer_id = $layerId")
+      .filter(fr"annotation_project_id = $annotationProjectId")
 
   def listTasks(
       queryParams: TaskQueryParameters,
-      projectId: UUID,
-      layerId: UUID,
+      annotationProjectId: UUID,
       pageRequest: PageRequest
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] = {
     val actionFiltered = queryParams.actionUser.nonEmpty ||
@@ -193,16 +184,14 @@ object TaskDao extends Dao[Task] {
     for {
       paginatedResponse <- actionFiltered match {
         case true =>
-          tasksForProjectAndLayerQB(
+          tasksForAnnotationProjectQB(
             queryParams,
-            projectId,
-            layerId
+            annotationProjectId
           ).page(pageRequest)
         case _ =>
           query
             .filter(queryParams)
-            .filter(fr"project_id = $projectId")
-            .filter(fr"project_layer_id = $layerId")
+            .filter(fr"annotation_project_id = $annotationProjectId")
             .page(pageRequest)
       }
       withActions <- paginatedResponse.results.toList traverse { task =>
@@ -226,8 +215,7 @@ object TaskDao extends Dao[Task] {
   ): Fragment = {
     fr"""(
         ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id},
-        ${tfc.properties.projectId}, ${tfc.properties.projectLayerId}, ${tfc.properties.status},
-        null, null, ${tfc.geometry}, ${tfc.properties.annotationProjectId}
+        ${tfc.properties.status}, null, null, ${tfc.geometry}, ${tfc.properties.annotationProjectId}
     )"""
   }
 
@@ -246,8 +234,6 @@ object TaskDao extends Dao[Task] {
           "created_by",
           "modified_at",
           "owner",
-          "project_id",
-          "project_layer_id",
           "status",
           "locked_by",
           "locked_on",
@@ -279,7 +265,9 @@ object TaskDao extends Dao[Task] {
     for {
       geomO <- taskGridFeatureCreate.geometry match {
         case Some(g) => Option(g).pure[ConnectionIO]
-        case None    => ProjectDao.getFootprint(taskProperties.projectId)
+        case None => AnnotationProjectDao.getFootprint(
+            taskProperties.annotationProjectId
+          )
       }
       gridInsert <- geomO map { geom =>
         (insertF ++ fr"""
@@ -289,8 +277,6 @@ object TaskDao extends Dao[Task] {
           ${user.id},
           NOW(),
           ${user.id},
-          ${taskProperties.projectId},
-          ${taskProperties.projectLayerId},
           ${taskProperties.status},
           null,
           null,
@@ -332,8 +318,8 @@ object TaskDao extends Dao[Task] {
   def unlockTask(taskId: UUID): ConnectionIO[Option[Task.TaskFeature]] =
     deleteLockF(taskId).update.run *> getTaskWithActions(taskId)
 
-  def deleteLayerTasks(projectId: UUID, layerId: UUID): ConnectionIO[Int] = {
-    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE project_id = ${projectId} and project_layer_id = ${layerId}").update.run
+  def deleteProjectTasks(annotationProjectId: UUID): ConnectionIO[Int] = {
+    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE annotation_project_id = ${annotationProjectId}").update.run
   }
 
   def getTeamUsersF(
@@ -486,14 +472,12 @@ object TaskDao extends Dao[Task] {
       team_users.user_id = user_validated_tasks.user_id
   """).query[TaskUserSummary].to[List]
 
-  def listLayerTasksByStatus(
-      projectId: UUID,
-      layerId: UUID,
+  def listProjectTasksByStatus(
+      annotationProjectId: UUID,
       taskStatuses: List[String]
   ): ConnectionIO[List[Task]] = {
     query
-      .filter(fr"project_id = $projectId")
-      .filter(fr"project_layer_id = $layerId")
+      .filter(fr"annotation_project_id = $annotationProjectId")
       .filter(taskStatusF(taskStatuses))
       .list
   }
@@ -504,8 +488,7 @@ object TaskDao extends Dao[Task] {
     }
 
   def createUnionedGeomExtent(
-      projectId: UUID,
-      layerId: UUID,
+      annotationProjectId: UUID,
       taskStatuses: List[String]
   ): ConnectionIO[Option[UnionedGeomExtent]] =
     Dao
@@ -523,8 +506,7 @@ object TaskDao extends Dao[Task] {
         Nil,
         None
       )
-      .filter(fr"project_id = $projectId")
-      .filter(fr"project_layer_id = $layerId")
+      .filter(fr"annotation_project_id = $annotationProjectId")
       .filter(taskStatusF(taskStatuses))
       .select map {
       case Some(geom) :: Some(xMin) :: Some(yMin) :: Some(xMax) :: Some(yMax) :: HNil =>
@@ -535,8 +517,7 @@ object TaskDao extends Dao[Task] {
 
   def listTaskGeomByStatus(
       user: User,
-      projectId: UUID,
-      layerId: UUID,
+      annotationProjectId: UUID,
       statusO: Option[TaskStatus]
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] =
     (fr"""
@@ -545,8 +526,7 @@ object TaskDao extends Dao[Task] {
       ST_Transform(ST_Buffer(ST_Union(ST_Buffer(geometry, 1)), -1), 4326) AS geometry
     FROM tasks""" ++ Fragments
       .whereAndOpt(
-        Some(fr"project_layer_id = ${layerId}"),
-        Some(fr"project_id = ${projectId}"),
+        Some(fr"annotation_project_id = ${annotationProjectId}"),
         taskStatusF(statusO.toList map { _.toString })
       ) ++ fr"GROUP BY status")
       .query[UnionedGeomWithStatus]
@@ -567,13 +547,11 @@ object TaskDao extends Dao[Task] {
                 user.id,
                 Instant.now(),
                 user.id,
-                projectId,
-                layerId,
                 geomWithStatus.status,
                 None,
                 None,
                 List(),
-                UUID.randomUUID()
+                annotationProjectId
               ),
               geomWithStatus.geometry
             )

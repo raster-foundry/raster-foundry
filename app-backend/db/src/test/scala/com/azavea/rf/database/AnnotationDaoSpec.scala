@@ -369,7 +369,7 @@ class AnnotationDaoSpec
                 Some(Map(labelGroupId -> "Car Group"))
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(updatedDbProject.id)
                   ),
@@ -473,7 +473,7 @@ class AnnotationDaoSpec
                 Some(Map(labelGroupId -> "Car Group"))
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(updatedDbProject.id)
                   ),
@@ -592,7 +592,7 @@ class AnnotationDaoSpec
                 )
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(updatedDbProject.id)
                   ),

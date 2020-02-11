@@ -23,7 +23,7 @@ class AnnotationProjectDaoSpec
           val insertIO = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao
-              .insertAnnotationProject(annotationProjectCreate, user)
+              .insert(annotationProjectCreate, user)
           } yield inserted
 
           val result = insertIO.transact(xa).unsafeRunSync
