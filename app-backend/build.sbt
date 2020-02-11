@@ -34,9 +34,12 @@ val scalaOptions = Seq(
   "-Ywarn-unused-import",
   "-Ypartial-unification",
   "-Ybackend-parallelism",
-  "4",
-  "-Ypatmat-exhaust-depth",
-  "100"
+  "4"
+  // This options appears to be broken. bloop appends some params after it, and
+  // the compiler treats them as additional parameters to this argument, despite
+  // it being a single param argument
+  // "-Ypatmat-exhaust-depth",
+  // "100"
 )
 
 /**
