@@ -325,4 +325,59 @@ class AnnotationLabelDaoSpec
       )
     }
   }
+
+  test("generate stac export of labels in a project") {
+    // TODO: edit this to test the correct thing
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            annotationCreates: List[AnnotationLabelWithClasses.Create],
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+        ) => {
+          val toInsert = annotationProjectCreate.copy(
+            labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
+          )
+
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            annotationProject <- AnnotationProjectDao
+              .insert(toInsert, user)
+            fixedUpTasks = fixupTaskFeaturesCollection(
+              taskFeatureCollectionCreate,
+              annotationProject,
+              None
+            )
+            task <- TaskDao.insertTasks(
+              fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+              user
+            ) map { _.features.head }
+            classIds = annotationProject.labelClassGroups flatMap {
+              _.labelClasses
+            } map { _.id }
+            withClasses = annotationCreates map { create =>
+              addClasses(create, classIds)
+            }
+            _ <- AnnotationLabelDao.insertAnnotations(
+              annotationProject.id,
+              task.id,
+              withClasses,
+              user
+            )
+            listed <- AnnotationLabelDao.listProjectLabels(annotationProject.id)
+          } yield listed
+
+          val listed = listIO.transact(xa).unsafeRunSync
+
+          assert(
+            listed.size == annotationCreates.size,
+            "All annotations were listed"
+          )
+
+          true
+        }
+      )
+    }
+  }
 }

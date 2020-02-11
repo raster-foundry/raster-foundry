@@ -2,12 +2,8 @@ package com.rasterfoundry.datamodel
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.vector.{Geometry, Projected, io => _}
-import io.circe.Encoder
-import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras._
-import io.circe.generic.semiauto._
-import io.circe.syntax._
 
 import java.sql.Timestamp
 import java.util.UUID
@@ -290,124 +286,6 @@ final case class AnnotationWithOwnerInfoProperties(
     taskId: Option[UUID] = None,
     ownerName: String,
     ownerProfileImageUri: String)
-
-@JsonCodec
-final case class AnnotationWithClasses(
-    id: UUID,
-    projectId: UUID,
-    createdAt: Timestamp,
-    createdBy: String,
-    modifiedAt: Timestamp,
-    owner: String,
-    description: Option[String],
-    machineGenerated: Option[Boolean],
-    confidence: Option[Float],
-    quality: Option[AnnotationQuality],
-    geometry: Option[Projected[Geometry]],
-    annotationGroup: UUID,
-    labeledBy: Option[String],
-    verifiedBy: Option[String],
-    projectLayerId: UUID,
-    taskId: Option[UUID],
-    classes: Json
-) extends GeoJSONSerializable[AnnotationWithClasses.GeoJSON] {
-  def toGeoJSONFeature = AnnotationWithClasses.GeoJSON(
-    this.id,
-    this.geometry,
-    AnnotationWithClassesProperties(
-      this.projectId,
-      this.createdAt,
-      this.createdBy,
-      this.modifiedAt,
-      this.owner,
-      this.description,
-      this.machineGenerated,
-      this.confidence,
-      this.quality,
-      this.annotationGroup,
-      this.labeledBy,
-      this.verifiedBy,
-      this.projectLayerId,
-      this.taskId,
-      this.classes
-    )
-  )
-}
-
-object AnnotationWithClasses {
-  final case class GeoJSON(
-      id: UUID,
-      geometry: Option[Projected[Geometry]],
-      properties: AnnotationWithClassesProperties,
-      _type: String = "Feature"
-  ) extends GeoJSONFeature
-
-  object GeoJSON {
-    implicit val annoWithClassesGeojonEncoder: Encoder[GeoJSON] =
-      Encoder.forProduct4("id", "geometry", "properties", "type")(
-        geojson =>
-          (geojson.id, geojson.geometry, geojson.properties, geojson._type)
-      )
-  }
-}
-
-final case class AnnotationWithClassesProperties(
-    projectId: UUID,
-    createdAt: Timestamp,
-    createdBy: String,
-    modifiedAt: Timestamp,
-    owner: String,
-    description: Option[String],
-    machineGenerated: Option[Boolean],
-    confidence: Option[Float],
-    quality: Option[AnnotationQuality],
-    annotationGroup: UUID,
-    labeledBy: Option[String],
-    verifiedBy: Option[String],
-    projectLayerId: UUID,
-    taskId: Option[UUID],
-    classes: Json
-)
-
-object AnnotationWithClassesProperties {
-  implicit val annotationWithClassesPropertiesEncoder
-    : Encoder[AnnotationWithClassesProperties] =
-    new Encoder[AnnotationWithClassesProperties] {
-      final def apply(properties: AnnotationWithClassesProperties): Json = {
-        val classMap: Map[String, Json] =
-          properties.classes.as[Map[String, Json]].getOrElse(Map.empty)
-        (
-          Map(
-            "projectId" -> properties.projectId.asJson,
-            "createdAt" -> properties.createdAt.asJson,
-            "createdBy" -> properties.createdBy.asJson,
-            "modifiedAt" -> properties.modifiedAt.asJson,
-            "owner" -> properties.owner.asJson,
-            "description" -> properties.description.asJson,
-            "machineGenerated" -> properties.machineGenerated.asJson,
-            "confidence" -> properties.confidence.asJson,
-            "quality" -> properties.quality.asJson,
-            "annotationGroup" -> properties.annotationGroup.asJson,
-            "labeledBy" -> properties.labeledBy.asJson,
-            "verifiedBy" -> properties.verifiedBy.asJson,
-            "projectLayerId" -> properties.projectLayerId.asJson,
-            "taskId" -> properties.taskId.asJson
-          ) ++ classMap
-        ).asJson
-      }
-    }
-}
-
-final case class AnnotationWithClassesFeatureCollection(
-    features: List[AnnotationWithClasses.GeoJSON],
-    `type`: String = "FeatureCollection"
-)
-
-object AnnotationWithClassesFeatureCollection {
-  implicit val annoWithClassesFCEncoder
-    : Encoder[AnnotationWithClassesFeatureCollection] =
-    deriveEncoder[AnnotationWithClassesFeatureCollection]
-}
 
 @JsonCodec
 final case class AnnotationFeatureCollection(

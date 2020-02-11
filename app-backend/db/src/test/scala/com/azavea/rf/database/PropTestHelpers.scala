@@ -435,12 +435,10 @@ trait PropTestHelpers {
   def fixupStacExportCreate(
       stacExportCreate: StacExport.Create,
       user: User,
-      project: Project
+      project: AnnotationProject.WithRelated
   ): StacExport.Create =
     stacExportCreate.copy(
-      layerDefinitions = List(
-        StacExport.LayerDefinition(project.id, project.defaultLayerId)
-      ),
+      annotationProjectId = project.id,
       owner = Some(user.id)
     )
 

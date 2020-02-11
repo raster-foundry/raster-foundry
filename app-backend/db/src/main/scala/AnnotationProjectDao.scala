@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
+import cats.data._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -61,6 +62,11 @@ object AnnotationProjectDao
       .filter(objectId)
       .selectOption
       .map(AuthResult.fromOption _)
+
+  def getProjectById(
+      annotationProjectId: UUID
+  ): ConnectionIO[Option[AnnotationProject]] =
+    this.query.filter(annotationProjectId).selectOption
 
   def listProjects(
       page: PageRequest,
@@ -257,4 +263,38 @@ object AnnotationProjectDao
         }
       }
       .map(_.distinct.length.toLong)
+
+  def getAnnotationProjectStacInfo(
+      annotationProjectId: UUID
+  ): ConnectionIO[Option[StacLabelItemPropertiesThin]] =
+    (for {
+      annotationProject <- OptionT {
+        getProjectById(annotationProjectId)
+      }
+      labelGroups <- OptionT.liftF(
+        AnnotationLabelClassGroupDao.listByProjectId(annotationProjectId)
+      )
+      groupedLabelClasses <- OptionT.liftF(labelGroups traverse { group =>
+        AnnotationLabelClassDao
+          .listAnnotationLabelClassByGroupId(group.id)
+          .map((group.id, _))
+      })
+      groupToLabelClasses = groupedLabelClasses.map(g => g._1 -> g._2).toMap
+      stacInfo = StacLabelItemPropertiesThin(
+        labelGroups.map(_.name),
+        labelGroups.map { group =>
+          groupToLabelClasses
+            .get(group.id)
+            .map(
+              classes =>
+                StacLabelItemProperties.StacLabelItemClasses(
+                  group.name,
+                  classes.map(_.name)
+              )
+            )
+        }.flatten,
+        "vector",
+        annotationProject.projectType.toString.toLowerCase
+      )
+    } yield stacInfo).value
 }

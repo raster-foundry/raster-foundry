@@ -13,6 +13,9 @@ import java.net.{URI, URLDecoder}
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
+// TODO: Layers are no longer relevant to AnnotationProjects.
+// We can simplify the exporter by having a single collection
+// for all the scenes, instead of a layer collection wrapping them.
 object Utils {
 
   private val relativeCatalogRoot = StacLink(

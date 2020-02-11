@@ -575,15 +575,13 @@ object TaskDao extends Dao[Task] {
     """).query[(TaskStatus, Int)].to[List].map(_.toMap)
   }
 
-  def listLayerTasksByStatus(
-      projectId: UUID,
-      layerId: UUID,
+  def listTasksByStatus(
+      annotationProjectId: UUID,
       taskStatuses: List[String]
-  ): ConnectionIO[List[Task]] = ???
-
-  def createUnionedGeomExtentOld(
-      projectId: UUID,
-      layerId: UUID,
-      taskStatuses: List[String]
-  ): ConnectionIO[Option[UnionedGeomExtent]] = ???
+  ): ConnectionIO[List[Task]] = {
+    query
+      .filter(fr"annotation_project_id = $annotationProjectId")
+      .filter(taskStatusF(taskStatuses))
+      .list
+  }
 }

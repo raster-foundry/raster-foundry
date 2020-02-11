@@ -3,28 +3,36 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
+import cats.data._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
+import io.circe._
+import io.circe.syntax._
 
 import java.util.UUID
 
 object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   val tableName = "annotation_labels"
   val joinTableName = "annotation_labels_annotation_label_classes"
-
-  val selectF: Fragment = fr"""
-  SELECT
-    id, created_at, created_by, geometry, annotation_project_id, annotation_task_id,
-    classes.class_ids
-  FROM """ ++ tableF ++ fr"""JOIN (
-    SELECT annotation_label_id, array_agg(annotation_class_id) as class_ids
-    FROM """ ++ Fragment.const(joinTableName) ++ fr"""
-    GROUP BY annotation_label_id
-  ) as classes ON """ ++ Fragment.const(
-    s"${tableName}.id = classes.annotation_label_id"
+  override val fieldNames = List(
+    "id",
+    "created_at",
+    "created_by",
+    "geometry",
+    "annotation_project_id",
+    "annotation_task_id"
   )
+  val selectF: Fragment = fr"SELECT" ++
+    fieldsF ++ fr", classes.class_ids as annotation_label_classes FROM " ++
+    Fragment.const(tableName) ++
+    fr""" JOIN (
+      SELECT annotation_label_id, array_agg(annotation_class_id) as class_ids
+      FROM """ ++ Fragment.const(joinTableName) ++ fr"""
+      GROUP BY annotation_label_id
+    ) as classes ON """ ++ Fragment.const(tableName) ++ fr".id = " ++
+    fr"classes.annotation_label_id"
 
   def insertAnnotations(
       annotationProjectId: UUID,
@@ -37,13 +45,11 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       id, created_at, created_by, geometry, annotation_project_id, annotation_task_id
     ) VALUES
     """
-
     val insertClassesFragment: Fragment =
       fr"INSERT INTO" ++ Fragment.const(joinTableName) ++ fr"""(
       annotation_label_id, annotation_class_id
     ) VALUES
     """
-
     val annotationLabelsWithClasses =
       annotations.map(
         _.toAnnotationLabelWithClasses(
@@ -52,7 +58,6 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
           user
         )
       )
-
     val annotationFragments: List[Fragment] = annotationLabelsWithClasses.map(
       (annotationLabel: AnnotationLabelWithClasses) => fr"""(
         ${annotationLabel.id}, ${annotationLabel.createdAt},
@@ -60,14 +65,12 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         ${annotationLabel.annotationProjectId}, ${annotationLabel.annotationTaskId}
        )"""
     )
-
     val labelClassFragments: List[Fragment] =
       annotationLabelsWithClasses flatMap { label =>
         label.annotationLabelClasses.map(
           labelClassId => fr"(${label.id}, ${labelClassId})"
         )
       }
-
     for {
       insertedAnnotationIds <- annotationFragments.toNel traverse { fragments =>
         (insertAnnotationsFragment ++ fragments.intercalate(fr",")).update
@@ -141,4 +144,55 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       Some(fr"annotation_project_id=$projectId"),
       Some(fr"annotation_task_id=$taskId")
     )).update.run
+
+  def getAnnotationJsonByTaskStatus(
+      annotationProjectId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[Option[Json]] = {
+    val taskJoinF = fr"JOIN tasks on " ++ Fragment.const(tableName) ++ fr".annotation_task_id = tasks.id"
+    val taskFilterF = fr"tasks.annotation_project_id = ${annotationProjectId}"
+    val labelFilterF =
+      fr"annotation_labels.annotation_project_id = ${annotationProjectId}"
+    val statusFilterFO = taskStatuses.toNel map { statuses =>
+      Fragments.notIn(fr"tasks.status", statuses.map(TaskStatus.fromString(_)))
+    }
+    val fcIo = for {
+      labelGroups <- OptionT.liftF(
+        AnnotationLabelClassGroupDao.listByProjectId(annotationProjectId)
+      )
+      groupedLabelClasses <- OptionT.liftF(labelGroups traverse { group =>
+        AnnotationLabelClassDao
+          .listAnnotationLabelClassByGroupId(group.id)
+          .map((group.id, _))
+      })
+      labelGroupMap = labelGroups.map(g => (g.id -> g)).toMap
+      classIdToGroupName = groupedLabelClasses
+        .map { classGroups =>
+          classGroups._2.map(_.id -> labelGroupMap.get(classGroups._1))
+        }
+        .flatten
+        .toMap
+        .collect {
+          case (k, Some(v)) => k -> v.name
+        }
+      classIdToLabelName = groupedLabelClasses
+        .map(_._2)
+        .flatten
+        .map(c => c.id -> c.name)
+        .toMap
+      annotations <- OptionT.liftF(
+        (selectF ++ taskJoinF ++ Fragments
+          .whereAndOpt(Some(taskFilterF), Some(labelFilterF), statusFilterFO))
+          .query[AnnotationLabelWithClasses]
+          .to[List]
+      )
+    } yield
+      StacGeoJSONFeatureCollection(
+        annotations.map(
+          anno =>
+            anno.toStacGeoJSONFeature(classIdToGroupName, classIdToLabelName)
+        )
+      ).asJson
+    fcIo.value
+  }
 }
