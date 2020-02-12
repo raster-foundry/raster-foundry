@@ -155,4 +155,15 @@ object AnnotationProjectDao
 
   def countUserProjects(user: User): ConnectionIO[Long] =
     query.filter(user).count
+
+  def getShareCount(id: UUID, userId: String): ConnectionIO[Long] =
+    getPermissions(id)
+      .map { acrList =>
+        acrList.collect {
+          case ObjectAccessControlRule(subjType, Some(subjectId), _)
+              if subjType == SubjectType.User && subjectId != userId =>
+            subjectId
+        }
+      }
+      .map(_.distinct.length.toLong)
 }

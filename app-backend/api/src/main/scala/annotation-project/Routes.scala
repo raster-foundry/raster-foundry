@@ -4,9 +4,10 @@ import com.rasterfoundry.akkautil._
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.common.RollbarNotifier
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server._
 import cats.effect.IO
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.util.transactor.Transactor
@@ -17,10 +18,13 @@ import java.util.UUID
 
 trait AnnotationProjectRoutes
     extends CommonHandlers
+    with Directives
     with Authentication
     with PaginationDirectives
     with QueryParametersCommon
-    with AnnotationProjectTaskRoutes {
+    with AnnotationProjectTaskRoutes
+    with AnnotationProjectPermissionRoutes
+    with RollbarNotifier {
 
   val xa: Transactor[IO]
 
@@ -45,6 +49,22 @@ trait AnnotationProjectRoutes
               deleteAnnotationProject(projectId)
             }
         } ~
+          pathPrefix("permissions") {
+            pathEndOrSingleSlash {
+              get {
+                listPermissions(projectId)
+              } ~
+                put {
+                  replacePermissions(projectId)
+                } ~
+                post {
+                  addPermission(projectId)
+                } ~
+                delete {
+                  deletePermissions(projectId)
+                }
+            }
+          } ~
           pathPrefix("tasks") {
             pathEndOrSingleSlash {
               get {

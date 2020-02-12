@@ -5,9 +5,10 @@ import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.common.RollbarNotifier
 
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server._
 import cats.effect.IO
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.util.transactor.Transactor
@@ -18,9 +19,11 @@ import java.util.UUID
 
 trait AnnotationProjectTaskRoutes
     extends CommonHandlers
+    with Directives
     with Authentication
     with PaginationDirectives
-    with QueryParametersCommon {
+    with QueryParametersCommon
+    with RollbarNotifier {
 
   val xa: Transactor[IO]
 
