@@ -308,27 +308,24 @@ trait PropTestHelpers {
 
   def fixupTaskFeaturesCollection(
       tfc: Task.TaskFeatureCollectionCreate,
-      project: Project,
       annotationProject: AnnotationProject.WithRelated,
       statusOption: Option[TaskStatus] = None
   ) =
     tfc.copy(
       features =
         tfc.features map {
-          fixupTaskFeatureCreate(_, project, annotationProject, statusOption)
+          fixupTaskFeatureCreate(_, annotationProject, statusOption)
         }
     )
 
   def fixupTaskFeatureCreate(
       tfc: Task.TaskFeatureCreate,
-      project: Project,
       annotationProject: AnnotationProject.WithRelated,
       statusOption: Option[TaskStatus] = None
   ): Task.TaskFeatureCreate =
     tfc.copy(
       properties = fixupTaskPropertiesCreate(
         tfc.properties,
-        project,
         annotationProject,
         statusOption
       )
@@ -336,13 +333,10 @@ trait PropTestHelpers {
 
   def fixupTaskPropertiesCreate(
       tpc: Task.TaskPropertiesCreate,
-      project: Project,
       annotationProject: AnnotationProject.WithRelated,
       statusOption: Option[TaskStatus] = None
   ): Task.TaskPropertiesCreate =
     tpc.copy(
-      projectId = project.id,
-      projectLayerId = project.defaultLayerId,
       status = statusOption.getOrElse(tpc.status),
       annotationProjectId = annotationProject.id
     )

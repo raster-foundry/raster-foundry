@@ -380,7 +380,6 @@ class AnnotationDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate,
-                      updatedDbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Labeled)
                   )
@@ -484,7 +483,6 @@ class AnnotationDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate,
-                      updatedDbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Labeled)
                   )
@@ -603,7 +601,6 @@ class AnnotationDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreateOne,
-                      updatedDbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Labeled)
                   )
@@ -615,7 +612,6 @@ class AnnotationDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreateTwo,
-                      updatedDbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Validated)
                   )

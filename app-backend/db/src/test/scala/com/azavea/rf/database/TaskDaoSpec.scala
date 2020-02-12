@@ -55,15 +55,13 @@ class TaskDaoSpec
                 collection <- TaskDao.insertTasks(
                   fixupTaskFeaturesCollection(
                     taskFeaturesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   dbUser
                 )
                 fetched <- TaskDao.listTasks(
                   TaskQueryParameters(),
-                  dbProject.id,
-                  dbProject.defaultLayerId,
+                  dbAnnotationProj.id,
                   PageRequest(0, 10, Map.empty)
                 )
               } yield { (collection, fetched) }
@@ -108,7 +106,6 @@ class TaskDaoSpec
                 collection <- TaskDao.insertTasks(
                   fixupTaskFeaturesCollection(
                     taskFeaturesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   dbUser
@@ -185,7 +182,6 @@ class TaskDaoSpec
                 taskCount <- TaskDao.insertTasksByGrid(
                   fixupTaskPropertiesCreate(
                     taskPropertiesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   taskGridFeatureCreate,
@@ -244,7 +240,6 @@ class TaskDaoSpec
                 collection <- TaskDao.insertTasks(
                   fixupTaskFeaturesCollection(
                     taskFeaturesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   dbUser
@@ -290,7 +285,6 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate1,
-                      dbProject,
                       dbAnnotationProj
                     )
                   )
@@ -301,7 +295,6 @@ class TaskDaoSpec
                 collection.features.head.id,
                 fixupTaskFeatureCreate(
                   taskFeatureCreate2,
-                  dbProject,
                   dbAnnotationProj
                 ),
                 dbUser
@@ -362,7 +355,6 @@ class TaskDaoSpec
                     features = List(
                       fixupTaskFeatureCreate(
                         taskFeatureCreate,
-                        dbProject,
                         dbAnnotationProj
                       ).withStatus(TaskStatus.Unlabeled)
                     )
@@ -389,8 +381,7 @@ class TaskDaoSpec
                 )
                 listed <- TaskDao.listTasks(
                   TaskQueryParameters(actionType = Some(TaskStatus.Unlabeled)),
-                  dbProject.id,
-                  dbProject.defaultLayerId,
+                  dbAnnotationProj.id,
                   PageRequest(0, 10, Map.empty)
                 )
               } yield { (collection, listed) }
@@ -440,7 +431,6 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate,
-                      dbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Unlabeled)
                   )
@@ -520,20 +510,17 @@ class TaskDaoSpec
                 _ <- TaskDao.insertTasks(
                   fixupTaskFeaturesCollection(
                     taskFeaturesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   dbUser
                 )
                 fetched <- TaskDao.listTasks(
                   TaskQueryParameters(),
-                  dbProject.id,
-                  dbProject.defaultLayerId,
+                  dbAnnotationProj.id,
                   PageRequest(0, 10, Map.empty)
                 )
-                deletedRowCount <- TaskDao.deleteLayerTasks(
-                  dbProject.id,
-                  dbProject.defaultLayerId
+                deletedRowCount <- TaskDao.deleteProjectTasks(
+                  dbAnnotationProj.id
                 )
               } yield { (fetched, deletedRowCount) }
 
@@ -549,442 +536,497 @@ class TaskDaoSpec
     }
   }
 
-  test("list user actions on tasks with label and validate performed") {
+  // test("list user actions on tasks with label and validate performed") {
+  //   check {
+  //     forAll {
+  //       (
+  //           userCreate: User.Create,
+  //           orgCreate: Organization.Create,
+  //           platform: Platform,
+  //           projCreate: (Project.Create, AnnotationProject.Create),
+  //           taskFeatureCreate: Task.TaskFeatureCreate,
+  //           labelValidateTeamCreate: (Team.Create, Team.Create),
+  //           labelValidateTeamUgrCreate: (
+  //               UserGroupRole.Create,
+  //               UserGroupRole.Create
+  //           )
+  //       ) =>
+  //         {
+  //           val (projectCreate, annotationProjectCreate) = projCreate
+  //           val connIO = for {
+  //             (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+  //               userCreate,
+  //               orgCreate,
+  //               platform,
+  //               projectCreate
+  //             )
+  //             updatedDbProject <- fixupProjectExtrasUpdate(
+  //               labelValidateTeamCreate,
+  //               labelValidateTeamUgrCreate,
+  //               dbOrg,
+  //               dbUser,
+  //               dbPlatform,
+  //               dbProject
+  //             )
+  //             dbAnnotationProj <- AnnotationProjectDao
+  //               .insert(
+  //                 annotationProjectCreate.copy(
+  //                   projectId = Some(updatedDbProject.id)
+  //                 ),
+  //                 dbUser
+  //               )
+  //             collection <- TaskDao.insertTasks(
+  //               Task.TaskFeatureCollectionCreate(
+  //                 features = List(
+  //                   fixupTaskFeatureCreate(
+  //                     taskFeatureCreate,
+  //                     dbAnnotationProj
+  //                   ).withStatus(TaskStatus.Unlabeled)
+  //                 )
+  //               ),
+  //               dbUser
+  //             )
+  //             feature = collection.features.head
+  //             _ <- TaskDao.updateTask(
+  //               feature.id,
+  //               Task.TaskFeatureCreate(
+  //                 feature.properties
+  //                   .copy(status = TaskStatus.LabelingInProgress)
+  //                   .toCreate,
+  //                 feature.geometry
+  //               ),
+  //               dbUser
+  //             )
+  //             _ <- TaskDao.updateTask(
+  //               feature.id,
+  //               Task.TaskFeatureCreate(
+  //                 feature.properties.copy(status = TaskStatus.Labeled).toCreate,
+  //                 feature.geometry
+  //               ),
+  //               dbUser
+  //             )
+  //             _ <- TaskDao.updateTask(
+  //               feature.id,
+  //               Task.TaskFeatureCreate(
+  //                 feature.properties
+  //                   .copy(status = TaskStatus.ValidationInProgress)
+  //                   .toCreate,
+  //                 feature.geometry
+  //               ),
+  //               dbUser
+  //             )
+  //             _ <- TaskDao.updateTask(
+  //               feature.id,
+  //               Task.TaskFeatureCreate(
+  //                 feature.properties
+  //                   .copy(status = TaskStatus.Validated)
+  //                   .toCreate,
+  //                 feature.geometry
+  //               ),
+  //               dbUser
+  //             )
+  //             listed <- TaskDao.getTaskUserSummary(
+  //               updatedDbProject.id,
+  //               updatedDbProject.defaultLayerId,
+  //               UserTaskActivityParameters()
+  //             )
+  //           } yield { (dbUser, listed) }
+
+  //           val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
+
+  //           assert(
+  //             userTaskSummary.head.userId == user.id,
+  //             "should match the ID of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.name == user.name,
+  //             "should match the name of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.profileImageUri == user.profileImageUri,
+  //             "should match the avatar of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.labeledTaskCount == 1,
+  //             "action user should have 1 labeled task"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.validatedTaskCount == 1,
+  //             "action user should have 1 validated task"
+  //           )
+  //           true
+  //         }
+  //     }
+  //   }
+  // }
+
+  // test("list user actions on tasks with only label performed") {
+  //   check {
+  //     forAll {
+  //       (
+  //           userCreate: User.Create,
+  //           orgCreate: Organization.Create,
+  //           platform: Platform,
+  //           projCreate: (Project.Create, AnnotationProject.Create),
+  //           taskFeatureCreate: Task.TaskFeatureCreate,
+  //           labelValidateTeamCreate: (Team.Create, Team.Create),
+  //           labelValidateTeamUgrCreate: (
+  //               UserGroupRole.Create,
+  //               UserGroupRole.Create
+  //           )
+  //       ) =>
+  //         {
+  //           val (projectCreate, annotationProjectCreate) = projCreate
+  //           val connIO = for {
+  //             (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+  //               userCreate,
+  //               orgCreate,
+  //               platform,
+  //               projectCreate
+  //             )
+  //             updatedDbProject <- fixupProjectExtrasUpdate(
+  //               labelValidateTeamCreate,
+  //               labelValidateTeamUgrCreate,
+  //               dbOrg,
+  //               dbUser,
+  //               dbPlatform,
+  //               dbProject
+  //             )
+  //             dbAnnotationProj <- AnnotationProjectDao
+  //               .insert(
+  //                 annotationProjectCreate.copy(
+  //                   projectId = Some(updatedDbProject.id)
+  //                 ),
+  //                 dbUser
+  //               )
+  //             collection <- TaskDao.insertTasks(
+  //               Task.TaskFeatureCollectionCreate(
+  //                 features = List(
+  //                   fixupTaskFeatureCreate(
+  //                     taskFeatureCreate,
+  //                     dbAnnotationProj
+  //                   ).withStatus(TaskStatus.Unlabeled)
+  //                 )
+  //               ),
+  //               dbUser
+  //             )
+  //             feature = collection.features.head
+  //             _ <- TaskDao.updateTask(
+  //               feature.id,
+  //               Task.TaskFeatureCreate(
+  //                 feature.properties
+  //                   .copy(status = TaskStatus.LabelingInProgress)
+  //                   .toCreate,
+  //                 feature.geometry
+  //               ),
+  //               dbUser
+  //             )
+  //             _ <- TaskDao.updateTask(
+  //               feature.id,
+  //               Task.TaskFeatureCreate(
+  //                 feature.properties.copy(status = TaskStatus.Labeled).toCreate,
+  //                 feature.geometry
+  //               ),
+  //               dbUser
+  //             )
+  //             listed <- TaskDao.getTaskUserSummary(
+  //               updatedDbProject.id,
+  //               updatedDbProject.defaultLayerId,
+  //               UserTaskActivityParameters()
+  //             )
+  //           } yield { (dbUser, listed) }
+
+  //           val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
+
+  //           assert(
+  //             userTaskSummary.head.userId == user.id,
+  //             "should match the ID of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.name == user.name,
+  //             "should match the name of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.profileImageUri == user.profileImageUri,
+  //             "should match the avatar of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.labeledTaskCount == 1,
+  //             "action user should have 1 labeled task"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.validatedTaskCount == 0,
+  //             "action user should have 1 validated task"
+  //           )
+  //           true
+  //         }
+  //     }
+  //   }
+  // }
+
+  // test("list user actions on tasks with only validate performed") {
+  //   check {
+  //     forAll {
+  //       (
+  //           userCreate: User.Create,
+  //           orgCreate: Organization.Create,
+  //           platform: Platform,
+  //           projCreate: (Project.Create, AnnotationProject.Create),
+  //           taskFeatureCreate: Task.TaskFeatureCreate,
+  //           labelValidateTeamCreate: (Team.Create, Team.Create),
+  //           labelValidateTeamUgrCreate: (
+  //               UserGroupRole.Create,
+  //               UserGroupRole.Create
+  //           )
+  //       ) =>
+  //         {
+  //           val (projectCreate, annotationProjectCreate) = projCreate
+  //           val connIO = for {
+  //             (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+  //               userCreate,
+  //               orgCreate,
+  //               platform,
+  //               projectCreate
+  //             )
+  //             updatedDbProject <- fixupProjectExtrasUpdate(
+  //               labelValidateTeamCreate,
+  //               labelValidateTeamUgrCreate,
+  //               dbOrg,
+  //               dbUser,
+  //               dbPlatform,
+  //               dbProject
+  //             )
+  //             dbAnnotationProj <- AnnotationProjectDao
+  //               .insert(
+  //                 annotationProjectCreate.copy(
+  //                   projectId = Some(updatedDbProject.id)
+  //                 ),
+  //                 dbUser
+  //               )
+  //             collection <- TaskDao.insertTasks(
+  //               Task.TaskFeatureCollectionCreate(
+  //                 features = List(
+  //                   fixupTaskFeatureCreate(
+  //                     taskFeatureCreate,
+  //                     updatedDbProject,
+  //                     dbAnnotationProj
+  //                   ).withStatus(TaskStatus.Labeled)
+  //                 )
+  //               ),
+  //               dbUser
+  //             )
+  //             feature = collection.features.head
+  //             _ <- TaskDao.updateTask(
+  //               feature.id,
+  //               Task.TaskFeatureCreate(
+  //                 feature.properties
+  //                   .copy(status = TaskStatus.ValidationInProgress)
+  //                   .toCreate,
+  //                 feature.geometry
+  //               ),
+  //               dbUser
+  //             )
+  //             _ <- TaskDao.updateTask(
+  //               feature.id,
+  //               Task.TaskFeatureCreate(
+  //                 feature.properties
+  //                   .copy(status = TaskStatus.Validated)
+  //                   .toCreate,
+  //                 feature.geometry
+  //               ),
+  //               dbUser
+  //             )
+  //             listed <- TaskDao.getTaskUserSummary(
+  //               updatedDbProject.id,
+  //               updatedDbProject.defaultLayerId,
+  //               UserTaskActivityParameters()
+  //             )
+  //           } yield { (dbUser, listed) }
+
+  //           val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
+
+  //           assert(
+  //             userTaskSummary.head.userId == user.id,
+  //             "should match the ID of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.name == user.name,
+  //             "should match the name of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.profileImageUri == user.profileImageUri,
+  //             "should match the avatar of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.labeledTaskCount == 0,
+  //             "action user should have 1 labeled task"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.validatedTaskCount == 1,
+  //             "action user should have 1 validated task"
+  //           )
+  //           true
+  //         }
+  //     }
+  //   }
+  // }
+
+  // test("list user actions on tasks with nothing performed") {
+  //   check {
+  //     forAll {
+  //       (
+  //           userCreate: User.Create,
+  //           orgCreate: Organization.Create,
+  //           platform: Platform,
+  //           projCreate: (Project.Create, AnnotationProject.Create),
+  //           taskFeatureCreate: Task.TaskFeatureCreate,
+  //           labelValidateTeamCreate: (Team.Create, Team.Create),
+  //           labelValidateTeamUgrCreate: (
+  //               UserGroupRole.Create,
+  //               UserGroupRole.Create
+  //           )
+  //       ) =>
+  //         {
+  //           val (projectCreate, annotationProjectCreate) = projCreate
+  //           val connIO = for {
+  //             (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+  //               userCreate,
+  //               orgCreate,
+  //               platform,
+  //               projectCreate
+  //             )
+  //             updatedDbProject <- fixupProjectExtrasUpdate(
+  //               labelValidateTeamCreate,
+  //               labelValidateTeamUgrCreate,
+  //               dbOrg,
+  //               dbUser,
+  //               dbPlatform,
+  //               dbProject
+  //             )
+  //             dbAnnotationProj <- AnnotationProjectDao
+  //               .insert(
+  //                 annotationProjectCreate.copy(
+  //                   projectId = Some(updatedDbProject.id)
+  //                 ),
+  //                 dbUser
+  //               )
+  //             _ <- TaskDao.insertTasks(
+  //               Task.TaskFeatureCollectionCreate(
+  //                 features = List(
+  //                   fixupTaskFeatureCreate(
+  //                     taskFeatureCreate,
+  //                     updatedDbProject,
+  //                     dbAnnotationProj
+  //                   ).withStatus(TaskStatus.Unlabeled)
+  //                 )
+  //               ),
+  //               dbUser
+  //             )
+  //             listed <- TaskDao.getTaskUserSummary(
+  //               updatedDbProject.id,
+  //               updatedDbProject.defaultLayerId,
+  //               UserTaskActivityParameters()
+  //             )
+  //           } yield { (dbUser, listed) }
+
+  //           val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
+
+  //           assert(
+  //             userTaskSummary.head.userId == user.id,
+  //             "should match the ID of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.name == user.name,
+  //             "should match the name of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.profileImageUri == user.profileImageUri,
+  //             "should match the avatar of the action user"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.labeledTaskCount == 0,
+  //             "action user should have 1 labeled task"
+  //           )
+  //           assert(
+  //             userTaskSummary.head.validatedTaskCount == 0,
+  //             "action user should have 1 validated task"
+  //           )
+  //           true
+  //         }
+  //     }
+  //   }
+  // }
+
+  // test("list tasks by a list of statuses") {
+  //   check {
+  //     forAll {
+  //       (
+  //           userCreate: User.Create,
+  //           orgCreate: Organization.Create,
+  //           platform: Platform,
+  //           projCreate: (Project.Create, AnnotationProject.Create),
+  //           taskFeaturesCreateOne: Task.TaskFeatureCollectionCreate,
+  //           taskFeaturesCreateTwo: Task.TaskFeatureCollectionCreate
+  //       ) =>
+  //         {
+  //           val (projectCreate, annotationProjectCreate) = projCreate
+  //           val connIO = for {
+  //             (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+  //               userCreate,
+  //               orgCreate,
+  //               platform,
+  //               projectCreate
+  //             )
+  //             dbAnnotationProj <- AnnotationProjectDao
+  //               .insert(
+  //                 annotationProjectCreate.copy(
+  //                   projectId = Some(dbProject.id)
+  //                 ),
+  //                 dbUser
+  //               )
+  //             collectionOne <- TaskDao.insertTasks(
+  //               fixupTaskFeaturesCollection(
+  //                 taskFeaturesCreateOne,
+  //                 dbProject,
+  //                 dbAnnotationProj,
+  //                 Some(TaskStatus.Labeled)
+  //               ),
+  //               dbUser
+  //             )
+  //             collectionTwo <- TaskDao.insertTasks(
+  //               fixupTaskFeaturesCollection(
+  //                 taskFeaturesCreateTwo,
+  //                 dbProject,
+  //                 dbAnnotationProj,
+  //                 Some(TaskStatus.Validated)
+  //               ),
+  //               dbUser
+  //             )
+  //             fetched <- TaskDao.listLayerTasksByStatus(
+  //               dbProject.id,
+  //               dbProject.defaultLayerId,
+  //               List("LABELED", "VALIDATED")
+  //             )
+  //           } yield { (collectionOne, collectionTwo, fetched) }
+
+  //           val (colOne, colTwo, listed) = connIO.transact(xa).unsafeRunSync
+  //           colOne.features.length + colTwo.features.length == listed.length
+  //         }
+  //     }
+  //   }
+  // }
+
+  test("create a geometric extent even when no tasks returned in query") {
     check {
       forAll {
         (
             userCreate: User.Create,
             orgCreate: Organization.Create,
             platform: Platform,
-            projCreate: (Project.Create, AnnotationProject.Create),
-            taskFeatureCreate: Task.TaskFeatureCreate,
-            labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (
-                UserGroupRole.Create,
-                UserGroupRole.Create
-            )
+            projectCreate: Project.Create,
+            annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
-            val (projectCreate, annotationProjectCreate) = projCreate
-            val connIO = for {
-              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
-                userCreate,
-                orgCreate,
-                platform,
-                projectCreate
-              )
-              updatedDbProject <- fixupProjectExtrasUpdate(
-                labelValidateTeamCreate,
-                labelValidateTeamUgrCreate,
-                dbOrg,
-                dbUser,
-                dbPlatform,
-                dbProject
-              )
-              dbAnnotationProj <- AnnotationProjectDao
-                .insert(
-                  annotationProjectCreate.copy(
-                    projectId = Some(updatedDbProject.id)
-                  ),
-                  dbUser
-                )
-              collection <- TaskDao.insertTasks(
-                Task.TaskFeatureCollectionCreate(
-                  features = List(
-                    fixupTaskFeatureCreate(
-                      taskFeatureCreate,
-                      updatedDbProject,
-                      dbAnnotationProj
-                    ).withStatus(TaskStatus.Unlabeled)
-                  )
-                ),
-                dbUser
-              )
-              feature = collection.features.head
-              _ <- TaskDao.updateTask(
-                feature.id,
-                Task.TaskFeatureCreate(
-                  feature.properties
-                    .copy(status = TaskStatus.LabelingInProgress)
-                    .toCreate,
-                  feature.geometry
-                ),
-                dbUser
-              )
-              _ <- TaskDao.updateTask(
-                feature.id,
-                Task.TaskFeatureCreate(
-                  feature.properties.copy(status = TaskStatus.Labeled).toCreate,
-                  feature.geometry
-                ),
-                dbUser
-              )
-              _ <- TaskDao.updateTask(
-                feature.id,
-                Task.TaskFeatureCreate(
-                  feature.properties
-                    .copy(status = TaskStatus.ValidationInProgress)
-                    .toCreate,
-                  feature.geometry
-                ),
-                dbUser
-              )
-              _ <- TaskDao.updateTask(
-                feature.id,
-                Task.TaskFeatureCreate(
-                  feature.properties
-                    .copy(status = TaskStatus.Validated)
-                    .toCreate,
-                  feature.geometry
-                ),
-                dbUser
-              )
-              listed <- TaskDao.getTaskUserSummary(
-                updatedDbProject.id,
-                updatedDbProject.defaultLayerId,
-                UserTaskActivityParameters()
-              )
-            } yield { (dbUser, listed) }
-
-            val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
-
-            assert(
-              userTaskSummary.head.userId == user.id,
-              "should match the ID of the action user"
-            )
-            assert(
-              userTaskSummary.head.name == user.name,
-              "should match the name of the action user"
-            )
-            assert(
-              userTaskSummary.head.profileImageUri == user.profileImageUri,
-              "should match the avatar of the action user"
-            )
-            assert(
-              userTaskSummary.head.labeledTaskCount == 1,
-              "action user should have 1 labeled task"
-            )
-            assert(
-              userTaskSummary.head.validatedTaskCount == 1,
-              "action user should have 1 validated task"
-            )
-            true
-          }
-      }
-    }
-  }
-
-  test("list user actions on tasks with only label performed") {
-    check {
-      forAll {
-        (
-            userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projCreate: (Project.Create, AnnotationProject.Create),
-            taskFeatureCreate: Task.TaskFeatureCreate,
-            labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (
-                UserGroupRole.Create,
-                UserGroupRole.Create
-            )
-        ) =>
-          {
-            val (projectCreate, annotationProjectCreate) = projCreate
-            val connIO = for {
-              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
-                userCreate,
-                orgCreate,
-                platform,
-                projectCreate
-              )
-              updatedDbProject <- fixupProjectExtrasUpdate(
-                labelValidateTeamCreate,
-                labelValidateTeamUgrCreate,
-                dbOrg,
-                dbUser,
-                dbPlatform,
-                dbProject
-              )
-              dbAnnotationProj <- AnnotationProjectDao
-                .insert(
-                  annotationProjectCreate.copy(
-                    projectId = Some(updatedDbProject.id)
-                  ),
-                  dbUser
-                )
-              collection <- TaskDao.insertTasks(
-                Task.TaskFeatureCollectionCreate(
-                  features = List(
-                    fixupTaskFeatureCreate(
-                      taskFeatureCreate,
-                      updatedDbProject,
-                      dbAnnotationProj
-                    ).withStatus(TaskStatus.Unlabeled)
-                  )
-                ),
-                dbUser
-              )
-              feature = collection.features.head
-              _ <- TaskDao.updateTask(
-                feature.id,
-                Task.TaskFeatureCreate(
-                  feature.properties
-                    .copy(status = TaskStatus.LabelingInProgress)
-                    .toCreate,
-                  feature.geometry
-                ),
-                dbUser
-              )
-              _ <- TaskDao.updateTask(
-                feature.id,
-                Task.TaskFeatureCreate(
-                  feature.properties.copy(status = TaskStatus.Labeled).toCreate,
-                  feature.geometry
-                ),
-                dbUser
-              )
-              listed <- TaskDao.getTaskUserSummary(
-                updatedDbProject.id,
-                updatedDbProject.defaultLayerId,
-                UserTaskActivityParameters()
-              )
-            } yield { (dbUser, listed) }
-
-            val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
-
-            assert(
-              userTaskSummary.head.userId == user.id,
-              "should match the ID of the action user"
-            )
-            assert(
-              userTaskSummary.head.name == user.name,
-              "should match the name of the action user"
-            )
-            assert(
-              userTaskSummary.head.profileImageUri == user.profileImageUri,
-              "should match the avatar of the action user"
-            )
-            assert(
-              userTaskSummary.head.labeledTaskCount == 1,
-              "action user should have 1 labeled task"
-            )
-            assert(
-              userTaskSummary.head.validatedTaskCount == 0,
-              "action user should have 1 validated task"
-            )
-            true
-          }
-      }
-    }
-  }
-
-  test("list user actions on tasks with only validate performed") {
-    check {
-      forAll {
-        (
-            userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projCreate: (Project.Create, AnnotationProject.Create),
-            taskFeatureCreate: Task.TaskFeatureCreate,
-            labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (
-                UserGroupRole.Create,
-                UserGroupRole.Create
-            )
-        ) =>
-          {
-            val (projectCreate, annotationProjectCreate) = projCreate
-            val connIO = for {
-              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
-                userCreate,
-                orgCreate,
-                platform,
-                projectCreate
-              )
-              updatedDbProject <- fixupProjectExtrasUpdate(
-                labelValidateTeamCreate,
-                labelValidateTeamUgrCreate,
-                dbOrg,
-                dbUser,
-                dbPlatform,
-                dbProject
-              )
-              dbAnnotationProj <- AnnotationProjectDao
-                .insert(
-                  annotationProjectCreate.copy(
-                    projectId = Some(updatedDbProject.id)
-                  ),
-                  dbUser
-                )
-              collection <- TaskDao.insertTasks(
-                Task.TaskFeatureCollectionCreate(
-                  features = List(
-                    fixupTaskFeatureCreate(
-                      taskFeatureCreate,
-                      updatedDbProject,
-                      dbAnnotationProj
-                    ).withStatus(TaskStatus.Labeled)
-                  )
-                ),
-                dbUser
-              )
-              feature = collection.features.head
-              _ <- TaskDao.updateTask(
-                feature.id,
-                Task.TaskFeatureCreate(
-                  feature.properties
-                    .copy(status = TaskStatus.ValidationInProgress)
-                    .toCreate,
-                  feature.geometry
-                ),
-                dbUser
-              )
-              _ <- TaskDao.updateTask(
-                feature.id,
-                Task.TaskFeatureCreate(
-                  feature.properties
-                    .copy(status = TaskStatus.Validated)
-                    .toCreate,
-                  feature.geometry
-                ),
-                dbUser
-              )
-              listed <- TaskDao.getTaskUserSummary(
-                updatedDbProject.id,
-                updatedDbProject.defaultLayerId,
-                UserTaskActivityParameters()
-              )
-            } yield { (dbUser, listed) }
-
-            val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
-
-            assert(
-              userTaskSummary.head.userId == user.id,
-              "should match the ID of the action user"
-            )
-            assert(
-              userTaskSummary.head.name == user.name,
-              "should match the name of the action user"
-            )
-            assert(
-              userTaskSummary.head.profileImageUri == user.profileImageUri,
-              "should match the avatar of the action user"
-            )
-            assert(
-              userTaskSummary.head.labeledTaskCount == 0,
-              "action user should have 1 labeled task"
-            )
-            assert(
-              userTaskSummary.head.validatedTaskCount == 1,
-              "action user should have 1 validated task"
-            )
-            true
-          }
-      }
-    }
-  }
-
-  test("list user actions on tasks with nothing performed") {
-    check {
-      forAll {
-        (
-            userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projCreate: (Project.Create, AnnotationProject.Create),
-            taskFeatureCreate: Task.TaskFeatureCreate,
-            labelValidateTeamCreate: (Team.Create, Team.Create),
-            labelValidateTeamUgrCreate: (
-                UserGroupRole.Create,
-                UserGroupRole.Create
-            )
-        ) =>
-          {
-            val (projectCreate, annotationProjectCreate) = projCreate
-            val connIO = for {
-              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
-                userCreate,
-                orgCreate,
-                platform,
-                projectCreate
-              )
-              updatedDbProject <- fixupProjectExtrasUpdate(
-                labelValidateTeamCreate,
-                labelValidateTeamUgrCreate,
-                dbOrg,
-                dbUser,
-                dbPlatform,
-                dbProject
-              )
-              dbAnnotationProj <- AnnotationProjectDao
-                .insert(
-                  annotationProjectCreate.copy(
-                    projectId = Some(updatedDbProject.id)
-                  ),
-                  dbUser
-                )
-              _ <- TaskDao.insertTasks(
-                Task.TaskFeatureCollectionCreate(
-                  features = List(
-                    fixupTaskFeatureCreate(
-                      taskFeatureCreate,
-                      updatedDbProject,
-                      dbAnnotationProj
-                    ).withStatus(TaskStatus.Unlabeled)
-                  )
-                ),
-                dbUser
-              )
-              listed <- TaskDao.getTaskUserSummary(
-                updatedDbProject.id,
-                updatedDbProject.defaultLayerId,
-                UserTaskActivityParameters()
-              )
-            } yield { (dbUser, listed) }
-
-            val (user, userTaskSummary) = connIO.transact(xa).unsafeRunSync
-
-            assert(
-              userTaskSummary.head.userId == user.id,
-              "should match the ID of the action user"
-            )
-            assert(
-              userTaskSummary.head.name == user.name,
-              "should match the name of the action user"
-            )
-            assert(
-              userTaskSummary.head.profileImageUri == user.profileImageUri,
-              "should match the avatar of the action user"
-            )
-            assert(
-              userTaskSummary.head.labeledTaskCount == 0,
-              "action user should have 1 labeled task"
-            )
-            assert(
-              userTaskSummary.head.validatedTaskCount == 0,
-              "action user should have 1 validated task"
-            )
-            true
-          }
-      }
-    }
-  }
-
-  test("list tasks by a list of statuses") {
-    check {
-      forAll {
-        (
-            userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projCreate: (Project.Create, AnnotationProject.Create),
-            taskFeaturesCreateOne: Task.TaskFeatureCollectionCreate,
-            taskFeaturesCreateTwo: Task.TaskFeatureCollectionCreate
-        ) =>
-          {
-            val (projectCreate, annotationProjectCreate) = projCreate
             val connIO = for {
               (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
                 userCreate,
@@ -999,58 +1041,8 @@ class TaskDaoSpec
                   ),
                   dbUser
                 )
-              collectionOne <- TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(
-                  taskFeaturesCreateOne,
-                  dbProject,
-                  dbAnnotationProj,
-                  Some(TaskStatus.Labeled)
-                ),
-                dbUser
-              )
-              collectionTwo <- TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(
-                  taskFeaturesCreateTwo,
-                  dbProject,
-                  dbAnnotationProj,
-                  Some(TaskStatus.Validated)
-                ),
-                dbUser
-              )
-              fetched <- TaskDao.listLayerTasksByStatus(
-                dbProject.id,
-                dbProject.defaultLayerId,
-                List("LABELED", "VALIDATED")
-              )
-            } yield { (collectionOne, collectionTwo, fetched) }
-
-            val (colOne, colTwo, listed) = connIO.transact(xa).unsafeRunSync
-            colOne.features.length + colTwo.features.length == listed.length
-          }
-      }
-    }
-  }
-
-  test("create a geometric extent even when no tasks returned in query") {
-    check {
-      forAll {
-        (
-            userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projectCreate: Project.Create
-        ) =>
-          {
-            val connIO = for {
-              (_, _, _, dbProject) <- insertUserOrgPlatProject(
-                userCreate,
-                orgCreate,
-                platform,
-                projectCreate
-              )
               unionedExtent <- TaskDao.createUnionedGeomExtent(
-                dbProject.id,
-                dbProject.defaultLayerId,
+                dbAnnotationProj.id,
                 Nil
               )
             } yield unionedExtent
