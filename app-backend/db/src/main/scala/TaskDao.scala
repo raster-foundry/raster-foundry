@@ -265,7 +265,8 @@ object TaskDao extends Dao[Task] {
     for {
       geomO <- taskGridFeatureCreate.geometry match {
         case Some(g) => Option(g).pure[ConnectionIO]
-        case None => AnnotationProjectDao.getFootprint(
+        case None =>
+          AnnotationProjectDao.getFootprint(
             taskProperties.annotationProjectId
           )
       }
@@ -559,4 +560,16 @@ object TaskDao extends Dao[Task] {
         )
 
       })
+
+  def listLayerTasksByStatus(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[List[Task]] = ???
+
+  def createUnionedGeomExtentOld(
+      projectId: UUID,
+      layerId: UUID,
+      taskStatuses: List[String]
+  ): ConnectionIO[Option[UnionedGeomExtent]] = ???
 }

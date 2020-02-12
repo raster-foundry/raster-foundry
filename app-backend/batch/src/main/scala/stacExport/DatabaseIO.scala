@@ -42,9 +42,10 @@ object DatabaseIO {
     for {
       scenes <- ProjectLayerScenesDao.listLayerScenesRaw(layerId)
       scenesGeomExtentOption <- ProjectLayerScenesDao.getUnionedGeomExtent(
-        layerId)
+        layerId
+      )
       tasks <- TaskDao.listLayerTasksByStatus(projectId, layerId, taskStatuses)
-      tasksGeomExtentOption <- TaskDao.createUnionedGeomExtent(
+      tasksGeomExtentOption <- TaskDao.createUnionedGeomExtentOld(
         projectId,
         layerId,
         taskStatuses
@@ -56,16 +57,21 @@ object DatabaseIO {
         projectType
       )
       labelItemPropsThinOption <- ProjectDao.getAnnotationProjectStacInfo(
-        projectId)
+        projectId
+      )
     } yield {
-      (annotationsOption,
-       labelItemPropsThinOption,
-       tasksGeomExtentOption,
-       scenesGeomExtentOption) match {
-        case (Some(annotations),
-              Some(labelItemPropsThin),
-              Some(tasksGeomExtent),
-              Some(scenesGeomExtent)) => {
+      (
+        annotationsOption,
+        labelItemPropsThinOption,
+        tasksGeomExtentOption,
+        scenesGeomExtentOption
+      ) match {
+        case (
+            Some(annotations),
+            Some(labelItemPropsThin),
+            Some(tasksGeomExtent),
+            Some(scenesGeomExtent)
+            ) => {
           Some(
             ExportData(
               scenes,
@@ -74,7 +80,8 @@ object DatabaseIO {
               tasksGeomExtent,
               annotations,
               labelItemPropsThin
-            ))
+            )
+          )
         }
         case _ => None
       }
