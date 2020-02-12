@@ -158,7 +158,38 @@ trait AnnotationProjectTaskRoutes
     }
   }
 
-  def getTaskUserStats(projectId: UUID): Route = ???
+  def getTaskUserSummary(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+      user
+    ) {
+      {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          (userTaskActivityParameters) { userTaskActivityParams =>
+            complete {
+              TaskDao
+                .getTaskUserSummary(
+                  projectId,
+                  userTaskActivityParams
+                )
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+  }
 
   def getTask(projectId: UUID, taskId: UUID): Route = authenticate { user =>
     authorizeScope(

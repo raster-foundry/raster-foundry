@@ -82,7 +82,7 @@ trait AnnotationProjectRoutes
               } ~
               pathPrefix("user-stats") {
                 get {
-                  getTaskUserStats(projectId)
+                  getTaskUserSummary(projectId)
                 }
               } ~
               pathPrefix(JavaUUID) { taskId =>
