@@ -423,7 +423,9 @@ class ProjectLiberation(tileHost: URI) {
       CreateLabels: FailureStage
     } flatMap { classes =>
       Either.fromOption(
-        classes.intersect(classIds.keys.toList).toList.toNel,
+        classes.intersect(classIds.keys.toList).toList flatMap {
+          key => classIds.get(key)
+        } toNel,
         CreateLabels: FailureStage
       )
     }
