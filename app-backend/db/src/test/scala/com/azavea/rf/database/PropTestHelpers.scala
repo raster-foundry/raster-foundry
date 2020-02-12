@@ -9,7 +9,6 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import io.circe.syntax._
 import io.circe.generic.JsonCodec
 
 import java.util.UUID
@@ -341,16 +340,13 @@ trait PropTestHelpers {
       annotationProjectId = annotationProject.id
     )
 
-  def fixupProjectExtrasUpdate(
+  def fixupAssignUserToTeams(
       labelValidateTeamCreate: (Team.Create, Team.Create),
       labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create),
       dbOrg: Organization,
       dbUser: User,
-      dbPlatform: Platform,
-      dbProject: Project,
-      labelsOption: Option[List[(UUID, String, UUID)]] = None,
-      labelGroupsOption: Option[Map[UUID, String]] = None
-  ): ConnectionIO[Project] = {
+      dbPlatform: Platform
+  ): ConnectionIO[(Team, Team)] = {
     val (labelTeamCreate, validateTeamCreate) = labelValidateTeamCreate
     val (labelTeamUgrCreate, validateTeamUgrCreate) = labelValidateTeamUgrCreate
     for {
@@ -382,21 +378,7 @@ trait PropTestHelpers {
           validateTeamUgrCreate.copy(groupType = GroupType.Team)
         ).toUserGroupRole(dbUser, MembershipStatus.Approved)
       )
-      _ <- ProjectDao.updateProject(
-        dbProject.copy(
-          extras = Some(
-            fixupProjectExtrasAnnotate(
-              dbLabelTeam.id,
-              dbValidateTeam.id,
-              labelsOption,
-              labelGroupsOption
-            ).asJson
-          )
-        ),
-        dbProject.id
-      )
-      updatedDbProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
-    } yield updatedDbProject
+    } yield (dbLabelTeam, dbValidateTeam)
   }
 
   def fixupProjectExtrasAnnotate(
