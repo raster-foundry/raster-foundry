@@ -108,7 +108,22 @@ trait AnnotationProjectRoutes
       }
   }
 
-  def listAnnotationProjects: Route = ???
+  def listAnnotationProjects: Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+      user
+    ) {
+      (withPagination & annotationProjectQueryParameters) {
+        (page, annotationProjectQP) =>
+          complete {
+            AnnotationProjectDao
+              .listProjects(page, annotationProjectQP, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
+      }
+    }
+  }
 
   def createAnnotationProject: Route = authenticate { user =>
     authorizeScopeLimit(

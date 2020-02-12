@@ -62,6 +62,60 @@ object AnnotationProjectDao
       .selectOption
       .map(AuthResult.fromOption _)
 
+  def listProjects(
+      page: PageRequest,
+      params: AnnotationProjectQueryParameters,
+      user: User
+  ): ConnectionIO[PaginatedResponse[AnnotationProject.WithRelated]] =
+    authQuery(
+      user,
+      ObjectType.AnnotationProject,
+      params.ownershipTypeParams.ownershipType,
+      params.groupQueryParameters.groupType,
+      params.groupQueryParameters.groupId
+    ).filter(params)
+      .page(page)
+      .flatMap(toWithRelated)
+
+  def toWithRelated(
+      projectsPage: PaginatedResponse[AnnotationProject]
+  ): ConnectionIO[PaginatedResponse[AnnotationProject.WithRelated]] =
+    projectsPage.results.toList.toNel match {
+      case Some(projects) =>
+        projects traverse { project =>
+          for {
+            tileLayers <- TileLayerDao.listByProjectId(project.id)
+            labelClassGroups <- AnnotationLabelClassGroupDao.listByProjectId(
+              project.id
+            )
+            labelClassGroupsWithClasses <- labelClassGroups traverse {
+              labelClassGroup =>
+                AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(
+                  labelClassGroup.id
+                ) map { cls =>
+                  labelClassGroup.withLabelClasses(cls)
+                }
+            }
+          } yield {
+            project.withRelated(tileLayers, labelClassGroupsWithClasses)
+          }
+        } map { projectWithRelated =>
+          PaginatedResponse[AnnotationProject.WithRelated](
+            projectsPage.count,
+            projectsPage.hasPrevious,
+            projectsPage.hasNext,
+            projectsPage.page,
+            projectsPage.pageSize,
+            projectWithRelated.toList
+          )
+
+        }
+      case _ =>
+        projectsPage
+          .copy(results = List.empty[AnnotationProject.WithRelated])
+          .pure[ConnectionIO]
+    }
+
   def insert(
       newAnnotationProject: AnnotationProject.Create,
       user: User
