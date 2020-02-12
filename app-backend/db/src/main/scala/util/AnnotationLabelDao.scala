@@ -45,36 +45,43 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         ${annotationLabel.annotationTaskId}, ${annotationLabel.geometry}
        )"""
     )
-    val labelClassFragments: List[Fragment] = annotationLabelsWithClasses.flatMap(
-      (annotationLabel: AnnotationLabelWithClasses) =>
-        annotationLabel.annotationLabelClasses
-          .map(
-            labelClassId => fr"${annotationLabel.id}, ${labelClassId}"
-          )
-          .toList
-    )
-    for {
-      insertedAnnotations <- annotationFragments.toNel.map(
-        fragments =>
-          (insertAnnotationsFragment ++ fragments.intercalate(fr",")).update
-            .withGeneratedKeys[AnnotationLabel](
-              "id",
-              "created_at",
-              "created_by",
-              "annotation_project_id",
-              "annotation_task_id"
+    val labelClassFragments: List[Fragment] =
+      annotationLabelsWithClasses.flatMap(
+        (annotationLabel: AnnotationLabelWithClasses) =>
+          annotationLabel.annotationLabelClasses
+            .map(
+              labelClassId => fr"${annotationLabel.id}, ${labelClassId}"
             )
-            .compile
             .toList
-      ).getOrElse(List[AnnotationLabel]().pure[ConnectionIO])
-      insertedAnnotationClasses <- labelClassFragments.toNel.map(
-        fragments =>
-          (insertClassesFragment ++ fragments.intercalate(fr",")).update
-            .withGeneratedKeys[(UUID, UUID)](
-              "annotation_label_id",
-              "annotation_label_class_id"
-            ).compile.toList
-      ).getOrElse(List[(UUID,UUID)]().pure[ConnectionIO])
+      )
+    for {
+      insertedAnnotations <- annotationFragments.toNel
+        .map(
+          fragments =>
+            (insertAnnotationsFragment ++ fragments.intercalate(fr",")).update
+              .withGeneratedKeys[AnnotationLabel](
+                "id",
+                "created_at",
+                "created_by",
+                "annotation_project_id",
+                "annotation_task_id"
+              )
+              .compile
+              .toList
+        )
+        .getOrElse(List[AnnotationLabel]().pure[ConnectionIO])
+      insertedAnnotationClasses <- labelClassFragments.toNel
+        .map(
+          fragments =>
+            (insertClassesFragment ++ fragments.intercalate(fr",")).update
+              .withGeneratedKeys[(UUID, UUID)](
+                "annotation_label_id",
+                "annotation_label_class_id"
+              )
+              .compile
+              .toList
+        )
+        .getOrElse(List[(UUID, UUID)]().pure[ConnectionIO])
       labelsToClasses = insertedAnnotationClasses.groupBy(_._1)
       insertedAnnotationsWithClasses = insertedAnnotations.map(
         anno =>
@@ -85,8 +92,11 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
             anno.geometry,
             anno.annotationProjectId,
             anno.annotationTaskId,
-            labelsToClasses.getOrElse(anno.id, Seq[(UUID,UUID)]()).map(_._2).toList
-          )
+            labelsToClasses
+              .getOrElse(anno.id, Seq[(UUID, UUID)]())
+              .map(_._2)
+              .toList
+        )
       )
     } yield insertedAnnotationsWithClasses
   }

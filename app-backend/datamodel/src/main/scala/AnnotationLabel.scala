@@ -11,7 +11,6 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
 
-
 final case class AnnotationLabel(
     id: UUID,
     createdAt: Timestamp,
@@ -70,10 +69,10 @@ object AnnotationLabelWithClasses {
   def tupled = (AnnotationLabel.apply _).tupled
 
   final case class Create(
-    geometry: Option[Projected[Geometry]],
-    annotationProjectId: UUID,
-    annotationTaskId: UUID,
-    annotationLabelClasses: List[UUID]
+      geometry: Option[Projected[Geometry]],
+      annotationProjectId: UUID,
+      annotationTaskId: UUID,
+      annotationLabelClasses: List[UUID]
   ) {
     def toAnnotationLabelWithClasses(user: User): AnnotationLabelWithClasses = {
       val now = new Timestamp(new java.util.Date().getTime)
@@ -96,13 +95,14 @@ object AnnotationLabelWithClasses {
       properties: AnnotationLabelWithClassesProperties,
       _type: String = "Feature"
   ) extends GeoJSONFeature
-  
+
   @JsonCodec
   final case class GeoJSONFeatureCreate(
-    geometry: Option[Projected[Geometry]],
-    properties: AnnotationLabelWithClassesPropertiesCreate
+      geometry: Option[Projected[Geometry]],
+      properties: AnnotationLabelWithClassesPropertiesCreate
   ) {
-    def toAnnotationLabelWithClassesCreate: AnnotationLabelWithClasses.Create = {
+    def toAnnotationLabelWithClassesCreate
+      : AnnotationLabelWithClasses.Create = {
       AnnotationLabelWithClasses.Create(
         geometry,
         properties.annotationProjectId,
@@ -111,7 +111,6 @@ object AnnotationLabelWithClasses {
       )
     }
   }
-  
 
   object GeoJSON {
     implicit val annoLabelWithClassesGeojonEncoder: Encoder[GeoJSON] =
@@ -124,9 +123,9 @@ object AnnotationLabelWithClasses {
 
 @JsonCodec
 final case class AnnotationLabelWithClassesPropertiesCreate(
-  annotationProjectId: UUID,
-  annotationTaskId: UUID,
-  annotationLabelClasses: List[UUID]
+    annotationProjectId: UUID,
+    annotationTaskId: UUID,
+    annotationLabelClasses: List[UUID]
 )
 
 @JsonCodec
@@ -142,7 +141,8 @@ object AnnotationLabelWithClassesProperties {
   implicit val annotationLabelWithClassesPropertiesEncoder
     : Encoder[AnnotationLabelWithClassesProperties] =
     new Encoder[AnnotationLabelWithClassesProperties] {
-      final def apply(properties: AnnotationLabelWithClassesProperties): Json = {
+      final def apply(
+          properties: AnnotationLabelWithClassesProperties): Json = {
         (
           Map(
             "createdAt" -> properties.createdAt.asJson,
