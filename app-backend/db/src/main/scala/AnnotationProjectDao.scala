@@ -117,9 +117,9 @@ object AnnotationProjectDao
   ): ConnectionIO[Option[AnnotationProject.WithRelated]] =
     for {
       projectO <- getById(id)
-      tileLayers <- TileLayerDao.listTileLayerByProjectId(id)
+      tileLayers <- TileLayerDao.listByProjectId(id)
       labelClassGroup <- AnnotationLabelClassGroupDao
-        .listLabelClassGroupProjectId(id)
+        .listByProjectId(id)
       labelClassGroupWithClass <- labelClassGroup traverse { group =>
         AnnotationLabelClassDao
           .listAnnotationLabelClassByGroupId(group.id)
@@ -133,6 +133,60 @@ object AnnotationProjectDao
 
   def deleteById(id: UUID): ConnectionIO[Int] =
     query.filter(fr"id = ${id}").delete
+
+  def update(project: AnnotationProject, id: UUID): ConnectionIO[Int] = {
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      name = ${project.name},
+      labelers_team_id = ${project.labelersTeamId},
+      validators_team_id = ${project.validatorsTeamId}
+    WHERE
+      id = $id
+    """).update.run;
+  }
+
+  def updateWithRelated(
+      id: UUID,
+      projectWithRelated: AnnotationProject.WithRelated
+  ): ConnectionIO[Int] = {
+    val project = projectWithRelated.toProject
+    for {
+      count <- update(project, id)
+      _ <- TileLayerDao.deleteByProjectId(id)
+      _ <- projectWithRelated.tileLayers traverse { layer =>
+        TileLayerDao.insertTileLayer(
+          TileLayer.Create(
+            layer.name,
+            layer.url,
+            Some(layer.default),
+            Some(layer.overlay),
+            layer.layerType
+          ),
+          project
+        )
+      }
+      _ <- AnnotationLabelClassGroupDao.deleteByProjectId(id)
+      _ <- projectWithRelated.labelClassGroups.zipWithIndex traverse {
+        case (classGroup, idx) =>
+          AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
+            AnnotationLabelClassGroup.Create(
+              classGroup.id.toString(),
+              Some(classGroup.index),
+              classGroup.labelClasses map { labelClass =>
+                AnnotationLabelClass.Create(
+                  labelClass.name,
+                  labelClass.colorHexCode,
+                  labelClass.default,
+                  labelClass.determinant,
+                  labelClass.index
+                )
+              }
+            ),
+            project,
+            idx
+          )
+      }
+    } yield { count }
+  }
 
   def getFootprint(id: UUID): ConnectionIO[Option[Projected[Geometry]]] =
     for {

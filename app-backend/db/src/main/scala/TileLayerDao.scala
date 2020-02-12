@@ -38,11 +38,16 @@ object TileLayerDao extends Dao[TileLayer] {
       "annotation_project_id"
     )
 
-  def listTileLayerByProjectId(
+  def listByProjectId(
       projectId: UUID
   ): ConnectionIO[List[TileLayer]] = {
     (selectF ++ Fragments.whereAndOpt(
       Some(fr"annotation_project_id = ${projectId}")
     )).query[TileLayer].to[List]
   }
+
+  def deleteByProjectId(
+      projectId: UUID
+  ): ConnectionIO[Int] =
+    query.filter(fr"annotation_project_id = $projectId").delete
 }

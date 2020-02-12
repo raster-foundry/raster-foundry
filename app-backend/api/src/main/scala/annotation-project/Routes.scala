@@ -158,7 +158,39 @@ trait AnnotationProjectRoutes
     }
   }
 
-  def updateAnnotationProject(projectId: UUID): Route = ???
+  def updateAnnotationProject(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        AnnotationProjectDao
+          .authorized(
+            user,
+            ObjectType.AnnotationProject,
+            projectId,
+            ActionType.Edit
+          )
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AnnotationProject.WithRelated]) {
+          updatedAnnotationProjectWithRelated =>
+            onSuccess(
+              AnnotationProjectDao
+                .updateWithRelated(
+                  projectId,
+                  updatedAnnotationProjectWithRelated
+                )
+                .transact(xa)
+                .unsafeToFuture
+            ) {
+              completeSingleOrNotFound
+            }
+        }
+      }
+    }
+  }
 
   def deleteAnnotationProject(projectId: UUID): Route = authenticate { user =>
     authorizeScope(

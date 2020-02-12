@@ -41,11 +41,16 @@ object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
     } yield labelClassGroup.withLabelClasses(labelClasses)
   }
 
-  def listLabelClassGroupProjectId(
+  def listByProjectId(
       projectId: UUID
   ): ConnectionIO[List[AnnotationLabelClassGroup]] = {
     (selectF ++ Fragments.whereAndOpt(
       Some(fr"annotation_project_id = ${projectId}")
     )).query[AnnotationLabelClassGroup].to[List]
   }
+
+  def deleteByProjectId(
+      projectId: UUID
+  ): ConnectionIO[Int] =
+    query.filter(fr"annotation_project_id = $projectId").delete
 }

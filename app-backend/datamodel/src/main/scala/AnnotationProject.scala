@@ -72,9 +72,23 @@ object AnnotationProject {
       projectId: Option[UUID],
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses]
-  )
+  ) {
+    def toProject: AnnotationProject = AnnotationProject(
+      id,
+      createdAt,
+      createdBy,
+      name,
+      projectType,
+      taskSizeMeters,
+      aoi,
+      labelersTeamId,
+      validatorsTeamId,
+      projectId
+    )
+  }
 
   object WithRelated {
     implicit val encRelated: Encoder[WithRelated] = deriveEncoder
+    implicit val decRelated: Decoder[WithRelated] = deriveDecoder
   }
 }
