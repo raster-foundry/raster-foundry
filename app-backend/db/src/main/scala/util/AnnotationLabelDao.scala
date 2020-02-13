@@ -14,13 +14,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   val joinTableName = "annotation_labels_annotation_label_classes"
   val selectF: Fragment = fr"""
   SELECT
-    id, created_at, created_by, annotation_project_id, annotation_task_id,
-    classes.class_ids as annotation_label_classes, geometry
+    id, created_at, created_by, geometry, annotation_project_id, annotation_task_id,
+    classes.class_ids as annotation_label_classes,
   FROM ${tableName} JOIN (
     SELECT annotation_label_id, array_agg(annotation_class_id) as class_ids
     FROM ${joinTableName}
     GROUP BY annotation_label_id
-  ) as classes
+  ) as classes ON ${tableName}.id = ${joinTableName}.annotation_label_id
   """
   def insertAnnotations(
       annotations: List[AnnotationLabelWithClasses.Create],
@@ -28,7 +28,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
     val insertAnnotationsFragment: Fragment = fr"""
     INSERT INTO ${tableName} (
-      id, created_at, created_by, annotation_project_id, annotation_task_id, geometry
+      id, created_at, created_by, geometry, annotation_project_id, annotation_task_id
     ) VALUES
     """
     val insertClassesFragment: Fragment = fr"""
@@ -40,9 +40,9 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       annotations.map(_.toAnnotationLabelWithClasses(user))
     val annotationFragments: List[Fragment] = annotationLabelsWithClasses.map(
       (annotationLabel: AnnotationLabelWithClasses) => fr"""(
-         ${annotationLabel.id}, ${annotationLabel.createdAt},
-        ${annotationLabel.createdBy}, ${annotationLabel.annotationProjectId},
-        ${annotationLabel.annotationTaskId}, ${annotationLabel.geometry}
+        ${annotationLabel.id}, ${annotationLabel.createdAt},
+        ${annotationLabel.createdBy}, ${annotationLabel.geometry},
+        ${annotationLabel.annotationProjectId}, ${annotationLabel.annotationTaskId}
        )"""
     )
     val labelClassFragments: List[Fragment] =
@@ -63,6 +63,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
                 "id",
                 "created_at",
                 "created_by",
+                "geometry",
                 "annotation_project_id",
                 "annotation_task_id"
               )
