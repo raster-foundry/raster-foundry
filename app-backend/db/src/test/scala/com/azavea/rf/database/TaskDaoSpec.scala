@@ -146,7 +146,8 @@ class TaskDaoSpec
               (
                   Option[Scene.WithRelated],
                   com.rasterfoundry.datamodel.Task.TaskGridFeatureCreate,
-                  Int
+                  Int,
+                  com.rasterfoundry.datamodel.AnnotationProject.WithRelated
               )
             ] =
               for {
@@ -187,13 +188,20 @@ class TaskDaoSpec
                   taskGridFeatureCreate,
                   dbUser
                 )
-              } yield { (createdScene, taskGridFeatureCreate, taskCount) }
+              } yield {
+                (
+                  createdScene,
+                  taskGridFeatureCreate,
+                  taskCount,
+                  dbAnnotationProj
+                )
+              }
 
-            val (createdScene, gridFeatures, taskCount) =
+            val (createdScene, gridFeatures, taskCount, annotationProject) =
               connIO.transact(xa).unsafeRunSync
 
-            (createdScene, gridFeatures.geometry) match {
-              case (_, Some(_)) | (Some(_), None) =>
+            (createdScene, gridFeatures.geometry, annotationProject.aoi) match {
+              case (_, Some(_), _) | (Some(_), None, _) | (_, _, Some(_)) =>
                 assert(
                   taskCount > 0,
                   "Task grid generation resulted in at least one inserted task"
