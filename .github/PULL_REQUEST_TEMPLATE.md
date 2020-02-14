@@ -9,6 +9,7 @@ Brief description of what this PR does, and why it is needed.
 - [ ] New tables and queries have appropriate indices added
 - [ ] Any content changes are properly templated using `BUILDCONFIG.APP_NAME`
 - [ ] Any new SQL strings have tests
+- [ ] Any new endpoints have scope validation and are included in the integration test csv
 
 ### Demo
 
