@@ -91,4 +91,48 @@ object AnnotationProject {
     implicit val encRelated: Encoder[WithRelated] = deriveEncoder
     implicit val decRelated: Decoder[WithRelated] = deriveDecoder
   }
+
+  final case class LabelClassSummary(
+      labelClassId: String,
+      labelClassName: String,
+      count: Int
+  )
+
+  object LabelClassSummary {
+    implicit val encLabelClassGroupSummary: Encoder[LabelClassSummary] =
+      deriveEncoder
+  }
+
+  final case class LabelClassGroupSummary(
+      labelClassGroupId: String,
+      labelClassGroupName: String,
+      labelClassSummaries: List[LabelClassSummary]
+  )
+
+  object LabelClassGroupSummary {
+    implicit val encLabelClassGroupSummary: Encoder[LabelClassGroupSummary] =
+      deriveEncoder
+  }
+
+  final case class WithRelatedAndSummary(
+      id: UUID,
+      createdAt: Instant,
+      createdBy: String,
+      name: String,
+      projectType: AnnotationProjectType,
+      taskSizeMeters: Option[Int],
+      aoi: Option[Projected[Geometry]],
+      labelersTeamId: Option[UUID],
+      validatorsTeamId: Option[UUID],
+      projectId: Option[UUID],
+      tileLayers: List[TileLayer],
+      labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
+      taskStatusSummary: Map[TaskStatus, Int],
+      labelClassSummary: List[LabelClassGroupSummary]
+  )
+
+  object WithRelatedAndSummary {
+    implicit val encRelatedAndSummary: Encoder[WithRelatedAndSummary] =
+      deriveEncoder
+  }
 }
