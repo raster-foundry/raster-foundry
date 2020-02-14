@@ -553,6 +553,17 @@ object TaskDao extends Dao[Task] {
 
       })
 
+  def countProjectTaskByStatus(
+      projectId: UUID
+  ): ConnectionIO[Map[TaskStatus, Int]] = {
+    (fr"""
+    SELECT status, COUNT(id)
+    FROM tasks
+    WHERE annotation_project_id = ${projectId}
+    GROUP BY status;
+    """).query[(TaskStatus, Int)].to[List].map(_.toMap)
+  }
+
   def listLayerTasksByStatus(
       projectId: UUID,
       layerId: UUID,

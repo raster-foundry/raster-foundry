@@ -97,7 +97,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
               .getOrElse(anno.id, Seq[(UUID, UUID)]())
               .map(_._2)
               .toList
-        )
+          )
       )
     } yield insertedAnnotationsWithClasses
   }
@@ -107,4 +107,26 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
     query.filter(fr"annotation_project_id = ${projectId}").list
   }
+
+  def countByProjectAndGroup(
+      projectId: UUID,
+      annotationLabelClassGroupId: UUID
+  ): ConnectionIO[List[AnnotationProject.LabelClassSummary]] = (fr"""
+  SELECT 
+    alalc.annotation_class_id AS label_class_id, 
+    alcls.name AS label_class_name,
+    count(al.id) AS count
+  FROM annotation_labels AS al
+  JOIN annotation_labels_annotation_label_classes AS alalc
+  ON alalc.annotation_label_id = al.id
+  JOIN annotation_label_classes AS alcls
+  ON alcls.id = alalc.annotation_class_id
+  WHERE 
+    al.annotation_project_id = ${projectId}
+    AND
+    alcls.annotation_label_group_id = ${annotationLabelClassGroupId}
+  GROUP BY
+    alalc.annotation_class_id,
+    alcls.name
+  """).query[AnnotationProject.LabelClassSummary].to[List]
 }

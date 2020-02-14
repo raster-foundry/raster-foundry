@@ -185,6 +185,32 @@ object AnnotationProjectDao
       }
     }
 
+  def getWithRelatedAndSummaryById(
+      id: UUID
+  ): ConnectionIO[Option[AnnotationProject.WithRelatedAndSummary]] =
+    for {
+      withRelatedO <- getWithRelatedById(id)
+      taskStatusSummary <- TaskDao.countProjectTaskByStatus(id)
+      labelClassGroups <- AnnotationLabelClassGroupDao.listByProjectId(id)
+      labelClassSummaries <- labelClassGroups traverse { labelClassGroup =>
+        AnnotationLabelDao.countByProjectAndGroup(id, labelClassGroup.id).map {
+          summary =>
+            AnnotationProject.LabelClassGroupSummary(
+              labelClassGroup.id,
+              labelClassGroup.name,
+              summary
+            )
+        }
+      }
+    } yield {
+      withRelatedO map { withRelated =>
+        withRelated.withSummary(
+          taskStatusSummary,
+          labelClassSummaries
+        )
+      }
+    }
+
   def deleteById(id: UUID): ConnectionIO[Int] =
     query.filter(fr"id = ${id}").delete
 

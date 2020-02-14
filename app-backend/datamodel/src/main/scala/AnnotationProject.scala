@@ -85,6 +85,27 @@ object AnnotationProject {
       validatorsTeamId,
       projectId
     )
+
+    def withSummary(
+        taskStatusSummary: Map[TaskStatus, Int],
+        labelClassSummary: List[AnnotationProject.LabelClassGroupSummary]
+    ): AnnotationProject.WithRelatedAndSummary =
+      AnnotationProject.WithRelatedAndSummary(
+        id,
+        createdAt,
+        createdBy,
+        name,
+        projectType,
+        taskSizeMeters,
+        aoi,
+        labelersTeamId,
+        validatorsTeamId,
+        projectId,
+        tileLayers,
+        labelClassGroups,
+        taskStatusSummary,
+        labelClassSummary
+      )
   }
 
   object WithRelated {
@@ -93,7 +114,7 @@ object AnnotationProject {
   }
 
   final case class LabelClassSummary(
-      labelClassId: String,
+      labelClassId: UUID,
       labelClassName: String,
       count: Int
   )
@@ -104,7 +125,7 @@ object AnnotationProject {
   }
 
   final case class LabelClassGroupSummary(
-      labelClassGroupId: String,
+      labelClassGroupId: UUID,
       labelClassGroupName: String,
       labelClassSummaries: List[LabelClassSummary]
   )

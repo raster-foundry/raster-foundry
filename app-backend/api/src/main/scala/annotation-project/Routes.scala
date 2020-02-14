@@ -164,7 +164,7 @@ trait AnnotationProjectRoutes
         rejectEmptyResponse {
           complete {
             AnnotationProjectDao
-              .getWithRelatedById(projectId)
+              .getWithRelatedAndSummaryById(projectId)
               .transact(xa)
               .unsafeToFuture
           }
