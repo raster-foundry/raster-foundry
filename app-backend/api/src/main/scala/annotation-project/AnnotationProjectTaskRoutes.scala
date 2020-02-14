@@ -3,6 +3,7 @@ package com.rasterfoundry.api.annotationProject
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.common.RollbarNotifier
@@ -285,7 +286,7 @@ trait AnnotationProjectTaskRoutes
   ): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.Projects, Action.CreateAnnotation, None),
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
       ) {
         authorizeAsync {
@@ -309,4 +310,53 @@ trait AnnotationProjectTaskRoutes
 
       }
     }
+
+  def listTaskLabels(projectId: UUID, taksId: UUID): Route = ???
+
+  def addTaskLabels(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        AnnotationProjectDao
+          .authorized(
+            user,
+            ObjectType.AnnotationProject,
+            projectId,
+            ActionType.Annotate
+          )
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
+          val annotationLabelWithClassesCreate = fc.features map {
+            _.toAnnotationLabelWithClassesCreate
+          }
+          onSuccess(
+            AnnotationLabelDao
+              .insertAnnotations(
+                annotationLabelWithClassesCreate.toList,
+                user
+              )
+              .transact(xa)
+              .unsafeToFuture
+              .map { annotations: List[AnnotationLabelWithClasses] =>
+                fromSeqToFeatureCollection[
+                  AnnotationLabelWithClasses,
+                  AnnotationLabelWithClasses.GeoJSON
+                ](
+                  annotations
+                )
+              }
+          ) { createdAnnotation =>
+            complete((StatusCodes.Created, createdAnnotation))
+          }
+        }
+      }
+    }
+  }
+
+  def deleteTaskLabels(projectId: UUID, taksId: UUID): Route = ???
+
 }

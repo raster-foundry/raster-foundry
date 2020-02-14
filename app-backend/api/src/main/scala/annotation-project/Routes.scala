@@ -102,7 +102,20 @@ trait AnnotationProjectRoutes
                       unlockTask(projectId, taskId)
                     }
                   }
-                }
+                } ~
+                  pathPrefix("labels") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listTaskLabels(projectId, taskId)
+                      } ~
+                        post {
+                          addTaskLabels(projectId)
+                        } ~
+                        delete {
+                          deleteTaskLabels(projectId, taskId)
+                        }
+                    }
+                  }
               }
           }
       }
@@ -128,7 +141,7 @@ trait AnnotationProjectRoutes
   def createAnnotationProject: Route = authenticate { user =>
     authorizeScopeLimit(
       AnnotationProjectDao.countUserProjects(user).transact(xa).unsafeToFuture,
-      Domain.Projects,
+      Domain.AnnotationProjects,
       Action.Create,
       user
     ) {
