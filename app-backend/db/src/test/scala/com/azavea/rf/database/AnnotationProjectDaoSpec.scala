@@ -52,4 +52,37 @@ class AnnotationProjectDaoSpec
       )
     }
   }
+
+  test("list annotation projects") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create
+        ) => true
+      )
+    }
+  }
+
+  test("update annotation projects") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            annotationProjectUpdate: AnnotationProject.Create
+        ) => true
+      )
+    }
+  }
+
+  test("delete an annotation project") {
+    check {
+      forAll(
+        (userCreate: User.Create,
+          annotationProjectCreate: AnnotationProject.Create) =>
+        true
+      )
+    }
+  }
 }
