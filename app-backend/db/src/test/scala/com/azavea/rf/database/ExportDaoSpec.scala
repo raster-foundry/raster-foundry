@@ -1,17 +1,18 @@
 package com.rasterfoundry.database
 
-import java.util.UUID
-
+import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.MapAlgebraAST.{LayerRaster, ProjectRaster}
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.common.Generators.Implicits._
-import io.circe.syntax._
+
 import doobie.implicits._
+import io.circe.syntax._
+import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
-import org.scalacheck.Prop.forAll
+
+import java.util.UUID
 
 class ExportDaoSpec
     extends FunSuite

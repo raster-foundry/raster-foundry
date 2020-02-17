@@ -1,7 +1,8 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel.{Organization, Platform, Shape, User}
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.datamodel.{Organization, Platform, Shape, User}
+
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import org.scalacheck.Prop.forAll

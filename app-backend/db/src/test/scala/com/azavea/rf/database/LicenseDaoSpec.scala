@@ -1,7 +1,6 @@
 package com.rasterfoundry.database
 
 import doobie.implicits._
-
 import org.scalatest._
 
 class LicenseDaoSpec extends FunSuite with Matchers with DBTestConfig {

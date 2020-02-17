@@ -4,12 +4,12 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
 import cats.implicits._
-
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 import io.circe.generic.JsonCodec
+import io.circe.syntax._
 
 import java.util.UUID
 

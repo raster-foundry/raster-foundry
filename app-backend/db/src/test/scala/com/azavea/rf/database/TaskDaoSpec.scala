@@ -1,17 +1,17 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
+import com.rasterfoundry.datamodel._
 
 import cats.data.NonEmptyList
 import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
-import com.typesafe.scalalogging.LazyLogging
 
 class TaskDaoSpec
     extends FunSuite
