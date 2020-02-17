@@ -46,7 +46,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Linting Scala source code and running tests"
         docker-compose \
             run --rm sbt \
-            ";scalafmtCheck;scalafmtSbtCheck;scapegoat;unusedCompileDependenciesTest;undeclaredCompileDependenciesTest;test"
+            ";scalafmtCheck;scalafmtSbtCheck;scalafix --check;scapegoat;unusedCompileDependenciesTest;undeclaredCompileDependenciesTest;test"
 
         echo "Validating API service spec"
         docker-compose \
