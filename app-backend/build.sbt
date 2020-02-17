@@ -7,6 +7,11 @@ addCommandAlias(
   ";set version in ThisBuild := git.gitDescribedVersion.value.get + \"-SNAPSHOT\""
 )
 
+addCommandAlias(
+  "fix",
+  ";scalafix;scalafmt"
+)
+
 git.gitTagToVersionNumber in ThisBuild := { tag: String =>
   if (tag matches "[0-9]+\\..*") Some(tag)
   else None
