@@ -52,26 +52,26 @@ trait ProjectLayerRoutes
     }
   }
 
-  def listProjectLayers(projectId: UUID): Route = extractTokenHeader { tokenO =>
-    extractMapTokenParam { mapTokenO =>
-      (projectAuthFromMapTokenO(mapTokenO, projectId) |
-        projectAuthFromTokenO(
-          tokenO,
-          projectId,
-          None,
-          ScopedAction(Domain.Projects, Action.Read, None)
-        ) | projectIsPublic(projectId)) {
-        (withPagination) { (page) =>
-          complete {
-            ProjectLayerDao
-              .listProjectLayersForProject(page, projectId)
-              .transact(xa)
-              .unsafeToFuture
+  def listProjectLayers(projectId: UUID): Route = authenticateAllowAnonymous {
+    user =>
+      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+        (authorizeAsync(
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+            .map(_.toBoolean)) | projectIsPublic(projectId)) {
+          (withPagination) { (page) =>
+            complete {
+              ProjectLayerDao
+                .listProjectLayersForProject(page, projectId)
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
-      }
 
-    }
+      }
   }
 
   def getProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
@@ -241,7 +241,8 @@ trait ProjectLayerRoutes
       layerId: UUID
   ): Route =
     authenticate { user =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.Update, None), user) {
+      authorizeScope(ScopedAction(Domain.Projects, Action.ColorCorrect, None),
+                     user) {
         authorizeAsync {
           ProjectDao
             .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
