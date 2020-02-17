@@ -183,11 +183,10 @@ trait ObjectPermissions[Model] {
       tableName: String
   ): Fragment =
     (objectType, actionType) match {
-      case (ObjectType.Shape, ActionType.View) =>
+      case (ObjectType.Shape, ActionType.View) |
+          (ObjectType.AnnotationProject, ActionType.View) =>
         Fragment.empty
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
-          (ObjectType.AnnotationProject, ActionType.Export) |
-          (ObjectType.AnnotationProject, ActionType.Annotate) |
           (ObjectType.Project, ActionType.Export) |
           (ObjectType.Project, ActionType.Annotate) |
           (ObjectType.Analysis, ActionType.Export) =>
@@ -239,7 +238,7 @@ trait ObjectPermissions[Model] {
     val inheritedF: Fragment =
       createInheritedF(user, actionType, groupTypeO, groupIdO)
     val acrFilterF
-      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
+        : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
       .const(s"${tableName}acrs")
 
     ownershipTypeO match {
@@ -270,7 +269,7 @@ trait ObjectPermissions[Model] {
         }
       // shared to the requesting user due to group membership
       case Some("inherited") =>
-        if (objectType == ObjectType.Shape) {
+        if (objectType == ObjectType.Shape || objectType == ObjectType.AnnotationProject) {
           Some(inheritedF ++ Fragment.const(s"&& ${tableName}acrs"))
         } else {
           Some(

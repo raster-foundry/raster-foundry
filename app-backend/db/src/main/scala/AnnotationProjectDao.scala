@@ -249,7 +249,7 @@ object AnnotationProjectDao
         case (classGroup, idx) =>
           AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
             AnnotationLabelClassGroup.Create(
-              classGroup.id.toString(),
+              classGroup.name,
               Some(classGroup.index),
               classGroup.labelClasses map { labelClass =>
                 AnnotationLabelClass.Create(

@@ -544,7 +544,8 @@ object Scopes {
           Action.DeleteTasks,
           Action.UpdateTasks,
           Action.ReadTasks,
-          Action.AddScenes
+          Action.AddScenes,
+          Action.ReadPermissions
         ).map(makeScopedAction(Domain.AnnotationProjects, _, None)) ++
           StacExportsCRUD.actions ++
           UserSelfScope.actions ++
