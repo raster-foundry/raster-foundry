@@ -1,24 +1,25 @@
 package com.rasterfoundry.backsplash.export
 
-import com.rasterfoundry.backsplash.export.shapes._
 import com.rasterfoundry.backsplash.export.ExportableInstances._
+import com.rasterfoundry.backsplash.export.shapes._
 import com.rasterfoundry.common.export._
 
+import Exportable.ops._
+import _root_.io.circe.parser._
+import _root_.io.circe.shapes._
 import cats.effect._
 import cats.implicits._
 import com.monovore.decline._
-import geotrellis.spark.io.s3.S3Client
-import geotrellis.raster.io.geotiff.compression._
-import shapeless._
-import _root_.io.circe.parser._
-import _root_.io.circe.shapes._
 import com.typesafe.scalalogging._
+import geotrellis.raster.io.geotiff.compression._
+import geotrellis.spark.io.s3.S3Client
 import org.apache.commons.io.FileUtils
-import Exportable.ops._
+import shapeless._
 
-import java.net.URI
-import java.io.File
 import scala.concurrent.ExecutionContext
+
+import java.io.File
+import java.net.URI
 
 /**
   * Point this command line utility at a serialized version of any type that

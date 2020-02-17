@@ -1,8 +1,5 @@
 package com.rasterfoundry.datamodel
 
-import java.sql.Timestamp
-import java.util.{Date, UUID}
-
 import geotrellis.server.stac.{
   StacCollection,
   StacExtent,
@@ -12,6 +9,9 @@ import geotrellis.server.stac.{
 }
 import io.circe.JsonObject
 import io.circe.generic.JsonCodec
+
+import java.sql.Timestamp
+import java.util.{Date, UUID}
 
 @JsonCodec
 final case class StacExport(id: UUID,

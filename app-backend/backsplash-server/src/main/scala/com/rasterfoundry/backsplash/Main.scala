@@ -1,35 +1,35 @@
 package com.rasterfoundry.backsplash.server
 
+import com.rasterfoundry.backsplash.MosaicImplicits
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.common.{Config => CommonConfig}
+import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
   LayerAttributeDao,
   ProjectDao,
   SceneToLayerDao,
   ToolRunDao
 }
-import com.rasterfoundry.common.{Config => CommonConfig}
-import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.MosaicImplicits
-import com.rasterfoundry.database.util.RFTransactor
-import cats.data.OptionT
-import cats.effect._
-import com.olegpy.meow.hierarchy._
-import org.http4s._
-import org.http4s.server.middleware.{CORS, CORSConfig, Timeout}
-import org.http4s.server.blaze.BlazeServerBuilder
-import org.http4s.server.Router
-import org.http4s.syntax.kleisli._
-import com.typesafe.scalalogging.LazyLogging
-import doobie.implicits._
-
-import scala.concurrent.duration.FiniteDuration
-import scala.util.Properties
-import java.util.concurrent.{Executors, TimeUnit}
-
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
 
+import cats.data.OptionT
+import cats.effect._
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.olegpy.meow.hierarchy._
+import com.typesafe.scalalogging.LazyLogging
+import doobie.implicits._
+import org.http4s._
+import org.http4s.server.Router
+import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.server.middleware.{CORS, CORSConfig, Timeout}
+import org.http4s.syntax.kleisli._
+
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
+import scala.util.Properties
+
+import java.util.concurrent.{Executors, TimeUnit}
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 

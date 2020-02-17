@@ -2,12 +2,12 @@ package com.rasterfoundry.batch
 
 import com.rasterfoundry.batch.cogMetadata._
 import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
-import com.rasterfoundry.batch.healthcheck.HealthCheck
-import com.rasterfoundry.batch.stacImport.ReadStacFeature
-import com.rasterfoundry.batch.stacExport.WriteStacCatalog
-import com.rasterfoundry.batch.notification.NotifyIngestStatus
 import com.rasterfoundry.batch.geojsonImport.ImportGeojsonFiles
+import com.rasterfoundry.batch.healthcheck.HealthCheck
+import com.rasterfoundry.batch.notification.NotifyIngestStatus
 import com.rasterfoundry.batch.projectLiberation.ProjectLiberation
+import com.rasterfoundry.batch.stacExport.WriteStacCatalog
+import com.rasterfoundry.batch.stacImport.ReadStacFeature
 
 object Main {
   val modules = Map[String, Array[String] => Unit](

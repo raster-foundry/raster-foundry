@@ -2,6 +2,7 @@ package com.rasterfoundry.akkautil
 
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
+
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server._
@@ -17,13 +18,13 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import io.circe.Json
 
 import scala.concurrent.Future
 import scala.util.Try
+
 import java.net.URL
 import java.util.UUID
-
-import io.circe.Json
 
 trait Authentication extends Directives with LazyLogging {
 

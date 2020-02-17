@@ -9,9 +9,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 
 import java.util.UUID
 

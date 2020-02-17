@@ -1,17 +1,22 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
+import com.rasterfoundry.backsplash._
 import com.rasterfoundry.common.utils.TileUtils
+import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
+
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
-import com.azavea.maml.eval.ConcurrentInterpreter
 import com.azavea.maml.ast.{GeomLit, Masking, RasterVar}
+import com.azavea.maml.eval.ConcurrentInterpreter
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import doobie.util.transactor.Transactor
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
+import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import io.circe.parser._
 import io.circe.syntax._
 import org.http4s._
@@ -19,12 +24,8 @@ import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
-import doobie.util.transactor.Transactor
-import geotrellis.vector.{MultiPolygon, Polygon, Projected}
-import java.util.UUID
 
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
-import com.rasterfoundry.http4s.TracedHTTPRoutes
+import java.util.UUID
 
 class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     layers: LayerStore,

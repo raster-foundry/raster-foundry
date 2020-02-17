@@ -1,10 +1,10 @@
 package com.rasterfoundry.datamodel
 
-import java.util.UUID
-
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto._
+
+import java.util.UUID
 
 final case class Platform(id: UUID,
                           name: String,

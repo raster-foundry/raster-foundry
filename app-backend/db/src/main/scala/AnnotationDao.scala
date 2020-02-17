@@ -1,18 +1,19 @@
 package com.rasterfoundry.database
 
-import java.util.UUID
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.filter.Filters
+import com.rasterfoundry.database.util.Page
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.{Order, PageRequest}
+
 import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import io.circe._
 import io.circe.syntax._
-import com.rasterfoundry.datamodel.{PageRequest, Order}
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.filter.Filters
-import com.rasterfoundry.database.util.Page
+import java.util.UUID
 
 object AnnotationDao extends Dao[Annotation] {
 

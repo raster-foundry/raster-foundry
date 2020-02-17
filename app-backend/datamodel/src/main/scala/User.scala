@@ -1,13 +1,13 @@
 package com.rasterfoundry.datamodel
 
+import cats.syntax.either._
+import io.circe._
+import io.circe.generic.JsonCodec
+
 import java.net.{URI, URLEncoder}
 import java.security.InvalidParameterException
 import java.sql.Timestamp
 import java.util.UUID
-
-import cats.syntax.either._
-import io.circe._
-import io.circe.generic.JsonCodec
 
 sealed abstract class UserRole(val repr: String)
     extends Product

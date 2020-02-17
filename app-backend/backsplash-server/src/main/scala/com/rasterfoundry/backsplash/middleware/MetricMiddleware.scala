@@ -1,18 +1,18 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.{ProjectDao, MetricDao, ToolRunDao}
+import com.rasterfoundry.database.{MetricDao, ProjectDao, ToolRunDao}
+import com.rasterfoundry.datamodel._
 
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import doobie.{ConnectionIO, Transactor}
 import doobie.implicits._
+import doobie.{ConnectionIO, Transactor}
 import org.http4s._
-import org.http4s.headers._
 import org.http4s.dsl.io._
+import org.http4s.headers._
 
 import java.time.Instant
 import java.util.UUID

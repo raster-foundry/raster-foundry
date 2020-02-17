@@ -4,7 +4,6 @@ import com.rasterfoundry.database.Filterable
 import com.rasterfoundry.database.meta.RFMeta
 import com.rasterfoundry.datamodel._
 
-import io.circe.syntax._
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments.in
@@ -12,6 +11,7 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import geotrellis.vector._
+import io.circe.syntax._
 
 import java.util.UUID
 

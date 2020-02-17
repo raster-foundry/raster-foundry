@@ -2,13 +2,14 @@ package com.rasterfoundry.akkautil
 
 import com.rasterfoundry.common.{RfStackTrace, RollbarNotifier}
 
-import akka.http.scaladsl.server.{ExceptionHandler, Directives}
 import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
+import akka.http.scaladsl.server.{Directives, ExceptionHandler}
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.typesafe.scalalogging.LazyLogging
+import org.postgresql.util.PSQLException
+
 import java.lang.{IllegalArgumentException, UnsupportedOperationException}
 import java.security.InvalidParameterException
-import org.postgresql.util.PSQLException
 
 trait UserErrorHandler
     extends Directives

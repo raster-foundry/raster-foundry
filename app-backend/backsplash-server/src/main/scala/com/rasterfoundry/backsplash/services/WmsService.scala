@@ -1,31 +1,32 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.OgcStore
 import com.rasterfoundry.backsplash.OgcStore.ToOgcStoreOps
 import com.rasterfoundry.backsplash.Parameters._
+import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
+
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
-import io.circe.syntax._
+import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.{CapabilitiesView, WmsParams}
+import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.scalaxml._
-import com.typesafe.scalalogging.LazyLogging
+
 import java.net.URL
 import java.util.UUID
-
-import com.colisweb.tracing.TracingContext
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
 
 class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO],

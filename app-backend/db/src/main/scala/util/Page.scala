@@ -1,9 +1,10 @@
 package com.rasterfoundry.database.util
 
+import com.rasterfoundry.datamodel.{Order, PageRequest}
+
+import cats.implicits._
 import doobie._, doobie.implicits._
 import doobie.util.fragment.Fragment
-import cats.implicits._
-import com.rasterfoundry.datamodel.{PageRequest, Order}
 
 object Page {
 

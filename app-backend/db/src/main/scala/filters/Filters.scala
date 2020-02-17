@@ -2,12 +2,12 @@ package com.rasterfoundry.database.filter
 
 import com.rasterfoundry.datamodel._
 
+import Fragments.in
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import geotrellis.vector.{Polygon, Projected}
-import cats.implicits._
-import Fragments.in
 
 object Filters {
 

@@ -1,18 +1,16 @@
 package com.rasterfoundry.api.exports
 
-import java.net.URL
-import java.util.UUID
+import com.rasterfoundry.akkautil._
+import com.rasterfoundry.common._
+import com.rasterfoundry.database.ExportDao
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.{StatusCodes, Uri}
 import akka.http.scaladsl.server.Route
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
-import com.rasterfoundry.akkautil._
-import com.rasterfoundry.common._
-import com.rasterfoundry.database.ExportDao
-import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
@@ -22,6 +20,9 @@ import io.circe._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Success
+
+import java.net.URL
+import java.util.UUID
 
 trait ExportRoutes
     extends Authentication

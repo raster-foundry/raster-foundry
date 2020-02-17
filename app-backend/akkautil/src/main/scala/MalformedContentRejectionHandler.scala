@@ -1,9 +1,9 @@
 package com.rasterfoundry.akkautil
 
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.model._
-import StatusCodes._
 import Directives._
+import StatusCodes._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server._
 
 object RFRejectionHandler {
   implicit val rfRejectionHandler: RejectionHandler = RejectionHandler

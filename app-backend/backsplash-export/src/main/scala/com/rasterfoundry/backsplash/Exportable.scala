@@ -1,12 +1,12 @@
 package com.rasterfoundry.backsplash.export
 
+import cats.effect._
 import geotrellis.proj4.{CRS, WebMercator}
-import geotrellis.vector.Extent
+import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.compression._
-import geotrellis.raster._
+import geotrellis.vector.Extent
 import simulacrum._
-import cats.effect._
 
 /**
   * Allows arbitrary types to encode exports by writing the appropriate instances

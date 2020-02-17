@@ -1,8 +1,8 @@
 package com.rasterfoundry.batch.export
 
-import java.net.URI
-
 import scala.util._
+
+import java.net.URI
 
 object CommandLine {
 

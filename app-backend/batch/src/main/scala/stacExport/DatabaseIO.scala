@@ -2,10 +2,12 @@ package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
-import java.util.UUID
-import doobie.implicits._
-import doobie._
+
 import cats.implicits._
+import doobie._
+import doobie.implicits._
+
+import java.util.UUID
 
 object DatabaseIO {
   def sceneTaskAnnotationforLayers(

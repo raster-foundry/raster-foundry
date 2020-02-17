@@ -1,20 +1,22 @@
 package com.rasterfoundry.database
 
-import java.util.UUID
-
-import cats.implicits._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.filter.Filterables
 import com.rasterfoundry.database.util._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.{PageRequest, Order}
-import doobie.{LogHandler => _, _}
+import com.rasterfoundry.datamodel.{Order, PageRequest}
+
+import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.log._
 import doobie.util.{Read, Write}
-import com.typesafe.scalalogging.LazyLogging
+import doobie.{LogHandler => _, _}
+
 import scala.concurrent.duration.FiniteDuration
+
+import java.util.UUID
 
 /**
   * This is abstraction over the listing of arbitrary types from the DB with filters/pagination

@@ -1,21 +1,21 @@
 package com.rasterfoundry.batch.projectLiberation
 
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
   AnnotationDao,
   AnnotationGroupDao,
   ProjectDao
 }
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 
 import cats.data.{EitherT, NonEmptyList}
 import cats.effect.IO
 import cats.implicits._
-import doobie.{ConnectionIO, Fragment}
 import doobie.implicits._
 import doobie.postgres.implicits._
+import doobie.{ConnectionIO, Fragment}
 import geotrellis.vector.{Geometry, Projected}
 import io.circe.Json
 import io.circe.optics.JsonPath._
@@ -23,6 +23,7 @@ import io.circe.syntax._
 import shapeless.{Annotation => _, _}
 
 import scala.util.Try
+
 import java.net.URI
 import java.util.UUID
 

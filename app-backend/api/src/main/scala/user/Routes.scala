@@ -1,26 +1,27 @@
 package com.rasterfoundry.api.user
 
-import java.net.URLDecoder
-
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
-import cats.effect.IO
-import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
   UserErrorHandler
 }
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
+
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
+import cats.effect.IO
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
-import com.rasterfoundry.akkautil.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
 import scala.collection.JavaConverters._
+
+import java.net.URLDecoder
 
 /**
   * Routes for users

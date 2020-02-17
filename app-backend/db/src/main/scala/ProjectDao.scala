@@ -1,31 +1,32 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.common.color._
 import com.rasterfoundry.common.{AWSBatch, S3}
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.common.color._
+import com.rasterfoundry.database.util.Cache
 import com.rasterfoundry.datamodel.PageRequest
+import com.rasterfoundry.datamodel._
+
 import cats.data._
-import cats.implicits._
 import cats.effect.{Async, IO, LiftIO}
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 import geotrellis.proj4.{CRS, WebMercator}
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._
 import io.circe.syntax._
-import java.sql.Timestamp
-import java.util.UUID
-import java.net.URI
-import java.net.URLDecoder
-
-import com.rasterfoundry.database.util.Cache
-import scalacache._
 import scalacache.CatsEffect.modes._
+import scalacache._
 
 import scala.concurrent.duration._
+
+import java.net.URI
+import java.net.URLDecoder
+import java.sql.Timestamp
+import java.util.UUID
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class ProjectDao()

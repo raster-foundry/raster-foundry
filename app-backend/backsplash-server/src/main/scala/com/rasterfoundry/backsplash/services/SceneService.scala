@@ -1,18 +1,21 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
+import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.datamodel.{BandOverride, Datasource, Scene}
+import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.database.DatasourceDao
+import com.rasterfoundry.datamodel.{BandOverride, Datasource, Scene}
+import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
+
 import cats.data.OptionT
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.CellSize
@@ -21,10 +24,8 @@ import geotrellis.vector.{MultiPolygon, Projected}
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-import java.util.UUID
 
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
-import com.rasterfoundry.http4s.TracedHTTPRoutes
+import java.util.UUID
 
 class SceneService[HistStore](
     mosaicImplicits: MosaicImplicits[HistStore],

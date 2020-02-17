@@ -1,10 +1,10 @@
 package com.rasterfoundry.common
 
+import com.amazonaws.HttpMethod
 import com.amazonaws.auth.{
   AWSCredentialsProvider,
   DefaultAWSCredentialsProviderChain
 }
-import com.amazonaws.HttpMethod
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}

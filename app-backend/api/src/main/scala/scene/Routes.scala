@@ -1,35 +1,35 @@
 package com.rasterfoundry.api.scene
 
-import java.util.UUID
-
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Route
-import cats.effect.IO
-import cats.implicits._
-import com.rasterfoundry.api.utils.Config
-import com.rasterfoundry.common.utils.CogUtils
-import com.rasterfoundry.common.{AWSBatch, S3}
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
   UserErrorHandler
 }
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.common.LayerAttribute
+import com.rasterfoundry.common.utils.CogUtils
+import com.rasterfoundry.common.{AWSBatch, S3}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.akkautil.PaginationDirectives
+
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Route
+import cats.effect.IO
+import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.parser._
-
-import spray.json._
 import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.concurrent.ExecutionContext
-import com.rasterfoundry.common.LayerAttribute
+
+import java.util.UUID
 
 trait SceneRoutes
     extends Authentication

@@ -1,24 +1,24 @@
 package com.rasterfoundry.batch.stacExport
 
-import java.net.URI
-
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.conf.Config
-import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.RollbarNotifier
-import cats.implicits._
-import better.files.{File => ScalaFile}
-import geotrellis.server.stac._
-import java.util.UUID
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 
-import doobie._
-import doobie.implicits._
-import cats.implicits._
+import better.files.{File => ScalaFile}
 import cats.effect.{ContextShift, IO}
+import cats.implicits._
+import cats.implicits._
 import com.amazonaws.services.s3.model.PutObjectResult
+import doobie._
 import doobie.hikari.HikariTransactor
+import doobie.implicits._
+import geotrellis.server.stac._
+
+import java.net.URI
+import java.util.UUID
 
 final case class WriteStacCatalog(exportId: UUID)(
     implicit val xa: Transactor[IO],

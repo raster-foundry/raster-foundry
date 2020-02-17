@@ -1,30 +1,27 @@
 package com.rasterfoundry.batch.geojsonImport
-import com.typesafe.scalalogging.LazyLogging
-
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.common.S3
+import com.rasterfoundry.database.AnnotationDao
+import com.rasterfoundry.database.GeojsonUploadDao
+import com.rasterfoundry.database.UserDao
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.common.S3
-import com.rasterfoundry.batch.Job
 
+import cats.effect._
+import cats.implicits._
+import com.amazonaws.services.s3.AmazonS3URI
 import com.typesafe.scalalogging.LazyLogging
-
+import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
-import cats.implicits._
-import cats.effect._
+import io.circe.parser.decode
 
 import scala.util._
-import java.util.UUID
 
-import java.util.UUID
-import com.rasterfoundry.database.GeojsonUploadDao
-import com.amazonaws.services.s3.AmazonS3URI
 import java.net.URLDecoder
-
 import java.nio.charset.StandardCharsets
-import io.circe.parser.decode
-import com.rasterfoundry.database.UserDao
-import com.rasterfoundry.database.AnnotationDao
+import java.util.UUID
+import java.util.UUID
 
 object ImportGeojsonFiles extends Job with LazyLogging {
   val name = "import_geojson_files"

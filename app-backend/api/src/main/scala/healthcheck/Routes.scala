@@ -1,16 +1,17 @@
 package com.rasterfoundry.api.healthcheck
 
+import com.rasterfoundry.akkautil.Authentication
+import com.rasterfoundry.common.RollbarNotifier
+
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.server._
 import cats.effect.IO
-import com.rasterfoundry.akkautil.Authentication
-import com.rasterfoundry.common.RollbarNotifier
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import doobie.util.transactor.Transactor
-import org.postgresql.util.PSQLException
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
+import org.postgresql.util.PSQLException
 
 /**
   * Routes for healthchecks -- additional routes for individual healthchecks

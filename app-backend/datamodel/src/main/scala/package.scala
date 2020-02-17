@@ -1,25 +1,24 @@
 package com.rasterfoundry
 
-import java.net.URI
-import java.security.InvalidParameterException
-import java.sql.Timestamp
-import java.time.Instant
-import java.util.UUID
-
 import cats.syntax.either._
+import geotrellis.proj4._
+import geotrellis.raster.render.{RGB, RGBA}
+import geotrellis.raster.{CellType, GridExtent}
+import geotrellis.vector._
+import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.parser._
 import io.circe.syntax._
-import geotrellis.proj4._
-import geotrellis.raster.render.{RGB, RGBA}
-import geotrellis.vector._
-import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 
 import scala.util._
-import java.time.LocalDate
 
-import geotrellis.raster.{CellType, GridExtent}
+import java.net.URI
+import java.security.InvalidParameterException
+import java.sql.Timestamp
+import java.time.Instant
+import java.time.LocalDate
+import java.util.UUID
 
 @SuppressWarnings(Array("CatchException"))
 trait JsonCodecs extends GeoJsonImplicits {

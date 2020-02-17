@@ -1,12 +1,12 @@
 package com.rasterfoundry.api.user
 
-import java.util.Base64
-
 import com.dropbox.core.DbxSessionStore
 import io.circe.generic.JsonCodec
 
 import scala.beans.BeanProperty
 import scala.util.Random
+
+import java.util.Base64
 
 @JsonCodec
 final case class DropboxAuthRequest(

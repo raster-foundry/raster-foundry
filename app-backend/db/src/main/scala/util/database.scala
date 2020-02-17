@@ -1,15 +1,15 @@
 package com.rasterfoundry.database.util
 
 import cats.effect._
-import doobie.hikari.HikariTransactor
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import doobie.hikari.HikariTransactor
+import doobie.util.transactor.Transactor
 
 import scala.concurrent.ExecutionContext
 import scala.util.Properties
-import java.util.concurrent.Executors
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
-import doobie.util.transactor.Transactor
+import java.util.concurrent.Executors
 
 object RFTransactor {
   final case class TransactorConfig(

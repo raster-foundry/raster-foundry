@@ -1,5 +1,6 @@
 package com.rasterfoundry.api.team
 
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
@@ -7,17 +8,16 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
-import akka.http.scaladsl.server.Route
-import com.rasterfoundry.akkautil.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import java.util.UUID
 
+import akka.http.scaladsl.server.Route
 import cats.data.OptionT
 import cats.effect.IO
-
-import doobie.util.transactor.Transactor
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
+
+import java.util.UUID
 
 /**
   * Routes for Organizations

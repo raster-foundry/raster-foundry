@@ -1,7 +1,8 @@
 package com.rasterfoundry.backsplash.color
 
-import com.rasterfoundry.datamodel.{ColorComposite, SingleBandOptions}
 import com.rasterfoundry.common.color.ColorCorrect
+import com.rasterfoundry.datamodel.{ColorComposite, SingleBandOptions}
+
 import geotrellis.raster._
 import geotrellis.raster.histogram._
 import geotrellis.server.ogc.OutputFormat.Png

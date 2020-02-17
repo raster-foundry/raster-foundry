@@ -1,16 +1,16 @@
 package com.rasterfoundry.api.project
 
 import com.rasterfoundry.akkautil.Authentication
-import com.rasterfoundry.database.{ProjectDao, ToolRunDao, UserDao, MapTokenDao}
+import com.rasterfoundry.database.{MapTokenDao, ProjectDao, ToolRunDao, UserDao}
 import com.rasterfoundry.datamodel._
 
+import akka.http.scaladsl.server._
 import cats.Applicative
 import cats.effect.IO
 import cats.implicits._
-import akka.http.scaladsl.server._
+import doobie.ConnectionIO
 import doobie.Transactor
 import doobie.implicits._
-import doobie.ConnectionIO
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

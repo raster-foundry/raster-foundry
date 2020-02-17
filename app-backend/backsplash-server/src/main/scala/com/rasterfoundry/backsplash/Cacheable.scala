@@ -1,22 +1,23 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.error.NoDataInRegionException
-import com.rasterfoundry.datamodel.{ProjectLayer, Scene}
-import com.rasterfoundry.database.{ProjectLayerDao, SceneDao}
+import com.rasterfoundry.backsplash.error.NoDataInRegionException
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.{ProjectLayerDao, SceneDao}
+import com.rasterfoundry.datamodel.{ProjectLayer, Scene}
+
 import cats.effect.IO
+import com.colisweb.tracing.TracingContext
 import doobie._
 import doobie.implicits._
 import geotrellis.vector.{Polygon, Projected}
-import scalacache._
 import scalacache.CatsEffect.modes._
+import scalacache._
 import scalacache.memoization._
 
 import scala.concurrent.duration._
-import java.util.UUID
 
-import com.colisweb.tracing.TracingContext
-import com.rasterfoundry.backsplash.error.NoDataInRegionException
+import java.util.UUID
 
 object Cacheable {
   def getSceneById(sceneId: UUID,

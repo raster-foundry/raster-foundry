@@ -2,20 +2,21 @@ package com.rasterfoundry.common.ast.codec
 
 import com.rasterfoundry.common.ast._
 
-import geotrellis.raster.io._
 import geotrellis.raster.histogram._
-import geotrellis.raster.summary.Statistics
-import geotrellis.raster.render._
+import geotrellis.raster.io._
 import geotrellis.raster.mapalgebra.focal._
-import spray.json._
+import geotrellis.raster.render._
+import geotrellis.raster.summary.Statistics
 import io.circe._
-import io.circe.syntax._
 import io.circe.generic.semiauto._
 import io.circe.parser._
+import io.circe.syntax._
+import spray.json._
+
+import scala.util.Try
 
 import java.security.InvalidParameterException
 import java.util.UUID
-import scala.util.Try
 
 trait MapAlgebraUtilityCodecs {
   implicit def mapAlgebraDecoder: Decoder[MapAlgebraAST]

@@ -1,18 +1,19 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.Cache
+import com.rasterfoundry.database.util.Sanitization
+import com.rasterfoundry.datamodel._
 
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import cats.implicits._
-import scalacache._
 import scalacache.CatsEffect.modes._
+import scalacache._
+
+import scala.concurrent.duration._
 
 import java.sql.Timestamp
-import scala.concurrent.duration._
 
 object UserDao extends Dao[User] with Sanitization {
 

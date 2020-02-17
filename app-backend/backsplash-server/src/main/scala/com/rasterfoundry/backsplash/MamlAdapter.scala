@@ -1,15 +1,16 @@
 package com.rasterfoundry.backsplash
 
+import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.common.ast.{
   MamlConversion,
   MapAlgebraAST,
   NodeMetadata
 }
-import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.ProjectDao
+
+import cats.effect.IO
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{ClassMap => _}
-import cats.effect.IO
 import com.colisweb.tracing.NoOpTracingContext
 import doobie.Transactor
 import doobie.implicits._

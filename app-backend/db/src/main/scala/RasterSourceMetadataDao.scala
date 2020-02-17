@@ -1,16 +1,17 @@
 package com.rasterfoundry.database
 
-import java.util.UUID
-
 import com.rasterfoundry.database.meta.CirceJsonbMeta
+import com.rasterfoundry.datamodel._
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import com.rasterfoundry.datamodel._
 import geotrellis.contrib.vlm.gdal.GDALDataPath
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
 import geotrellis.vector.Extent
+
+import java.util.UUID
 
 object RasterSourceMetadataDao extends CirceJsonbMeta {
 

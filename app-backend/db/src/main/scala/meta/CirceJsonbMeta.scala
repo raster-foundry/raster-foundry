@@ -1,17 +1,17 @@
 package com.rasterfoundry.database.meta
 
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import com.rasterfoundry.common.color._
+import com.rasterfoundry.datamodel._
+
+import cats.implicits._
 import doobie._
 import doobie.postgres.circe.jsonb.implicits._
+import geotrellis.raster.{CellSize, GridExtent}
 import io.circe._
 import io.circe.syntax._
-import cats.implicits._
 
 import scala.reflect.runtime.universe.TypeTag
-
-import com.rasterfoundry.common.BacksplashGeoTiffInfo
-import geotrellis.raster.{CellSize, GridExtent}
 
 object CirceJsonbMeta {
   def apply[Type: TypeTag: Encoder: Decoder] = {

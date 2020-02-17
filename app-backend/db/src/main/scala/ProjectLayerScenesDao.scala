@@ -3,11 +3,12 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.SceneToLayer
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
+
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 import geotrellis.vector.{Geometry, Projected}
 
 import java.util.UUID

@@ -1,11 +1,5 @@
 package com.rasterfoundry.database.util
 
-import java.net.InetSocketAddress
-import java.util.concurrent.Executors
-
-import cats._
-import cats.implicits._
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.common.{
   BacksplashConnectionFactory,
   BacksplashGeoTiffInfo,
@@ -13,17 +7,23 @@ import com.rasterfoundry.common.{
   SceneToLayerWithSceneType
 }
 import com.rasterfoundry.datamodel._
+
+import cats._
+import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.histogram.Histogram
 import net.spy.memcached.MemcachedClient
 import scalacache._
 import scalacache.caffeine.CaffeineCache
 import scalacache.memcached.MemcachedCache
-
-import scala.collection.JavaConverters._
 import scalacache.serialization.circe._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
+
+import java.net.InetSocketAddress
+import java.util.concurrent.Executors
 
 object Cache extends LazyLogging {
 

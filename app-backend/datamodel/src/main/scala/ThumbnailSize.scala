@@ -1,7 +1,7 @@
 package com.rasterfoundry.datamodel
 
-import io.circe.{Decoder, Encoder}
 import cats.syntax.either._
+import io.circe.{Decoder, Encoder}
 
 /** The possible sizes of thumbnail */
 sealed abstract class ThumbnailSize(val repr: String) {

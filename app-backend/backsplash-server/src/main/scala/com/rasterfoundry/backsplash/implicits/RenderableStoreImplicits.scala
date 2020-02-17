@@ -1,19 +1,21 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
+import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{SceneDao, SceneToLayerDao}
-import com.rasterfoundry.datamodel.{BandOverride, SingleBandOptions}
-import com.rasterfoundry.common._
-import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.backsplash.{
   BacksplashGeotiff,
   BacksplashImage,
   RenderableStore
 }
+import com.rasterfoundry.common._
+import com.rasterfoundry.common.color.ColorCorrect
+import com.rasterfoundry.database.{SceneDao, SceneToLayerDao}
+import com.rasterfoundry.datamodel.{BandOverride, SingleBandOptions}
+
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.{ContextShift, IO}
+import com.colisweb.tracing.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -21,8 +23,6 @@ import geotrellis.vector.{Polygon, Projected}
 
 import java.net.URI
 import java.util.UUID
-
-import com.colisweb.tracing.TracingContext
 
 class RenderableStoreImplicits(xa: Transactor[IO])(
     implicit contextShift: ContextShift[IO])

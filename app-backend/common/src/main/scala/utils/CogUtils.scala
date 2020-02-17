@@ -1,14 +1,13 @@
 package com.rasterfoundry.common.utils
 
-import geotrellis.vector._
-import geotrellis.raster._
-import geotrellis.raster.histogram._
-import geotrellis.proj4._
-import geotrellis.vector.Projected
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
-
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
+import geotrellis.proj4._
+import geotrellis.raster._
+import geotrellis.raster.histogram._
+import geotrellis.vector.Projected
+import geotrellis.vector._
 
 object CogUtils extends LazyLogging {
 

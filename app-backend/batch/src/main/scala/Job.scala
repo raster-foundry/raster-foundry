@@ -4,6 +4,7 @@ import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 
 import cats.effect._
+
 import java.util.concurrent.ForkJoinPool
 
 trait Job extends IOApp with Config with RollbarNotifier {

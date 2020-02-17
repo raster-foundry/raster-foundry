@@ -1,25 +1,25 @@
 package com.rasterfoundry.api.platform
 
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
-  UserErrorHandler,
-  CommonHandlers
+  CommonHandlers,
+  UserErrorHandler
 }
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.{
-  PlatformDao,
   OrganizationDao,
+  PlatformDao,
   TeamDao,
   UserDao
 }
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
 import cats.implicits._
-import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._

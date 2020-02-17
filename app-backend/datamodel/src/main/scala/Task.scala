@@ -2,8 +2,8 @@ package com.rasterfoundry.datamodel
 
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._
-import io.circe.generic.semiauto.{deriveEncoder, deriveDecoder}
 import io.circe.generic.JsonCodec
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.time.Instant
 import java.util.UUID

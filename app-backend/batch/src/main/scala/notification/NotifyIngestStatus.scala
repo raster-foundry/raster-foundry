@@ -11,8 +11,8 @@ import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
   PlatformDao,
-  ProjectLayerDao,
   ProjectDao,
+  ProjectLayerDao,
   SceneDao
 }
 import com.rasterfoundry.datamodel._

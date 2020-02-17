@@ -1,22 +1,23 @@
 package com.rasterfoundry.api.thumbnail
 
-import java.net.{URI, URLDecoder}
-
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Route
-import cats.effect.IO
-import com.amazonaws.regions._
-import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
   UserErrorHandler
 }
+import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.common.S3RegionEnum
-import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction}
+
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Route
+import cats.effect.IO
+import com.amazonaws.regions._
 import doobie.util.transactor.Transactor
+
+import java.net.{URI, URLDecoder}
 
 trait ThumbnailRoutes
     extends Authentication

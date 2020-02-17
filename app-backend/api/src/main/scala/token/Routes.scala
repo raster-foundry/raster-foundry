@@ -6,9 +6,10 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.Auth0ErrorHandler
-import akka.http.scaladsl.server.Route
-import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction}
 import com.rasterfoundry.datamodel.auth.RefreshToken
+import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction}
+
+import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 /**

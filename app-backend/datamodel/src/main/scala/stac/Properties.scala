@@ -2,9 +2,9 @@ package com.rasterfoundry.datamodel.stac
 
 import com.rasterfoundry.datamodel._
 
-import java.sql.Timestamp
-
 import io.circe.generic.JsonCodec
+
+import java.sql.Timestamp
 
 @JsonCodec
 final case class Properties(license: String,

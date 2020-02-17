@@ -1,24 +1,25 @@
 package com.rasterfoundry.api.organization
 
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
   UserErrorHandler
 }
+import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.database.OrganizationDao
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.api.utils.Config
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.StatusCodes
-import com.rasterfoundry.akkautil.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import java.util.UUID
-
-import cats.effect.IO
 import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction}
-import doobie.util.transactor.Transactor
+
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
+import cats.effect.IO
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
+
+import java.util.UUID
 
 trait OrganizationRoutes
     extends Authentication

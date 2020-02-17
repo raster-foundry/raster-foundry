@@ -7,15 +7,15 @@ import com.rasterfoundry.common.notification.Email.{
   EmailConfig,
   NotificationEmail
 }
-import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
 
 import cats.effect.IO
 import cats.implicits._
-import doobie.{ConnectionIO, Transactor}
 import doobie.implicits._
+import doobie.{ConnectionIO, Transactor}
 import org.apache.commons.mail.Email
 
 import java.util.UUID

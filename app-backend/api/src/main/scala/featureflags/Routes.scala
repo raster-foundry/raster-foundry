@@ -1,19 +1,20 @@
 package com.rasterfoundry.api.featureflags
 
-import akka.http.scaladsl.server.Route
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
   UserErrorHandler
 }
 import com.rasterfoundry.database.FeatureFlagDao
-import com.rasterfoundry.akkautil.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import cats.effect.IO
 import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction, User}
-import doobie.util.transactor.Transactor
+
+import akka.http.scaladsl.server.Route
+import cats.effect.IO
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 
 /**
   * Routes for FeatureFlag overrides

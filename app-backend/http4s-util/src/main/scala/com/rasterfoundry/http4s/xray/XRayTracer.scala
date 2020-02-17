@@ -1,9 +1,10 @@
 package com.rasterfoundry.http4s
 
-import cats.effect._
-import com.colisweb.tracing.TracingContext._
-import com.amazonaws.services.xray.{AWSXRayAsync, AWSXRayAsyncClientBuilder}
 import com.rasterfoundry.http4s.xray._
+
+import cats.effect._
+import com.amazonaws.services.xray.{AWSXRayAsync, AWSXRayAsyncClientBuilder}
+import com.colisweb.tracing.TracingContext._
 
 object XRayTracer {
 

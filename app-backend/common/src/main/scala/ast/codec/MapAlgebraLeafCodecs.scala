@@ -2,9 +2,9 @@ package com.rasterfoundry.common.ast.codec
 
 import com.rasterfoundry.common.ast._
 
+import geotrellis.raster._
 import io.circe._
 import io.circe.syntax._
-import geotrellis.raster._
 
 import java.security.InvalidParameterException
 

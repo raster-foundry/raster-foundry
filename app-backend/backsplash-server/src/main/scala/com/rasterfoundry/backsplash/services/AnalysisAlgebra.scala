@@ -1,23 +1,23 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
+import com.rasterfoundry.datamodel.User
 
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
 import doobie.Transactor
 import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.{io => _, _}
-import geotrellis.raster.render.ColorRamps
 import geotrellis.raster.io.geotiff._
+import geotrellis.raster.render.ColorRamps
+import geotrellis.raster.{io => _, _}
 import geotrellis.vector.Extent
 import io.circe.syntax._
 import org.http4s._
+import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-import org.http4s.circe._
 import org.http4s.util.CaseInsensitiveString
 
 import java.util.UUID

@@ -1,14 +1,15 @@
 package com.rasterfoundry.backsplash.error
 
 import com.rasterfoundry.backsplash._
+
 import cats._
 import cats.data._
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import org.http4s._
-import org.http4s.headers._
 import org.http4s.dsl._
+import org.http4s.headers._
 
 sealed trait BacksplashException extends Exception
 

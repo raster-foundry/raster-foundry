@@ -1,16 +1,17 @@
 package com.rasterfoundry.backsplash
 
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
+import com.rasterfoundry.datamodel._
+
+import cats.effect._
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.ConcurrentInterpreter
-import geotrellis.raster.histogram.Histogram
-import geotrellis.raster._
-import geotrellis.vector._
-import geotrellis.server._
-import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.raster._
+import geotrellis.raster.histogram.Histogram
+import geotrellis.server._
+import geotrellis.vector._
 
 sealed trait PaintableTool extends ColorImplicits with LazyLogging {
   def tms(z: Int, x: Int, y: Int)(

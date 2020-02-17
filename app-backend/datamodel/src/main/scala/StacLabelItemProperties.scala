@@ -1,9 +1,10 @@
 package com.rasterfoundry.datamodel
 
-import java.sql.Timestamp
-import io.circe.generic.JsonCodec
 import io.circe.Encoder
 import io.circe._
+import io.circe.generic.JsonCodec
+
+import java.sql.Timestamp
 
 final case class StacLabelItemProperties(
     property: List[String], // required

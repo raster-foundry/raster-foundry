@@ -1,15 +1,16 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.UUID
-
-import cats.implicits._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
+
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 object ImageDao extends Dao[Image] {
 

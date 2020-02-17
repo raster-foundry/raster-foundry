@@ -1,11 +1,11 @@
 package com.rasterfoundry.datamodel
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 @JsonCodec
 final case class Team(

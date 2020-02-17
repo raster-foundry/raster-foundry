@@ -1,29 +1,30 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common._
-import com.rasterfoundry.database.util.Cache
-import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.color._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.Cache
 import com.rasterfoundry.datamodel.{Scene, User, _}
 
-import cats.implicits._
 import cats.effect.{IO, LiftIO}
+import cats.implicits._
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.model.ObjectMetadata
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 import geotrellis.vector.{Geometry, Polygon, Projected}
 import io.circe.syntax._
-import com.amazonaws.regions.Regions
-import com.amazonaws.services.s3.model.ObjectMetadata
-import scalacache._
 import scalacache.CatsEffect.modes._
+import scalacache._
 
 import scala.concurrent.duration._
+
+import java.net.{URI, URLDecoder}
 import java.sql.Timestamp
 import java.util.{Date, UUID}
-import java.net.{URI, URLDecoder}
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneDao()
@@ -34,8 +35,8 @@ object SceneDao
     with ObjectPermissions[Scene]
     with AWSBatch {
 
-  import Cache.SceneCache._
   import Cache.GeotiffInfoCache._
+  import Cache.SceneCache._
 
   type KickoffIngest = Boolean
 
