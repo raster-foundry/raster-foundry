@@ -3,7 +3,6 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.LayerAttribute
 import com.rasterfoundry.database.util.Cache
 
-import DefaultJsonProtocol._
 import cats.effect.IO
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
@@ -17,6 +16,7 @@ import geotrellis.raster.io.json._
 import geotrellis.spark.LayerId
 import scalacache.CatsEffect.modes._
 import scalacache._
+import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import java.util.UUID

@@ -2,7 +2,6 @@ package com.rasterfoundry.database.filter
 
 import com.rasterfoundry.datamodel._
 
-import Fragments.in
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -42,7 +41,7 @@ object Filters {
 
   def organizationQP(orgParams: OrgQueryParameters): List[Option[Fragment]] = {
     val f1 = orgParams.organizations.toList.toNel
-      .map(orgs => in(fr"organization_id", orgs))
+      .map(orgs => Fragments.in(fr"organization_id", orgs))
     List(f1)
   }
 
@@ -77,7 +76,8 @@ object Filters {
       imageParams.minResolution.map(minRes => fr"resolution_meters > $minRes")
     val f4 =
       imageParams.maxResolution.map(maxRes => fr"resolution_meters < $maxRes")
-    val f5 = imageParams.scene.toList.toNel.map(scenes => in(fr"scene", scenes))
+    val f5 = imageParams.scene.toList.toNel.map(scenes =>
+      Fragments.in(fr"scene", scenes))
     List(f1, f2, f3, f4, f5)
   }
 

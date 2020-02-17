@@ -10,7 +10,7 @@ import doobie.Fragments.in
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.vector._
+import geotrellis.vector.{io => _, _}
 import io.circe.syntax._
 
 import java.util.UUID

@@ -1,15 +1,12 @@
 package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
+import com.rasterfoundry.backsplash.RenderableStore._
+import com.rasterfoundry.backsplash.ToolStore._
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.datamodel.SingleBandOptions
 
-import ExtentReification._
-import HasRasterExtents._
-import RenderableStore._
-import TmsReification._
-import ToolStore._
 import cats.Semigroup
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
@@ -21,6 +18,9 @@ import geotrellis.proj4.WebMercator
 import geotrellis.raster._
 import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
+import geotrellis.server.ExtentReification._
+import geotrellis.server.HasRasterExtents._
+import geotrellis.server.TmsReification._
 import geotrellis.server._
 import geotrellis.vector._
 

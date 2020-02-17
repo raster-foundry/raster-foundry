@@ -13,7 +13,7 @@ import doobie.ConnectionIO
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.proj4.CRS
-import geotrellis.vector._
+import geotrellis.vector.{io => _, _}
 import io.circe.generic.JsonCodec
 import io.circe.parser._
 import io.circe.syntax._

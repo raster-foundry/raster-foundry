@@ -14,7 +14,7 @@ import cats.implicits._
 import com.colisweb.tracing.TracingContext
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster._
+import geotrellis.raster.{io => _, _}
 import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError

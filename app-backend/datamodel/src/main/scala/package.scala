@@ -1,11 +1,11 @@
 package com.rasterfoundry
 
 import cats.syntax.either._
-import geotrellis.proj4._
+import geotrellis.proj4.{io => _, _}
 import geotrellis.raster.render.{RGB, RGBA}
 import geotrellis.raster.{CellType, GridExtent}
-import geotrellis.vector._
 import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
+import geotrellis.vector.{io => _, _}
 import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.parser._

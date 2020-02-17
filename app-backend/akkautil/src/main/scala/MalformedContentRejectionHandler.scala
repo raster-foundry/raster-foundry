@@ -1,8 +1,7 @@
 package com.rasterfoundry.akkautil
 
-import Directives._
-import StatusCodes._
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 
 object RFRejectionHandler {

@@ -1,6 +1,6 @@
 package com.rasterfoundry.datamodel
 
-import geotrellis.proj4._
+import geotrellis.proj4.{io => _, _}
 import geotrellis.vector.{Extent, Point, Polygon, Projected}
 import io.circe._
 import io.circe.generic.semiauto._
