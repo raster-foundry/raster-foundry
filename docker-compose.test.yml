@@ -1,5 +1,20 @@
 version: "2.3"
 services:
+  postgres:
+    image: quay.io/azavea/postgis:2.3-postgres9.6-slim
+    volumes:
+      - ./data/:/tmp/data/
+    env_file: .env
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: postgres -c log_statement=all
+
   nginx-api:
     image: raster-foundry-nginx-api:${GIT_COMMIT:-latest}
     build:
