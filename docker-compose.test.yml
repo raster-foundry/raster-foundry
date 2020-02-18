@@ -79,6 +79,10 @@ services:
       - "-jar"
       - "api-assembly.jar"
 
+  memcached:
+    image: memcached:1.4-alpine
+    command: -m 4096 -c 8192 -I 5242880b
+
   api-server:
     image: raster-foundry-api-server:${GIT_COMMIT:-latest}
     build:
@@ -135,7 +139,7 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:memcached.service.rasterfoundry.internal
-      - api-server:api.service.rasterfoundry.internal
+      - api-server-test:api.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
