@@ -1054,6 +1054,13 @@ object Generators extends ArbitraryInstances {
       Gen.listOfN(3, labelClassGroupGen)
     ).mapN(AnnotationProject.Create.apply _)
 
+  private def annotationLabelWithClassesCreateGen
+      : Gen[AnnotationLabelWithClasses.Create] =
+    (
+      projectedMultiPolygonGen3857 map { (geom: Projected[MultiPolygon]) => Option(geom) },
+      Gen.const(Nil)
+    ).mapN(AnnotationLabelWithClasses.Create.apply _)
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -1294,6 +1301,17 @@ object Generators extends ArbitraryInstances {
         : Arbitrary[AnnotationProject.Create] =
       Arbitrary {
         annotationProjectCreateGen
+      }
+
+    implicit def arbAnnotationLabelWithClassesCreate
+        : Arbitrary[AnnotationLabelWithClasses.Create] =
+      Arbitrary {
+        annotationLabelWithClassesCreateGen
+      }
+
+    implicit def arbTileLayerCreate: Arbitrary[TileLayer.Create] =
+      Arbitrary {
+        tileLayerCreateGen
       }
   }
 }
