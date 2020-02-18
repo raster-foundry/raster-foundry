@@ -97,7 +97,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
               .getOrElse(anno.id, Seq[(UUID, UUID)]())
               .map(_._2)
               .toList
-          )
+        )
       )
     } yield insertedAnnotationsWithClasses
   }
