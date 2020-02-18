@@ -3,11 +3,12 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
-import doobie._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
+
+import java.util.UUID
 
 class TileLayerDaoSpec
     extends FunSuite
@@ -26,7 +27,7 @@ class TileLayerDaoSpec
           val listIO = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao
-              .insertAnnotationProject(annotationProjectCreate, user)
+              .insert(annotationProjectCreate, user)
             listedReal <- TileLayerDao.listByProjectId(inserted.id)
             listedBogus <- TileLayerDao.listByProjectId(UUID.randomUUID)
           } yield {(inserted.tileLayers, listedReal, listedBogus)}

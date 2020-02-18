@@ -34,8 +34,7 @@ class AnnotationLabelClassDaoSpec
             (List[AnnotationLabelClass], List[AnnotationLabelClass])
           ] = for {
             user <- UserDao.create(userCreate)
-            inserted <- AnnotationProjectDao
-              .insertAnnotationProject(toInsert, user)
+            inserted <- AnnotationProjectDao.insert(toInsert, user)
             labelClassGroup = inserted.labelClassGroups.head
             listedReal <- AnnotationLabelClassDao
               .listAnnotationLabelClassByGroupId(

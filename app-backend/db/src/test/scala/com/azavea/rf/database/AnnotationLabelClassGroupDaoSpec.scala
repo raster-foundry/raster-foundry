@@ -30,7 +30,7 @@ class AnnotationLabelClassGroupDaoSpec
           ] = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao
-              .insertAnnotationProject(annotationProjectCreate, user)
+              .insert(annotationProjectCreate, user)
             listedReal <- AnnotationLabelClassGroupDao
               .listByProjectId(inserted.id)
             listedBogus <- AnnotationLabelClassGroupDao
@@ -63,7 +63,7 @@ class AnnotationLabelClassGroupDaoSpec
           val insertIO: ConnectionIO[(Int, Int)] = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao
-              .insertAnnotationProject(annotationProjectCreate, user)
+              .insert(annotationProjectCreate, user)
             deletedReal <- AnnotationLabelClassGroupDao
               .deleteByProjectId(inserted.id)
             deletedBogus <- AnnotationLabelClassGroupDao

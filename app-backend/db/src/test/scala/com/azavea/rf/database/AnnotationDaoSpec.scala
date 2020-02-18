@@ -5,13 +5,10 @@ import com.rasterfoundry.datamodel.PageRequest
 import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
-import io.circe.syntax._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 import com.rasterfoundry.datamodel.PageRequest
-
-import java.util.UUID
 
 class AnnotationDaoSpec
     extends FunSuite

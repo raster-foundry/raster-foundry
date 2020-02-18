@@ -4,7 +4,6 @@ import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
 import cats.implicits._
-import doobie._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
@@ -66,11 +65,10 @@ class AnnotationProjectDaoSpec
           val pageSize = 20
           val pageRequest = PageRequest(0, pageSize, Map.empty)
 
-          val listIO: ConnectionIO[List[AnnotationProject]] = for {
+          val listIO = for {
             user <- UserDao.create(userCreate)
             _ <- annotationProjectCreates.take(pageSize) traverse { toInsert =>
-              AnnotationProjectDao
-                .insertAnnotationProject(toInsert, user)
+              AnnotationProjectDao.insert(toInsert, user)
             }
             listed <- AnnotationProjectDao
               .listProjects(
@@ -82,11 +80,11 @@ class AnnotationProjectDaoSpec
 
           val listedProjects = listIO.transact(xa).unsafeRunSync
 
-          val expectedNames =
+          val expectedNames: Set[String] =
             (annotationProjectCreates.take(pageSize) map { _.name }).toSet
 
           assert(
-            expectedNames === (listedProjects.results map { _.name }).toSet,
+            expectedNames == (listedProjects.results map { _.name }).toSet,
             "Listed projects are those expected from project insertion"
           )
 
@@ -106,7 +104,7 @@ class AnnotationProjectDaoSpec
           val insertIO = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao
-              .insertAnnotationProject(annotationProjectCreate, user)
+              .insert(annotationProjectCreate, user)
             fetched <- AnnotationProjectDao.getById(inserted.id)
           } yield { (inserted, fetched) }
 
@@ -134,25 +132,24 @@ class AnnotationProjectDaoSpec
           val updateIO = for {
             user <- UserDao.create(userCreate)
             inserted1 <- AnnotationProjectDao
-              .insertAnnotationProject(annotationProjectCreate, user)
-            inserted2 <- AnnotationProjectDao
-              .insertAnnotationProject(annotationProjectUpdate)
-            _ <- AnnotationProjectDao.update(inserted2, inserted1.id)
+              .insert(annotationProjectCreate, user)
+            inserted2 <- AnnotationProjectDao.insert(annotationProjectUpdate, user)
+            _ <- AnnotationProjectDao.update(inserted2.toProject, inserted1.id)
             fetched <- AnnotationProjectDao.getById(inserted1.id)
           } yield fetched
 
-          val afterUpdate = updateIO.transact(xa).unsafeRunSync
+          val Some(afterUpdate) = updateIO.transact(xa).unsafeRunSync
 
           assert(
-            afterUpdate.name === annotationProjectUpdate.name,
+            afterUpdate.name == annotationProjectUpdate.name,
             "Name was updated"
           )
           assert(
-            afterUpdate.labelersTeamId === annotationProjectUpdate.labelersTeamId,
+            afterUpdate.labelersTeamId == annotationProjectUpdate.labelersTeamId,
             "Labelers were updated"
           )
           assert(
-            afterUpdate.validatorsTeamId === annotationProjectUpdate.validatorsTeamId,
+            afterUpdate.validatorsTeamId == annotationProjectUpdate.validatorsTeamId,
             "Validators were updated"
           )
 
@@ -172,16 +169,16 @@ class AnnotationProjectDaoSpec
           val deleteIO = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao
-              .insertAnnotationProject(annotationProjectCreate, user)
+              .insert(annotationProjectCreate, user)
             deleted <- AnnotationProjectDao.deleteById(inserted.id)
             fetched <- AnnotationProjectDao.getById(inserted.id)
           } yield { (deleted, fetched) }
 
           val (count, result) = deleteIO.transact(xa).unsafeRunSync
 
-          assert(count === 1, "One project was deleted")
+          assert(count == 1, "One project was deleted")
           assert(
-            result === Option.empty[AnnotationProject],
+            result == Option.empty[AnnotationProject],
             "After deletion the project was gone"
           )
 

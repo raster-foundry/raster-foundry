@@ -104,7 +104,7 @@ object AnnotationLabelWithClasses {
       properties: AnnotationLabelWithClassesPropertiesCreate
   ) {
     def toAnnotationLabelWithClassesCreate
-        : AnnotationLabelWithClasses.Create = {
+      : AnnotationLabelWithClasses.Create = {
       AnnotationLabelWithClasses.Create(
         geometry,
         properties.annotationLabelClasses
@@ -137,7 +137,7 @@ final case class AnnotationLabelWithClassesProperties(
 
 object AnnotationLabelWithClassesProperties {
   implicit val annotationLabelWithClassesPropertiesEncoder
-      : Encoder[AnnotationLabelWithClassesProperties] =
+    : Encoder[AnnotationLabelWithClassesProperties] =
     new Encoder[AnnotationLabelWithClassesProperties] {
       final def apply(
           properties: AnnotationLabelWithClassesProperties
@@ -162,6 +162,6 @@ final case class AnnotationLabelWithClassesFeatureCollection(
 
 object AnnotationLabelWithClassesFeatureCollection {
   implicit val annoLabelWithClassesFCEncoder
-      : Encoder[AnnotationLabelWithClassesFeatureCollection] =
+    : Encoder[AnnotationLabelWithClassesFeatureCollection] =
     deriveEncoder[AnnotationLabelWithClassesFeatureCollection]
 }

@@ -9,7 +9,6 @@ import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
 import io.circe.generic.JsonCodec
-import io.circe.syntax._
 
 import java.util.UUID
 
