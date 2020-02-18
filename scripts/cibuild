@@ -58,8 +58,8 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                   -f "${DIR}/../docker-compose.test.yml" \
                   build batch
 
-#        echo "Running tests"
-#        GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
-#        echo "All tests pass!"
+        echo "Running tests"
+        GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
+        echo "All tests pass!"
     fi
 fi
