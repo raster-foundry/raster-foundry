@@ -194,19 +194,18 @@ trait AnnotationProjectRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        entity(as[AnnotationProject.WithRelated]) {
-          updatedAnnotationProjectWithRelated =>
-            onSuccess(
-              AnnotationProjectDao
-                .updateWithRelated(
-                  projectId,
-                  updatedAnnotationProjectWithRelated
-                )
-                .transact(xa)
-                .unsafeToFuture
-            ) {
-              completeSingleOrNotFound
-            }
+        entity(as[AnnotationProject]) { updatedAnnotationProject =>
+          onSuccess(
+            AnnotationProjectDao
+              .update(
+                updatedAnnotationProject,
+                projectId
+              )
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            completeSingleOrNotFound
+          }
         }
       }
     }

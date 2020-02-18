@@ -226,50 +226,6 @@ object AnnotationProjectDao
     """).update.run;
   }
 
-  def updateWithRelated(
-      id: UUID,
-      projectWithRelated: AnnotationProject.WithRelated
-  ): ConnectionIO[Int] = {
-    val project = projectWithRelated.toProject
-    for {
-      count <- update(project, id)
-      _ <- TileLayerDao.deleteByProjectId(id)
-      _ <- projectWithRelated.tileLayers traverse { layer =>
-        TileLayerDao.insertTileLayer(
-          TileLayer.Create(
-            layer.name,
-            layer.url,
-            Some(layer.default),
-            Some(layer.overlay),
-            layer.layerType
-          ),
-          project
-        )
-      }
-      _ <- AnnotationLabelClassGroupDao.deleteByProjectId(id)
-      _ <- projectWithRelated.labelClassGroups.zipWithIndex traverse {
-        case (classGroup, idx) =>
-          AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
-            AnnotationLabelClassGroup.Create(
-              classGroup.name,
-              Some(classGroup.index),
-              classGroup.labelClasses map { labelClass =>
-                AnnotationLabelClass.Create(
-                  labelClass.name,
-                  labelClass.colorHexCode,
-                  labelClass.default,
-                  labelClass.determinant,
-                  labelClass.index
-                )
-              }
-            ),
-            project,
-            idx
-          )
-      }
-    } yield { count }
-  }
-
   def getFootprint(id: UUID): ConnectionIO[Option[Projected[Geometry]]] =
     for {
       annotationProjectO <- getById(id)

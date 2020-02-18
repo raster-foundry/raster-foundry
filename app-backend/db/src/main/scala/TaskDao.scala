@@ -261,7 +261,7 @@ object TaskDao extends Dao[Task] {
       taskProperties: Task.TaskPropertiesCreate,
       taskGridFeatureCreate: Task.TaskGridFeatureCreate,
       user: User
-  ): ConnectionIO[Int] = {
+  ): ConnectionIO[Int] =
     for {
       annotationProjectO <- AnnotationProjectDao.getById(
         taskProperties.annotationProjectId
@@ -272,14 +272,9 @@ object TaskDao extends Dao[Task] {
           AnnotationProjectDao.getFootprint(annotationProject.id)
         case _ => None.pure[ConnectionIO]
       }
-      taskSizeO = (
-        taskGridFeatureCreate.properties.sizeMeters,
-        annotationProjectO
-      ) match {
-        case (Some(size), _)              => Some(size)
-        case (_, Some(annotationProject)) => annotationProject.taskSizeMeters
-        case _                            => None
-      }
+      taskSizeO = taskGridFeatureCreate.properties.sizeMeters orElse (annotationProjectO flatMap {
+        _.taskSizeMeters
+      })
       gridInsert <- (geomO, taskSizeO).tupled.map { geomAndSize =>
         val (geom, size) = geomAndSize
         (insertF ++ fr"""
@@ -316,7 +311,6 @@ object TaskDao extends Dao[Task] {
         )
       }
     } yield gridInsert
-  }
 
   def isLockingUserOrUnlocked(taskId: UUID, user: User): ConnectionIO[Boolean] =
     OptionT(getTaskById(taskId))
