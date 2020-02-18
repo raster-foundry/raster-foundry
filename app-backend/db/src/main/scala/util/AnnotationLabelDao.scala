@@ -11,7 +11,9 @@ import com.rasterfoundry.database.Implicits._
 
 object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   val tableName = "annotation_labels"
+
   val joinTableName = "annotation_labels_annotation_label_classes"
+
   val selectF: Fragment = fr"""
   SELECT
     id, created_at, created_by, geometry, annotation_project_id, annotation_task_id,
@@ -22,6 +24,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     GROUP BY annotation_label_id
   ) as classes ON ${tableName}.id = ${joinTableName}.annotation_label_id
   """
+
   def insertAnnotations(
       annotations: List[AnnotationLabelWithClasses.Create],
       user: User
@@ -97,7 +100,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
               .getOrElse(anno.id, Seq[(UUID, UUID)]())
               .map(_._2)
               .toList
-        )
+          )
       )
     } yield insertedAnnotationsWithClasses
   }
@@ -129,4 +132,15 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     alalc.annotation_class_id,
     alcls.name
   """).query[AnnotationProject.LabelClassSummary].to[List]
+
+  def listByProjectIdAndTaskId(
+      page: PageRequest,
+      projectId: UUID,
+      taskId: UUID
+  ): ConnectionIO[PaginatedResponse[AnnotationLabelWithClasses]] = ???
+
+  def deleteByProjectIdAndTaskId(
+      prjectId: UUID,
+      taskId: UUID
+  ): ConnectionIO[Int] = ???
 }
