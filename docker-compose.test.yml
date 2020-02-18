@@ -30,6 +30,40 @@ services:
     entrypoint: yarn
     command: run build
 
+  api-server-test:
+    # If changing container, make sure to update app-backend/api/Dockerfile as well
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
+    links:
+      - postgres:database.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - HIKARI_LOG_LEVEL=WARN
+      - RF_LOG_LEVEL=WARN
+      - TILE_SERVER_LOCATION
+      - COURSIER_CACHE=/root/.coursier
+      - BACKSPLASH_ENABLE_MULTITIFF=false
+      - AWS_DEFAULT_PROFILE=raster-foundry
+    expose:
+      - 9000
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./scratch/:/opt/raster-foundry/scratch/
+      - ./data/:/opt/data/
+      - $HOME/.sbt:/root/.sbt
+      - $HOME/.coursier:/root/.coursier
+      - ./.bintray:/root/.bintray
+      - $HOME/.ivy2:/root/.ivy2
+      - $HOME/.aws:/root/.aws:ro
+    working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.12/
+    entrypoint: java
+    command:
+      - "-jar"
+      - "api-assembly.jar"
+
   api-server:
     image: raster-foundry-api-server:${GIT_COMMIT:-latest}
     build:
@@ -75,6 +109,30 @@ services:
       - $HOME/.sbt:/root/.sbt
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.gnupg:/root/.gnupg:ro
+    working_dir: /opt/raster-foundry/app-backend/
+    entrypoint: ./sbt
+
+  sbt-test:
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres:database.service.rasterfoundry.internal
+      - memcached:memcached.service.rasterfoundry.internal
+      - api-server:api.service.rasterfoundry.internal
+    env_file: .env
+    environment:
+      - RF_LOG_LEVEL=INFO
+      - COURSIER_CACHE=/root/.coursier
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./data/:/opt/data/
+      - $HOME/.sbt:/root/.sbt
+      - $HOME/.coursier:/root/.coursier
+      - ./.bintray:/root/.bintray
+      - $HOME/.ivy2:/root/.ivy2
+      - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
 
