@@ -20,13 +20,13 @@ class TileLayerDaoSpec
     check {
       forAll(
         (
-          user: User.Create,
+          userCreate: User.Create,
           annotationProjectCreate: AnnotationProject.Create
         ) => {
           val listIO = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao
-              .insertAnnotationProject(toInsert, user)
+              .insertAnnotationProject(annotationProjectCreate, user)
             listedReal <- TileLayerDao.listByProjectId(inserted.id)
             listedBogus <- TileLayerDao.listByProjectId(UUID.randomUUID)
           } yield {(inserted.tileLayers, listedReal, listedBogus)}

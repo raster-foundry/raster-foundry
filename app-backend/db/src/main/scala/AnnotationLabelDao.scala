@@ -26,6 +26,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   """
 
   def insertAnnotations(
+      annotationProjectId: UUID,
+      annotationTaskId: UUID,
       annotations: List[AnnotationLabelWithClasses.Create],
       user: User
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
@@ -40,7 +42,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     ) VALUES
     """
     val annotationLabelsWithClasses =
-      annotations.map(_.toAnnotationLabelWithClasses(user))
+      annotations.map(
+        _.toAnnotationLabelWithClasses(
+          annotationProjectId,
+          annotationTaskId,
+          user
+        )
+      )
     val annotationFragments: List[Fragment] = annotationLabelsWithClasses.map(
       (annotationLabel: AnnotationLabelWithClasses) => fr"""(
         ${annotationLabel.id}, ${annotationLabel.createdAt},
@@ -100,7 +108,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
               .getOrElse(anno.id, Seq[(UUID, UUID)]())
               .map(_._2)
               .toList
-        )
+          )
       )
     } yield insertedAnnotationsWithClasses
   }
@@ -115,8 +123,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       projectId: UUID,
       annotationLabelClassGroupId: UUID
   ): ConnectionIO[List[AnnotationProject.LabelClassSummary]] = (fr"""
-  SELECT 
-    alalc.annotation_class_id AS label_class_id, 
+  SELECT
+    alalc.annotation_class_id AS label_class_id,
     alcls.name AS label_class_name,
     count(al.id) AS count
   FROM annotation_labels AS al
@@ -124,7 +132,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   ON alalc.annotation_label_id = al.id
   JOIN annotation_label_classes AS alcls
   ON alcls.id = alalc.annotation_class_id
-  WHERE 
+  WHERE
     al.annotation_project_id = ${projectId}
     AND
     alcls.annotation_label_group_id = ${annotationLabelClassGroupId}
