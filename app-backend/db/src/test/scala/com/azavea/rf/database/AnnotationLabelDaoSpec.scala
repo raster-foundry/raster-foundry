@@ -55,9 +55,11 @@ class AnnotationLabelDaoSpec
             annotationProjectCreate: AnnotationProject.Create,
             annotationCreates: List[AnnotationLabelWithClasses.Create]
         ) => {
-          println(userCreate)
-          println(annotationProjectCreate)
-          println(annotationCreates)
+          // TODO
+          // - insert the labels after fixing them up to have classes from the annotation project create
+          // - count the instance of each class after fixup
+          // - get the summary
+          // - confirm it matches what we counted in Scala
           true
         }
       )
