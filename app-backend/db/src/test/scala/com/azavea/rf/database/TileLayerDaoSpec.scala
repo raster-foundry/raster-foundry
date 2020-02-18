@@ -3,6 +3,8 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
+import doobie._
+import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
@@ -13,24 +15,31 @@ class TileLayerDaoSpec
     with Checkers
     with DBTestConfig
     with PropTestHelpers {
-  test("inserting a tile layer") {
-    check {
-      forAll(
-        (
-            annotationProjectCreate: AnnotationProject.Create,
-            tileLayerCreate: TileLayer.Create
-        ) => true
-      )
-    }
-  }
 
-  test("list tile layers") {
+  test("list tile layers for a project") {
     check {
       forAll(
         (
-            annotationProjectCreate: AnnotationProject.Create,
-            tileLayerCreate: TileLayer.Create
-        ) => true
+          user: User.Create,
+          annotationProjectCreate: AnnotationProject.Create
+        ) => {
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            inserted <- AnnotationProjectDao
+              .insertAnnotationProject(toInsert, user)
+            listedReal <- TileLayerDao.listByProjectId(inserted.id)
+            listedBogus <- TileLayerDao.listByProjectId(UUID.randomUUID)
+          } yield {(inserted.tileLayers, listedReal, listedBogus)}
+
+          val (insertedLayers, listedReal, listedBogus) = listIO.transact(xa).unsafeRunSync
+
+          assert(insertedLayers === listedReal,
+            "Inserted layers and listed layers for project match")
+          assert(listedBogus === Nil,
+            "List for a bogus project id returned nothing")
+
+          true
+        }
       )
     }
   }
