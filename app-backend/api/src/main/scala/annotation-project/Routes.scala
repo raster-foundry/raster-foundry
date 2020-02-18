@@ -4,7 +4,6 @@ import com.rasterfoundry.akkautil._
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.RollbarNotifier
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
@@ -23,8 +22,7 @@ trait AnnotationProjectRoutes
     with PaginationDirectives
     with QueryParametersCommon
     with AnnotationProjectTaskRoutes
-    with AnnotationProjectPermissionRoutes
-    with RollbarNotifier {
+    with AnnotationProjectPermissionRoutes {
 
   val xa: Transactor[IO]
 
@@ -70,7 +68,7 @@ trait AnnotationProjectRoutes
               get {
                 listTasks(projectId)
               } ~ post {
-                createTask(projectId)
+                createTasks(projectId)
               } ~ delete {
                 deleteTasks(projectId)
               }
@@ -105,15 +103,9 @@ trait AnnotationProjectRoutes
                 } ~
                   pathPrefix("labels") {
                     pathEndOrSingleSlash {
-                      get {
-                        listTaskLabels(projectId, taskId)
-                      } ~
-                        post {
-                          addTaskLabels(projectId)
-                        } ~
-                        delete {
-                          deleteTaskLabels(projectId, taskId)
-                        }
+                      post {
+                        addTaskLabels(projectId)
+                      }
                     }
                   }
               }

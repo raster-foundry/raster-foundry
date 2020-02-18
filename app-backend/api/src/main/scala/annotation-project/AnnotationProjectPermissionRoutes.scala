@@ -3,23 +3,21 @@ package com.rasterfoundry.api.annotationProject
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.common.RollbarNotifier
 
 import akka.http.scaladsl.server._
 import cats.effect.IO
+import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
-import cats.implicits._
+import doobie.util.transactor.Transactor
 
 import java.util.UUID
 
 trait AnnotationProjectPermissionRoutes
     extends CommonHandlers
     with Directives
-    with Authentication
-    with RollbarNotifier {
+    with Authentication {
 
   val xa: Transactor[IO]
 

@@ -263,14 +263,25 @@ object TaskDao extends Dao[Task] {
       user: User
   ): ConnectionIO[Int] = {
     for {
-      geomO <- taskGridFeatureCreate.geometry match {
-        case Some(g) => Option(g).pure[ConnectionIO]
-        case None =>
-          AnnotationProjectDao.getFootprint(
-            taskProperties.annotationProjectId
-          )
+      annotationProjectO <- AnnotationProjectDao.getById(
+        taskProperties.annotationProjectId
+      )
+      geomO <- (taskGridFeatureCreate.geometry, annotationProjectO) match {
+        case (Some(g), _) => Option(g).pure[ConnectionIO]
+        case (_, Some(annotationProject)) =>
+          AnnotationProjectDao.getFootprint(annotationProject.id)
+        case _ => None.pure[ConnectionIO]
       }
-      gridInsert <- geomO map { geom =>
+      taskSizeO = (
+        taskGridFeatureCreate.properties.sizeMeters,
+        annotationProjectO
+      ) match {
+        case (Some(size), _)              => Some(size)
+        case (_, Some(annotationProject)) => annotationProject.taskSizeMeters
+        case _                            => None
+      }
+      gridInsert <- (geomO, taskSizeO).tupled.map { geomAndSize =>
+        val (geom, size) = geomAndSize
         (insertF ++ fr"""
         SELECT
           uuid_generate_v4(),
@@ -288,8 +299,8 @@ object TaskDao extends Dao[Task] {
             ST_Dump(
               ST_MakeGrid(
                 ${geom},
-                ${taskGridFeatureCreate.properties.xSizeMeters},
-                ${taskGridFeatureCreate.properties.ySizeMeters}
+                ${size},
+                ${size}
               )
             )
           ).geom AS cell
@@ -297,6 +308,12 @@ object TaskDao extends Dao[Task] {
     """).update.run
       } getOrElse {
         0.pure[ConnectionIO]
+      }
+      _ <- annotationProjectO traverse { annotationProject =>
+        AnnotationProjectDao.update(
+          annotationProject.copy(taskSizeMeters = taskSizeO, aoi = geomO),
+          annotationProject.id
+        )
       }
     } yield gridInsert
   }

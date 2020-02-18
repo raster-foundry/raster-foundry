@@ -218,7 +218,9 @@ object AnnotationProjectDao
     (fr"UPDATE " ++ tableF ++ fr"""SET
       name = ${project.name},
       labelers_team_id = ${project.labelersTeamId},
-      validators_team_id = ${project.validatorsTeamId}
+      validators_team_id = ${project.validatorsTeamId},
+      "task_size_meters"= ${project.taskSizeMeters},
+      "aoi" = ${project.aoi}
     WHERE
       id = $id
     """).update.run;
@@ -271,20 +273,19 @@ object AnnotationProjectDao
   def getFootprint(id: UUID): ConnectionIO[Option[Projected[Geometry]]] =
     for {
       annotationProjectO <- getById(id)
-      result <- annotationProjectO match {
+      footprint <- annotationProjectO match {
         case Some(annotationProject) =>
           annotationProject.aoi match {
             case Some(aoi) => Some(aoi).pure[ConnectionIO]
             case _ =>
-              annotationProject.projectId match {
-                case Some(projectId) => ProjectDao.getFootprint(projectId)
-                case _               => None.pure[ConnectionIO]
-              }
+              annotationProject.projectId
+                .traverse(projectId => ProjectDao.getFootprint(projectId))
+                .map(_.flatten)
           }
         case _ => None.pure[ConnectionIO]
       }
     } yield {
-      result
+      footprint
     }
 
   def countUserProjects(user: User): ConnectionIO[Long] =

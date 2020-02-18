@@ -973,10 +973,9 @@ object Generators extends ArbitraryInstances {
 
   private def taskGridCreatePropertiesGen: Gen[Task.TaskGridCreateProperties] =
     for {
-      xSizeMeters <- Gen.const(100000)
-      ySizeMeters <- Gen.const(100000)
+      sizeMeters <- Gen.const(100000)
     } yield {
-      Task.TaskGridCreateProperties(xSizeMeters, ySizeMeters)
+      Task.TaskGridCreateProperties(Some(sizeMeters))
     }
 
   private def taskGridFeatureCreateGen: Gen[Task.TaskGridFeatureCreate] =

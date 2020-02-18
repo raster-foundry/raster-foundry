@@ -26,13 +26,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       annotations: List[AnnotationLabelWithClasses.Create],
       user: User
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
-    val insertAnnotationsFragment: Fragment = fr"""
-    INSERT INTO ${tableName} (
+    val insertAnnotationsFragment: Fragment =
+      fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, created_by, geometry, annotation_project_id, annotation_task_id
     ) VALUES
     """
-    val insertClassesFragment: Fragment = fr"""
-    INSERT INTO ${joinTableName} (
+    val insertClassesFragment: Fragment =
+      fr"INSERT INTO" ++ Fragment.const(joinTableName) ++ fr"""(
       annotation_label_id, annotation_label_class_id
     ) VALUES
     """
@@ -97,7 +97,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
               .getOrElse(anno.id, Seq[(UUID, UUID)]())
               .map(_._2)
               .toList
-        )
+          )
       )
     } yield insertedAnnotationsWithClasses
   }

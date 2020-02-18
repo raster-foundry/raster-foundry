@@ -6,7 +6,6 @@ import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.common.RollbarNotifier
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
@@ -23,8 +22,7 @@ trait AnnotationProjectTaskRoutes
     with Directives
     with Authentication
     with PaginationDirectives
-    with QueryParametersCommon
-    with RollbarNotifier {
+    with QueryParametersCommon {
 
   val xa: Transactor[IO]
 
@@ -69,7 +67,7 @@ trait AnnotationProjectTaskRoutes
     }
   }
 
-  def createTask(projectId: UUID): Route = authenticate { user =>
+  def createTasks(projectId: UUID): Route = authenticate { user =>
     authorizeScope(
       ScopedAction(Domain.AnnotationProjects, Action.CreateTasks, None),
       user
@@ -311,8 +309,6 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def listTaskLabels(projectId: UUID, taksId: UUID): Route = ???
-
   def addTaskLabels(projectId: UUID): Route = authenticate { user =>
     authorizeScope(
       ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
@@ -356,7 +352,4 @@ trait AnnotationProjectTaskRoutes
       }
     }
   }
-
-  def deleteTaskLabels(projectId: UUID, taksId: UUID): Route = ???
-
 }
