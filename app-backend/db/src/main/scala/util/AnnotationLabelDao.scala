@@ -133,14 +133,22 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     alcls.name
   """).query[AnnotationProject.LabelClassSummary].to[List]
 
-  def listByProjectIdAndTaskId(
+  def listWithClassesByProjectIdAndTaskId(
       page: PageRequest,
       projectId: UUID,
       taskId: UUID
-  ): ConnectionIO[PaginatedResponse[AnnotationLabelWithClasses]] = ???
+  ): ConnectionIO[PaginatedResponse[AnnotationLabelWithClasses]] =
+    query
+      .filter(fr"annotation_project_id=$projectId")
+      .filter(fr"annotation_task_id=$taskId")
+      .page(page)
 
   def deleteByProjectIdAndTaskId(
-      prjectId: UUID,
+      projectId: UUID,
       taskId: UUID
-  ): ConnectionIO[Int] = ???
+  ): ConnectionIO[Int] =
+    query
+      .filter(fr"annotation_project_id=$projectId")
+      .filter(fr"annotation_task_id=$taskId")
+      .delete
 }

@@ -329,7 +329,11 @@ trait AnnotationProjectTaskRoutes
           (withPagination) { (page: PageRequest) =>
             complete {
               AnnotationLabelDao
-                .listByProjectIdAndTaskId(page, projectId, taskId)
+                .listWithClassesByProjectIdAndTaskId(
+                  page,
+                  projectId,
+                  taskId
+                )
                 .transact(xa)
                 .unsafeToFuture
                 .map { p =>
