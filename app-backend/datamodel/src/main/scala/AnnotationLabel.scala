@@ -17,19 +17,19 @@ final case class AnnotationLabel(
     createdBy: String,
     geometry: Option[Projected[Geometry]],
     annotationProjectId: UUID,
-    annotationTaskId: UUID,
+    annotationTaskId: UUID
 )
 
 final case class AnnotationLabelProperties(
     createdAt: Timestamp,
     createdBy: String,
     annotationProjectId: UUID,
-    annotationTaskId: UUID,
+    annotationTaskId: UUID
 )
 
 final case class AnnotationLabelPropertiesCreate(
     annotationProjectId: UUID,
-    annotationTaskId: UUID,
+    annotationTaskId: UUID
 )
 
 @JsonCodec
@@ -142,7 +142,8 @@ object AnnotationLabelWithClassesProperties {
     : Encoder[AnnotationLabelWithClassesProperties] =
     new Encoder[AnnotationLabelWithClassesProperties] {
       final def apply(
-          properties: AnnotationLabelWithClassesProperties): Json = {
+          properties: AnnotationLabelWithClassesProperties
+      ): Json = {
         (
           Map(
             "createdAt" -> properties.createdAt.asJson,

@@ -26,13 +26,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       annotations: List[AnnotationLabelWithClasses.Create],
       user: User
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
-    val insertAnnotationsFragment: Fragment = fr"""
-    INSERT INTO ${tableName} (
+    val insertAnnotationsFragment: Fragment =
+      fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, created_by, geometry, annotation_project_id, annotation_task_id
     ) VALUES
     """
-    val insertClassesFragment: Fragment = fr"""
-    INSERT INTO ${joinTableName} (
+    val insertClassesFragment: Fragment =
+      fr"INSERT INTO" ++ Fragment.const(joinTableName) ++ fr"""(
       annotation_label_id, annotation_label_class_id
     ) VALUES
     """
@@ -107,4 +107,26 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
     query.filter(fr"annotation_project_id = ${projectId}").list
   }
+
+  def countByProjectAndGroup(
+      projectId: UUID,
+      annotationLabelClassGroupId: UUID
+  ): ConnectionIO[List[AnnotationProject.LabelClassSummary]] = (fr"""
+  SELECT 
+    alalc.annotation_class_id AS label_class_id, 
+    alcls.name AS label_class_name,
+    count(al.id) AS count
+  FROM annotation_labels AS al
+  JOIN annotation_labels_annotation_label_classes AS alalc
+  ON alalc.annotation_label_id = al.id
+  JOIN annotation_label_classes AS alcls
+  ON alcls.id = alalc.annotation_class_id
+  WHERE 
+    al.annotation_project_id = ${projectId}
+    AND
+    alcls.annotation_label_group_id = ${annotationLabelClassGroupId}
+  GROUP BY
+    alalc.annotation_class_id,
+    alcls.name
+  """).query[AnnotationProject.LabelClassSummary].to[List]
 }

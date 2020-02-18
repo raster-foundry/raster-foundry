@@ -33,6 +33,12 @@ trait QueryParameterDeserializers {
       TaskStatus.fromString(s)
     }
 
+  implicit val deserializerAnnotationProjectType
+    : Unmarshaller[String, AnnotationProjectType] =
+    Unmarshaller.strict[String, AnnotationProjectType] { s =>
+      AnnotationProjectType.fromString(s)
+    }
+
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
@@ -192,4 +198,20 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
           'layerId.as[UUID].?
         )
     ).as(StacExportQueryParameters.apply _)
+
+  def annotationProjectTypeQueryParameters =
+    parameters(
+      (
+        'projectType.as(deserializerAnnotationProjectType).?
+      )
+    ).as(AnnotationProjectTypeQueryParameters.apply _)
+
+  def annotationProjectQueryParameters =
+    (
+      ownerQueryParameters &
+        searchParams &
+        ownershipTypeQueryParameters &
+        groupQueryParameters &
+        annotationProjectTypeQueryParameters
+    ).as(AnnotationProjectQueryParameters.apply _)
 }

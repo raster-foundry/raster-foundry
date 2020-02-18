@@ -7,6 +7,8 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 
+import java.util.UUID
+
 object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
   val tableName = "annotation_label_class_groups"
 
@@ -38,4 +40,17 @@ object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
       }
     } yield labelClassGroup.withLabelClasses(labelClasses)
   }
+
+  def listByProjectId(
+      projectId: UUID
+  ): ConnectionIO[List[AnnotationLabelClassGroup]] = {
+    (selectF ++ Fragments.whereAndOpt(
+      Some(fr"annotation_project_id = ${projectId}")
+    )).query[AnnotationLabelClassGroup].to[List]
+  }
+
+  def deleteByProjectId(
+      projectId: UUID
+  ): ConnectionIO[Int] =
+    query.filter(fr"annotation_project_id = $projectId").delete
 }

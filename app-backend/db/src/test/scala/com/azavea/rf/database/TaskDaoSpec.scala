@@ -46,7 +46,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -55,15 +55,13 @@ class TaskDaoSpec
                 collection <- TaskDao.insertTasks(
                   fixupTaskFeaturesCollection(
                     taskFeaturesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   dbUser
                 )
                 fetched <- TaskDao.listTasks(
                   TaskQueryParameters(),
-                  dbProject.id,
-                  dbProject.defaultLayerId,
+                  dbAnnotationProj.id,
                   PageRequest(0, 10, Map.empty)
                 )
               } yield { (collection, fetched) }
@@ -99,7 +97,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -108,7 +106,6 @@ class TaskDaoSpec
                 collection <- TaskDao.insertTasks(
                   fixupTaskFeaturesCollection(
                     taskFeaturesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   dbUser
@@ -149,7 +146,8 @@ class TaskDaoSpec
               (
                   Option[Scene.WithRelated],
                   com.rasterfoundry.datamodel.Task.TaskGridFeatureCreate,
-                  Int
+                  Int,
+                  com.rasterfoundry.datamodel.AnnotationProject.WithRelated
               )
             ] =
               for {
@@ -160,7 +158,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -185,19 +183,25 @@ class TaskDaoSpec
                 taskCount <- TaskDao.insertTasksByGrid(
                   fixupTaskPropertiesCreate(
                     taskPropertiesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   taskGridFeatureCreate,
                   dbUser
                 )
-              } yield { (createdScene, taskGridFeatureCreate, taskCount) }
+              } yield {
+                (
+                  createdScene,
+                  taskGridFeatureCreate,
+                  taskCount,
+                  dbAnnotationProj
+                )
+              }
 
-            val (createdScene, gridFeatures, taskCount) =
+            val (createdScene, gridFeatures, taskCount, annotationProject) =
               connIO.transact(xa).unsafeRunSync
 
-            (createdScene, gridFeatures.geometry) match {
-              case (_, Some(_)) | (Some(_), None) =>
+            (createdScene, gridFeatures.geometry, annotationProject.aoi) match {
+              case (_, Some(_), _) | (Some(_), None, _) | (_, _, Some(_)) =>
                 assert(
                   taskCount > 0,
                   "Task grid generation resulted in at least one inserted task"
@@ -235,7 +239,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -244,7 +248,6 @@ class TaskDaoSpec
                 collection <- TaskDao.insertTasks(
                   fixupTaskFeaturesCollection(
                     taskFeaturesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   dbUser
@@ -281,7 +284,7 @@ class TaskDaoSpec
                 projectCreate
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(projectId = Some(dbProject.id)),
                   dbUser
                 )
@@ -290,7 +293,6 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate1,
-                      dbProject,
                       dbAnnotationProj
                     )
                   )
@@ -301,7 +303,6 @@ class TaskDaoSpec
                 collection.features.head.id,
                 fixupTaskFeatureCreate(
                   taskFeatureCreate2,
-                  dbProject,
                   dbAnnotationProj
                 ),
                 dbUser
@@ -351,7 +352,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -362,7 +363,6 @@ class TaskDaoSpec
                     features = List(
                       fixupTaskFeatureCreate(
                         taskFeatureCreate,
-                        dbProject,
                         dbAnnotationProj
                       ).withStatus(TaskStatus.Unlabeled)
                     )
@@ -389,8 +389,7 @@ class TaskDaoSpec
                 )
                 listed <- TaskDao.listTasks(
                   TaskQueryParameters(actionType = Some(TaskStatus.Unlabeled)),
-                  dbProject.id,
-                  dbProject.defaultLayerId,
+                  dbAnnotationProj.id,
                   PageRequest(0, 10, Map.empty)
                 )
               } yield { (collection, listed) }
@@ -431,7 +430,7 @@ class TaskDaoSpec
                 projectCreate
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(projectId = Some(dbProject.id)),
                   dbUser
                 )
@@ -440,7 +439,6 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate,
-                      dbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Unlabeled)
                   )
@@ -511,7 +509,7 @@ class TaskDaoSpec
                   projectCreate
                 )
                 dbAnnotationProj <- AnnotationProjectDao
-                  .insertAnnotationProject(
+                  .insert(
                     annotationProjectCreate.copy(
                       projectId = Some(dbProject.id)
                     ),
@@ -520,20 +518,17 @@ class TaskDaoSpec
                 _ <- TaskDao.insertTasks(
                   fixupTaskFeaturesCollection(
                     taskFeaturesCreate,
-                    dbProject,
                     dbAnnotationProj
                   ),
                   dbUser
                 )
                 fetched <- TaskDao.listTasks(
                   TaskQueryParameters(),
-                  dbProject.id,
-                  dbProject.defaultLayerId,
+                  dbAnnotationProj.id,
                   PageRequest(0, 10, Map.empty)
                 )
-                deletedRowCount <- TaskDao.deleteLayerTasks(
-                  dbProject.id,
-                  dbProject.defaultLayerId
+                deletedRowCount <- TaskDao.deleteProjectTasks(
+                  dbAnnotationProj.id
                 )
               } yield { (fetched, deletedRowCount) }
 
@@ -567,24 +562,24 @@ class TaskDaoSpec
           {
             val (projectCreate, annotationProjectCreate) = projCreate
             val connIO = for {
-              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+              (dbUser, dbOrg, dbPlatform, _) <- insertUserOrgPlatProject(
                 userCreate,
                 orgCreate,
                 platform,
                 projectCreate
               )
-              updatedDbProject <- fixupProjectExtrasUpdate(
+              (labelTeam, validateTeam) <- fixupAssignUserToTeams(
                 labelValidateTeamCreate,
                 labelValidateTeamUgrCreate,
                 dbOrg,
                 dbUser,
-                dbPlatform,
-                dbProject
+                dbPlatform
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
-                    projectId = Some(updatedDbProject.id)
+                    labelersTeamId = Some(labelTeam.id),
+                    validatorsTeamId = Some(validateTeam.id)
                   ),
                   dbUser
                 )
@@ -593,7 +588,6 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate,
-                      updatedDbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Unlabeled)
                   )
@@ -640,8 +634,7 @@ class TaskDaoSpec
                 dbUser
               )
               listed <- TaskDao.getTaskUserSummary(
-                updatedDbProject.id,
-                updatedDbProject.defaultLayerId,
+                dbAnnotationProj.id,
                 UserTaskActivityParameters()
               )
             } yield { (dbUser, listed) }
@@ -692,24 +685,24 @@ class TaskDaoSpec
           {
             val (projectCreate, annotationProjectCreate) = projCreate
             val connIO = for {
-              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+              (dbUser, dbOrg, dbPlatform, _) <- insertUserOrgPlatProject(
                 userCreate,
                 orgCreate,
                 platform,
                 projectCreate
               )
-              updatedDbProject <- fixupProjectExtrasUpdate(
+              (labelTeam, validateTeam) <- fixupAssignUserToTeams(
                 labelValidateTeamCreate,
                 labelValidateTeamUgrCreate,
                 dbOrg,
                 dbUser,
-                dbPlatform,
-                dbProject
+                dbPlatform
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
-                    projectId = Some(updatedDbProject.id)
+                    labelersTeamId = Some(labelTeam.id),
+                    validatorsTeamId = Some(validateTeam.id)
                   ),
                   dbUser
                 )
@@ -718,7 +711,6 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate,
-                      updatedDbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Unlabeled)
                   )
@@ -745,8 +737,7 @@ class TaskDaoSpec
                 dbUser
               )
               listed <- TaskDao.getTaskUserSummary(
-                updatedDbProject.id,
-                updatedDbProject.defaultLayerId,
+                dbAnnotationProj.id,
                 UserTaskActivityParameters()
               )
             } yield { (dbUser, listed) }
@@ -797,24 +788,24 @@ class TaskDaoSpec
           {
             val (projectCreate, annotationProjectCreate) = projCreate
             val connIO = for {
-              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+              (dbUser, dbOrg, dbPlatform, _) <- insertUserOrgPlatProject(
                 userCreate,
                 orgCreate,
                 platform,
                 projectCreate
               )
-              updatedDbProject <- fixupProjectExtrasUpdate(
+              (labelTeam, validateTeam) <- fixupAssignUserToTeams(
                 labelValidateTeamCreate,
                 labelValidateTeamUgrCreate,
                 dbOrg,
                 dbUser,
-                dbPlatform,
-                dbProject
+                dbPlatform
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
-                    projectId = Some(updatedDbProject.id)
+                    labelersTeamId = Some(labelTeam.id),
+                    validatorsTeamId = Some(validateTeam.id)
                   ),
                   dbUser
                 )
@@ -823,7 +814,6 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate,
-                      updatedDbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Labeled)
                   )
@@ -852,8 +842,7 @@ class TaskDaoSpec
                 dbUser
               )
               listed <- TaskDao.getTaskUserSummary(
-                updatedDbProject.id,
-                updatedDbProject.defaultLayerId,
+                dbAnnotationProj.id,
                 UserTaskActivityParameters()
               )
             } yield { (dbUser, listed) }
@@ -904,24 +893,24 @@ class TaskDaoSpec
           {
             val (projectCreate, annotationProjectCreate) = projCreate
             val connIO = for {
-              (dbUser, dbOrg, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+              (dbUser, dbOrg, dbPlatform, _) <- insertUserOrgPlatProject(
                 userCreate,
                 orgCreate,
                 platform,
                 projectCreate
               )
-              updatedDbProject <- fixupProjectExtrasUpdate(
+              (labelTeam, validateTeam) <- fixupAssignUserToTeams(
                 labelValidateTeamCreate,
                 labelValidateTeamUgrCreate,
                 dbOrg,
                 dbUser,
-                dbPlatform,
-                dbProject
+                dbPlatform
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
-                    projectId = Some(updatedDbProject.id)
+                    labelersTeamId = Some(labelTeam.id),
+                    validatorsTeamId = Some(validateTeam.id)
                   ),
                   dbUser
                 )
@@ -930,7 +919,6 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate,
-                      updatedDbProject,
                       dbAnnotationProj
                     ).withStatus(TaskStatus.Unlabeled)
                   )
@@ -938,8 +926,7 @@ class TaskDaoSpec
                 dbUser
               )
               listed <- TaskDao.getTaskUserSummary(
-                updatedDbProject.id,
-                updatedDbProject.defaultLayerId,
+                dbAnnotationProj.id,
                 UserTaskActivityParameters()
               )
             } yield { (dbUser, listed) }
@@ -993,7 +980,7 @@ class TaskDaoSpec
                 projectCreate
               )
               dbAnnotationProj <- AnnotationProjectDao
-                .insertAnnotationProject(
+                .insert(
                   annotationProjectCreate.copy(
                     projectId = Some(dbProject.id)
                   ),
@@ -1002,7 +989,6 @@ class TaskDaoSpec
               collectionOne <- TaskDao.insertTasks(
                 fixupTaskFeaturesCollection(
                   taskFeaturesCreateOne,
-                  dbProject,
                   dbAnnotationProj,
                   Some(TaskStatus.Labeled)
                 ),
@@ -1011,15 +997,13 @@ class TaskDaoSpec
               collectionTwo <- TaskDao.insertTasks(
                 fixupTaskFeaturesCollection(
                   taskFeaturesCreateTwo,
-                  dbProject,
                   dbAnnotationProj,
                   Some(TaskStatus.Validated)
                 ),
                 dbUser
               )
-              fetched <- TaskDao.listLayerTasksByStatus(
-                dbProject.id,
-                dbProject.defaultLayerId,
+              fetched <- TaskDao.listProjectTasksByStatus(
+                dbAnnotationProj.id,
                 List("LABELED", "VALIDATED")
               )
             } yield { (collectionOne, collectionTwo, fetched) }
@@ -1038,19 +1022,26 @@ class TaskDaoSpec
             userCreate: User.Create,
             orgCreate: Organization.Create,
             platform: Platform,
-            projectCreate: Project.Create
+            projectCreate: Project.Create,
+            annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
             val connIO = for {
-              (_, _, _, dbProject) <- insertUserOrgPlatProject(
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
                 userCreate,
                 orgCreate,
                 platform,
                 projectCreate
               )
+              dbAnnotationProj <- AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(
+                    projectId = Some(dbProject.id)
+                  ),
+                  dbUser
+                )
               unionedExtent <- TaskDao.createUnionedGeomExtent(
-                dbProject.id,
-                dbProject.defaultLayerId,
+                dbAnnotationProj.id,
                 Nil
               )
             } yield unionedExtent

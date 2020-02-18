@@ -29,4 +29,9 @@ object TaskStatus {
     Decoder.decodeString.emap { str =>
       Either.catchNonFatal(fromString(str)).leftMap(_ => "TaskStatus")
     }
+
+  implicit val taskStatusKeyEncoder: KeyEncoder[TaskStatus] =
+    new KeyEncoder[TaskStatus] {
+      override def apply(taskStatus: TaskStatus): String = taskStatus.toString
+    }
 }

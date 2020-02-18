@@ -9,7 +9,6 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import io.circe.syntax._
 import io.circe.generic.JsonCodec
 
 import java.util.UUID
@@ -308,27 +307,24 @@ trait PropTestHelpers {
 
   def fixupTaskFeaturesCollection(
       tfc: Task.TaskFeatureCollectionCreate,
-      project: Project,
       annotationProject: AnnotationProject.WithRelated,
       statusOption: Option[TaskStatus] = None
   ) =
     tfc.copy(
       features =
         tfc.features map {
-          fixupTaskFeatureCreate(_, project, annotationProject, statusOption)
+          fixupTaskFeatureCreate(_, annotationProject, statusOption)
         }
     )
 
   def fixupTaskFeatureCreate(
       tfc: Task.TaskFeatureCreate,
-      project: Project,
       annotationProject: AnnotationProject.WithRelated,
       statusOption: Option[TaskStatus] = None
   ): Task.TaskFeatureCreate =
     tfc.copy(
       properties = fixupTaskPropertiesCreate(
         tfc.properties,
-        project,
         annotationProject,
         statusOption
       )
@@ -336,27 +332,21 @@ trait PropTestHelpers {
 
   def fixupTaskPropertiesCreate(
       tpc: Task.TaskPropertiesCreate,
-      project: Project,
       annotationProject: AnnotationProject.WithRelated,
       statusOption: Option[TaskStatus] = None
   ): Task.TaskPropertiesCreate =
     tpc.copy(
-      projectId = project.id,
-      projectLayerId = project.defaultLayerId,
       status = statusOption.getOrElse(tpc.status),
       annotationProjectId = annotationProject.id
     )
 
-  def fixupProjectExtrasUpdate(
+  def fixupAssignUserToTeams(
       labelValidateTeamCreate: (Team.Create, Team.Create),
       labelValidateTeamUgrCreate: (UserGroupRole.Create, UserGroupRole.Create),
       dbOrg: Organization,
       dbUser: User,
-      dbPlatform: Platform,
-      dbProject: Project,
-      labelsOption: Option[List[(UUID, String, UUID)]] = None,
-      labelGroupsOption: Option[Map[UUID, String]] = None
-  ): ConnectionIO[Project] = {
+      dbPlatform: Platform
+  ): ConnectionIO[(Team, Team)] = {
     val (labelTeamCreate, validateTeamCreate) = labelValidateTeamCreate
     val (labelTeamUgrCreate, validateTeamUgrCreate) = labelValidateTeamUgrCreate
     for {
@@ -388,21 +378,7 @@ trait PropTestHelpers {
           validateTeamUgrCreate.copy(groupType = GroupType.Team)
         ).toUserGroupRole(dbUser, MembershipStatus.Approved)
       )
-      _ <- ProjectDao.updateProject(
-        dbProject.copy(
-          extras = Some(
-            fixupProjectExtrasAnnotate(
-              dbLabelTeam.id,
-              dbValidateTeam.id,
-              labelsOption,
-              labelGroupsOption
-            ).asJson
-          )
-        ),
-        dbProject.id
-      )
-      updatedDbProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
-    } yield updatedDbProject
+    } yield (dbLabelTeam, dbValidateTeam)
   }
 
   def fixupProjectExtrasAnnotate(

@@ -433,6 +433,19 @@ trait Filterables extends RFMeta with LazyLogging {
             }
           )
     }
+
+  implicit val annotationProjectQueryParametersFilter
+    : Filterable[Any, AnnotationProjectQueryParameters] =
+    Filterable[Any, AnnotationProjectQueryParameters] {
+      params: AnnotationProjectQueryParameters =>
+        Filters.ownerQP(params.ownerParams) ++
+          Filters.searchQP(params.searchParams, List("name")) ++
+          List(
+            params.projectTypeParams.projectType.map({ projectType =>
+              fr"project_type = $projectType"
+            })
+          )
+    }
 }
 
 object Filterables extends Filterables

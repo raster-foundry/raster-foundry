@@ -39,29 +39,31 @@ object Domain {
   case object Tokens extends Domain("tokens")
   case object Uploads extends Domain("uploads")
   case object Users extends Domain("users")
+  case object AnnotationProjects extends Domain("annotationProjects")
 
   def fromStringTry(s: String): Try[Domain] = s match {
-    case "analyses"          => Success(Analyses)
-    case "annotationGroups"  => Success(AnnotationGroups)
-    case "annotationUploads" => Success(AnnotationUploads)
-    case "datasources"       => Success(Datasources)
-    case "exports"           => Success(Exports)
-    case "featureFlags"      => Success(FeatureFlags)
-    case "licenses"          => Success(Licenses)
-    case "mapTokens"         => Success(MapTokens)
-    case "organizations"     => Success(Organizations)
-    case "platforms"         => Success(Platforms)
-    case "projects"          => Success(Projects)
-    case "scenes"            => Success(Scenes)
-    case "shapes"            => Success(Shapes)
-    case "stacExports"       => Success(StacExports)
-    case "teams"             => Success(Teams)
-    case "templates"         => Success(Templates)
-    case "thumbnails"        => Success(Thumbnails)
-    case "tokens"            => Success(Tokens)
-    case "uploads"           => Success(Uploads)
-    case "users"             => Success(Users)
-    case _                   => Failure(new Exception(s"Cannot parse Domain from string $s"))
+    case "analyses"           => Success(Analyses)
+    case "annotationGroups"   => Success(AnnotationGroups)
+    case "annotationUploads"  => Success(AnnotationUploads)
+    case "datasources"        => Success(Datasources)
+    case "exports"            => Success(Exports)
+    case "featureFlags"       => Success(FeatureFlags)
+    case "licenses"           => Success(Licenses)
+    case "mapTokens"          => Success(MapTokens)
+    case "organizations"      => Success(Organizations)
+    case "platforms"          => Success(Platforms)
+    case "projects"           => Success(Projects)
+    case "scenes"             => Success(Scenes)
+    case "shapes"             => Success(Shapes)
+    case "stacExports"        => Success(StacExports)
+    case "teams"              => Success(Teams)
+    case "templates"          => Success(Templates)
+    case "thumbnails"         => Success(Thumbnails)
+    case "tokens"             => Success(Tokens)
+    case "uploads"            => Success(Uploads)
+    case "users"              => Success(Users)
+    case "annotationProjects" => Success(AnnotationProjects)
+    case _                    => Failure(new Exception(s"Cannot parse Domain from string $s"))
   }
 }
 
@@ -524,8 +526,12 @@ object Scopes {
           ScopedAction(Domain.Uploads, Action.Delete, None),
           ScopedAction(Domain.Uploads, Action.ReadPermissions, None),
           ScopedAction(Domain.Uploads, Action.Share, None),
-          ScopedAction(Domain.Projects, Action.Create, Some(10.toLong)),
-          ScopedAction(Domain.Projects, Action.Share, Some(5.toLong))
+          ScopedAction(
+            Domain.AnnotationProjects,
+            Action.Create,
+            Some(10.toLong)
+          ),
+          ScopedAction(Domain.AnnotationProjects, Action.Share, Some(5.toLong))
         ) ++ Set(
           Action.Read,
           Action.Update,
@@ -538,8 +544,9 @@ object Scopes {
           Action.DeleteTasks,
           Action.UpdateTasks,
           Action.ReadTasks,
-          Action.AddScenes
-        ).map(makeScopedAction(Domain.Projects, _, None)) ++
+          Action.AddScenes,
+          Action.ReadPermissions
+        ).map(makeScopedAction(Domain.AnnotationProjects, _, None)) ++
           StacExportsCRUD.actions ++
           UserSelfScope.actions ++
           FeatureFlagsScope.actions

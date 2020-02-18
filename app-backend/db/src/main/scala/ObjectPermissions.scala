@@ -183,7 +183,8 @@ trait ObjectPermissions[Model] {
       tableName: String
   ): Fragment =
     (objectType, actionType) match {
-      case (ObjectType.Shape, ActionType.View) =>
+      case (ObjectType.Shape, ActionType.View) |
+          (ObjectType.AnnotationProject, ActionType.View) =>
         Fragment.empty
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
           (ObjectType.Project, ActionType.Export) |
@@ -268,7 +269,7 @@ trait ObjectPermissions[Model] {
         }
       // shared to the requesting user due to group membership
       case Some("inherited") =>
-        if (objectType == ObjectType.Shape) {
+        if (objectType == ObjectType.Shape || objectType == ObjectType.AnnotationProject) {
           Some(inheritedF ++ Fragment.const(s"&& ${tableName}acrs"))
         } else {
           Some(

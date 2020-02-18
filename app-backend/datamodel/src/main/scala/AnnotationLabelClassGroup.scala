@@ -50,5 +50,6 @@ object AnnotationLabelClassGroup {
 
   object WithLabelClasses {
     implicit val encWithLabelClasses: Encoder[WithLabelClasses] = deriveEncoder
+    implicit val decWithLabelClasses: Decoder[WithLabelClasses] = deriveDecoder
   }
 }

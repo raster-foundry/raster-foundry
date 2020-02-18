@@ -14,8 +14,6 @@ case class Task(
     createdBy: String,
     modifiedAt: Instant,
     owner: String,
-    projectId: UUID,
-    projectLayerId: UUID,
     status: TaskStatus,
     lockedBy: Option[String],
     lockedOn: Option[Instant],
@@ -37,8 +35,6 @@ case class Task(
       this.createdBy,
       this.modifiedAt,
       this.owner,
-      this.projectId,
-      this.projectLayerId,
       this.status,
       this.lockedBy,
       this.lockedOn,
@@ -55,8 +51,6 @@ object Task {
       createdBy: String,
       modifiedAt: Instant,
       owner: String,
-      projectId: UUID,
-      projectLayerId: UUID,
       status: TaskStatus,
       lockedBy: Option[String],
       lockedOn: Option[Instant],
@@ -65,8 +59,6 @@ object Task {
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
-        this.projectId,
-        this.projectLayerId,
         this.status,
         this.annotationProjectId
       )
@@ -79,8 +71,6 @@ object Task {
   }
 
   case class TaskPropertiesCreate(
-      projectId: UUID,
-      projectLayerId: UUID,
       status: TaskStatus,
       annotationProjectId: UUID
   )
@@ -174,8 +164,7 @@ object Task {
   }
 
   final case class TaskGridCreateProperties(
-      xSizeMeters: Int,
-      ySizeMeters: Int
+      sizeMeters: Option[Int]
   )
 
   object TaskGridCreateProperties {

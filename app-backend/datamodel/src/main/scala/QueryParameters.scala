@@ -665,7 +665,7 @@ final case class StacExportQueryParameters(
     searchParams: SearchQueryParameters = SearchQueryParameters(),
     exportStatus: Option[String] = None,
     projectId: Option[UUID] = None,
-    layerId: Option[UUID] = None,
+    layerId: Option[UUID] = None
 )
 
 object StacExportQueryParameters {
@@ -675,4 +675,36 @@ object StacExportQueryParameters {
   implicit def decStacExportQueryParameters
     : Decoder[StacExportQueryParameters] =
     deriveDecoder[StacExportQueryParameters]
+}
+
+final case class AnnotationProjectTypeQueryParameters(
+    projectType: Option[AnnotationProjectType] = None
+)
+
+object AnnotationProjectTypeQueryParameters {
+  implicit def encGroupQueryParameters
+    : Encoder[AnnotationProjectTypeQueryParameters] =
+    deriveEncoder[AnnotationProjectTypeQueryParameters]
+  implicit def decGroupQueryParameters
+    : Decoder[AnnotationProjectTypeQueryParameters] =
+    deriveDecoder[AnnotationProjectTypeQueryParameters]
+}
+
+final case class AnnotationProjectQueryParameters(
+    ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
+    searchParams: SearchQueryParameters = SearchQueryParameters(),
+    ownershipTypeParams: OwnershipTypeQueryParameters =
+      OwnershipTypeQueryParameters(),
+    groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+    projectTypeParams: AnnotationProjectTypeQueryParameters =
+      AnnotationProjectTypeQueryParameters()
+)
+
+object AnnotationProjectQueryParameters {
+  implicit def encGroupQueryParameters
+    : Encoder[AnnotationProjectQueryParameters] =
+    deriveEncoder[AnnotationProjectQueryParameters]
+  implicit def decGroupQueryParameters
+    : Decoder[AnnotationProjectQueryParameters] =
+    deriveDecoder[AnnotationProjectQueryParameters]
 }

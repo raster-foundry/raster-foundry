@@ -45,7 +45,6 @@ trait ProjectRoutes
     with ProjectAnnotationRoutes
     with ProjectLayerRoutes
     with ProjectLayerAnnotationRoutes
-    with ProjectLayerTaskRoutes
     with ProjectAuthorizationDirectives {
 
   val xa: Transactor[IO]
@@ -299,46 +298,6 @@ trait ProjectRoutes
                         listLayerDatasources(projectId, layerId)
                       }
                     }
-                  } ~
-                  pathPrefix("tasks") {
-                    pathEndOrSingleSlash {
-                      get {
-                        listLayerTasks(projectId, layerId)
-                      } ~ post {
-                        createLayerTask(projectId, layerId)
-                      } ~ delete {
-                        deleteLayerTasks(projectId, layerId)
-                      }
-                    } ~
-                      pathPrefix("grid") {
-                        post {
-                          createLayerTaskGrid(projectId, layerId)
-                        }
-                      } ~
-                      pathPrefix("summary") {
-                        get {
-                          getTaskUserSummary(projectId, layerId)
-                        }
-                      } ~
-                      pathPrefix(JavaUUID) { taskId =>
-                        pathEndOrSingleSlash {
-                          get {
-                            getTask(projectId, layerId, taskId)
-                          } ~ put {
-                            updateTask(projectId, layerId, taskId)
-                          } ~ delete {
-                            deleteTask(projectId, layerId, taskId)
-                          }
-                        } ~ pathPrefix("lock") {
-                          pathEndOrSingleSlash {
-                            post {
-                              lockTask(projectId, layerId, taskId)
-                            } ~ delete {
-                              unlockTask(projectId, layerId, taskId)
-                            }
-                          }
-                        }
-                      }
                   }
               }
           } ~
