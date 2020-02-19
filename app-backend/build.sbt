@@ -44,6 +44,8 @@ val scalaOptions = Seq(
   // "100"
 )
 
+scalaVersion in ThisBuild := Version.scala
+
 /**
   * Shared settings across all subprojects
   */
@@ -245,6 +247,7 @@ lazy val apiDependencies = Seq(
   Dependencies.doobieCore,
   Dependencies.doobieFree,
   Dependencies.doobieHikari,
+  Dependencies.doobiePostgres,
   Dependencies.dropbox,
   Dependencies.geotrellisRaster,
   Dependencies.geotrellisS3,
@@ -282,6 +285,7 @@ lazy val apiIntegrationTest = project
       Dependencies.sttpCore % "test",
       Dependencies.sttpJson % "test",
       Dependencies.sttpCirce % "test",
+      Dependencies.sttpOkHttpBackend % "test",
       Dependencies.scalatest
     )
   })

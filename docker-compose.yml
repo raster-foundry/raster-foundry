@@ -7,8 +7,6 @@ services:
     env_file: .env
     expose:
       - "5432"
-    ports:
-      - 5432:5432
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 5s
@@ -205,6 +203,7 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:memcached.service.rasterfoundry.internal
+      - api-server:api.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO

@@ -63,9 +63,18 @@ then
             download_database_backup
             download_development_images
         fi
+
         # API server won't start until Postgres is passing Health Checks
-        docker-compose up -d api-server
-        docker-compose rm -sf api-server
+        docker-compose \
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            up -d api-server-test
+
+        docker-compose \
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            rm -sf api-server-test
+
         load_database_backup
     fi
     exit

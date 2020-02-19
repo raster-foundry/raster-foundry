@@ -97,7 +97,7 @@ trait UserRoutes
   }
 
   def updateAuth0User: Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Users, Action.Update, None), user) {
+    authorizeScope(ScopedAction(Domain.Users, Action.UpdateSelf, None), user) {
       entity(as[Auth0UserUpdate]) { userUpdate =>
         complete {
           Auth0UserService.updateAuth0User(user.id, userUpdate)
