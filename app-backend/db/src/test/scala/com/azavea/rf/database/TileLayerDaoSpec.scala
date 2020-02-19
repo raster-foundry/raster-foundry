@@ -21,8 +21,8 @@ class TileLayerDaoSpec
     check {
       forAll(
         (
-          userCreate: User.Create,
-          annotationProjectCreate: AnnotationProject.Create
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create
         ) => {
           val listIO = for {
             user <- UserDao.create(userCreate)
@@ -30,14 +30,15 @@ class TileLayerDaoSpec
               .insert(annotationProjectCreate, user)
             listedReal <- TileLayerDao.listByProjectId(inserted.id)
             listedBogus <- TileLayerDao.listByProjectId(UUID.randomUUID)
-          } yield {(inserted.tileLayers, listedReal, listedBogus)}
+          } yield { (inserted.tileLayers, listedReal, listedBogus) }
 
-          val (insertedLayers, listedReal, listedBogus) = listIO.transact(xa).unsafeRunSync
+          val (insertedLayers, listedReal, listedBogus) =
+            listIO.transact(xa).unsafeRunSync
 
           assert(insertedLayers === listedReal,
-            "Inserted layers and listed layers for project match")
+                 "Inserted layers and listed layers for project match")
           assert(listedBogus === Nil,
-            "List for a bogus project id returned nothing")
+                 "List for a bogus project id returned nothing")
 
           true
         }

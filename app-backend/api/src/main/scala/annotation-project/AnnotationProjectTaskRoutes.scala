@@ -309,7 +309,7 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def addTaskLabels(projectId: UUID): Route = authenticate { user =>
+  def addTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate { user =>
     authorizeScope(
       ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
       user
@@ -332,6 +332,8 @@ trait AnnotationProjectTaskRoutes
           onSuccess(
             AnnotationLabelDao
               .insertAnnotations(
+                projectId,
+                taskId,
                 annotationLabelWithClassesCreate.toList,
                 user
               )

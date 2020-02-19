@@ -24,7 +24,7 @@ class AnnotationLabelClassGroupDaoSpec
         (
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create
-        ) =>{
+        ) => {
           val insertIO: ConnectionIO[
             (List[AnnotationLabelClassGroup], List[AnnotationLabelClassGroup])
           ] = for {
@@ -41,12 +41,13 @@ class AnnotationLabelClassGroupDaoSpec
 
           val (listedReal, listedBogus) = insertIO.transact(xa).unsafeRunSync
 
-          val expectedNames = (annotationProjectCreate.labelClassGroups map { _.name }).toSet
+          val expectedNames =
+            (annotationProjectCreate.labelClassGroups map { _.name }).toSet
 
           assert(expectedNames === (listedReal map { _.name }).toSet,
-            "Listed names for project id match names of groups to create")
+                 "Listed names for project id match names of groups to create")
           assert(Set.empty[String] === (listedBogus map { _.name }).toSet,
-            "Bogus id lists no annotation label class groups")
+                 "Bogus id lists no annotation label class groups")
           true
         }
       )
@@ -74,10 +75,11 @@ class AnnotationLabelClassGroupDaoSpec
 
           val (deletedReal, deletedBogus) = insertIO.transact(xa).unsafeRunSync
 
-          assert(deletedReal === annotationProjectCreate.labelClassGroups.length,
+          assert(
+            deletedReal === annotationProjectCreate.labelClassGroups.length,
             "Deleted all annotation label class groups for real project id")
           assert(deletedBogus === 0,
-            "Bogus id deletes no annotation label class groups")
+                 "Bogus id deletes no annotation label class groups")
 
           true
         }

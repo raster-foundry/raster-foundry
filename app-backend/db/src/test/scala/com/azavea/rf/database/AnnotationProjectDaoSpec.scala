@@ -133,7 +133,8 @@ class AnnotationProjectDaoSpec
             user <- UserDao.create(userCreate)
             inserted1 <- AnnotationProjectDao
               .insert(annotationProjectCreate, user)
-            inserted2 <- AnnotationProjectDao.insert(annotationProjectUpdate, user)
+            inserted2 <- AnnotationProjectDao.insert(annotationProjectUpdate,
+                                                     user)
             _ <- AnnotationProjectDao.update(inserted2.toProject, inserted1.id)
             fetched <- AnnotationProjectDao.getById(inserted1.id)
           } yield fetched

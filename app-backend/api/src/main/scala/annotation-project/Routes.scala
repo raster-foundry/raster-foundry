@@ -104,7 +104,7 @@ trait AnnotationProjectRoutes
                   pathPrefix("labels") {
                     pathEndOrSingleSlash {
                       post {
-                        addTaskLabels(projectId)
+                        addTaskLabels(projectId, taskId)
                       }
                     }
                   }

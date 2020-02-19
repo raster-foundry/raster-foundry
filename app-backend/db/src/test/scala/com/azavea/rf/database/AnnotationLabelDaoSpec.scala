@@ -56,7 +56,9 @@ class AnnotationLabelDaoSpec
             created <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
               task.id,
-              annotationCreates map { create => addClasses(create, classIds) },
+              annotationCreates map { create =>
+                addClasses(create, classIds)
+              },
               user
             )
           } yield (created)
@@ -117,7 +119,7 @@ class AnnotationLabelDaoSpec
           val listed = listIO.transact(xa).unsafeRunSync
 
           assert(listed.size == annotationCreates.size,
-            "All annotations were listed")
+                 "All annotations were listed")
 
           true
         }
@@ -176,20 +178,21 @@ class AnnotationLabelDaoSpec
           val (classIds, summaryReal, summaryBogus) =
             summaryIO.transact(xa).unsafeRunSync
 
-          classIds map { classId =>
-            val labelSummaryO = summaryReal.find(_.labelClassId == classId)
-            val expectation = if (annotationCreates.isEmpty) {
-              None
-            } else {
-              Some(annotationCreates.size)
-            }
-            assert(
-              (labelSummaryO map {
-                (summ: AnnotationProject.LabelClassSummary) =>
-                  summ.count
-              }) == expectation,
-              "All the annotations with the real class were counted"
-            )
+          classIds map {
+            classId =>
+              val labelSummaryO = summaryReal.find(_.labelClassId == classId)
+              val expectation = if (annotationCreates.isEmpty) {
+                None
+              } else {
+                Some(annotationCreates.size)
+              }
+              assert(
+                (labelSummaryO map {
+                  (summ: AnnotationProject.LabelClassSummary) =>
+                    summ.count
+                }) == expectation,
+                "All the annotations with the real class were counted"
+              )
           }
 
           assert(
