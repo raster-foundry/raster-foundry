@@ -3,8 +3,6 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
-import cats.data.NonEmptyList
-import cats.implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
@@ -21,7 +19,7 @@ class AnnotationLabelDaoSpec
 
   def addClasses(
       label: AnnotationLabelWithClasses.Create,
-      classes: NonEmptyList[UUID]
+      classes: List[UUID]
   ): AnnotationLabelWithClasses.Create =
     label.copy(annotationLabelClasses = classes)
 
@@ -58,7 +56,7 @@ class AnnotationLabelDaoSpec
             created <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
               task.id,
-              annotationCreates map { create => addClasses(create, classIds.toNel.get) },
+              annotationCreates map { create => addClasses(create, classIds) },
               user
             )
           } yield (created)
@@ -105,7 +103,7 @@ class AnnotationLabelDaoSpec
               _.labelClasses
             } map { _.id }
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds.toNel.get)
+              addClasses(create, classIds)
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
@@ -157,7 +155,7 @@ class AnnotationLabelDaoSpec
               _.labelClasses
             } map { _.id }
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds.toNel.get)
+              addClasses(create, classIds)
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,

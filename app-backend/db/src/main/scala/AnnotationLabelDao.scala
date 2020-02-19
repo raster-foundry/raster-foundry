@@ -32,8 +32,6 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       annotations: List[AnnotationLabelWithClasses.Create],
       user: User
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
-    println(s"Starting with ${annotations.size} annotations to insert")
-
     val insertAnnotationsFragment: Fragment =
       fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, created_by, geometry, annotation_project_id, annotation_task_id
@@ -64,14 +62,11 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     )
 
     val labelClassFragments: List[Fragment] =
-      annotationLabelsWithClasses.flatMap(
-        (annotationLabel: AnnotationLabelWithClasses) =>
-          annotationLabel.annotationLabelClasses
-            .map(
-              labelClassId => fr"(${annotationLabel.id}, ${labelClassId})"
-            )
-            .toList
-      )
+      annotationLabelsWithClasses flatMap { label =>
+        label.annotationLabelClasses.map(
+          labelClassId => fr"(${label.id}, ${labelClassId})"
+        )
+      }
 
     for {
       insertedAnnotationIds <- annotationFragments.toNel traverse { fragments =>
@@ -123,7 +118,6 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     alalc.annotation_class_id,
     alcls.name
   """)
-    println(fragment)
     fragment.query[AnnotationProject.LabelClassSummary].to[List]
   }
 }
