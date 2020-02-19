@@ -309,49 +309,50 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def addTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        AnnotationProjectDao
-          .authorized(
-            user,
-            ObjectType.AnnotationProject,
-            projectId,
-            ActionType.Annotate
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
-          val annotationLabelWithClassesCreate = fc.features map {
-            _.toAnnotationLabelWithClassesCreate
-          }
-          onSuccess(
-            AnnotationLabelDao
-              .insertAnnotations(
-                projectId,
-                taskId,
-                annotationLabelWithClassesCreate.toList,
-                user
-              )
-              .transact(xa)
-              .unsafeToFuture
-              .map { annotations: List[AnnotationLabelWithClasses] =>
-                fromSeqToFeatureCollection[
-                  AnnotationLabelWithClasses,
-                  AnnotationLabelWithClasses.GeoJSON
-                ](
-                  annotations
+  def addTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
+            val annotationLabelWithClassesCreate = fc.features map {
+              _.toAnnotationLabelWithClassesCreate
+            }
+            onSuccess(
+              AnnotationLabelDao
+                .insertAnnotations(
+                  projectId,
+                  taskId,
+                  annotationLabelWithClassesCreate.toList,
+                  user
                 )
-              }
-          ) { createdAnnotation =>
-            complete((StatusCodes.Created, createdAnnotation))
+                .transact(xa)
+                .unsafeToFuture
+                .map { annotations: List[AnnotationLabelWithClasses] =>
+                  fromSeqToFeatureCollection[
+                    AnnotationLabelWithClasses,
+                    AnnotationLabelWithClasses.GeoJSON
+                  ](
+                    annotations
+                  )
+                }
+            ) { createdAnnotation =>
+              complete((StatusCodes.Created, createdAnnotation))
+            }
           }
         }
       }
-    }
   }
 }
