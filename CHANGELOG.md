@@ -11,7 +11,7 @@
 - Added scopes to the API, database, and user creation to control access to resources and endpoints [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270), [#5275](https://github.com/raster-foundry/raster-foundry/pull/5275), [#5278](https://github.com/raster-foundry/raster-foundry/pull/5278) [#5277](https://github.com/raster-foundry/raster-foundry/pull/5277), [#5292](https://github.com/raster-foundry/raster-foundry/pull/5292)
 - Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
 - Added a migration to add annotation project id to tasks [#5296](https://github.com/raster-foundry/raster-foundry/pull/5296)
-- Added annotation project related data models, `Dao` methods, and endpoints [#5301](https://github.com/raster-foundry/raster-foundry/pull/5301)
+- Added annotation project related data models, `Dao` methods, endpoints, and tests [#5301](https://github.com/raster-foundry/raster-foundry/pull/5301), [#5303](https://github.com/raster-foundry/raster-foundry/pull/5303), [#5308](https://github.com/raster-foundry/raster-foundry/pull/5308)
 
 ### Changed
 
