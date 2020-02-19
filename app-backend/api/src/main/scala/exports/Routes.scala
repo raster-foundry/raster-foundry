@@ -67,16 +67,18 @@ trait ExportRoutes
   }
 
   def listExports: Route = authenticate { user =>
-    (withPagination & exportQueryParams) {
-      (page: PageRequest, queryParams: ExportQueryParameters) =>
-        complete {
-          ExportDao.query
-            .filter(queryParams)
-            .filter(user)
-            .page(page)
-            .transact(xa)
-            .unsafeToFuture()
-        }
+    authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
+      (withPagination & exportQueryParams) {
+        (page: PageRequest, queryParams: ExportQueryParameters) =>
+          complete {
+            ExportDao.query
+              .filter(queryParams)
+              .filter(user)
+              .page(page)
+              .transact(xa)
+              .unsafeToFuture()
+          }
+      }
     }
   }
 

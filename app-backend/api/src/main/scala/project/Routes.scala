@@ -492,21 +492,18 @@ trait ProjectRoutes
     }
   }
 
-  def getProject(projectId: UUID): Route = extractTokenHeader { tokenO =>
-    (extractMapTokenParam & projectQueryParameters) {
-      (mapTokenO, projectQueryParams) =>
-        (projectAuthFromMapTokenO(mapTokenO, projectId) |
-          projectAuthFromTokenO(
-            tokenO,
-            projectId,
-            projectQueryParams.analysisId,
-            ScopedAction(Domain.Projects, Action.Read, None)
-          ) |
-          projectIsPublic(projectId)) {
-          complete {
-            ProjectDao.getProjectById(projectId).transact(xa).unsafeToFuture
-          }
+  def getProject(projectId: UUID): Route = authenticateAllowAnonymous { user =>
+    authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+      (authorizeAsync(
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+          .map(_.toBoolean)) | projectIsPublic(projectId)) {
+        complete {
+          ProjectDao.getProjectById(projectId).transact(xa).unsafeToFuture
         }
+      }
     }
   }
 

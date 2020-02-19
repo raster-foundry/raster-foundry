@@ -13,7 +13,8 @@ import com.softwaremill.sttp.{
   Uri
 }
 import com.softwaremill.sttp.circe._
-import com.softwaremill.sttp.quick._
+import com.softwaremill.sttp.okhttp.OkHttpSyncBackend
+import com.softwaremill.sttp._
 import com.typesafe.config.ConfigFactory
 import io.circe._
 import io.circe.generic.semiauto.deriveDecoder
@@ -84,6 +85,8 @@ object TokenResponse {
 
 class ScopeSpec extends FunSpec {
 
+  implicit val okHttpBackend = OkHttpSyncBackend()
+
   private val config = ConfigFactory.load()
 
   val apiHost = config.getString("apiHost")
@@ -94,6 +97,7 @@ class ScopeSpec extends FunSpec {
 
   // match strings of alpha characters between braces
   val idSegment = "\\{[aA-zZ]*\\}".r
+  val tokenQueryParameterSegment = "\\{token\\}".r
 
   def subUUID(path: String): String = idSegment.replaceAllIn(path, s"$bogusId")
 
@@ -105,7 +109,7 @@ class ScopeSpec extends FunSpec {
   }
 
   val authTokenE: Either[String, TokenResponse] = {
-    val tokenRoute = makeRoute("/tokens/")
+    val tokenRoute = makeRoute("/api/tokens/")
     val response
         : Id[Response[Either[DeserializationError[Error], TokenResponse]]] =
       sttp
@@ -116,7 +120,9 @@ class ScopeSpec extends FunSpec {
     response map { resp =>
       resp.body match {
         case Right(Right(tokenResp)) => Right(tokenResp)
-        case _                       => Left("could not get token")
+        case _                       => {
+          Left("could not get token")
+        }
       }
     }
   }
@@ -171,8 +177,7 @@ class ScopeSpec extends FunSpec {
       resp.body match {
         case Right(Right(simResp)) => Right(simResp)
         case left =>
-          println(s"Err was: $left")
-          Left("body deserialization failed")
+          Left(s"body deserialization failed: $left, code: ${resp.code} body: ${response.body}")
       }
     }
     assert(
@@ -208,7 +213,8 @@ class ScopeSpec extends FunSpec {
           {
             (for {
               tokenResponse <- authTokenE
-              row <- ParsedCsvRow.fromStringsE(path, scope, verb)
+              updatedPath = tokenQueryParameterSegment.replaceAllIn(path, s"${tokenResponse.id_token}")
+              row <- ParsedCsvRow.fromStringsE(updatedPath, scope, verb)
               baseRequest = getBaseRequest(tokenResponse, row.scope, false)
             } yield { expectForbidden(baseRequest, row) }) getOrElse {
               fail(inputDataFailureMessage(path, scope, verb))
@@ -223,8 +229,11 @@ class ScopeSpec extends FunSpec {
           {
             (for {
               tokenResponse <- authTokenE
-              row <- ParsedCsvRow.fromStringsE(path, scope, verb)
-              baseRequest = getBaseRequest(tokenResponse, row.scope, true)
+              updatedPath = tokenQueryParameterSegment.replaceAllIn(path, s"${tokenResponse.id_token}")
+              row <- ParsedCsvRow.fromStringsE(updatedPath, scope, verb)
+              baseRequest = {
+                getBaseRequest(tokenResponse, row.scope, true)
+              }
             } yield { expectAllowed(baseRequest, row) }) getOrElse {
               fail(inputDataFailureMessage(path, scope, verb))
             }

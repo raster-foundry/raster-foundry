@@ -33,31 +33,32 @@ trait ProjectLayerAnnotationRoutes
 
   def listLayerLabels(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
-        ProjectDao
-          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          AnnotationDao
-            .listProjectLabels(projectId, Some(layerId))
+      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+        authorizeAsync {
+          ProjectDao
+            .authProjectLayerExist(projectId, layerId, user, ActionType.View)
             .transact(xa)
             .unsafeToFuture
+        } {
+          complete {
+            AnnotationDao
+              .listProjectLabels(projectId, Some(layerId))
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
   }
 
   def listLayerAnnotations(projectId: UUID, layerId: UUID): Route =
-    extractTokenHeader { tokenO =>
-      extractMapTokenParam { mapTokenO =>
-        (projectAuthFromMapTokenO(mapTokenO, projectId) |
-          projectAuthFromTokenO(
-            tokenO,
-            projectId,
-            None,
-            ScopedAction(Domain.Projects, Action.Read, None)
-          ) | projectIsPublic(projectId)) {
+    authenticateAllowAnonymous { user =>
+      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+        (authorizeAsync(
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+            .map(_.toBoolean)) | projectIsPublic(projectId)) {
           (withPagination & annotationQueryParams) {
             (page: PageRequest, queryParams: AnnotationQueryParameters) =>
               complete {

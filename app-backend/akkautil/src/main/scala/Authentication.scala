@@ -45,6 +45,21 @@ trait Authentication extends Directives with LazyLogging {
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
 
+  // Use on endpoints where you need to return an anonymous user for public endpoints
+  def authenticateAllowAnonymous: Directive1[User] = {
+    extractTokenHeader.flatMap {
+      case Some(token) =>
+        authenticateWithToken(token.split(" ").last)
+      case None =>
+        onSuccess(anonymousUser) flatMap {
+          case Some(user) => provide(user)
+          case _ =>
+            reject(
+              AuthenticationFailedRejection(CredentialsRejected, challenge))
+        }
+    }
+  }
+
   /**
     * Authenticates user based on bearer token (JWT)
     */

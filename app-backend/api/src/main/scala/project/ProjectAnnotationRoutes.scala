@@ -30,52 +30,50 @@ trait ProjectAnnotationRoutes
   implicit val xa: Transactor[IO]
   implicit val ec: ExecutionContext
 
-  def listAnnotations(projectId: UUID): Route = extractTokenHeader { tokenO =>
-    extractMapTokenParam { mapTokenO =>
-      (projectAuthFromMapTokenO(mapTokenO, projectId) |
-        projectAuthFromTokenO(
-          tokenO,
-          projectId,
-          None,
-          ScopedAction(Domain.Projects, Action.Read, None)
-        ) | projectIsPublic(
-        projectId
-      )) {
-        (withPagination & annotationQueryParams) {
-          (page: PageRequest, queryParams: AnnotationQueryParameters) =>
-            complete {
-              (queryParams.withOwnerInfo match {
-                case Some(true) =>
-                  AnnotationDao
-                    .listByLayerWithOwnerInfo(projectId, page, queryParams)
-                    .transact(xa)
-                    .unsafeToFuture
-                    .map { p =>
-                      {
-                        fromPaginatedResponseToGeoJson[
-                          AnnotationWithOwnerInfo,
-                          AnnotationWithOwnerInfo.GeoJSON
-                        ](p)
+  def listAnnotations(projectId: UUID): Route = authenticateAllowAnonymous {
+    user =>
+      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+        (authorizeAsync(
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+            .map(_.toBoolean)) | projectIsPublic(projectId)) {
+          (withPagination & annotationQueryParams) {
+            (page: PageRequest, queryParams: AnnotationQueryParameters) =>
+              complete {
+                (queryParams.withOwnerInfo match {
+                  case Some(true) =>
+                    AnnotationDao
+                      .listByLayerWithOwnerInfo(projectId, page, queryParams)
+                      .transact(xa)
+                      .unsafeToFuture
+                      .map { p =>
+                        {
+                          fromPaginatedResponseToGeoJson[
+                            AnnotationWithOwnerInfo,
+                            AnnotationWithOwnerInfo.GeoJSON
+                          ](p)
+                        }
                       }
-                    }
-                case _ =>
-                  AnnotationDao
-                    .listByLayer(projectId, page, queryParams)
-                    .transact(xa)
-                    .unsafeToFuture
-                    .map { p =>
-                      {
-                        fromPaginatedResponseToGeoJson[
-                          Annotation,
-                          Annotation.GeoJSON
-                        ](p)
+                  case _ =>
+                    AnnotationDao
+                      .listByLayer(projectId, page, queryParams)
+                      .transact(xa)
+                      .unsafeToFuture
+                      .map { p =>
+                        {
+                          fromPaginatedResponseToGeoJson[
+                            Annotation,
+                            Annotation.GeoJSON
+                          ](p)
+                        }
                       }
-                    }
-              })
-            }
+                })
+              }
+          }
         }
       }
-    }
   }
 
   def createAnnotation(projectId: UUID): Route = authenticate { user =>
