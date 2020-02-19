@@ -17,13 +17,14 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   val selectF: Fragment = fr"""
   SELECT
     id, created_at, created_by, geometry, annotation_project_id, annotation_task_id,
-    classes.class_ids as annotation_label_classes,
-  FROM ${tableName} JOIN (
+    classes.class_ids
+  FROM """ ++ tableF ++ fr"""JOIN (
     SELECT annotation_label_id, array_agg(annotation_class_id) as class_ids
-    FROM ${joinTableName}
+    FROM """ ++ Fragment.const(joinTableName) ++ fr"""
     GROUP BY annotation_label_id
-  ) as classes ON ${tableName}.id = ${joinTableName}.annotation_label_id
-  """
+  ) as classes ON """ ++ Fragment.const(
+    s"${tableName}.id = classes.annotation_label_id"
+  )
 
   def insertAnnotations(
       annotationProjectId: UUID,
@@ -31,16 +32,20 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       annotations: List[AnnotationLabelWithClasses.Create],
       user: User
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
+    println(s"Starting with ${annotations.size} annotations to insert")
+
     val insertAnnotationsFragment: Fragment =
       fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, created_by, geometry, annotation_project_id, annotation_task_id
     ) VALUES
     """
+
     val insertClassesFragment: Fragment =
       fr"INSERT INTO" ++ Fragment.const(joinTableName) ++ fr"""(
-      annotation_label_id, annotation_label_class_id
+      annotation_label_id, annotation_class_id
     ) VALUES
     """
+
     val annotationLabelsWithClasses =
       annotations.map(
         _.toAnnotationLabelWithClasses(
@@ -49,6 +54,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
           user
         )
       )
+
     val annotationFragments: List[Fragment] = annotationLabelsWithClasses.map(
       (annotationLabel: AnnotationLabelWithClasses) => fr"""(
         ${annotationLabel.id}, ${annotationLabel.createdAt},
@@ -56,61 +62,34 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         ${annotationLabel.annotationProjectId}, ${annotationLabel.annotationTaskId}
        )"""
     )
+
     val labelClassFragments: List[Fragment] =
       annotationLabelsWithClasses.flatMap(
         (annotationLabel: AnnotationLabelWithClasses) =>
           annotationLabel.annotationLabelClasses
             .map(
-              labelClassId => fr"${annotationLabel.id}, ${labelClassId}"
+              labelClassId => fr"(${annotationLabel.id}, ${labelClassId})"
             )
             .toList
       )
+
     for {
-      insertedAnnotations <- annotationFragments.toNel
-        .map(
-          fragments =>
-            (insertAnnotationsFragment ++ fragments.intercalate(fr",")).update
-              .withGeneratedKeys[AnnotationLabel](
-                "id",
-                "created_at",
-                "created_by",
-                "geometry",
-                "annotation_project_id",
-                "annotation_task_id"
-              )
-              .compile
-              .toList
-        )
-        .getOrElse(List[AnnotationLabel]().pure[ConnectionIO])
-      insertedAnnotationClasses <- labelClassFragments.toNel
-        .map(
-          fragments =>
-            (insertClassesFragment ++ fragments.intercalate(fr",")).update
-              .withGeneratedKeys[(UUID, UUID)](
-                "annotation_label_id",
-                "annotation_label_class_id"
-              )
-              .compile
-              .toList
-        )
-        .getOrElse(List[(UUID, UUID)]().pure[ConnectionIO])
-      labelsToClasses = insertedAnnotationClasses.groupBy(_._1)
-      insertedAnnotationsWithClasses = insertedAnnotations.map(
-        anno =>
-          AnnotationLabelWithClasses(
-            anno.id,
-            anno.createdAt,
-            anno.createdBy,
-            anno.geometry,
-            anno.annotationProjectId,
-            anno.annotationTaskId,
-            labelsToClasses
-              .getOrElse(anno.id, Seq[(UUID, UUID)]())
-              .map(_._2)
-              .toList
-        )
-      )
-    } yield insertedAnnotationsWithClasses
+      insertedAnnotationIds <- annotationFragments.toNel traverse { fragments =>
+        (insertAnnotationsFragment ++ fragments.intercalate(fr",")).update
+          .withGeneratedKeys[UUID](
+            "id"
+          )
+          .compile
+          .toList
+      }
+      _ <- labelClassFragments.toNel map { fragments =>
+        (insertClassesFragment ++ fragments.intercalate(fr",")).update.run
+      } getOrElse { ().pure[ConnectionIO] }
+      recent <- insertedAnnotationIds flatMap { _.toNel } traverse {
+        insertedIds =>
+          query.filter(Fragments.in(fr"id", insertedIds)).list
+      }
+    } yield { recent getOrElse Nil }
   }
 
   def listProjectLabels(
@@ -122,22 +101,29 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   def countByProjectAndGroup(
       projectId: UUID,
       annotationLabelClassGroupId: UUID
-  ): ConnectionIO[List[AnnotationProject.LabelClassSummary]] = (fr"""
+  ): ConnectionIO[List[AnnotationProject.LabelClassSummary]] = {
+    val fragment = (fr"""
   SELECT
     alalc.annotation_class_id AS label_class_id,
     alcls.name AS label_class_name,
     count(al.id) AS count
-  FROM annotation_labels AS al
-  JOIN annotation_labels_annotation_label_classes AS alalc
-  ON alalc.annotation_label_id = al.id
-  JOIN annotation_label_classes AS alcls
-  ON alcls.id = alalc.annotation_class_id
+  FROM (
+    annotation_labels AS al
+    JOIN
+      annotation_labels_annotation_label_classes AS alalc
+      ON alalc.annotation_label_id = al.id
+    JOIN annotation_label_classes AS alcls
+      ON alcls.id = alalc.annotation_class_id
+  )
   WHERE
     al.annotation_project_id = ${projectId}
-    AND
+  AND
     alcls.annotation_label_group_id = ${annotationLabelClassGroupId}
   GROUP BY
     alalc.annotation_class_id,
     alcls.name
-  """).query[AnnotationProject.LabelClassSummary].to[List]
+  """)
+    println(fragment)
+    fragment.query[AnnotationProject.LabelClassSummary].to[List]
+  }
 }

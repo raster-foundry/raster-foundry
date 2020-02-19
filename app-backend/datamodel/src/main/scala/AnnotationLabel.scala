@@ -1,5 +1,6 @@
 package com.rasterfoundry.datamodel
 
+import cats.data.NonEmptyList
 import geotrellis.vector.{Geometry, Projected, io => _}
 import io.circe.Encoder
 import io.circe._
@@ -45,7 +46,7 @@ final case class AnnotationLabelWithClasses(
     geometry: Option[Projected[Geometry]],
     annotationProjectId: UUID,
     annotationTaskId: UUID,
-    annotationLabelClasses: List[UUID]
+    annotationLabelClasses: NonEmptyList[UUID]
 ) extends GeoJSONSerializable[AnnotationLabelWithClasses.GeoJSON] {
   def toGeoJSONFeature = AnnotationLabelWithClasses.GeoJSON(
     this.id,
@@ -70,7 +71,7 @@ object AnnotationLabelWithClasses {
 
   final case class Create(
       geometry: Option[Projected[Geometry]],
-      annotationLabelClasses: List[UUID]
+      annotationLabelClasses: NonEmptyList[UUID]
   ) {
     def toAnnotationLabelWithClasses(
         annotationProjectId: UUID,
@@ -123,7 +124,7 @@ object AnnotationLabelWithClasses {
 
 @JsonCodec
 final case class AnnotationLabelWithClassesPropertiesCreate(
-    annotationLabelClasses: List[UUID]
+    annotationLabelClasses: NonEmptyList[UUID]
 )
 
 @JsonCodec
@@ -132,7 +133,7 @@ final case class AnnotationLabelWithClassesProperties(
     createdBy: String,
     annotationProjectId: UUID,
     annotationTaskId: UUID,
-    annotationLabelClasses: List[UUID]
+    annotationLabelClasses: NonEmptyList[UUID]
 )
 
 object AnnotationLabelWithClassesProperties {

@@ -111,7 +111,7 @@ class AnnotationProjectDaoSpec
           val (inserted, Some(fetched)) = insertIO.transact(xa).unsafeRunSync
 
           assert(
-            inserted === fetched,
+            inserted.toProject == fetched,
             "Fetched project matches the project we inserted"
           )
 

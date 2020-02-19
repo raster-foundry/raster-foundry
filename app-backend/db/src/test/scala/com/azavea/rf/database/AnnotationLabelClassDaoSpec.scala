@@ -49,7 +49,7 @@ class AnnotationLabelClassDaoSpec
           val (listedReal, listedBogus) = listIO.transact(xa).unsafeRunSync
 
           val expectedNames =
-            (annotationProjectCreate.labelClassGroups flatMap { group =>
+            (toInsert.labelClassGroups flatMap { group =>
               group.classes map { _.name }
             }).toSet
 
