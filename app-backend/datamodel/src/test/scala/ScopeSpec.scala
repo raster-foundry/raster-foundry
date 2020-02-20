@@ -141,5 +141,31 @@ class ScopeSpec
       )
     )
   }
-  // TODO test some permissions relationships
+
+  test("action resolution prefers ScopedActions without limits") {
+    val action1 = ScopedAction(Domain.Projects, Action.Create, None)
+    val action2 = ScopedAction(Domain.Projects, Action.Create, Some(10L))
+    assert(
+      Scopes
+        .resolveFor(Domain.Projects, Action.Create, Set(action1, action2)) == Some(
+        action1
+      )
+    )
+  }
+
+  test("action resolution prefers higher limits to lower limits") {
+    val action1 = ScopedAction(Domain.Projects, Action.Create, Some(5L))
+    val action2 = ScopedAction(Domain.Projects, Action.Create, Some(10L))
+    assert(
+      Scopes
+        .resolveFor(Domain.Projects, Action.Create, Set(action1, action2)) == Some(
+        action2
+      )
+    )
+  }
+
+  test("action resolution should not resolve missing actions") {
+    val action = ScopedAction(Domain.Projects, Action.Create, Some(5L))
+    assert(Scopes.resolveFor(Domain.Scenes, Action.Create, Set(action)).isEmpty)
+  }
 }
