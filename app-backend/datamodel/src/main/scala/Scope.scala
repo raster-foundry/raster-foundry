@@ -220,7 +220,7 @@ object SimpleScope {
   }
 }
 
-sealed class ComplexScope(val scopes: Set[Scope]) extends Scope {
+sealed class ComplexScope(scopes: Set[Scope]) extends Scope {
   val actions: Set[ScopedAction] = scopes flatMap { _.actions }
 }
 
