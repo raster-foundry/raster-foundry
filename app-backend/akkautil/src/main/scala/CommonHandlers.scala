@@ -81,10 +81,14 @@ trait CommonHandlers extends RouteDirectives {
     })
 
   def authorizeScope(scopedAction: ScopedAction, user: User): Directive0 =
-    maybeSim(
-      scopedAction,
-      user,
-      SecurityDirectives.authorize(user.scope.actions.contains(scopedAction)))
+    maybeSim(scopedAction,
+             user,
+             SecurityDirectives.authorize(
+               !Scopes
+                 .resolveFor(scopedAction.domain,
+                             scopedAction.action,
+                             user.scope.actions)
+                 .isEmpty))
 
   def authorizeScopeLimitDirective(
       usedLimitFuture: Future[Long],
@@ -92,9 +96,7 @@ trait CommonHandlers extends RouteDirectives {
       action: Action,
       user: User
   ): Directive0 = {
-    val userScopedAction = user.scope.actions.find(
-      s => s.domain == domain && s.action == action
-    )
+    val userScopedAction = Scopes.resolveFor(domain, action, user.scope.actions)
     val userLimitOption = userScopedAction.flatMap(_.limit)
 
     // if user does not have an explicit scope limit, assume infinite
