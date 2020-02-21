@@ -8,6 +8,7 @@ import com.rasterfoundry.datamodel._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.effect.IO
+import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
@@ -115,7 +116,13 @@ trait AnnotationProjectRoutes
                     }
                   }
               }
+          } ~ pathPrefix("actions") {
+          pathEndOrSingleSlash {
+            get {
+              listUserActions(projectId)
+            }
           }
+        }
       }
   }
 
@@ -240,6 +247,49 @@ trait AnnotationProjectRoutes
             .unsafeToFuture
         ) {
           completeSingleOrNotFound
+        }
+      }
+    }
+  }
+
+  def listUserActions(projectId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.ReadPermissions, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        AnnotationProjectDao
+          .authorized(
+            user,
+            ObjectType.AnnotationProject,
+            projectId,
+            ActionType.View
+          )
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        user.isSuperuser match {
+          case true => complete(List("*"))
+          case false =>
+            onSuccess(
+              AnnotationProjectDao
+                .getById(projectId)
+                .transact(xa)
+                .unsafeToFuture
+            ) { projectO =>
+              complete {
+                (projectO map { project =>
+                  project.createdBy == user.id match {
+                    case true => List("*").pure[ConnectionIO]
+                    case false =>
+                      AnnotationProjectDao
+                        .listUserActions(user, projectId)
+                  }
+                } getOrElse { List[String]().pure[ConnectionIO] })
+                  .transact(xa)
+                  .unsafeToFuture()
+              }
+            }
         }
       }
     }
