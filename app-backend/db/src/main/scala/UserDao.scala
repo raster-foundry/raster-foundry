@@ -297,4 +297,7 @@ object UserDao extends Dao[User] with Sanitization {
       _ <- remove(user.cacheKey)(userCache, async[ConnectionIO]).attempt
     } yield query
   }
+
+  def findUsersByEmail(email: String): ConnectionIO[List[User]] =
+    query.filter(fr"(email = $email OR personal_info ->> 'email' = $email)").list
 }

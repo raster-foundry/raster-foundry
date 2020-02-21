@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
+import cats.data.NonEmptyList
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
@@ -417,6 +418,28 @@ class UserDaoSpec
             )
             true
           }
+      }
+    }
+  }
+
+  test("list users by email") {
+    check {
+      forAll { (userCreates: NonEmptyList[User.Create]) =>
+        {
+          val listIO = for {
+            _ <- userCreates traverse { userCreate =>
+              UserDao.create(userCreate)
+            }
+            listed <- UserDao.findUsersByEmail(userCreates.head.email)
+          } yield listed
+
+          val List(user) = listIO.transact(xa).unsafeRunSync
+
+          assert(
+            user.email == userCreates.head.email || user.personalInfo.email == userCreates.head.email
+          )
+          true
+        }
       }
     }
   }

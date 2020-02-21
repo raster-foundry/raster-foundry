@@ -141,4 +141,32 @@ trait AnnotationProjectPermissionRoutes
       }
     }
   }
+
+  def shareAnnotationProject(projectId: UUID): Route = authenticate { user =>
+    val shareCount =
+      AnnotationProjectDao
+        .getShareCount(projectId, user.id)
+        .transact(xa)
+        .unsafeToFuture
+    authorizeScopeLimit(
+      shareCount,
+      Domain.AnnotationProjects,
+      Action.Share,
+      user
+    ) {
+      entity(as[UserEmail]) { userByEmail =>
+        // exist branch:
+        // - share with all users with this email
+        // - update auth0 to make sure those users have annotate access
+        } {
+          complete {
+            AnnotationProjectDao
+              .addPermission(projectId, acr)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+  }
 }

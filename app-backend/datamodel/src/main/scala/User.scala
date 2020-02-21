@@ -246,3 +246,5 @@ object User {
     }
   }
 }
+
+@JsonCodec final case class UserEmail(email: String)
