@@ -326,25 +326,14 @@ trait AnnotationProjectTaskRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          (withPagination) { (page: PageRequest) =>
-            complete {
-              AnnotationLabelDao
-                .listWithClassesByProjectIdAndTaskId(
-                  page,
-                  projectId,
-                  taskId
-                )
-                .transact(xa)
-                .unsafeToFuture
-                .map { p =>
-                  {
-                    fromPaginatedResponseToGeoJson[
-                      AnnotationLabelWithClasses,
-                      AnnotationLabelWithClasses.GeoJSON
-                    ](p)
-                  }
-                }
-            }
+          complete {
+            AnnotationLabelDao
+              .listWithClassesByProjectIdAndTaskId(
+                projectId,
+                taskId
+              )
+              .transact(xa)
+              .unsafeToFuture
           }
         }
       }

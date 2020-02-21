@@ -122,14 +122,16 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   }
 
   def listWithClassesByProjectIdAndTaskId(
-      page: PageRequest,
       projectId: UUID,
       taskId: UUID
-  ): ConnectionIO[PaginatedResponse[AnnotationLabelWithClasses]] =
+  ): ConnectionIO[List[AnnotationLabelWithClasses.GeoJSON]] =
     query
       .filter(fr"annotation_project_id=$projectId")
       .filter(fr"annotation_task_id=$taskId")
-      .page(page)
+      .list
+      .map { listed =>
+        listed.map(_.toGeoJSONFeature)
+      }
 
   def deleteByProjectIdAndTaskId(
       projectId: UUID,

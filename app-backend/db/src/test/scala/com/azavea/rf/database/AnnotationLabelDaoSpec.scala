@@ -118,8 +118,68 @@ class AnnotationLabelDaoSpec
 
           val listed = listIO.transact(xa).unsafeRunSync
 
-          assert(listed.size == annotationCreates.size,
-                 "All annotations were listed")
+          assert(
+            listed.size == annotationCreates.size,
+            "All annotations were listed"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("list labels for a project task") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            annotationCreates: List[AnnotationLabelWithClasses.Create],
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+        ) => {
+          val toInsert = annotationProjectCreate.copy(
+            labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
+          )
+
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            annotationProject <- AnnotationProjectDao
+              .insert(toInsert, user)
+            fixedUpTasks = fixupTaskFeaturesCollection(
+              taskFeatureCollectionCreate,
+              annotationProject,
+              None
+            )
+            task <- TaskDao.insertTasks(
+              fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+              user
+            ) map { _.features.head }
+            classIds = annotationProject.labelClassGroups flatMap {
+              _.labelClasses
+            } map { _.id }
+            withClasses = annotationCreates map { create =>
+              addClasses(create, classIds)
+            }
+            _ <- AnnotationLabelDao.insertAnnotations(
+              annotationProject.id,
+              task.id,
+              withClasses,
+              user
+            )
+            listedByTask <- AnnotationLabelDao
+              .listWithClassesByProjectIdAndTaskId(
+                annotationProject.id,
+                task.id
+              )
+          } yield listedByTask
+
+          val listedByTask = listIO.transact(xa).unsafeRunSync
+
+          assert(
+            listedByTask.size == annotationCreates.size,
+            "All annotations from a task were listed"
+          )
 
           true
         }
@@ -198,6 +258,66 @@ class AnnotationLabelDaoSpec
           assert(
             summaryBogus == Nil,
             "Lookup by a bogus group id returns nothing"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("delete labels from a project task") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            annotationCreates: List[AnnotationLabelWithClasses.Create],
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+        ) => {
+          val toInsert = annotationProjectCreate.copy(
+            labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
+          )
+
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            annotationProject <- AnnotationProjectDao
+              .insert(toInsert, user)
+            fixedUpTasks = fixupTaskFeaturesCollection(
+              taskFeatureCollectionCreate,
+              annotationProject,
+              None
+            )
+            task <- TaskDao.insertTasks(
+              fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+              user
+            ) map { _.features.head }
+            classIds = annotationProject.labelClassGroups flatMap {
+              _.labelClasses
+            } map { _.id }
+            withClasses = annotationCreates map { create =>
+              addClasses(create, classIds)
+            }
+            _ <- AnnotationLabelDao.insertAnnotations(
+              annotationProject.id,
+              task.id,
+              withClasses,
+              user
+            )
+            _ <- AnnotationLabelDao
+              .deleteByProjectIdAndTaskId(annotationProject.id, task.id)
+            listedByTask <- AnnotationLabelDao
+              .listWithClassesByProjectIdAndTaskId(
+                annotationProject.id,
+                task.id
+              )
+          } yield listedByTask
+
+          val listed = listIO.transact(xa).unsafeRunSync
+
+          assert(
+            listed.size == 0,
+            "All annotations from a task were deleted"
           )
 
           true
