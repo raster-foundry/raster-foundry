@@ -15,6 +15,7 @@
 
 ### Changed
 
+- Altered permission resolution to prefer scoped actions with higher limits [#5316](https://github.com/raster-foundry/raster-foundry/pull/5316/files)
 - Improved error handling in Groundwork project migration [#5310](https://github.com/raster-foundry/raster-foundry/pull/5310)
 - Logout can redirect to a custom URL [#5291](https://github.com/raster-foundry/raster-foundry/pull/5291)
 - Moved project data for Groundwork from extras jsonb field and a text field to normalized tables [#5286](https://github.com/raster-foundry/raster-foundry/pull/5286)

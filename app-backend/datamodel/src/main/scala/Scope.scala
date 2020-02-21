@@ -18,6 +18,7 @@ import scala.util.{Failure, Success, Try}
 sealed abstract class Domain(repr: String) {
   override def toString: String = repr
 }
+
 object Domain {
   case object Analyses extends Domain("analyses")
   case object AnnotationGroups extends Domain("annotationGroups")
@@ -290,6 +291,28 @@ object Scope {
 }
 
 object Scopes {
+
+  def resolveFor(
+      domain: Domain,
+      action: Action,
+      actions: Set[ScopedAction]
+  ): Option[ScopedAction] =
+    actions.foldLeft(Option.empty[ScopedAction])(
+      (resolved: Option[ScopedAction], candidate: ScopedAction) => {
+        if (candidate.domain != domain || candidate.action != action) {
+          resolved
+        } else {
+          resolved map { resolvedAction =>
+            (resolvedAction.limit, candidate.limit) match {
+              case (Some(lim1), Some(lim2)) =>
+                if (lim1 > lim2) resolvedAction else candidate
+              case (Some(_), None) => candidate
+              case (None, _)       => resolvedAction
+            }
+          } orElse { Some(candidate) }
+        }
+      }
+    )
 
   def cannedPolicyFromString(s: String): Either[Error, Scope] = s match {
     case "organizations:admin" =>
