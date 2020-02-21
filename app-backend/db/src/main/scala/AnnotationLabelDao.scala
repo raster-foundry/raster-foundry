@@ -120,4 +120,23 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   """)
     fragment.query[AnnotationProject.LabelClassSummary].to[List]
   }
+
+  def listWithClassesByProjectIdAndTaskId(
+      page: PageRequest,
+      projectId: UUID,
+      taskId: UUID
+  ): ConnectionIO[PaginatedResponse[AnnotationLabelWithClasses]] =
+    query
+      .filter(fr"annotation_project_id=$projectId")
+      .filter(fr"annotation_task_id=$taskId")
+      .page(page)
+
+  def deleteByProjectIdAndTaskId(
+      projectId: UUID,
+      taskId: UUID
+  ): ConnectionIO[Int] =
+    (fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(
+      Some(fr"annotation_project_id=$projectId"),
+      Some(fr"annotation_task_id=$taskId")
+    )).update.run
 }

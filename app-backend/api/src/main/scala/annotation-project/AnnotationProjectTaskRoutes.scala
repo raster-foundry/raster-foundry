@@ -309,6 +309,47 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
+  def listTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          (withPagination) { (page: PageRequest) =>
+            complete {
+              AnnotationLabelDao
+                .listWithClassesByProjectIdAndTaskId(
+                  page,
+                  projectId,
+                  taskId
+                )
+                .transact(xa)
+                .unsafeToFuture
+                .map { p =>
+                  {
+                    fromPaginatedResponseToGeoJson[
+                      AnnotationLabelWithClasses,
+                      AnnotationLabelWithClasses.GeoJSON
+                    ](p)
+                  }
+                }
+            }
+          }
+        }
+      }
+  }
+
   def addTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate {
     user =>
       authorizeScope(
@@ -355,4 +396,33 @@ trait AnnotationProjectTaskRoutes
         }
       }
   }
+
+  def deleteTaskLabels(projectId: UUID, task: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.DeleteAnnotation, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          onSuccess(
+            AnnotationLabelDao
+              .deleteByProjectIdAndTaskId(projectId, task)
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            completeSomeOrNotFound
+          }
+        }
+      }
+    }
 }
