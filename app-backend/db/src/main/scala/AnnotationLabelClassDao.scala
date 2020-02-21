@@ -42,9 +42,6 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
 
   def listAnnotationLabelClassByGroupId(
       groupId: UUID
-  ): ConnectionIO[List[AnnotationLabelClass]] = {
-    (selectF ++ Fragments.whereAndOpt(
-      Some(fr"annotation_label_group_id = ${groupId}")
-    )).query[AnnotationLabelClass].to[List]
-  }
+  ): ConnectionIO[List[AnnotationLabelClass]] =
+    query.filter(fr"annotation_label_group_id = ${groupId}").list
 }

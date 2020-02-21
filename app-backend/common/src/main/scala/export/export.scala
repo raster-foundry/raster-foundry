@@ -1,6 +1,7 @@
 package com.rasterfoundry.common
 
 import com.rasterfoundry.JsonCodecs
+
 import geotrellis.raster.CellType
 import geotrellis.vector.Polygon
 import io.circe.parser.parse

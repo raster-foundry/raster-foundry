@@ -1,21 +1,21 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.database.{MapTokenDao, ProjectDao}
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.{MapTokenDao, ProjectDao}
 import com.rasterfoundry.datamodel.{MapToken, Project, User, Visibility}
 import com.rasterfoundry.{http4s => RFHttp4s}
 
 import cats.data._
 import cats.effect.IO
+import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.server._
 import org.http4s.util.CaseInsensitiveString
-import com.typesafe.scalalogging.LazyLogging
-import doobie.util.transactor.Transactor
 
 import java.util.UUID
 

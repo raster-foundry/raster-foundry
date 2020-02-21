@@ -1,15 +1,15 @@
 package com.rasterfoundry.common
 
-import java.nio.ByteOrder
-
+import cats.data.{NonEmptyList => NEL}
 import geotrellis.proj4.CRS
+import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.compression.{Compression, Decompressor}
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader.GeoTiffInfo
 import geotrellis.raster.io.geotiff.tags.TiffTags
-import geotrellis.raster.io.geotiff._
 import geotrellis.util.StreamingByteReader
 import geotrellis.vector.Extent
-import cats.data.{NonEmptyList => NEL}
+
+import java.nio.ByteOrder
 
 /** Container for metadata for Tiffs
   *

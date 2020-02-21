@@ -1,13 +1,13 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel.{AuthFailure, PageRequest, Project, ToolRun}
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.{AuthFailure, PageRequest, Project, ToolRun}
 
 import cats.Applicative
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import cats.implicits._
 
 import java.sql.Timestamp
 import java.util.UUID

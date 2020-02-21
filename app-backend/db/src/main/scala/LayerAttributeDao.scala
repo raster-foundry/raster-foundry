@@ -1,24 +1,25 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common.LayerAttribute
+import com.rasterfoundry.database.util.Cache
+
 import cats.effect.IO
 import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import spray.json._
-import DefaultJsonProtocol._
-import geotrellis.spark.LayerId
+import doobie.postgres.implicits._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json._
-import scalacache._
+import geotrellis.spark.LayerId
 import scalacache.CatsEffect.modes._
-import com.rasterfoundry.database.util.Cache
-import java.util.UUID
+import scalacache._
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
-import com.typesafe.scalalogging.LazyLogging
+import java.util.UUID
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class LayerAttributeDao()

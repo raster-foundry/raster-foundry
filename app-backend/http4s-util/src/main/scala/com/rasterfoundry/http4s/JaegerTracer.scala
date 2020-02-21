@@ -1,15 +1,15 @@
 package com.rasterfoundry.http4s
 
 import cats.effect.Sync
-import com.colisweb.tracing._
 import com.colisweb.tracing.TracingContext.{
   TracingContextBuilder,
   TracingContextResource
 }
-import io.opentracing.Span
+import com.colisweb.tracing._
 import io.jaegertracing.Configuration
 import io.jaegertracing.Configuration._
 import io.jaegertracing.internal.{JaegerTracer => JT}
+import io.opentracing.Span
 
 object JaegerTracer {
 

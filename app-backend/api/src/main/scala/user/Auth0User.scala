@@ -1,5 +1,10 @@
 package com.rasterfoundry.api.user
 
+import com.rasterfoundry.api.utils.{
+  Auth0Exception,
+  Config,
+  ManagementBearerToken
+}
 import com.rasterfoundry.datamodel.User
 
 import akka.http.scaladsl.Http
@@ -7,11 +12,6 @@ import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.rasterfoundry.api.utils.{
-  Auth0Exception,
-  Config,
-  ManagementBearerToken
-}
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._

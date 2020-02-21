@@ -1,8 +1,9 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.common.RollbarNotifier
+
 import cats._
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.typesafe.scalalogging.LazyLogging

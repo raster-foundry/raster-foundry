@@ -1,9 +1,9 @@
 package com.rasterfoundry.batch.cogMetadata
 
 import com.rasterfoundry.batch.Job
+import com.rasterfoundry.common.LayerAttribute
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.CogUtils
-import com.rasterfoundry.common.LayerAttribute
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{LayerAttributeDao, SceneDao}
 

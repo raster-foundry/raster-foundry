@@ -4,15 +4,16 @@ import com.rasterfoundry.backsplash.HistogramStore
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 import com.rasterfoundry.backsplash.error.RequirementFailedException
 import com.rasterfoundry.database.LayerAttributeDao
+
 import cats.effect.IO
 import cats.implicits._
+import com.colisweb.tracing.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
 import geotrellis.raster.histogram._
 import geotrellis.raster.io.json._
-import java.util.UUID
 
-import com.colisweb.tracing.TracingContext
+import java.util.UUID
 
 trait HistogramStoreImplicits
     extends ToHistogramStoreOps

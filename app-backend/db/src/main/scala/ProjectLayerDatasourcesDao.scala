@@ -2,10 +2,11 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.Datasource
+
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 
 import java.util.UUID
 

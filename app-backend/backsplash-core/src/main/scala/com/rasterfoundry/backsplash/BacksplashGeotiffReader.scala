@@ -1,8 +1,9 @@
 package com.rasterfoundry.backsplash
 
-import java.nio.ByteOrder
-
 import com.rasterfoundry.common.BacksplashGeoTiffInfo
+
+import cats.data.{NonEmptyList => NEL}
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader.GeoTiffInfo
 import geotrellis.raster.io.geotiff.reader.{
@@ -13,10 +14,10 @@ import geotrellis.raster.io.geotiff.reader.{
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.raster.io.geotiff.util._
 import geotrellis.util.ByteReader
-import cats.data.{NonEmptyList => NEL}
-import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable.ListBuffer
+
+import java.nio.ByteOrder
 
 object BacksplashGeotiffReader extends LazyLogging {
 

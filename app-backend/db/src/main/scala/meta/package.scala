@@ -4,11 +4,10 @@ import com.rasterfoundry.datamodel._
 
 import cats.implicits._
 import doobie._
-import io.circe.syntax._
-import org.postgresql.util.PGobject
-
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
+import io.circe.syntax._
+import org.postgresql.util.PGobject
 
 import java.net.URI
 import java.time.LocalDate

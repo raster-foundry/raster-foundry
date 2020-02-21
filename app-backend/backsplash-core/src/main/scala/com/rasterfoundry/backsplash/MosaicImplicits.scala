@@ -1,27 +1,28 @@
 package com.rasterfoundry.backsplash
 
+import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
+import com.rasterfoundry.backsplash.RenderableStore._
+import com.rasterfoundry.backsplash.ToolStore._
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
+import com.rasterfoundry.datamodel.SingleBandOptions
+
+import cats.Semigroup
+import cats.data.{NonEmptyList => NEL}
+import cats.effect._
+import cats.effect.{ContextShift, IO}
+import cats.implicits._
+import com.colisweb.tracing.TracingContext
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.WebMercator
-import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
+import geotrellis.server.ExtentReification._
+import geotrellis.server.HasRasterExtents._
+import geotrellis.server.TmsReification._
 import geotrellis.server._
-import cats.implicits._
-import cats.data.{NonEmptyList => NEL}
-import cats.effect._
-import cats.Semigroup
-import RenderableStore._
-import ToolStore._
-import ExtentReification._
-import HasRasterExtents._
-import TmsReification._
-import com.colisweb.tracing.TracingContext
-import com.typesafe.scalalogging.LazyLogging
-import com.rasterfoundry.datamodel.SingleBandOptions
-import cats.effect.{ContextShift, IO}
+import geotrellis.vector._
 
 class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     extends ToTmsReificationOps

@@ -1,17 +1,17 @@
 package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 
 import java.util.UUID
 
@@ -104,7 +104,7 @@ trait AnnotationProjectRoutes
                   pathPrefix("labels") {
                     pathEndOrSingleSlash {
                       post {
-                        addTaskLabels(projectId)
+                        addTaskLabels(projectId, taskId)
                       }
                     }
                   }

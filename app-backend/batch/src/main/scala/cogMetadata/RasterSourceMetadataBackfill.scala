@@ -1,23 +1,24 @@
 package com.rasterfoundry.batch.cogMetadata
 
-import java.util.UUID
-import java.util.concurrent.Executors
-
-import cats.effect._
-import cats.implicits._
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.backsplash.BacksplashGeotiffReader
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.common.{BacksplashGeoTiffInfo, RollbarNotifier}
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{RasterSourceMetadataDao, SceneDao}
 import com.rasterfoundry.datamodel.RasterSourceMetadata
+
+import cats.effect._
+import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import geotrellis.contrib.vlm.gdal.GDALDataPath
 
 import scala.concurrent.ExecutionContext
+
+import java.util.UUID
+import java.util.concurrent.Executors
 
 object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
 

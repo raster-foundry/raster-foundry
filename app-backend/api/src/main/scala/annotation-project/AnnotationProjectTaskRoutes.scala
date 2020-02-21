@@ -1,19 +1,19 @@
 package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
-import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel.GeoJsonCodec._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 
 import java.util.UUID
 
@@ -309,47 +309,50 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def addTaskLabels(projectId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        AnnotationProjectDao
-          .authorized(
-            user,
-            ObjectType.AnnotationProject,
-            projectId,
-            ActionType.Annotate
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
-          val annotationLabelWithClassesCreate = fc.features map {
-            _.toAnnotationLabelWithClassesCreate
-          }
-          onSuccess(
-            AnnotationLabelDao
-              .insertAnnotations(
-                annotationLabelWithClassesCreate.toList,
-                user
-              )
-              .transact(xa)
-              .unsafeToFuture
-              .map { annotations: List[AnnotationLabelWithClasses] =>
-                fromSeqToFeatureCollection[
-                  AnnotationLabelWithClasses,
-                  AnnotationLabelWithClasses.GeoJSON
-                ](
-                  annotations
+  def addTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
+            val annotationLabelWithClassesCreate = fc.features map {
+              _.toAnnotationLabelWithClassesCreate
+            }
+            onSuccess(
+              AnnotationLabelDao
+                .insertAnnotations(
+                  projectId,
+                  taskId,
+                  annotationLabelWithClassesCreate.toList,
+                  user
                 )
-              }
-          ) { createdAnnotation =>
-            complete((StatusCodes.Created, createdAnnotation))
+                .transact(xa)
+                .unsafeToFuture
+                .map { annotations: List[AnnotationLabelWithClasses] =>
+                  fromSeqToFeatureCollection[
+                    AnnotationLabelWithClasses,
+                    AnnotationLabelWithClasses.GeoJSON
+                  ](
+                    annotations
+                  )
+                }
+            ) { createdAnnotation =>
+              complete((StatusCodes.Created, createdAnnotation))
+            }
           }
         }
       }
-    }
   }
 }

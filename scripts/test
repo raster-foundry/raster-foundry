@@ -48,7 +48,8 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm sbt-test \
-            ";scalafmtCheck;scalafmtSbtCheck;scapegoat;unusedCompileDependenciesTest;undeclaredCompileDependenciesTest;test;apiIntegrationTest/test"
+            ";scalafmtCheck;scalafmtSbtCheck;scalafix --check;scapegoat;unusedCompileDependenciesTest;undeclaredCompileDependenciesTest;test;apiIntegrationTest/test"
+
 
         echo "Validating API service spec"
         docker-compose \

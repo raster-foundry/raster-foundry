@@ -1,9 +1,9 @@
 package com.rasterfoundry.common.ast
 
 import cats.implicits._
-import geotrellis.vector.MultiPolygon
 import geotrellis.raster._
 import geotrellis.raster.mapalgebra.focal._
+import geotrellis.vector.MultiPolygon
 
 import java.util.UUID
 

@@ -1,9 +1,9 @@
 package com.rasterfoundry.datamodel
 
+import geotrellis.proj4.{io => _, _}
+import geotrellis.vector.{Extent, Point, Polygon, Projected}
 import io.circe._
 import io.circe.generic.semiauto._
-import geotrellis.proj4._
-import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 import java.sql.Timestamp
 import java.util.UUID

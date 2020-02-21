@@ -1,11 +1,11 @@
 package com.rasterfoundry.api.project
 
-import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.GeoJsonCodec._
-import com.rasterfoundry.database._
 import com.rasterfoundry.akkautil._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel.GeoJsonCodec._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._

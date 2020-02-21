@@ -1,15 +1,15 @@
 package com.rasterfoundry.datamodel
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import geotrellis.vector.{Geometry, Projected, io => _}
-import io.circe.generic.JsonCodec
-import io.circe.generic.extras._
 import io.circe.Encoder
 import io.circe._
-import io.circe.syntax._
+import io.circe.generic.JsonCodec
+import io.circe.generic.extras._
 import io.circe.generic.semiauto._
+import io.circe.syntax._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 final case class AnnotationLabel(
     id: UUID,
@@ -70,11 +70,13 @@ object AnnotationLabelWithClasses {
 
   final case class Create(
       geometry: Option[Projected[Geometry]],
-      annotationProjectId: UUID,
-      annotationTaskId: UUID,
       annotationLabelClasses: List[UUID]
   ) {
-    def toAnnotationLabelWithClasses(user: User): AnnotationLabelWithClasses = {
+    def toAnnotationLabelWithClasses(
+        annotationProjectId: UUID,
+        annotationTaskId: UUID,
+        user: User
+    ): AnnotationLabelWithClasses = {
       val now = new Timestamp(new java.util.Date().getTime)
       AnnotationLabelWithClasses(
         UUID.randomUUID,
@@ -105,8 +107,6 @@ object AnnotationLabelWithClasses {
       : AnnotationLabelWithClasses.Create = {
       AnnotationLabelWithClasses.Create(
         geometry,
-        properties.annotationProjectId,
-        properties.annotationTaskId,
         properties.annotationLabelClasses
       )
     }
@@ -123,8 +123,6 @@ object AnnotationLabelWithClasses {
 
 @JsonCodec
 final case class AnnotationLabelWithClassesPropertiesCreate(
-    annotationProjectId: UUID,
-    annotationTaskId: UUID,
     annotationLabelClasses: List[UUID]
 )
 

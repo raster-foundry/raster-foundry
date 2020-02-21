@@ -2,21 +2,21 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.{
-  Shape,
-  User,
-  ObjectType,
-  GroupType,
   ActionType,
-  AuthResult
+  AuthResult,
+  GroupType,
+  ObjectType,
+  Shape,
+  User
 }
 
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import cats.implicits._
-import java.util.UUID
 
 import java.sql.Timestamp
+import java.util.UUID
 
 object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
 

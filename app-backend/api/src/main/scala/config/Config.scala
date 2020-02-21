@@ -3,6 +3,7 @@ package com.rasterfoundry.api.config
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.database.FeatureFlagDao
 import com.rasterfoundry.datamodel.FeatureFlag
+
 import doobie.free.connection.ConnectionIO
 import io.circe.generic.JsonCodec
 

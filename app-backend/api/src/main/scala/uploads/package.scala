@@ -1,8 +1,8 @@
 package com.rasterfoundry.api
 
-import java.net.URI
-
 import com.rasterfoundry.common.S3
+
+import java.net.URI
 
 package object uploads {
   implicit def stringAsJavaURI(uri: String): URI = new URI(uri)

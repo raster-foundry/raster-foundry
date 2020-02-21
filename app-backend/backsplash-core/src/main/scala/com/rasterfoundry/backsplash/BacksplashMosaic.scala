@@ -1,15 +1,16 @@
 package com.rasterfoundry.backsplash
 
+import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
+import com.rasterfoundry.backsplash.error._
+
+import cats.data.Validated._
+import cats.data.{NonEmptyList => _}
+import cats.effect._
+import cats.implicits._
 import geotrellis.contrib.vlm.MosaicRasterSource
 import geotrellis.proj4.CRS
 import geotrellis.raster.histogram._
 import geotrellis.server._
-import cats.implicits._
-import cats.data.{NonEmptyList => _}
-import cats.data.Validated._
-import cats.effect._
-import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 
 object BacksplashMosaic extends ToHistogramStoreOps {
 

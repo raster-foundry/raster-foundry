@@ -1,10 +1,10 @@
 package com.rasterfoundry.common.color
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.raster.UByteConstantNoDataCellType
 import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.{ArrayTile, MultibandTile, isData}
+import geotrellis.raster.{isData, ArrayTile, MultibandTile}
 import io.circe.generic.JsonCodec
 import spire.syntax.cfor.cfor
-import geotrellis.raster.UByteConstantNoDataCellType
 
 /**
   * Usage of Approximations.{pow | exp} functions can allow to speed up this function on 10 - 15ms.

@@ -1,21 +1,22 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.UUID
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.Cache
+import com.rasterfoundry.datamodel.PageRequest
+import com.rasterfoundry.datamodel._
 
 import cats.implicits._
-import com.rasterfoundry.database.util.Cache
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.PageRequest
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import scalacache._
+import doobie.postgres.implicits._
 import scalacache.CatsEffect.modes._
+import scalacache._
 
 import scala.concurrent.duration._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 object DatasourceDao
     extends Dao[Datasource]

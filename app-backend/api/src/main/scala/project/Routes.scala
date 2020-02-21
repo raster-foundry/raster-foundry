@@ -1,6 +1,20 @@
 package com.rasterfoundry.api.project
 
-import java.util.UUID
+import com.rasterfoundry.akkautil.PaginationDirectives
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
+import com.rasterfoundry.api.scene._
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.common._
+import com.rasterfoundry.common.color._
+import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
@@ -8,26 +22,13 @@ import cats.Applicative
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
-import com.rasterfoundry.api.scene._
-import com.rasterfoundry.api.utils.Config
-import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
-import com.rasterfoundry.akkautil.{
-  Authentication,
-  CommonHandlers,
-  UserErrorHandler
-}
-import com.rasterfoundry.database._
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.akkautil.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import com.rasterfoundry.common.color._
-import com.rasterfoundry.common._
+
+import java.util.UUID
 
 trait ProjectRoutes
     extends Authentication

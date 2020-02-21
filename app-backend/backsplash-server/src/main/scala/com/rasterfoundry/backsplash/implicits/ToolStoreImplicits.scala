@@ -2,12 +2,12 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{SceneToLayerDao}
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.ToolRunDao
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.ToolRunDao
+import com.rasterfoundry.database.{SceneToLayerDao}
+import com.rasterfoundry.datamodel._
 
 import cats.effect.{ContextShift, IO}
 import com.typesafe.scalalogging.LazyLogging

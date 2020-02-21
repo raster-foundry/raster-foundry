@@ -1,8 +1,8 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
+import com.rasterfoundry.datamodel._
 
 import cats.data.OptionT
 import cats.implicits._

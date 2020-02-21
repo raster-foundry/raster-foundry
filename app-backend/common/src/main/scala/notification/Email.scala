@@ -2,8 +2,8 @@ package com.rasterfoundry.common.notification.Email
 
 import com.rasterfoundry.common.RollbarNotifier
 
-import org.apache.commons.mail._
 import org.apache.commons.mail.HtmlEmail
+import org.apache.commons.mail._
 
 import java.lang.IllegalArgumentException
 

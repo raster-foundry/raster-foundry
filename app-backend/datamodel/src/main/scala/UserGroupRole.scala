@@ -1,9 +1,9 @@
 package com.rasterfoundry.datamodel
 
+import io.circe.generic.JsonCodec
+
 import java.sql.Timestamp
 import java.util.UUID
-
-import io.circe.generic.JsonCodec
 
 @JsonCodec
 final case class UserGroupRole(

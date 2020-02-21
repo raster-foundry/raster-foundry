@@ -1,9 +1,9 @@
 package com.rasterfoundry.datamodel
 
-import java.time.{Instant, LocalDate, LocalDateTime, ZoneOffset}
-
 import io.circe._
 import io.circe.generic.semiauto._
+
+import java.time.{Instant, LocalDate, LocalDateTime, ZoneOffset}
 
 final case class Metric(
     period: (LocalDate, LocalDate),

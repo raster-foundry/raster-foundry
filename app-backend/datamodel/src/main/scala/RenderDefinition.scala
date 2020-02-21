@@ -1,10 +1,10 @@
 package com.rasterfoundry.datamodel
 
+import geotrellis.raster.render._
 import io.circe._
-import io.circe.syntax._
 import io.circe.generic.semiauto._
 import io.circe.parser.decode
-import geotrellis.raster.render._
+import io.circe.syntax._
 
 final case class RenderDefinition(
     breakpoints: Map[Double, RGBA],

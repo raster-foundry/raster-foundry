@@ -1,20 +1,20 @@
 package com.rasterfoundry.api.project
 
-import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.common.color._
-import com.rasterfoundry.common._
-import com.rasterfoundry.database._
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.common._
+import com.rasterfoundry.common.color._
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.Applicative
 import cats.effect._
-import com.rasterfoundry.akkautil.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import doobie.{ConnectionIO, Transactor}
 import doobie.implicits._
+import doobie.{ConnectionIO, Transactor}
 
 import java.util.UUID
 

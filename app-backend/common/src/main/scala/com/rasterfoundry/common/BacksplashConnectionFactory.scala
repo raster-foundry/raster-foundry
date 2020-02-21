@@ -1,8 +1,8 @@
 package com.rasterfoundry.common
 
-import java.util.concurrent.ExecutorService
-
 import net.spy.memcached.{ClientMode, DefaultConnectionFactory, FailureMode}
+
+import java.util.concurrent.ExecutorService
 
 class BacksplashConnectionFactory(executorService: ExecutorService)
     extends DefaultConnectionFactory() {

@@ -1,7 +1,8 @@
 package com.rasterfoundry.datamodel
 
-import cats.{Eq, Monoid}
 import cats.implicits._
+import cats.{Eq, Monoid}
+import io.circe.parser._
 import io.circe.{
   Decoder,
   DecodingFailure,
@@ -11,7 +12,6 @@ import io.circe.{
   Json,
   ParsingFailure
 }
-import io.circe.parser._
 
 import scala.util.{Failure, Success, Try}
 

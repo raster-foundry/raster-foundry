@@ -1,9 +1,10 @@
 package com.rasterfoundry.backsplash.server
 
+import com.rasterfoundry.database.util.Cache.ProjectLayerCache
+
 import cats._
 import cats.data.NonEmptyList
 import cats.effect._
-import com.rasterfoundry.database.util.Cache.ProjectLayerCache
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -13,7 +14,7 @@ import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl._
 import scalacache.CatsEffect.modes._
 import sup.data._
-import sup.{Health, HealthCheck, HealthResult, mods}
+import sup.{mods, Health, HealthCheck, HealthResult}
 
 import scala.concurrent.duration._
 

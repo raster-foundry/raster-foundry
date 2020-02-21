@@ -1,12 +1,12 @@
 package com.rasterfoundry.datamodel
 
-import java.security.InvalidParameterException
-import java.sql.Timestamp
-import java.util.UUID
-
 import geotrellis.vector.{Geometry, Projected}
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras._
+
+import java.security.InvalidParameterException
+import java.sql.Timestamp
+import java.util.UUID
 
 @JsonCodec
 final case class Shape(

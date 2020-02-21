@@ -5,10 +5,10 @@ import com.rasterfoundry.datamodel._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 import akka.http.scaladsl.unmarshalling._
-
-import java.util.UUID
-import java.sql.Timestamp
 import javax.xml.bind.DatatypeConverter
+
+import java.sql.Timestamp
+import java.util.UUID
 
 /** Unmarshalls query parameters to correct type */
 trait QueryParameterDeserializers {

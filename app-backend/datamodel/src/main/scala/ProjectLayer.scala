@@ -1,14 +1,15 @@
 package com.rasterfoundry.datamodel
 
+import com.rasterfoundry.JsonCodecs
+
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.vector.{Geometry, Projected}
-import io.circe.{Decoder, Encoder}
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto._
+import io.circe.{Decoder, Encoder}
+
 import java.sql.Timestamp
 import java.util.UUID
-
-import com.rasterfoundry.JsonCodecs
 
 @JsonCodec
 final case class ProjectLayer(

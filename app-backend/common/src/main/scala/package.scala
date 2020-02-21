@@ -1,23 +1,25 @@
 package com.rasterfoundry
 
-import java.nio.ByteOrder
-
-import scala.util.Try
-import cats.syntax.either._
-import geotrellis.proj4.CRS
-import geotrellis.vector.{Extent, MultiPolygon}
-import geotrellis.vector._
-import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import com.rasterfoundry.datamodel._
+
 import _root_.io.circe._
+import _root_.io.circe.generic.semiauto._
 import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
-import _root_.io.circe.generic.semiauto._
+import cats.syntax.either._
+import geotrellis.proj4.CRS
 import geotrellis.raster._
-import geotrellis.raster.io.geotiff.compression._
 import geotrellis.raster.io.geotiff._
+import geotrellis.raster.io.geotiff.compression._
 import geotrellis.raster.io.geotiff.tags._
 import geotrellis.raster.render.IndexedColorMap
+import geotrellis.vector._
+import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
+import geotrellis.vector.{Extent, MultiPolygon}
+
+import scala.util.Try
+
+import java.nio.ByteOrder
 
 package object common extends GeoJsonImplicits {
 

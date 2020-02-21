@@ -1,10 +1,5 @@
 package com.rasterfoundry.api.maptoken
 
-import java.util.UUID
-
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.StatusCodes
-import cats.effect.IO
 import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
@@ -12,14 +7,19 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
-import doobie.util.transactor.Transactor
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.datamodel._
+
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
 import cats.Applicative
+import cats.effect.IO
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
+
+import java.util.UUID
 
 trait MapTokenRoutes
     extends Authentication

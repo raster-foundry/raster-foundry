@@ -1,12 +1,12 @@
 package com.rasterfoundry.common.export
 
-import java.util.UUID
-
 import _root_.io.circe._
 import _root_.io.circe.syntax._
 import com.azavea.maml.ast._
 import geotrellis.proj4.WebMercator
 import geotrellis.vector._
+
+import java.util.UUID
 
 // The information necessary to export a tif
 final case class ExportDefinition[SourceDefinition](

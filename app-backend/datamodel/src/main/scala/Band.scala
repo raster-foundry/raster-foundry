@@ -1,12 +1,12 @@
 package com.rasterfoundry.datamodel
 
-import java.util.UUID
-
-import io.circe.{Encoder, Decoder}
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto._
+import io.circe.{Decoder, Encoder}
 
 import scala.util.Try
+
+import java.util.UUID
 
 @JsonCodec
 final case class Band(id: UUID,

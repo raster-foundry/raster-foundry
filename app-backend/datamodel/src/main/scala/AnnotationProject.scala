@@ -1,8 +1,8 @@
 package com.rasterfoundry.datamodel
 
 import geotrellis.vector.{Geometry, Projected}
-import io.circe.generic.semiauto._
 import io.circe._
+import io.circe.generic.semiauto._
 
 import java.time.Instant
 import java.util.UUID

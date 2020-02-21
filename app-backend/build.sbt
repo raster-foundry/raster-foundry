@@ -7,10 +7,18 @@ addCommandAlias(
   ";set version in ThisBuild := git.gitDescribedVersion.value.get + \"-SNAPSHOT\""
 )
 
+addCommandAlias(
+  "fix",
+  ";scalafix;scalafmt"
+)
+
 git.gitTagToVersionNumber in ThisBuild := { tag: String =>
   if (tag matches "[0-9]+\\..*") Some(tag)
   else None
 }
+
+scalafixDependencies in ThisBuild +=
+  "com.nequissimus" %% "sort-imports" % "0.3.2"
 
 cancelable in Global := true
 
@@ -37,11 +45,6 @@ val scalaOptions = Seq(
   "-Ypartial-unification",
   "-Ybackend-parallelism",
   "4"
-  // This options appears to be broken. bloop appends some params after it, and
-  // the compiler treats them as additional parameters to this argument, despite
-  // it being a single param argument
-  // "-Ypatmat-exhaust-depth",
-  // "100"
 )
 
 scalaVersion in ThisBuild := Version.scala

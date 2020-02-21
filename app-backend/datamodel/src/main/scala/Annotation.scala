@@ -1,16 +1,16 @@
 package com.rasterfoundry.datamodel
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.vector.{Geometry, Projected, io => _}
-import io.circe.generic.JsonCodec
-import io.circe.generic.extras._
 import io.circe.Encoder
 import io.circe._
-import io.circe.syntax._
+import io.circe.generic.JsonCodec
+import io.circe.generic.extras._
 import io.circe.generic.semiauto._
+import io.circe.syntax._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 @JsonCodec
 final case class AnnotationFeatureCollectionCreate(

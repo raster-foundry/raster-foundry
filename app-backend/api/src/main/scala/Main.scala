@@ -1,18 +1,19 @@
 package com.rasterfoundry.api
 
-import java.util.concurrent.Executors
+import com.rasterfoundry.akkautil.RFRejectionHandler._
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.database.util.RFTransactor
 
 import akka.actor.{ActorSystem, Terminated}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import cats.effect.{ContextShift, IO}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.rasterfoundry.akkautil.RFRejectionHandler._
-import com.rasterfoundry.api.utils.Config
-import com.rasterfoundry.database.util.RFTransactor
 import doobie.implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
+
+import java.util.concurrent.Executors
 
 object AkkaSystem {
   implicit val system = ActorSystem("rf-system")

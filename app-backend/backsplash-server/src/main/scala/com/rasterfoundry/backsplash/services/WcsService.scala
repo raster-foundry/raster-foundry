@@ -6,8 +6,13 @@ import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
+
 import cats.data.Validated
 import cats.effect.{ContextShift, IO}
+import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.typesafe.scalalogging.LazyLogging
+import geotrellis.server.ogc.wcs.ops.{GetCoverage, Operations}
 import geotrellis.server.ogc.wcs.params.{
   DescribeCoverageWcsParams,
   GetCapabilitiesWcsParams,
@@ -15,15 +20,11 @@ import geotrellis.server.ogc.wcs.params.{
   WcsParams,
   WcsParamsError
 }
-import geotrellis.server.ogc.wcs.ops.{GetCoverage, Operations}
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.scalaxml._
-import com.typesafe.scalalogging.LazyLogging
-import java.util.UUID
 
-import com.colisweb.tracing.TracingContext
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import java.util.UUID
 
 class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO],

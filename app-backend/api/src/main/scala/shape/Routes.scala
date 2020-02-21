@@ -1,16 +1,15 @@
 package com.rasterfoundry.api.shape
 
-import java.util.UUID
-
-import akka.http.scaladsl.server.Route
-import cats.effect.IO
-import cats.implicits._
-import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.akkautil._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ShapeDao
 import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.datamodel._
+
+import akka.http.scaladsl.server.Route
+import cats.effect.IO
+import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
@@ -18,6 +17,8 @@ import doobie.util.transactor.Transactor
 import io.circe.generic.JsonCodec
 
 import scala.concurrent.ExecutionContext
+
+import java.util.UUID
 
 @JsonCodec
 final case class ShapeFeatureCollectionCreate(

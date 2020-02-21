@@ -4,7 +4,6 @@ import com.rasterfoundry.api.Codec._
 
 import doobie._
 import doobie.implicits._
-
 import io.circe.generic.JsonCodec
 
 /**

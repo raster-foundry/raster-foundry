@@ -3,12 +3,12 @@ package com.rasterfoundry.api.toolrun
 import com.rasterfoundry.akkautil.Authentication
 import com.rasterfoundry.database.MapTokenDao
 
+import akka.http.scaladsl.server._
 import cats.effect.IO
 import cats.implicits._
-import akka.http.scaladsl.server._
 import doobie.Transactor
-import doobie.implicits._
 import doobie._
+import doobie.implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

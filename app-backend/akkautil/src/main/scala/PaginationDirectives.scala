@@ -4,9 +4,10 @@ package com.rasterfoundry.akkautil
   * Copied from https://github.com/lonelyplanet/akka-http-extensions
   * with minor modifications for removing unused variables/code-paths
   */
+import com.rasterfoundry.datamodel._
+
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
-import com.rasterfoundry.datamodel._
 
 trait PaginationDirectives {
 

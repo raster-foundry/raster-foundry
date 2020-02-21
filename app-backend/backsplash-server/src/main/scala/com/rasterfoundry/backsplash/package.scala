@@ -1,12 +1,12 @@
 package com.rasterfoundry.backsplash
 
-import geotrellis.raster.io._
 import geotrellis.raster.histogram._
+import geotrellis.raster.io._
 import geotrellis.raster.summary._
-import io.circe.{Encoder, Json, KeyEncoder}
 import io.circe.generic.semiauto._
 import io.circe.parser._
 import io.circe.syntax._
+import io.circe.{Encoder, Json, KeyEncoder}
 import spray.json._
 
 package object server {

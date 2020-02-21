@@ -2,10 +2,10 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
 
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import cats.implicits._
 
 object BandDao extends Dao[Band] {
 

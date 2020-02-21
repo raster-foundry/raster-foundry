@@ -19,6 +19,7 @@ import scalacache.Flags
 import scalacache.memoization._
 
 import scala.concurrent.duration._
+
 import java.net.URL
 
 trait Authenticators extends LazyLogging {

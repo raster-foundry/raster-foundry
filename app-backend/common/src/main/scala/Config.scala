@@ -1,11 +1,11 @@
 package com.rasterfoundry.common
 
-import java.util.concurrent.TimeUnit
-
 import com.typesafe.config.ConfigFactory
 import net.spy.memcached.ClientMode
 
 import scala.concurrent.duration._
+
+import java.util.concurrent.TimeUnit
 
 object Config {
   private val config = ConfigFactory.load()

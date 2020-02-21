@@ -1,15 +1,16 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.PageRequest
+import com.rasterfoundry.datamodel._
 
-import java.sql.Timestamp
-import java.util.{UUID, Date}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
+
+import java.sql.Timestamp
+import java.util.{Date, UUID}
 
 object StacExportDao extends Dao[StacExport] {
   val tableName = "stac_exports"

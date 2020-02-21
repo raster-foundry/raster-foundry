@@ -1,9 +1,5 @@
 package com.rasterfoundry
 
-import java.net.{URI, URL}
-import java.nio.charset.Charset
-import java.nio.file.Paths
-
 import cats.effect._
 import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
 import com.colisweb.tracing.TracingContext
@@ -16,6 +12,10 @@ import io.circe.KeyEncoder
 import org.apache.http.client.utils.URLEncodedUtils
 import org.http4s.Request
 import org.http4s.util.CaseInsensitiveString
+
+import java.net.{URI, URL}
+import java.nio.charset.Charset
+import java.nio.file.Paths
 
 package object backsplash {
 

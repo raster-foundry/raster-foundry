@@ -1,14 +1,14 @@
 package com.rasterfoundry.backsplash
 
 import cats.effect.IO
+import com.colisweb.tracing.TracingContext
 import geotrellis.raster.histogram.Histogram
-import geotrellis.server.ogc.wms.WmsModel
 import geotrellis.server.ogc.wcs.WcsModel
+import geotrellis.server.ogc.wms.WmsModel
 import opengis.wms.Service
 import simulacrum._
-import java.util.UUID
 
-import com.colisweb.tracing.TracingContext
+import java.util.UUID
 
 @typeclass trait OgcStore[A] {
   @op("getWcsModel") def getWcsModel(

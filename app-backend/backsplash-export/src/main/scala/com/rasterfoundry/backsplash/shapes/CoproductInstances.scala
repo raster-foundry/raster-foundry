@@ -2,8 +2,8 @@ package com.rasterfoundry.backsplash.export.shapes
 
 import com.rasterfoundry.backsplash.export._
 
-import geotrellis.raster._
 import cats.effect._
+import geotrellis.raster._
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr}
 
 /** Necessary for evaluating the coproduct of exportable instances (allowing any type

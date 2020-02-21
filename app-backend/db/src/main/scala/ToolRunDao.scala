@@ -1,26 +1,26 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.{
-  ToolRun,
-  User,
-  ObjectType,
-  GroupType,
-  ActionType,
-  ToolRunWithRelated,
-  PaginatedResponse,
-  AuthResult
-}
-import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.ast._
+import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util._
+import com.rasterfoundry.datamodel.{
+  ActionType,
+  AuthResult,
+  GroupType,
+  ObjectType,
+  PaginatedResponse,
+  ToolRun,
+  ToolRunWithRelated,
+  User
+}
+import com.rasterfoundry.datamodel.{Order, PageRequest}
 
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import cats.implicits._
-import com.rasterfoundry.datamodel.{Order, PageRequest}
-import com.rasterfoundry.database.util._
+import doobie.postgres.implicits._
 
 import java.sql.Timestamp
 import java.util.UUID
