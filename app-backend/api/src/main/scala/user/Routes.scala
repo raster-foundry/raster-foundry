@@ -101,7 +101,7 @@ trait UserRoutes
     authorizeScope(ScopedAction(Domain.Users, Action.UpdateSelf, None), user) {
       entity(as[Auth0UserUpdate]) { userUpdate =>
         complete {
-          Auth0UserService.updateAuth0User(user.id, userUpdate)
+          Auth0Service.updateAuth0User(user.id, userUpdate)
         }
       }
     }

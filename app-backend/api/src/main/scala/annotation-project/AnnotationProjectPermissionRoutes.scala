@@ -155,16 +155,28 @@ trait AnnotationProjectPermissionRoutes
       user
     ) {
       entity(as[UserEmail]) { userByEmail =>
-        // exist branch:
-        // - share with all users with this email
-        // - update auth0 to make sure those users have annotate access
-        } {
-          complete {
-            AnnotationProjectDao
-              .addPermission(projectId, acr)
-              .transact(xa)
-              .unsafeToFuture
+        val io = for {
+          users <- UserDao.findUsersByEmail(userByEmail.email)
+          // exist branch:
+          // - share with all users with this email
+          // - update auth0 to make sure those users have annotate access
+          permissions <- users match {
+            case Nil =>
+              ???
+            case us =>
+              us flatMap { user =>
+                List(
+                  ObjectAccessControlRule(SubjectType.User, Some(user.id), ActionType.View),
+                  ObjectAccessControlRule(SubjectType.User, Some(user.id), ActionType.Annotate),
+                  ObjectAccessControlRule(SubjectType.User, Some(user.id), ActionType.Export)
+                )
+              } traverse { acr =>
+                AnnotationProjectDao.addPermission(projectId, acr)
+              }
           }
+        } yield permissions
+        complete {
+          io.transact(xa).unsafeToFuture
         }
       }
     }

@@ -88,15 +88,12 @@ final case class UserWithOAuthUpdate(
     user: User.Create,
     oauth: Auth0UserUpdate
 )
-object Auth0UserService extends Config with LazyLogging {
+object Auth0Service extends Config with LazyLogging {
 
   import com.rasterfoundry.api.AkkaSystem._
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
   val userUri = Uri(s"https://$auth0Domain/api/v2/users")
-  val auth0BearerHeader = List(
-    Authorization(GenericHttpCredentials("Bearer", auth0Bearer))
-  )
 
   val authBearerTokenCache: AsyncLoadingCache[Int, ManagementBearerToken] =
     Scaffeine()
@@ -200,4 +197,7 @@ object Auth0UserService extends Config with LazyLogging {
           throw new Auth0Exception(errCode, error.toString)
       }
   }
+
+  // don't need a read method because patch is idempotent
+  def addGroundworkMetadata(user: User): Future[Unit] = ???
 }
