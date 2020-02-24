@@ -154,7 +154,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     val labelFilterF =
       fr"annotation_labels.annotation_project_id = ${annotationProjectId}"
     val statusFilterFO = taskStatuses.toNel map { statuses =>
-      Fragments.notIn(fr"tasks.status", statuses.map(TaskStatus.fromString(_)))
+      Fragments.in(fr"tasks.status", statuses.map(TaskStatus.fromString(_)))
     }
     val fcIo = for {
       labelGroups <- OptionT.liftF(

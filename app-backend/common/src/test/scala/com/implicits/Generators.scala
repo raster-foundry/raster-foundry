@@ -1031,7 +1031,7 @@ object Generators extends ArbitraryInstances {
     (
       nonEmptyStringGen,
       Gen.option(Gen.choose(0, 1000)),
-      Gen.listOfN(3, labelClassCreateGen)
+      Gen.listOfN(1, labelClassCreateGen)
     ).mapN(AnnotationLabelClassGroup.Create.apply _)
 
   private def annotationProjectCreateGen: Gen[AnnotationProject.Create] =
