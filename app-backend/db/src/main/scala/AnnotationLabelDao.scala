@@ -120,4 +120,25 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   """)
     fragment.query[AnnotationProject.LabelClassSummary].to[List]
   }
+
+  def listWithClassesByProjectIdAndTaskId(
+      projectId: UUID,
+      taskId: UUID
+  ): ConnectionIO[List[AnnotationLabelWithClasses.GeoJSON]] =
+    query
+      .filter(fr"annotation_project_id=$projectId")
+      .filter(fr"annotation_task_id=$taskId")
+      .list
+      .map { listed =>
+        listed.map(_.toGeoJSONFeature)
+      }
+
+  def deleteByProjectIdAndTaskId(
+      projectId: UUID,
+      taskId: UUID
+  ): ConnectionIO[Int] =
+    (fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(
+      Some(fr"annotation_project_id=$projectId"),
+      Some(fr"annotation_task_id=$taskId")
+    )).update.run
 }

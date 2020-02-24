@@ -309,6 +309,36 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
+  def listTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            AnnotationLabelDao
+              .listWithClassesByProjectIdAndTaskId(
+                projectId,
+                taskId
+              )
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
   def addTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate {
     user =>
       authorizeScope(
@@ -355,4 +385,31 @@ trait AnnotationProjectTaskRoutes
         }
       }
   }
+
+  def deleteTaskLabels(projectId: UUID, task: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.DeleteAnnotation, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            AnnotationLabelDao
+              .deleteByProjectIdAndTaskId(projectId, task)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
 }
