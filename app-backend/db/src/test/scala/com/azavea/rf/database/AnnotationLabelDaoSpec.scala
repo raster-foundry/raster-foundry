@@ -21,7 +21,7 @@ class AnnotationLabelDaoSpec
       label: AnnotationLabelWithClasses.Create,
       classes: List[UUID]
   ): AnnotationLabelWithClasses.Create =
-    label.copy(annotationLabelClasses = classes)
+    label.copy(annotationLabelClasses = classes.take(1))
 
   test("insert annotations") {
     check {
@@ -275,8 +275,10 @@ class AnnotationLabelDaoSpec
             annotationCreates: List[AnnotationLabelWithClasses.Create],
             taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
         ) => {
+          val labelClassGroupCreate =
+            annotationProjectCreate.labelClassGroups.take(1)
           val toInsert = annotationProjectCreate.copy(
-            labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
+            labelClassGroups = labelClassGroupCreate
           )
 
           val listIO = for {
@@ -326,8 +328,7 @@ class AnnotationLabelDaoSpec
     }
   }
 
-  test("generate stac export of labels in a project") {
-    // TODO: edit this to test the correct thing
+  test("generate stac labels in a project for export") {
     check {
       forAll(
         (
@@ -365,16 +366,50 @@ class AnnotationLabelDaoSpec
               withClasses,
               user
             )
-            listed <- AnnotationLabelDao.listProjectLabels(annotationProject.id)
-          } yield listed
+            annotationJson <- AnnotationLabelDao.getAnnotationJsonByTaskStatus(
+              annotationProject.id,
+              List(task.properties.status.toString)
+            )
+          } yield annotationJson
 
-          val listed = listIO.transact(xa).unsafeRunSync
+          val stacAnnotationsO = listIO.transact(xa).unsafeRunSync
 
+          assert(stacAnnotationsO.nonEmpty, "Annotations json is created")
+          val stacAnnotationsJson = stacAnnotationsO.map(_.asObject).flatten.get
+          val requiredLabelFields = Set("geometry", "type", "properties")
           assert(
-            listed.size == annotationCreates.size,
-            "All annotations were listed"
+            requiredLabelFields subsetOf stacAnnotationsJson.keys.toSet,
+            "stac label json contains correct top level fields"
           )
-
+          val labelProperties = stacAnnotationsJson.toMap
+            .get("properties")
+            .map(_.asObject)
+            .flatten
+            .get
+          val requiredLabelProperties =
+            Set(
+              "id",
+              "createdAt",
+              "createdBy",
+              "annotationProjectId",
+              "annotationTaskId"
+            )
+          assert(
+            requiredLabelProperties subsetOf labelProperties.keys.toSet,
+            "stac label json properties contain required normal fields"
+          )
+          val groupName = labelClassGroupCreate.head.name
+          assert(
+            labelProperties.keys.toSet.contains(groupName),
+            "stac label class group / label value exists"
+          )
+          assert(
+            labelClassGroupCreate.head.classes
+              .map(_.name)
+              .toSet
+              .contains(labelProperties.toMap.get(groupName).get.asString),
+              "stac label value for group name exists"
+          )
           true
         }
       )
