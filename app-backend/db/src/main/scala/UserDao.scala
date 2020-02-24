@@ -299,5 +299,7 @@ object UserDao extends Dao[User] with Sanitization {
   }
 
   def findUsersByEmail(email: String): ConnectionIO[List[User]] =
-    query.filter(fr"(email = $email OR personal_info ->> 'email' = $email)").list
+    query
+      .filter(fr"(email = $email OR personal_info ->> 'email' = $email)")
+      .list
 }

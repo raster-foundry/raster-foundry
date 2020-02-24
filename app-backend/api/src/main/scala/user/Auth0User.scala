@@ -76,7 +76,7 @@ object UserWithOAuth {
         u.visibility,
         u.dropboxCredential,
         u.planetCredential
-      )
+    )
   )
 }
 @JsonCodec
@@ -111,7 +111,7 @@ object Auth0Service extends Config with LazyLogging {
         Unmarshal(entity).to[Auth0User]
       case HttpResponse(StatusCodes.Created, _, entity, _) =>
         Unmarshal(entity).to[Auth0User]
-      case resp@HttpResponse(StatusCodes.ClientError(400), _, entity, _) =>
+      case resp @ HttpResponse(StatusCodes.ClientError(400), _, entity, _) =>
         println(s"Entity is: $entity")
         println(s"Resp is: $resp")
         throw new IllegalArgumentException(

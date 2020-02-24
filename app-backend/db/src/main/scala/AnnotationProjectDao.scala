@@ -265,7 +265,7 @@ object AnnotationProjectDao
                     Some(subjectId),
                     _
                     ) if subjectId != userId =>
-                   Set(subjectId) | accum
+                  Set(subjectId) | accum
                 case _ => accum
               }
             }
