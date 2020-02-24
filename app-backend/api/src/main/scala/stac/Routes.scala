@@ -102,7 +102,7 @@ trait StacRoutes
       entity(as[StacExport.Create]) { newStacExport =>
         authorizeAsync {
           StacExportDao
-            .hasProjectViewAccess(newStacExport.layerDefinitions, user)
+            .hasProjectViewAccess(newStacExport.annotationProjectId, user)
             .transact(xa)
             .unsafeToFuture
         } {

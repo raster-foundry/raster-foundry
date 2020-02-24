@@ -989,27 +989,20 @@ object Generators extends ArbitraryInstances {
   private def taskStatusListGen: Gen[List[TaskStatus]] =
     Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
 
-  private def layerDefinitionGen: Gen[StacExport.LayerDefinition] =
-    for {
-      projectId <- uuidGen
-      layerId <- uuidGen
-    } yield {
-      StacExport.LayerDefinition(projectId, layerId)
-    }
 
   private def stacExportCreateGen: Gen[StacExport.Create] =
     for {
       name <- nonEmptyStringGen
       owner <- Gen.const(None)
-      layerDefinition <- layerDefinitionGen
+      annotationProjectId <-  uuidGen
       taskStatuses <- taskStatusListGen
     } yield {
       StacExport.Create(
         name,
         owner,
-        List(layerDefinition),
         StacExportLicense(Proprietary(), Some("http://example.com")),
-        taskStatuses
+        taskStatuses,
+        annotationProjectId
       )
     }
 
@@ -1038,7 +1031,7 @@ object Generators extends ArbitraryInstances {
     (
       nonEmptyStringGen,
       Gen.option(Gen.choose(0, 1000)),
-      Gen.listOfN(3, labelClassCreateGen)
+      Gen.listOfN(1, labelClassCreateGen)
     ).mapN(AnnotationLabelClassGroup.Create.apply _)
 
   private def annotationProjectCreateGen: Gen[AnnotationProject.Create] =

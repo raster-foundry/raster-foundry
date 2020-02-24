@@ -8123,9 +8123,8 @@ definitions:
     type: object
     required:
       - name
-      - layerDefinitions
-      - isUnion
       - taskStatuses
+      - annotationProjectId
     properties:
       name:
         type: string
@@ -8133,16 +8132,14 @@ definitions:
       owner:
         type: string
         description: 'Owner of of the STAC export record'
-      layerDefinitions:
-        description: 'List of project and layers to be exported'
-        $ref: '#/definitions/LayerDefinitions'
-      isUnion:
-        type: boolean
-        description: 'Union the AOIs or not'
       taskStatuses:
         type: array
         items:
           $ref: '#/definitions/TaskStatus'
+      annotationProjectId:
+        type: string
+        format: uuid
+        description: 'Annotation project to export'
   StacExport:
     allOf:
       - $ref: '#/definitions/TimeModelMixin'

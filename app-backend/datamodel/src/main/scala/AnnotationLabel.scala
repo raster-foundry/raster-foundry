@@ -20,6 +20,7 @@ final case class AnnotationLabel(
     annotationTaskId: UUID
 )
 
+@JsonCodec
 final case class AnnotationLabelProperties(
     createdAt: Timestamp,
     createdBy: String,
@@ -58,6 +59,33 @@ final case class AnnotationLabelWithClasses(
       this.annotationLabelClasses
     )
   )
+
+  def toStacGeoJSONFeature(
+      classToGroup: Map[UUID, String],
+      classes: Map[UUID, String]
+  ): AnnotationLabelWithClasses.StacGeoJSON = {
+    val classMap: Map[String, String] =
+      this.annotationLabelClasses
+        .map { classId =>
+          for {
+            group <- classToGroup.get(classId)
+            labelClass <- classes.get(classId)
+          } yield (group -> labelClass)
+        }
+        .flatten
+        .toMap
+    AnnotationLabelWithClasses.StacGeoJSON(
+      this.id,
+      this.geometry,
+      AnnotationLabelProperties(
+        this.createdAt,
+        this.createdBy,
+        this.annotationProjectId,
+        this.annotationTaskId
+      ),
+      classMap
+    )
+  }
 }
 
 object AnnotationLabelWithClasses {
@@ -66,7 +94,6 @@ object AnnotationLabelWithClasses {
       case "_type" => "type"
       case other   => other
     })
-  def tupled = (AnnotationLabel.apply _).tupled
 
   final case class Create(
       geometry: Option[Projected[Geometry]],
@@ -97,7 +124,6 @@ object AnnotationLabelWithClasses {
       properties: AnnotationLabelWithClassesProperties,
       _type: String = "Feature"
   ) extends GeoJSONFeature
-
   @JsonCodec
   final case class GeoJSONFeatureCreate(
       geometry: Option[Projected[Geometry]],
@@ -119,6 +145,60 @@ object AnnotationLabelWithClasses {
           (geojson.id, geojson.geometry, geojson.properties, geojson._type)
       )
   }
+
+  /**
+    * Classes on STAC geojson labels must be top level items in the properties.
+    *
+    * Class fields (which are AnnotationLabelClassGroup names)
+    * under properties are specified on the StacItem which refers to it.
+    * The optional values for these keys are the actual class of the label.
+    *
+    * In the following example, we have 3 class groups defined: label, color, and redTint.
+    * The StacItem referring to it would have label:properties field containing ["label", "color", "redTint"]
+    * ex:
+    * {
+    *   id: ...,
+    *   geometry: ...,
+    *   type: "Feature",
+    *   properties: {
+    *     createdAt: ...,
+    *     createdBy: ...,
+    *     annotationProjectId: ...,
+    *     annotationTaskId: ...,
+    *     label: "something", -- we should default to "label" as the class group name for single class labels
+    *     color: "blue", -- color is the group, "blue" is the class selected
+    *     redTint: null -- redTint is the group, and the value is null because "blue" is the color selected.
+    *                      This is what a discriminant would look like
+    *   }
+    * }
+    */
+  final case class StacGeoJSON(
+      id: UUID,
+      geometry: Option[Projected[Geometry]],
+      properties: AnnotationLabelProperties,
+      classMap: Map[String, String],
+      _type: String = "Feature"
+  ) extends GeoJSONFeature
+
+  object StacGeoJSON {
+    implicit val stacGeoJsonEncoder: Encoder[StacGeoJSON] =
+      Encoder.forProduct3("geometry", "type", "properties")(
+        geojson =>
+          (
+            geojson.geometry,
+            geojson._type,
+            (
+              Map(
+                "id" -> geojson.id.asJson,
+                "createdAt" -> geojson.properties.createdAt.asJson,
+                "createdBy" -> geojson.properties.createdBy.asJson,
+                "annotationProjectId" -> geojson.properties.annotationProjectId.asJson,
+                "annotationTaskId" -> geojson.properties.annotationTaskId.asJson
+              ) ++ geojson.classMap.map(e => (e._1 -> e._2.asJson))
+            )
+        )
+      )
+  }
 }
 
 @JsonCodec
@@ -135,33 +215,12 @@ final case class AnnotationLabelWithClassesProperties(
     annotationLabelClasses: List[UUID]
 )
 
-object AnnotationLabelWithClassesProperties {
-  implicit val annotationLabelWithClassesPropertiesEncoder
-    : Encoder[AnnotationLabelWithClassesProperties] =
-    new Encoder[AnnotationLabelWithClassesProperties] {
-      final def apply(
-          properties: AnnotationLabelWithClassesProperties
-      ): Json = {
-        (
-          Map(
-            "createdAt" -> properties.createdAt.asJson,
-            "createdBy" -> properties.createdBy.asJson,
-            "annotationProjectId" -> properties.annotationProjectId.asJson,
-            "annotationTaskId" -> properties.annotationTaskId.asJson,
-            "annotationLabelClasses" -> properties.annotationLabelClasses.asJson
-          )
-        ).asJson
-      }
-    }
-}
-
-final case class AnnotationLabelWithClassesFeatureCollection(
-    features: List[AnnotationLabelWithClasses.GeoJSON],
+final case class StacGeoJSONFeatureCollection(
+    features: List[AnnotationLabelWithClasses.StacGeoJSON],
     `type`: String = "FeatureCollection"
 )
 
-object AnnotationLabelWithClassesFeatureCollection {
-  implicit val annoLabelWithClassesFCEncoder
-    : Encoder[AnnotationLabelWithClassesFeatureCollection] =
-    deriveEncoder[AnnotationLabelWithClassesFeatureCollection]
+object StacGeoJSONFeatureCollection {
+  implicit val stacGeoJsonFcEncoder: Encoder[StacGeoJSONFeatureCollection] =
+    deriveEncoder[StacGeoJSONFeatureCollection]
 }

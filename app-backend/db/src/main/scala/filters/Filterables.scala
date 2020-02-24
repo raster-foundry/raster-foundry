@@ -11,7 +11,6 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import geotrellis.vector.{io => _, _}
-import io.circe.syntax._
 
 import java.util.UUID
 
@@ -419,17 +418,8 @@ trait Filterables extends RFMeta with LazyLogging {
             params.exportStatus map { qp =>
               fr"export_status = UPPER($qp)::public.export_status"
             },
-            (params.projectId, params.layerId) match {
-              case (Some(projectId), Some(layerId)) =>
-                Some(
-                  fr"layer_definitions @> '[" ++ Fragment.const(
-                    StacExport
-                      .LayerDefinition(projectId, layerId)
-                      .asJson
-                      .noSpaces
-                  ) ++ fr"]'::jsonb"
-                )
-              case _ => None
+            params.annotationProjectId map { qp =>
+              fr"annotation_project_id = ${qp}"
             }
           )
     }

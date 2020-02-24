@@ -25,6 +25,12 @@ abstract class Dao[Model: Read: Write] extends Filterables {
 
   val tableName: String
 
+  val fieldNames: List[String] = List()
+
+  /** Helper to use in selectF and avoid writing out */
+  def fieldsF =
+    Fragment.const(fieldNames.map(f => tableName ++ "." ++ f).mkString(", "))
+
   /** The fragment which holds the associated table's name */
   def tableF = Fragment.const(tableName)
 

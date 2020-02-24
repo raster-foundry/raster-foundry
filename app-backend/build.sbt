@@ -34,8 +34,6 @@ val scalaOptions = Seq(
   "-language:postfixOps",
   "-language:existentials",
   "-language:experimental.macros",
-  "-Xmax-classfile-name",
-  "100",
   "-Yrangepos",
   "-Ywarn-value-discard",
   "-Ywarn-macros:after",
@@ -44,7 +42,9 @@ val scalaOptions = Seq(
   "-Ywarn-unused-import",
   "-Ypartial-unification",
   "-Ybackend-parallelism",
-  "4"
+  "4",
+  "-Ypatmat-exhaust-depth",
+  "100"
 )
 
 scalaVersion in ThisBuild := Version.scala
