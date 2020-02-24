@@ -1,6 +1,7 @@
 package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
+import com.rasterfoundry.api.user.Auth0Service
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
@@ -20,6 +21,25 @@ trait AnnotationProjectPermissionRoutes
     with Authentication {
 
   val xa: Transactor[IO]
+
+  def getDefaultShare(user: User): List[ObjectAccessControlRule] =
+    List(
+      ObjectAccessControlRule(
+        SubjectType.User,
+        Some(user.id),
+        ActionType.View
+      ),
+      ObjectAccessControlRule(
+        SubjectType.User,
+        Some(user.id),
+        ActionType.Annotate
+      ),
+      ObjectAccessControlRule(
+        SubjectType.User,
+        Some(user.id),
+        ActionType.Export
+      )
+    )
 
   def listPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeScope(
@@ -155,28 +175,49 @@ trait AnnotationProjectPermissionRoutes
       user
     ) {
       entity(as[UserEmail]) { userByEmail =>
-        val io = for {
-          users <- UserDao.findUsersByEmail(userByEmail.email)
-          // exist branch:
-          // - share with all users with this email
-          // - update auth0 to make sure those users have annotate access
-          permissions <- users match {
-            case Nil =>
-              ???
-            case us =>
-              us flatMap { user =>
-                List(
-                  ObjectAccessControlRule(SubjectType.User, Some(user.id), ActionType.View),
-                  ObjectAccessControlRule(SubjectType.User, Some(user.id), ActionType.Annotate),
-                  ObjectAccessControlRule(SubjectType.User, Some(user.id), ActionType.Export)
-                )
-              } traverse { acr =>
-                AnnotationProjectDao.addPermission(projectId, acr)
-              }
-          }
-        } yield permissions
         complete {
-          io.transact(xa).unsafeToFuture
+          Auth0Service.getManagementBearerToken flatMap { managementToken =>
+            (for {
+              // Everything has to be Futures here because of methods in akka-http / Auth0Service
+              users <- UserDao
+                .findUsersByEmail(userByEmail.email)
+                .transact(xa)
+                .unsafeToFuture
+              // exist branch:
+              // - share with all users with this email
+              // - update auth0 to make sure those users have annotate access
+              permissions <- users match {
+                case Nil =>
+                  for {
+                    auth0User <- Auth0Service
+                      .createGroundworkUser(userByEmail.email, managementToken)
+                    user <- (auth0User.user_id traverse { userId =>
+                      UserDao.create(
+                        User.Create(
+                          userId,
+                          email = userByEmail.email,
+                          scope = Scopes.GroundworkUser
+                        )
+                      )
+                    }).transact(xa).unsafeToFuture
+                    acrs = user map { getDefaultShare(_) } getOrElse Nil
+                    dbAcrs <- (acrs traverse { acr =>
+                      AnnotationProjectDao
+                        .addPermission(projectId, acr)
+                    }).transact(xa).unsafeToFuture
+                  } yield dbAcrs
+                case us =>
+                  val acrs = getDefaultShare(user)
+                  us traverse { user =>
+                    Auth0Service.addGroundworkMetadata(user, managementToken) *>
+                      (acrs traverse { acr =>
+                        AnnotationProjectDao
+                          .addPermission(projectId, acr)
+                      }).transact(xa).unsafeToFuture
+                  } map { _.flatten }
+              }
+            } yield permissions)
+          }
         }
       }
     }
