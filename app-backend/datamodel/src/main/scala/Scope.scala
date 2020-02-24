@@ -2,6 +2,7 @@ package com.rasterfoundry.datamodel
 
 import cats.implicits._
 import cats.{Eq, Monoid}
+import io.circe.generic.semiauto._
 import io.circe.parser._
 import io.circe.{
   Decoder,
@@ -10,7 +11,7 @@ import io.circe.{
   Error,
   HCursor,
   Json,
-  ParsingFailure
+  ParsingFailure,
 }
 
 import scala.util.{Failure, Success, Try}
@@ -20,6 +21,11 @@ sealed abstract class Domain(repr: String) {
 }
 
 object Domain {
+  implicit val domainEncoder: Encoder[Domain] =
+    Encoder.encodeString.contramap[Domain] { domain =>
+      domain.toString
+    }
+
   case object Analyses extends Domain("analyses")
   case object AnnotationGroups extends Domain("annotationGroups")
   case object AnnotationUploads extends Domain("annotationUploads")
@@ -73,6 +79,10 @@ sealed abstract class Action(repr: String) {
 }
 
 object Action {
+  implicit val actionEncoder: Encoder[Action] =
+    Encoder.encodeString.contramap[Action] { action =>
+      action.toString
+    }
   case object AddScenes extends Action("addScenes")
   case object AddUser extends Action("addUser")
   case object ColorCorrect extends Action("colorCorrect")
@@ -574,4 +584,15 @@ object Scopes {
           UserSelfScope.actions ++
           FeatureFlagsScope.actions
       )
+}
+
+case class ScopeLimit(domain: Domain,
+                      action: Action,
+                      objectId: Option[String],
+                      used: Float,
+                      limit: Option[Float])
+
+object ScopeLimit {
+  implicit val scopeLimitEncoder: Encoder[ScopeLimit] =
+    deriveEncoder[ScopeLimit]
 }

@@ -12,6 +12,7 @@
 - Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
 - Added a migration to add annotation project id to tasks [#5296](https://github.com/raster-foundry/raster-foundry/pull/5296)
 - Added annotation project related data models, `Dao` methods, endpoints, and tests [#5301](https://github.com/raster-foundry/raster-foundry/pull/5301), [#5303](https://github.com/raster-foundry/raster-foundry/pull/5303), [#5308](https://github.com/raster-foundry/raster-foundry/pull/5308), [#5318](https://github.com/raster-foundry/raster-foundry/pull/5318)
+- Add /user/me/limits endpoint for listing how many projects, shared, and how much upload space a user is using  [#5320](https://github.com/raster-foundry/raster-foundry/pull/5320)
 
 ### Changed
 

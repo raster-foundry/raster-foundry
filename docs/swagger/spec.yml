@@ -190,6 +190,21 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
+  /users/me/limits:
+    x-resource: Users
+    get:
+      summary: "Get a logged in user's account limits"
+      responses:
+        200:
+          description: 'Limits fetched'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/UserScopeLimit'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
   /users/me/roles:
     x-resource: Users
     get:
@@ -6111,7 +6126,24 @@ definitions:
       token_type:
         type: string
         description: 'Type of token returned by using the refresh token'
-
+  UserScopeLimit:
+    type: object
+    properties:
+      domain:
+        type: string
+        description: 'Domain that the limit applies to'
+      action:
+        type: string
+        description: 'Action that the limit applies to'
+      objectId:
+        type: string
+        description: 'Object Id that that limit applies to'
+      used:
+        type: number
+        description: 'Used portion of limit'
+      limit:
+        type: number
+        description: 'Maximum of limit'
   UserRole:
     type: object
     properties:

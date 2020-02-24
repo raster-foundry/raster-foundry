@@ -94,6 +94,50 @@ class AnnotationProjectDaoSpec
     }
   }
 
+  test("list share counts for user") {
+    check {
+      forAll(
+        (
+            userSharingCreate: User.Create,
+            userSharedCreate: User.Create,
+            annotationProjectSharedCreates: List[AnnotationProject.Create],
+            annotationProjectUnsharedCreates: List[AnnotationProject.Create]
+        ) => {
+          val io = for {
+            userSharing <- UserDao.create(userSharingCreate)
+            userShared <- UserDao.create(userSharedCreate)
+            sharedProjects <- annotationProjectSharedCreates traverse {
+              toInsert =>
+                AnnotationProjectDao.insert(toInsert, userSharing)
+            }
+            unsharedProjects <- annotationProjectUnsharedCreates traverse {
+              toInsert =>
+                AnnotationProjectDao.insert(toInsert, userSharing)
+            }
+            _ <- sharedProjects traverse { project =>
+              AnnotationProjectDao.addPermission(
+                project.id,
+                ObjectAccessControlRule(
+                  SubjectType.User,
+                  Some(userShared.id),
+                  ActionType.View
+                )
+              )
+            }
+            shareCounts <- AnnotationProjectDao.getAllShareCounts(userSharing.id)
+          } yield (sharedProjects, unsharedProjects, shareCounts)
+
+          val (sharedProjects, unsharedProjects, shareCounts) = io.transact(xa).unsafeRunSync
+          assert(shareCounts.filter(sc => sc._2 > 0).size == sharedProjects.size, "Shared projects are counted correctly")
+          assert(shareCounts.filter(sc => sc._2 == 0).size == unsharedProjects.size, "Unshared projects are counted correctly")
+          assert(shareCounts.toList.map(_._2).filter(_ == 1).size == sharedProjects.size, "Shared projects have correct share count")
+
+          true
+        }
+      )
+    }
+  }
+
   test("get an annotation project by id") {
     check {
       forAll(
@@ -133,8 +177,8 @@ class AnnotationProjectDaoSpec
             user <- UserDao.create(userCreate)
             inserted1 <- AnnotationProjectDao
               .insert(annotationProjectCreate, user)
-            inserted2 <- AnnotationProjectDao.insert(annotationProjectUpdate,
-                                                     user)
+            inserted2 <- AnnotationProjectDao
+              .insert(annotationProjectUpdate, user)
             _ <- AnnotationProjectDao.update(inserted2.toProject, inserted1.id)
             fetched <- AnnotationProjectDao.getById(inserted1.id)
           } yield fetched

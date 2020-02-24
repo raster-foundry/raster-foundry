@@ -46,6 +46,9 @@ trait UserRoutes
         pathPrefix("roles") {
           get { getUserRoles }
         } ~
+        pathPrefix("limits") {
+          get { getUserLimits }
+        } ~
         pathEndOrSingleSlash {
           get { getDbOwnUser } ~
             patch { updateAuth0User } ~
@@ -199,6 +202,64 @@ trait UserRoutes
           .listByUserWithRelated(user)
           .transact(xa)
           .unsafeToFuture()
+      }
+    }
+  }
+
+  /*
+  Hard coded limits
+   */
+  def getUserLimits: Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
+      val io = for {
+        projectCount <- AnnotationProjectDao.countUserProjects(user)
+        projectLimit = Scopes
+          .resolveFor(
+            Domain.AnnotationProjects,
+            Action.Create,
+            user.scope.actions
+          )
+          .flatMap(_.limit.map(_.toFloat))
+        uploadBytes <- UploadDao.getUserBytesUploaded(user)
+        uploadLimit = Scopes
+          .resolveFor(Domain.Uploads, Action.Create, user.scope.actions)
+          .flatMap(_.limit.map(_.toFloat))
+        projectShares <- AnnotationProjectDao.getAllShareCounts(user.id)
+        projectShareLimit = Scopes
+          .resolveFor(
+            Domain.AnnotationProjects,
+            Action.Share,
+            user.scope.actions
+          )
+          .flatMap(_.limit.map(_.toFloat))
+      } yield
+        List(
+          ScopeLimit(
+            Domain.AnnotationProjects,
+            Action.Create,
+            None,
+            projectCount,
+            projectLimit
+          ),
+          ScopeLimit(
+            Domain.Uploads,
+            Action.Create,
+            None,
+            uploadBytes,
+            uploadLimit
+          )
+        ) ++ projectShares.toList.map {
+          case (id, count) =>
+            ScopeLimit(
+              Domain.AnnotationProjects,
+              Action.Share,
+              Some(id.toString),
+              count,
+              projectShareLimit
+            )
+        }
+      complete {
+        io.transact(xa).unsafeToFuture
       }
     }
   }
