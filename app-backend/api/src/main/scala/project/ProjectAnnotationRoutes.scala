@@ -38,7 +38,8 @@ trait ProjectAnnotationRoutes
             .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
             .transact(xa)
             .unsafeToFuture
-            .map(_.toBoolean)) | projectIsPublic(projectId)) {
+            .map(_.toBoolean)
+        ) | projectIsPublic(projectId)) {
           (withPagination & annotationQueryParams) {
             (page: PageRequest, queryParams: AnnotationQueryParameters) =>
               complete {
@@ -207,13 +208,11 @@ trait ProjectAnnotationRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        onSuccess(
+        complete {
           AnnotationDao
             .deleteByProjectLayer(projectId)
             .transact(xa)
             .unsafeToFuture
-        ) {
-          completeSomeOrNotFound
         }
       }
     }

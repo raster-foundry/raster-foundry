@@ -403,13 +403,11 @@ trait AnnotationProjectTaskRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          onSuccess(
+          complete {
             AnnotationLabelDao
               .deleteByProjectIdAndTaskId(projectId, task)
               .transact(xa)
               .unsafeToFuture
-          ) {
-            completeSomeOrNotFound
           }
         }
       }

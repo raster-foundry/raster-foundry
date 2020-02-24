@@ -162,13 +162,11 @@ trait ProjectLayerAnnotationRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          onSuccess(
+          complete {
             AnnotationDao
               .deleteByProjectLayer(projectId, Some(layerId))
               .transact(xa)
               .unsafeToFuture
-          ) {
-            completeSomeOrNotFound
           }
         }
       }
