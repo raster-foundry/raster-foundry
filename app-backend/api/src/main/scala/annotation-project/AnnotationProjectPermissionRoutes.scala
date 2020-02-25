@@ -203,10 +203,10 @@ trait AnnotationProjectPermissionRoutes
                         .addPermission(projectId, acr)
                     }).transact(xa).unsafeToFuture
                   } yield dbAcrs
-                case us =>
-                  val acrs = getDefaultShare(user)
-                  us traverse { user =>
-                    Auth0Service.addGroundworkMetadata(user, managementToken) *>
+                case existingUsers =>
+                  existingUsers traverse { existingUser =>
+                    val acrs = getDefaultShare(existingUser)
+                    Auth0Service.addGroundworkMetadata(existingUser, managementToken) *>
                       (acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)
