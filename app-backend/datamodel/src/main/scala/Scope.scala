@@ -586,13 +586,13 @@ object Scopes {
       )
 }
 
-case class ScopeLimit(domain: Domain,
+case class ScopeUsage(domain: Domain,
                       action: Action,
                       objectId: Option[String],
                       used: Float,
                       limit: Option[Float])
 
-object ScopeLimit {
-  implicit val scopeLimitEncoder: Encoder[ScopeLimit] =
-    deriveEncoder[ScopeLimit]
+object ScopeUsage {
+  implicit val scopeUsageEncoder: Encoder[ScopeUsage] =
+    deriveEncoder[ScopeUsage]
 }

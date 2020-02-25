@@ -200,7 +200,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/UserScopeLimit'
+              $ref: '#/definitions/UserScopeUsage'
         default:
           description: 'Unexpected error'
           schema:
@@ -6126,7 +6126,7 @@ definitions:
       token_type:
         type: string
         description: 'Type of token returned by using the refresh token'
-  UserScopeLimit:
+  UserScopeUsage:
     type: object
     properties:
       domain:

@@ -206,9 +206,7 @@ trait UserRoutes
     }
   }
 
-  /*
-  Hard coded limits
-   */
+  // Hard coded limits
   def getUserLimits: Route = authenticate { user =>
     authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
       val io = for {
@@ -234,14 +232,14 @@ trait UserRoutes
           .flatMap(_.limit.map(_.toFloat))
       } yield
         List(
-          ScopeLimit(
+          ScopeUsage(
             Domain.AnnotationProjects,
             Action.Create,
             None,
             projectCount,
             projectLimit
           ),
-          ScopeLimit(
+          ScopeUsage(
             Domain.Uploads,
             Action.Create,
             None,
@@ -250,7 +248,7 @@ trait UserRoutes
           )
         ) ++ projectShares.toList.map {
           case (id, count) =>
-            ScopeLimit(
+            ScopeUsage(
               Domain.AnnotationProjects,
               Action.Share,
               Some(id.toString),
