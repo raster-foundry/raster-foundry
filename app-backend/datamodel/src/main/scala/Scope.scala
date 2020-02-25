@@ -11,7 +11,7 @@ import io.circe.{
   Error,
   HCursor,
   Json,
-  ParsingFailure,
+  ParsingFailure
 }
 
 import scala.util.{Failure, Success, Try}
