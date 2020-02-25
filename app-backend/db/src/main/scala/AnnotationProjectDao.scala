@@ -274,6 +274,16 @@ object AnnotationProjectDao
           .toLong
       }
 
+  def getAllShareCounts(userId: String): ConnectionIO[Map[UUID, Long]] =
+    for {
+      projectIds <- (fr"select id from " ++ Fragment.const(tableName) ++ fr" where owner = $userId")
+        .query[UUID]
+        .to[List]
+      projectShareCounts <- projectIds traverse { id =>
+        getShareCount(id, userId).map((id -> _))
+      }
+    } yield projectShareCounts.toMap
+
   def getAnnotationProjectStacInfo(
       annotationProjectId: UUID
   ): ConnectionIO[Option[StacLabelItemPropertiesThin]] =

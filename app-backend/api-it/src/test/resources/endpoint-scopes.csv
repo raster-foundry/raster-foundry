@@ -194,5 +194,6 @@ Path,Domain:Action,Verb
 /api/users/me/,users:readSelf,get
 /api/users/me/,users:updateSelf,patch
 /api/users/me/,users:updateSelf,put
+/api/users/me/limits,users:readSelf,get
 /api/users/me/roles,users:readSelf,get
 /api/users/search/,users:search,get
