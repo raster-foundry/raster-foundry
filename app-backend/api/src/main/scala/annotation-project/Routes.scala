@@ -48,6 +48,13 @@ trait AnnotationProjectRoutes
               deleteAnnotationProject(projectId)
             }
         } ~
+          pathPrefix("share") {
+            pathEndOrSingleSlash {
+              post {
+                shareAnnotationProject(projectId)
+              }
+            }
+          } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               get {
@@ -294,5 +301,4 @@ trait AnnotationProjectRoutes
       }
     }
   }
-
 }

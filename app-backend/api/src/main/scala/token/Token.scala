@@ -34,10 +34,6 @@ object TokenService extends Config with ErrorAccumulatingCirceSupport {
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
 
-  val auth0BearerHeader = List(
-    Authorization(GenericHttpCredentials("Bearer", auth0Bearer))
-  )
-
   val authBearerTokenCache: AsyncLoadingCache[Int, ManagementBearerToken] =
     Scaffeine()
       .expireAfterWrite(1.hour)

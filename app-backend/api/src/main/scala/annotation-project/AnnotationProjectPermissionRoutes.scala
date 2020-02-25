@@ -1,6 +1,7 @@
 package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
+import com.rasterfoundry.api.user.Auth0Service
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
@@ -20,6 +21,25 @@ trait AnnotationProjectPermissionRoutes
     with Authentication {
 
   val xa: Transactor[IO]
+
+  def getDefaultShare(user: User): List[ObjectAccessControlRule] =
+    List(
+      ObjectAccessControlRule(
+        SubjectType.User,
+        Some(user.id),
+        ActionType.View
+      ),
+      ObjectAccessControlRule(
+        SubjectType.User,
+        Some(user.id),
+        ActionType.Annotate
+      ),
+      ObjectAccessControlRule(
+        SubjectType.User,
+        Some(user.id),
+        ActionType.Export
+      )
+    )
 
   def listPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeScope(
@@ -137,6 +157,65 @@ trait AnnotationProjectPermissionRoutes
             .deletePermissions(projectId)
             .transact(xa)
             .unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def shareAnnotationProject(projectId: UUID): Route = authenticate { user =>
+    val shareCount =
+      AnnotationProjectDao
+        .getShareCount(projectId, user.id)
+        .transact(xa)
+        .unsafeToFuture
+    authorizeScopeLimit(
+      shareCount,
+      Domain.AnnotationProjects,
+      Action.Share,
+      user
+    ) {
+      entity(as[UserEmail]) { userByEmail =>
+        complete {
+          Auth0Service.getManagementBearerToken flatMap { managementToken =>
+            (for {
+              // Everything has to be Futures here because of methods in akka-http / Auth0Service
+              users <- UserDao
+                .findUsersByEmail(userByEmail.email)
+                .transact(xa)
+                .unsafeToFuture
+              permissions <- users match {
+                case Nil =>
+                  for {
+                    auth0User <- Auth0Service
+                      .createGroundworkUser(userByEmail.email, managementToken)
+                    user <- (auth0User.user_id traverse { userId =>
+                      UserDao.create(
+                        User.Create(
+                          userId,
+                          email = userByEmail.email,
+                          scope = Scopes.GroundworkUser
+                        )
+                      )
+                    }).transact(xa).unsafeToFuture
+                    acrs = user map { getDefaultShare(_) } getOrElse Nil
+                    dbAcrs <- (acrs traverse { acr =>
+                      AnnotationProjectDao
+                        .addPermission(projectId, acr)
+                    }).transact(xa).unsafeToFuture
+                  } yield dbAcrs
+                case existingUsers =>
+                  existingUsers traverse { existingUser =>
+                    val acrs = getDefaultShare(existingUser)
+                    Auth0Service.addGroundworkMetadata(existingUser,
+                                                       managementToken) *>
+                      (acrs traverse { acr =>
+                        AnnotationProjectDao
+                          .addPermission(projectId, acr)
+                      }).transact(xa).unsafeToFuture
+                  } map { _.flatten }
+              }
+            } yield permissions)
+          }
         }
       }
     }
