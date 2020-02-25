@@ -1,0 +1,24 @@
+version: "2.3"
+services:
+  postgres-dev:
+    image: quay.io/azavea/postgis:2.3-postgres9.6-slim
+    volumes:
+      - ./data/:/tmp/data/
+    env_file: .env
+    expose:
+      - "5432"
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: postgres -c log_statement=all
+
+  memcached:
+    image: memcached:1.4-alpine
+    command: -m 4096 -c 8192 -I 5242880b
+    ports:
+      - 11211:11211
