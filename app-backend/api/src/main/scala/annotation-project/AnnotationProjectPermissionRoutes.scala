@@ -183,9 +183,6 @@ trait AnnotationProjectPermissionRoutes
                 .findUsersByEmail(userByEmail.email)
                 .transact(xa)
                 .unsafeToFuture
-              // exist branch:
-              // - share with all users with this email
-              // - update auth0 to make sure those users have annotate access
               permissions <- users match {
                 case Nil =>
                   for {
