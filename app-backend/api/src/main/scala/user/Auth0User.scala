@@ -112,8 +112,7 @@ object Auth0Service extends Config with LazyLogging {
       case HttpResponse(StatusCodes.Created, _, entity, _) =>
         Unmarshal(entity).to[Auth0User]
       case resp @ HttpResponse(StatusCodes.ClientError(400), _, entity, _) =>
-        println(s"Entity is: $entity")
-        println(s"Resp is: $resp")
+        logger.debug(s"Entity from Auth0 is: $entity")
         throw new IllegalArgumentException(
           "Request must specify a valid field to update"
         )
