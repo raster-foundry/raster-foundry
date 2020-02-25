@@ -206,7 +206,8 @@ trait AnnotationProjectPermissionRoutes
                 case existingUsers =>
                   existingUsers traverse { existingUser =>
                     val acrs = getDefaultShare(existingUser)
-                    Auth0Service.addGroundworkMetadata(existingUser, managementToken) *>
+                    Auth0Service.addGroundworkMetadata(existingUser,
+                                                       managementToken) *>
                       (acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)
