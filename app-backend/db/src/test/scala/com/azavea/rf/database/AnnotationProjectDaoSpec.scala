@@ -41,7 +41,8 @@ class AnnotationProjectDaoSpec
           assert(
             result.name == annotationProjectCreate.name &&
               result.projectType == annotationProjectCreate.projectType &&
-              result.taskSizeMeters == annotationProjectCreate.taskSizeMeters &&
+              result.taskSizePixels == annotationProjectCreate.taskSizePixels &&
+              result.taskSizeMeters == None &&
               result.aoi == annotationProjectCreate.aoi &&
               result.labelersTeamId == annotationProjectCreate.labelersTeamId &&
               result.validatorsTeamId == annotationProjectCreate.validatorsTeamId &&

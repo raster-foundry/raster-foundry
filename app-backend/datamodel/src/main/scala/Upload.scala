@@ -26,7 +26,9 @@ final case class Upload(
     layerId: Option[UUID],
     source: Option[String],
     keepInSourceBucket: Boolean,
-    bytesUploaded: Long
+    bytesUploaded: Long,
+  annotationProjectId: Option[UUID],
+  generateTasks: Boolean
 )
 
 object Upload {
@@ -79,7 +81,9 @@ object Upload {
       projectId: Option[UUID],
       layerId: Option[UUID],
       source: Option[String],
-      keepInSourceBucket: Option[Boolean]
+      keepInSourceBucket: Option[Boolean],
+    annotationProjectId: Option[UUID],
+    generateTasks: Boolean
   ) {
     def toUpload(
         user: User,
@@ -139,7 +143,9 @@ object Upload {
         this.layerId,
         this.source,
         this.keepInSourceBucket.getOrElse(false),
-        bytesUploaded
+        bytesUploaded,
+        annotationProjectId,
+        generateTasks
       )
     }
   }

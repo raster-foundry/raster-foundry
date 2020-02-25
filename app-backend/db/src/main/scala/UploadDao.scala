@@ -21,7 +21,8 @@ object UploadDao extends Dao[Upload] {
        id, created_at, created_by, modified_at,
        owner, upload_status, file_type, upload_type,
        files, datasource, metadata, visibility, project_id,
-       layer_id, source, keep_in_source_bucket, bytes_uploaded
+       layer_id, source, keep_in_source_bucket, bytes_uploaded,
+       annotation_project_id, generate_tasks
     FROM
   """ ++ tableF
 
@@ -71,12 +72,14 @@ object UploadDao extends Dao[Upload] {
          (id, created_at, created_by, modified_at,
           owner, upload_status, file_type, upload_type,
           files, datasource, metadata, visibility, project_id,
-          layer_id, source, keep_in_source_bucket, bytes_uploaded)
+          layer_id, source, keep_in_source_bucket, bytes_uploaded, annotation_project_id,
+          generate_tasks)
        VALUES (
          ${upload.id}, ${upload.createdAt}, ${upload.createdBy}, ${upload.modifiedAt},
          ${upload.owner}, ${upload.uploadStatus}, ${upload.fileType}, ${upload.uploadType},
          ${upload.files}, ${upload.datasource}, ${upload.metadata}, ${upload.visibility}, ${upload.projectId},
-         ${upload.layerId}, ${upload.source}, ${upload.keepInSourceBucket}, ${upload.bytesUploaded}
+         ${upload.layerId}, ${upload.source}, ${upload.keepInSourceBucket}, ${upload.bytesUploaded},
+         ${upload.annotationProjectId}, ${upload.generateTasks}
        )
       """.update.withUniqueGeneratedKeys[Upload](
           "id",
@@ -95,7 +98,9 @@ object UploadDao extends Dao[Upload] {
           "layer_id",
           "source",
           "keep_in_source_bucket",
-          "bytes_uploaded"
+          "bytes_uploaded",
+        "annotation_project_id",
+        "generate_tasks"
         )
       )
     } yield insertedUpload

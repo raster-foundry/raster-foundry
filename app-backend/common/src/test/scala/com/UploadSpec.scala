@@ -22,7 +22,9 @@ class UploadTestSuite extends FunSuite with Matchers {
       None,
       None,
       None,
-      None
+      None,
+      None,
+      false
     )
     // note the id is not "foo"
     val user = User.Create("bar").toUser
@@ -52,7 +54,9 @@ class UploadTestSuite extends FunSuite with Matchers {
       None,
       None,
       None,
-      None
+      None,
+      None,
+      false
     )
     // note the id is not "foo"
     val user = User.Create("bar").toUser
@@ -79,7 +83,9 @@ class UploadTestSuite extends FunSuite with Matchers {
       None,
       None,
       None,
-      None
+      None,
+      None,
+      false
     )
     // note the id is not "foo"
     val user = User.Create("bar").toUser
@@ -108,7 +114,9 @@ class UploadTestSuite extends FunSuite with Matchers {
       None,
       None,
       None,
-      None
+      None,
+      None,
+      false
     )
     // note the id is not "foo"
     val user = User
