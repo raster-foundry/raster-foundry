@@ -99,8 +99,8 @@ object UploadDao extends Dao[Upload] {
           "source",
           "keep_in_source_bucket",
           "bytes_uploaded",
-        "annotation_project_id",
-        "generate_tasks"
+          "annotation_project_id",
+          "generate_tasks"
         )
       )
     } yield insertedUpload

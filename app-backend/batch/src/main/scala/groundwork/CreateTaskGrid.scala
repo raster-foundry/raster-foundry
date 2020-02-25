@@ -1,6 +1,7 @@
 package com.rasterfoundry.batch.groundwork
 
 import com.rasterfoundry.batch.Job
+import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
   AnnotationProjectDao,
   ProjectDao,
@@ -8,13 +9,12 @@ import com.rasterfoundry.database.{
   UserDao
 }
 import com.rasterfoundry.datamodel.{Task, TaskStatus}
-import com.rasterfoundry.database.util.RFTransactor
 
 import cats.data.OptionT
 import cats.effect.IO
 import cats.implicits._
-import doobie.implicits._
 import doobie.Transactor
+import doobie.implicits._
 
 import java.util.UUID
 
