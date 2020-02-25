@@ -162,7 +162,7 @@ class ProjectLiberation(tileHost: URI) {
           ) =>
         fr"""
       insert into annotation_projects
-        (id, created_at, owner, name, project_type, aoi, labelers_team_id, validators_team_id, project_id)
+        (id, created_at, owner, name, project_type, aoi, labelers_team_id, validators_team_id, project_id, task_size_pixels, ready)
       VALUES (
         uuid_generate_v4(),
         now(),
@@ -172,7 +172,9 @@ class ProjectLiberation(tileHost: URI) {
         $aoi,
         $labelersId,
         $validatorsId,
-        $projectId
+        $projectId,
+        -1,
+        true
       );
       """.update
           .withUniqueGeneratedKeys[UUID]("id")
