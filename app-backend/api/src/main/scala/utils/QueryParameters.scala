@@ -34,7 +34,7 @@ trait QueryParameterDeserializers {
     }
 
   implicit val deserializerAnnotationProjectType
-    : Unmarshaller[String, AnnotationProjectType] =
+      : Unmarshaller[String, AnnotationProjectType] =
     Unmarshaller.strict[String, AnnotationProjectType] { s =>
       AnnotationProjectType.fromString(s)
     }
@@ -194,7 +194,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         parameters(
           'exportStatus.as[String].?,
-          'projectId.as[UUID].?
+          'annotationProjectId.as[UUID].?
         )
     ).as(StacExportQueryParameters.apply _)
 
