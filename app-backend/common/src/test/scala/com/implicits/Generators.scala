@@ -1049,7 +1049,7 @@ object Generators extends ArbitraryInstances {
       Gen.const(None),
       tileLayerCreateGen map { List(_) },
       Gen.listOfN(3, labelClassGroupGen),
-      Gen.const(false)
+      arbitrary[Boolean]
     ).mapN(AnnotationProject.Create.apply _)
 
   private def annotationLabelWithClassesCreateGen

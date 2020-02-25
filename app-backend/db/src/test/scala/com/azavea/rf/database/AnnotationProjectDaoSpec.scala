@@ -155,6 +155,10 @@ class AnnotationProjectDaoSpec
             "Validators were updated"
           )
 
+          assert(
+            afterUpdate.ready == annotationProjectUpdate.ready,
+            "Readiness was updated")
+
           true
         }
       )
