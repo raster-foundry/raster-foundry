@@ -11,9 +11,10 @@ import com.rasterfoundry.database.{
 import com.rasterfoundry.datamodel.{Task, TaskStatus}
 
 import cats.data.OptionT
-import cats.effect.IO
+import cats.effect.{IO, LiftIO}
 import cats.implicits._
-import doobie.Transactor
+import com.typesafe.scalalogging.LazyLogging
+import doobie.{ConnectionIO, Transactor}
 import doobie.implicits._
 
 import java.util.UUID
@@ -22,20 +23,30 @@ class CreateTaskGrid(
     annotationProjectId: UUID,
     taskSizeMeters: Double,
     xa: Transactor[IO]
-) {
+) extends LazyLogging {
+
+  private def debug(s: String): ConnectionIO[Unit] =
+    LiftIO[ConnectionIO].liftIO(
+      IO { logger.debug(s) }
+    )
 
   def run(): IO[Unit] =
     (for {
       annotationProject <- OptionT {
-        AnnotationProjectDao.getProjectById(annotationProjectId).transact(xa)
+        AnnotationProjectDao.getProjectById(annotationProjectId)
+      }
+      _ <- OptionT.liftF {
+        debug(s"Got annotation project ${annotationProject.name}")
       }
       owner <- OptionT {
-        UserDao.getUserById(annotationProject.createdBy).transact(xa)
+        UserDao.getUserById(annotationProject.createdBy)
       }
       footprint <- OptionT {
         annotationProject.projectId traverse { projectId =>
-          ProjectDao.getFootprint(projectId).transact(xa)
+          ProjectDao.getFootprint(projectId)
         }
+      } <* OptionT.liftF {
+        debug("Got annotation project footprint")
       }
       taskGridFeatureCreate = Task.TaskGridFeatureCreate(
         Task.TaskGridCreateProperties(Some(taskSizeMeters)),
@@ -48,8 +59,8 @@ class CreateTaskGrid(
       _ <- OptionT.liftF {
         TaskDao
           .insertTasksByGrid(taskProperties, taskGridFeatureCreate, owner)
-          .transact(xa)
       }
+      _ <- OptionT.liftF { debug("Inserted tasks") }
       _ <- OptionT.liftF {
         AnnotationProjectDao
           .update(
@@ -60,9 +71,9 @@ class CreateTaskGrid(
             ),
             annotationProject.id
           )
-          .transact(xa)
       }
-    } yield ()).value.void
+      _ <- OptionT.liftF { debug("Updated annotation project") }
+    } yield ()).value.transact(xa).void
 }
 
 object CreateTaskGrid extends Job {

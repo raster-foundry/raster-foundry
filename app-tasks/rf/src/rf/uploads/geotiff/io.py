@@ -93,6 +93,6 @@ def update_annotation_project(annotation_project_id, cog_path):
             "com.rasterfoundry.batch.Main",
             "create-task-grid",
             annotation_project.id,
-            task_side_length,
+            "%.4f" % (task_side_length * annotation_project.taskSizePixels),
         ]
     )

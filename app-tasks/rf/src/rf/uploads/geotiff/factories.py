@@ -45,7 +45,7 @@ class GeoTiffS3SceneFactory(object):
         self._upload = upload
         self.isProjectUpload = upload.projectId is not None
         self.isAnnotationProjectUpload = upload.annotationProjectId is not None
-        self.generateTasks = self.isAnnotationProject and upload.generateTasks
+        self.generateTasks = self.isAnnotationProjectUpload and upload.generateTasks
         self.files = self._upload.files
         self.owner = upload.owner
         self.visibility = Visibility.PRIVATE
