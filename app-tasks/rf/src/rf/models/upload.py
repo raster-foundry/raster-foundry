@@ -22,6 +22,8 @@ class Upload(BaseModel):
         projectId=None,
         layerId=None,
         keepInSourceBucket=None,
+        annotationProjectId=None,
+        generateTasks=False
     ):
         self.id = id
         self.createdAt = createdAt
@@ -38,6 +40,8 @@ class Upload(BaseModel):
         self.projectId = projectId
         self.layerId = layerId
         self.keepInSourceBucket = keepInSourceBucket
+        self.annotationProjectId = annotationProjectId
+        self.generateTasks = False
 
     def to_dict(self):
         return dict(
@@ -56,6 +60,8 @@ class Upload(BaseModel):
             projectId=self.projectId,
             layerId=self.layerId,
             keepInSourceBucket=self.keepInSourceBucket,
+            annotationProjectId=self.annotationProjectId,
+            generateTasks=self.generateTasks
         )
 
     def update_upload_status(self, status):
@@ -80,6 +86,8 @@ class Upload(BaseModel):
             projectId=d.get("projectId"),
             layerId=d.get("layerId"),
             keepInSourceBucket=d.get("keepInSourceBucket"),
+            annotationProjectId=d.get("annotationProjectId"),
+            generateTasks=d.get("generateTasks")
         )
 
     @classmethod
