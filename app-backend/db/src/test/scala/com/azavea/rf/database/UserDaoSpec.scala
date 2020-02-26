@@ -443,4 +443,25 @@ class UserDaoSpec
       }
     }
   }
+
+  test("get list of user ids and emails") {
+    check {
+      forAll { (userCreates: NonEmptyList[User.Create]) =>
+        {
+          val listIO = for {
+            _ <- userCreates traverse { userCreate =>
+              UserDao.create(userCreate)
+            }
+            listed <- UserDao.getThinUsersForIds(userCreates.map(_.id).toList)
+          } yield listed
+          val users = listIO.transact(xa).unsafeRunSync
+          assert(
+            users.map(_.id).toSet.equals(userCreates.map(_.id).toList.toSet),
+            "users are listed"
+          )
+          true
+        }
+      }
+    }
+  }
 }

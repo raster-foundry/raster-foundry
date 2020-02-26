@@ -162,6 +162,83 @@ trait AnnotationProjectPermissionRoutes
     }
   }
 
+  def listAnnotationProjectShares(projectId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.Share, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Edit
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            AnnotationProjectDao
+              .getSharedUsers(projectId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def deleteAnnotationProjectShare(projectId: UUID, deleteId: String): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+        user
+      ) {
+        if (user.id == deleteId) {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.View
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            completeWithOneOrFail {
+              AnnotationProjectDao
+                .deleteSharedUser(projectId, user.id)
+                .map(c => if (c > 0) 1 else 0)
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        } else {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Edit
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            completeWithOneOrFail {
+              AnnotationProjectDao
+                .deleteSharedUser(projectId, deleteId)
+                .map(c => if (c > 0) 1 else 0)
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+
   def shareAnnotationProject(projectId: UUID): Route = authenticate { user =>
     val shareCount =
       AnnotationProjectDao
@@ -206,8 +283,8 @@ trait AnnotationProjectPermissionRoutes
                 case existingUsers =>
                   existingUsers traverse { existingUser =>
                     val acrs = getDefaultShare(existingUser)
-                    Auth0Service.addGroundworkMetadata(existingUser,
-                                                       managementToken) *>
+                    Auth0Service
+                      .addGroundworkMetadata(existingUser, managementToken) *>
                       (acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)

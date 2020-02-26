@@ -322,4 +322,29 @@ object AnnotationProjectDao
       )
     } yield stacInfo).value
 
+  def getSharedUsers(projectId: UUID) = {
+    for {
+      permissions <- AnnotationProjectDao.getPermissions(projectId)
+      ids = permissions
+        .filter(
+          _.subjectType == SubjectType.User
+        )
+        .map(_.subjectId)
+        .flatten
+      users <- UserDao.getThinUsersForIds(ids)
+    } yield users
+  }
+
+  def deleteSharedUser(projectId: UUID, userId: String): ConnectionIO[Int] = {
+    for {
+      permissions <- AnnotationProjectDao.getPermissions(projectId)
+      permissionsToKeep = permissions.filter(
+        p => p.subjectId.map(id => id != userId).getOrElse(true)
+      )
+      permissionsResult <- permissions.size > permissionsToKeep.size && permissions.size > 0 match {
+        case true => replacePermissions(projectId, permissionsToKeep)
+        case _    => (permissions).pure[ConnectionIO]
+      }
+    } yield (permissions.size - permissionsResult.size)
+  }
 }

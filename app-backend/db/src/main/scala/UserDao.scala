@@ -5,6 +5,7 @@ import com.rasterfoundry.database.util.Cache
 import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.datamodel._
 
+import cats.data._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -302,4 +303,15 @@ object UserDao extends Dao[User] with Sanitization {
     query
       .filter(fr"(email = $email OR personal_info ->> 'email' = $email)")
       .list
+
+  def getThinUsersForIds(ids: List[String]): ConnectionIO[List[UserThin]] =
+    ids.toNel match {
+      case Some(idsNel) =>
+        Nested(
+          query
+            .filter(Fragments.in(fr"id", idsNel))
+            .list
+        ).map(UserThin.fromUser(_)).value
+      case _ => List.empty.pure[ConnectionIO]
+    }
 }
