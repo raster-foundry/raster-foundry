@@ -164,7 +164,7 @@ object Task {
   }
 
   final case class TaskGridCreateProperties(
-      sizeMeters: Option[Int]
+      sizeMeters: Option[Double]
   )
 
   object TaskGridCreateProperties {

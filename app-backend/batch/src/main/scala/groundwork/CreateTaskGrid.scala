@@ -18,24 +18,11 @@ import doobie.implicits._
 
 import java.util.UUID
 
-class CreateTaskGrid(annotationProjectId: UUID, xa: Transactor[IO]) {
-  // assuming upload has been processed, there is:
-  //
-  // - a scene
-  // - in a layer
-  // - in a project
-  // - for this annotation project
-  //
-  // we want to:
-  //
-  // - [x] get its footprint
-  // - [x] create a TaskGridFeatureCreate with the footprint
-  // - also with the sizeMeters that corresponds to the taskSizePixels of this annotation project
-  // - [x] use the existing TaskDao method to insert the task grid
-  // - [x] update annotation project aoi with the footprint
-  // - [x] mark the annotation project ready
-
-  val taskSizeMeters: Int = ??? // TODO
+class CreateTaskGrid(
+    annotationProjectId: UUID,
+    taskSizeMeters: Double,
+    xa: Transactor[IO]
+) {
 
   def run(): IO[Unit] =
     (for {
@@ -51,7 +38,8 @@ class CreateTaskGrid(annotationProjectId: UUID, xa: Transactor[IO]) {
         }
       }
       taskGridFeatureCreate = Task.TaskGridFeatureCreate(
-        Task.TaskGridCreateProperties(taskSizeMeters) footprint
+        Task.TaskGridCreateProperties(Some(taskSizeMeters)),
+        footprint
       )
       taskProperties = Task.TaskPropertiesCreate(
         TaskStatus.Unlabeled,
@@ -82,9 +70,13 @@ object CreateTaskGrid extends Job {
   val name = "create-task-grid"
 
   def runJob(args: List[String]): IO[Unit] = args match {
-    case annotationProjectId +: Nil =>
+    case annotationProjectId +: taskSizeMeters +: Nil =>
       val xa = RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
-      new CreateTaskGrid(UUID.fromString(annotationProjectId), xa).run()
+      new CreateTaskGrid(
+        UUID.fromString(annotationProjectId),
+        taskSizeMeters.toDouble,
+        xa
+      ).run()
     case _ =>
       IO.raiseError(
         new Exception("Must provide exactly one annotation project id")
