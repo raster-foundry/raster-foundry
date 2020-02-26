@@ -1,3 +1,4 @@
+from .annotation_project import AnnotationProject
 from .band import Band
 from .thumbnail import Thumbnail
 from .footprint import Footprint

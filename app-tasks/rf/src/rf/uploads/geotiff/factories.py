@@ -6,6 +6,7 @@ import boto3
 
 from .create_images import create_geotiff_image
 from .create_scenes import create_geotiff_scene
+from .io import update_annotation_project
 from rf.utils import cog
 from rf.utils.io import (
     Visibility,
@@ -43,6 +44,8 @@ class GeoTiffS3SceneFactory(object):
         """
         self._upload = upload
         self.isProjectUpload = upload.projectId is not None
+        self.isAnnotationProjectUpload = upload.annotationProjectId is not None
+        self.generateTasks = self.isAnnotationProjectUpload and upload.generateTasks
         self.files = self._upload.files
         self.owner = upload.owner
         self.visibility = Visibility.PRIVATE
@@ -92,6 +95,10 @@ class GeoTiffS3SceneFactory(object):
                         tmp_fname, unquote(scene.ingestLocation), scene, cog_path
                     )
                 ]
+                if self.generateTasks:
+                    update_annotation_project(
+                        self._upload.annotationProjectId, cog_path
+                    )
 
             scene.thumbnails = []
             scene.images = images

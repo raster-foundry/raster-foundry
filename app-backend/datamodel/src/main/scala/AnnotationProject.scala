@@ -13,11 +13,13 @@ final case class AnnotationProject(
     createdBy: String,
     name: String,
     projectType: AnnotationProjectType,
-    taskSizeMeters: Option[Int],
+    taskSizeMeters: Option[Double],
+    taskSizePixels: Int,
     aoi: Option[Projected[Geometry]],
     labelersTeamId: Option[UUID],
     validatorsTeamId: Option[UUID],
-    projectId: Option[UUID]
+    projectId: Option[UUID],
+    ready: Boolean
 ) {
   def withRelated(
       tileLayers: List[TileLayer],
@@ -30,10 +32,12 @@ final case class AnnotationProject(
       name,
       projectType,
       taskSizeMeters,
+      taskSizePixels,
       aoi,
       labelersTeamId,
       validatorsTeamId,
       projectId,
+      ready,
       tileLayers,
       labelClassGroups
     )
@@ -46,13 +50,14 @@ object AnnotationProject {
   final case class Create(
       name: String,
       projectType: AnnotationProjectType,
-      taskSizeMeters: Option[Int],
+      taskSizePixels: Int,
       aoi: Option[Projected[Geometry]],
       labelersTeamId: Option[UUID],
       validatorsTeamId: Option[UUID],
       projectId: Option[UUID],
       tileLayers: List[TileLayer.Create],
-      labelClassGroups: List[AnnotationLabelClassGroup.Create]
+      labelClassGroups: List[AnnotationLabelClassGroup.Create],
+      ready: Boolean
   )
 
   object Create {
@@ -65,11 +70,13 @@ object AnnotationProject {
       createdBy: String,
       name: String,
       projectType: AnnotationProjectType,
-      taskSizeMeters: Option[Int],
+      taskSizeMeters: Option[Double],
+      taskSizePixels: Int,
       aoi: Option[Projected[Geometry]],
       labelersTeamId: Option[UUID],
       validatorsTeamId: Option[UUID],
       projectId: Option[UUID],
+      ready: Boolean,
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses]
   ) {
@@ -80,10 +87,12 @@ object AnnotationProject {
       name,
       projectType,
       taskSizeMeters,
+      taskSizePixels,
       aoi,
       labelersTeamId,
       validatorsTeamId,
-      projectId
+      projectId,
+      ready
     )
 
     def withSummary(
@@ -97,10 +106,12 @@ object AnnotationProject {
         name,
         projectType,
         taskSizeMeters,
+        taskSizePixels,
         aoi,
         labelersTeamId,
         validatorsTeamId,
         projectId,
+        ready,
         tileLayers,
         labelClassGroups,
         taskStatusSummary,
@@ -141,11 +152,13 @@ object AnnotationProject {
       createdBy: String,
       name: String,
       projectType: AnnotationProjectType,
-      taskSizeMeters: Option[Int],
+      taskSizeMeters: Option[Double],
+      taskSizePixels: Int,
       aoi: Option[Projected[Geometry]],
       labelersTeamId: Option[UUID],
       validatorsTeamId: Option[UUID],
       projectId: Option[UUID],
+      ready: Boolean,
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
       taskStatusSummary: Map[TaskStatus, Int],

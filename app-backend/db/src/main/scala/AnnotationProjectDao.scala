@@ -20,7 +20,8 @@ object AnnotationProjectDao
   def selectF: Fragment = sql"""
     SELECT
       id, created_at, owner, name, project_type, task_size_meters,
-      aoi, labelers_team_id, validators_team_id, project_id
+      task_size_pixels, aoi, labelers_team_id, validators_team_id,
+      project_id, ready
     FROM
   """ ++ tableF
 
@@ -127,14 +128,14 @@ object AnnotationProjectDao
       user: User
   ): ConnectionIO[AnnotationProject.WithRelated] = {
     val projectInsert = (fr"INSERT INTO" ++ tableF ++ fr"""
-      (id, created_at, owner, name, project_type, task_size_meters,
-       aoi, labelers_team_id, validators_team_id, project_id)
+      (id, created_at, owner, name, project_type, task_size_pixels,
+       aoi, labelers_team_id, validators_team_id, project_id, ready)
     VALUES
       (uuid_generate_v4(), now(), ${user.id}, ${newAnnotationProject.name},
-       ${newAnnotationProject.projectType}, ${newAnnotationProject.taskSizeMeters},
+       ${newAnnotationProject.projectType}, ${newAnnotationProject.taskSizePixels},
        ${newAnnotationProject.aoi}, ${newAnnotationProject.labelersTeamId},
        ${newAnnotationProject.validatorsTeamId},
-       ${newAnnotationProject.projectId})
+       ${newAnnotationProject.projectId}, ${newAnnotationProject.ready})
     """).update.withUniqueGeneratedKeys[AnnotationProject](
       "id",
       "created_at",
@@ -142,10 +143,12 @@ object AnnotationProjectDao
       "name",
       "project_type",
       "task_size_meters",
+      "task_size_pixels",
       "aoi",
       "labelers_team_id",
       "validators_team_id",
-      "project_id"
+      "project_id",
+      "ready"
     )
 
     for {
@@ -225,8 +228,9 @@ object AnnotationProjectDao
       name = ${project.name},
       labelers_team_id = ${project.labelersTeamId},
       validators_team_id = ${project.validatorsTeamId},
-      "task_size_meters"= ${project.taskSizeMeters},
-      "aoi" = ${project.aoi}
+      task_size_meters= ${project.taskSizeMeters},
+      aoi = ${project.aoi},
+      ready = ${project.ready}
     WHERE
       id = $id
     """).update.run;

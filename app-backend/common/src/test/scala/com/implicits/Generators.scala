@@ -578,6 +578,8 @@ object Generators extends ArbitraryInstances {
       layerId <- Gen.const(None)
       source <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
       keepInSourceBucket <- Gen.const(None)
+      annotationProjectId <- Gen.const(None)
+      generateTasks <- Gen.const(false)
     } yield {
       Upload.Create(
         uploadStatus,
@@ -591,7 +593,9 @@ object Generators extends ArbitraryInstances {
         projectId,
         layerId,
         source,
-        keepInSourceBucket
+        keepInSourceBucket,
+        annotationProjectId,
+        generateTasks
       )
     }
 
@@ -1038,13 +1042,14 @@ object Generators extends ArbitraryInstances {
     (
       nonEmptyStringGen,
       annotationProjectTypeGen,
-      Gen.option(Gen.choose(1, 1000)),
+      Gen.choose(1, 1000),
       Gen.option(projectedMultiPolygonGen3857),
       Gen.const(None),
       Gen.const(None),
       Gen.const(None),
       tileLayerCreateGen map { List(_) },
-      Gen.listOfN(3, labelClassGroupGen)
+      Gen.listOfN(3, labelClassGroupGen),
+      arbitrary[Boolean]
     ).mapN(AnnotationProject.Create.apply _)
 
   private def annotationLabelWithClassesCreateGen
