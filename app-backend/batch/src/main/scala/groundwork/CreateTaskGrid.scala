@@ -14,8 +14,8 @@ import cats.data.OptionT
 import cats.effect.{IO, LiftIO}
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
-import doobie.{ConnectionIO, Transactor}
 import doobie.implicits._
+import doobie.{ConnectionIO, Transactor}
 
 import java.util.UUID
 
