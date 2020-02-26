@@ -554,7 +554,8 @@ object Scopes {
             Action.Create,
             Some(10.toLong)
           ),
-          ScopedAction(Domain.AnnotationProjects, Action.Share, Some(5.toLong))
+          ScopedAction(Domain.AnnotationProjects, Action.Share, Some(5.toLong)),
+          ScopedAction(Domain.Projects, Action.Create, None)
         ) ++ Set(
           Action.Read,
           Action.Update,
