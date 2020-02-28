@@ -23,4 +23,7 @@ COPY jars/ /opt/raster-foundry/jars/
 
 COPY rf/ /tmp/rf
 COPY completion.bash /tmp/rf/completion.bash
+
 RUN (cat /tmp/rf/completion.bash | tee -a /root/.bashrc && cd /tmp/rf && python3 setup.py install)
+
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
