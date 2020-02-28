@@ -304,14 +304,12 @@ object UserDao extends Dao[User] with Sanitization {
       .filter(fr"(email = $email OR personal_info ->> 'email' = $email)")
       .list
 
-  def getThinUsersForIds(ids: List[String]): ConnectionIO[List[UserThin]] =
-    ids.toNel match {
-      case Some(idsNel) =>
-        Nested(
-          query
-            .filter(Fragments.in(fr"id", idsNel))
-            .list
-        ).map(UserThin.fromUser(_)).value
-      case _ => List.empty.pure[ConnectionIO]
-    }
+  def getThinUsersForIds(
+      ids: NonEmptyList[String]
+  ): ConnectionIO[List[UserThin]] =
+    Nested(
+      query
+        .filter(Fragments.in(fr"id", ids))
+        .list
+    ).map(UserThin.fromUser(_)).value
 }

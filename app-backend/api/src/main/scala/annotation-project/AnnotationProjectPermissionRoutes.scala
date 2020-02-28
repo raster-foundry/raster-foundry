@@ -195,7 +195,7 @@ trait AnnotationProjectPermissionRoutes
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
       ) {
-        if (user.id == deleteId) {
+        (if (user.id == deleteId) {
           authorizeAuthResultAsync {
             AnnotationProjectDao
               .authorized(
@@ -206,15 +206,7 @@ trait AnnotationProjectPermissionRoutes
               )
               .transact(xa)
               .unsafeToFuture
-          } {
-            completeWithOneOrFail {
-              AnnotationProjectDao
-                .deleteSharedUser(projectId, user.id)
-                .map(c => if (c > 0) 1 else 0)
-                .transact(xa)
-                .unsafeToFuture
-            }
-          }
+          } 
         } else {
           authorizeAuthResultAsync {
             AnnotationProjectDao
@@ -226,7 +218,8 @@ trait AnnotationProjectPermissionRoutes
               )
               .transact(xa)
               .unsafeToFuture
-          } {
+          } 
+        }) {
             completeWithOneOrFail {
               AnnotationProjectDao
                 .deleteSharedUser(projectId, deleteId)
@@ -235,7 +228,6 @@ trait AnnotationProjectPermissionRoutes
                 .unsafeToFuture
             }
           }
-        }
       }
     }
 

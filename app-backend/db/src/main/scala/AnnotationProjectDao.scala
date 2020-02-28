@@ -322,16 +322,19 @@ object AnnotationProjectDao
       )
     } yield stacInfo).value
 
-  def getSharedUsers(projectId: UUID) = {
+  def getSharedUsers(projectId: UUID): ConnectionIO[List[UserThin]] = {
     for {
       permissions <- AnnotationProjectDao.getPermissions(projectId)
-      ids = permissions
+      idsNel = permissions
         .filter(
           _.subjectType == SubjectType.User
         )
-        .map(_.subjectId)
-        .flatten
-      users <- UserDao.getThinUsersForIds(ids)
+        .flatMap(_.subjectId)
+        .toNel
+      users <- idsNel match {
+        case Some(ids) => UserDao.getThinUsersForIds(ids)
+        case _ => List.empty.pure[ConnectionIO]
+      }
     } yield users
   }
 
