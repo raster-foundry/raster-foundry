@@ -6,6 +6,7 @@ from planet import api
 
 from ..models import Upload
 from ..uploads.geotiff import GeoTiffS3SceneFactory
+from ..uploads.geotiff.io import update_annotation_project
 from ..uploads.landsat_historical import LandsatHistoricalSceneFactory
 from ..uploads.planet.factories import PlanetSceneFactory
 from ..uploads.modis.factories import MODISSceneFactory
@@ -120,6 +121,13 @@ def process_upload(upload_id):
             upload.owner,
             upload.files,
         )
+
+        generate_tasks = upload.annotationProjectId is not None and upload.generateTasks
+        if generate_tasks:
+            [
+                update_annotation_project(upload.annotationProjectId, scene.ingestLocation)
+                for scene in created_scenes
+            ]
     except:
         logger.error(
             "Failed to process upload (%s) for user %s with files %s",
