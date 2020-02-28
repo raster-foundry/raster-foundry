@@ -223,7 +223,10 @@ class UploadDaoSpec
             updatedUpload.metadata == updateUpload.metadata &&
             updatedUpload.visibility == updateUpload.visibility &&
             updatedUpload.projectId == updateUpload.projectId &&
-            updatedUpload.source == updateUpload.source
+            updatedUpload.source == updateUpload.source &&
+            updatedUpload.annotationProjectId ==
+            updateUpload.annotationProjectId &&
+            updatedUpload.generateTasks == updateUpload.generateTasks
           }
       }
     }
