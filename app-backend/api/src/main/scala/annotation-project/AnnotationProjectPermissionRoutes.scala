@@ -196,38 +196,38 @@ trait AnnotationProjectPermissionRoutes
         user
       ) {
         (if (user.id == deleteId) {
-          authorizeAuthResultAsync {
+           authorizeAuthResultAsync {
+             AnnotationProjectDao
+               .authorized(
+                 user,
+                 ObjectType.AnnotationProject,
+                 projectId,
+                 ActionType.View
+               )
+               .transact(xa)
+               .unsafeToFuture
+           }
+         } else {
+           authorizeAuthResultAsync {
+             AnnotationProjectDao
+               .authorized(
+                 user,
+                 ObjectType.AnnotationProject,
+                 projectId,
+                 ActionType.Edit
+               )
+               .transact(xa)
+               .unsafeToFuture
+           }
+         }) {
+          completeWithOneOrFail {
             AnnotationProjectDao
-              .authorized(
-                user,
-                ObjectType.AnnotationProject,
-                projectId,
-                ActionType.View
-              )
+              .deleteSharedUser(projectId, deleteId)
+              .map(c => if (c > 0) 1 else 0)
               .transact(xa)
               .unsafeToFuture
-          } 
-        } else {
-          authorizeAuthResultAsync {
-            AnnotationProjectDao
-              .authorized(
-                user,
-                ObjectType.AnnotationProject,
-                projectId,
-                ActionType.Edit
-              )
-              .transact(xa)
-              .unsafeToFuture
-          } 
-        }) {
-            completeWithOneOrFail {
-              AnnotationProjectDao
-                .deleteSharedUser(projectId, deleteId)
-                .map(c => if (c > 0) 1 else 0)
-                .transact(xa)
-                .unsafeToFuture
-            }
           }
+        }
       }
     }
 

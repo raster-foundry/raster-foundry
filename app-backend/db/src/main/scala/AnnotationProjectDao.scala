@@ -333,7 +333,7 @@ object AnnotationProjectDao
         .toNel
       users <- idsNel match {
         case Some(ids) => UserDao.getThinUsersForIds(ids)
-        case _ => List.empty.pure[ConnectionIO]
+        case _         => List.empty.pure[ConnectionIO]
       }
     } yield users
   }
