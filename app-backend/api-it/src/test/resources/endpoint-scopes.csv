@@ -26,6 +26,8 @@ Path,Domain:Action,Verb
 /api/annotation-projects/{annotationProjectID}/permissions/,annotationProjects:share,post
 /api/annotation-projects/{annotationProjectID}/permissions/,annotationProjects:share,delete
 /api/annotation-projects/{annotationProjectID}/share,annotationProjects:share,post
+/api/annotation-projects/{annotationProjectID}/share,annotationProjects:share,get
+/api/annotation-projects/{annotationProjectID}/share/{userID},annotationProjects:read,delete
 /api/annotation-projects/{annotationProjectID}/tasks/,annotationProjects:readTasks,get
 /api/annotation-projects/{annotationProjectID}/tasks/,annotationProjects:createTasks,post
 /api/annotation-projects/{annotationProjectID}/tasks/,annotationProjects:deleteTasks,delete

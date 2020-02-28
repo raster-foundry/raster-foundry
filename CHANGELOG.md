@@ -5,7 +5,7 @@
 ### Added
 
 - Update annotation projects after upload processing as appropriate [#5324](https://github.com/raster-foundry/raster-foundry/pull/5324)
-- Added a special share endpoint that can be used with just an email for annotation projects [#5321](https://github.com/raster-foundry/raster-foundry/pull/5321)
+- Added special share endpoints that can be used with just an email for annotation projects [#5321](https://github.com/raster-foundry/raster-foundry/pull/5321), [#5327](https://github.com/raster-foundry/raster-foundry/pull/5327)
 - Added a CSV-configurable scope checking integration test [#5297](https://github.com/raster-foundry/raster-foundry/pull/5297), [#5306](https://github.com/raster-foundry/raster-foundry/pull/5306)
 - Added POST endpoint for annotation projects and their related fields [#5294](https://github.com/raster-foundry/raster-foundry/pull/5294)
 - Added `signed-url` endpoint for uploads to send secure PUTs to s3 [#5290](https://github.com/raster-foundry/raster-foundry/pull/5290)
