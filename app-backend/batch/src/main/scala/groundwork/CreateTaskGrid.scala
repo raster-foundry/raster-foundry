@@ -25,9 +25,9 @@ class CreateTaskGrid(
     xa: Transactor[IO]
 ) extends LazyLogging {
 
-  private def debug(s: String): ConnectionIO[Unit] =
+  private def info(s: String): ConnectionIO[Unit] =
     LiftIO[ConnectionIO].liftIO(
-      IO { logger.debug(s) }
+      IO { logger.info(s) }
     )
 
   def run(): IO[Unit] =
@@ -36,7 +36,7 @@ class CreateTaskGrid(
         AnnotationProjectDao.getProjectById(annotationProjectId)
       }
       _ <- OptionT.liftF {
-        debug(s"Got annotation project ${annotationProject.name}")
+        info(s"Got annotation project ${annotationProject.name}")
       }
       owner <- OptionT {
         UserDao.getUserById(annotationProject.createdBy)
@@ -46,7 +46,7 @@ class CreateTaskGrid(
           ProjectDao.getFootprint(projectId)
         }
       } <* OptionT.liftF {
-        debug("Got annotation project footprint")
+        info("Got annotation project footprint")
       }
       taskGridFeatureCreate = Task.TaskGridFeatureCreate(
         Task.TaskGridCreateProperties(Some(taskSizeMeters)),
@@ -60,7 +60,7 @@ class CreateTaskGrid(
         TaskDao
           .insertTasksByGrid(taskProperties, taskGridFeatureCreate, owner)
       }
-      _ <- OptionT.liftF { debug("Inserted tasks") }
+      _ <- OptionT.liftF { info("Inserted tasks") }
       _ <- OptionT.liftF {
         AnnotationProjectDao
           .update(
@@ -72,7 +72,7 @@ class CreateTaskGrid(
             annotationProject.id
           )
       }
-      _ <- OptionT.liftF { debug("Updated annotation project") }
+      _ <- OptionT.liftF { info("Updated annotation project") }
     } yield ()).value.transact(xa).void
 }
 
