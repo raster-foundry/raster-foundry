@@ -51,7 +51,8 @@ class UploadDaoSpec
             dbUpload.files == upload.files &&
             dbUpload.metadata == upload.metadata &&
             dbUpload.visibility == upload.visibility &&
-            dbUpload.source == upload.source
+            dbUpload.source == upload.source &&
+            dbUpload.generateTasks === upload.generateTasks
           }
       }
     }
