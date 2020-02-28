@@ -125,7 +125,8 @@ def process_upload(upload_id):
         generate_tasks = upload.annotationProjectId is not None and upload.generateTasks
         if generate_tasks:
             [
-                update_annotation_project(upload.annotationProjectId, scene.ingestLocation)
+                update_annotation_project(
+                    upload.annotationProjectId, scene.ingestLocation.replace("%7C", "|"))
                 for scene in created_scenes
             ]
     except:
