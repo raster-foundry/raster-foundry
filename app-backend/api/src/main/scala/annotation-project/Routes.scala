@@ -52,6 +52,15 @@ trait AnnotationProjectRoutes
             pathEndOrSingleSlash {
               post {
                 shareAnnotationProject(projectId)
+              } ~
+                get {
+                  listAnnotationProjectShares(projectId)
+                }
+            } ~ pathPrefix(Segment) { deleteId =>
+              pathEndOrSingleSlash {
+                delete {
+                  deleteAnnotationProjectShare(projectId, deleteId)
+                }
               }
             }
           } ~

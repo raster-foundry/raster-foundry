@@ -248,3 +248,10 @@ object User {
 }
 
 @JsonCodec final case class UserEmail(email: String)
+
+@JsonCodec final case class UserThin(id: String,
+                                     email: String,
+                                     profileImageUri: String)
+object UserThin {
+  def fromUser(user: User) = UserThin(user.id, user.email, user.profileImageUri)
+}
