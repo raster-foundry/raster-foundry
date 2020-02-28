@@ -46,7 +46,7 @@ def create_geotiff_bands(tif_path):
     bands = []
     with rasterio.open(tif_path) as src:
         for band in src.indexes:
-            colorinterp = src.colorinterp(band)
+            colorinterp = src.colorinterp[band - 1]
             if colorinterp == ColorInterp.undefined:
                 band_data = band_data_lookup["nir"]
             elif colorinterp.name in band_data_lookup:
