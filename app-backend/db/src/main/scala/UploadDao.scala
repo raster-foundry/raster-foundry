@@ -123,7 +123,9 @@ object UploadDao extends Dao[Upload] {
           layer_id = ${upload.layerId},
           source = ${upload.source},
           keep_in_source_bucket = ${upload.keepInSourceBucket},
-          bytes_uploaded = ${upload.bytesUploaded}
+          bytes_uploaded = ${upload.bytesUploaded},
+          annotation_project_id = ${upload.annotationProjectId},
+          generate_tasks = ${upload.generateTasks}
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
     (for {
       oldUpload <- oldUploadIO
