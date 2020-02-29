@@ -324,7 +324,7 @@ object AnnotationProjectDao
 
   def getSharedUsers(projectId: UUID): ConnectionIO[List[UserThin]] = {
     for {
-      permissions <- AnnotationProjectDao.getPermissions(projectId)
+      permissions <- getPermissions(projectId)
       idsNel = permissions
         .filter(
           _.subjectType == SubjectType.User
@@ -340,13 +340,16 @@ object AnnotationProjectDao
 
   def deleteSharedUser(projectId: UUID, userId: String): ConnectionIO[Int] = {
     for {
-      permissions <- AnnotationProjectDao.getPermissions(projectId)
+      permissions <- getPermissions(projectId)
       permissionsToKeep = permissions.filter(
         p => p.subjectId.map(id => id != userId).getOrElse(true)
       )
-      permissionsResult <- permissions.size > permissionsToKeep.size && permissions.size > 0 match {
-        case true => replacePermissions(projectId, permissionsToKeep)
-        case _    => (permissions).pure[ConnectionIO]
+      permissionsResult <- permissionsToKeep match {
+        case Nil => deletePermissions(projectId) map { _ => permissions }
+        case ps if ps.toSet != permissions.toSet =>
+          replacePermissions(projectId, ps)
+        case _ =>
+          Nil.pure[ConnectionIO]
       }
     } yield (permissions.size - permissionsResult.size)
   }
