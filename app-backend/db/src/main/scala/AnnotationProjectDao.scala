@@ -314,7 +314,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-                )
+              )
             )
         }.flatten,
         "vector",
