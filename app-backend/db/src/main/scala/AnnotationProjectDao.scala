@@ -341,9 +341,9 @@ object AnnotationProjectDao
   def deleteSharedUser(projectId: UUID, userId: String): ConnectionIO[Int] = {
     for {
       permissions <- getPermissions(projectId)
-      permissionsToKeep = permissions.filter(
-        p => p.subjectId.map(id => id != userId).getOrElse(true)
-      )
+      permissionsToKeep = permissions collect {
+        case p if p.subjectId != Some(userId) => p
+      }
       numberDeleted <- permissionsToKeep match {
         case Nil => deletePermissions(projectId)
         case ps if ps.toSet != permissions.toSet =>
