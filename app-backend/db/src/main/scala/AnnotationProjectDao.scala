@@ -314,7 +314,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
@@ -344,13 +344,15 @@ object AnnotationProjectDao
       permissionsToKeep = permissions.filter(
         p => p.subjectId.map(id => id != userId).getOrElse(true)
       )
-      permissionsResult <- permissionsToKeep match {
-        case Nil => deletePermissions(projectId) map { _ => permissions }
+      numberDeleted <- permissionsToKeep match {
+        case Nil => deletePermissions(projectId)
         case ps if ps.toSet != permissions.toSet =>
-          replacePermissions(projectId, ps)
+          replacePermissions(projectId, ps) map { _ =>
+            permissions.size - ps.size
+          }
         case _ =>
-          Nil.pure[ConnectionIO]
+          0.pure[ConnectionIO]
       }
-    } yield (permissions.size - permissionsResult.size)
+    } yield numberDeleted
   }
 }
