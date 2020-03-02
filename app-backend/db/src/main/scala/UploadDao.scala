@@ -27,7 +27,7 @@ object UploadDao extends Dao[Upload] {
   """ ++ tableF
 
   def getUserBytesUploaded(user: User): ConnectionIO[Long] =
-    fr"SELECT SUM(bytes_uploaded) FROM uploads WHERE owner = ${user.id}"
+    fr"SELECT COALESCE(SUM(bytes_uploaded), 0) FROM uploads WHERE owner = ${user.id}"
       .query[Long]
       .unique
 
