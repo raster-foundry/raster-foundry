@@ -33,6 +33,7 @@
 ### Fixed
 - Upload updates now respect all fields [#5330](https://github.com/raster-foundry/raster-foundry/pull/5330)
 - Removed unused route and fixed spelling in Swagger spec [#5273](https://github.com/raster-foundry/raster-foundry/pull/5273)
+- Fix 403 when users with no uploads try to create an upload [#5337](https://github.com/raster-foundry/raster-foundry/pull/5337)
 
 ### Security
 
