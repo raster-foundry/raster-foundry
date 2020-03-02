@@ -24,6 +24,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Random
 
+import java.net.URLEncoder
+
 @JsonCodec
 final case class Auth0User(
     email: Option[String],
@@ -35,7 +37,7 @@ final case class Auth0User(
     created_at: Option[String],
     updated_at: Option[String],
     identities: Option[Json],
-    // app_metadata: Option[Json],
+    app_metadata: Option[Json],
     user_metadata: Option[Json],
     picture: Option[String],
     name: Option[String],
@@ -76,7 +78,7 @@ object UserWithOAuth {
         u.visibility,
         u.dropboxCredential,
         u.planetCredential
-    )
+      )
   )
 }
 @JsonCodec
@@ -105,7 +107,13 @@ object Auth0Service extends Config with LazyLogging {
       .maximumSize(1)
       .buildAsyncFuture((_: Int) => getManagementBearerToken())
 
-  private def responseAsAuth0User(response: HttpResponse): Future[Auth0User] =
+  private def getBearerHeaders(bearerToken: ManagementBearerToken) = List(
+    Authorization(
+      GenericHttpCredentials(bearerToken.token_type, bearerToken.access_token)
+    )
+  )
+
+  private def responseAsAuth0User(response: HttpResponse): Future[Auth0User] = {
     response match {
       case HttpResponse(StatusCodes.OK, _, entity, _) =>
         Unmarshal(entity).to[Auth0User]
@@ -126,6 +134,7 @@ object Auth0Service extends Config with LazyLogging {
         logger.info(s"error $error")
         throw new Auth0Exception(errCode, error.toString)
     }
+  }
 
   def getManagementBearerToken(): Future[ManagementBearerToken] = {
     val bearerTokenUri = Uri(s"https://$auth0Domain/oauth/token")
@@ -157,9 +166,8 @@ object Auth0Service extends Config with LazyLogging {
       userId: String,
       bearerToken: ManagementBearerToken
   ): Future[Auth0User] = {
-    val auth0UserBearerHeader = List(
-      Authorization(GenericHttpCredentials("Bearer", bearerToken.access_token))
-    )
+    val auth0UserBearerHeader = getBearerHeaders(bearerToken)
+
     Http()
       .singleRequest(
         HttpRequest(
@@ -198,9 +206,7 @@ object Auth0Service extends Config with LazyLogging {
       auth0UserUpdate: Auth0UserUpdate,
       bearerToken: ManagementBearerToken
   ): Future[Auth0User] = {
-    val auth0UserBearerHeader = List(
-      Authorization(GenericHttpCredentials("Bearer", bearerToken.access_token))
-    )
+    val auth0UserBearerHeader = getBearerHeaders(bearerToken)
     Http()
       .singleRequest(
         HttpRequest(
@@ -222,11 +228,7 @@ object Auth0Service extends Config with LazyLogging {
       bearerToken: ManagementBearerToken
   ): Future[Unit] = {
     val patch = Map("app_metadata" -> Map("annotateApp" -> true)).asJson
-    val managementBearerHeaders = List(
-      Authorization(
-        GenericHttpCredentials(bearerToken.token_type, bearerToken.access_token)
-      )
-    )
+    val managementBearerHeaders = getBearerHeaders(bearerToken)
 
     Http()
       .singleRequest(
@@ -243,7 +245,8 @@ object Auth0Service extends Config with LazyLogging {
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, _, _) =>
           Future.successful(())
-        case HttpResponse(StatusCodes.ClientError(400), _, _, _) =>
+        case HttpResponse(StatusCodes.ClientError(400), _, entity, _) =>
+          logger.debug(s"Entity from Auth0 is: $entity")
           throw new IllegalArgumentException(
             "Request must specify a valid field to update"
           )
@@ -259,6 +262,39 @@ object Auth0Service extends Config with LazyLogging {
       }
   }
 
+  def findGroundworkUser(
+      email: String,
+      bearerToken: ManagementBearerToken
+  ): Future[Option[Auth0User]] = {
+    val managementBearerHeaders = getBearerHeaders(bearerToken)
+
+    val queryString =
+      URLEncoder.encode(s"name:$email* OR email:$email*", "utf-8")
+    val fields =
+      URLEncoder.encode(
+        "user_id,name,email,phone_number,identities,picture,lastLogin,loginsCount,user_metadata,app_metadata,blocked,email_verified",
+        "utf-8"
+      )
+
+    Http()
+      .singleRequest(
+        HttpRequest(
+          method = GET,
+          uri = s"$userUri?q=$queryString&fields=$fields",
+          headers = managementBearerHeaders
+        )
+      ) flatMap {
+      case HttpResponse(StatusCodes.OK, _, entity, _) =>
+        Unmarshal(entity).to[List[Auth0User]] map { users =>
+          logger.debug(s"Returned users: $users")
+          users.headOption
+        }
+      case HttpResponse(_, _, error, _) =>
+        logger.debug(s"There was an error: $error")
+        Future.successful(None)
+    }
+  }
+
   def createGroundworkUser(
       email: String,
       bearerToken: ManagementBearerToken
@@ -271,11 +307,8 @@ object Auth0Service extends Config with LazyLogging {
       "app_metadata" -> Map("annotateApp" -> true).asJson
     ).asJson
 
-    val managementBearerHeaders = List(
-      Authorization(
-        GenericHttpCredentials(bearerToken.token_type, bearerToken.access_token)
-      )
-    )
+    val managementBearerHeaders = getBearerHeaders(bearerToken)
+
     Http()
       .singleRequest(
         HttpRequest(
