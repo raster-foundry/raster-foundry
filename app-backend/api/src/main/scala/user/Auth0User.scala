@@ -78,7 +78,7 @@ object UserWithOAuth {
         u.visibility,
         u.dropboxCredential,
         u.planetCredential
-      )
+    )
   )
 }
 @JsonCodec

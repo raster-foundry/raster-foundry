@@ -147,7 +147,8 @@ trait ObjectPermissions[Model] {
           )
         case Nil if replace =>
           ApplicativeError[ConnectionIO, Throwable].raiseError(
-            new Exception("Cannot replace permissions with empty permission list")
+            new Exception(
+              "Cannot replace permissions with empty permission list")
           )
         case _ =>
           updatePermissionsF(id, acrList, replace).update
@@ -244,7 +245,7 @@ trait ObjectPermissions[Model] {
     val inheritedF: Fragment =
       createInheritedF(user, actionType, groupTypeO, groupIdO)
     val acrFilterF
-        : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
+      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
       .const(s"${tableName}acrs")
 
     ownershipTypeO match {
