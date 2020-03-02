@@ -220,7 +220,7 @@ trait AnnotationProjectPermissionRoutes
                .unsafeToFuture
            }
          }) {
-          completeWithOneOrFail {
+          complete {
             AnnotationProjectDao
               .deleteSharedUser(projectId, deleteId)
               .map(c => if (c > 0) 1 else 0)
