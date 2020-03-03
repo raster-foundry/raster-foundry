@@ -1004,7 +1004,15 @@ trait ProjectRoutes
               ProjectDao.isValidPermission(acr, user)
             } map {
               _.foldLeft(true)(_ && _)
-            }
+            } map {
+                case true =>
+                  ProjectDao.isReplaceWithinScopedLimit(
+                    Domain.Projects,
+                    user,
+                    acrList
+                  )
+                case _ => false
+              }
           ).tupled
             .map({ authTup =>
               authTup._1 && authTup._2

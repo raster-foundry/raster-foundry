@@ -85,7 +85,15 @@ trait AnnotationProjectPermissionRoutes
               AnnotationProjectDao.isValidPermission(acr, user)
             }
           } yield {
-            auth1.toBoolean && auth2.foldLeft(true)(_ && _)
+            auth1.toBoolean && (auth2.foldLeft(true)(_ && _) match {
+              case true =>
+                AnnotationProjectDao.isReplaceWithinScopedLimit(
+                  Domain.AnnotationProjects,
+                  user,
+                  acrList
+                )
+              case _ => false
+            })
           }).transact(xa).unsafeToFuture()
         } {
           complete {

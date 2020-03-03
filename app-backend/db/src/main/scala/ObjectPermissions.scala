@@ -238,7 +238,7 @@ trait ObjectPermissions[Model] {
     val inheritedF: Fragment =
       createInheritedF(user, actionType, groupTypeO, groupIdO)
     val acrFilterF
-      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
+        : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
       .const(s"${tableName}acrs")
 
     ownershipTypeO match {
@@ -295,4 +295,21 @@ trait ObjectPermissions[Model] {
       case false =>
         queryObjectsF(user, objectType, actionType)
     }
+
+  def isReplaceWithinScopedLimit(
+      domain: Domain,
+      user: User,
+      acrList: List[ObjectAccessControlRule]
+  ): Boolean =
+    (Scopes.resolveFor(
+      domain,
+      Action.Share,
+      user.scope.actions
+    ) map { action =>
+      (action.limit map { limit =>
+        (acrList map { acr =>
+          acr.subjectId.getOrElse("")
+        }).distinct.size.toLong == limit
+      }) getOrElse { true }
+    }) getOrElse { false }
 }

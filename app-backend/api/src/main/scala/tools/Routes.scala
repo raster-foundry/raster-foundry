@@ -241,6 +241,14 @@ trait ToolRoutes
               ToolDao.isValidPermission(acr, user)
             } map {
               _.foldLeft(true)(_ && _)
+            } map {
+              case true =>
+                ToolDao.isReplaceWithinScopedLimit(
+                  Domain.Templates,
+                  user,
+                  acrList
+                )
+              case _ => false
             }
           ).tupled
             .map({ authTup =>
