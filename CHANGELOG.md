@@ -24,6 +24,7 @@
 - Moved project data for Groundwork from extras jsonb field and a text field to normalized tables [#5286](https://github.com/raster-foundry/raster-foundry/pull/5286)
 - Clear Python Lambda function pip cache [#5274](https://github.com/raster-foundry/raster-foundry/pull/5274)
 - Updated to support STAC exports on annotation projects [#5312](https://github.com/raster-foundry/raster-foundry/pull/5312) [#5323](https://github.com/raster-foundry/raster-foundry/pull/5323)
+- Made permission replacement obey same scope rules [#5343](https://github.com/raster-foundry/raster-foundry/pull/5343)
 
 
 ### Deprecated
