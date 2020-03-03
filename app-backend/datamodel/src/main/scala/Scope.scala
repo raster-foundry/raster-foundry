@@ -458,7 +458,8 @@ object Scopes {
       )
 
   case object ThumbnailScope
-      extends SimpleScope(Set(ScopedAction(Domain.Thumbnails, Action.Read, None)))
+      extends SimpleScope(
+        Set(ScopedAction(Domain.Thumbnails, Action.Read, None)))
 
   case object ShapesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Shapes))
