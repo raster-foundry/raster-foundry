@@ -64,11 +64,7 @@ class CreateTaskGrid(
       _ <- OptionT.liftF {
         AnnotationProjectDao
           .update(
-            annotationProject.copy(
-              aoi = footprint,
-              ready = true,
-              taskSizeMeters = Some(taskSizeMeters)
-            ),
+            annotationProject.copy(ready = true),
             annotationProject.id
           )
       }
