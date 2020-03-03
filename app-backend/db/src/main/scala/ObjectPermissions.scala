@@ -308,7 +308,9 @@ trait ObjectPermissions[Model] {
     ) map { action =>
       (action.limit map { limit =>
         val distinctUsers = acrList.foldLeft(Set.empty[String])({
-          case (accum: Set[String], ObjectAccessControlRule(SubjectType.User, Some(subjId), _)) => accum | Set(subjId)
+          case (accum: Set[String],
+                ObjectAccessControlRule(SubjectType.User, Some(subjId), _)) =>
+            accum | Set(subjId)
           case (accum: Set[String], _) => accum
         })
         distinctUsers.size.toLong <= limit
