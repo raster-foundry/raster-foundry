@@ -37,7 +37,7 @@ final case class Auth0User(
     created_at: Option[String],
     updated_at: Option[String],
     identities: Option[Json],
-    app_metadata: Option[Json],
+    // app_metadata: Option[Json],
     user_metadata: Option[Json],
     picture: Option[String],
     name: Option[String],
