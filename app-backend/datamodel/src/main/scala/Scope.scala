@@ -452,10 +452,13 @@ object Scopes {
           Action.Download,
           Action.ReadThumbnail,
           Action.ReadSentinelMetadata
-        ).map(makeScopedAction(Domain.Projects, _)) ++ makeCRUDScopedActions(
+        ).map(makeScopedAction(Domain.Scenes, _)) ++ makeCRUDScopedActions(
           Domain.Scenes
         )
       )
+
+  case object ThumbnailScope
+      extends SimpleScope(Set(ScopedAction(Domain.Thumbnails, Action.Read)))
 
   case object ShapesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Shapes))
@@ -523,6 +526,7 @@ object Scopes {
           StacExportsCRUD,
           TeamsCRUD,
           TemplatesCRUD,
+          ThumbnailScope,
           TokensCRUD,
           UploadsCRUD,
           UserSelfScope,
