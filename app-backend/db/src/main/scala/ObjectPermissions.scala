@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
+import cats.ApplicativeError
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -122,9 +123,10 @@ trait ObjectPermissions[Model] {
       permExists = permissions.contains(acr)
       addPermission <- permExists match {
         case true =>
-          throw new Exception(
-            s"${acr.toObjAcrString} exists for ${tableName} ${id}"
-          )
+          // if the permission already exists, return the list of permissions.
+          // a client's expressed intent -- perm a should be included for this object --
+          // is satisfied, so don't make them care about prior states of the world
+          permissions.pure[ConnectionIO]
         case false =>
           appendPermissionF(id, acr).update
             .withUniqueGeneratedKeys[List[String]]("acrs")
@@ -140,9 +142,14 @@ trait ObjectPermissions[Model] {
     for {
       addPermissionsMany <- acrList match {
         case Nil if !replace =>
-          throw new Exception(s"All permissions exist for ${tableName} ${id}")
+          ApplicativeError[ConnectionIO, Throwable].raiseError(
+            new Exception(s"All permissions exist for ${tableName} ${id}")
+          )
         case Nil if replace =>
-          throw new Exception("List of permissions do not have valid subjects")
+          ApplicativeError[ConnectionIO, Throwable].raiseError(
+            new Exception(
+              "Cannot replace permissions with empty permission list")
+          )
         case _ =>
           updatePermissionsF(id, acrList, replace).update
             .withUniqueGeneratedKeys[List[String]]("acrs")
@@ -154,8 +161,8 @@ trait ObjectPermissions[Model] {
   def replacePermissions(
       id: UUID,
       acrList: List[ObjectAccessControlRule]
-  ): ConnectionIO[List[ObjectAccessControlRule]] =
-    addPermissionsMany(id, acrList, true)
+  ): ConnectionIO[Either[Throwable, List[ObjectAccessControlRule]]] =
+    addPermissionsMany(id, acrList, true).attempt
 
   def deletePermissions(id: UUID): ConnectionIO[Int] =
     updatePermissionsF(id, List[ObjectAccessControlRule]()).update.run

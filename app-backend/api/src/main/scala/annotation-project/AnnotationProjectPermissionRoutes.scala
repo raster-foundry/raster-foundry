@@ -6,6 +6,7 @@ import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.server._
+import cats.data.OptionT
 import cats.effect.IO
 import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -255,8 +256,18 @@ trait AnnotationProjectPermissionRoutes
               permissions <- users match {
                 case Nil =>
                   for {
-                    auth0User <- Auth0Service
-                      .createGroundworkUser(userByEmail.email, managementToken)
+                    auth0User <- OptionT {
+                      Auth0Service.findGroundworkUser(
+                        userByEmail.email,
+                        managementToken
+                      )
+                    } getOrElseF {
+                      Auth0Service
+                        .createGroundworkUser(
+                          userByEmail.email,
+                          managementToken
+                        )
+                    }
                     user <- (auth0User.user_id traverse { userId =>
                       UserDao.create(
                         User.Create(
