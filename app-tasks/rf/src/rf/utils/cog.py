@@ -21,6 +21,22 @@ DATA_BUCKET = os.getenv("DATA_BUCKET")
 s3client = boto3.client("s3")
 logger = logging.getLogger(__name__)
 
+def reproject_to_webmercator(file_path):
+    logger.info("Reprojecting %s", file_path)
+    output_dir, source_filename = os.path.split(file_path)
+    warped_tiff = os.path.join(
+        output_dir, "{}-warped.tif".format(source_filename.split(".")[0])
+    )
+    warped_command = [
+        "gdalwarp",
+        "-t_srs",
+        "epsg:3857",
+        file_path,
+        warped_tiff,
+    ]
+    logger.debug("Running warp command: %s", warped_command)
+    subprocess.check_call(warped_command)
+    return warped_tiff
 
 def georeference_file(file_path):
     logger.info("Georeferencing %s", file_path)

@@ -72,12 +72,15 @@ class GeoTiffS3SceneFactory(object):
                 bucket.download_file(key, tmp_fname)
 
                 if self.fileType == "NON_SPATIAL":
-                    tmp_fname = cog.georeference_file(tmp_fname)
+                    warped_fname = cog.georeference_file(tmp_fname)
+                else:
+                    warped_fname = cog.reproject_to_webmercator(tmp_fname)
 
-                cog.add_overviews(tmp_fname)
-                cog_path = cog.convert_to_cog(tmp_fname, tempdir)
+                cog.add_overviews(warped_fname)
+
+                cog_path = cog.convert_to_cog(warped_fname, tempdir)
                 scene = self.create_geotiff_scene(
-                    tmp_fname, os.path.splitext(filename)[0]
+                    warped_fname, os.path.splitext(filename)[0]
                 )
                 if self.keep_in_source_bucket:
                     scene.ingestLocation = upload_tifs(
@@ -89,7 +92,7 @@ class GeoTiffS3SceneFactory(object):
                     )[0]
                 images = [
                     self.create_geotiff_image(
-                        tmp_fname, unquote(scene.ingestLocation), scene, cog_path
+                        warped_fname, unquote(scene.ingestLocation), scene, cog_path
                     )
                 ]
 

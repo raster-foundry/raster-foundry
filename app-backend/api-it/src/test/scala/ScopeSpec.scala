@@ -182,7 +182,7 @@ class ScopeSpec extends FunSpec {
     }
     assert(
       resultBody == Right(SimResponse(expectation)),
-      "Authorization expectation failed"
+      s"Authorization expectation failed: received $resultBody, expected $expectation"
     )
   }
 

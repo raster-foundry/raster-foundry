@@ -147,6 +147,7 @@ Path,Domain:Action,Verb
 /api/scenes/{sceneID}/actions,scenes:readPermissions,get
 /api/scenes/{sceneID}/datasource,datasources:read,get
 /api/scenes/{sceneID}/download,scenes:download,get
+/api/scenes/{sceneID}/sentinel-metadata/other-random-string,scenes:readSentinelMetadata,get
 /api/scenes/{sceneID}/permissions/,scenes:readPermissions,get
 /api/scenes/{sceneID}/permissions/,scenes:share,put
 /api/scenes/{sceneID}/permissions/,scenes:share,post
@@ -164,6 +165,8 @@ Path,Domain:Action,Verb
 /api/stac/{stacExportID}/,stacExports:read,get
 /api/stac/{stacExportID}/,stacExports:delete,delete
 /api/teams/{teamID},teams:read,get
+/api/thumbnails/sentinel/a-random-sentinel-image/?token={token},scenes:readThumbnail,get
+/api/thumbnails/{thumbnailID}/?token={token},thumbnails:read,get
 /api/tokens/,tokens:read,get
 /api/tokens/{refreshTokenID}/,tokens:delete,delete
 /api/tool-runs/,analyses:read,get
