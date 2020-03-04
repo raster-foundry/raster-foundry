@@ -223,6 +223,14 @@ trait DatasourceRoutes
                 DatasourceDao.isValidPermission(acr, user)
               } map {
                 _.foldLeft(true)(_ && _)
+              } map {
+                case true =>
+                  DatasourceDao.isReplaceWithinScopedLimit(
+                    Domain.Datasources,
+                    user,
+                    acrList
+                  )
+                case _ => false
               }
             ).tupled
               .map({ authTup =>

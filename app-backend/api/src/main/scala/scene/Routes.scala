@@ -337,6 +337,14 @@ trait SceneRoutes
               SceneDao.isValidPermission(acr, user)
             } map {
               _.foldLeft(true)(_ && _)
+            } map {
+              case true =>
+                SceneDao.isReplaceWithinScopedLimit(
+                  Domain.Scenes,
+                  user,
+                  acrList
+                )
+              case _ => false
             }
           ).tupled
             .map({ authTup =>

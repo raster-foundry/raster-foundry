@@ -215,6 +215,14 @@ trait ShapeRoutes
               ShapeDao.isValidPermission(acr, user)
             } map {
               _.foldLeft(true)(_ && _)
+            } map {
+              case true =>
+                ShapeDao.isReplaceWithinScopedLimit(
+                  Domain.Shapes,
+                  user,
+                  acrList
+                )
+              case _ => false
             }
           ).tupled
             .map({ authTup =>

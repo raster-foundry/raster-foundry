@@ -264,6 +264,14 @@ trait ToolRunRoutes
               ToolRunDao.isValidPermission(acr, user)
             } map {
               _.foldLeft(true)(_ && _)
+            } map {
+              case true =>
+                ToolRunDao.isReplaceWithinScopedLimit(
+                  Domain.Analyses,
+                  user,
+                  acrList
+                )
+              case _ => false
             }
           ).tupled
             .map({ authTup =>

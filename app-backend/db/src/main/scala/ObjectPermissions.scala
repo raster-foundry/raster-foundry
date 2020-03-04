@@ -302,4 +302,25 @@ trait ObjectPermissions[Model] {
       case false =>
         queryObjectsF(user, objectType, actionType)
     }
+
+  def isReplaceWithinScopedLimit(
+      domain: Domain,
+      user: User,
+      acrList: List[ObjectAccessControlRule]
+  ): Boolean =
+    (Scopes.resolveFor(
+      domain,
+      Action.Share,
+      user.scope.actions
+    ) map { action =>
+      (action.limit map { limit =>
+        val distinctUsers = acrList.foldLeft(Set.empty[String])({
+          case (accum: Set[String],
+                ObjectAccessControlRule(SubjectType.User, Some(subjId), _)) =>
+            accum | Set(subjId)
+          case (accum: Set[String], _) => accum
+        })
+        distinctUsers.size.toLong <= limit
+      }) getOrElse { true } // if there's no limit, then the limit is infinity, so this action is allowed
+    }) getOrElse { false } // if there's no scope, then the action is not allowed
 }
