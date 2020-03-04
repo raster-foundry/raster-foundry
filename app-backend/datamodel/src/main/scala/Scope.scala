@@ -459,7 +459,8 @@ object Scopes {
 
   case object ThumbnailScope
       extends SimpleScope(
-        Set(ScopedAction(Domain.Thumbnails, Action.Read, None)))
+        Set(ScopedAction(Domain.Thumbnails, Action.Read, None))
+      )
 
   case object ShapesCRUD
       extends SimpleScope(makeCRUDScopedActions(Domain.Shapes))
@@ -559,7 +560,11 @@ object Scopes {
           ScopedAction(Domain.Licenses, Action.Read, None),
           ScopedAction(Domain.Scenes, Action.Read, None),
           ScopedAction(Domain.Uploads, Action.Read, None),
-          ScopedAction(Domain.Uploads, Action.Create, Some(1e9.toLong)),
+          ScopedAction(
+            Domain.Uploads,
+            Action.Create,
+            Some((10 * scala.math.pow(2, 30)).toLong)
+          ),
           ScopedAction(Domain.Uploads, Action.Update, None),
           ScopedAction(Domain.Uploads, Action.Delete, None),
           ScopedAction(Domain.Uploads, Action.ReadPermissions, None),
@@ -592,11 +597,13 @@ object Scopes {
       )
 }
 
-case class ScopeUsage(domain: Domain,
-                      action: Action,
-                      objectId: Option[String],
-                      used: Float,
-                      limit: Option[Float])
+case class ScopeUsage(
+    domain: Domain,
+    action: Action,
+    objectId: Option[String],
+    used: Float,
+    limit: Option[Float]
+)
 
 object ScopeUsage {
   implicit val scopeUsageEncoder: Encoder[ScopeUsage] =
