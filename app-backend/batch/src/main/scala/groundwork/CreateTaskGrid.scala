@@ -61,10 +61,17 @@ class CreateTaskGrid(
           .insertTasksByGrid(taskProperties, taskGridFeatureCreate, owner)
       }
       _ <- OptionT.liftF { info("Inserted tasks") }
+      // even though the `aoi` and `taskSizeMeters` are updated when inserting tasks,
+      // the `annotationProject` here does not know that because it happened before
+      // task insert. this is why we update these fields in the following lines
       _ <- OptionT.liftF {
         AnnotationProjectDao
           .update(
-            annotationProject.copy(ready = true),
+            annotationProject.copy(
+              aoi = footprint,
+              ready = true,
+              taskSizeMeters = Some(taskSizeMeters)
+            ),
             annotationProject.id
           )
       }
