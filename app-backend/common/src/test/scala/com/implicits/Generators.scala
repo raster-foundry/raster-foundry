@@ -139,6 +139,16 @@ object Generators extends ArbitraryInstances {
     IngestStatus.Failed
   )
 
+  private def annotationProjectStatusGen: Gen[AnnotationProjectStatus] = Gen.oneOf(
+    AnnotationProjectStatus.Waiting,
+    AnnotationProjectStatus.Queued,
+    AnnotationProjectStatus.Processing,
+    AnnotationProjectStatus.Ready,
+    AnnotationProjectStatus.UnknownFailure,
+    AnnotationProjectStatus.TaskGridFailure,
+    AnnotationProjectStatus.ImageIngestionFailure
+  )
+
   private def tileLayerTypeGen: Gen[TileLayerType] = Gen.oneOf(
     TileLayerType.MVT,
     TileLayerType.TMS
@@ -1049,7 +1059,7 @@ object Generators extends ArbitraryInstances {
       Gen.const(None),
       tileLayerCreateGen map { List(_) },
       Gen.listOfN(3, labelClassGroupGen),
-      arbitrary[Boolean]
+      annotationProjectStatusGen
     ).mapN(AnnotationProject.Create.apply _)
 
   private def annotationLabelWithClassesCreateGen

@@ -4,7 +4,7 @@ import os
 import click
 from planet import api
 
-from ..models import Upload
+from ..models import Upload, AnnotationProject
 from ..uploads.geotiff import GeoTiffS3SceneFactory
 from ..uploads.geotiff.io import update_annotation_project
 from ..uploads.landsat_historical import LandsatHistoricalSceneFactory
@@ -16,6 +16,10 @@ from ..utils.io import get_session
 logger = logging.getLogger(__name__)
 HOST = os.getenv("RF_HOST")
 JOB_ATTEMPT = int(os.getenv("AWS_BATCH_JOB_ATTEMPT", -1))
+
+
+class TaskGridError(Exception):
+    pass
 
 
 @click.command(name="process-upload")
@@ -33,6 +37,12 @@ def process_upload(upload_id):
     upload = Upload.from_id(upload_id)
     logger.info("Updating upload status")
     upload.update_upload_status("Processing")
+    annotationProject = None
+    if upload.annotationProjectId is not None:
+        logger.info("Getting annotation project: %s", upload.annotationProjectId)
+        annotationProject = AnnotationProject.from_id(upload.annotationProjectId)
+        logger.info("Updating annotation project status")
+        annotationProject.update_status("Processing")
 
     logger.info(
         "Processing upload (%s) for user %s with files %s",
@@ -124,20 +134,48 @@ def process_upload(upload_id):
 
         generate_tasks = upload.annotationProjectId is not None and upload.generateTasks
         if generate_tasks:
-            [
-                update_annotation_project(
-                    upload.annotationProjectId, scene.ingestLocation.replace("%7C", "|"))
-                for scene in created_scenes
-            ]
+            try:
+                [
+                    update_annotation_project(
+                        upload.annotationProjectId, scene.ingestLocation.replace("%7C", "|"))
+                    for scene in created_scenes
+                ]
+            except Exception as e:
+                raise TaskGridError("Error making task grid: %s", e)
+        if annotationProject is not None:
+            # Don't overwrite fields modified by the task grid creation
+            annotationProject = AnnotationProject.from_id(upload.annotationProjectId)
+            annotationProject.update_status("READY")
+    except TaskGridError as tge:
+        logger.error(
+            "Error making task grids annotation project (%s) on upload (%s) for with files %s. %s",
+            annotationProject.id,
+            upload.id,
+            upload.files,
+            tge
+        )
+        if JOB_ATTEMPT >= 3:
+            upload.update_upload_status("FAILED")
+            annotationProject.update_status("TASK_GRID_FAILURE")
+        else:
+            upload.update_upload_status("QUEUED")
+            if annotationProject is not None:
+                annotationProject.update_status("QUEUED")
+        raise
     except:
+        if annotationProject is not None:
+            logger.error("Upload for AnnotationProject failed to process: %s", annotationProject.id)
+        if JOB_ATTEMPT >= 3:
+            upload.update_upload_status("FAILED")
+            annotationProject.update_status("IMAGE_INGESTION_FAILURE")
+        else:
+            upload.update_upload_status("QUEUED")
+            if annotationProject is not None:
+                annotationProject.update_status("QUEUED")
         logger.error(
             "Failed to process upload (%s) for user %s with files %s",
             upload.id,
             upload.owner,
             upload.files,
         )
-        if JOB_ATTEMPT >= 3:
-            upload.update_upload_status("FAILED")
-        else:
-            upload.update_upload_status("QUEUED")
         raise

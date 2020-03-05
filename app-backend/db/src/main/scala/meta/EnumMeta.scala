@@ -79,6 +79,13 @@ trait EnumMeta {
       _.repr
     )
 
+  implicit val annotationProjectStatusMeta: Meta[AnnotationProjectStatus] =
+    pgEnumString(
+      "annotation_project_status",
+      AnnotationProjectStatus.fromString,
+      _.repr
+    )
+
   implicit val tileLayerTypeMeta: Meta[TileLayerType] =
     pgEnumString(
       "tile_layer_type",

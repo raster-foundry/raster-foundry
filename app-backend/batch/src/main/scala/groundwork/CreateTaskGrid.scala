@@ -69,7 +69,6 @@ class CreateTaskGrid(
           .update(
             annotationProject.copy(
               aoi = footprint,
-              ready = true,
               taskSizeMeters = Some(taskSizeMeters)
             ),
             annotationProject.id
