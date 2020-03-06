@@ -221,7 +221,17 @@ object AnnotationProjectDao
     }
 
   def deleteById(id: UUID): ConnectionIO[Int] =
-    query.filter(fr"id = ${id}").delete
+    (for {
+      annotationProject <- OptionT {
+        query.filter(id).selectOption
+      }
+      _ <- OptionT {
+        annotationProject.projectId traverse { projectId =>
+          ProjectDao.unsafeGetProjectById(projectId)
+        }
+      }
+      n <- OptionT.liftF { query.filter(fr"id = ${id}").delete }
+    } yield n).getOrElse(0)
 
   def update(project: AnnotationProject, id: UUID): ConnectionIO[Int] = {
     (fr"UPDATE " ++ tableF ++ fr"""SET
@@ -314,7 +324,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
