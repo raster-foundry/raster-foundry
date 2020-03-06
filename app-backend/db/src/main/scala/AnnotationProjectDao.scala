@@ -1,9 +1,12 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.common.Config.s3
+import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
 import cats.data._
+import cats.effect.{IO, LiftIO}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -15,6 +18,8 @@ import java.util.UUID
 object AnnotationProjectDao
     extends Dao[AnnotationProject]
     with ObjectPermissions[AnnotationProject] {
+  lazy val s3client = S3()
+
   val tableName = "annotation_projects"
 
   def selectF: Fragment = sql"""
@@ -220,18 +225,34 @@ object AnnotationProjectDao
       }
     }
 
-  def deleteById(id: UUID): ConnectionIO[Int] =
-    (for {
-      annotationProject <- OptionT {
-        query.filter(id).selectOption
-      }
-      _ <- OptionT {
-        annotationProject.projectId traverse { projectId =>
+  def deleteById(id: UUID, user: User): ConnectionIO[Int] =
+    for {
+      annotationProject <- query.filter(id).selectOption
+      sourceProject <- annotationProject flatMap { _.projectId } traverse {
+        projectId =>
           ProjectDao.unsafeGetProjectById(projectId)
+      }
+      projectScenes <- sourceProject map { _.defaultLayerId } traverse {
+        projectLayerId =>
+          ProjectLayerScenesDao.listLayerScenesRaw(projectLayerId, None)
+      }
+      _ <- projectScenes traverse { scenes =>
+        scenes traverse {
+          case scene if (scene.bucketAndKey map { bk: (String, String) =>
+                bk._1 == s3.dataBucket && bk._2.contains(user.id)
+              }).getOrElse(false) =>
+            val Some((bucket, key)) = scene.bucketAndKey
+            (LiftIO[ConnectionIO].liftIO {
+              IO { s3client.deleteObject(bucket, key) }
+            }).attempt *> SceneDao.query.filter(scene.id).delete
+          case scene => SceneDao.query.filter(scene.id).delete
         }
       }
-      n <- OptionT.liftF { query.filter(fr"id = ${id}").delete }
-    } yield n).getOrElse(0)
+      _ <- sourceProject traverse { project =>
+        ProjectDao.deleteProject(project.id)
+      }
+      n <- query.filter(fr"id = ${id}").delete
+    } yield n
 
   def update(project: AnnotationProject, id: UUID): ConnectionIO[Int] = {
     (fr"UPDATE " ++ tableF ++ fr"""SET

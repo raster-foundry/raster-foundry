@@ -6,6 +6,7 @@ import geotrellis.vector.{MultiPolygon, Projected}
 import io.circe._
 import io.circe.generic.JsonCodec
 
+import java.net.{URI, URLDecoder}
 import java.sql.Timestamp
 import java.util.UUID
 
@@ -154,6 +155,17 @@ final case class Scene(
     sceneOrder,
     this.metadataFields
   )
+
+  // Lifted from ProjectDao removeLayerOverview method --
+  // it's not clear what sort of common place this URI parsing logic should live in
+  // so it's duplicated here
+  def bucketAndKey: Option[(String, String)] = ingestLocation map { ingestLoc =>
+    val uri = URI.create(ingestLoc)
+    val urlPath = uri.getPath()
+    val bucket = URLDecoder.decode(uri.getHost(), "UTF-8")
+    val key = URLDecoder.decode(urlPath.drop(1), "UTF-8")
+    (bucket, key)
+  }
 }
 
 object Scene {
