@@ -13,7 +13,7 @@ import io.circe.syntax._
 
 import scala.util._
 
-import java.net.URI
+import java.net.{URI, URLDecoder}
 import java.security.InvalidParameterException
 import java.sql.Timestamp
 import java.time.Instant
@@ -299,5 +299,13 @@ package object datamodel extends JsonCodecs {
         case (user, _) => user.id
       }
     }
+  }
+
+  def uriToBucketAndKey(s: String): (String, String) = {
+    val uri = URI.create(s)
+    val urlPath = uri.getPath()
+    val bucket = URLDecoder.decode(uri.getHost(), "UTF-8")
+    val key = URLDecoder.decode(urlPath.drop(1), "UTF-8")
+    (bucket, key)
   }
 }

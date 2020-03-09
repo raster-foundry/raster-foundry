@@ -235,6 +235,26 @@ object AnnotationProjectDao
         projectId =>
           ProjectDao.unsafeGetProjectById(projectId)
       }
+      uploads <- UploadDao.findForAnnotationProject(id)
+      uploadFiles = uploads flatMap { _.files } flatMap { (f: String) =>
+        val (bucket, key) = uriToBucketAndKey(f.replace("|", "%7C"))
+        if (bucket == s3.dataBucket && key.contains(user.id)) {
+          Some((bucket, key))
+        } else {
+          None
+        }
+      }
+      _ <- debug(s"Planning to delete ${uploadFiles.size} files from S3")
+      _ <- uploadFiles traverse {
+        case (bucket, key) =>
+          LiftIO[ConnectionIO].liftIO {
+            (IO { s3client.deleteObject(bucket, key) }).attempt
+          }
+      }
+      _ <- debug(s"Deleting uplods ${uploads map { _.id }}")
+      _ <- uploads traverse { upload =>
+        UploadDao.query.filter(upload.id).delete
+      }
       _ <- debug(s"Source project is: ${sourceProject map { _.id }}")
       projectScenes <- sourceProject map { _.defaultLayerId } traverse {
         projectLayerId =>
