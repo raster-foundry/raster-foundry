@@ -158,7 +158,9 @@ final case class Scene(
   // Lifted from ProjectDao removeLayerOverview method --
   // it's not clear what sort of common place this URI parsing logic should live in
   // so it's duplicated here
-  def bucketAndKey: Option[(String, String)] = ingestLocation map { uriToBucketAndKey _ }
+  def bucketAndKey: Option[(String, String)] = ingestLocation map {
+    uriToBucketAndKey _
+  }
 }
 
 object Scene {

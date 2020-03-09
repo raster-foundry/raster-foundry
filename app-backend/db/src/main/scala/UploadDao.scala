@@ -176,6 +176,7 @@ object UploadDao extends Dao[Upload] {
     }
   }
 
-  def findForAnnotationProject(annotationProjectId: UUID): ConnectionIO[List[Upload]] =
+  def findForAnnotationProject(
+      annotationProjectId: UUID): ConnectionIO[List[Upload]] =
     query.filter(fr"annotation_project_id = $annotationProjectId").list
 }
