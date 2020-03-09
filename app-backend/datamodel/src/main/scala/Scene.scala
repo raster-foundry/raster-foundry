@@ -155,9 +155,6 @@ final case class Scene(
     this.metadataFields
   )
 
-  // Lifted from ProjectDao removeLayerOverview method --
-  // it's not clear what sort of common place this URI parsing logic should live in
-  // so it's duplicated here
   def bucketAndKey: Option[(String, String)] = ingestLocation map {
     uriToBucketAndKey _
   }

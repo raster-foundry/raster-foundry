@@ -301,6 +301,9 @@ package object datamodel extends JsonCodecs {
     }
   }
 
+  // Lifted from ProjectDao removeLayerOverview method --
+  // it's not clear what sort of common place this URI parsing logic should live in
+  // so it's duplicated here
   def uriToBucketAndKey(s: String): (String, String) = {
     val uri = URI.create(s)
     val urlPath = uri.getPath()
