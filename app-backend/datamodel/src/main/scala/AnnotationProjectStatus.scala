@@ -3,6 +3,7 @@ package com.rasterfoundry.datamodel
 import cats.implicits._
 import io.circe._
 import io.circe.syntax._
+import scala.util.Try
 
 abstract class AnnotationProjectStatus(val repr: String)
 
