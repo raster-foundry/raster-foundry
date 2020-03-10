@@ -4,6 +4,20 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.35.0](https://github.com/raster-foundry/raster-foundry/compare/1.34.1...1.35.0)
+
+### Added
+
 - Update annotation projects after upload processing as appropriate [#5324](https://github.com/raster-foundry/raster-foundry/pull/5324), [#5334](https://github.com/raster-foundry/raster-foundry/pull/5334)
 - Added special share endpoints that can be used with just an email for annotation projects [#5321](https://github.com/raster-foundry/raster-foundry/pull/5321), [#5327](https://github.com/raster-foundry/raster-foundry/pull/5327), [#5336](https://github.com/raster-foundry/raster-foundry/pull/5336), [#5338](https://github.com/raster-foundry/raster-foundry/pull/5338)
 - Added a CSV-configurable scope checking integration test [#5297](https://github.com/raster-foundry/raster-foundry/pull/5297), [#5306](https://github.com/raster-foundry/raster-foundry/pull/5306)
@@ -27,17 +41,11 @@
 - Made permission replacement obey same scope rules [#5343](https://github.com/raster-foundry/raster-foundry/pull/5343)
 - Updated the task grid creation SQL function to clip task cells to project footprint [#5344](https://github.com/raster-foundry/raster-foundry/pull/5344)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - Upgrade pyproj to make app-tasks python3.7 compatible [#5352](https://github.com/raster-foundry/raster-foundry/pull/5352)
 - Upload updates now respect all fields [#5330](https://github.com/raster-foundry/raster-foundry/pull/5330)
 - Removed unused route and fixed spelling in Swagger spec [#5273](https://github.com/raster-foundry/raster-foundry/pull/5273)
 - Fix 403 when users with no uploads try to create an upload [#5337](https://github.com/raster-foundry/raster-foundry/pull/5337)
-
-### Security
 
 ## [1.34.1](https://github.com/raster-foundry/raster-foundry/compare/1.34.0...1.34.1)
 
