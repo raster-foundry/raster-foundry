@@ -65,7 +65,11 @@ object types {
 trait IntercomNotifier[F[_]] {
   import types._
 
-  def notifyUser(userId: UserId, msg: Message): F[Unit]
+  def notifyUser(
+      intercomToken: IntercomToken,
+      userId: UserId,
+      msg: Message
+  ): F[Unit]
   def userByExternalId(
       intercomToken: IntercomToken,
       email: ExternalId
@@ -74,7 +78,11 @@ trait IntercomNotifier[F[_]] {
 
 class LiveIntercomNotifier[F[_]] extends IntercomNotifier[F] {
   import types._
-  def notifyUser(userId: UserId, msg: Message): F[Unit] = ???
+  def notifyUser(
+      intercomToken: IntercomToken,
+      userId: UserId,
+      msg: Message
+  ): F[Unit] = ???
   def userByExternalId(
       intercomToken: IntercomToken,
       email: ExternalId
