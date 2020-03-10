@@ -11,12 +11,12 @@ object types {
       case "_type" => "type"
       case other   => other
     })
-  @newtype case class EmailAddress(underlying: String)
-  object EmailAddress {
-    implicit val encEmailAddress: Encoder[EmailAddress] =
+  @newtype case class ExternalId(underlying: String)
+  object ExternalId {
+    implicit val encExternalId: Encoder[ExternalId] =
       Encoder.encodeString.contramap(_.underlying)
-    implicit val decEmailAddress: Decoder[EmailAddress] =
-      Decoder.decodeString.map(EmailAddress.apply _)
+    implicit val decExternalId: Decoder[ExternalId] =
+      Decoder.decodeString.map(ExternalId.apply _)
   }
 
   @newtype case class Notification(underlying: String)
@@ -24,14 +24,14 @@ object types {
   @newtype case class Message(underlying: String)
   @newtype case class IntercomToken(underlying: String)
 
-  case class IntercomSearchQuery(email: EmailAddress)
+  case class IntercomSearchQuery(externalId: ExternalId)
   object IntercomSearchQuery {
     implicit val encIntercomSearchQuery: Encoder[IntercomSearchQuery] =
       Encoder.forProduct3(
         "field",
         "operator",
         "value"
-      )(query => ("email", "=", query.email))
+      )(query => ("external_id", "=", query.externalId))
 
     implicit val decIntercomSearchQuery: Decoder[IntercomSearchQuery] =
       Decoder.forProduct3(
@@ -39,8 +39,7 @@ object types {
         "operator",
         "value"
       )(
-        (_: String, _: String, email: EmailAddress) =>
-          IntercomSearchQuery(email)
+        (_: String, _: String, email: ExternalId) => IntercomSearchQuery(email)
       )
   }
 
@@ -67,17 +66,17 @@ trait IntercomNotifier[F[_]] {
   import types._
 
   def notifyUser(userId: UserId, msg: Message): F[Unit]
-  def usersbyEmail(
+  def userByExternalId(
       intercomToken: IntercomToken,
-      email: EmailAddress
+      email: ExternalId
   ): F[IntercomSearchResponse]
 }
 
 class LiveIntercomNotifier[F[_]] extends IntercomNotifier[F] {
   import types._
   def notifyUser(userId: UserId, msg: Message): F[Unit] = ???
-  def usersbyEmail(
+  def userByExternalId(
       intercomToken: IntercomToken,
-      email: EmailAddress
+      email: ExternalId
   ): F[IntercomSearchResponse] = ???
 }
