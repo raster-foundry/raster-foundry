@@ -1,11 +1,11 @@
 package com.rasterfoundry.database.meta
 
-import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database._
 
 import doobie._, doobie.implicits._
-import org.scalatest._
 import geotrellis.vector._
+import org.scalatest._
 
 class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
 

@@ -1,0 +1,7 @@
+ALTER TABLE annotation_labels_annotation_label_classes 
+DROP CONSTRAINT annotation_labels_annotation_label_cla_annotation_class_id_fkey;
+
+ALTER TABLE annotation_labels_annotation_label_classes 
+ADD CONSTRAINT annotation_labels_annotation_label_cla_annotation_class_id_fkey
+FOREIGN KEY (annotation_class_id) 
+REFERENCES annotation_label_classes (id) ON DELETE CASCADE;

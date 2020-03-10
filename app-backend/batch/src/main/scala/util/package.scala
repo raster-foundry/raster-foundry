@@ -2,12 +2,12 @@ package com.rasterfoundry.batch
 
 import com.rasterfoundry.common.S3
 
+import com.amazonaws.services.s3.AmazonS3URI
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.spark.io.s3.util.S3RangeReader
-import com.amazonaws.services.s3.AmazonS3URI
 import io.circe.Json
 import io.circe.parser.parse
 import org.apache.commons.io.IOUtils

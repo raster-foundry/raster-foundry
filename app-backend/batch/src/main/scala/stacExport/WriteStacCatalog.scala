@@ -1,24 +1,23 @@
 package com.rasterfoundry.batch.stacExport
 
-import java.net.URI
-
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.conf.Config
-import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.RollbarNotifier
-import cats.implicits._
-import better.files.{File => ScalaFile}
-import geotrellis.server.stac._
-import java.util.UUID
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 
-import doobie._
-import doobie.implicits._
-import cats.implicits._
+import better.files.{File => ScalaFile}
 import cats.effect.{ContextShift, IO}
+import cats.implicits._
 import com.amazonaws.services.s3.model.PutObjectResult
+import doobie._
 import doobie.hikari.HikariTransactor
+import doobie.implicits._
+import geotrellis.server.stac._
+
+import java.net.URI
+import java.util.UUID
 
 final case class WriteStacCatalog(exportId: UUID)(
     implicit val xa: Transactor[IO],
@@ -188,16 +187,19 @@ final case class WriteStacCatalog(exportId: UUID)(
     logger.info(s"Exporting STAC export for record $exportId...")
 
     logger.info(s"Getting STAC export data for record $exportId...")
-    val dbIO = for {
+    val dbIO: ConnectionIO[(StacExport, Option[Map[UUID, ExportData]])] = for {
       exportDefinition <- StacExportDao.unsafeGetById(exportId)
       _ <- StacExportDao.update(
         exportDefinition.copy(exportStatus = ExportStatus.Exporting),
         exportDefinition.id
       )
-      layerSceneTaskAnnotation <- DatabaseIO.sceneTaskAnnotationforLayers(
-        exportDefinition.layerDefinitions,
-        exportDefinition.taskStatuses
-      )
+      layerSceneTaskAnnotation <- exportDefinition.annotationProjectId traverse {
+        pid =>
+          DatabaseIO.sceneTaskAnnotationforLayers(
+            pid,
+            exportDefinition.taskStatuses
+          )
+      }
     } yield (exportDefinition, layerSceneTaskAnnotation)
 
     logger.info(
@@ -205,11 +207,11 @@ final case class WriteStacCatalog(exportId: UUID)(
     )
 
     dbIO.transact(xa) flatMap {
-      case (exportDef, layerInfo) =>
+      case (exportDef, Some(layerInfoMap)) =>
         val currentPath = s"s3://$dataBucket/stac-exports"
         val exportPath = s"$currentPath/${exportDef.id}"
         logger.info(s"Writing export under prefix: $exportPath")
-        val layerIds = layerInfo.keys.toList
+        val layerIds = layerInfoMap.keys.toList
         val catalog: StacCatalog =
           Utils.getStacCatalog(currentPath, exportDef, "0.8.0", layerIds)
         val catalogWithPath =
@@ -218,7 +220,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         val tempDir = ScalaFile.newTemporaryDirectory()
         tempDir.deleteOnExit()
 
-        val layerIO = layerInfo map {
+        val layerIO = layerInfoMap map {
           case (layerId, sceneTaskAnnotation) =>
             processLayerCollection(
               exportDef,
@@ -254,6 +256,13 @@ final case class WriteStacCatalog(exportId: UUID)(
           logger.info(s"Uploaded $totalResults to S3")
           ()
         }
+      case _ =>
+        IO {
+          val msg = "Export definition is missing an annotation project ID"
+          logger.error(msg)
+          throw new IllegalArgumentException(msg)
+        }
+
     }
   }
 

@@ -7,12 +7,22 @@ addCommandAlias(
   ";set version in ThisBuild := git.gitDescribedVersion.value.get + \"-SNAPSHOT\""
 )
 
+addCommandAlias(
+  "fix",
+  ";scalafix;scalafmt"
+)
+
 git.gitTagToVersionNumber in ThisBuild := { tag: String =>
   if (tag matches "[0-9]+\\..*") Some(tag)
   else None
 }
 
+scalafixDependencies in ThisBuild +=
+  "com.nequissimus" %% "sort-imports" % "0.3.2"
+
 cancelable in Global := true
+
+onChangedBuildSource := ReloadOnSourceChanges
 
 val scalaOptions = Seq(
   "-deprecation",
@@ -24,8 +34,6 @@ val scalaOptions = Seq(
   "-language:postfixOps",
   "-language:existentials",
   "-language:experimental.macros",
-  "-Xmax-classfile-name",
-  "100",
   "-Yrangepos",
   "-Ywarn-value-discard",
   "-Ywarn-macros:after",
@@ -39,12 +47,12 @@ val scalaOptions = Seq(
   "100"
 )
 
+scalaVersion in ThisBuild := Version.scala
+
 /**
   * Shared settings across all subprojects
   */
 lazy val sharedSettings = Seq(
-  // https://github.com/lucidsoftware/neo-sbt-scalafmt
-  scalafmtOnCompile := true,
   scapegoatVersion in ThisBuild := "1.3.8",
   scalaVersion in ThisBuild := Version.scala,
   unusedCompileDependenciesFilter -= moduleFilter(
@@ -58,6 +66,14 @@ lazy val sharedSettings = Seq(
   unusedCompileDependenciesFilter -= moduleFilter(
     "io.jaegertracing",
     "jaeger-client"
+  ),
+  undeclaredCompileDependenciesFilter -= moduleFilter(
+    "com.typesafe.scala-logging",
+    "scala-logging"
+  ),
+  undeclaredCompileDependenciesFilter -= moduleFilter(
+    "org.slf4j",
+    "slf4j-api"
   ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
@@ -74,18 +90,20 @@ lazy val sharedSettings = Seq(
     .filterNot(_ == "-Ywarn-unused-import")),
   updateOptions := updateOptions.value.withGigahorse(false),
   externalResolvers := Seq(
-    "Geotoolkit Repo" at "http://maven.geotoolkit.org",
-    "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
+    "Geotoolkit Repo" at "https://maven.geotoolkit.org",
+    "Open Source Geospatial Foundation Repo" at "https://download.osgeo.org/webdav/geotools/",
     "boundless" at "https://repo.boundlessgeo.com/main/",
-    "imageio-ext Repository" at "http://maven.geo-solutions.it",
+    "imageio-ext Repository" at "https://maven.geo-solutions.it",
     DefaultMavenRepository,
     Resolver.sonatypeRepo("snapshots"),
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.bintrayRepo("guizmaii", "maven"),
+    Resolver.bintrayRepo("zamblauskas", "maven"), // for scala-csv-parser
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
-    "azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/",
+    ("azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/")
+      .withAllowInsecureProtocol(true),
     Resolver.bintrayRepo("naftoligug", "maven"),
     Resolver.bintrayRepo("colisweb", "maven"),
     Classpaths.sbtPluginReleases,
@@ -212,13 +230,43 @@ lazy val apiSettings = sharedSettings ++ Seq(
 )
 
 lazy val apiDependencies = Seq(
-  Dependencies.akkaSlf4j,
-  Dependencies.scalatest,
-  Dependencies.akkaHttpCors,
+  Dependencies.akkaActor,
   Dependencies.akkaCirceJson,
+  Dependencies.akkaHttp,
+  Dependencies.akkaHttpCore,
+  Dependencies.akkaHttpCors,
+  Dependencies.akkaSlf4j,
+  Dependencies.akkaStream,
+  Dependencies.akkaStream,
+  Dependencies.awsCoreSdk,
+  Dependencies.awsS3,
   Dependencies.awsStsSdk,
+  Dependencies.catsCore,
+  Dependencies.catsEffect,
+  Dependencies.catsFree,
+  Dependencies.circeCore,
+  Dependencies.circeGeneric,
+  Dependencies.circeParser,
+  Dependencies.doobieCore,
+  Dependencies.doobieFree,
+  Dependencies.doobieHikari,
+  Dependencies.doobiePostgres,
   Dependencies.dropbox,
-  Dependencies.scalaCheck
+  Dependencies.geotrellisRaster,
+  Dependencies.geotrellisS3,
+  Dependencies.geotrellisVector,
+  Dependencies.guava,
+  Dependencies.hikariCP,
+  Dependencies.nimbusJose,
+  Dependencies.nimbusJoseJwt,
+  Dependencies.postgres,
+  Dependencies.scaffeine,
+  Dependencies.scalaCheck,
+  Dependencies.scalatest,
+  Dependencies.shapeless,
+  Dependencies.sourceCode,
+  Dependencies.spray,
+  Dependencies.typesafeConfig
 )
 
 lazy val api = project
@@ -230,6 +278,22 @@ lazy val api = project
     libraryDependencies ++= apiDependencies ++ loggingDependencies
   })
 
+lazy val apiIntegrationTest = project
+  .in(file("api-it"))
+  .configs(IntegrationTest)
+  .dependsOn(db)
+  .settings({
+    libraryDependencies ++= Seq(
+      Dependencies.scalaCsv % "test",
+      Dependencies.sttpCore % "test",
+      Dependencies.sttpJson % "test",
+      Dependencies.sttpCirce % "test",
+      Dependencies.sttpOkHttpBackend % "test",
+      Dependencies.scalatest
+    )
+  })
+  .settings(Defaults.itSettings)
+
 /**
   * Common Settings
   */
@@ -239,22 +303,42 @@ lazy val common = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.apacheCommonsEmail,
+      Dependencies.apacheHttpClient,
+      Dependencies.apacheHttpCore,
+      Dependencies.awsBatchSdk,
+      Dependencies.awsCoreSdk,
+      Dependencies.awsS3,
+      Dependencies.catsCore,
+      Dependencies.catsKernel,
+      Dependencies.catsScalacheck,
+      Dependencies.chronoscala,
+      Dependencies.circeCore,
+      Dependencies.circeGeneric,
+      Dependencies.circeOptics,
+      Dependencies.circeParser,
+      Dependencies.circeTest,
+      Dependencies.commonsIO,
       Dependencies.elasticacheClient,
+      Dependencies.geotrellisContribVLM,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisRaster,
       Dependencies.geotrellisS3,
       Dependencies.geotrellisSpark,
+      Dependencies.geotrellisUtil,
+      Dependencies.geotrellisVector,
       Dependencies.geotrellisVectorTestkit,
+      Dependencies.javaMail,
       Dependencies.logbackClassic % Runtime,
       Dependencies.mamlJvm,
-      Dependencies.sparkCore,
-      Dependencies.circeCore,
-      Dependencies.circeParser,
-      Dependencies.circeOptics,
-      Dependencies.circeTest,
-      Dependencies.awsBatchSdk,
+      Dependencies.monocleCore,
       Dependencies.rollbar,
-      Dependencies.apacheCommonsEmail,
       Dependencies.scalaCheck,
-      Dependencies.catsScalacheck
+      Dependencies.shapeless,
+      Dependencies.sparkCore,
+      Dependencies.spireMath,
+      Dependencies.spray,
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
 
@@ -263,23 +347,28 @@ lazy val datamodel = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.shapeless,
+      Dependencies.awsS3,
       Dependencies.catsCore,
-      Dependencies.monocleCore,
-      Dependencies.circeGeneric,
-      Dependencies.spray,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisVector,
-      Dependencies.geotrellisProj4,
-      Dependencies.geotrellisContribGDAL,
-      Dependencies.geotrellisVectorTestkit,
-      Dependencies.geotrellisServerStac,
+      Dependencies.catsKernel,
+      Dependencies.catsLaws,
       Dependencies.circeCore,
-      Dependencies.circeParser,
-      Dependencies.circeOptics,
-      Dependencies.circeTest,
+      Dependencies.circeGeneric,
       Dependencies.circeGenericExtras,
-      Dependencies.scalaCheck
+      Dependencies.circeOptics,
+      Dependencies.circeParser,
+      Dependencies.circeTest,
+      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisS3,
+      Dependencies.geotrellisServerStac,
+      Dependencies.geotrellisVector,
+      Dependencies.geotrellisVectorTestkit,
+      Dependencies.monocleCore,
+      Dependencies.scalaCheck,
+      Dependencies.shapeless,
+      Dependencies.spireMath,
+      Dependencies.spray
     ) ++ loggingDependencies
   })
 
@@ -292,23 +381,46 @@ lazy val db = project
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.scalatest,
+      Dependencies.apacheCommonsEmail,
+      Dependencies.awsCoreSdk,
+      Dependencies.awsS3,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.catsFree,
+      Dependencies.catsKernel,
+      Dependencies.circeCore,
+      Dependencies.commonsCodec,
       Dependencies.doobieCore,
+      Dependencies.doobieFree,
       Dependencies.doobieHikari,
-      Dependencies.scalaCheck,
-      Dependencies.geotrellisContribGDAL,
-      Dependencies.geotrellisRaster,
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
-      Dependencies.scalacacheCats,
-      Dependencies.scalacacheCore,
-      Dependencies.scalacacheCaffeine,
-      Dependencies.scalacacheMemcached,
-      Dependencies.scalacacheCirce,
       Dependencies.elasticacheClient,
-      Dependencies.scalaCheck,
+      Dependencies.flyway % Test,
+      Dependencies.fs2,
+      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisS3,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisVector,
+      Dependencies.guava,
+      Dependencies.hikariCP,
+      Dependencies.mamlJvm,
       Dependencies.postgis,
-      Dependencies.flyway % Test
+      Dependencies.postgres,
+      Dependencies.scalaCheck,
+      Dependencies.scalaCheck,
+      Dependencies.scalacacheCaffeine,
+      Dependencies.scalacacheCats,
+      Dependencies.scalacacheCirce,
+      Dependencies.scalacacheCore,
+      Dependencies.scalacacheMemcached,
+      Dependencies.scalatest,
+      Dependencies.shapeless,
+      Dependencies.sourceCode,
+      Dependencies.spray,
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
 
@@ -323,17 +435,51 @@ lazy val batch = project
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.apacheAvro,
+      Dependencies.apacheCommonsEmail,
+      Dependencies.awsCoreSdk,
+      Dependencies.awsS3,
       Dependencies.betterFiles,
-      Dependencies.scalatest,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisS3,
-      Dependencies.geotrellisUtil,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisServerStac,
-      Dependencies.sparkCore,
-      Dependencies.ficus,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.catsFree,
+      Dependencies.catsKernel,
+      Dependencies.circeCore,
+      Dependencies.circeGeneric,
+      Dependencies.circeOptics,
+      Dependencies.circeParser,
+      Dependencies.commonsIO,
+      Dependencies.doobieCore,
+      Dependencies.doobieFree,
+      Dependencies.doobieHikari,
+      Dependencies.doobiePostgres,
       Dependencies.dropbox,
-      Dependencies.scopt
+      Dependencies.ficus,
+      Dependencies.fs2,
+      Dependencies.fs2,
+      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisS3,
+      Dependencies.geotrellisServerStac,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisUtil,
+      Dependencies.geotrellisVector,
+      Dependencies.guava,
+      Dependencies.hadoop,
+      Dependencies.hikariCP,
+      Dependencies.monocleCore,
+      Dependencies.refined,
+      Dependencies.scaffeine,
+      Dependencies.scaffeine,
+      Dependencies.scalatest,
+      Dependencies.scopt,
+      Dependencies.shapeless,
+      Dependencies.sourceCode,
+      Dependencies.sparkCore,
+      Dependencies.spireMath,
+      Dependencies.spray,
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
   .settings({
@@ -385,8 +531,22 @@ lazy val akkautil = project
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.akkaCirceJson,
+      Dependencies.akkaHttp,
+      Dependencies.akkaHttpCore,
+      Dependencies.awsS3,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.catsFree,
+      Dependencies.catsKernel,
+      Dependencies.circeCore,
+      Dependencies.doobieCore,
+      Dependencies.doobieFree,
+      Dependencies.jsonSmart,
       Dependencies.nimbusJose,
-      Dependencies.akkahttp
+      Dependencies.nimbusJoseJwt,
+      Dependencies.postgres,
+      Dependencies.typesafeConfig
     )
   })
 
@@ -399,16 +559,41 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
   .settings(
     fork in run := true,
     libraryDependencies ++= Seq(
-      Dependencies.http4sDSL,
-      Dependencies.geotrellisContribVLM,
+      Dependencies.apacheHttpClient,
+      Dependencies.apacheHttpCore,
+      Dependencies.awsCoreSdk,
+      Dependencies.awsS3,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.catsFree,
+      Dependencies.catsKernel,
+      Dependencies.circeCore,
+      Dependencies.circeParser,
+      Dependencies.doobieCore,
+      Dependencies.doobieFree,
       Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisContribVLM,
+      Dependencies.geotrellisProj4,
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisS3,
       Dependencies.geotrellisServer,
-      Dependencies.scalacacheCore,
-      Dependencies.scalacacheCaffeine,
-      Dependencies.scalaCheck,
-      Dependencies.opentracing,
       Dependencies.geotrellisServerOgc,
-      Dependencies.spatial4j
+      Dependencies.geotrellisServerOgc,
+      Dependencies.geotrellisServerOpenGIS,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisUtil,
+      Dependencies.geotrellisVector,
+      Dependencies.http4sCore,
+      Dependencies.http4sDSL,
+      Dependencies.mamlJvm,
+      Dependencies.opentracing,
+      Dependencies.scalaCheck,
+      Dependencies.scalacacheCaffeine,
+      Dependencies.scalacacheCats,
+      Dependencies.scalacacheCore,
+      Dependencies.spatial4j,
+      Dependencies.spireMath,
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies,
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin(
@@ -432,15 +617,28 @@ lazy val backsplashExport =
     .settings(
       fork in run := true,
       libraryDependencies ++= Seq(
-        Dependencies.geotrellisServer,
-        Dependencies.geotrellisContribGDAL,
+        Dependencies.awsS3,
+        Dependencies.catsCore,
+        Dependencies.catsEffect,
+        Dependencies.circeCore,
+        Dependencies.circeParser,
+        Dependencies.circeShapes,
+        Dependencies.commonsIO,
         Dependencies.decline,
-        Dependencies.mamlJvm,
-        Dependencies.geotrellisS3,
+        Dependencies.geotrellisContribGDAL,
+        Dependencies.geotrellisContribVLM,
+        Dependencies.geotrellisProj4,
         Dependencies.geotrellisRaster,
+        Dependencies.geotrellisS3,
+        Dependencies.geotrellisServer,
         Dependencies.geotrellisSpark,
+        Dependencies.geotrellisVector,
+        Dependencies.mamlJvm,
         Dependencies.scalaCheck,
-        Dependencies.scalatest
+        Dependencies.scalajHttp,
+        Dependencies.scalatest,
+        Dependencies.shapeless,
+        Dependencies.typesafeConfig
       ) ++ loggingDependencies,
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
       addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
@@ -461,18 +659,49 @@ lazy val backsplashServer =
     .settings(fork in run := true)
     .settings({
       libraryDependencies ++= Seq(
+        Dependencies.awsS3,
+        Dependencies.catsCore,
+        Dependencies.catsEffect,
+        Dependencies.catsFree,
+        Dependencies.catsKernel,
         Dependencies.catsMeow,
+        Dependencies.catsPar,
+        Dependencies.circeCore,
+        Dependencies.circeGeneric,
+        Dependencies.circeParser,
+        Dependencies.doobieCore,
+        Dependencies.doobieFree,
+        Dependencies.doobieHikari,
+        Dependencies.fs2,
+        Dependencies.geotrellisContribVLM,
+        Dependencies.geotrellisProj4,
+        Dependencies.geotrellisRaster,
         Dependencies.geotrellisServer,
+        Dependencies.geotrellisServerOgc,
+        Dependencies.geotrellisServerOpenGIS,
+        Dependencies.geotrellisSpark,
+        Dependencies.geotrellisVector,
+        Dependencies.guava,
+        Dependencies.hikariCP,
         Dependencies.http4sBlaze,
         Dependencies.http4sCirce,
+        Dependencies.http4sCore,
         Dependencies.http4sDSL,
         Dependencies.http4sServer,
         Dependencies.http4sXml,
         Dependencies.mamlJvm,
-        Dependencies.sup,
-        Dependencies.scalacacheCore,
+        Dependencies.opentracing,
+        Dependencies.opentracingApi,
+        Dependencies.scalaXml,
+        Dependencies.scalacacheCaffeine,
         Dependencies.scalacacheCats,
-        Dependencies.scalacacheCaffeine
+        Dependencies.scalacacheCore,
+        Dependencies.shapeless,
+        Dependencies.sourceCode,
+        Dependencies.spray,
+        Dependencies.sup,
+        Dependencies.typesafeConfig,
+        Dependencies.vault
       ) ++ loggingDependencies
     })
     .settings({
@@ -495,13 +724,27 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
     libraryDependencies ++= Seq(
       Dependencies.awsXrayRecorder,
       Dependencies.awsXraySdk,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.catsFree,
+      Dependencies.catsKernel,
+      Dependencies.circeCore,
+      Dependencies.circeGeneric,
+      Dependencies.circeParser,
       Dependencies.doobieCore,
+      Dependencies.doobieFree,
+      Dependencies.http4sCore,
       Dependencies.jaegerClient,
-      Dependencies.opentracing,
+      Dependencies.jaegerCore,
       Dependencies.nimbusJose,
-      Dependencies.scalacacheCore,
+      Dependencies.nimbusJoseJwt,
+      Dependencies.opentracing,
+      Dependencies.opentracingApi,
+      Dependencies.scalacacheCaffeine,
       Dependencies.scalacacheCats,
-      Dependencies.scalacacheCaffeine
+      Dependencies.scalacacheCore,
+      Dependencies.shapeless,
+      Dependencies.typesafeConfig
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))

@@ -1,8 +1,6 @@
 package com.rasterfoundry.common.utils
 
-import java.net.{URI, URL}
-import java.nio.charset.Charset
-import java.nio.file.Paths
+import com.rasterfoundry.common.S3
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.spark.io.http.util.HttpRangeReader
@@ -11,7 +9,9 @@ import geotrellis.spark.io.s3.util.S3RangeReader
 import geotrellis.util.{FileRangeReader, RangeReader}
 import org.apache.http.client.utils.URLEncodedUtils
 
-import com.rasterfoundry.common.S3
+import java.net.{URI, URL}
+import java.nio.charset.Charset
+import java.nio.file.Paths
 
 object RangeReaderUtils extends LazyLogging {
   def fromUri(uri: String): Option[RangeReader] = {

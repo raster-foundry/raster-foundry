@@ -1,5 +1,18 @@
 package com.rasterfoundry.api.token
 
+import com.rasterfoundry.api.utils.{
+  Auth0Exception,
+  Config,
+  ManagementBearerToken
+}
+import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.datamodel.auth.{
+  AuthorizedToken,
+  DeviceCredential,
+  RefreshToken,
+  RefreshTokenRequest
+}
+
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.HttpMethods._
@@ -7,19 +20,7 @@ import akka.http.scaladsl.model.Uri.{Path, Query}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.rasterfoundry.api.utils.{
-  Auth0Exception,
-  Config,
-  ManagementBearerToken
-}
-import com.rasterfoundry.datamodel.User
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
-import com.rasterfoundry.datamodel.auth.{
-  AuthorizedToken,
-  DeviceCredential,
-  RefreshToken,
-  RefreshTokenRequest
-}
 import de.heikoseeberger.akkahttpcirce._
 import io.circe.generic.auto._
 
@@ -32,10 +33,6 @@ object TokenService extends Config with ErrorAccumulatingCirceSupport {
   import com.rasterfoundry.api.AkkaSystem._
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
-
-  val auth0BearerHeader = List(
-    Authorization(GenericHttpCredentials("Bearer", auth0Bearer))
-  )
 
   val authBearerTokenCache: AsyncLoadingCache[Int, ManagementBearerToken] =
     Scaffeine()

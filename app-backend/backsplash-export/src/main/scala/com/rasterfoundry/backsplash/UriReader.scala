@@ -3,9 +3,10 @@ package com.rasterfoundry.backsplash.export
 import com.amazonaws.services.s3._
 import scalaj.http._
 
-import java.net.URI
 import scala.io.Source
+
 import java.io.{BufferedReader, InputStreamReader}
+import java.net.URI
 import java.util.stream.Collectors
 
 object UriReader {

@@ -1,20 +1,21 @@
 package com.rasterfoundry.api.license
 
+import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
   UserErrorHandler
 }
 import com.rasterfoundry.database.LicenseDao
-import akka.http.scaladsl.server.Route
-import com.rasterfoundry.akkautil.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import cats.effect.IO
-import doobie.util.transactor.Transactor
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction, User}
+
+import akka.http.scaladsl.server.Route
+import cats.effect.IO
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 
 trait LicenseRoutes
     extends Authentication
@@ -32,20 +33,25 @@ trait LicenseRoutes
     }
   }
 
-  def listLicenses: Route = authenticate { _: User =>
-    withPagination { pageRequest =>
-      complete(LicenseDao.query.page(pageRequest).transact(xa).unsafeToFuture)
+  def listLicenses: Route = authenticate { user: User =>
+    authorizeScope(ScopedAction(Domain.Licenses, Action.Read, None), user) {
+      withPagination { pageRequest =>
+        complete(LicenseDao.query.page(pageRequest).transact(xa).unsafeToFuture)
+      }
     }
   }
 
-  def getLicense(shortName: String): Route = authenticate { _: User =>
-    rejectEmptyResponse {
-      complete(
-        LicenseDao.query
-          .filter(fr"short_name = ${shortName}")
-          .selectOption
-          .transact(xa)
-          .unsafeToFuture)
+  def getLicense(shortName: String): Route = authenticate { user: User =>
+    authorizeScope(ScopedAction(Domain.Licenses, Action.Read, None), user) {
+      rejectEmptyResponse {
+        complete(
+          LicenseDao.query
+            .filter(fr"short_name = ${shortName}")
+            .selectOption
+            .transact(xa)
+            .unsafeToFuture
+        )
+      }
     }
   }
 }

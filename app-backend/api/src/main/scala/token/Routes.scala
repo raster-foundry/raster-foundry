@@ -1,9 +1,15 @@
 package com.rasterfoundry.api.token
 
-import com.rasterfoundry.akkautil.{Authentication, UserErrorHandler}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
 import com.rasterfoundry.api.utils.Auth0ErrorHandler
-import akka.http.scaladsl.server.Route
 import com.rasterfoundry.datamodel.auth.RefreshToken
+import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction}
+
+import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 /**
@@ -12,11 +18,13 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 trait TokenRoutes
     extends Authentication
     with UserErrorHandler
+    with CommonHandlers
     with Auth0ErrorHandler {
 
   val tokenRoutes: Route =
     (handleExceptions(auth0ExceptionHandler) & handleExceptions(
-      userExceptionHandler)) {
+      userExceptionHandler
+    )) {
       pathEndOrSingleSlash {
         get { listRefreshTokens } ~
           post { getAuthorizedToken }
@@ -29,8 +37,10 @@ trait TokenRoutes
     }
 
   def listRefreshTokens: Route = authenticate { user =>
-    complete {
-      TokenService.listRefreshTokens(user)
+    authorizeScope(ScopedAction(Domain.Tokens, Action.Read, None), user) {
+      complete {
+        TokenService.listRefreshTokens(user)
+      }
     }
   }
 
@@ -43,8 +53,10 @@ trait TokenRoutes
   }
 
   def revokeRefreshToken(deviceId: String): Route = authenticate { user =>
-    complete {
-      TokenService.revokeRefreshToken(user, deviceId)
+    authorizeScope(ScopedAction(Domain.Tokens, Action.Delete, None), user) {
+      complete {
+        TokenService.revokeRefreshToken(user, deviceId)
+      }
     }
   }
 }

@@ -1,7 +1,8 @@
 package com.rasterfoundry.datamodel
 
-import java.util.UUID
 import io.circe.generic.JsonCodec
+
+import java.util.UUID
 
 @JsonCodec
 final case class OverviewInput(

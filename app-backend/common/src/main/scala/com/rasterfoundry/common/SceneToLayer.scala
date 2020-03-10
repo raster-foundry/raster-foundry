@@ -1,13 +1,13 @@
 package com.rasterfoundry.common
 
-import geotrellis.vector.{Geometry, Projected}
-import io.circe.generic.JsonCodec
-import io.circe._
-
-import java.util.UUID
-
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel._
+
+import geotrellis.vector.{Geometry, Projected}
+import io.circe._
+import io.circe.generic.JsonCodec
+
+import java.util.UUID
 
 final case class SceneToLayer(sceneId: UUID,
                               projectLayerId: UUID,

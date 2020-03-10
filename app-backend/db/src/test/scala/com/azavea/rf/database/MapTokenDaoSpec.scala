@@ -1,13 +1,13 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.datamodel._
 
 import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
 import doobie.implicits._
-import org.scalatest._
 import org.scalacheck.Prop.forAll
+import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID

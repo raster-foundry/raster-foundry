@@ -1,24 +1,25 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.common._
+import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.Cache
+
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
-import doobie._
+import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments._
+import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
-import com.typesafe.scalalogging.LazyLogging
-import java.util.UUID
-
-import com.rasterfoundry.common.color.ColorCorrect
-import com.rasterfoundry.common._
-import com.rasterfoundry.database.util.Cache
-import scalacache._
 import scalacache.CatsEffect.modes._
+import scalacache._
 
 import scala.concurrent.duration._
+
+import java.util.UUID
 
 @SuppressWarnings(Array("EmptyCaseClass"))
 final case class SceneToLayerDao()

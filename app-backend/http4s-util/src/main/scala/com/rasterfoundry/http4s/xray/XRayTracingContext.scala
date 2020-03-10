@@ -1,17 +1,17 @@
 package com.rasterfoundry.http4s.xray
 
-import java.time.Instant
-
 import cats.data._
-import cats.implicits._
 import cats.effect.concurrent.Ref
 import cats.effect.{Resource, Sync, Timer}
+import cats.implicits._
 import com.amazonaws.services.xray.AWSXRayAsync
 import com.amazonaws.xray.entities.TraceID
 import com.colisweb.tracing.TracingContext
 import com.colisweb.tracing.TracingContext.TracingContextResource
 
 import scala.util.Random
+
+import java.time.Instant
 
 class XRayTracingContext[F[_]: Sync: Timer](
     client: AWSXRayAsync,

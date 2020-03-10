@@ -1,16 +1,11 @@
 package com.rasterfoundry.backsplash.server
 
+import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
+import com.rasterfoundry.backsplash.color.OgcStyles
 import com.rasterfoundry.backsplash.{
   BacksplashMosaic,
   OgcStore,
   RenderableStore
-}
-import com.rasterfoundry.backsplash.color.OgcStyles
-import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
-import com.rasterfoundry.datamodel.{
-  ColorComposite,
-  ProjectLayer,
-  SingleBandOptions
 }
 import com.rasterfoundry.database.{
   LayerAttributeDao,
@@ -18,23 +13,29 @@ import com.rasterfoundry.database.{
   ProjectLayerDao,
   ProjectLayerDatasourcesDao
 }
+import com.rasterfoundry.datamodel.{
+  ColorComposite,
+  ProjectLayer,
+  SingleBandOptions
+}
+
+import _root_.io.circe.syntax._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
+import com.colisweb.tracing.TracingContext
 import doobie.Transactor
 import doobie.implicits._
 import geotrellis.contrib.vlm.MosaicRasterSource
 import geotrellis.proj4.{CRS, LatLng, WebMercator}
 import geotrellis.raster.histogram.Histogram
-import geotrellis.server.ogc.{OgcSource, OgcStyle, SimpleSource}
 import geotrellis.server.ogc.ows._
 import geotrellis.server.ogc.wcs.WcsModel
-import geotrellis.server.ogc.wms.{WmsModel, WmsParentLayerMeta}
 import geotrellis.server.ogc.wms.wmsScope
-import _root_.io.circe.syntax._
+import geotrellis.server.ogc.wms.{WmsModel, WmsParentLayerMeta}
+import geotrellis.server.ogc.{OgcSource, OgcStyle, SimpleSource}
 import opengis.wms.{Name, OnlineResource, Service}
-import java.util.UUID
 
-import com.colisweb.tracing.TracingContext
+import java.util.UUID
 
 class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
     implicit contextShift: ContextShift[IO]

@@ -1,11 +1,11 @@
 package com.rasterfoundry.datamodel
 
-import java.util.UUID
-
 import cats.implicits._
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
+
+import java.util.UUID
 
 sealed trait MetricEvent {
   def toQueryParams: MetricQueryParameters

@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
@@ -39,7 +39,8 @@ class UploadDaoSpec
               datasource <- unsafeGetRandomDatasource
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, upload),
-                dbUser
+                dbUser,
+                0
               )
             } yield insertedUpload
 
@@ -50,7 +51,8 @@ class UploadDaoSpec
             dbUpload.files == upload.files &&
             dbUpload.metadata == upload.metadata &&
             dbUpload.visibility == upload.visibility &&
-            dbUpload.source == upload.source
+            dbUpload.source == upload.source &&
+            dbUpload.generateTasks === upload.generateTasks
           }
       }
     }
@@ -80,7 +82,7 @@ class UploadDaoSpec
                 datasource = datasource.id,
                 projectId = Some(dbProject.id)
               )
-              insertedUpload <- UploadDao.insert(uploadToInsert, dbUser)
+              insertedUpload <- UploadDao.insert(uploadToInsert, dbUser, 0)
             } yield (insertedUpload, dbProject)
 
             val (dbUpload, dbProject) =
@@ -130,7 +132,7 @@ class UploadDaoSpec
                 projectId = Some(dbProject.id),
                 layerId = Some(dbLayer.id)
               )
-              insertedUpload <- UploadDao.insert(uploadToInsert, dbUser)
+              insertedUpload <- UploadDao.insert(uploadToInsert, dbUser, 0)
             } yield (insertedUpload, dbProject, dbLayer)
 
             val (dbUpload, dbProject, dbLayer) =
@@ -172,7 +174,8 @@ class UploadDaoSpec
               datasource <- unsafeGetRandomDatasource
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, insertUpload),
-                dbUser
+                dbUser,
+                0
               )
             } yield
               (insertedUpload, dbUser, dbOrg, dbPlatform, dbProject, datasource)
@@ -196,7 +199,8 @@ class UploadDaoSpec
                   ).toUpload(
                     dbUser,
                     (dbPlatform.id, false),
-                    Some(dbPlatform.id)
+                    Some(dbPlatform.id),
+                    0
                   )
                 UploadDao.update(fixedUpUpdateUpload, uploadId) flatMap {
                   (affectedRows: Int) =>
@@ -219,7 +223,10 @@ class UploadDaoSpec
             updatedUpload.metadata == updateUpload.metadata &&
             updatedUpload.visibility == updateUpload.visibility &&
             updatedUpload.projectId == updateUpload.projectId &&
-            updatedUpload.source == updateUpload.source
+            updatedUpload.source == updateUpload.source &&
+            updatedUpload.annotationProjectId ==
+            updateUpload.annotationProjectId &&
+            updatedUpload.generateTasks == updateUpload.generateTasks
           }
       }
     }

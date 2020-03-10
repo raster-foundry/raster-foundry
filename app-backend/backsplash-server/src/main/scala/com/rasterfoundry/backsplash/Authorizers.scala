@@ -1,6 +1,12 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.database.{
+  ProjectDao,
+  ProjectLayerDao,
+  SceneDao,
+  ToolRunDao
+}
 import com.rasterfoundry.datamodel.{
   ActionType,
   AuthFailure,
@@ -12,24 +18,19 @@ import com.rasterfoundry.datamodel.{
   ToolRun,
   User
 }
-import com.rasterfoundry.database.{
-  ProjectDao,
-  ProjectLayerDao,
-  SceneDao,
-  ToolRunDao
-}
+
 import cats.Applicative
 import cats.effect._
+import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
+import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
 import doobie.implicits._
-import com.typesafe.scalalogging.LazyLogging
-import scalacache.memoization._
 import scalacache.CatsEffect.modes._
+import scalacache.memoization._
 
 import scala.concurrent.duration._
-import java.util.UUID
 
-import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
+import java.util.UUID
 
 class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 

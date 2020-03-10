@@ -453,7 +453,8 @@ export default class SceneImportModalController {
             metadata: {
                 acquisitionDate: this.sceneData.acquisitionDate,
                 cloudCover: this.sceneData.cloudCover
-            }
+            },
+            generateTasks: false
         };
 
         if (this.importType === 'local') {

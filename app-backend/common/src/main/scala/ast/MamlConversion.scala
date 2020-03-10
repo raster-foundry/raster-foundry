@@ -2,7 +2,6 @@ package com.rasterfoundry.common.ast
 
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{NeighborhoodConversion, ClassMap => MamlClassMap}
-
 import geotrellis.vector.io.json.Implicits._
 
 object MamlConversion {

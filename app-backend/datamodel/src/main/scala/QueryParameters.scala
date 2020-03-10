@@ -1,9 +1,9 @@
 package com.rasterfoundry.datamodel
 
+import geotrellis.proj4.{io => _, _}
+import geotrellis.vector.{Extent, Point, Polygon, Projected}
 import io.circe._
 import io.circe.generic.semiauto._
-import geotrellis.proj4._
-import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 import java.sql.Timestamp
 import java.util.UUID
@@ -664,8 +664,7 @@ final case class StacExportQueryParameters(
     ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
     searchParams: SearchQueryParameters = SearchQueryParameters(),
     exportStatus: Option[String] = None,
-    projectId: Option[UUID] = None,
-    layerId: Option[UUID] = None,
+    annotationProjectId: Option[UUID] = None
 )
 
 object StacExportQueryParameters {
@@ -675,4 +674,36 @@ object StacExportQueryParameters {
   implicit def decStacExportQueryParameters
     : Decoder[StacExportQueryParameters] =
     deriveDecoder[StacExportQueryParameters]
+}
+
+final case class AnnotationProjectTypeQueryParameters(
+    projectType: Option[AnnotationProjectType] = None
+)
+
+object AnnotationProjectTypeQueryParameters {
+  implicit def encGroupQueryParameters
+    : Encoder[AnnotationProjectTypeQueryParameters] =
+    deriveEncoder[AnnotationProjectTypeQueryParameters]
+  implicit def decGroupQueryParameters
+    : Decoder[AnnotationProjectTypeQueryParameters] =
+    deriveDecoder[AnnotationProjectTypeQueryParameters]
+}
+
+final case class AnnotationProjectQueryParameters(
+    ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
+    searchParams: SearchQueryParameters = SearchQueryParameters(),
+    ownershipTypeParams: OwnershipTypeQueryParameters =
+      OwnershipTypeQueryParameters(),
+    groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+    projectTypeParams: AnnotationProjectTypeQueryParameters =
+      AnnotationProjectTypeQueryParameters()
+)
+
+object AnnotationProjectQueryParameters {
+  implicit def encGroupQueryParameters
+    : Encoder[AnnotationProjectQueryParameters] =
+    deriveEncoder[AnnotationProjectQueryParameters]
+  implicit def decGroupQueryParameters
+    : Decoder[AnnotationProjectQueryParameters] =
+    deriveDecoder[AnnotationProjectQueryParameters]
 }

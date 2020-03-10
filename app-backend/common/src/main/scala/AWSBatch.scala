@@ -1,14 +1,13 @@
 package com.rasterfoundry.common
 
-import java.util.UUID
-
-import com.typesafe.scalalogging.LazyLogging
-
 import com.amazonaws.services.batch.AWSBatchClientBuilder
 import com.amazonaws.services.batch.model.SubmitJobRequest
+import com.typesafe.scalalogging.LazyLogging
 
-import scala.collection.immutable.Map
 import scala.collection.JavaConverters._
+import scala.collection.immutable.Map
+
+import java.util.UUID
 
 /** Submits jobs to AWS Batch for processing */
 trait AWSBatch extends RollbarNotifier with LazyLogging {

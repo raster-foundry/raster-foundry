@@ -1,5 +1,11 @@
 import os
+import subprocess
+
+
 import rasterio
+
+
+from rf.models import AnnotationProject
 
 
 def get_geotiff_metadata(tif_path):
@@ -68,3 +74,25 @@ def get_geotiff_dimensions(tif_path):
     """
     with rasterio.open(tif_path) as src:
         return (src.width, src.height)
+
+
+def update_annotation_project(annotation_project_id, cog_path):
+    """Run the create-task-grid command on an annotation project
+
+    Args:
+        annotation_project_id (str): the annotation project to update
+        cog_path (str): the location of the cog backing imagery for this project
+    """
+    annotation_project = AnnotationProject.from_id(annotation_project_id)
+    task_side_length = get_geotiff_resolution(cog_path)[0]
+    subprocess.check_call(
+        [
+            "java",
+            "-cp",
+            "/opt/raster-foundry/jars/batch-assembly.jar",
+            "com.rasterfoundry.batch.Main",
+            "create-task-grid",
+            annotation_project.id,
+            "%.4f" % (task_side_length * annotation_project.taskSizePixels),
+        ]
+    )

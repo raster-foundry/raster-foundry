@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: Raster Foundry
   description: An application to find, view, and analyze geospatial data at any scale
-  version: "1.34.0"
+  version: "1.35.0"
 
 host: app.rasterfoundry.com
 
@@ -186,6 +186,21 @@ paths:
           description: 'User not found'
           schema:
             $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
+  /users/me/limits:
+    x-resource: Users
+    get:
+      summary: "Get a logged in user's account limits"
+      responses:
+        200:
+          description: 'Limits fetched'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/UserScopeUsage'
         default:
           description: 'Unexpected error'
           schema:
@@ -1197,6 +1212,28 @@ paths:
           description: 'Unexpected error'
           schema:
             $ref: '#/definitions/Error'
+  /uploads/{uploadID}/signed-url:
+    x-resource: Uploads
+    get:
+      summary: 'Get a signed URL to upload data to'
+      tags:
+        - Authentication
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uploadID'
+      responses:
+        200:
+          description: 'A signed URL for HTTP PUT requests'
+          schema:
+            $ref: '#/definitions/UploadSignedUrlResponse'
+        403:
+          description: 'Insufficient permissions for resource or resource does not exist'
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: 'Unexpected error'
+          schema:
+            $ref: '#/definitions/Error'
   /scenes/:
     x-resource: Scenes
     get:
@@ -1505,37 +1542,6 @@ paths:
           description: 'A datasource'
           schema:
             $ref: '#/definitions/Datasource'
-        403:
-          description: 'Insufficient permissions for resource or resource does not exist'
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: 'Unexpected error'
-          schema:
-            $ref: '#/definitions/Error'
-  /scenes/{sceneID}/thumbnail:
-    x-resource: Scenes
-    get:
-      summary: 'Get a thumbnail for this COG scene. Only works for scenes of type COG'
-      tags:
-        - Imagery
-      parameters:
-        - $ref: '#/parameters/sceneID'
-        - $ref: '#/parameters/redBand'
-        - $ref: '#/parameters/greenBand'
-        - $ref: '#/parameters/blueBand'
-        - $ref: '#/parameters/brightnessFloor'
-        - $ref: '#/parameters/queryAuthToken'
-        - $ref: '#/parameters/width'
-        - $ref: '#/parameters/height'
-      produces:
-        - image/png
-      responses:
-        200:
-          description: 'PNG of a thumbnail for this scene'
-          schema:
-            type: string
-            format: binary
         403:
           description: 'Insufficient permissions for resource or resource does not exist'
           schema:
@@ -1950,7 +1956,7 @@ paths:
 
 
   /projects/{projectID}/annotations/{annotationID}:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: 'Get an annotation belonging to a project default layer'
       tags:
@@ -2953,7 +2959,7 @@ paths:
 
 
   /projects/{projectID}/layers/{layerID}/annotations/{annotationID}/:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: 'Get an annotation belonging to a project layer'
       tags:
@@ -4383,7 +4389,7 @@ paths:
             $ref: '#/definitions/Error'
 
   /shapes/{shapeID}:
-    x-resouce: Projects
+    x-resource: Projects
     get:
       summary: Get a specific shape
       tags:
@@ -6120,7 +6126,24 @@ definitions:
       token_type:
         type: string
         description: 'Type of token returned by using the refresh token'
-
+  UserScopeUsage:
+    type: object
+    properties:
+      domain:
+        type: string
+        description: 'Domain that the limit applies to'
+      action:
+        type: string
+        description: 'Action that the limit applies to'
+      objectId:
+        type: string
+        description: 'Object Id that that limit applies to'
+      used:
+        type: number
+        description: 'Used portion of limit'
+      limit:
+        type: number
+        description: 'Maximum of limit'
   UserRole:
     type: object
     properties:
@@ -7322,6 +7345,12 @@ definitions:
         $ref: '#/definitions/UploadCredentials'
       bucketPath:
         type: string
+  UploadSignedUrlResponse:
+    type: object
+    properties:
+      signedUrl:
+        type: string
+        format: uri
   SceneParams:
     type: object
     description: 'scene params'
@@ -8126,9 +8155,8 @@ definitions:
     type: object
     required:
       - name
-      - layerDefinitions
-      - isUnion
       - taskStatuses
+      - annotationProjectId
     properties:
       name:
         type: string
@@ -8136,16 +8164,14 @@ definitions:
       owner:
         type: string
         description: 'Owner of of the STAC export record'
-      layerDefinitions:
-        description: 'List of project and layers to be exported'
-        $ref: '#/definitions/LayerDefinitions'
-      isUnion:
-        type: boolean
-        description: 'Union the AOIs or not'
       taskStatuses:
         type: array
         items:
           $ref: '#/definitions/TaskStatus'
+      annotationProjectId:
+        type: string
+        format: uuid
+        description: 'Annotation project to export'
   StacExport:
     allOf:
       - $ref: '#/definitions/TimeModelMixin'

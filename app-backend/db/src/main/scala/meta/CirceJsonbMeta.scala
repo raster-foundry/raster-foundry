@@ -1,18 +1,17 @@
 package com.rasterfoundry.database.meta
 
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import com.rasterfoundry.common.color._
+import com.rasterfoundry.datamodel._
+
+import cats.implicits._
 import doobie._
 import doobie.postgres.circe.jsonb.implicits._
+import geotrellis.raster.{CellSize, GridExtent}
 import io.circe._
 import io.circe.syntax._
-import cats.implicits._
 
 import scala.reflect.runtime.universe.TypeTag
-import java.net.URI
-
-import com.rasterfoundry.common.BacksplashGeoTiffInfo
-import geotrellis.raster.{CellSize, GridExtent}
 
 object CirceJsonbMeta {
   def apply[Type: TypeTag: Encoder: Decoder] = {
@@ -68,9 +67,6 @@ trait CirceJsonbMeta {
   implicit val bandMeta: Meta[List[Band]] =
     CirceJsonbMeta[List[Band]]
 
-  implicit val uriMeta: Meta[URI] =
-    CirceJsonbMeta[URI]
-
   implicit val PlatformPublicSettingsMeta: Meta[Platform.PublicSettings] =
     CirceJsonbMeta[Platform.PublicSettings]
 
@@ -98,10 +94,6 @@ trait CirceJsonbMeta {
   implicit val userScopeMeta: Meta[Map[ObjectType, List[ActionType]]] =
     CirceJsonbMeta[Map[ObjectType, List[ActionType]]]
 
-  implicit val stacExportLayerDefinitionsMeta
-    : Meta[List[StacExport.LayerDefinition]] =
-    CirceJsonbMeta[List[StacExport.LayerDefinition]]
-
   implicit val taskStatusListMeta: Meta[List[TaskStatus]] =
     CirceJsonbMeta[List[TaskStatus]]
 
@@ -110,4 +102,6 @@ trait CirceJsonbMeta {
 
   implicit val stacExportLicenseMeta: Meta[StacExportLicense] =
     CirceJsonbMeta[StacExportLicense]
+
+  implicit val scopesMeta: Meta[Scope] = CirceJsonbMeta[Scope]
 }

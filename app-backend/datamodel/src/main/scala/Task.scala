@@ -2,8 +2,8 @@ package com.rasterfoundry.datamodel
 
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._
-import io.circe.generic.semiauto.{deriveEncoder, deriveDecoder}
 import io.circe.generic.JsonCodec
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.time.Instant
 import java.util.UUID
@@ -14,12 +14,11 @@ case class Task(
     createdBy: String,
     modifiedAt: Instant,
     owner: String,
-    projectId: UUID,
-    projectLayerId: UUID,
     status: TaskStatus,
     lockedBy: Option[String],
     lockedOn: Option[Instant],
-    geometry: Projected[Geometry]
+    geometry: Projected[Geometry],
+    annotationProjectId: UUID
 ) {
   def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
@@ -36,12 +35,11 @@ case class Task(
       this.createdBy,
       this.modifiedAt,
       this.owner,
-      this.projectId,
-      this.projectLayerId,
       this.status,
       this.lockedBy,
       this.lockedOn,
-      actions
+      actions,
+      this.annotationProjectId
     )
 }
 
@@ -53,18 +51,16 @@ object Task {
       createdBy: String,
       modifiedAt: Instant,
       owner: String,
-      projectId: UUID,
-      projectLayerId: UUID,
       status: TaskStatus,
       lockedBy: Option[String],
       lockedOn: Option[Instant],
-      actions: List[TaskActionStamp]
+      actions: List[TaskActionStamp],
+      annotationProjectId: UUID
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
-        this.projectId,
-        this.projectLayerId,
-        this.status
+        this.status,
+        this.annotationProjectId
       )
     }
   }
@@ -75,9 +71,8 @@ object Task {
   }
 
   case class TaskPropertiesCreate(
-      projectId: UUID,
-      projectLayerId: UUID,
-      status: TaskStatus
+      status: TaskStatus,
+      annotationProjectId: UUID
   )
 
   object TaskPropertiesCreate {
@@ -169,8 +164,7 @@ object Task {
   }
 
   final case class TaskGridCreateProperties(
-      xSizeMeters: Int,
-      ySizeMeters: Int
+      sizeMeters: Option[Double]
   )
 
   object TaskGridCreateProperties {

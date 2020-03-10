@@ -1,8 +1,9 @@
 package com.rasterfoundry.batch.stacExport
 
-import java.io.ByteArrayInputStream
-import java.nio.charset.Charset
+import com.rasterfoundry.batch.util.conf.Config
+import com.rasterfoundry.common.S3
 
+import better.files.{File => ScalaFile}
 import cats.effect.IO
 import com.amazonaws.services.s3.AmazonS3URI
 import com.amazonaws.services.s3.model.{
@@ -10,12 +11,12 @@ import com.amazonaws.services.s3.model.{
   PutObjectRequest,
   PutObjectResult
 }
-import com.rasterfoundry.batch.util.conf.Config
-import com.rasterfoundry.common.S3
 import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
-import better.files.{File => ScalaFile}
+
+import java.io.ByteArrayInputStream
+import java.nio.charset.Charset
 
 case class ObjectWithAbsolute[A](absolutePath: String, item: A)
 

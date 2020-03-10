@@ -4,14 +4,13 @@ import com.rasterfoundry.database.Filterable
 import com.rasterfoundry.database.meta.RFMeta
 import com.rasterfoundry.datamodel._
 
-import io.circe.syntax._
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments.in
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.vector._
+import geotrellis.vector.{io => _, _}
 
 import java.util.UUID
 
@@ -419,18 +418,22 @@ trait Filterables extends RFMeta with LazyLogging {
             params.exportStatus map { qp =>
               fr"export_status = UPPER($qp)::public.export_status"
             },
-            (params.projectId, params.layerId) match {
-              case (Some(projectId), Some(layerId)) =>
-                Some(
-                  fr"layer_definitions @> '[" ++ Fragment.const(
-                    StacExport
-                      .LayerDefinition(projectId, layerId)
-                      .asJson
-                      .noSpaces
-                  ) ++ fr"]'::jsonb"
-                )
-              case _ => None
+            params.annotationProjectId map { qp =>
+              fr"annotation_project_id = ${qp}"
             }
+          )
+    }
+
+  implicit val annotationProjectQueryParametersFilter
+    : Filterable[Any, AnnotationProjectQueryParameters] =
+    Filterable[Any, AnnotationProjectQueryParameters] {
+      params: AnnotationProjectQueryParameters =>
+        Filters.ownerQP(params.ownerParams) ++
+          Filters.searchQP(params.searchParams, List("name")) ++
+          List(
+            params.projectTypeParams.projectType.map({ projectType =>
+              fr"project_type = $projectType"
+            })
           )
     }
 }

@@ -3,8 +3,8 @@ package com.rasterfoundry.common.export
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.ast.codec.tree.ExpressionTreeCodec
 import geotrellis.vector.MultiPolygon
-import io.circe.{Decoder, ObjectEncoder}
 import io.circe.generic.semiauto._
+import io.circe.{Decoder, ObjectEncoder}
 
 final case class AnalysisExportSource(
     zoom: Int,

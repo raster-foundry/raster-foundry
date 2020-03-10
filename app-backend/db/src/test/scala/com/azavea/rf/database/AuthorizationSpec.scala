@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.datamodel._
 
 import doobie._
 import doobie.implicits._
@@ -216,7 +216,7 @@ class AuthorizationSpec
               insertManyAcrsIO.transact(xa).unsafeRunSync
 
             assert(
-              acrs.toSet == dbAcrs.flatten.toSet,
+              acrs.toSet == dbAcrs.toSet,
               "Inserting many ACRs should make those ACRs available to list")
             true
           }

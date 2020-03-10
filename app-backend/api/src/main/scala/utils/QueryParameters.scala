@@ -5,10 +5,10 @@ import com.rasterfoundry.datamodel._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 import akka.http.scaladsl.unmarshalling._
-
-import java.util.UUID
-import java.sql.Timestamp
 import javax.xml.bind.DatatypeConverter
+
+import java.sql.Timestamp
+import java.util.UUID
 
 /** Unmarshalls query parameters to correct type */
 trait QueryParameterDeserializers {
@@ -31,6 +31,12 @@ trait QueryParameterDeserializers {
   implicit val deserializerTaskStatus: Unmarshaller[String, TaskStatus] =
     Unmarshaller.strict[String, TaskStatus] { s =>
       TaskStatus.fromString(s)
+    }
+
+  implicit val deserializerAnnotationProjectType
+    : Unmarshaller[String, AnnotationProjectType] =
+    Unmarshaller.strict[String, AnnotationProjectType] { s =>
+      AnnotationProjectType.fromString(s)
     }
 
 }
@@ -188,8 +194,23 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         parameters(
           'exportStatus.as[String].?,
-          'projectId.as[UUID].?,
-          'layerId.as[UUID].?
+          'annotationProjectId.as[UUID].?
         )
     ).as(StacExportQueryParameters.apply _)
+
+  def annotationProjectTypeQueryParameters =
+    parameters(
+      (
+        'projectType.as(deserializerAnnotationProjectType).?
+      )
+    ).as(AnnotationProjectTypeQueryParameters.apply _)
+
+  def annotationProjectQueryParameters =
+    (
+      ownerQueryParameters &
+        searchParams &
+        ownershipTypeQueryParameters &
+        groupQueryParameters &
+        annotationProjectTypeQueryParameters
+    ).as(AnnotationProjectQueryParameters.apply _)
 }

@@ -119,6 +119,7 @@ services:
       - EXPORT_TILE_SIZE=1024
       - AWS_DEFAULT_PROFILE=raster-foundry
       - BACKSPLASH_ENABLE_GDAL=true
+      - RF_LOG_LEVEL=DEBUG
     command: rf
     links:
       - postgres:database.service.rasterfoundry.internal
@@ -203,6 +204,7 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:memcached.service.rasterfoundry.internal
+      - api-server:api.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO

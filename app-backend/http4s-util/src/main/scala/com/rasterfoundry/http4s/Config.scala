@@ -1,9 +1,11 @@
 package com.rasterfoundry.http4s
 
+import com.rasterfoundry.common.{Config => CommonConfig}
+
 import com.amazonaws.xray.plugins.{EC2Plugin, ECSPlugin}
 import com.typesafe.config.ConfigFactory
+
 import scala.collection.JavaConverters._
-import com.rasterfoundry.common.{Config => CommonConfig}
 
 object Config {
   private val config = ConfigFactory.load()

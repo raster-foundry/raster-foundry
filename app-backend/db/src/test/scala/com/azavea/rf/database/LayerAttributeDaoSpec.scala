@@ -3,8 +3,8 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.common.LayerAttribute
 
-import doobie.implicits._
 import cats.implicits._
+import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers

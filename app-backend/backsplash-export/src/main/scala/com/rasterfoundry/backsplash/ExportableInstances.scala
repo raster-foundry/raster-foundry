@@ -1,15 +1,16 @@
 package com.rasterfoundry.backsplash.export
 
 import com.rasterfoundry.common.export._
+
 import TileReification._
-import geotrellis.raster._
-import geotrellis.proj4._
-import geotrellis.raster.rasterize.Rasterizer
-import geotrellis.server._
-import com.azavea.maml.eval._
 import cats.data.Validated._
 import cats.effect._
+import com.azavea.maml.eval._
 import com.typesafe.scalalogging._
+import geotrellis.proj4._
+import geotrellis.raster._
+import geotrellis.raster.rasterize.Rasterizer
+import geotrellis.server._
 
 trait ExportableInstances extends LazyLogging {
   // This is fine because `hasNext` should *never* return true when `allTiles` is empty

@@ -4,11 +4,11 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.notification.{GroupNotifier, MessageType}
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.{Order, PageRequest}
 
+import cats._, cats.implicits._
 import doobie._, doobie.implicits._
 import doobie.postgres.implicits._
-import cats._, cats.implicits._
-import com.rasterfoundry.datamodel.{PageRequest, Order}
 
 import java.util.UUID
 

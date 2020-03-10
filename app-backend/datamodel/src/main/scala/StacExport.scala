@@ -1,8 +1,5 @@
 package com.rasterfoundry.datamodel
 
-import java.sql.Timestamp
-import java.util.{Date, UUID}
-
 import geotrellis.server.stac.{
   StacCollection,
   StacExtent,
@@ -12,6 +9,9 @@ import geotrellis.server.stac.{
 }
 import io.circe.JsonObject
 import io.circe.generic.JsonCodec
+
+import java.sql.Timestamp
+import java.util.{Date, UUID}
 
 @JsonCodec
 final case class StacExport(id: UUID,
@@ -23,8 +23,8 @@ final case class StacExport(id: UUID,
                             license: StacExportLicense,
                             exportLocation: Option[String],
                             exportStatus: ExportStatus,
-                            layerDefinitions: List[StacExport.LayerDefinition],
-                            taskStatuses: List[String]) {
+                            taskStatuses: List[String],
+                            annotationProjectId: Option[UUID]) {
   def createStacCollection(stacVersion: String,
                            id: String,
                            title: Option[String],
@@ -68,9 +68,6 @@ object StacExport {
   def tupled = (StacExport.apply _).tupled
 
   @JsonCodec
-  final case class LayerDefinition(projectId: UUID, layerId: UUID)
-
-  @JsonCodec
   final case class WithSignedDownload(
       id: UUID,
       createdAt: Timestamp,
@@ -81,9 +78,9 @@ object StacExport {
       license: StacExportLicense,
       exportLocation: Option[String],
       exportStatus: ExportStatus,
-      layerDefinitions: List[StacExport.LayerDefinition],
       taskStatuses: List[String],
-      downloadUrl: Option[String]
+      downloadUrl: Option[String],
+      annotationProjectId: Option[UUID]
   )
 
   def signDownloadUrl(export: StacExport, signedDownload: Option[String]) =
@@ -97,17 +94,17 @@ object StacExport {
       export.license,
       export.exportLocation,
       export.exportStatus,
-      export.layerDefinitions,
       export.taskStatuses,
-      signedDownload
+      signedDownload,
+      export.annotationProjectId
     )
 
   @JsonCodec
   final case class Create(name: String,
                           owner: Option[String],
-                          layerDefinitions: List[StacExport.LayerDefinition],
                           license: StacExportLicense,
-                          taskStatuses: List[TaskStatus])
+                          taskStatuses: List[TaskStatus],
+                          annotationProjectId: UUID)
       extends OwnerCheck {
     def toStacExport(user: User): StacExport = {
       val id = UUID.randomUUID()
@@ -124,8 +121,8 @@ object StacExport {
         license,
         None,
         ExportStatus.NotExported,
-        this.layerDefinitions,
-        this.taskStatuses.map(_.toString)
+        this.taskStatuses.map(_.toString),
+        Some(annotationProjectId)
       )
     }
   }

@@ -1,37 +1,38 @@
 package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.backsplash.error.RequirementFailedException
+import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.database.SceneDao
+import com.rasterfoundry.database.util.{Cache => DBCache}
 import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}
-import cats.{Applicative, Monad, MonadError, Parallel}
+
 import cats.data.NonEmptyList
 import cats.effect.{ContextShift, IO, Sync}
 import cats.implicits._
-import doobie.implicits._
+import cats.{Applicative, Monad, MonadError, Parallel}
 import com.colisweb.tracing.TracingContext
 import com.typesafe.scalalogging.LazyLogging
+import doobie.implicits._
+import doobie.util.transactor.Transactor
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.proj4.WebMercator
-import geotrellis.raster.histogram._
 import geotrellis.raster.MultibandTile
+import geotrellis.raster.histogram._
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.{io => _, _}
 import geotrellis.spark.SpatialKey
 import geotrellis.spark.tiling.ZoomedLayoutScheme
 import geotrellis.vector.MultiPolygon
 import geotrellis.vector.{io => _, _}
-import scalacache._
 import scalacache.CatsEffect.modes._
-import com.rasterfoundry.database.util.{Cache => DBCache}
-import java.net.URLDecoder
-import java.util.UUID
-
-import com.rasterfoundry.common.BacksplashGeoTiffInfo
+import scalacache._
 
 import scala.concurrent.duration._
-import doobie.util.transactor.Transactor
+
+import java.net.URLDecoder
+import java.util.UUID
 
 /** An image used in a tile or export service, can be color corrected, and requested a subet of the bands from the
   * image

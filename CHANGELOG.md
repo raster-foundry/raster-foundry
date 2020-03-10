@@ -14,6 +14,39 @@
 
 ### Security
 
+## [1.35.0](https://github.com/raster-foundry/raster-foundry/compare/1.34.1...1.35.0)
+
+### Added
+
+- Update annotation projects after upload processing as appropriate [#5324](https://github.com/raster-foundry/raster-foundry/pull/5324), [#5334](https://github.com/raster-foundry/raster-foundry/pull/5334)
+- Added special share endpoints that can be used with just an email for annotation projects [#5321](https://github.com/raster-foundry/raster-foundry/pull/5321), [#5327](https://github.com/raster-foundry/raster-foundry/pull/5327), [#5336](https://github.com/raster-foundry/raster-foundry/pull/5336), [#5338](https://github.com/raster-foundry/raster-foundry/pull/5338)
+- Added a CSV-configurable scope checking integration test [#5297](https://github.com/raster-foundry/raster-foundry/pull/5297), [#5306](https://github.com/raster-foundry/raster-foundry/pull/5306)
+- Added POST endpoint for annotation projects and their related fields [#5294](https://github.com/raster-foundry/raster-foundry/pull/5294)
+- Added `signed-url` endpoint for uploads to send secure PUTs to s3 [#5290](https://github.com/raster-foundry/raster-foundry/pull/5290)
+- Added migration for annotate projects and related items [#5284](https://github.com/raster-foundry/raster-foundry/pull/5284)
+- Added scopes to the API, database, and user creation to control access to resources and endpoints [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270), [#5275](https://github.com/raster-foundry/raster-foundry/pull/5275), [#5278](https://github.com/raster-foundry/raster-foundry/pull/5278) [#5277](https://github.com/raster-foundry/raster-foundry/pull/5277), [#5292](https://github.com/raster-foundry/raster-foundry/pull/5292), [#5346](https://github.com/raster-foundry/raster-foundry/pull/5346)
+- Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
+- Added a migration to add annotation project id to tasks [#5296](https://github.com/raster-foundry/raster-foundry/pull/5296)
+- Added annotation project related data models, `Dao` methods, endpoints, and tests [#5301](https://github.com/raster-foundry/raster-foundry/pull/5301), [#5303](https://github.com/raster-foundry/raster-foundry/pull/5303), [#5308](https://github.com/raster-foundry/raster-foundry/pull/5308), [#5318](https://github.com/raster-foundry/raster-foundry/pull/5318)
+- Add /user/me/limits endpoint for listing how many projects, shared, and how much upload space a user is using  [#5320](https://github.com/raster-foundry/raster-foundry/pull/5320)
+
+### Changed
+
+- Altered permission resolution to prefer scoped actions with higher limits [#5316](https://github.com/raster-foundry/raster-foundry/pull/5316/files)
+- Improved error handling in Groundwork project migration [#5310](https://github.com/raster-foundry/raster-foundry/pull/5310)
+- Logout can redirect to a custom URL [#5291](https://github.com/raster-foundry/raster-foundry/pull/5291)
+- Moved project data for Groundwork from extras jsonb field and a text field to normalized tables [#5286](https://github.com/raster-foundry/raster-foundry/pull/5286)
+- Clear Python Lambda function pip cache [#5274](https://github.com/raster-foundry/raster-foundry/pull/5274)
+- Updated to support STAC exports on annotation projects [#5312](https://github.com/raster-foundry/raster-foundry/pull/5312) [#5323](https://github.com/raster-foundry/raster-foundry/pull/5323)
+- Made permission replacement obey same scope rules [#5343](https://github.com/raster-foundry/raster-foundry/pull/5343)
+- Updated the task grid creation SQL function to clip task cells to project footprint [#5344](https://github.com/raster-foundry/raster-foundry/pull/5344)
+
+### Fixed
+- Upgrade pyproj to make app-tasks python3.7 compatible [#5352](https://github.com/raster-foundry/raster-foundry/pull/5352)
+- Upload updates now respect all fields [#5330](https://github.com/raster-foundry/raster-foundry/pull/5330)
+- Removed unused route and fixed spelling in Swagger spec [#5273](https://github.com/raster-foundry/raster-foundry/pull/5273)
+- Fix 403 when users with no uploads try to create an upload [#5337](https://github.com/raster-foundry/raster-foundry/pull/5337)
+
 ## [1.34.1](https://github.com/raster-foundry/raster-foundry/compare/1.34.0...1.34.1)
 
 ### Changed

@@ -1,13 +1,14 @@
 package com.rasterfoundry.backsplash
 
+import com.rasterfoundry.datamodel.BandOverride
+
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
-import com.rasterfoundry.datamodel.BandOverride
+import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
 import geotrellis.vector.{Polygon, Projected}
 import simulacrum._
-import java.util.UUID
 
-import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
+import java.util.UUID
 
 // RenderableStore
 // currently scenes and layers

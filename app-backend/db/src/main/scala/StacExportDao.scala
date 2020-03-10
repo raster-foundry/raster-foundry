@@ -1,15 +1,15 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.PageRequest
+import com.rasterfoundry.datamodel._
 
-import java.sql.Timestamp
-import java.util.{UUID, Date}
-import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
+
+import java.sql.Timestamp
+import java.util.{Date, UUID}
 
 object StacExportDao extends Dao[StacExport] {
   val tableName = "stac_exports"
@@ -17,8 +17,8 @@ object StacExportDao extends Dao[StacExport] {
   val selectF: Fragment = sql"""
       SELECT
         id, created_at, created_by, modified_at, owner,
-        name, license, export_location, export_status, layer_definitions,
-        task_statuses
+        name, license, export_location, export_status,
+        task_statuses, annotation_project_id
       FROM
     """ ++ tableF
 
@@ -28,9 +28,11 @@ object StacExportDao extends Dao[StacExport] {
   def getById(id: UUID): ConnectionIO[Option[StacExport]] =
     query.filter(id).selectOption
 
-  def list(page: PageRequest,
-           params: StacExportQueryParameters,
-           user: User): ConnectionIO[PaginatedResponse[StacExport]] =
+  def list(
+      page: PageRequest,
+      params: StacExportQueryParameters,
+      user: User
+  ): ConnectionIO[PaginatedResponse[StacExport]] =
     query
       .filter(params)
       .filter(user.isSuperuser && user.isActive match {
@@ -39,17 +41,19 @@ object StacExportDao extends Dao[StacExport] {
       })
       .page(page)
 
-  def create(newStacExport: StacExport.Create,
-             user: User): ConnectionIO[StacExport] = {
+  def create(
+      newStacExport: StacExport.Create,
+      user: User
+  ): ConnectionIO[StacExport] = {
     val newExport = newStacExport.toStacExport(user)
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, owner,
-      name, license, export_location, export_status, layer_definitions,
-      task_statuses)
+      name, license, export_location, export_status,
+      task_statuses, annotation_project_id)
     VALUES
       (${newExport.id}, ${newExport.createdAt}, ${newExport.createdBy}, ${newExport.modifiedAt},
       ${newExport.owner}, ${newExport.name}, ${newExport.license}, ${newExport.exportLocation},
-      ${newExport.exportStatus}, ${newExport.layerDefinitions}, ${newExport.taskStatuses})
+      ${newExport.exportStatus}, ${newExport.taskStatuses}, ${newExport.annotationProjectId})
     """).update.withUniqueGeneratedKeys[StacExport](
       "id",
       "created_at",
@@ -60,8 +64,8 @@ object StacExportDao extends Dao[StacExport] {
       "license",
       "export_location",
       "export_status",
-      "layer_definitions",
-      "task_statuses"
+      "task_statuses",
+      "annotation_project_id"
     )
   }
 
@@ -91,12 +95,16 @@ object StacExportDao extends Dao[StacExport] {
       }
     }
 
-  def hasProjectViewAccess(layerDefinitions: List[StacExport.LayerDefinition],
-                           user: User): ConnectionIO[Boolean] =
-    layerDefinitions traverse { ld =>
-      ProjectDao.authProjectLayerExist(ld.projectId,
-                                       ld.layerId,
-                                       user,
-                                       ActionType.View)
-    } map { _.foldLeft(true)(_ && _) }
+  def hasProjectViewAccess(
+      annotationProjectId: UUID,
+      user: User
+  ): ConnectionIO[Boolean] =
+    for {
+      authProject <- AnnotationProjectDao.authorized(
+        user,
+        ObjectType.AnnotationProject,
+        annotationProjectId,
+        ActionType.View
+      )
+    } yield authProject.toBoolean
 }

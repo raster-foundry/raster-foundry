@@ -1,12 +1,13 @@
 package com.rasterfoundry.common
 
-import java.util.UUID
-
 import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.datamodel._
+
 import geotrellis.vector.MultiPolygon
 import io.circe.Json
 import io.circe.generic.JsonCodec
+
+import java.util.UUID
 
 @JsonCodec
 final case class MosaicDefinition(

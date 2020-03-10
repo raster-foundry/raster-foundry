@@ -1,12 +1,12 @@
 package com.rasterfoundry.api.thumbnail
 
-import java.util.UUID
+import com.rasterfoundry.api.utils.queryparams._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
-import com.rasterfoundry.datamodel._
 
-import com.rasterfoundry.api.utils.queryparams._
+import java.util.UUID
 
 trait ThumbnailQueryParameterDirective extends QueryParametersCommon {
 

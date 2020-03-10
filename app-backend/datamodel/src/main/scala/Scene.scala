@@ -1,13 +1,13 @@
 package com.rasterfoundry.datamodel
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellType, GridExtent}
 import geotrellis.vector.{MultiPolygon, Projected}
 import io.circe._
 import io.circe.generic.JsonCodec
+
+import java.sql.Timestamp
+import java.util.UUID
 
 @JsonCodec
 final case class SceneFilterFields(

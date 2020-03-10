@@ -1,15 +1,16 @@
 package com.rasterfoundry.database
 
-import java.util.UUID
-
-import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.util.Email
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.{PageRequest, Order}
+import com.rasterfoundry.datamodel.{Order, PageRequest}
+
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.{Fragment, Fragments, _}
+
+import java.util.UUID
 
 object PlatformDao extends Dao[Platform] {
 

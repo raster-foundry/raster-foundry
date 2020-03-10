@@ -1,13 +1,14 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.datamodel._
 
+import cats.data.NonEmptyList
+import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
-import com.typesafe.scalalogging.LazyLogging
 
 class UserDaoSpec
     extends FunSuite
@@ -60,7 +61,8 @@ class UserDaoSpec
               UserDao.createUserWithJWT(
                 creatingUser,
                 newUserFields,
-                GroupRole.Member
+                GroupRole.Member,
+                Scopes.RasterFoundryUser
               )
             }
             userRoles <- UserGroupRoleDao.listByUser(newUser)
@@ -416,6 +418,49 @@ class UserDaoSpec
             )
             true
           }
+      }
+    }
+  }
+
+  test("list users by email") {
+    check {
+      forAll { (userCreates: NonEmptyList[User.Create]) =>
+        {
+          val listIO = for {
+            _ <- userCreates traverse { userCreate =>
+              UserDao.create(userCreate)
+            }
+            listed <- UserDao.findUsersByEmail(userCreates.head.email)
+          } yield listed
+
+          val List(user) = listIO.transact(xa).unsafeRunSync
+
+          assert(
+            user.email == userCreates.head.email || user.personalInfo.email == userCreates.head.email
+          )
+          true
+        }
+      }
+    }
+  }
+
+  test("get list of user ids and emails") {
+    check {
+      forAll { (userCreates: NonEmptyList[User.Create]) =>
+        {
+          val listIO = for {
+            _ <- userCreates traverse { userCreate =>
+              UserDao.create(userCreate)
+            }
+            listed <- UserDao.getThinUsersForIds(userCreates.map(_.id))
+          } yield listed
+          val users = listIO.transact(xa).unsafeRunSync
+          assert(
+            users.size == userCreates.size,
+            "Same number of users are listed"
+          )
+          true
+        }
       }
     }
   }

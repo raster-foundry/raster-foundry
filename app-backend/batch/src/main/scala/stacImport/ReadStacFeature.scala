@@ -5,28 +5,28 @@ import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{SceneDao, UserDao}
 import com.rasterfoundry.datamodel._
+
+import cats.effect.{ContextShift, IO}
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.proj4.CRS
+import geotrellis.vector.{io => _, _}
 import io.circe.generic.JsonCodec
 import io.circe.parser._
 import io.circe.syntax._
-import cats.effect.{ContextShift, IO}
-import geotrellis.vector._
 import javax.imageio.ImageIO
 
+import scala.concurrent.ExecutionContext
 import scala.io.Source
 import scala.util._
+
 import java.net.URI
 import java.sql.Timestamp
 import java.util.UUID
 import java.util.concurrent.Executors
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder
-
-import scala.concurrent.ExecutionContext
 @JsonCodec
 final case class MetadataWithStartStop(start: Timestamp, end: Timestamp)
 

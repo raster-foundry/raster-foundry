@@ -1,24 +1,25 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.ast.MapAlgebraAST._
 import com.rasterfoundry.common.ast._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.export._
 import com.rasterfoundry.database.Implicits._
-import geotrellis.raster._
-import geotrellis.vector.reproject.Implicits._
-import geotrellis.proj4._
-import cats.implicits._
+import com.rasterfoundry.datamodel._
+
 import _root_.io.circe._
 import _root_.io.circe.syntax._
+import cats.data.NonEmptyList
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import java.util.UUID
+import doobie.postgres.implicits._
+import geotrellis.proj4._
+import geotrellis.raster._
+import geotrellis.vector.reproject.Implicits._
 
-import cats.data.NonEmptyList
+import java.util.UUID
 
 object ExportDao extends Dao[Export] {
 

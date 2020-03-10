@@ -1,26 +1,27 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.Cache
+import com.rasterfoundry.datamodel.PageRequest
+import com.rasterfoundry.datamodel._
+
+import cats.effect.LiftIO
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import com.rasterfoundry.datamodel.PageRequest
-import cats.implicits._
-import cats.effect.LiftIO
+import scalacache.CatsEffect.modes._
+import scalacache._
+
+import scala.concurrent.duration._
+
 import java.sql.Timestamp
-import java.time.temporal.IsoFields
-import java.time.temporal.TemporalAdjusters
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.time.temporal.IsoFields
+import java.time.temporal.TemporalAdjusters
 import java.util.UUID
-
-import com.rasterfoundry.database.util.Cache
-import scalacache._
-import scalacache.CatsEffect.modes._
-
-import scala.concurrent.duration._
 
 object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"

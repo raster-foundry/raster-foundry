@@ -18,9 +18,11 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import io.circe.Json
 
 import scala.concurrent.Future
 import scala.util.Try
+
 import java.net.URL
 import java.util.UUID
 
@@ -33,7 +35,8 @@ trait Authentication extends Directives with LazyLogging {
 
   private val jwksURL = auth0Config.getString("jwksURL")
   private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(
-    new URL(jwksURL))
+    new URL(jwksURL)
+  )
 
   // Default user returned when no credentials are provided
   lazy val anonymousUser: Future[Option[User]] =
@@ -41,6 +44,21 @@ trait Authentication extends Directives with LazyLogging {
 
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
+
+  // Use on endpoints where you need to return an anonymous user for public endpoints
+  def authenticateAllowAnonymous: Directive1[User] = {
+    extractTokenHeader.flatMap {
+      case Some(token) =>
+        authenticateWithToken(token.split(" ").last)
+      case None =>
+        onSuccess(anonymousUser) flatMap {
+          case Some(user) => provide(user)
+          case _ =>
+            reject(
+              AuthenticationFailedRejection(CredentialsRejected, challenge))
+        }
+    }
+  }
 
   /**
     * Authenticates user based on bearer token (JWT)
@@ -63,8 +81,9 @@ trait Authentication extends Directives with LazyLogging {
     }
   }
 
-  def verifyJWT(tokenString: String)
-    : Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
+  def verifyJWT(
+      tokenString: String
+  ): Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
     val token: JwtToken = JwtToken(content = tokenString)
 
     ConfigurableJwtValidator(jwkSet).validate(token)
@@ -108,8 +127,10 @@ trait Authentication extends Directives with LazyLogging {
       .getOrElse(getStringClaimOrBlank(claims, "id"))
   }
 
-  def defaultPersonalInfo(user: User,
-                          claims: JWTClaimsSet): User.PersonalInfo = {
+  def defaultPersonalInfo(
+      user: User,
+      claims: JWTClaimsSet
+  ): User.PersonalInfo = {
     val pi = user.personalInfo
     val delegatedProfile = Option(claims.getJSONObjectClaim("delegatedProfile"))
 
@@ -143,42 +164,54 @@ trait Authentication extends Directives with LazyLogging {
         val email = getStringClaimOrBlank(jwtClaims, "email")
         val name = getNameOrFallback(jwtClaims)
         val picture = getStringClaimOrBlank(jwtClaims, "picture")
-        final case class MembershipAndUser(platform: Option[Platform],
-                                           user: User)
+        final case class MembershipAndUser(
+            platform: Option[Platform],
+            user: User
+        )
         // All users will have a platform role, either added by a migration or created with the user if they are new
         val query = for {
           (user, roles) <- UserDao.getUserAndActiveRolesById(userId).flatMap {
             case UserOptionAndRoles(Some(user), roles) =>
               (user, roles).pure[ConnectionIO]
-            case UserOptionAndRoles(None, _) =>
+            case UserOptionAndRoles(None, _) => {
               createUserWithRoles(userId, email, name, picture, jwtClaims)
+            }
+
           }
-          platformRole = roles.find(role =>
-            role.groupType == GroupType.Platform)
+          platformRole = roles.find(
+            role => role.groupType == GroupType.Platform
+          )
           plat <- platformRole match {
             case Some(role) => PlatformDao.getPlatformById(role.groupId)
             case _ =>
               logger.error(
-                s"User without a platform tried to log in: ${userId}")
+                s"User without a platform tried to log in: ${userId}"
+              )
               None.pure[ConnectionIO]
           }
           personalInfo = defaultPersonalInfo(user, jwtClaims)
           updatedUser = (user.dropboxCredential, user.planetCredential) match {
             case (Credential(Some(d)), Credential(Some(_))) if d.length == 0 =>
-              user.copy(email = email,
-                        name = name,
-                        profileImageUri = picture,
-                        personalInfo = personalInfo)
+              user.copy(
+                email = email,
+                name = name,
+                profileImageUri = picture,
+                personalInfo = personalInfo
+              )
             case (Credential(Some(_)), Credential(Some(p))) if p.length == 0 =>
-              user.copy(email = email,
-                        name = name,
-                        profileImageUri = picture,
-                        personalInfo = personalInfo)
+              user.copy(
+                email = email,
+                name = name,
+                profileImageUri = picture,
+                personalInfo = personalInfo
+              )
             case _ =>
-              user.copy(email = email,
-                        name = name,
-                        profileImageUri = picture,
-                        personalInfo = personalInfo)
+              user.copy(
+                email = email,
+                name = name,
+                profileImageUri = picture,
+                personalInfo = personalInfo
+              )
           }
           userUpdate <- {
             (updatedUser != user) match {
@@ -197,11 +230,13 @@ trait Authentication extends Directives with LazyLogging {
                 provide(userUpdate)
               case _ =>
                 reject(
-                  AuthenticationFailedRejection(CredentialsRejected, challenge))
+                  AuthenticationFailedRejection(CredentialsRejected, challenge)
+                )
             }
           case _ =>
             reject(
-              AuthenticationFailedRejection(CredentialsRejected, challenge))
+              AuthenticationFailedRejection(CredentialsRejected, challenge)
+            )
         }
       }
     }
@@ -212,7 +247,8 @@ trait Authentication extends Directives with LazyLogging {
       email: String,
       name: String,
       picture: String,
-      jwtClaims: JWTClaimsSet): ConnectionIO[(User, List[UserGroupRole])] = {
+      jwtClaims: JWTClaimsSet
+  ): ConnectionIO[(User, List[UserGroupRole])] = {
     // use default platform / org if fields are not filled
     val auth0DefaultPlatformId = auth0Config.getString("defaultPlatformId")
     val auth0DefaultOrganizationId =
@@ -239,10 +275,21 @@ trait Authentication extends Directives with LazyLogging {
 
     val userRole = getStringClaimOrBlank(
       jwtClaims,
-      "https://app.rasterfoundry.com;platformRole").toUpperCase match {
+      "https://app.rasterfoundry.com;platformRole"
+    ).toUpperCase match {
       case "ADMIN" => GroupRole.Admin
       case _       => GroupRole.Member
     }
+
+    val userScope: Scope =
+      Option(jwtClaims.getStringClaim("https://app.rasterfoundry.com;scopes")) match {
+        case Some(scopeString) =>
+          Json.fromString(scopeString).as[Scope] match {
+            case Left(_)      => Scopes.NoAccess
+            case Right(scope) => scope
+          }
+        case _ => Scopes.NoAccess
+      }
 
     for {
       platform <- PlatformDao.getPlatformById(platformId)
@@ -270,7 +317,7 @@ trait Authentication extends Directives with LazyLogging {
         orgID
       )
       newUserWithRoles <- {
-        UserDao.createUserWithJWT(systemUser, jwtUser, userRole)
+        UserDao.createUserWithJWT(systemUser, jwtUser, userRole, userScope)
       }
     } yield newUserWithRoles
   }
@@ -298,7 +345,9 @@ trait Authentication extends Directives with LazyLogging {
     */
   def authenticateSuperUser: Directive1[User] = {
     authenticate.flatMap { user =>
-      if (user.isSuperuser) { provide(user) } else {
+      if (user.isSuperuser) {
+        provide(user)
+      } else {
         reject(AuthorizationFailedRejection)
       }
     }

@@ -1,17 +1,21 @@
 package com.rasterfoundry.batch.stacExport
 
-import cats.implicits._
-import java.net.{URI, URLDecoder}
-import java.sql.Timestamp
-import java.util.{Date, UUID}
-
 import com.rasterfoundry.datamodel._
+
+import cats.implicits._
 import geotrellis.proj4.CRS
 import geotrellis.server.stac._
 import geotrellis.vector.reproject.Reproject
 import io.circe._
 import io.circe.syntax._
 
+import java.net.{URI, URLDecoder}
+import java.sql.Timestamp
+import java.util.{Date, UUID}
+
+// TODO: Layers are no longer relevant to AnnotationProjects.
+// We can simplify the exporter by having a single collection
+// for all the scenes, instead of a layer collection wrapping them.
 object Utils {
 
   private val relativeCatalogRoot = StacLink(

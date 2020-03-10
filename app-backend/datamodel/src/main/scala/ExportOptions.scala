@@ -1,10 +1,10 @@
 package com.rasterfoundry.datamodel
 
-import java.net.URI
-
 import geotrellis.proj4.CRS
 import geotrellis.vector.{MultiPolygon, Projected}
 import io.circe.generic.extras.{Configuration, ConfiguredJsonCodec}
+
+import java.net.URI
 
 @ConfiguredJsonCodec
 final case class ExportOptions(mask: Option[Projected[MultiPolygon]],

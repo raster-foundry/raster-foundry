@@ -4,8 +4,8 @@ import com.rasterfoundry.datamodel._
 
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 
 import java.sql.Timestamp
 import java.util.UUID

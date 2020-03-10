@@ -1,7 +1,8 @@
 package com.rasterfoundry.common.ast.codec
 
-import com.rasterfoundry.common.ast._
 import com.rasterfoundry.common._
+import com.rasterfoundry.common.ast._
+
 import io.circe._
 import io.circe.syntax._
 

@@ -1,10 +1,10 @@
 package com.rasterfoundry.http4s.xray
 
-import java.net._
-
 import cats.effect.Sync
-import io.circe.syntax._
 import io.circe.Printer
+import io.circe.syntax._
+
+import java.net._
 
 object UdpClient {
 

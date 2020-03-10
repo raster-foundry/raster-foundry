@@ -1,34 +1,35 @@
 package com.rasterfoundry.common
 
-import java.io.File
-import java.net._
-import java.time.{Duration, ZoneOffset}
-import java.util.Date
-
+import com.amazonaws.HttpMethod
 import com.amazonaws.auth.{
   AWSCredentialsProvider,
   DefaultAWSCredentialsProviderChain
 }
-import com.amazonaws.HttpMethod
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
-import jp.ne.opt.chronoscala.Imports._
 import geotrellis.spark.io.s3.S3InputFormat
+import jp.ne.opt.chronoscala.Imports._
 import org.apache.commons.io.IOUtils
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
+import java.io.File
+import java.net._
+import java.time.{Duration, ZoneOffset}
+import java.util.Date
+
 sealed trait S3Region
 final case class S3RegionEnum(s3Region: Regions) extends S3Region
 final case class S3RegionString(s3Region: String) extends S3Region
 
-final case class S3(credentialsProviderChain: AWSCredentialsProvider =
-                      new DefaultAWSCredentialsProviderChain,
-                    region: Option[S3Region] = None)
-    extends Serializable {
+final case class S3(
+    credentialsProviderChain: AWSCredentialsProvider =
+      new DefaultAWSCredentialsProviderChain,
+    region: Option[S3Region] = None
+) extends Serializable {
 
   lazy val client: AmazonS3 = region match {
     case Some(S3RegionEnum(region)) =>
@@ -46,8 +47,10 @@ final case class S3(credentialsProviderChain: AWSCredentialsProvider =
 
   // we want to ignore here, because uri.getHost returns null instead of an Option[String] -- thanks Java
   @SuppressWarnings(Array("NullParameter"))
-  def bucketAndPrefixFromURI(uri: URI,
-                             stripSlash: Boolean = true): (String, String) = {
+  def bucketAndPrefixFromURI(
+      uri: URI,
+      stripSlash: Boolean = true
+  ): (String, String) = {
     val prefix = uri.getPath match {
       case ""                         => ""
       case "/"                        => ""
@@ -72,9 +75,11 @@ final case class S3(credentialsProviderChain: AWSCredentialsProvider =
     client.getObject(s3uri.getBucket, s3uri.getKey)
   }
 
-  def getObject(s3bucket: String,
-                s3prefix: String,
-                requesterPays: Boolean = false): S3Object =
+  def getObject(
+      s3bucket: String,
+      s3prefix: String,
+      requesterPays: Boolean = false
+  ): S3Object =
     client.getObject(new GetObjectRequest(s3bucket, s3prefix, requesterPays))
 
   def listKeys(url: String, ext: String, recursive: Boolean): Array[URI] = {
@@ -83,11 +88,13 @@ final case class S3(credentialsProviderChain: AWSCredentialsProvider =
   }
 
   /** List the keys to files found within a given bucket */
-  def listKeys(s3bucket: String,
-               s3prefix: String,
-               ext: String,
-               recursive: Boolean = false,
-               requesterPays: Boolean = false): Array[URI] = {
+  def listKeys(
+      s3bucket: String,
+      s3prefix: String,
+      ext: String,
+      recursive: Boolean = false,
+      requesterPays: Boolean = false
+  ): Array[URI] = {
     val objectRequest = (new ListObjectsRequest)
       .withBucketName(s3bucket)
       .withPrefix(s3prefix)
@@ -121,21 +128,26 @@ final case class S3(credentialsProviderChain: AWSCredentialsProvider =
     result
   }
 
-  def getSignedUrl(bucket: String,
-                   key: String,
-                   duration: Duration = Duration.ofDays(1)): URL = {
+  def getSignedUrl(
+      bucket: String,
+      key: String,
+      duration: Duration = Duration.ofDays(1),
+      method: HttpMethod = HttpMethod.GET
+  ): URL = {
     val expiration = LocalDateTime.now + duration
     val generatePresignedUrlRequest =
       new GeneratePresignedUrlRequest(bucket, key)
-    generatePresignedUrlRequest.setMethod(HttpMethod.GET)
+    generatePresignedUrlRequest.setMethod(method)
     generatePresignedUrlRequest.setExpiration(
       Date.from(expiration.toInstant(ZoneOffset.UTC))
     )
     client.generatePresignedUrl(generatePresignedUrlRequest)
   }
 
-  def maybeSignUri(uriString: String,
-                   whitelist: List[String] = List()): String = {
+  def maybeSignUri(
+      uriString: String,
+      whitelist: List[String] = List()
+  ): String = {
     val whitelisted =
       whitelist.map(uriString.startsWith(_)).foldLeft(false)(_ || _)
     if (whitelisted) {
@@ -144,9 +156,11 @@ final case class S3(credentialsProviderChain: AWSCredentialsProvider =
     } else uriString
   }
 
-  def getSignedUrls(source: URI,
-                    duration: Duration = Duration.ofDays(1),
-                    stripSlash: Boolean = true): List[URL] = {
+  def getSignedUrls(
+      source: URI,
+      duration: Duration = Duration.ofDays(1),
+      stripSlash: Boolean = true
+  ): List[URL] = {
     @tailrec
     def get(listing: ObjectListing, accumulator: List[URL]): List[URL] = {
       def getObjects: List[URL] =
@@ -248,11 +262,13 @@ final case class S3(credentialsProviderChain: AWSCredentialsProvider =
 
   /** Copy buckets */
   @tailrec
-  def copyListing(bucket: String,
-                  destBucket: String,
-                  sourcePrefix: String,
-                  destPrefix: String,
-                  listing: ObjectListing): Unit = {
+  def copyListing(
+      bucket: String,
+      destBucket: String,
+      sourcePrefix: String,
+      destPrefix: String,
+      listing: ObjectListing
+  ): Unit = {
     listing.getObjectSummaries.asScala.foreach { os =>
       val key = os.getKey
       client.copyObject(

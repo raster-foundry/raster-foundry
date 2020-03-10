@@ -1,12 +1,12 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.common.S3
+import com.rasterfoundry.datamodel.{Order, PageRequest}
 
 import cats.implicits._
 import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
-import com.rasterfoundry.datamodel.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._

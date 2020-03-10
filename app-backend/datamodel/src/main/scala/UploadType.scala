@@ -1,7 +1,7 @@
 package com.rasterfoundry.datamodel
 
-import io.circe._
 import cats.syntax.either._
+import io.circe._
 
 sealed abstract class UploadType(val repr: String) {
   override def toString = repr

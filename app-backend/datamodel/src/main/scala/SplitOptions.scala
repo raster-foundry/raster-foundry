@@ -1,8 +1,8 @@
 package com.rasterfoundry.datamodel
 
-import io.circe.generic.JsonCodec
-import io.circe._
 import cats.syntax.either._
+import io.circe._
+import io.circe.generic.JsonCodec
 
 import java.sql.Timestamp
 

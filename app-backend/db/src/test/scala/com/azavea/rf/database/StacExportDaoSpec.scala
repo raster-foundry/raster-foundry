@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
@@ -20,18 +20,13 @@ class StacExportDaoSpec
       forAll(
         (
             userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projectCreate: Project.Create,
+            annotationProjectCreate: AnnotationProject.Create,
             stacExportCreate: StacExport.Create
         ) => {
           val createStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
-              userCreate,
-              orgCreate,
-              platform,
-              projectCreate
-            )
+            dbUser <- UserDao.create(userCreate)
+            dbProject <- AnnotationProjectDao
+              .insert(annotationProjectCreate, dbUser)
             fixedStacExportCreate = fixupStacExportCreate(
               stacExportCreate,
               dbUser,
@@ -41,7 +36,7 @@ class StacExportDaoSpec
               fixedStacExportCreate,
               dbUser
             )
-          } yield { (dbUser, fixedStacExportCreate, dbStacExport) }
+          } yield (dbUser, fixedStacExportCreate, dbStacExport)
           val (user, seCreate, se) =
             createStacExportIO.transact(xa).unsafeRunSync
 
@@ -62,14 +57,14 @@ class StacExportDaoSpec
             "Inserted StacExport status should be NotExported"
           )
           assert(
-            se.layerDefinitions == seCreate.layerDefinitions,
-            "Sent and inserted StacExport layer definition should be the same"
-          )
-          assert(
             se.taskStatuses.toSet == seCreate.taskStatuses
               .map(_.toString)
               .toSet,
             "Sent and inserted StacExport taskStatuses should be the same"
+          )
+          assert(
+            se.annotationProjectId.map(_ == seCreate.annotationProjectId).getOrElse(false),
+            "Sent and inserted StacExport annotation project ids should be the same"
           )
           true
         }
@@ -82,18 +77,12 @@ class StacExportDaoSpec
       forAll(
         (
             userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projectCreate: Project.Create,
+            projectCreate: AnnotationProject.Create,
             stacExportCreate: StacExport.Create
         ) => {
           val selectStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
-              userCreate,
-              orgCreate,
-              platform,
-              projectCreate
-            )
+            dbUser <- UserDao.create(userCreate)
+            dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
             fixedStacExportCreate = fixupStacExportCreate(
               stacExportCreate,
               dbUser,
@@ -105,7 +94,7 @@ class StacExportDaoSpec
             )
             selectedStacExport <- StacExportDao
               .getById(dbStacExport.id)
-          } yield { (dbUser, dbStacExport, selectedStacExport) }
+          } yield (dbUser, dbStacExport, selectedStacExport)
 
           val (user, se, selectedSeO) =
             selectStacExportIO.transact(xa).unsafeRunSync
@@ -133,12 +122,12 @@ class StacExportDaoSpec
                 "Selected StacExport status should be NotExported"
               )
               assert(
-                se.layerDefinitions == selectedSe.layerDefinitions,
-                "Inserted and selected StacExport layer definition should be the same"
-              )
-              assert(
                 se.taskStatuses.toSet == selectedSe.taskStatuses.toSet,
                 "Inserted and selected StacExport taskStatuses should be the same"
+              )
+              assert(
+                se.annotationProjectId == selectedSe.annotationProjectId,
+                "Selected and inserted StacExport annotation project ids should be the same"
               )
               true
             case _ => false
@@ -153,18 +142,12 @@ class StacExportDaoSpec
       forAll(
         (
             userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projectCreate: Project.Create,
+            projectCreate: AnnotationProject.Create,
             stacExportCreate: StacExport.Create
         ) => {
           val updatetStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
-              userCreate,
-              orgCreate,
-              platform,
-              projectCreate
-            )
+            dbUser <- UserDao.create(userCreate)
+            dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
             fixedStacExportCreate = fixupStacExportCreate(
               stacExportCreate,
               dbUser,
@@ -216,12 +199,12 @@ class StacExportDaoSpec
             "Selected StacExport status should be updated"
           )
           assert(
-            se.layerDefinitions == selectedSe.layerDefinitions,
-            "Inserted and selected StacExport layer definition should be the same"
-          )
-          assert(
             se.taskStatuses.toSet == selectedSe.taskStatuses.toSet,
             "Updating task statuses should not change the record in DB"
+          )
+          assert(
+            se.annotationProjectId == selectedSe.annotationProjectId,
+            "Selected and inserted StacExport annotation project ids should be the same"
           )
           true
         }
@@ -234,18 +217,12 @@ class StacExportDaoSpec
       forAll(
         (
             userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projectCreate: Project.Create,
+            projectCreate: AnnotationProject.Create,
             stacExportCreate: StacExport.Create
         ) => {
           val deletetStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
-              userCreate,
-              orgCreate,
-              platform,
-              projectCreate
-            )
+            dbUser <- UserDao.create(userCreate)
+            dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
             fixedStacExportCreate = fixupStacExportCreate(
               stacExportCreate,
               dbUser,
@@ -280,21 +257,15 @@ class StacExportDaoSpec
       forAll(
         (
             userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projectCreate: Project.Create,
+            projectCreate: AnnotationProject.Create,
             stacExportCreate1: StacExport.Create,
             stacExportCreate2: StacExport.Create,
             page: PageRequest,
             queryParams: StacExportQueryParameters
         ) => {
           val updatetStacExportIO = for {
-            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
-              userCreate,
-              orgCreate,
-              platform,
-              projectCreate
-            )
+            dbUser <- UserDao.create(userCreate)
+            dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
             fixedStacExportCreate1 = fixupStacExportCreate(
               stacExportCreate1,
               dbUser,
@@ -319,8 +290,7 @@ class StacExportDaoSpec
                 page,
                 queryParams.copy(
                   exportStatus = Some("Exported"),
-                  projectId = Some(dbProject.id),
-                  layerId = Some(dbProject.defaultLayerId)
+                  annotationProjectId = Some(dbProject.id)
                 ),
                 dbUser
               )

@@ -1,17 +1,17 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.{Order, PageRequest}
 
-import doobie._
-import doobie.implicits._
-import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
 import cats._
 import cats.implicits._
-import com.rasterfoundry.datamodel.{PageRequest, Order}
+import doobie._
+import doobie.implicits._
+import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 
-import java.util.UUID
 import java.sql.Timestamp
+import java.util.UUID
 
 object TeamDao extends Dao[Team] {
   val tableName = "teams"

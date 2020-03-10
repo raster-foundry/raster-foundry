@@ -1,14 +1,14 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel._
 
-import doobie._
-import doobie.implicits._
-import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
 import cats.data._
 import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 
 import java.util.UUID
 

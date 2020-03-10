@@ -1,13 +1,13 @@
 package com.rasterfoundry.datamodel
 
+import cats.syntax.either._
+import io.circe._
+import io.circe.generic.JsonCodec
+
 import java.net.{URI, URLEncoder}
 import java.security.InvalidParameterException
 import java.sql.Timestamp
 import java.util.UUID
-
-import cats.syntax.either._
-import io.circe._
-import io.circe.generic.JsonCodec
 
 sealed abstract class UserRole(val repr: String)
     extends Product
@@ -40,8 +40,10 @@ object UserRole {
   }
 }
 
-final case class UserOptionAndRoles(user: Option[User],
-                                    roles: List[UserGroupRole])
+final case class UserOptionAndRoles(
+    user: Option[User],
+    roles: List[UserGroupRole]
+)
 
 final case class Credential(token: Option[String])
 
@@ -97,20 +99,23 @@ object OrganizationType {
 }
 
 @JsonCodec
-final case class User(id: String,
-                      role: UserRole,
-                      createdAt: Timestamp,
-                      modifiedAt: Timestamp,
-                      dropboxCredential: Credential,
-                      planetCredential: Credential,
-                      emailNotifications: Boolean,
-                      email: String,
-                      name: String,
-                      profileImageUri: String,
-                      isSuperuser: Boolean,
-                      isActive: Boolean,
-                      visibility: UserVisibility,
-                      personalInfo: User.PersonalInfo) {
+final case class User(
+    id: String,
+    role: UserRole,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    dropboxCredential: Credential,
+    planetCredential: Credential,
+    emailNotifications: Boolean,
+    email: String,
+    name: String,
+    profileImageUri: String,
+    isSuperuser: Boolean,
+    isActive: Boolean,
+    visibility: UserVisibility,
+    personalInfo: User.PersonalInfo,
+    scope: Scope
+) {
 
   lazy val cacheKey: String = s"user:$id"
 
@@ -146,42 +151,48 @@ object User {
   def create = Create.apply _
 
   @JsonCodec
-  final case class PersonalInfo(firstName: String = "",
-                                lastName: String = "",
-                                email: String = "",
-                                emailNotifications: Boolean = false,
-                                phoneNumber: String = "",
-                                organizationName: String = "",
-                                organizationType: OrganizationType =
-                                  OrganizationType.Other,
-                                organizationWebsite: String = "",
-                                profileWebsite: String = "",
-                                profileBio: String = "",
-                                profileUrl: String = "")
+  final case class PersonalInfo(
+      firstName: String = "",
+      lastName: String = "",
+      email: String = "",
+      emailNotifications: Boolean = false,
+      phoneNumber: String = "",
+      organizationName: String = "",
+      organizationType: OrganizationType = OrganizationType.Other,
+      organizationWebsite: String = "",
+      profileWebsite: String = "",
+      profileBio: String = "",
+      profileUrl: String = ""
+  )
 
   @JsonCodec
-  final case class WithGroupRole(id: String,
-                                 role: UserRole,
-                                 createdAt: Timestamp,
-                                 modifiedAt: Timestamp,
-                                 dropboxCredential: Credential,
-                                 planetCredential: Credential,
-                                 emailNotifications: Boolean,
-                                 email: String,
-                                 name: String,
-                                 profileImageUri: String,
-                                 isSuperuser: Boolean,
-                                 isActive: Boolean,
-                                 visibility: UserVisibility,
-                                 groupRole: GroupRole,
-                                 membershipStatus: MembershipStatus)
+  final case class WithGroupRole(
+      id: String,
+      role: UserRole,
+      createdAt: Timestamp,
+      modifiedAt: Timestamp,
+      dropboxCredential: Credential,
+      planetCredential: Credential,
+      emailNotifications: Boolean,
+      email: String,
+      name: String,
+      profileImageUri: String,
+      isSuperuser: Boolean,
+      isActive: Boolean,
+      visibility: UserVisibility,
+      groupRole: GroupRole,
+      membershipStatus: MembershipStatus
+  )
 
   @JsonCodec
-  final case class Create(id: String,
-                          role: UserRole = Viewer,
-                          email: String = "",
-                          name: String = "",
-                          profileImageUri: String = "") {
+  final case class Create(
+      id: String,
+      role: UserRole = Viewer,
+      email: String = "",
+      name: String = "",
+      profileImageUri: String = "",
+      scope: Scope = Scopes.RasterFoundryUser
+  ) {
     def toUser: User = {
       val now = new Timestamp(new java.util.Date().getTime)
       User(
@@ -198,17 +209,21 @@ object User {
         isSuperuser = false,
         isActive = true,
         UserVisibility.Private,
-        User.PersonalInfo()
+        User.PersonalInfo(),
+        scope
       )
     }
   }
 
-  final case class JwtFields(id: String,
-                             email: String,
-                             name: String,
-                             picture: String,
-                             platformId: UUID,
-                             organizationId: UUID) {
+  final case class JwtFields(
+      id: String,
+      email: String,
+      name: String,
+      picture: String,
+      platformId: UUID,
+      organizationId: UUID,
+      scope: Scope = Scopes.RasterFoundryUser
+  ) {
     def toUser: User = {
       val now = new Timestamp(new java.util.Date().getTime)
       User(
@@ -225,12 +240,18 @@ object User {
         isSuperuser = false,
         isActive = true,
         UserVisibility.Private,
-        User.PersonalInfo()
+        User.PersonalInfo(),
+        scope
       )
     }
   }
 }
 
-@JsonCodec
-final case class UserWithScopes(user: User,
-                                scopes: Map[ObjectType, List[ActionType]])
+@JsonCodec final case class UserEmail(email: String)
+
+@JsonCodec final case class UserThin(id: String,
+                                     email: String,
+                                     profileImageUri: String)
+object UserThin {
+  def fromUser(user: User) = UserThin(user.id, user.email, user.profileImageUri)
+}

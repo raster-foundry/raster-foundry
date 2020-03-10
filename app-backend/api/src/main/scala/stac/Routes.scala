@@ -1,23 +1,22 @@
 package com.rasterfoundry.api.stac
 
 import com.rasterfoundry.akkautil._
-import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.common.S3
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import akka.http.scaladsl.server.Route
 import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3URI}
-
-import java.util.UUID
-import java.net.URLDecoder
-
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
+
+import java.net.URLDecoder
+import java.util.UUID
 
 trait StacRoutes
     extends Authentication
@@ -74,88 +73,96 @@ trait StacRoutes
   }
 
   def listStacExports: Route = authenticate { user =>
-    (withPagination & stacExportQueryParameters) {
-      (page: PageRequest, params: StacExportQueryParameters) =>
-        complete {
-          StacExportDao
-            .list(page, params, user)
-            .map(
-              p =>
-                PaginatedResponse[StacExport.WithSignedDownload](
-                  p.count,
-                  p.hasPrevious,
-                  p.hasNext,
-                  p.page,
-                  p.pageSize,
-                  p.results.map(signExportUrl(_))
+    authorizeScope(ScopedAction(Domain.StacExports, Action.Read, None), user) {
+      (withPagination & stacExportQueryParameters) {
+        (page: PageRequest, params: StacExportQueryParameters) =>
+          complete {
+            StacExportDao
+              .list(page, params, user)
+              .map(
+                p =>
+                  PaginatedResponse[StacExport.WithSignedDownload](
+                    p.count,
+                    p.hasPrevious,
+                    p.hasNext,
+                    p.page,
+                    p.pageSize,
+                    p.results.map(signExportUrl(_))
+                )
               )
-            )
-            .transact(xa)
-            .unsafeToFuture
-        }
+              .transact(xa)
+              .unsafeToFuture
+          }
+      }
     }
   }
 
   def createStacExport: Route = authenticate { user =>
-    entity(as[StacExport.Create]) { newStacExport =>
-      authorizeAsync {
-        StacExportDao
-          .hasProjectViewAccess(newStacExport.layerDefinitions, user)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        onSuccess(
+    authorizeScope(ScopedAction(Domain.StacExports, Action.Create, None), user) {
+      entity(as[StacExport.Create]) { newStacExport =>
+        authorizeAsync {
           StacExportDao
-            .create(newStacExport, user)
+            .hasProjectViewAccess(newStacExport.annotationProjectId, user)
             .transact(xa)
             .unsafeToFuture
-        ) { stacExport =>
-          kickoffStacExport(stacExport.id)
-          complete((StatusCodes.Created, stacExport))
+        } {
+          onSuccess(
+            StacExportDao
+              .create(newStacExport, user)
+              .transact(xa)
+              .unsafeToFuture
+          ) { stacExport =>
+            kickoffStacExport(stacExport.id)
+            complete((StatusCodes.Created, stacExport))
+          }
         }
       }
     }
   }
 
   def getStacExport(id: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      StacExportDao
-        .isOwnerOrSuperUser(user, id)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      rejectEmptyResponse {
-        complete {
-          StacExportDao
-            .getById(id)
-            .map {
-              case Some(export) =>
-                Some(
-                  signExportUrl(export)
-                )
-              case _ => None
-            }
-            .transact(xa)
-            .unsafeToFuture
+    authorizeScope(ScopedAction(Domain.StacExports, Action.Read, None), user) {
+      authorizeAsync {
+        StacExportDao
+          .isOwnerOrSuperUser(user, id)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            StacExportDao
+              .getById(id)
+              .map {
+                case Some(export) =>
+                  Some(
+                    signExportUrl(export)
+                  )
+                case _ => None
+              }
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
   }
 
   def deleteStacExport(id: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      StacExportDao
-        .isOwnerOrSuperUser(user, id)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
+    authorizeScope(ScopedAction(Domain.StacExports, Action.Delete, None), user) {
+      authorizeAsync {
         StacExportDao
-          .delete(id)
+          .isOwnerOrSuperUser(user, id)
           .transact(xa)
           .unsafeToFuture
-      ) { count: Int =>
-        complete((StatusCodes.NoContent, s"$count stac export deleted"))
+      } {
+        onSuccess(
+          StacExportDao
+            .delete(id)
+            .transact(xa)
+            .unsafeToFuture
+        ) { count: Int =>
+          complete((StatusCodes.NoContent, s"$count stac export deleted"))
+        }
       }
     }
   }

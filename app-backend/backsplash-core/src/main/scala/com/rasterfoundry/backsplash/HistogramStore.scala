@@ -1,11 +1,11 @@
 package com.rasterfoundry.backsplash
 
 import cats.effect.IO
+import com.colisweb.tracing.TracingContext
 import geotrellis.raster.histogram._
 import simulacrum._
-import java.util.UUID
 
-import com.colisweb.tracing.TracingContext
+import java.util.UUID
 
 @typeclass trait HistogramStore[A] {
   @op("layerHistogram") def layerHistogram(

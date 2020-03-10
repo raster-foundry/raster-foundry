@@ -7,8 +7,8 @@ import com.github.blemale.scaffeine.Cache
 import geotrellis.raster.split._
 import geotrellis.raster.{CellSize, MultibandTile}
 import geotrellis.spark._
-import geotrellis.spark.io.{LayerAttributes, _}
 import geotrellis.spark.io.index.KeyIndex
+import geotrellis.spark.io.{LayerAttributes, _}
 import geotrellis.spark.tiling._
 import geotrellis.util.Component
 import geotrellis.vector._

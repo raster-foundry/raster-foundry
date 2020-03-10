@@ -2,22 +2,23 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
+
+import cats.effect.{ContextShift, IO}
+import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.config.ConfigFactory
 import doobie._
+import doobie.free.connection.unit
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Strategy
-import doobie.free.connection.unit
-import cats.implicits._
-import org.scalatest.{BeforeAndAfterAll, Suite}
-import java.util.UUID
-import java.util.concurrent.Executors
-
-import cats.effect.{ContextShift, IO}
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.flywaydb.core.Flyway
+import org.scalatest.{BeforeAndAfterAll, Suite}
 
 import scala.concurrent.ExecutionContext
+
+import java.util.UUID
+import java.util.concurrent.Executors
 
 // SetupTemplateDB is a singleton that is used to instantiate the template db
 // once and only once per test run

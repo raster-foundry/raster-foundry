@@ -1,6 +1,7 @@
 package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.datamodel._
+
 import io.circe.Json
 
 case class ExportData(scenes: List[Scene],

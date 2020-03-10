@@ -1,12 +1,13 @@
 package com.rasterfoundry.http4s
 
+import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.http4s.xray.{XrayHttp, XrayRequest}
+
 import cats.data.{Kleisli, OptionT}
 import cats.effect.Sync
 import cats.implicits._
-import com.colisweb.tracing._
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
-import com.rasterfoundry.datamodel.User
-import com.rasterfoundry.http4s.xray.{XrayHttp, XrayRequest}
+import com.colisweb.tracing._
 import io.circe.parser._
 import io.opentracing._
 import org.http4s._

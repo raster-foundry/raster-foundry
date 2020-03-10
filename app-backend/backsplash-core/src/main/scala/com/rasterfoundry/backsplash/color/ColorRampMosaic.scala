@@ -1,7 +1,8 @@
 package com.rasterfoundry.backsplash.color
 
-import com.rasterfoundry.datamodel.SingleBandOptions
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.datamodel.SingleBandOptions
+
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import geotrellis.raster.histogram._

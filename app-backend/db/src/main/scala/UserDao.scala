@@ -1,18 +1,20 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.Cache
+import com.rasterfoundry.database.util.Sanitization
+import com.rasterfoundry.datamodel._
 
+import cats.data._
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import cats.implicits._
-import scalacache._
 import scalacache.CatsEffect.modes._
+import scalacache._
+
+import scala.concurrent.duration._
 
 import java.sql.Timestamp
-import scala.concurrent.duration._
 
 object UserDao extends Dao[User] with Sanitization {
 
@@ -24,7 +26,7 @@ object UserDao extends Dao[User] with Sanitization {
     SELECT
       id, role, created_at, modified_at,
       dropbox_credential, planet_credential, email_notifications,
-      email, name, profile_image_uri, is_superuser, is_active, visibility, personal_info
+      email, name, profile_image_uri, is_superuser, is_active, visibility, personal_info, scopes
     FROM
   """ ++ tableF
 
@@ -34,7 +36,8 @@ object UserDao extends Dao[User] with Sanitization {
 
   def unsafeGetUserById(
       id: String,
-      isOwn: Option[Boolean] = Some(true)): ConnectionIO[User] = isOwn match {
+      isOwn: Option[Boolean] = Some(true)
+  ): ConnectionIO[User] = isOwn match {
     case Some(true) => filterById(id).select
     case _ =>
       filterById(id).select map { sanitizeUser _ }
@@ -67,7 +70,8 @@ object UserDao extends Dao[User] with Sanitization {
   }
 
   def getUserAndActiveRolesById(
-      id: String): ConnectionIO[UserOptionAndRoles] = {
+      id: String
+  ): ConnectionIO[UserOptionAndRoles] = {
     for {
       user <- getUserById(id)
       roles <- {
@@ -84,7 +88,9 @@ object UserDao extends Dao[User] with Sanitization {
   def createUserWithJWT(
       creatingUser: User,
       jwtUser: User.JwtFields,
-      userRole: GroupRole): ConnectionIO[(User, List[UserGroupRole])] = {
+      userRole: GroupRole,
+      scope: Scope
+  ): ConnectionIO[(User, List[UserGroupRole])] = {
     for {
       organization <- OrganizationDao.query
         .filter(jwtUser.organizationId)
@@ -97,7 +103,8 @@ object UserDao extends Dao[User] with Sanitization {
               Viewer,
               jwtUser.email,
               jwtUser.name,
-              jwtUser.picture
+              jwtUser.picture,
+              scope
             )
             create(newUser)
           case None =>
@@ -124,7 +131,8 @@ object UserDao extends Dao[User] with Sanitization {
             organization
               .getOrElse(
                 throw new RuntimeException(
-                  "Tried to create a user role using a non-existent organization ID")
+                  "Tried to create a user role using a non-existent organization ID"
+                )
               )
               .id,
             userRole
@@ -152,14 +160,15 @@ object UserDao extends Dao[User] with Sanitization {
          profile_image_uri = ${user.profileImageUri},
          visibility = ${user.visibility},
          personal_info = ${user.personalInfo}
-
         """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
       _ <- remove(user.cacheKey)(userCache, async[ConnectionIO]).attempt
     } yield query
   }
 
-  def storeDropboxAccessToken(userId: String,
-                              accessToken: Credential): ConnectionIO[Int] = {
+  def storeDropboxAccessToken(
+      userId: String,
+      accessToken: Credential
+  ): ConnectionIO[Int] = {
     sql"""UPDATE users
           SET dropbox_credential = ${accessToken}
           WHERE id = ${userId}
@@ -172,10 +181,10 @@ object UserDao extends Dao[User] with Sanitization {
     sql"""
        INSERT INTO users
           (id, role, created_at, modified_at, email_notifications,
-          email, name, profile_image_uri, is_superuser, is_active, visibility)
+          email, name, profile_image_uri, is_superuser, is_active, visibility, scopes)
        VALUES
           (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
-          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility)
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility, ${newUser.scope})
        """.update.withUniqueGeneratedKeys[User](
       "id",
       "role",
@@ -190,7 +199,8 @@ object UserDao extends Dao[User] with Sanitization {
       "is_superuser",
       "is_active",
       "visibility",
-      "personal_info"
+      "personal_info",
+      "scopes"
     )
   }
 
@@ -261,7 +271,8 @@ object UserDao extends Dao[User] with Sanitization {
 
   def searchUsers(
       user: User,
-      searchParams: SearchQueryParameters): ConnectionIO[List[User]] = {
+      searchParams: SearchQueryParameters
+  ): ConnectionIO[List[User]] = {
     UserDao
       .viewFilter(user)
       .filter(searchParams)
@@ -287,4 +298,18 @@ object UserDao extends Dao[User] with Sanitization {
       _ <- remove(user.cacheKey)(userCache, async[ConnectionIO]).attempt
     } yield query
   }
+
+  def findUsersByEmail(email: String): ConnectionIO[List[User]] =
+    query
+      .filter(fr"(email = $email OR personal_info ->> 'email' = $email)")
+      .list
+
+  def getThinUsersForIds(
+      ids: NonEmptyList[String]
+  ): ConnectionIO[List[UserThin]] =
+    Nested(
+      query
+        .filter(Fragments.in(fr"id", ids))
+        .list
+    ).map(UserThin.fromUser(_)).value
 }
