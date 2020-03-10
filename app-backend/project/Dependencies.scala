@@ -55,6 +55,7 @@ object Version {
   val logback = "1.2.3"
   val maml = "0.4.0"
   val monocle = "1.5.1-cats"
+  val newtype = "0.4.3"
   val nimbusJose = "0.6.0"
   val nimbusJoseJwt = "4.41.1"
   val openTracing = "0.0.6"
@@ -174,6 +175,7 @@ object Dependencies {
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % Version.monocle
+  val newtype = "io.estatico" %% "newtype" % Version.newtype
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val nimbusJoseJwt = "com.nimbusds" % "nimbus-jose-jwt" % Version.nimbusJoseJwt
   val opentracing = "com.colisweb" %% "scala-opentracing" % Version.openTracing
