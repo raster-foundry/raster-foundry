@@ -156,7 +156,7 @@ def process_upload(upload_id):
         )
         if JOB_ATTEMPT >= 3:
             upload.update_upload_status("FAILED")
-            annotationProject.update_status("TASK_GRID_FAILURE")
+            annotationProject.update_status({"errorStage": "TASK_GRID_FAILURE"})
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:
@@ -167,7 +167,7 @@ def process_upload(upload_id):
             logger.error("Upload for AnnotationProject failed to process: %s", annotationProject.id)
         if JOB_ATTEMPT >= 3:
             upload.update_upload_status("FAILED")
-            annotationProject.update_status("IMAGE_INGESTION_FAILURE")
+            annotationProject.update_status({"errorStage": "IMAGE_INGESTION_FAILURE"})
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:

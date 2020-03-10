@@ -59,8 +59,8 @@ object AnnotationProjectStatus {
       (stage: ErrorStage) => stage.repr
     )
   implicit val decoderProgressStatus: Decoder[ProgressStage] =
-    Decoder.forProduct1("status")(
-      (status: String) => ProgressStage.fromString(status)
+    Decoder.decodeString.emapTry(
+      (status: String) => Try { ProgressStage.fromString(status) }
     )
   implicit val encoderProgressStatus: Encoder[ProgressStage] =
     Encoder.forProduct1("status")(
