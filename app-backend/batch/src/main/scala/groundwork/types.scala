@@ -54,7 +54,7 @@ object types {
           ToObject(messagePost.userId),
           messagePost.msg.underlying,
           "inapp"
-        )
+      )
     )
   }
 

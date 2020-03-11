@@ -1,14 +1,14 @@
 package com.rasterfoundry.batch.groundwork
 
-import types._
+import com.rasterfoundry.batch.groundwork.types._
 
 import cats.effect.Sync
 import cats.implicits._
-import com.softwaremill.sttp.circe._
 import com.softwaremill.sttp._
-import io.circe.Json
+import com.softwaremill.sttp.circe._
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.circe.Json
 import io.circe.syntax._
 
 trait IntercomNotifier[F[_]] {

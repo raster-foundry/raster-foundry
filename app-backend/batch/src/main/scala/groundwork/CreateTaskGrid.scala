@@ -1,7 +1,7 @@
 package com.rasterfoundry.batch.groundwork
 
-import com.rasterfoundry.batch.groundwork.types._
 import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.groundwork.types._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
