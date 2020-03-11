@@ -469,6 +469,7 @@ lazy val batch = project
       Dependencies.hadoop,
       Dependencies.hikariCP,
       Dependencies.log4cats,
+      Dependencies.log4catsSlf4j,
       Dependencies.monocleCore,
       Dependencies.newtype,
       Dependencies.refined,
