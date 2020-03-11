@@ -52,6 +52,7 @@ object Version {
   val json4s = "3.5.0"
   val jsonSmart = "2.3"
   val jts = "1.16.0"
+  val log4cats = "0.3.0"
   val logback = "1.2.3"
   val maml = "0.4.0"
   val monocle = "1.5.1-cats"
@@ -171,6 +172,7 @@ object Dependencies {
   val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
   val javaMail = "com.sun.mail" % "javax.mail" % Version.javaMail
   val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
+  val log4cats = "io.chrisdavenport" %% "log4cats-slf4j"   % Version.log4cats
   val log4jOverslf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml

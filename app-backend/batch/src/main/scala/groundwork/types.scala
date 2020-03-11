@@ -1,7 +1,6 @@
 package com.rasterfoundry.batch.groundwork
 
 import io.circe.{Decoder, Encoder}
-import io.circe.generic.JsonCodec
 import io.estatico.newtype.macros.newtype
 import io.circe.generic.extras.{Configuration, ConfiguredJsonCodec}
 
@@ -11,6 +10,7 @@ object types {
       case "_type" => "type"
       case other   => other
     })
+
   @newtype case class ExternalId(underlying: String)
   object ExternalId {
     implicit val encExternalId: Encoder[ExternalId] =
@@ -21,58 +21,37 @@ object types {
 
   @newtype case class Notification(underlying: String)
   @newtype case class UserId(underlying: String)
+  object UserId {
+    implicit val encUserId: Encoder[UserId] =
+      Encoder.encodeString.contramap(_.underlying)
+    implicit val decUserId: Decoder[UserId] =
+      Decoder.decodeString.map(UserId.apply _)
+  }
   @newtype case class Message(underlying: String)
   @newtype case class IntercomToken(underlying: String)
 
-  case class IntercomSearchQuery(externalId: ExternalId)
-  object IntercomSearchQuery {
-    implicit val encIntercomSearchQuery: Encoder[IntercomSearchQuery] =
-      Encoder.forProduct3(
-        "field",
-        "operator",
-        "value"
-      )(query => ("external_id", "=", query.externalId))
-
-    implicit val decIntercomSearchQuery: Decoder[IntercomSearchQuery] =
-      Decoder.forProduct3(
-        "field",
-        "operator",
-        "value"
-      )(
-        (_: String, _: String, email: ExternalId) => IntercomSearchQuery(email)
-      )
-  }
-
-  @JsonCodec case class IntercomUser(id: String)
-  @JsonCodec case class IntercomPost(query: IntercomSearchQuery)
-
-  @ConfiguredJsonCodec case class Pages(
-      _type: String,
-      page: Int,
-      perPage: Int,
-      totalPages: Int
+  @ConfiguredJsonCodec case class FromObject(adminId: UserId, _type: String)
+  @ConfiguredJsonCodec case class ToObject(
+      externalId: ExternalId,
+      _type: String
   )
 
-  object Pages {
-    def empty: Pages =
-      Pages("pages", 0, 0, 0)
-  }
-
-  @ConfiguredJsonCodec case class IntercomSearchResponse(
-      _type: String,
-      data: List[IntercomUser],
-      totalCount: Int,
-      pages: Pages
-  )
-
-  object IntercomSearchResponse {
-    def empty: IntercomSearchResponse =
-      IntercomSearchResponse(
-        "list",
-        Nil,
-        0,
-        Pages.empty
+  case class MessagePost(adminId: UserId, userId: ExternalId, msg: Message)
+  object MessagePost {
+    implicit val encMessagePost: Encoder[MessagePost] = Encoder.forProduct4(
+      "from",
+      "to",
+      "body",
+      "message_type"
+    )(
+      messagePost =>
+      (
+        FromObject(messagePost.adminId, "admin"),
+        ToObject(messagePost.userId, "user"),
+        messagePost.msg.underlying,
+        "inapp"
       )
+    )
   }
 
 }
