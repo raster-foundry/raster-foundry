@@ -2,14 +2,8 @@ package com.rasterfoundry.batch.groundwork
 
 import io.circe.{Decoder, Encoder}
 import io.estatico.newtype.macros.newtype
-import io.circe.generic.extras.{Configuration, ConfiguredJsonCodec}
 
 object types {
-  implicit val jsonConfig: Configuration =
-    Configuration.default.withSnakeCaseMemberNames.copy(transformMemberNames = {
-      case "_type" => "type"
-      case other   => other
-    })
 
   @newtype case class ExternalId(underlying: String)
   object ExternalId {
@@ -30,11 +24,21 @@ object types {
   @newtype case class Message(underlying: String)
   @newtype case class IntercomToken(underlying: String)
 
-  @ConfiguredJsonCodec case class FromObject(adminId: UserId, _type: String)
-  @ConfiguredJsonCodec case class ToObject(
-      externalId: ExternalId,
-      _type: String
-  )
+  case class FromObject(adminId: UserId)
+  object FromObject {
+    implicit val encFromObject: Encoder[FromObject] =
+      Encoder.forProduct2("type", "id")(
+        fromObject => ("admin", fromObject.adminId)
+      )
+  }
+
+  case class ToObject(externalId: ExternalId)
+  object ToObject {
+    implicit val encToObject: Encoder[ToObject] = Encoder.forProduct2(
+      "type",
+      "user_id"
+    )(toObject => ("user", toObject.externalId))
+  }
 
   case class MessagePost(adminId: UserId, userId: ExternalId, msg: Message)
   object MessagePost {
@@ -45,12 +49,12 @@ object types {
       "message_type"
     )(
       messagePost =>
-      (
-        FromObject(messagePost.adminId, "admin"),
-        ToObject(messagePost.userId, "user"),
-        messagePost.msg.underlying,
-        "inapp"
-      )
+        (
+          FromObject(messagePost.adminId),
+          ToObject(messagePost.userId),
+          messagePost.msg.underlying,
+          "inapp"
+        )
     )
   }
 
