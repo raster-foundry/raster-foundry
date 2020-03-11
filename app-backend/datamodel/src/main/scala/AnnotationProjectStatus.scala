@@ -4,8 +4,6 @@ import cats.implicits._
 import io.circe._
 import io.circe.syntax._
 
-import scala.util.Try
-
 abstract class AnnotationProjectStatus(val repr: String)
 
 abstract class ProgressStage(val stage: String)
@@ -61,11 +59,11 @@ object AnnotationProjectStatus {
       (stage: ErrorStage) => stage.repr
     )
   implicit val decoderProgressStatus: Decoder[ProgressStage] =
-    Decoder.decodeString.emapTry(
-      (status: String) => Try { ProgressStage.fromString(status) }
+    Decoder.forProduct1("progressStage")(
+      (stage: String) => ProgressStage.fromString(stage)
     )
   implicit val encoderProgressStatus: Encoder[ProgressStage] =
-    Encoder.forProduct1("status")(
+    Encoder.forProduct1("progressStage")(
       (status: ProgressStage) => status.repr
     )
 
@@ -75,7 +73,7 @@ object AnnotationProjectStatus {
   implicit def encAnnProjStat: Encoder[AnnotationProjectStatus] =
     new Encoder[AnnotationProjectStatus] {
       def apply(thing: AnnotationProjectStatus): Json = thing match {
-        case ps: ProgressStage => Map("status" -> ps.repr).asJson
+        case ps: ProgressStage => Map("progressStage" -> ps.repr).asJson
         case es: ErrorStage    => Map("errorStage" -> es.repr).asJson
       }
     }
