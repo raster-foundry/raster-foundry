@@ -1,6 +1,8 @@
 package com.rasterfoundry.batch.groundwork
 
+import com.rasterfoundry.batch.groundwork.types._
 import com.rasterfoundry.batch.Job
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
   AnnotationProjectDao,
@@ -22,6 +24,7 @@ import java.util.UUID
 class CreateTaskGrid(
     annotationProjectId: UUID,
     taskSizeMeters: Double,
+    notifier: IntercomNotifier[IO],
     xa: Transactor[IO]
 ) extends LazyLogging {
 
@@ -75,7 +78,37 @@ class CreateTaskGrid(
           )
       }
       _ <- OptionT.liftF { info("Updated annotation project") }
-    } yield ()).value.transact(xa).void
+    } yield annotationProject).value.transact(xa) flatMap {
+      case Some(annotationProject) =>
+        notifier.notifyUser(
+          Config.intercomToken,
+          Config.intercomAdminId,
+          ExternalId(annotationProject.createdBy),
+          Message("Your project ${annotationProject.name} is ready!")
+        )
+      case None =>
+        (for {
+          projectO <- AnnotationProjectDao.query
+            .filter(annotationProjectId)
+            .selectOption
+          ownerO <- projectO traverse { project =>
+            UserDao.unsafeGetUserById(project.createdBy)
+          }
+          _ <- ownerO traverse { user =>
+            LiftIO[ConnectionIO].liftIO {
+              notifier.notifyUser(
+                Config.intercomToken,
+                Config.intercomAdminId,
+                ExternalId(user.id),
+                Message(
+                  "Your project failed to process. If you'd like help troubleshooting, please reach out to us at groundwork@azavea.com."
+                )
+              )
+            }
+          }
+        } yield ()).transact(xa)
+
+    }
 }
 
 object CreateTaskGrid extends Job {
@@ -88,6 +121,7 @@ object CreateTaskGrid extends Job {
       new CreateTaskGrid(
         UUID.fromString(annotationProjectId),
         taskSizeMeters.toDouble,
+        ???,
         xa
       ).run()
     case _ =>
