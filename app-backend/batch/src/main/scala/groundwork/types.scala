@@ -53,11 +53,26 @@ object types {
       totalPages: Int
   )
 
+  object Pages {
+    def empty: Pages =
+      Pages("pages", 0, 0, 0)
+  }
+
   @ConfiguredJsonCodec case class IntercomSearchResponse(
       _type: String,
       data: List[IntercomUser],
       totalCount: Int,
       pages: Pages
   )
+
+  object IntercomSearchResponse {
+    def empty: IntercomSearchResponse =
+      IntercomSearchResponse(
+        "list",
+        Nil,
+        0,
+        Pages.empty
+      )
+  }
 
 }

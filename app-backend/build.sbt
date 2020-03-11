@@ -480,6 +480,10 @@ lazy val batch = project
       Dependencies.sparkCore,
       Dependencies.spireMath,
       Dependencies.spray,
+      Dependencies.sttpCatsBackend,
+      Dependencies.sttpCore,
+      Dependencies.sttpJson,
+      Dependencies.sttpCirce,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })

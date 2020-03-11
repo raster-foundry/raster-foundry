@@ -206,6 +206,7 @@ object Dependencies {
   val spire = "org.typelevel" %% "spire" % Version.spire
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath
   val spray = "io.spray" %% "spray-json" % Version.spray
+  val sttpCatsBackend = "com.softwaremill.sttp" %% "async-http-client-backend-cats" % Version.sttp
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % Version.sttp
   val sttpCore = "com.softwaremill.sttp" %% "core" % Version.sttp
   val sttpJson = "com.softwaremill.sttp" %% "json-common" % Version.sttp
