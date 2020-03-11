@@ -51,7 +51,6 @@ class LiveIntercomNotifier[F[_]: Sync](
       userId: ExternalId,
       msg: Message
   ): F[Unit] = {
-    println(MessagePost(adminId, userId, msg).asJson.spaces2)
     val uri = Uri(java.net.URI.create(s"$sttpApiBase/messages"))
     val resp = sttp.auth
       .bearer(intercomToken.underlying)
