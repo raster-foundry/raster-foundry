@@ -42,7 +42,7 @@ def process_upload(upload_id):
         logger.info("Getting annotation project: %s", upload.annotationProjectId)
         annotationProject = AnnotationProject.from_id(upload.annotationProjectId)
         logger.info("Updating annotation project status")
-        annotationProject.update_status("Processing")
+        annotationProject.update_status({"progressStage": "PROCESSING"})
 
     logger.info(
         "Processing upload (%s) for user %s with files %s",
@@ -145,7 +145,7 @@ def process_upload(upload_id):
         if annotationProject is not None:
             # Don't overwrite fields modified by the task grid creation
             annotationProject = AnnotationProject.from_id(upload.annotationProjectId)
-            annotationProject.update_status("READY")
+            annotationProject.update_status({"progressStage": "READY"})
     except TaskGridError as tge:
         logger.error(
             "Error making task grids annotation project (%s) on upload (%s) for with files %s. %s",
@@ -160,7 +160,7 @@ def process_upload(upload_id):
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:
-                annotationProject.update_status("QUEUED")
+                annotationProject.update_status({"progressStage" : "QUEUED"})
         raise
     except:
         if annotationProject is not None:
@@ -171,7 +171,7 @@ def process_upload(upload_id):
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:
-                annotationProject.update_status("QUEUED")
+                annotationProject.update_status({"progressStage": "QUEUED"})
         logger.error(
             "Failed to process upload (%s) for user %s with files %s",
             upload.id,
