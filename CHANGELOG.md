@@ -18,6 +18,7 @@
 
 ### Added
 
+- Deleting annotation projects deletes all related data (scenes, uploads, uploaded data, projects) [#5351](https://github.com/raster-foundry/raster-foundry/pull/5351)
 - Update annotation projects after upload processing as appropriate [#5324](https://github.com/raster-foundry/raster-foundry/pull/5324), [#5334](https://github.com/raster-foundry/raster-foundry/pull/5334)
 - Added special share endpoints that can be used with just an email for annotation projects [#5321](https://github.com/raster-foundry/raster-foundry/pull/5321), [#5327](https://github.com/raster-foundry/raster-foundry/pull/5327), [#5336](https://github.com/raster-foundry/raster-foundry/pull/5336), [#5338](https://github.com/raster-foundry/raster-foundry/pull/5338)
 - Added a CSV-configurable scope checking integration test [#5297](https://github.com/raster-foundry/raster-foundry/pull/5297), [#5306](https://github.com/raster-foundry/raster-foundry/pull/5306)

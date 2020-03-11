@@ -220,7 +220,7 @@ class AnnotationProjectDaoSpec
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao
               .insert(annotationProjectCreate, user)
-            deleted <- AnnotationProjectDao.deleteById(inserted.id)
+            deleted <- AnnotationProjectDao.deleteById(inserted.id, user)
             fetched <- AnnotationProjectDao.getById(inserted.id)
           } yield { (deleted, fetched) }
 

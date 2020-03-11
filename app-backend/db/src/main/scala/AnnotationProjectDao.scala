@@ -1,9 +1,12 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.common.Config.s3
+import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
 import cats.data._
+import cats.effect.{IO, LiftIO}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -14,7 +17,10 @@ import java.util.UUID
 
 object AnnotationProjectDao
     extends Dao[AnnotationProject]
-    with ObjectPermissions[AnnotationProject] {
+    with ObjectPermissions[AnnotationProject]
+    with ConnectionIOLogger {
+  lazy val s3client = S3()
+
   val tableName = "annotation_projects"
 
   def selectF: Fragment = sql"""
@@ -220,8 +226,62 @@ object AnnotationProjectDao
       }
     }
 
-  def deleteById(id: UUID): ConnectionIO[Int] =
-    query.filter(fr"id = ${id}").delete
+  def deleteById(id: UUID, user: User): ConnectionIO[Int] =
+    for {
+      annotationProject <- query.filter(id).selectOption
+      _ <- debug(s"Got annotation project ${annotationProject map { _.id }}")
+      sourceProject <- annotationProject flatMap { _.projectId } traverse {
+        projectId =>
+          ProjectDao.unsafeGetProjectById(projectId)
+      }
+      uploads <- UploadDao.findForAnnotationProject(id)
+      uploadFiles = uploads flatMap { _.files } flatMap { (f: String) =>
+        val (bucket, key) = uriToBucketAndKey(f.replace("|", "%7C"))
+        if (bucket == s3.dataBucket && key.contains(user.id)) {
+          Some((bucket, key))
+        } else {
+          None
+        }
+      }
+      _ <- debug(s"Planning to delete ${uploadFiles.size} files from S3")
+      _ <- uploadFiles traverse {
+        case (bucket, key) =>
+          LiftIO[ConnectionIO].liftIO {
+            (IO { s3client.deleteObject(bucket, key) }).attempt
+          }
+      }
+      _ <- debug(s"Deleting uplods ${uploads map { _.id }}")
+      _ <- uploads traverse { upload =>
+        UploadDao.query.filter(upload.id).delete
+      }
+      _ <- debug(s"Source project is: ${sourceProject map { _.id }}")
+      projectScenes <- sourceProject map { _.defaultLayerId } traverse {
+        projectLayerId =>
+          ProjectLayerScenesDao.listLayerScenesRaw(projectLayerId, None)
+      }
+      _ <- debug(s"Project scenes are: ${projectScenes map { _ map { _.id } }}")
+      _ <- projectScenes traverse { scenes =>
+        scenes traverse {
+          case scene if (scene.bucketAndKey map { bk: (String, String) =>
+                bk._1 == s3.dataBucket && bk._2.contains(user.id)
+              }).getOrElse(false) =>
+            val Some((bucket, key)) = scene.bucketAndKey
+            debug(s"Deleting ${scene.id} and its data") *>
+              (LiftIO[ConnectionIO].liftIO {
+                IO { s3client.deleteObject(bucket, key) }
+              }).attempt *> SceneDao.query.filter(scene.id).delete
+          case scene =>
+            debug(s"Deleting scene: ${scene.id}") *>
+              SceneDao.query.filter(scene.id).delete
+        }
+      }
+      _ <- sourceProject traverse { project =>
+        debug(s"Deleting project ${project.id}") *> ProjectDao.deleteProject(
+          project.id
+        )
+      }
+      n <- query.filter(fr"id = ${id}").delete
+    } yield n
 
   def update(project: AnnotationProject, id: UUID): ConnectionIO[Int] = {
     (fr"UPDATE " ++ tableF ++ fr"""SET

@@ -154,6 +154,10 @@ final case class Scene(
     sceneOrder,
     this.metadataFields
   )
+
+  def bucketAndKey: Option[(String, String)] = ingestLocation map {
+    uriToBucketAndKey _
+  }
 }
 
 object Scene {
