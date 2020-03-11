@@ -3,6 +3,7 @@ package com.rasterfoundry.batch.groundwork
 import io.circe.{Decoder, Encoder}
 import io.estatico.newtype.macros.newtype
 
+@SuppressWarnings(Array("AsInstanceOf"))
 object types {
 
   @newtype case class ExternalId(underlying: String)
