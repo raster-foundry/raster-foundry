@@ -226,7 +226,6 @@ object AnnotationProjectDao
       }
     }
 
-  // TODO delete uploads and their data
   def deleteById(id: UUID, user: User): ConnectionIO[Int] =
     for {
       annotationProject <- query.filter(id).selectOption
