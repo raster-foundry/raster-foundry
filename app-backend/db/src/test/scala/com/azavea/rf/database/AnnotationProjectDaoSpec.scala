@@ -200,7 +200,7 @@ class AnnotationProjectDaoSpec
           )
 
           assert(
-            afterUpdate.ready == annotationProjectUpdate.ready,
+            afterUpdate.status == annotationProjectUpdate.status,
             "Readiness was updated")
 
           true
