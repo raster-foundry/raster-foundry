@@ -10,4 +10,5 @@ object Config {
   private val intercomConfig = config.getConfig("intercom")
   val intercomToken = IntercomToken(intercomConfig.getString("token"))
   val intercomAdminId = UserId(intercomConfig.getString("adminId"))
+  val apiHost = intercomConfig.getString("rfHost")
 }

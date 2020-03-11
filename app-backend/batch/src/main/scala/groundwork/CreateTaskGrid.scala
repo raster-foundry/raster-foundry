@@ -84,7 +84,9 @@ class CreateTaskGrid(
           Config.intercomToken,
           Config.intercomAdminId,
           ExternalId(annotationProject.createdBy),
-          Message("Your project ${annotationProject.name} is ready!")
+          Message(
+            s"Your project ${annotationProject.name} is ready! ${Config.apiHost}/api/annotation-projects/${annotationProject.id}"
+          )
         )
       case None =>
         (for {
