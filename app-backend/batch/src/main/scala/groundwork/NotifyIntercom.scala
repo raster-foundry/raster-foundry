@@ -27,7 +27,7 @@ class LiveIntercomNotifier[F[_]: Sync](
 
   implicit val unsafeLoggerF = Slf4jLogger.getLogger[F]
 
-  def responseAsBody[T](
+  private def responseAsBody[T](
       resp: Either[String, Either[DeserializationError[io.circe.Error], T]],
       fallback: => T
   ): F[T] =

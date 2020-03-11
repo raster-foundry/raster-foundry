@@ -15,6 +15,7 @@ import com.rasterfoundry.datamodel.{Task, TaskStatus}
 import cats.data.OptionT
 import cats.effect.{IO, LiftIO}
 import cats.implicits._
+import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.{ConnectionIO, Transactor}
@@ -117,13 +118,15 @@ object CreateTaskGrid extends Job {
 
   val name = "create-task-grid"
 
+  implicit val backend = AsyncHttpClientCatsBackend[IO]()
+
   def runJob(args: List[String]): IO[Unit] = args match {
     case annotationProjectId +: taskSizeMeters +: Nil =>
       val xa = RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
       new CreateTaskGrid(
         UUID.fromString(annotationProjectId),
         taskSizeMeters.toDouble,
-        ???,
+        new LiveIntercomNotifier[IO],
         xa
       ).run()
     case _ =>
