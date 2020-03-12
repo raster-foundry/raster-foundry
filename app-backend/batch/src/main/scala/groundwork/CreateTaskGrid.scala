@@ -10,7 +10,7 @@ import com.rasterfoundry.database.{
   TaskDao,
   UserDao
 }
-import com.rasterfoundry.datamodel.{Task, TaskStatus}
+import com.rasterfoundry.datamodel.{AnnotationProjectStatus, Task, TaskStatus}
 
 import cats.data.OptionT
 import cats.effect.{IO, LiftIO}
@@ -73,7 +73,8 @@ class CreateTaskGrid(
           .update(
             annotationProject.copy(
               aoi = footprint,
-              taskSizeMeters = Some(taskSizeMeters)
+              taskSizeMeters = Some(taskSizeMeters),
+              status = AnnotationProjectStatus.Ready
             ),
             annotationProject.id
           )
@@ -94,6 +95,12 @@ class CreateTaskGrid(
           projectO <- AnnotationProjectDao.query
             .filter(annotationProjectId)
             .selectOption
+          _ <- projectO traverse { project =>
+            AnnotationProjectDao.update(
+              project.copy(status = AnnotationProjectStatus.TaskGridFailure),
+              project.id
+            )
+          }
           ownerO <- projectO traverse { project =>
             UserDao.unsafeGetUserById(project.createdBy)
           }
@@ -104,13 +111,16 @@ class CreateTaskGrid(
                 Config.intercomAdminId,
                 ExternalId(user.id),
                 Message(
-                  "Your project failed to process. If you'd like help troubleshooting, please reach out to us at groundwork@azavea.com."
+                  """
+                  | Your project failed to process. If you'd like help
+                  | troubleshooting, please reach out to us at
+                  | groundwork@azavea.com."
+                  """.trim.stripMargin
                 )
               )
             }
           }
         } yield ()).transact(xa)
-
     }
 }
 

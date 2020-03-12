@@ -142,10 +142,6 @@ def process_upload(upload_id):
                 ]
             except Exception as e:
                 raise TaskGridError("Error making task grid: %s", e)
-        if annotationProject is not None:
-            # Don't overwrite fields modified by the task grid creation
-            annotationProject = AnnotationProject.from_id(upload.annotationProjectId)
-            annotationProject.update_status({"progressStage": "READY"})
     except TaskGridError as tge:
         logger.error(
             "Error making task grids annotation project (%s) on upload (%s) for with files %s. %s",
