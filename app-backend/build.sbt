@@ -468,7 +468,10 @@ lazy val batch = project
       Dependencies.guava,
       Dependencies.hadoop,
       Dependencies.hikariCP,
+      Dependencies.log4cats,
+      Dependencies.log4catsSlf4j,
       Dependencies.monocleCore,
+      Dependencies.newtype,
       Dependencies.refined,
       Dependencies.scaffeine,
       Dependencies.scaffeine,
@@ -479,6 +482,10 @@ lazy val batch = project
       Dependencies.sparkCore,
       Dependencies.spireMath,
       Dependencies.spray,
+      Dependencies.sttpCatsBackend,
+      Dependencies.sttpCore,
+      Dependencies.sttpJson,
+      Dependencies.sttpCirce,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
