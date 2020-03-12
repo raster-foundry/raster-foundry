@@ -11,7 +11,7 @@ from ..uploads.landsat_historical import LandsatHistoricalSceneFactory
 from ..uploads.planet.factories import PlanetSceneFactory
 from ..uploads.modis.factories import MODISSceneFactory
 from ..utils.exception_reporting import wrap_rollbar
-from ..utils.io import (get_session, notify_intercom)
+from ..utils.io import get_session, notify_intercom
 
 logger = logging.getLogger(__name__)
 HOST = os.getenv("RF_HOST")
@@ -137,7 +137,9 @@ def process_upload(upload_id):
             try:
                 [
                     update_annotation_project(
-                        upload.annotationProjectId, scene.ingestLocation.replace("%7C", "|"))
+                        upload.annotationProjectId,
+                        scene.ingestLocation.replace("%7C", "|"),
+                    )
                     for scene in created_scenes
                 ]
             except Exception as e:
@@ -148,7 +150,7 @@ def process_upload(upload_id):
             annotationProject.id,
             upload.id,
             upload.files,
-            tge
+            tge,
         )
         if JOB_ATTEMPT >= 3:
             upload.update_upload_status("FAILED")
@@ -156,18 +158,25 @@ def process_upload(upload_id):
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:
-                annotationProject.update_status({"progressStage" : "QUEUED"})
+                annotationProject.update_status({"progressStage": "QUEUED"})
         raise
     except:
         if annotationProject is not None:
-            logger.error("Upload for AnnotationProject failed to process: %s", annotationProject.id)
+            logger.error(
+                "Upload for AnnotationProject failed to process: %s",
+                annotationProject.id,
+            )
         if JOB_ATTEMPT >= 3:
             upload.update_upload_status("FAILED")
             annotationProject.update_status({"errorStage": "IMAGE_INGESTION_FAILURE"})
-            notify_intercom(upload.owner,
-                            f"Your project {annotationProject.name} failed to process. If "
-                            "you'd like help troubleshooting, please reach out to us at "
-                            "groundwork@azavea.com.")
+            notify_intercom(
+                upload.owner,
+                (
+                    "Your project \"{annotationProjectName}\" failed to process. If "
+                    "you'd like help troubleshooting, please reach out to us at "
+                    "groundwork@azavea.com."
+                ).format(annotationProjectName=annotationProject.name),
+            )
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:

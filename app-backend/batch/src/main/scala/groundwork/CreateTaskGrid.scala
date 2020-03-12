@@ -87,7 +87,7 @@ class CreateTaskGrid(
           Config.intercomAdminId,
           ExternalId(annotationProject.createdBy),
           Message(
-            s"Your project ${annotationProject.name} is ready! ${Config.apiHost}/api/annotation-projects/${annotationProject.id}"
+            s"""Your project "${annotationProject.name}" is ready! ${Config.apiHost}/api/annotation-projects/${annotationProject.id}"""
           )
         )
       case None =>
@@ -104,21 +104,22 @@ class CreateTaskGrid(
           ownerO <- projectO traverse { project =>
             UserDao.unsafeGetUserById(project.createdBy)
           }
-          _ <- ownerO traverse { user =>
-            LiftIO[ConnectionIO].liftIO {
-              notifier.notifyUser(
-                Config.intercomToken,
-                Config.intercomAdminId,
-                ExternalId(user.id),
-                Message(
-                  """
-                  | Your project failed to process. If you'd like help
+          _ <- (ownerO, projectO map { _.name }).tupled traverse {
+            case (user, projectName) =>
+              LiftIO[ConnectionIO].liftIO {
+                notifier.notifyUser(
+                  Config.intercomToken,
+                  Config.intercomAdminId,
+                  ExternalId(user.id),
+                  Message(
+                    s"""
+                  | Your project "${projectName}" failed to process. If you'd like help
                   | troubleshooting, please reach out to us at
                   | groundwork@azavea.com."
                   """.trim.stripMargin
+                  )
                 )
-              )
-            }
+              }
           }
         } yield ()).transact(xa)
     }

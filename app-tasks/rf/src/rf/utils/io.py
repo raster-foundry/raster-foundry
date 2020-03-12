@@ -129,7 +129,9 @@ def gcs_path_for_landsat_id(landsat_id):
 def notify_intercom(user_id: str, message: str) -> None:
     subprocess.check_call(
         [
-            "java", "-cp", "com.rasterfoundry.batch.Main",
+            "java", "-cp",
+            "/opt/raster-foundry/jars/batch-assembly.jar",
+            "com.rasterfoundry.batch.Main",
             "notify-intercom", user_id, message
         ]
     )
