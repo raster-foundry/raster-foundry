@@ -19,7 +19,7 @@ final case class AnnotationProject(
     labelersTeamId: Option[UUID],
     validatorsTeamId: Option[UUID],
     projectId: Option[UUID],
-    ready: Boolean
+    status: AnnotationProjectStatus
 ) {
   def withRelated(
       tileLayers: List[TileLayer],
@@ -37,7 +37,7 @@ final case class AnnotationProject(
       labelersTeamId,
       validatorsTeamId,
       projectId,
-      ready,
+      status,
       tileLayers,
       labelClassGroups
     )
@@ -57,7 +57,7 @@ object AnnotationProject {
       projectId: Option[UUID],
       tileLayers: List[TileLayer.Create],
       labelClassGroups: List[AnnotationLabelClassGroup.Create],
-      ready: Boolean
+      status: AnnotationProjectStatus
   )
 
   object Create {
@@ -76,7 +76,7 @@ object AnnotationProject {
       labelersTeamId: Option[UUID],
       validatorsTeamId: Option[UUID],
       projectId: Option[UUID],
-      ready: Boolean,
+      status: AnnotationProjectStatus,
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses]
   ) {
@@ -92,7 +92,7 @@ object AnnotationProject {
       labelersTeamId,
       validatorsTeamId,
       projectId,
-      ready
+      status
     )
 
     def withSummary(
@@ -111,7 +111,7 @@ object AnnotationProject {
         labelersTeamId,
         validatorsTeamId,
         projectId,
-        ready,
+        status,
         tileLayers,
         labelClassGroups,
         taskStatusSummary,
@@ -158,7 +158,7 @@ object AnnotationProject {
       labelersTeamId: Option[UUID],
       validatorsTeamId: Option[UUID],
       projectId: Option[UUID],
-      ready: Boolean,
+      status: AnnotationProjectStatus,
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
       taskStatusSummary: Map[TaskStatus, Int],

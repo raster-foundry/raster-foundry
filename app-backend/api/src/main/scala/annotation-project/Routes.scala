@@ -258,7 +258,7 @@ trait AnnotationProjectRoutes
       } {
         onSuccess(
           AnnotationProjectDao
-            .deleteById(projectId)
+            .deleteById(projectId, user)
             .transact(xa)
             .unsafeToFuture
         ) {

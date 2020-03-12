@@ -102,6 +102,7 @@ metals.sbt
 
 /.env
 /.envrc
+.env.local
 
 .node_modules
 dist/

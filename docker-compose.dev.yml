@@ -17,7 +17,7 @@ services:
       start_period: 10s
     command: postgres -c log_statement=all
 
-  memcached:
+  memcached-dev:
     image: memcached:1.4-alpine
     command: -m 4096 -c 8192 -I 5242880b
     ports:

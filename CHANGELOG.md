@@ -14,10 +14,16 @@
 
 ### Security
 
+## [1.36.0](https://github.com/raster-foundry/raster-foundry/compare/1.35.0...1.36.0)
+
+### Fixed
+ - Fixed an issues with upload deserialization [#5356](https://github.com/raster-foundry/raster-foundry/pull/5356)
+
 ## [1.35.0](https://github.com/raster-foundry/raster-foundry/compare/1.34.1...1.35.0)
 
 ### Added
 
+- Deleting annotation projects deletes all related data (scenes, uploads, uploaded data, projects) [#5351](https://github.com/raster-foundry/raster-foundry/pull/5351)
 - Update annotation projects after upload processing as appropriate [#5324](https://github.com/raster-foundry/raster-foundry/pull/5324), [#5334](https://github.com/raster-foundry/raster-foundry/pull/5334)
 - Added special share endpoints that can be used with just an email for annotation projects [#5321](https://github.com/raster-foundry/raster-foundry/pull/5321), [#5327](https://github.com/raster-foundry/raster-foundry/pull/5327), [#5336](https://github.com/raster-foundry/raster-foundry/pull/5336), [#5338](https://github.com/raster-foundry/raster-foundry/pull/5338)
 - Added a CSV-configurable scope checking integration test [#5297](https://github.com/raster-foundry/raster-foundry/pull/5297), [#5306](https://github.com/raster-foundry/raster-foundry/pull/5306)
@@ -40,6 +46,7 @@
 - Updated to support STAC exports on annotation projects [#5312](https://github.com/raster-foundry/raster-foundry/pull/5312) [#5323](https://github.com/raster-foundry/raster-foundry/pull/5323)
 - Made permission replacement obey same scope rules [#5343](https://github.com/raster-foundry/raster-foundry/pull/5343)
 - Updated the task grid creation SQL function to clip task cells to project footprint [#5344](https://github.com/raster-foundry/raster-foundry/pull/5344)
+- Change the `ready` boolean field to a `status` enum field for better descriptions of processing failures [#5350](https://github.com/raster-foundry/raster-foundry/pull/5350)
 
 ### Fixed
 - Upgrade pyproj to make app-tasks python3.7 compatible [#5352](https://github.com/raster-foundry/raster-foundry/pull/5352)

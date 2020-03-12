@@ -8,6 +8,8 @@ import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 
+import java.util.UUID
+
 class UploadDaoSpec
     extends FunSuite
     with Matchers
@@ -225,9 +227,61 @@ class UploadDaoSpec
             updatedUpload.projectId == updateUpload.projectId &&
             updatedUpload.source == updateUpload.source &&
             updatedUpload.annotationProjectId ==
-            updateUpload.annotationProjectId &&
+              updateUpload.annotationProjectId &&
             updatedUpload.generateTasks == updateUpload.generateTasks
           }
+      }
+    }
+  }
+
+  test("list for annotation project") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            uploadCreate: Upload.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            bytesSize: Long
+        ) =>
+          val listIO = for {
+            (user, _, _) <- insertUserOrgPlatform(
+              userCreate,
+              orgCreate,
+              platform
+            )
+            datasource <- unsafeGetRandomDatasource
+            annotationProject <- AnnotationProjectDao.insert(
+              annotationProjectCreate,
+              user
+            )
+            upload <- UploadDao.insert(
+              uploadCreate.copy(
+                annotationProjectId = Some(annotationProject.id),
+                datasource = datasource.id
+              ),
+              user,
+              bytesSize
+            )
+            listedReal <- UploadDao.findForAnnotationProject(
+              annotationProject.id
+            )
+            listedBogus <- UploadDao.findForAnnotationProject(UUID.randomUUID)
+          } yield (upload, listedReal, listedBogus)
+
+          val (inserted, listedReal, listedBogus) =
+            listIO.transact(xa).unsafeRunSync
+
+          assert(
+            listedReal == List(inserted),
+            "List for existing annotation project returns the inserted upload"
+          )
+          assert(
+            listedBogus == Nil,
+            "List for non-existent annotation project returns nothing"
+          )
+          true
       }
     }
   }
