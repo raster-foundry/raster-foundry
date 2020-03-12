@@ -161,12 +161,11 @@ def process_upload(upload_id):
                 annotationProject.update_status({"progressStage": "QUEUED"})
         raise
     except:
-        if annotationProject is not None:
+        if JOB_ATTEMPT >= 3 and annotationProject is not None:
             logger.error(
                 "Upload for AnnotationProject failed to process: %s",
                 annotationProject.id,
             )
-        if JOB_ATTEMPT >= 3:
             upload.update_upload_status("FAILED")
             annotationProject.update_status({"errorStage": "IMAGE_INGESTION_FAILURE"})
             notify_intercom(
@@ -177,6 +176,8 @@ def process_upload(upload_id):
                     "groundwork@azavea.com."
                 ).format(annotationProjectName=annotationProject.name),
             )
+        elif JOB_ATTEMPT >= 3:
+            upload.update_upload_status("FAILED")
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:
