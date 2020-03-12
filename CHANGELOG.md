@@ -14,6 +14,11 @@
 
 ### Security
 
+## [1.36.0](https://github.com/raster-foundry/raster-foundry/compare/1.35.0...1.36.0)
+
+### Fixed
+ - Fixed an issues with upload deserialization [#5356](https://github.com/raster-foundry/raster-foundry/pull/5356)
+
 ## [1.35.0](https://github.com/raster-foundry/raster-foundry/compare/1.34.1...1.35.0)
 
 ### Added
