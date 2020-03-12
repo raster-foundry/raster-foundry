@@ -11,7 +11,7 @@ from ..uploads.landsat_historical import LandsatHistoricalSceneFactory
 from ..uploads.planet.factories import PlanetSceneFactory
 from ..uploads.modis.factories import MODISSceneFactory
 from ..utils.exception_reporting import wrap_rollbar
-from ..utils.io import get_session
+from ..utils.io import (get_session, notify_intercom)
 
 logger = logging.getLogger(__name__)
 HOST = os.getenv("RF_HOST")
@@ -168,6 +168,10 @@ def process_upload(upload_id):
         if JOB_ATTEMPT >= 3:
             upload.update_upload_status("FAILED")
             annotationProject.update_status({"errorStage": "IMAGE_INGESTION_FAILURE"})
+            notify_intercom(upload.owner,
+                            f"Your project {annotationProject.name} failed to process. If "
+                            "you'd like help troubleshooting, please reach out to us at "
+                            "groundwork@azavea.com.")
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:

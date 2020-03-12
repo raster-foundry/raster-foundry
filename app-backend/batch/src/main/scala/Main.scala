@@ -3,7 +3,10 @@ package com.rasterfoundry.batch
 import com.rasterfoundry.batch.cogMetadata._
 import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
 import com.rasterfoundry.batch.geojsonImport.ImportGeojsonFiles
-import com.rasterfoundry.batch.groundwork.CreateTaskGrid
+import com.rasterfoundry.batch.groundwork.{
+  CreateTaskGrid,
+  NotifyIntercomProgram
+}
 import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.notification.NotifyIngestStatus
 import com.rasterfoundry.batch.projectLiberation.ProjectLiberation
@@ -22,7 +25,8 @@ object Main {
     UpdateExportStatus.name -> (UpdateExportStatus.main(_)),
     ImportGeojsonFiles.name -> (ImportGeojsonFiles.main(_)),
     ProjectLiberation.name -> (ProjectLiberation.main(_)),
-    CreateTaskGrid.name -> (CreateTaskGrid.main(_))
+    CreateTaskGrid.name -> (CreateTaskGrid.main(_)),
+    NotifyIntercomProgram.name -> (NotifyIntercomProgram.main(_))
   )
 
   def main(args: Array[String]): Unit = {
