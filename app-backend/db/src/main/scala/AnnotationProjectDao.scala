@@ -8,6 +8,7 @@ import com.rasterfoundry.datamodel._
 import cats.data._
 import cats.effect.{IO, LiftIO}
 import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -18,18 +19,27 @@ import java.util.UUID
 object AnnotationProjectDao
     extends Dao[AnnotationProject]
     with ObjectPermissions[AnnotationProject]
-    with ConnectionIOLogger {
+    with ConnectionIOLogger
+    with LazyLogging {
   lazy val s3client = S3()
 
   val tableName = "annotation_projects"
+  override val fieldNames = List(
+    "id",
+    "created_at",
+    "owner",
+    "name",
+    "project_type",
+    "task_size_meters",
+    "task_size_pixels",
+    "aoi",
+    "labelers_team_id",
+    "validators_team_id",
+    "project_id",
+    "status"
+  )
 
-  def selectF: Fragment = sql"""
-    SELECT
-      id, created_at, owner, name, project_type, task_size_meters,
-      task_size_pixels, aoi, labelers_team_id, validators_team_id,
-      project_id, status
-    FROM
-  """ ++ tableF
+  def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
 
   def authQuery(
       user: User,
@@ -133,29 +143,17 @@ object AnnotationProjectDao
       newAnnotationProject: AnnotationProject.Create,
       user: User
   ): ConnectionIO[AnnotationProject.WithRelated] = {
-    val projectInsert = (fr"INSERT INTO" ++ tableF ++ fr"""
-      (id, created_at, owner, name, project_type, task_size_pixels,
-       aoi, labelers_team_id, validators_team_id, project_id, status)
-    VALUES
+    val projectInsert =
+      (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+        fr"""VALUES
       (uuid_generate_v4(), now(), ${user.id}, ${newAnnotationProject.name},
-       ${newAnnotationProject.projectType}, ${newAnnotationProject.taskSizePixels},
+       ${newAnnotationProject.projectType}, DEFAULT, ${newAnnotationProject.taskSizePixels},
        ${newAnnotationProject.aoi}, ${newAnnotationProject.labelersTeamId},
        ${newAnnotationProject.validatorsTeamId},
        ${newAnnotationProject.projectId}, ${newAnnotationProject.status})
     """).update.withUniqueGeneratedKeys[AnnotationProject](
-      "id",
-      "created_at",
-      "owner",
-      "name",
-      "project_type",
-      "task_size_meters",
-      "task_size_pixels",
-      "aoi",
-      "labelers_team_id",
-      "validators_team_id",
-      "project_id",
-      "status"
-    )
+        fieldNames: _*
+      )
 
     for {
       annotationProject <- projectInsert
@@ -235,7 +233,8 @@ object AnnotationProjectDao
           ProjectDao.unsafeGetProjectById(projectId)
       }
       uploads <- UploadDao.findForAnnotationProject(id)
-      uploadFiles = uploads flatMap { _.files } flatMap { (f: String) =>
+      userUploads = uploads.filter(_.owner == user.id)
+      uploadFiles = userUploads flatMap { _.files } flatMap { (f: String) =>
         val (bucket, key) = uriToBucketAndKey(f.replace("|", "%7C"))
         if (bucket == s3.dataBucket && key.contains(user.id)) {
           Some((bucket, key))
@@ -250,8 +249,8 @@ object AnnotationProjectDao
             (IO { s3client.deleteObject(bucket, key) }).attempt
           }
       }
-      _ <- debug(s"Deleting uplods ${uploads map { _.id }}")
-      _ <- uploads traverse { upload =>
+      _ <- debug(s"Deleting uploads ${userUploads map { _.id }}")
+      _ <- userUploads traverse { upload =>
         UploadDao.query.filter(upload.id).delete
       }
       _ <- debug(s"Source project is: ${sourceProject map { _.id }}")
@@ -269,13 +268,19 @@ object AnnotationProjectDao
             debug(s"Deleting ${scene.id} and its data") *>
               (LiftIO[ConnectionIO].liftIO {
                 IO { s3client.deleteObject(bucket, key) }
-              }).attempt *> SceneDao.query.filter(scene.id).delete
+              }).attempt *> SceneDao.query
+              .filter(scene.id)
+              .filter(fr"owner = ${user.id}")
+              .delete
           case scene =>
             debug(s"Deleting scene: ${scene.id}") *>
-              SceneDao.query.filter(scene.id).delete
+              SceneDao.query
+                .filter(scene.id)
+                .filter(fr"owner = ${user.id}")
+                .delete
         }
       }
-      _ <- sourceProject traverse { project =>
+      _ <- sourceProject.filter(_.owner == user.id) traverse { project =>
         debug(s"Deleting project ${project.id}") *> ProjectDao.deleteProject(
           project.id
         )
@@ -414,5 +419,59 @@ object AnnotationProjectDao
           0.pure[ConnectionIO]
       }
     } yield numberDeleted
+  }
+
+  def copyProject(
+      projectId: UUID,
+      user: User
+  ): ConnectionIO[AnnotationProject] = {
+    val insertQuery = (fr"""
+           INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+      fr"""SELECT 
+             uuid_generate_v4(), now(), ${user.id}, name, project_type, task_size_meters, task_size_pixels,
+             aoi, labelers_team_id, validators_team_id, project_id, status
+           FROM """ ++ tableF ++ fr"""
+           WHERE id = ${projectId}
+        """)
+    for {
+      aProjectCopy <- insertQuery.update
+        .withUniqueGeneratedKeys[AnnotationProject](
+          fieldNames: _*
+        )
+      classGroups <- AnnotationLabelClassGroupDao.listByProjectId(projectId)
+      _ <- classGroups traverse { classGroup =>
+        for {
+          labelClasses <- AnnotationLabelClassDao
+            .listAnnotationLabelClassByGroupId(classGroup.id)
+          newClassGroup <- AnnotationLabelClassGroupDao
+            .insertAnnotationLabelClassGroup(
+              AnnotationLabelClassGroup.Create(
+                classGroup.name,
+                Some(classGroup.index),
+                labelClasses.map { labelClass =>
+                  AnnotationLabelClass.Create(
+                    labelClass.name,
+                    labelClass.colorHexCode,
+                    labelClass.default,
+                    labelClass.determinant,
+                    labelClass.index
+                  )
+                }
+              ),
+              aProjectCopy,
+              0
+            )
+        } yield newClassGroup
+      }
+      _ <- TaskDao.copyAnnotationProjectTasks(
+        projectId,
+        aProjectCopy.id,
+        user
+      )
+      _ <- TileLayerDao.copyTileLayersForProject(
+        projectId,
+        aProjectCopy.id
+      )
+    } yield aProjectCopy
   }
 }

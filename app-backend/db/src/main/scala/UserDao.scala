@@ -22,13 +22,25 @@ object UserDao extends Dao[User] with Sanitization {
 
   import Cache.UserCache._
 
-  val selectF = sql"""
-    SELECT
-      id, role, created_at, modified_at,
-      dropbox_credential, planet_credential, email_notifications,
-      email, name, profile_image_uri, is_superuser, is_active, visibility, personal_info, scopes
-    FROM
-  """ ++ tableF
+  override val fieldNames = List(
+    "id",
+    "role",
+    "created_at",
+    "modified_at",
+    "dropbox_credential",
+    "planet_credential",
+    "email_notifications",
+    "email",
+    "name",
+    "profile_image_uri",
+    "is_superuser",
+    "is_active",
+    "visibility",
+    "personal_info",
+    "scopes"
+  )
+
+  val selectF = fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ tableF
 
   def filterById(id: String) = {
     query.filter(fr"id = ${id}")
@@ -178,29 +190,13 @@ object UserDao extends Dao[User] with Sanitization {
   def create(newUser: User.Create): ConnectionIO[User] = {
     val now = new Timestamp(new java.util.Date().getTime())
 
-    sql"""
-       INSERT INTO users
-          (id, role, created_at, modified_at, email_notifications,
-          email, name, profile_image_uri, is_superuser, is_active, visibility, scopes)
+    (fr"INSERT INTO users (" ++ insertFieldsF ++ fr""")
        VALUES
-          (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
-          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility, ${newUser.scope})
-       """.update.withUniqueGeneratedKeys[User](
-      "id",
-      "role",
-      "created_at",
-      "modified_at",
-      "dropbox_credential",
-      "planet_credential",
-      "email_notifications",
-      "email",
-      "name",
-      "profile_image_uri",
-      "is_superuser",
-      "is_active",
-      "visibility",
-      "personal_info",
-      "scopes"
+          (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, '', '', false,
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, 
+          ${UserVisibility.Private.toString}::user_visibility, DEFAULT, ${newUser.scope})
+       """).update.withUniqueGeneratedKeys[User](
+      fieldNames: _*
     )
   }
 

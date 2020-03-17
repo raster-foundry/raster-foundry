@@ -25,7 +25,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     "annotation_task_id"
   )
   val selectF: Fragment = fr"SELECT" ++
-    fieldsF ++ fr", classes.class_ids as annotation_label_classes FROM " ++
+    selectFieldsF ++ fr", classes.class_ids as annotation_label_classes FROM " ++
     Fragment.const(tableName) ++
     fr""" JOIN (
       SELECT annotation_label_id, array_agg(annotation_class_id) as class_ids
@@ -41,10 +41,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       user: User
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
     val insertAnnotationsFragment: Fragment =
-      fr"INSERT INTO" ++ tableF ++ fr"""(
-      id, created_at, created_by, geometry, annotation_project_id, annotation_task_id
-    ) VALUES
-    """
+      fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr") VALUES"
     val insertClassesFragment: Fragment =
       fr"INSERT INTO" ++ Fragment.const(joinTableName) ++ fr"""(
       annotation_label_id, annotation_class_id

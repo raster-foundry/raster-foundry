@@ -6,7 +6,8 @@ import com.rasterfoundry.datamodel._
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server._
-import cats.effect.IO
+import cats.data._
+import cats.effect._
 import cats.implicits._
 import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
@@ -32,6 +33,9 @@ trait Authentication extends Directives with LazyLogging {
 
   val configAuth = ConfigFactory.load()
   private val auth0Config = configAuth.getConfig("auth0")
+  private val groundworkConfigAuth = configAuth.getConfig("groundwork")
+  private val groundworkSampleProjectAuth =
+    groundworkConfigAuth.getString("sampleProject")
 
   private val jwksURL = auth0Config.getString("jwksURL")
   private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(
@@ -55,7 +59,8 @@ trait Authentication extends Directives with LazyLogging {
           case Some(user) => provide(user)
           case _ =>
             reject(
-              AuthenticationFailedRejection(CredentialsRejected, challenge))
+              AuthenticationFailedRejection(CredentialsRejected, challenge)
+            )
         }
     }
   }
@@ -170,24 +175,27 @@ trait Authentication extends Directives with LazyLogging {
         )
         // All users will have a platform role, either added by a migration or created with the user if they are new
         val query = for {
-          (user, roles) <- UserDao.getUserAndActiveRolesById(userId).flatMap {
-            case UserOptionAndRoles(Some(user), roles) =>
-              (user, roles).pure[ConnectionIO]
-            case UserOptionAndRoles(None, _) => {
-              createUserWithRoles(userId, email, name, picture, jwtClaims)
+          (user, roles) <- OptionT[ConnectionIO, (User, List[UserGroupRole])] {
+            UserDao.getUserAndActiveRolesById(userId).flatMap {
+              case UserOptionAndRoles(Some(user), roles) =>
+                Option((user, roles)).pure[ConnectionIO]
+              case UserOptionAndRoles(None, _) => {
+                createUserWithRoles(userId, email, name, picture, jwtClaims)
+              }
             }
-
           }
           platformRole = roles.find(
             role => role.groupType == GroupType.Platform
           )
-          plat <- platformRole match {
-            case Some(role) => PlatformDao.getPlatformById(role.groupId)
-            case _ =>
-              logger.error(
-                s"User without a platform tried to log in: ${userId}"
-              )
-              None.pure[ConnectionIO]
+          plat <- OptionT {
+            platformRole match {
+              case Some(role) => PlatformDao.getPlatformById(role.groupId)
+              case _ =>
+                logger.error(
+                  s"User without a platform tried to log in: ${userId}"
+                )
+                Option.empty[Platform].pure[ConnectionIO]
+            }
           }
           personalInfo = defaultPersonalInfo(user, jwtClaims)
           updatedUser = (user.dropboxCredential, user.planetCredential) match {
@@ -213,7 +221,7 @@ trait Authentication extends Directives with LazyLogging {
                 personalInfo = personalInfo
               )
           }
-          userUpdate <- {
+          userUpdate <- OptionT.liftF {
             (updatedUser != user) match {
               case true =>
                 UserDao
@@ -222,9 +230,9 @@ trait Authentication extends Directives with LazyLogging {
               case _ => user.pure[ConnectionIO]
             }
           }
-        } yield MembershipAndUser(plat, userUpdate)
-        onSuccess(query.transact(xa).unsafeToFuture).flatMap {
-          case MembershipAndUser(plat, userUpdate) =>
+        } yield MembershipAndUser(Some(plat), userUpdate)
+        onSuccess(query.value.transact(xa).unsafeToFuture).flatMap {
+          case Some(MembershipAndUser(plat, userUpdate)) =>
             plat map { _.isActive } match {
               case Some(true) =>
                 provide(userUpdate)
@@ -248,7 +256,7 @@ trait Authentication extends Directives with LazyLogging {
       name: String,
       picture: String,
       jwtClaims: JWTClaimsSet
-  ): ConnectionIO[(User, List[UserGroupRole])] = {
+  ): ConnectionIO[Option[(User, List[UserGroupRole])]] = {
     // use default platform / org if fields are not filled
     val auth0DefaultPlatformId = auth0Config.getString("defaultPlatformId")
     val auth0DefaultOrganizationId =
@@ -281,6 +289,10 @@ trait Authentication extends Directives with LazyLogging {
       case _       => GroupRole.Member
     }
 
+    val isGroundworkUser = jwtClaims
+      .getBooleanClaim("https://app.rasterfoundry.com;annotateApp")
+      .booleanValue()
+
     val userScope: Scope =
       Option(jwtClaims.getStringClaim("https://app.rasterfoundry.com;scopes")) match {
         case Some(scopeString) =>
@@ -290,6 +302,7 @@ trait Authentication extends Directives with LazyLogging {
           }
         case _ => Scopes.NoAccess
       }
+    logger.error(s"Setting user scopes: ${userScope}")
 
     for {
       platform <- PlatformDao.getPlatformById(platformId)
@@ -317,9 +330,21 @@ trait Authentication extends Directives with LazyLogging {
         orgID
       )
       newUserWithRoles <- {
-        UserDao.createUserWithJWT(systemUser, jwtUser, userRole, userScope)
+        UserDao
+          .createUserWithJWT(systemUser, jwtUser, userRole, userScope)
+          .attempt
       }
-    } yield newUserWithRoles
+      _ <- (newUserWithRoles, isGroundworkUser) match {
+        case (Right(user), true) =>
+          logger.info(s"sample project id = ${groundworkSampleProjectAuth}")
+          AnnotationProjectDao.copyProject(
+            UUID.fromString(groundworkSampleProjectAuth),
+            user._1
+          )
+        case _ => Unit.pure[ConnectionIO]
+      }
+      createdUserWithRoles <- UserDao.getUserAndActiveRolesById(userId)
+    } yield createdUserWithRoles.user.map((_, createdUserWithRoles.roles))
   }
 
   /**
