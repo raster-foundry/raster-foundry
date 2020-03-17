@@ -113,6 +113,7 @@ services:
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
+      - GROUNDWORK_URL_BASE=http://localhost:3000/app
       - POSTGRES_DB_POOL_SIZE=2
       - LOCAL_INGEST_CORES=2
       - LOCAL_INGEST_MEM_GB=4

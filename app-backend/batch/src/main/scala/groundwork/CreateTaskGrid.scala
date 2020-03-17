@@ -87,7 +87,7 @@ class CreateTaskGrid(
           Config.intercomAdminId,
           ExternalId(annotationProject.createdBy),
           Message(
-            s"""Your project "${annotationProject.name}" is ready! ${Config.apiHost}/api/annotation-projects/${annotationProject.id}"""
+            s"""Your project "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/projects/${annotationProject.id}/overview"""
           )
         )
       case None =>
@@ -114,7 +114,7 @@ class CreateTaskGrid(
                   Message(
                     s"""
                   | Your project "${projectName}" failed to process. If you'd like help
-                  | troubleshooting, please reach out to us at
+                  | troubleshooting, please reach out to us here or at
                   | groundwork@azavea.com."
                   """.trim.stripMargin
                   )

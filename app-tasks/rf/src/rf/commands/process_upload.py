@@ -172,7 +172,7 @@ def process_upload(upload_id):
                 upload.owner,
                 (
                     "Your project \"{annotationProjectName}\" failed to process. If "
-                    "you'd like help troubleshooting, please reach out to us at "
+                    "you'd like help troubleshooting, please reach out to us here or at "
                     "groundwork@azavea.com."
                 ).format(annotationProjectName=annotationProject.name),
             )
