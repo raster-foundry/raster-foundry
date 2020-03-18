@@ -20,6 +20,27 @@ and overwrites the existing dump.
 "
 }
 
+function create_database_backup() {
+    if [ -f data/database.pgdump ]; then
+        echo "Renaming old database dump"
+        mv data/database.pgdump data/database.pgdump.$(date +'%N')
+    fi
+    echo "Creating new dev database dump"
+    docker-compose exec -T postgres pg_dump -U rasterfoundry -Fc -f /tmp/data/database.pgdump
+}
+
+function upload_database_backup() {
+    if [ ! -f data/database.pgdump ]; then
+        logInfo "No databaes dump found"
+    else
+        # create backup of old dump
+        HASH=$(date +'%N')
+        aws s3 mv --sse AES256 "s3://${RF_SETTINGS_BUCKET}/database.pgdump" "s3://${RF_SETTINGS_BUCKET}/databaseArchives/database.pgdump.${HASH}"
+        # upload new dump
+        aws s3 cp --sse AES256 "data/database.pgdump" "s3://${RF_SETTINGS_BUCKET}/database.pgdump"
+    fi
+}
+
 function download_database_backup() {
 
     pushd "${DIR}/.."
@@ -59,23 +80,29 @@ then
     then
         usage
     else
-        if [ "${1:-}" = "--download" ] || [ ! -f data/database.pgdump ]; then
-            download_database_backup
-            download_development_images
+        if [ "${1:-}" = "--create" ]; then
+            create_database_backup
+        elif [ "${1:-}" = "--upload" ]; then
+            upload_database_backup
+        else
+            if [ "${1:-}" = "--download" ] || [ ! -f data/database.pgdump ]; then
+                download_database_backup
+                download_development_images
+            fi
+
+            # API server won't start until Postgres is passing Health Checks
+            docker-compose \
+                -f "${DIR}/../docker-compose.yml" \
+                -f "${DIR}/../docker-compose.test.yml" \
+                up -d api-server-test
+
+            docker-compose \
+                -f "${DIR}/../docker-compose.yml" \
+                -f "${DIR}/../docker-compose.test.yml" \
+                rm -sf api-server-test
+
+            load_database_backup
         fi
-
-        # API server won't start until Postgres is passing Health Checks
-        docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" \
-            up -d api-server-test
-
-        docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" \
-            rm -sf api-server-test
-
-        load_database_backup
     fi
     exit
 fi
