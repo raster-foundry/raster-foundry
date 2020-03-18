@@ -4,8 +4,6 @@
 
 ### Added
 
-- Notify users with Intercom when annotation project processing has completed [#5355](https://github.com/raster-foundry/raster-foundry/pull/5355), [#5361](https://github.com/raster-foundry/raster-foundry/pull/5361)
-
 ### Changed
 
 ### Deprecated
@@ -15,6 +13,12 @@
 ### Fixed
 
 ### Security
+
+## [1.37.0](https://github.com/raster-foundry/raster-foundry/compare/1.36.0...1.37.0)
+
+### Added
+
+- Notify users with Intercom when annotation project processing has completed [#5355](https://github.com/raster-foundry/raster-foundry/pull/5355), [#5361](https://github.com/raster-foundry/raster-foundry/pull/5361)
 
 ## [1.36.0](https://github.com/raster-foundry/raster-foundry/compare/1.35.0...1.36.0)
 
