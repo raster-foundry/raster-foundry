@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 from urllib.parse import urlparse, unquote, quote
 
@@ -123,6 +124,17 @@ def gcs_path_for_landsat_id(landsat_id):
         "L{sensor_id}0{landsat_number}/01/{path}/{row}/{landsat_id}"
     )
     return tmpl.format(**dict(landsat_id=landsat_id, **metadata))
+
+
+def notify_intercom(user_id: str, message: str) -> None:
+    subprocess.check_call(
+        [
+            "java", "-cp",
+            "/opt/raster-foundry/jars/batch-assembly.jar",
+            "com.rasterfoundry.batch.Main",
+            "notify-intercom", user_id, message
+        ]
+    )
 
 
 def make_fname_for_band(band, landsat_id):

@@ -1,6 +1,8 @@
 package com.rasterfoundry.batch.groundwork
 
 import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.groundwork.types._
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
   AnnotationProjectDao,
@@ -8,11 +10,12 @@ import com.rasterfoundry.database.{
   TaskDao,
   UserDao
 }
-import com.rasterfoundry.datamodel.{Task, TaskStatus}
+import com.rasterfoundry.datamodel.{AnnotationProjectStatus, Task, TaskStatus}
 
 import cats.data.OptionT
 import cats.effect.{IO, LiftIO}
 import cats.implicits._
+import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.{ConnectionIO, Transactor}
@@ -22,6 +25,7 @@ import java.util.UUID
 class CreateTaskGrid(
     annotationProjectId: UUID,
     taskSizeMeters: Double,
+    notifier: IntercomNotifier[IO],
     xa: Transactor[IO]
 ) extends LazyLogging {
 
@@ -69,18 +73,63 @@ class CreateTaskGrid(
           .update(
             annotationProject.copy(
               aoi = footprint,
-              taskSizeMeters = Some(taskSizeMeters)
+              taskSizeMeters = Some(taskSizeMeters),
+              status = AnnotationProjectStatus.Ready
             ),
             annotationProject.id
           )
       }
       _ <- OptionT.liftF { info("Updated annotation project") }
-    } yield ()).value.transact(xa).void
+    } yield annotationProject).value.transact(xa) flatMap {
+      case Some(annotationProject) =>
+        notifier.notifyUser(
+          Config.intercomToken,
+          Config.intercomAdminId,
+          ExternalId(annotationProject.createdBy),
+          Message(
+            s"""Your project "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/projects/${annotationProject.id}/overview"""
+          )
+        )
+      case None =>
+        (for {
+          projectO <- AnnotationProjectDao.query
+            .filter(annotationProjectId)
+            .selectOption
+          _ <- projectO traverse { project =>
+            AnnotationProjectDao.update(
+              project.copy(status = AnnotationProjectStatus.TaskGridFailure),
+              project.id
+            )
+          }
+          ownerO <- projectO traverse { project =>
+            UserDao.unsafeGetUserById(project.createdBy)
+          }
+          _ <- (ownerO, projectO map { _.name }).tupled traverse {
+            case (user, projectName) =>
+              LiftIO[ConnectionIO].liftIO {
+                notifier.notifyUser(
+                  Config.intercomToken,
+                  Config.intercomAdminId,
+                  ExternalId(user.id),
+                  Message(
+                    s"""
+                  | Your project "${projectName}" failed to process. If you'd like help
+                  | troubleshooting, please reach out to us here or at
+                  | groundwork@azavea.com."
+                  """.trim.stripMargin
+                  )
+                )
+              }
+          }
+        } yield ()).transact(xa)
+    }
 }
 
 object CreateTaskGrid extends Job {
 
   val name = "create-task-grid"
+
+  implicit val backend = AsyncHttpClientCatsBackend[IO]()
 
   def runJob(args: List[String]): IO[Unit] = args match {
     case annotationProjectId +: taskSizeMeters +: Nil =>
@@ -88,6 +137,7 @@ object CreateTaskGrid extends Job {
       new CreateTaskGrid(
         UUID.fromString(annotationProjectId),
         taskSizeMeters.toDouble,
+        new LiveIntercomNotifier[IO],
         xa
       ).run()
     case _ =>

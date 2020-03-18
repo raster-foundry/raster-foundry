@@ -52,9 +52,11 @@ object Version {
   val json4s = "3.5.0"
   val jsonSmart = "2.3"
   val jts = "1.16.0"
+  val log4cats = "0.3.0"
   val logback = "1.2.3"
   val maml = "0.4.0"
   val monocle = "1.5.1-cats"
+  val newtype = "0.4.3"
   val nimbusJose = "0.6.0"
   val nimbusJoseJwt = "4.41.1"
   val openTracing = "0.0.6"
@@ -170,10 +172,13 @@ object Dependencies {
   val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
   val javaMail = "com.sun.mail" % "javax.mail" % Version.javaMail
   val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
+  val log4cats = "io.chrisdavenport" %% "log4cats-core" % Version.log4cats
+  val log4catsSlf4j = "io.chrisdavenport" %% "log4cats-slf4j" % Version.log4cats
   val log4jOverslf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % Version.monocle
+  val newtype = "io.estatico" %% "newtype" % Version.newtype
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val nimbusJoseJwt = "com.nimbusds" % "nimbus-jose-jwt" % Version.nimbusJoseJwt
   val opentracing = "com.colisweb" %% "scala-opentracing" % Version.openTracing
@@ -204,6 +209,7 @@ object Dependencies {
   val spire = "org.typelevel" %% "spire" % Version.spire
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath
   val spray = "io.spray" %% "spray-json" % Version.spray
+  val sttpCatsBackend = "com.softwaremill.sttp" %% "async-http-client-backend-cats" % Version.sttp
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % Version.sttp
   val sttpCore = "com.softwaremill.sttp" %% "core" % Version.sttp
   val sttpJson = "com.softwaremill.sttp" %% "json-common" % Version.sttp
