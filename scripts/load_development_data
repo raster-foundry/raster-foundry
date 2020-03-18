@@ -23,7 +23,8 @@ and overwrites the existing dump.
 function create_database_backup() {
     if [ -f data/database.pgdump ]; then
         echo "Renaming old database dump"
-        mv data/database.pgdump data/database.pgdump.$(date +'%N')
+        HASH=$(date + '%N')
+        mv "data/database.pgdump" "data/database.pgdump.${HASH}"
     fi
     echo "Creating new dev database dump"
     docker-compose exec -T postgres pg_dump -U rasterfoundry -Fc -f /tmp/data/database.pgdump
