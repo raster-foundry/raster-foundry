@@ -434,7 +434,7 @@ object AnnotationProjectDao
            WHERE id = ${projectId}
         """)
     for {
-      aProjectCopy <- insertQuery.update
+      annotationProjectCopy <- insertQuery.update
         .withUniqueGeneratedKeys[AnnotationProject](
           fieldNames: _*
         )
@@ -458,20 +458,20 @@ object AnnotationProjectDao
                   )
                 }
               ),
-              aProjectCopy,
+              annotationProjectCopy,
               0
             )
         } yield newClassGroup
       }
       _ <- TaskDao.copyAnnotationProjectTasks(
         projectId,
-        aProjectCopy.id,
+        annotationProjectCopy.id,
         user
       )
       _ <- TileLayerDao.copyTileLayersForProject(
         projectId,
-        aProjectCopy.id
+        annotationProjectCopy.id
       )
-    } yield aProjectCopy
+    } yield annotationProjectCopy
   }
 }

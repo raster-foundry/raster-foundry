@@ -302,7 +302,7 @@ trait Authentication extends Directives with LazyLogging {
           }
         case _ => Scopes.NoAccess
       }
-    logger.error(s"Setting user scopes: ${userScope}")
+    logger.debug(s"Setting user scopes: ${userScope}")
 
     for {
       platform <- PlatformDao.getPlatformById(platformId)
