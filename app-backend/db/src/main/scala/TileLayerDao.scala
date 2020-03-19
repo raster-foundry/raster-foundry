@@ -12,11 +12,17 @@ import java.util.UUID
 object TileLayerDao extends Dao[TileLayer] {
   val tableName = "tiles"
 
-  def selectF: Fragment = sql"""
-    SELECT
-      id, name, url, is_default, is_overlay, layer_type, annotation_project_id
-    FROM
-  """ ++ tableF
+  override val fieldNames = List(
+    "id",
+    "name",
+    "url",
+    "is_default",
+    "is_overlay",
+    "layer_type",
+    "annotation_project_id"
+  )
+
+  def selectF: Fragment = fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ tableF
 
   def insertTileLayer(
       layerCreate: TileLayer.Create,
@@ -29,13 +35,7 @@ object TileLayerDao extends Dao[TileLayer] {
       ${layerCreate.default getOrElse false}, ${layerCreate.overlay getOrElse false},
       ${layerCreate.layerType}, ${annotationProject.id}
     )""").update.withUniqueGeneratedKeys[TileLayer](
-      "id",
-      "name",
-      "url",
-      "is_default",
-      "is_overlay",
-      "layer_type",
-      "annotation_project_id"
+      fieldNames: _*
     )
 
   def listByProjectId(
@@ -50,4 +50,17 @@ object TileLayerDao extends Dao[TileLayer] {
       projectId: UUID
   ): ConnectionIO[Int] =
     query.filter(fr"annotation_project_id = $projectId").delete
+
+  def copyTileLayersForProject(
+      fromProject: UUID,
+      toProject: UUID
+  ): ConnectionIO[Int] = {
+    (fr"""
+           INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+      fr"""SELECT
+           uuid_generate_v4(), name, url, is_default, is_overlay, layer_type, ${toProject}
+           FROM""" ++ tableF ++ fr"""
+           WHERE annotation_project_id = ${fromProject}
+       """).update.run
+  }
 }
