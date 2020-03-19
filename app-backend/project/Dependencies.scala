@@ -31,6 +31,7 @@ object Version {
   val circeOptics = "0.11.0"
   val commonsCodec = "1.10"
   val commonsIO = "2.6"
+  val cron4s = "0.5.0"
   val decline = "0.6.0"
   val dnsJava = "2.1.8"
   val doobie = "0.7.0"
@@ -39,6 +40,7 @@ object Version {
   val ficus = "1.4.0"
   val flyway = "5.2.4"
   val fs2 = "1.0.5"
+  val fs2Cron = "0.1.0"
   val geotrellis = "3.0.0-M3"
   val geotrellisContrib = "3.16.1-M3"
   val geotrellisServer = "3.4.0-9-geeb1ede-SNAPSHOT"
@@ -132,6 +134,7 @@ object Dependencies {
   val clistMacros = "org.backuity.clist" %% "clist-macros" % "3.5.0"
   val commonsCodec = "commons-codec" % "commons-codec" % Version.commonsCodec
   val commonsIO = "commons-io" % "commons-io" % Version.commonsIO
+  val cron4s = "com.github.alonsodomin.cron4s" %% "cron4s-core" % Version.cron4s
   val decline = "com.monovore" %% "decline" % Version.decline
   val doobieCore = "org.tpolecat" %% "doobie-core" % Version.doobie
   val doobieFree = "org.tpolecat" %% "doobie-free" % Version.doobie
@@ -145,6 +148,7 @@ object Dependencies {
   val ficus = "com.iheart" %% "ficus" % Version.ficus
   val flyway = "org.flywaydb" % "flyway-core" % Version.flyway
   val fs2 = "co.fs2" %% "fs2-core" % Version.fs2
+  val fs2Cron = "eu.timepit" %% "fs2-cron-core" % Version.fs2Cron
   val geotrellisContribGDAL = "com.azavea.geotrellis" %% "geotrellis-contrib-gdal" % Version.geotrellisContrib
   val geotrellisContribVLM = "com.azavea.geotrellis" %% "geotrellis-contrib-vlm" % Version.geotrellisContrib
   val geotrellisProj4 = "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellis

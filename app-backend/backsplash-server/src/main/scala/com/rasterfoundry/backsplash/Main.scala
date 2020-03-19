@@ -3,6 +3,8 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.common.{Config => CommonConfig}
+import com.rasterfoundry.database.Config.statusReapingConfig
+import com.rasterfoundry.database.TaskDao
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
   LayerAttributeDao,
@@ -14,11 +16,14 @@ import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
 
 import cats.data.OptionT
 import cats.effect._
+import cats.implicits._
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.olegpy.meow.hierarchy._
 import com.typesafe.scalalogging.LazyLogging
+import cron4s.Cron
 import doobie.implicits._
+import eu.timepit.fs2cron.awakeEveryCron
 import org.http4s._
 import org.http4s.server.Router
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -26,7 +31,7 @@ import org.http4s.server.middleware.{CORS, CORSConfig, Timeout}
 import org.http4s.syntax.kleisli._
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import scala.util.Properties
 
 import java.util.concurrent.{Executors, TimeUnit}
@@ -38,7 +43,8 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       Executors.newCachedThreadPool(
         new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
       )
-    ))
+    )
+  )
 
   override implicit val contextShift: ContextShift[IO] = rasterIO
 
@@ -157,6 +163,15 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     new WmsService(ProjectDao(), ogcUrlPrefix).routes
   )
 
+  private val statusExpirationDuration =
+    statusReapingConfig.taskStatusExpirationSeconds.seconds
+  private val everyMinute = Cron.unsafeParse("0 * * ? * * *")
+  val scheduled
+    : fs2.Stream[IO, Int] = awakeEveryCron[IO](everyMinute) *> (fs2.Stream
+    .eval {
+      TaskDao.expireStuckTasks(statusExpirationDuration).transact(xa)
+    })
+
   def router =
     errorHandling {
       baseMiddleware {
@@ -190,6 +205,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(router.orNotFound)
       .serve
+      .concurrently(scheduled)
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
   logger.info(s"Server Started (${canSelect})")

@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Automatically reset tasks to their previous state if they're stuck in progress for a configurable length of time [#5367](https://github.com/raster-foundry/raster-foundry/pull/5367)
+
 ### Security
 
 ## [1.38.0](https://github.com/raster-foundry/raster-foundry/compare/1.37.0...1.38.0)

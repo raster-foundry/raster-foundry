@@ -440,7 +440,8 @@ object Scopes {
       extends SimpleScope(
         Set(
           Action.AddScenes,
-          Action.ColorCorrect
+          Action.ColorCorrect,
+          Action.EditScenes
         ).map(makeScopedAction(Domain.Projects, _)) ++ makeCRUDScopedActions(
           Domain.Projects
         )

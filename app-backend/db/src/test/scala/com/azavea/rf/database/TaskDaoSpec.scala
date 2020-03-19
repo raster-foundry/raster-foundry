@@ -1,6 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.datamodel._
 
@@ -9,9 +10,12 @@ import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
+import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
+
+import scala.concurrent.duration._
 
 class TaskDaoSpec
     extends FunSuite
@@ -1048,6 +1052,72 @@ class TaskDaoSpec
 
             val result = connIO.transact(xa).unsafeRunSync
             result should be(None: Option[UnionedGeomExtent])
+            true
+          }
+      }
+    }
+  }
+
+  test("expire locks on stale tasks") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val expiryIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              dbAnnotationProj <- AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(
+                    projectId = Some(dbProject.id)
+                  ),
+                  dbUser
+                )
+              tasks <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.LabelingInProgress)
+                ),
+                dbUser
+              )
+              _ <- tasks.features traverse { task =>
+                TaskDao.lockTask(task.id)(dbUser)
+              }
+              numberExpiredBogus <- TaskDao.expireStuckTasks(9000 seconds)
+              numberExpired <- TaskDao.expireStuckTasks(0 seconds)
+              listed <- TaskDao.query
+                .filter(fr"annotation_project_id = ${dbAnnotationProj.id}")
+                .list
+            } yield (numberExpiredBogus, numberExpired, listed)
+
+            val (numberExpiredBogus, numberExpired, listed) =
+              expiryIO.transact(xa).unsafeRunSync
+
+            assert(
+              numberExpiredBogus == 0,
+              "Expiration leaves fresh tasks alone"
+            )
+
+            assert(
+              numberExpired == taskFeatureCollectionCreate.features.length,
+              "All inserted tasks expired"
+            )
+            assert(
+              (listed map { _.status } toSet) == Set(TaskStatus.Unlabeled),
+              "All tasks reverted to unlabeled"
+            )
             true
           }
       }

@@ -44,11 +44,15 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         fi
 
         echo "Linting Scala source code and running tests"
-        docker-compose \
+	TEST_CMD="test"
+	if [[ "${GIT_BRANCH}" =~ "feature/" ]]; then
+	    TEST_CMD="testQuick"
+	fi
+	docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm sbt-test \
-            ";scalafmtCheck;scalafmtSbtCheck;scalafix --check;scapegoat;unusedCompileDependenciesTest;undeclaredCompileDependenciesTest;test;apiIntegrationTest/test"
+            ";scalafmtCheck;scalafmtSbtCheck;scalafix --check;scapegoat;unusedCompileDependenciesTest;undeclaredCompileDependenciesTest;${TEST_CMD};apiIntegrationTest/test"
 
 
         echo "Validating API service spec"
