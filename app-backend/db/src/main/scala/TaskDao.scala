@@ -586,7 +586,7 @@ object TaskDao extends Dao[Task] {
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
            uuid_generate_v4(), now(), ${user.id}, now(), ${user.id},
-           status, locked_by, locked_on, geometry, ${toProject}
+           'UNLABELED', null, null, geometry, ${toProject}
            FROM """ ++ tableF ++ fr"""
            WHERE annotation_project_id = ${fromProject}
       """).update.run
