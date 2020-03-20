@@ -4,6 +4,7 @@
 
 ### Added
 - Support sample projects for new annotation app users [#5362](https://github.com/raster-foundry/raster-foundry/pull/5362)
+- Add status filter to annotation projects [#5365](https://github.com/raster-foundry/raster-foundry/pull/5365)
 
 ### Changed
 

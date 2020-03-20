@@ -39,6 +39,11 @@ trait QueryParameterDeserializers {
       AnnotationProjectType.fromString(s)
     }
 
+  implicit val deserializerAnnotationProjectStatus
+    : Unmarshaller[String, AnnotationProjectStatus] =
+    Unmarshaller.strict[String, AnnotationProjectStatus] { s =>
+      AnnotationProjectStatus.fromString(s)
+    }
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
@@ -198,12 +203,14 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         )
     ).as(StacExportQueryParameters.apply _)
 
-  def annotationProjectTypeQueryParameters =
+  def annotationProjectFilterQueryParameters =
     parameters(
       (
-        'projectType.as(deserializerAnnotationProjectType).?
+        'projectType.as(deserializerAnnotationProjectType).?,
+        'status.as(deserializerAnnotationProjectStatus).?,
+        'tasksComplete.as[Boolean].?
       )
-    ).as(AnnotationProjectTypeQueryParameters.apply _)
+    ).as(AnnotationProjectFilterQueryParameters.apply _)
 
   def annotationProjectQueryParameters =
     (
@@ -211,6 +218,6 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         ownershipTypeQueryParameters &
         groupQueryParameters &
-        annotationProjectTypeQueryParameters
+        annotationProjectFilterQueryParameters
     ).as(AnnotationProjectQueryParameters.apply _)
 }

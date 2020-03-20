@@ -431,8 +431,15 @@ trait Filterables extends RFMeta with LazyLogging {
         Filters.ownerQP(params.ownerParams) ++
           Filters.searchQP(params.searchParams, List("name")) ++
           List(
-            params.projectTypeParams.projectType.map({ projectType =>
-              fr"project_type = $projectType"
+            params.annotationProjectFilterParameters.projectType.map({
+              projectType =>
+                fr"project_type = $projectType"
+            }),
+            params.annotationProjectFilterParameters.status.map({ status =>
+              fr"status = $status"
+            }),
+            params.annotationProjectFilterParameters.tasksComplete.map({ tasksComplete =>
+              fr"tasksComplete = $tasksComplete"
             })
           )
     }

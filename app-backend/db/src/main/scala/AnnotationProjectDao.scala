@@ -21,9 +21,31 @@ object AnnotationProjectDao
     with ObjectPermissions[AnnotationProject]
     with ConnectionIOLogger
     with LazyLogging {
+
+  override implicit val permissionsFilter: Filterable[Any, User] =
+    Filterable[Any, User] { user: User =>
+      val filter =
+        Some(Fragment.const(s"${tableName}.owner") ++ fr"= ${user.id}")
+      List(filter)
+    }
   lazy val s3client = S3()
 
   val tableName = "annotation_projects"
+  val taskJoinF = fr"JOIN tasks ON tasks.annotation_project_id =" ++
+    Fragment.const(s"${tableName}.id") ++ fr"group by tasks.annotation_project_id"
+
+  val statusCountFilterF =
+    Fragments
+      .notIn(
+        fr"tasks.status",
+        NonEmptyList(
+          TaskStatus.Validated.toString,
+          List(TaskStatus.ValidationInProgress.toString)
+        )
+      )
+
+  override def query = Dao.QueryBuilder[AnnotationProject](selectF, tableF, List(Some(statusCountFilterF)))
+
   override val fieldNames = List(
     "id",
     "created_at",
@@ -39,7 +61,13 @@ object AnnotationProjectDao
     "status"
   )
 
-  def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
+  def selectF: Fragment = fr"SELECT" ++ selectFieldsF ++ fr"""
+       , CASE 
+         WHEN count(tasks.annotation_project_id) > 1 THEN false
+         ELSE true
+       END AS tasks_complete
+    FROM
+  """ ++ tableF ++ taskJoinF
 
   def authQuery(
       user: User,
@@ -83,7 +111,9 @@ object AnnotationProjectDao
   def getProjectById(
       annotationProjectId: UUID
   ): ConnectionIO[Option[AnnotationProject]] =
-    this.query.filter(annotationProjectId).selectOption
+    this.query
+      .filter(annotationProjectId)
+      .selectOption
 
   def listProjects(
       page: PageRequest,
@@ -379,7 +409,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
