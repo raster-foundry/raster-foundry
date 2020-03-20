@@ -3,7 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
-- Support sample projects for new annotation app users [#5362](https://github.com/raster-foundry/raster-foundry/pull/5362)
+- Support sample projects for new annotation app users [#5362](https://github.com/raster-foundry/raster-foundry/pull/5362), [#5368](https://github.com/raster-foundry/raster-foundry/pull/5368)
 
 ### Changed
 
