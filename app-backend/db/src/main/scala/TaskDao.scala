@@ -575,7 +575,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       TaskStatus.ValidationInProgress,
       TaskStatus.Validated
     ).foldLeft(Map.empty[TaskStatus, Int])(
-      (result, status) => result + (status -> counts.getOrElse(status, 0))
+      (result, status) => result |+| Map(status -> counts.getOrElse(status, 0))
     )
   }
 
