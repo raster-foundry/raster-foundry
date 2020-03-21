@@ -4,6 +4,7 @@ import com.rasterfoundry.common.Config.s3
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.database.util.Page
 
 import cats.data._
 import cats.effect.{IO, LiftIO}
@@ -89,55 +90,56 @@ object AnnotationProjectDao
       page: PageRequest,
       params: AnnotationProjectQueryParameters,
       user: User
-  ): ConnectionIO[PaginatedResponse[AnnotationProject.WithRelated]] =
-    authQuery(
+  ): ConnectionIO[
+    PaginatedResponse[AnnotationProject.WithRelatedAndSummary]
+  ] =
+    (authQuery(
       user,
       ObjectType.AnnotationProject,
       params.ownershipTypeParams.ownershipType,
       params.groupQueryParameters.groupType,
       params.groupQueryParameters.groupId
     ).filter(params)
-      .page(page)
-      .flatMap(toWithRelated)
-
-  def toWithRelated(
-      projectsPage: PaginatedResponse[AnnotationProject]
-  ): ConnectionIO[PaginatedResponse[AnnotationProject.WithRelated]] =
-    projectsPage.results.toList.toNel match {
-      case Some(projects) =>
-        projects traverse { project =>
-          for {
-            tileLayers <- TileLayerDao.listByProjectId(project.id)
-            labelClassGroups <- AnnotationLabelClassGroupDao.listByProjectId(
-              project.id
-            )
-            labelClassGroupsWithClasses <- labelClassGroups traverse {
-              labelClassGroup =>
-                AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(
-                  labelClassGroup.id
-                ) map { cls =>
-                  labelClassGroup.withLabelClasses(cls)
+      .list(page.offset, page.limit, Page.createOrderClause(page))
+      .map { projectList =>
+        projectList traverse {
+          project =>
+            getWithRelatedAndSummaryById(project.id) map {
+              case Some(project) =>
+                val taskStatusList =
+                  params.projectFilterParams.taskStatusesInclude.toList
+                if (taskStatusList.size > 0) {
+                  taskStatusList.foldLeft(
+                    true
+                  )(
+                    (acc, status) =>
+                      (project.taskStatusSummary
+                        .getOrElse(status, 0) > 0) && acc
+                  ) match {
+                    case true => Some(project)
+                    case _    => None
+                  }
+                } else {
+                  Some(project)
                 }
+              case _ => None
             }
-          } yield {
-            project.withRelated(tileLayers, labelClassGroupsWithClasses)
-          }
-        } map { projectWithRelated =>
-          PaginatedResponse[AnnotationProject.WithRelated](
-            projectsPage.count,
-            projectsPage.hasPrevious,
-            projectsPage.hasNext,
-            projectsPage.page,
-            projectsPage.pageSize,
-            projectWithRelated.toList
-          )
-
-        }
-      case _ =>
-        projectsPage
-          .copy(results = List.empty[AnnotationProject.WithRelated])
-          .pure[ConnectionIO]
-    }
+        } map { _.flatten }
+      })
+      .flatten
+      .map { projectsWithRelatedSummary =>
+        val count = projectsWithRelatedSummary.size
+        val hasPrevious = page.offset > 0
+        val hasNext = (page.offset * page.limit) + 1 < count
+        PaginatedResponse[AnnotationProject.WithRelatedAndSummary](
+          count,
+          hasPrevious,
+          hasNext,
+          page.offset,
+          page.limit,
+          projectsWithRelatedSummary
+        )
+      }
 
   def insert(
       newAnnotationProject: AnnotationProject.Create,
@@ -379,7 +381,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
