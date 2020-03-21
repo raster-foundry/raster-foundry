@@ -567,16 +567,13 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     WHERE annotation_project_id = ${projectId}
     GROUP BY status;
     """).query[(TaskStatus, Int)].to[List].map { list =>
-    val counts = list.toMap
     List(
       TaskStatus.Unlabeled,
       TaskStatus.LabelingInProgress,
       TaskStatus.Labeled,
       TaskStatus.ValidationInProgress,
       TaskStatus.Validated
-    ).foldLeft(Map.empty[TaskStatus, Int])(
-      (result, status) => result |+| Map(status -> counts.getOrElse(status, 0))
-    )
+    ).fproduct(status => list.toMap.getOrElse(status, 0)).toMap
   }
 
   def listTasksByStatus(
