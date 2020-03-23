@@ -3,11 +3,8 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
-- Support sample projects for new annotation app users [#5362](https://github.com/raster-foundry/raster-foundry/pull/5362), [#5368](https://github.com/raster-foundry/raster-foundry/pull/5368)
 
 ### Changed
-
-- TMS polygons are buffered when querying for scenes to put a band aid on errors in footprint calculation in upload processing [#5374](https://github.com/raster-foundry/raster-foundry/pull/5374)
 
 ### Deprecated
 
@@ -16,6 +13,17 @@
 ### Fixed
 
 ### Security
+
+## [1.38.0](https://github.com/raster-foundry/raster-foundry/compare/1.37.0...1.38.0)
+
+### Added
+
+- Support sample projects for new annotation app users [#5362](https://github.com/raster-foundry/raster-foundry/pull/5362), [#5368](https://github.com/raster-foundry/raster-foundry/pull/5368)
+
+### Changed
+
+- TMS polygons are buffered when querying for scenes to put a band aid on errors in footprint calculation in upload processing [#5374](https://github.com/raster-foundry/raster-foundry/pull/5374)
+
 
 ## [1.37.0](https://github.com/raster-foundry/raster-foundry/compare/1.36.0...1.37.0)
 
