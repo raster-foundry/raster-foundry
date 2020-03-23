@@ -13,6 +13,7 @@ trait Config {
   private val tileServerConfig = config.getConfig("tileServer")
   private val dropboxConfig = config.getConfig("dropbox")
   private val sentinel2Config = config.getConfig("sentinel2")
+  private val groundworkConfig = config.getConfig("groundwork")
 
   val httpHost = httpConfig.getString("interface")
   val httpPort = httpConfig.getInt("port")
@@ -39,4 +40,6 @@ trait Config {
   val scopedUploadRoleArn = s3Config.getString("scopedUploadRoleArn")
 
   val sentinel2DatasourceId = sentinel2Config.getString("datasourceId")
+
+  val groundworkSampleProject = groundworkConfig.getString("sampleProject")
 }

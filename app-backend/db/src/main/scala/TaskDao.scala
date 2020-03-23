@@ -17,6 +17,19 @@ import java.util.UUID
 
 object TaskDao extends Dao[Task] {
 
+  override val fieldNames = List(
+    "id",
+    "created_at",
+    "created_by",
+    "modified_at",
+    "owner",
+    "status",
+    "locked_by",
+    "locked_on",
+    "geometry",
+    "annotation_project_id"
+  )
+
   type MaybeEmptyUnionedGeomExtent =
     Option[Projected[Geometry]] :: Option[Double] :: Option[Double] :: Option[
       Double
@@ -51,19 +64,7 @@ object TaskDao extends Dao[Task] {
     cols ++ joinTableF
 
   val insertF: Fragment =
-    fr"INSERT INTO " ++ tableF ++ fr"""(
-          id,
-          created_at,
-          created_by,
-          modified_at,
-          owner,
-          status,
-          locked_by,
-          locked_on,
-          geometry,
-          annotation_project_id
-     )
-     """
+    fr"INSERT INTO " ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")"
 
   def updateF(taskId: UUID, update: Task.TaskFeatureCreate): Fragment =
     fr"UPDATE " ++ tableF ++ fr"""SET
@@ -229,16 +230,7 @@ object TaskDao extends Dao[Task] {
     featureInserts.toNel map { inserts =>
       (insertF ++ fr"VALUES " ++ inserts.intercalate(fr",")).update
         .withGeneratedKeys[Task](
-          "id",
-          "created_at",
-          "created_by",
-          "modified_at",
-          "owner",
-          "status",
-          "locked_by",
-          "locked_on",
-          "geometry",
-          "annotation_project_id"
+          fieldNames: _*
         )
         .compile
         .toList map { (tasks: List[Task]) =>
@@ -399,7 +391,7 @@ object TaskDao extends Dao[Task] {
       action: String,
       params: UserTaskActivityParameters
   ): Fragment = {
-    val selectF = fr"""
+    val joinSelectF = fr"""
       SELECT
         to_in_progress.user_id,
         COUNT(DISTINCT to_in_progress.task_id) AS task_count,
@@ -448,7 +440,7 @@ object TaskDao extends Dao[Task] {
         )
     }
 
-    selectF ++ inProgressTaskActionTimeF ++ innerJoinF ++ completeTaskActionTimeF ++ joinTargetF
+    joinSelectF ++ inProgressTaskActionTimeF ++ innerJoinF ++ completeTaskActionTimeF ++ joinTargetF
   }
 
   def getTaskUserSummary(
@@ -583,5 +575,20 @@ object TaskDao extends Dao[Task] {
       .filter(fr"annotation_project_id = $annotationProjectId")
       .filter(taskStatusF(taskStatuses))
       .list
+  }
+
+  def copyAnnotationProjectTasks(
+      fromProject: UUID,
+      toProject: UUID,
+      user: User
+  ): ConnectionIO[Int] = {
+    (fr"""
+           INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+      fr"""SELECT
+           uuid_generate_v4(), now(), ${user.id}, now(), ${user.id},
+           'UNLABELED', null, null, geometry, ${toProject}
+           FROM """ ++ tableF ++ fr"""
+           WHERE annotation_project_id = ${fromProject}
+      """).update.run
   }
 }
