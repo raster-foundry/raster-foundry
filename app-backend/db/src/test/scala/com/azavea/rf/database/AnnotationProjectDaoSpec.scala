@@ -65,7 +65,7 @@ class AnnotationProjectDaoSpec
             taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
             annotationProjectCreate: AnnotationProject.Create
         ) => {
-          val pageSize = 2
+          val pageSize = 20
           val pageRequest = PageRequest(0, pageSize, Map.empty)
 
           val listIO = for {
