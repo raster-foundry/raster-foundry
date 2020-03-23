@@ -13,7 +13,7 @@ import doobie.Fragments._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.vector.{MultiPolygon, Polygon, Projected}
+import geotrellis.vector._
 import scalacache.CatsEffect.modes._
 import scalacache._
 
@@ -36,6 +36,21 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     FROM
   """ ++ tableF
 
+  private def getIntersectionGeometry(
+      g: Projected[Geometry]
+  ): Projected[Geometry] = {
+    val newGeom = g.as[Polygon] map { g =>
+      g.buffer(g.envelope.width / 20d): Geometry
+    } orElse {
+      g.as[MultiPolygon] map { g =>
+        val polys = g.polygons
+        MultiPolygon(polys map { poly =>
+          poly.buffer(poly.envelope.width / 20d)
+        }): Geometry
+      }
+    } getOrElse { g.geom }
+    Projected(newGeom, g.srid)
+  }
   def mosaicDefCacheKey(projectLayerId: UUID): String =
     s"SceneToLayer:ProjectLayer:$projectLayerId:MultiTiff:${Config.publicData.enableMultiTiff}:binary"
 
@@ -117,13 +132,14 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     }
   }
 
-  def getMosaicDefinition(projectLayerId: UUID,
-                          polygonOption: Option[Projected[Polygon]],
-                          redBand: Option[Int] = None,
-                          greenBand: Option[Int] = None,
-                          blueBand: Option[Int] = None,
-                          sceneIdSubset: List[UUID] = List.empty)
-    : ConnectionIO[List[MosaicDefinition]] = {
+  def getMosaicDefinition(
+      projectLayerId: UUID,
+      polygonOption: Option[Projected[Polygon]],
+      redBand: Option[Int] = None,
+      greenBand: Option[Int] = None,
+      blueBand: Option[Int] = None,
+      sceneIdSubset: List[UUID] = List.empty
+  ): ConnectionIO[List[MosaicDefinition]] = {
 
     val cacheKey = mosaicDefCacheKey(projectLayerId)
 
@@ -180,7 +196,10 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
           results.filter { stl =>
             ((stl.dataFootprint, polygonOption) match {
               case (Some(footprint), Some(polygon)) =>
-                footprint.intersects(polygon)
+                // TODO:
+                // buffer the polygon by... 2% of its width, make a new projected polygon,
+                // check whether _that_ intersects the polygon in question, view the tiff
+                getIntersectionGeometry(footprint).intersects(polygon)
               case (None, Some(_)) => false
               case _               => true
             }) &&
