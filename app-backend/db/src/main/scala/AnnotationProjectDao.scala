@@ -3,8 +3,8 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Config.s3
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.util.Page
+import com.rasterfoundry.datamodel._
 
 import cats.data._
 import cats.effect.{IO, LiftIO}
