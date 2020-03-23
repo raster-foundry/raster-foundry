@@ -7,6 +7,8 @@
 
 ### Changed
 
+- TMS polygons are buffered when querying for scenes to put a band aid on errors in footprint calculation in upload processing [#5374](https://github.com/raster-foundry/raster-foundry/pull/5374)
+
 ### Deprecated
 
 ### Removed

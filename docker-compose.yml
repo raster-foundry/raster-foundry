@@ -173,6 +173,7 @@ services:
       - BACKSPLASH_SERVER_REQUEST_LIMIT=0
       - BACKSPLASH_ENABLE_MULTITIFF=false
       - AWS_REQUEST_PAYER=requester
+      - DB_SCENE_SEARCH_BUFFER_PERCENTAGE=0.1
     ports:
       - "8080:8080"
       - "9030:9030"
