@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Add task status filter to annotation projects [#5373](https://github.com/raster-foundry/raster-foundry/pull/5373)
 
 ### Changed
 
