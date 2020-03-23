@@ -18,4 +18,9 @@ object Config {
     val enableMultiTiff =
       publicDataConfig.getBoolean("enableMultiTiff")
   }
+
+  object sceneSearch {
+    private val tmsConfig = config.getConfig("sceneSearch")
+    val bufferPercentage = tmsConfig.getDouble("bufferPercentage")
+  }
 }

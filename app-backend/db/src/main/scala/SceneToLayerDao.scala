@@ -40,12 +40,12 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
       g: Projected[Geometry]
   ): Projected[Geometry] = {
     val newGeom = g.as[Polygon] map { g =>
-      g.buffer(g.envelope.width / 20d): Geometry
+      g.buffer(g.envelope.width * Config.sceneSearch.bufferPercentage): Geometry
     } orElse {
       g.as[MultiPolygon] map { g =>
         val polys = g.polygons
         MultiPolygon(polys map { poly =>
-          poly.buffer(poly.envelope.width / 20d)
+          poly.buffer(poly.envelope.width * Config.sceneSearch.bufferPercentage)
         }): Geometry
       }
     } getOrElse { g.geom }
