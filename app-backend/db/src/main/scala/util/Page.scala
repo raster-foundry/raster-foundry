@@ -35,7 +35,6 @@ object Page {
   }
 
   /** Turn a page request into the appropriate SQL fragment */
-  @SuppressWarnings((Array("TraversableHead")))
   def apply(
       pageRequest: PageRequest,
       defaultOrderBy: Fragment = fr"id ASC"
@@ -52,6 +51,7 @@ object Page {
     case None     => fr""
   }
 
+  @SuppressWarnings((Array("TraversableHead")))
   def createOrderClause(
       pageRequest: PageRequest,
       defaultOrderBy: Fragment = fr"id ASC"
