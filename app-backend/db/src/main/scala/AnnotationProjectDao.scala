@@ -113,8 +113,8 @@ object AnnotationProjectDao
                     true
                   )(
                     (acc, status) =>
-                      (project.taskStatusSummary
-                        .getOrElse(status, 0) > 0) && acc
+                      acc && (project.taskStatusSummary
+                        .getOrElse(status, 0) > 0)
                   ) match {
                     case true => Some(project)
                     case _    => None
@@ -381,7 +381,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
