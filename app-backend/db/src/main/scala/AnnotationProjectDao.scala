@@ -3,7 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Config.s3
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util.Page
+// import com.rasterfoundry.database.util.Page
 import com.rasterfoundry.datamodel._
 
 import cats.data._
@@ -87,59 +87,119 @@ object AnnotationProjectDao
     this.query.filter(annotationProjectId).selectOption
 
   def listProjects(
-      page: PageRequest,
+      pageRequest: PageRequest,
       params: AnnotationProjectQueryParameters,
       user: User
   ): ConnectionIO[
-    PaginatedResponse[AnnotationProject.WithRelatedAndSummary]
-  ] =
-    (authQuery(
-      user,
-      ObjectType.AnnotationProject,
-      params.ownershipTypeParams.ownershipType,
-      params.groupQueryParameters.groupType,
-      params.groupQueryParameters.groupId
-    ).filter(params)
-      .list(page.offset, page.limit, Page.createOrderClause(page))
-      .map { projectList =>
-        projectList traverse {
-          project =>
-            getWithRelatedAndSummaryById(project.id) map {
-              case Some(project) =>
-                val taskStatusList =
-                  params.projectFilterParams.taskStatusesInclude.toList
-                if (taskStatusList.size > 0) {
-                  taskStatusList.foldLeft(
-                    true
-                  )(
-                    (acc, status) =>
-                      acc && (project.taskStatusSummary
-                        .getOrElse(status, 0) > 0)
-                  ) match {
-                    case true => Some(project)
-                    case _    => None
-                  }
-                } else {
-                  Some(project)
-                }
-              case _ => None
-            }
-        } map { _.flatten }
-      })
-      .flatten
-      .map { projectsWithRelatedSummary =>
-        val count = projectsWithRelatedSummary.size
-        val hasPrevious = page.offset > 0
-        val hasNext = (page.offset * page.limit) + 1 < count
-        PaginatedResponse[AnnotationProject.WithRelatedAndSummary](
-          count,
-          hasPrevious,
-          hasNext,
-          page.offset,
-          page.limit,
-          projectsWithRelatedSummary
+    PaginatedResponse[AnnotationProject.WithTaskStatusSummary]
+  ] = {
+    val fieldsF =
+      fieldNames.foldLeft(Fragment.empty)(
+        (acc, field) => acc ++ Fragment.const(s"ap.${field},")
+      )
+
+    val selectBaseF = fr"SELECT" ++ fieldsF ++ fr"""
+      jsonb_agg(t) AS tile_layers,
+      jsonb_agg(lcg) AS label_class_groups,
+      ts.summary AS task_status_summary
+    """
+
+    val fromF = fr"FROM annotation_projects ap"
+
+    val joinTileLayersF = fr"""
+      JOIN (
+        SELECT 
+          id,
+          name,
+          url,
+          is_default AS default,
+          is_overlay as overlay,
+          layer_type as "layerType",
+          annotation_project_id as "annotationProjectId"
+        FROM tiles
+      ) AS t
+      ON ap.id = t."annotationProjectId"
+    """
+
+    val joinLabelClassGroupF = fr"""
+      JOIN (
+        SELECT
+          alcg.id,
+          alcg.name,
+          alcg.annotation_project_id AS "annotationProjectId" ,
+          alcg.idx AS index,
+          array_agg(alc) AS "labelClasses"
+        FROM annotation_label_class_groups alcg
+        JOIN (
+          SELECT
+            id,                    
+            name,                     
+            annotation_label_group_id AS "annotationLabelClassGroupId",
+            color_hex_code AS "colorHexCode",
+            is_default AS default,    
+            is_determinant AS determinant,
+            idx AS index
+          FROM annotation_label_classes
+        ) AS alc
+        ON alcg.id = alc."annotationLabelClassGroupId"
+        GROUP BY alcg.id
+      ) AS lcg
+      ON ap.id = lcg."annotationProjectId"
+    """
+
+    val joinTaskStatusSummaryF = fr"""
+      JOIN (
+        SELECT 
+          CREATE_TASK_SUMMARY(
+            jsonb_object_agg(
+              statuses.status,
+              statuses.status_count
+              )
+            ) as summary,
+          statuses.annotation_project_id
+        FROM (
+            SELECT status, annotation_project_id, COUNT(id) AS status_count
+            FROM tasks
+            GROUP BY status, annotation_project_id
+        ) statuses
+        GROUP BY statuses.annotation_project_id
+      ) AS ts
+      ON ap.id = ts.annotation_project_id
+    """
+
+    val selectF = selectBaseF ++ fromF ++ joinTileLayersF ++ joinLabelClassGroupF ++ joinTaskStatusSummaryF
+
+    val countF = fr"SELECT count(ap.id)" ++ fromF ++ joinTaskStatusSummaryF
+
+    val tableF = fr"ap"
+
+    (user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[AnnotationProject.WithTaskStatusSummary](
+          selectF,
+          tableF,
+          List.empty,
+          Some(countF)
         )
-      }
+      case false =>
+        Dao.QueryBuilder[AnnotationProject.WithTaskStatusSummary](
+          selectF,
+          tableF,
+          List(
+            queryObjectsF(
+              user,
+              ObjectType.AnnotationProject,
+              ActionType.View,
+              params.ownershipTypeParams.ownershipType,
+              params.groupQueryParameters.groupType,
+              params.groupQueryParameters.groupId,
+              Some("ap")
+            )
+          ),
+          Some(countF)
+        )
+    }).filter(params).page(pageRequest, fr"GROUP BY ap.id, ts.summary")
+  }
 
   def insert(
       newAnnotationProject: AnnotationProject.Create,
@@ -381,7 +441,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
