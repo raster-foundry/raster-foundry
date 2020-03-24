@@ -14,6 +14,12 @@
 
 ### Security
 
+## [1.38.1](https://github.com/raster-foundry/raster-foundry/compare/1.38.0...1.38.1)
+
+### Fixed
+
+- Moved buffering to TMS extents to avoid extreme CPU load resulting from previous buffering strategy [#5375](https://github.com/raster-foundry/raster-foundry/pull/5375)
+
 ## [1.38.0](https://github.com/raster-foundry/raster-foundry/compare/1.37.0...1.38.0)
 
 ### Added
