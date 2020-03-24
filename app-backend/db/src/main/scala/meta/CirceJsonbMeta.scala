@@ -28,7 +28,7 @@ trait CirceJsonbMeta {
       Json.obj(
         ("width", a.width.asJson),
         ("height", a.height.asJson)
-      )
+    )
 
   implicit val cellSizeDecoder: Decoder[CellSize] = (c: HCursor) =>
     for {
@@ -36,7 +36,7 @@ trait CirceJsonbMeta {
       height <- c.downField("height").as[Double]
     } yield {
       new CellSize(width, height)
-    }
+  }
 
   implicit val gridExtentMeta: Meta[GridExtent[Long]] =
     CirceJsonbMeta[GridExtent[Long]]
@@ -109,7 +109,7 @@ trait CirceJsonbMeta {
     CirceJsonbMeta[List[TileLayer]]
 
   implicit val annotationProjectLabelGroupsMeta
-      : Meta[List[AnnotationLabelClassGroup.WithLabelClasses]] =
+    : Meta[List[AnnotationLabelClassGroup.WithLabelClasses]] =
     CirceJsonbMeta[List[AnnotationLabelClassGroup.WithLabelClasses]]
 
   implicit val annotationProjectTaskStatusSummaryMeta: Meta[Map[String, Int]] =
