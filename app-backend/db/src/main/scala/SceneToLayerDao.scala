@@ -36,21 +36,6 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     FROM
   """ ++ tableF
 
-  private def getIntersectionGeometry(
-      g: Projected[Geometry]
-  ): Projected[Geometry] = {
-    val newGeom = g.as[Polygon] map { g =>
-      g.buffer(g.envelope.width * Config.sceneSearch.bufferPercentage): Geometry
-    } orElse {
-      g.as[MultiPolygon] map { g =>
-        val polys = g.polygons
-        MultiPolygon(polys map { poly =>
-          poly.buffer(poly.envelope.width * Config.sceneSearch.bufferPercentage)
-        }): Geometry
-      }
-    } getOrElse { g.geom }
-    Projected(newGeom, g.srid)
-  }
   def mosaicDefCacheKey(projectLayerId: UUID): String =
     s"SceneToLayer:ProjectLayer:$projectLayerId:MultiTiff:${Config.publicData.enableMultiTiff}:binary"
 
@@ -196,10 +181,11 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
           results.filter { stl =>
             ((stl.dataFootprint, polygonOption) match {
               case (Some(footprint), Some(polygon)) =>
-                // TODO:
-                // buffer the polygon by... 2% of its width, make a new projected polygon,
-                // check whether _that_ intersects the polygon in question, view the tiff
-                getIntersectionGeometry(footprint).intersects(polygon)
+                footprint.intersects(
+                  polygon.buffer(
+                    polygon.envelope.width / Config.sceneSearch.bufferPercentage
+                  )
+                )
               case (None, Some(_)) => false
               case _               => true
             }) &&
