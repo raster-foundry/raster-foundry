@@ -62,6 +62,56 @@ class AnnotationProjectDaoSpec
         (
             userCreate: User.Create,
             annotationProjectCreates: List[AnnotationProject.Create],
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) => {
+          val pageSize = 20
+          val pageRequest = PageRequest(0, pageSize, Map.empty)
+
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            insertedProjects <- annotationProjectCreates
+              .take(pageSize) traverse { toInsert =>
+              AnnotationProjectDao.insert(toInsert, user)
+            }
+            _ <- insertedProjects traverse { project =>
+              TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreate,
+                  project,
+                  Some(TaskStatus.Unlabeled)
+                ),
+                user
+              )
+            }
+            listed <- AnnotationProjectDao
+              .listProjects(
+                pageRequest,
+                AnnotationProjectQueryParameters(),
+                user
+              )
+          } yield (listed, insertedProjects)
+
+          val (listedProjects, dbProjects) = listIO.transact(xa).unsafeRunSync
+
+          val expectedNames = (dbProjects.take(pageSize) map { _.id }).toSet
+
+          assert(
+            expectedNames == (listedProjects.results map { _.id }).toSet,
+            "Listed projects are those expected from project insertion"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("list unlabeled annotation projects") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreates: List[AnnotationProject.Create],
             taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
             annotationProjectCreate: AnnotationProject.Create
         ) => {

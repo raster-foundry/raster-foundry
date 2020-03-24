@@ -168,7 +168,7 @@ object AnnotationProjectDao
 
     val selectF = selectBaseF ++ fromF ++ joinTileLayersF ++ joinLabelClassGroupF ++ joinTaskStatusSummaryF
 
-    val countF = fr"SELECT count(ap.id)" ++ fromF ++ joinTaskStatusSummaryF
+    val countF = fr"SELECT count(ap.id)" ++ fromF ++ joinTileLayersF ++ joinLabelClassGroupF ++ joinTaskStatusSummaryF
 
     val tableF = fr"ap"
 
@@ -440,7 +440,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
