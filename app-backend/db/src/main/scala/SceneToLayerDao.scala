@@ -181,11 +181,12 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
           results.filter { stl =>
             ((stl.dataFootprint, polygonOption) match {
               case (Some(footprint), Some(polygon)) =>
-                footprint.intersects(
-                  polygon.buffer(
-                    polygon.envelope.width / Config.sceneSearch.bufferPercentage
-                  )
+                val footprintEnvelope = footprint.envelope
+                val footprintEnvelopeBuffered = footprintEnvelope.buffer(
+                  footprintEnvelope.width / Config.sceneSearch.bufferPercentage
                 )
+                val polygonEnvelope = polygon.envelope
+                footprintEnvelopeBuffered.intersects(polygonEnvelope)
               case (None, Some(_)) => false
               case _               => true
             }) &&
