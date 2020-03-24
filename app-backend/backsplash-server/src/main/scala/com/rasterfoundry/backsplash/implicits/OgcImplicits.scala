@@ -93,7 +93,8 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
 
   private def getSources(
       projectId: UUID,
-      tracingContext: TracingContext[IO]): IO[List[(OgcSource, List[CRS])]] =
+      tracingContext: TracingContext[IO]
+  ): IO[List[(OgcSource, List[CRS])]] =
     for {
       projectLayers <- ProjectLayerDao
         .listProjectLayersWithImagery(projectId)
@@ -105,9 +106,11 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
 
   implicit val projectOgcStore: OgcStore[ProjectDao] =
     new OgcStore[ProjectDao] {
-      def getWcsModel(self: ProjectDao,
-                      id: UUID,
-                      tracingContext: TracingContext[IO]): IO[WcsModel] =
+      def getWcsModel(
+          self: ProjectDao,
+          id: UUID,
+          tracingContext: TracingContext[IO]
+      ): IO[WcsModel] =
         for {
           sourcesAndCRS <- getSources(id, tracingContext)
           sources = sourcesAndCRS.map(_._1)
@@ -119,9 +122,11 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
           WcsModel(serviceMeta, sources)
         }
 
-      def getWmsModel(self: ProjectDao,
-                      id: UUID,
-                      tracingContext: TracingContext[IO]): IO[WmsModel] =
+      def getWmsModel(
+          self: ProjectDao,
+          id: UUID,
+          tracingContext: TracingContext[IO]
+      ): IO[WmsModel] =
         for {
           sourcesAndCRS <- getSources(id, tracingContext)
           sources = sourcesAndCRS.map(_._1)
@@ -140,7 +145,8 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
       def getWmsServiceMetadata(
           self: ProjectDao,
           id: UUID,
-          tracingContext: TracingContext[IO]): IO[Service] =
+          tracingContext: TracingContext[IO]
+      ): IO[Service] =
         for {
           project <- ProjectDao.unsafeGetProjectById(id).transact(xa)
         } yield {

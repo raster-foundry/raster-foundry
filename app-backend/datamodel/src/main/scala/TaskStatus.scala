@@ -3,7 +3,7 @@ package com.rasterfoundry.datamodel
 import cats.implicits._
 import io.circe._
 
-sealed class TaskStatus(val repr: String) {
+sealed abstract class TaskStatus(val repr: String) {
   override def toString = repr
 }
 
