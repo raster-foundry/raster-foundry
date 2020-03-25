@@ -676,17 +676,18 @@ object StacExportQueryParameters {
     deriveDecoder[StacExportQueryParameters]
 }
 
-final case class AnnotationProjectTypeQueryParameters(
-    projectType: Option[AnnotationProjectType] = None
+final case class AnnotationProjectFilterQueryParameters(
+    projectType: Option[AnnotationProjectType] = None,
+    taskStatusesInclude: Iterable[TaskStatus] = Seq.empty[TaskStatus]
 )
 
-object AnnotationProjectTypeQueryParameters {
+object AnnotationProjectFilterQueryParameters {
   implicit def encGroupQueryParameters
-    : Encoder[AnnotationProjectTypeQueryParameters] =
-    deriveEncoder[AnnotationProjectTypeQueryParameters]
+    : Encoder[AnnotationProjectFilterQueryParameters] =
+    deriveEncoder[AnnotationProjectFilterQueryParameters]
   implicit def decGroupQueryParameters
-    : Decoder[AnnotationProjectTypeQueryParameters] =
-    deriveDecoder[AnnotationProjectTypeQueryParameters]
+    : Decoder[AnnotationProjectFilterQueryParameters] =
+    deriveDecoder[AnnotationProjectFilterQueryParameters]
 }
 
 final case class AnnotationProjectQueryParameters(
@@ -695,8 +696,8 @@ final case class AnnotationProjectQueryParameters(
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
-    projectTypeParams: AnnotationProjectTypeQueryParameters =
-      AnnotationProjectTypeQueryParameters()
+    projectFilterParams: AnnotationProjectFilterQueryParameters =
+      AnnotationProjectFilterQueryParameters()
 )
 
 object AnnotationProjectQueryParameters {

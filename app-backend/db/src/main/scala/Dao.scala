@@ -176,10 +176,11 @@ object Dao extends LazyLogging {
         selectF: Fragment,
         countF: Fragment,
         orderClause: Map[String, Order],
-        doCount: Boolean
+        doCount: Boolean,
+        groupClause: Fragment = Fragment.empty
     ): ConnectionIO[PaginatedResponse[T]] = {
       for {
-        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
+        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ groupClause ++ Page(
           pageRequest.copy(sort = orderClause ++ pageRequest.sort)
         )).query[T]
           .to[List]
@@ -227,6 +228,19 @@ object Dao extends LazyLogging {
 
     def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] =
       page(pageRequest, selectF, countF, Map.empty[String, Order], true)
+
+    def page(
+        pageRequest: PageRequest,
+        groupClause: Fragment
+    ): ConnectionIO[PaginatedResponse[Model]] =
+      page(
+        pageRequest,
+        selectF,
+        countF,
+        Map.empty[String, Order],
+        true,
+        groupClause
+      )
 
     def listQ(pageRequest: PageRequest): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest)))

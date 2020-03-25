@@ -561,13 +561,20 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   def countProjectTaskByStatus(
       projectId: UUID
-  ): ConnectionIO[Map[TaskStatus, Int]] = {
-    (fr"""
+  ): ConnectionIO[Map[TaskStatus, Int]] = (fr"""
     SELECT status, COUNT(id)
     FROM tasks
     WHERE annotation_project_id = ${projectId}
     GROUP BY status;
-    """).query[(TaskStatus, Int)].to[List].map(_.toMap)
+    """).query[(TaskStatus, Int)].to[List].map { list =>
+    val statusMap = list.toMap
+    List(
+      TaskStatus.Unlabeled,
+      TaskStatus.LabelingInProgress,
+      TaskStatus.Labeled,
+      TaskStatus.ValidationInProgress,
+      TaskStatus.Validated
+    ).fproduct(status => statusMap.getOrElse(status, 0)).toMap
   }
 
   def listTasksByStatus(

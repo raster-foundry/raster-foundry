@@ -169,4 +169,29 @@ object AnnotationProject {
     implicit val encRelatedAndSummary: Encoder[WithRelatedAndSummary] =
       deriveEncoder
   }
+
+  final case class WithTaskStatusSummary(
+      id: UUID,
+      createdAt: Instant,
+      createdBy: String,
+      name: String,
+      projectType: AnnotationProjectType,
+      taskSizeMeters: Option[Double],
+      taskSizePixels: Int,
+      aoi: Option[Projected[Geometry]],
+      labelersTeamId: Option[UUID],
+      validatorsTeamId: Option[UUID],
+      projectId: Option[UUID],
+      status: AnnotationProjectStatus,
+      tileLayers: List[TileLayer],
+      labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
+      taskStatusSummary: Map[String, Int]
+  )
+
+  object WithTaskStatusSummary {
+    implicit val encTaskStatusSummary: Encoder[WithTaskStatusSummary] =
+      deriveEncoder
+    implicit val decTaskStatusSummary: Decoder[WithTaskStatusSummary] =
+      deriveDecoder
+  }
 }
