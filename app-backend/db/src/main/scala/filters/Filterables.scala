@@ -41,7 +41,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val timestampQueryParamsFilter
-    : Filterable[Any, TimestampQueryParameters] =
+      : Filterable[Any, TimestampQueryParameters] =
     Filterable[Any, TimestampQueryParameters] {
       tsParams: TimestampQueryParameters =>
         Filters.timestampQP(tsParams)
@@ -53,7 +53,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val projectQueryParametersFilter
-    : Filterable[Any, ProjectQueryParameters] =
+      : Filterable[Any, ProjectQueryParameters] =
     Filterable[Any, ProjectQueryParameters] {
       projectParams: ProjectQueryParameters =>
         Filters.timestampQP(projectParams.timestampParams) ++
@@ -82,7 +82,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val CombinedToolQueryParametersFilter
-    : Filterable[Any, CombinedToolQueryParameters] =
+      : Filterable[Any, CombinedToolQueryParameters] =
     Filterable[Any, CombinedToolQueryParameters] {
       toolParams: CombinedToolQueryParameters =>
         Filters.timestampQP(toolParams.timestampParams) ++
@@ -95,7 +95,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val annotationQueryparamsFilter
-    : Filterable[Any, AnnotationQueryParameters] =
+      : Filterable[Any, AnnotationQueryParameters] =
     Filterable[Any, AnnotationQueryParameters] {
       annotParams: AnnotationQueryParameters =>
         Filters.userQP(annotParams.userParams) ++
@@ -134,7 +134,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val combinedSceneQueryParams
-    : Filterable[Any, CombinedSceneQueryParams] =
+      : Filterable[Any, CombinedSceneQueryParams] =
     Filterable[Any, CombinedSceneQueryParams] {
       combineSceneParams: CombinedSceneQueryParams =>
         val sceneParams = combineSceneParams.sceneParams
@@ -198,7 +198,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val projectSceneQueryParameters
-    : Filterable[Any, ProjectSceneQueryParameters] =
+      : Filterable[Any, ProjectSceneQueryParameters] =
     Filterable[Any, ProjectSceneQueryParameters] { params =>
       List(
         params.ingested.map({
@@ -213,7 +213,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val mapTokenQueryParametersFilter
-    : Filterable[Any, CombinedMapTokenQueryParameters] =
+      : Filterable[Any, CombinedMapTokenQueryParameters] =
     Filterable[Any, CombinedMapTokenQueryParameters] {
       mapTokenParams: CombinedMapTokenQueryParameters =>
         Filters.userQP(mapTokenParams.userParams) ++
@@ -221,7 +221,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val combinedToolRunQueryParameters
-    : Filterable[Any, CombinedToolRunQueryParameters] =
+      : Filterable[Any, CombinedToolRunQueryParameters] =
     Filterable[Any, CombinedToolRunQueryParameters] {
       combinedToolRunParams: CombinedToolRunQueryParameters =>
         Filters.userQP(combinedToolRunParams.userParams) ++
@@ -268,7 +268,7 @@ trait Filterables extends RFMeta with LazyLogging {
   }
 
   implicit val datasourceQueryparamsFilter
-    : Filterable[Any, DatasourceQueryParameters] =
+      : Filterable[Any, DatasourceQueryParameters] =
     Filterable[Any, DatasourceQueryParameters] {
       dsParams: DatasourceQueryParameters =>
         Filters.searchQP(dsParams.searchParams, List("name")) ++
@@ -339,7 +339,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val thumbnailParamsFilter
-    : Filterable[Any, ThumbnailQueryParameters] =
+      : Filterable[Any, ThumbnailQueryParameters] =
     Filterable[Any, ThumbnailQueryParameters] {
       params: ThumbnailQueryParameters =>
         Filters.thumbnailQP(params)
@@ -354,7 +354,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val platformQueryparamsFilter
-    : Filterable[Any, PlatformQueryParameters] =
+      : Filterable[Any, PlatformQueryParameters] =
     Filterable[Any, PlatformQueryParameters] {
       params: PlatformQueryParameters =>
         Filters.timestampQP(params.timestampParams) ++
@@ -364,7 +364,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val organizationQueryparamsFilter
-    : Filterable[Any, OrganizationQueryParameters] =
+      : Filterable[Any, OrganizationQueryParameters] =
     Filterable[Any, OrganizationQueryParameters] {
       params: OrganizationQueryParameters =>
         Filters.timestampQP(params.timestampParams) ++
@@ -379,14 +379,14 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val orgSearchQueryParamsFilter
-    : Filterable[Organization, SearchQueryParameters] =
+      : Filterable[Organization, SearchQueryParameters] =
     Filterable[Organization, SearchQueryParameters] {
       params: SearchQueryParameters =>
         Filters.searchQP(params, List("name"))
     }
 
   implicit val userSearchQueryParamsFilter
-    : Filterable[User, SearchQueryParameters] =
+      : Filterable[User, SearchQueryParameters] =
     Filterable[User, SearchQueryParameters] { params: SearchQueryParameters =>
       Filters.searchQP(params, List("name", "email", "id"))
     }
@@ -397,7 +397,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit def projectedMultiPolygonFilter
-    : Filterable[Any, Projected[MultiPolygon]] =
+      : Filterable[Any, Projected[MultiPolygon]] =
     Filterable[Any, Projected[MultiPolygon]] { geom =>
       List(Some(fr"ST_Intersects(data_footprint, ${geom})"))
     }
@@ -408,7 +408,7 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val labelStacExportQPFilter
-    : Filterable[Any, StacExportQueryParameters] =
+      : Filterable[Any, StacExportQueryParameters] =
     Filterable[Any, StacExportQueryParameters] {
       params: StacExportQueryParameters =>
         Filters.onlyUserQP(params.userParams) ++
@@ -425,23 +425,17 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val annotationProjectQueryParametersFilter
-    : Filterable[Any, AnnotationProjectQueryParameters] =
+      : Filterable[Any, AnnotationProjectQueryParameters] =
     Filterable[Any, AnnotationProjectQueryParameters] {
       params: AnnotationProjectQueryParameters =>
-        val taskStatusList =
-          params.projectFilterParams.taskStatusesInclude.toList
-        val taskStatusF = taskStatusList.size match {
-          case 0 => None
-          case _ =>
-            val statusFilterF = taskStatusList map { status =>
+        val taskStatusF = params.projectFilterParams.taskStatusesInclude.toList.toNel map {
+          statusList =>
+            val statusFilterF = statusList map { status =>
               Some(fr"(ts.summary ->> ${status.toString}) > '0'")
             }
-            Some(
-              Fragment.const("(") ++ Fragments
-                .orOpt(statusFilterF: _*) ++ Fragment.const(")")
-            )
+            Fragment.const("(") ++ Fragments
+              .orOpt(statusFilterF.toList: _*) ++ Fragment.const(")")
         }
-
         Filters.ownerQP(params.ownerParams, fr"ap.owner") ++
           Filters.searchQP(params.searchParams, List("ap.name")) ++
           List(
