@@ -36,7 +36,8 @@ object AnnotationProjectDao
     "labelers_team_id",
     "validators_team_id",
     "project_id",
-    "status"
+    "status",
+    "task_status_summary"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -150,7 +151,9 @@ object AnnotationProjectDao
        ${newAnnotationProject.projectType}, DEFAULT, ${newAnnotationProject.taskSizePixels},
        ${newAnnotationProject.aoi}, ${newAnnotationProject.labelersTeamId},
        ${newAnnotationProject.validatorsTeamId},
-       ${newAnnotationProject.projectId}, ${newAnnotationProject.status})
+       ${newAnnotationProject.projectId}, ${newAnnotationProject.status},
+       '{"UNLABELED": 0, "LABELING_IN_PROGRESS": 0, "LABELED": 0, "VALIDATION_IN_PROGRESS": 0, "VALIDATED": 0 }'::jsonb
+       )
     """).update.withUniqueGeneratedKeys[AnnotationProject](
         fieldNames: _*
       )
@@ -178,6 +181,9 @@ object AnnotationProjectDao
 
   def getById(id: UUID): ConnectionIO[Option[AnnotationProject]] =
     annotationProjectByIdQuery(id).option
+
+  def unsafeGetById(id: UUID): ConnectionIO[AnnotationProject] =
+    annotationProjectByIdQuery(id).unique
 
   def getWithRelatedById(
       id: UUID
@@ -427,7 +433,7 @@ object AnnotationProjectDao
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT 
              uuid_generate_v4(), now(), ${user.id}, name, project_type, task_size_meters, task_size_pixels,
-             aoi, labelers_team_id, validators_team_id, project_id, status
+             aoi, labelers_team_id, validators_team_id, project_id, status, task_status_summary
            FROM """ ++ tableF ++ fr"""
            WHERE id = ${projectId}
         """)

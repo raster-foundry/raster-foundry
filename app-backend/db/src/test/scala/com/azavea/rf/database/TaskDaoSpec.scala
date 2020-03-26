@@ -92,7 +92,9 @@ class TaskDaoSpec
             annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
-            val connIO: ConnectionIO[(Task.TaskFeatureCollection, List[Task])] =
+            val connIO: ConnectionIO[
+              (Task.TaskFeatureCollection, List[Task], AnnotationProject)
+            ] =
               for {
                 (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
                   userCreate,
@@ -117,9 +119,19 @@ class TaskDaoSpec
                 fetched <- collection.features traverse { feat =>
                   TaskDao.unsafeGetTaskById(feat.id)
                 }
-              } yield { (collection, fetched) }
+                annoProj <- AnnotationProjectDao
+                  .unsafeGetById(dbAnnotationProj.id)
+              } yield { (collection, fetched, annoProj) }
 
-            val (featureCollection, fetched) = connIO.transact(xa).unsafeRunSync
+            val (featureCollection, fetched, annotationProject) =
+              connIO.transact(xa).unsafeRunSync
+
+            assert(
+              annotationProject.taskStatusSummary.valuesIterator
+                .foldLeft(0)(_ + _) == featureCollection.features.size,
+              "Task insert operation should update task status summary in annotation project"
+            )
+
             assert(
               featureCollection.features.toSet == fetched
                 .map(_.toGeoJSONFeature(Nil))
@@ -311,11 +323,25 @@ class TaskDaoSpec
                 ),
                 dbUser
               )
+              annoProjAfterUpdate <- AnnotationProjectDao
+                .unsafeGetById(dbAnnotationProj.id)
               // have to delete actions on the task to be able to delete it
               _ <- fr"TRUNCATE TABLE task_actions;".update.run
               delete <- TaskDao.deleteTask(collection.features.head.id)
-            } yield (update, delete)
-            val (updateResult, deleteResult) = connIO.transact(xa).unsafeRunSync
+            } yield
+              (
+                update,
+                delete,
+                annoProjAfterUpdate,
+                collection.features.size
+              )
+
+            val (
+              updateResult,
+              deleteResult,
+              annoProjAfterUpd,
+              taskOriginalCount
+            ) = connIO.transact(xa).unsafeRunSync
 
             if (taskFeatureCreate1.properties.status == taskFeatureCreate2.properties.status) {
               updateResult.get.properties.actions.length should be(0)
@@ -323,6 +349,11 @@ class TaskDaoSpec
               updateResult.get.properties.actions.length should be(1)
             }
 
+            assert(
+              annoProjAfterUpd.taskStatusSummary.valuesIterator
+                .foldLeft(0)(_ + _) == taskOriginalCount,
+              "For unlabeled, task update should update task status summary in annotation project"
+            )
             deleteResult should be(1)
             true
           }
@@ -492,7 +523,7 @@ class TaskDaoSpec
 
   }
 
-  test("delete all tasks in a project layer") {
+  test("delete all tasks in a project") {
     check {
       forAll {
         (
