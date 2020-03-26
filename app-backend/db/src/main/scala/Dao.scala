@@ -189,7 +189,7 @@ object Dao extends LazyLogging {
             (countF ++ Fragments.whereAndOpt(filters: _*))
               .query[Int]
               .unique map { count =>
-              (count, (pageRequest.offset * pageRequest.limit) + 1 < count)
+              (count, (pageRequest.offset + 1) * pageRequest.limit < count)
             }
           }
           case false => {
