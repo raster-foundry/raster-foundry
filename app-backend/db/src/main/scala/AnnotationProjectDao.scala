@@ -174,13 +174,8 @@ object AnnotationProjectDao
     } yield annotationProject.withRelated(tileLayers, labelClassGroups)
   }
 
-  def annotationProjectByIdQuery(id: UUID): Query0[AnnotationProject] = {
-    (selectF ++ Fragments.whereAndOpt(Some(fr"id = ${id}")))
-      .query[AnnotationProject]
-  }
-
   def getById(id: UUID): ConnectionIO[Option[AnnotationProject]] =
-    annotationProjectByIdQuery(id).option
+    query.filter(id).selectOption
 
   def unsafeGetById(id: UUID): ConnectionIO[AnnotationProject] =
     annotationProjectByIdQuery(id).unique
@@ -383,7 +378,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
@@ -431,7 +426,7 @@ object AnnotationProjectDao
   ): ConnectionIO[AnnotationProject] = {
     val insertQuery = (fr"""
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
-      fr"""SELECT 
+      fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, project_type, task_size_meters, task_size_pixels,
              aoi, labelers_team_id, validators_team_id, project_id, status, task_status_summary
            FROM """ ++ tableF ++ fr"""

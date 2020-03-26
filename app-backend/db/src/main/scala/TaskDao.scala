@@ -5,7 +5,7 @@ import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.datamodel.Task.TaskPropertiesCreate
 import com.rasterfoundry.datamodel._
 
-import cats.data.OptionT
+import cats.data.{NonEmptyList, OptionT}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -47,7 +47,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   val cols =
     fr"""
      SELECT
-      distinct(id),
+      id,
       created_at,
       created_by,
       modified_at,
@@ -645,4 +645,21 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         }
       }
     } yield stuckTasks.length
+
+  def randomTask(
+      queryParams: TaskQueryParameters,
+      annotationProjectIds: NonEmptyList[UUID]
+  ): ConnectionIO[Option[Task.TaskFeature]] = {
+    val builder = query
+      .filter(queryParams)
+      .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
+
+    (selectF ++ Fragments.whereAndOpt(builder.filters: _*) ++ fr"ORDER BY RANDOM() LIMIT 1")
+      .query[Task]
+      .to[List] flatMap { tasks =>
+      tasks.toNel traverse { tasks =>
+        getTaskWithActions(tasks.head.id)
+      }
+    } map { _.flatten }
+  }
 }

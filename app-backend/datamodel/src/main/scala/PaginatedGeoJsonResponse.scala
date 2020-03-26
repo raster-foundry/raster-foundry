@@ -37,6 +37,18 @@ object GeoJsonCodec {
       _type: String = "FeatureCollection"
   )
 
+  object PaginatedGeoJsonResponse {
+    def empty[T](pageSize: Int): PaginatedGeoJsonResponse[T] =
+      PaginatedGeoJsonResponse(
+        0,
+        false,
+        false,
+        0,
+        pageSize,
+        Nil
+      )
+  }
+
   def fromSeqToFeatureCollection[T1 <: GeoJSONSerializable[T2],
                                  T2 <: GeoJSONFeature](
       features: Iterable[T1]

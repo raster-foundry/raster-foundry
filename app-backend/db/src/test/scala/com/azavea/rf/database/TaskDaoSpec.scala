@@ -1185,4 +1185,94 @@ class TaskDaoSpec
       }
     }
   }
+
+  test("get a random task") {
+    check {
+      forAll {
+        (
+            userCreate1: User.Create,
+            userCreate2: User.Create,
+            annotationProjectCreate1: AnnotationProject.Create,
+            annotationProjectCreate2: AnnotationProject.Create,
+            taskFeatureCollectionCreate1: Task.TaskFeatureCollectionCreate,
+            taskFeatureCollectionCreate2: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val randomTaskIO = for {
+              user1 <- UserDao.create(userCreate1)
+              user2 <- UserDao.create(userCreate2)
+              dbAnnotationProject1 <- AnnotationProjectDao.insert(
+                annotationProjectCreate1,
+                user1
+              )
+              dbAnnotationProject2 <- AnnotationProjectDao.insert(
+                annotationProjectCreate2,
+                user2
+              )
+              insertedTasks1 <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate1,
+                  dbAnnotationProject1,
+                  Some(TaskStatus.Unlabeled)
+                ),
+                user1
+              )
+              insertedTasks2 <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate2,
+                  dbAnnotationProject2,
+                  None
+                ),
+                user2
+              )
+              randomTask1 <- TaskDao.randomTask(
+                TaskQueryParameters(
+                  status = Some(TaskStatus.Unlabeled)
+                ),
+                NonEmptyList.one(dbAnnotationProject1.id)
+              )
+              randomTask2 <- TaskDao.randomTask(
+                TaskQueryParameters(),
+                NonEmptyList.one(dbAnnotationProject2.id)
+              )
+              randomTask3 <- TaskDao.randomTask(
+                TaskQueryParameters(
+                  status = Some(TaskStatus.Validated)
+                ),
+                NonEmptyList.one(dbAnnotationProject1.id)
+              )
+            } yield {
+              (
+                insertedTasks1,
+                insertedTasks2,
+                randomTask1,
+                randomTask2,
+                randomTask3
+              )
+            }
+
+            val (
+              project1Tasks,
+              project2Tasks,
+              randomTask1,
+              randomTask2,
+              randomTask3
+            ) =
+              randomTaskIO.transact(xa).unsafeRunSync
+
+            assert(
+              project1Tasks.features.contains(randomTask1.get),
+              "Random task 1 comes from the first project's tasks"
+            )
+            assert(
+              project2Tasks.features.contains(randomTask2.get),
+              "Random task 2 comes from the first project's tasks"
+            )
+            assert(randomTask3.isEmpty, "Task status filters are respected")
+
+            true
+          }
+      }
+    }
+  }
 }
