@@ -19,7 +19,8 @@ final case class AnnotationProject(
     labelersTeamId: Option[UUID],
     validatorsTeamId: Option[UUID],
     projectId: Option[UUID],
-    status: AnnotationProjectStatus
+    status: AnnotationProjectStatus,
+    taskStatusSummary: Map[String, Int]
 ) {
   def withRelated(
       tileLayers: List[TileLayer],
@@ -39,7 +40,8 @@ final case class AnnotationProject(
       projectId,
       status,
       tileLayers,
-      labelClassGroups
+      labelClassGroups,
+      taskStatusSummary
     )
 }
 
@@ -78,9 +80,10 @@ object AnnotationProject {
       projectId: Option[UUID],
       status: AnnotationProjectStatus,
       tileLayers: List[TileLayer],
-      labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses]
+      labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
+      taskStatusSummary: Map[String, Int]
   ) {
-    def toProject: AnnotationProject = AnnotationProject(
+    def toProject = AnnotationProject(
       id,
       createdAt,
       createdBy,
@@ -92,31 +95,30 @@ object AnnotationProject {
       labelersTeamId,
       validatorsTeamId,
       projectId,
-      status
+      status,
+      taskStatusSummary
     )
 
     def withSummary(
-        taskStatusSummary: Map[TaskStatus, Int],
         labelClassSummary: List[AnnotationProject.LabelClassGroupSummary]
-    ): AnnotationProject.WithRelatedAndSummary =
-      AnnotationProject.WithRelatedAndSummary(
-        id,
-        createdAt,
-        createdBy,
-        name,
-        projectType,
-        taskSizeMeters,
-        taskSizePixels,
-        aoi,
-        labelersTeamId,
-        validatorsTeamId,
-        projectId,
-        status,
-        tileLayers,
-        labelClassGroups,
-        taskStatusSummary,
-        labelClassSummary
-      )
+    ) = AnnotationProject.WithRelatedAndLabelClassSummary(
+      id,
+      createdAt,
+      createdBy,
+      name,
+      projectType,
+      taskSizeMeters,
+      taskSizePixels,
+      aoi,
+      labelersTeamId,
+      validatorsTeamId,
+      projectId,
+      status,
+      tileLayers,
+      labelClassGroups,
+      taskStatusSummary,
+      labelClassSummary
+    )
   }
 
   object WithRelated {
@@ -146,7 +148,7 @@ object AnnotationProject {
       deriveEncoder
   }
 
-  final case class WithRelatedAndSummary(
+  final case class WithRelatedAndLabelClassSummary(
       id: UUID,
       createdAt: Instant,
       createdBy: String,
@@ -161,37 +163,13 @@ object AnnotationProject {
       status: AnnotationProjectStatus,
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
-      taskStatusSummary: Map[TaskStatus, Int],
+      taskStatusSummary: Map[String, Int],
       labelClassSummary: List[LabelClassGroupSummary]
   )
 
-  object WithRelatedAndSummary {
-    implicit val encRelatedAndSummary: Encoder[WithRelatedAndSummary] =
+  object WithRelatedAndLabelClassSummary {
+    implicit val encRelatedAndSummary
+        : Encoder[WithRelatedAndLabelClassSummary] =
       deriveEncoder
-  }
-
-  final case class WithTaskStatusSummary(
-      id: UUID,
-      createdAt: Instant,
-      createdBy: String,
-      name: String,
-      projectType: AnnotationProjectType,
-      taskSizeMeters: Option[Double],
-      taskSizePixels: Int,
-      aoi: Option[Projected[Geometry]],
-      labelersTeamId: Option[UUID],
-      validatorsTeamId: Option[UUID],
-      projectId: Option[UUID],
-      status: AnnotationProjectStatus,
-      tileLayers: List[TileLayer],
-      labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
-      taskStatusSummary: Map[String, Int]
-  )
-
-  object WithTaskStatusSummary {
-    implicit val encTaskStatusSummary: Encoder[WithTaskStatusSummary] =
-      deriveEncoder
-    implicit val decTaskStatusSummary: Decoder[WithTaskStatusSummary] =
-      deriveDecoder
   }
 }

@@ -86,119 +86,58 @@ object AnnotationProjectDao
     this.query.filter(annotationProjectId).selectOption
 
   def listProjects(
-      pageRequest: PageRequest,
+      page: PageRequest,
       params: AnnotationProjectQueryParameters,
       user: User
-  ): ConnectionIO[
-    PaginatedResponse[AnnotationProject.WithTaskStatusSummary]
-  ] = {
-    val fieldsF =
-      fieldNames.foldLeft(Fragment.empty)(
-        (acc, field) => acc ++ Fragment.const(s"ap.${field},")
-      )
+  ): ConnectionIO[PaginatedResponse[AnnotationProject.WithRelated]] =
+    authQuery(
+      user,
+      ObjectType.AnnotationProject,
+      params.ownershipTypeParams.ownershipType,
+      params.groupQueryParameters.groupType,
+      params.groupQueryParameters.groupId
+    ).filter(params)
+      .page(page)
+      .flatMap(toWithRelated)
 
-    val selectBaseF = fr"SELECT" ++ fieldsF ++ fr"""
-      jsonb_agg(t) AS tile_layers,
-      jsonb_agg(lcg) AS label_class_groups,
-      ts.summary AS task_status_summary
-    """
-
-    val fromF = fr"FROM annotation_projects ap"
-
-    val joinTileLayersF = fr"""
-      JOIN (
-        SELECT 
-          id,
-          name,
-          url,
-          is_default AS default,
-          is_overlay as overlay,
-          layer_type as "layerType",
-          annotation_project_id as "annotationProjectId"
-        FROM tiles
-      ) AS t
-      ON ap.id = t."annotationProjectId"
-    """
-
-    val joinLabelClassGroupF = fr"""
-      JOIN (
-        SELECT
-          alcg.id,
-          alcg.name,
-          alcg.annotation_project_id AS "annotationProjectId" ,
-          alcg.idx AS index,
-          array_agg(alc) AS "labelClasses"
-        FROM annotation_label_class_groups alcg
-        JOIN (
-          SELECT
-            id,                    
-            name,                     
-            annotation_label_group_id AS "annotationLabelClassGroupId",
-            color_hex_code AS "colorHexCode",
-            is_default AS default,    
-            is_determinant AS determinant,
-            idx AS index
-          FROM annotation_label_classes
-        ) AS alc
-        ON alcg.id = alc."annotationLabelClassGroupId"
-        GROUP BY alcg.id
-      ) AS lcg
-      ON ap.id = lcg."annotationProjectId"
-    """
-
-    val joinTaskStatusSummaryF = fr"""
-      JOIN (
-        SELECT 
-          CREATE_TASK_SUMMARY(
-            jsonb_object_agg(
-              statuses.status,
-              statuses.status_count
-              )
-            ) as summary,
-          statuses.annotation_project_id
-        FROM (
-            SELECT status, annotation_project_id, COUNT(id) AS status_count
-            FROM tasks
-            GROUP BY status, annotation_project_id
-        ) statuses
-        GROUP BY statuses.annotation_project_id
-      ) AS ts
-      ON ap.id = ts.annotation_project_id
-    """
-
-    val selectF = selectBaseF ++ fromF ++ joinTileLayersF ++ joinLabelClassGroupF ++ joinTaskStatusSummaryF
-
-    val countF = fr"SELECT count(ap.id)" ++ fromF ++ joinTileLayersF ++ joinLabelClassGroupF ++ joinTaskStatusSummaryF
-
-    val tableF = fr"ap"
-
-    (user.isSuperuser match {
-      case true =>
-        Dao.QueryBuilder[AnnotationProject.WithTaskStatusSummary](
-          selectF,
-          tableF,
-          List.empty,
-          Some(countF)
-        )
-      case false =>
-        Dao.QueryBuilder[AnnotationProject.WithTaskStatusSummary](
-          selectF,
-          tableF,
-          List(
-            queryObjectsF(
-              user,
-              ObjectType.AnnotationProject,
-              ActionType.View,
-              params.ownershipTypeParams.ownershipType,
-              params.groupQueryParameters.groupType,
-              params.groupQueryParameters.groupId,
-              Some("ap")
+  def toWithRelated(
+      projectsPage: PaginatedResponse[AnnotationProject]
+  ): ConnectionIO[PaginatedResponse[AnnotationProject.WithRelated]] =
+    projectsPage.results.toList.toNel match {
+      case Some(projects) =>
+        projects traverse { project =>
+          for {
+            tileLayers <- TileLayerDao.listByProjectId(project.id)
+            labelClassGroups <- AnnotationLabelClassGroupDao.listByProjectId(
+              project.id
             )
-          ),
-          Some(countF)
-        )
-    }).filter(params).page(pageRequest, fr"GROUP BY ap.id, ts.summary")
-  }
+            labelClassGroupsWithClasses <- labelClassGroups traverse {
+              labelClassGroup =>
+                AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(
+                  labelClassGroup.id
+                ) map { cls =>
+                  labelClassGroup.withLabelClasses(cls)
+                }
+            }
+          } yield {
+            project.withRelated(tileLayers, labelClassGroupsWithClasses)
+          }
+        } map { projectWithRelated =>
+          PaginatedResponse[AnnotationProject.WithRelated](
+            projectsPage.count,
+            projectsPage.hasPrevious,
+            projectsPage.hasNext,
+            projectsPage.page,
+            projectsPage.pageSize,
+            projectWithRelated.toList
+          )
+
+        }
+      case _ =>
+        projectsPage
+          .copy(results = List.empty[AnnotationProject.WithRelated])
+          .pure[ConnectionIO]
+    }
 
   def insert(
       newAnnotationProject: AnnotationProject.Create,
@@ -261,10 +200,9 @@ object AnnotationProjectDao
 
   def getWithRelatedAndSummaryById(
       id: UUID
-  ): ConnectionIO[Option[AnnotationProject.WithRelatedAndSummary]] =
+  ): ConnectionIO[Option[AnnotationProject.WithRelatedAndLabelClassSummary]] =
     for {
       withRelatedO <- getWithRelatedById(id)
-      taskStatusSummary <- TaskDao.countProjectTaskByStatus(id)
       labelClassGroups <- AnnotationLabelClassGroupDao.listByProjectId(id)
       labelClassSummaries <- labelClassGroups traverse { labelClassGroup =>
         AnnotationLabelDao.countByProjectAndGroup(id, labelClassGroup.id).map {
@@ -279,7 +217,6 @@ object AnnotationProjectDao
     } yield {
       withRelatedO map { withRelated =>
         withRelated.withSummary(
-          taskStatusSummary,
           labelClassSummaries
         )
       }
@@ -440,7 +377,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
