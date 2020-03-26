@@ -4,55 +4,61 @@ ADD COLUMN task_status_summary jsonb DEFAULT '{"UNLABELED": 0, "LABELING_IN_PROG
 
 -- populate task_status_summary column for all annotation projects
 UPDATE public.annotation_projects
-SET task_status_summary = statuses.summary
+SET task_status_summary = task_statuses.summary
 FROM (
   SELECT
-    annotation_projects.id as annotation_project_id, 
-    CREATE_TASK_SUMMARY(
-      jsonb_object_agg(
-        statuses.status,
-        statuses.status_count
-      )
-    ) AS summary
+  statuses.annotation_project_id, 
+  CREATE_TASK_SUMMARY(
+    jsonb_object_agg(
+      statuses.status,
+      statuses.status_count
+    )
+  ) AS summary
   FROM (
     SELECT status, annotation_project_id, COUNT(id) AS status_count
-    FROM tasks
+    FROM public.tasks
     GROUP BY status, annotation_project_id
   ) statuses
-  JOIN annotation_projects
-  ON statuses.annotation_project_id = annotation_projects.id
-  GROUP BY annotation_projects.id
-) statuses
-WHERE statuses.annotation_project_id = id;
+  GROUP BY statuses.annotation_project_id
+) AS task_statuses
+WHERE task_statuses.annotation_project_id = id;
 
 -- define the trigger function to update task summary for annotation projects
 CREATE OR REPLACE FUNCTION UPDATE_PROJECT_TASK_SUMMARY()
   RETURNS trigger AS
 $BODY$
 DECLARE
-  project_id uuid;
+  op_project_id uuid;
 BEGIN
   -- the NEW variable holds row for INSERT/UPDATE operations
   -- the OLD variable holds row for DELETE operations
   -- store the annotation project ID
   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
-    project_id := NEW.annotation_project_id;
+    op_project_id := NEW.annotation_project_id;
   ELSE
-    project_id := OLD.annotation_project_id;
+    op_project_id := OLD.annotation_project_id;
   END IF;
   -- update task summary for the stored annotation project
-  UPDATE annotation_projects
-  SET task_status_summary = CREATE_TASK_SUMMARY(jsonb_object_agg(
-    statuses.status,
-    statuses.status_count
-  ))
+  UPDATE public.annotation_projects
+  SET task_status_summary = task_statuses.summary
   FROM (
-    SELECT status, COUNT(id) AS status_count
-    FROM tasks
-    WHERE annotation_project_id = project_id
-    GROUP BY status
-  ) statuses
-  WHERE annotation_project_id = project_id;
+    SELECT
+      statuses.annotation_project_id, 
+      CREATE_TASK_SUMMARY(
+        jsonb_object_agg(
+          statuses.status,
+          statuses.status_count
+        )
+      ) AS summary
+    FROM (
+      SELECT status, annotation_project_id, COUNT(id) AS status_count
+      FROM public.tasks
+      WHERE annotation_project_id = op_project_id
+      GROUP BY status, annotation_project_id
+    ) statuses
+    GROUP BY statuses.annotation_project_id
+  ) AS task_statuses
+  WHERE task_statuses.annotation_project_id = annotation_projects.id;
 
   -- result is ignored since this is an AFTER trigger
   RETURN NULL;
