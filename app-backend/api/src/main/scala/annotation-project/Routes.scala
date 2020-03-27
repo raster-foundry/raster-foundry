@@ -83,7 +83,7 @@ trait AnnotationProjectRoutes
           pathPrefix("tasks") {
             pathEndOrSingleSlash {
               get {
-                listTasks(projectId)
+                listAnnotationProjectTasks(projectId)
               } ~ post {
                 createTasks(projectId)
               } ~ delete {

@@ -14,6 +14,7 @@ import com.rasterfoundry.api.project.ProjectRoutes
 import com.rasterfoundry.api.scene.SceneRoutes
 import com.rasterfoundry.api.shape.ShapeRoutes
 import com.rasterfoundry.api.stac.StacRoutes
+import com.rasterfoundry.api.tasks.TaskRoutes
 import com.rasterfoundry.api.team.TeamRoutes
 import com.rasterfoundry.api.thumbnail.ThumbnailRoutes
 import com.rasterfoundry.api.token.TokenRoutes
@@ -57,7 +58,8 @@ trait Router
     with TeamRoutes
     with PlatformRoutes
     with StacRoutes
-    with AnnotationProjectRoutes {
+    with AnnotationProjectRoutes
+    with TaskRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE)
@@ -121,6 +123,9 @@ trait Router
           } ~
           pathPrefix("annotation-projects") {
             annotationProjectRoutes
+          } ~
+          pathPrefix("tasks") {
+            taskRoutes
           }
       } ~
       pathPrefix("config") {

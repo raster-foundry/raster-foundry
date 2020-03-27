@@ -26,45 +26,46 @@ trait AnnotationProjectTaskRoutes
 
   val xa: Transactor[IO]
 
-  def listTasks(projectId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        AnnotationProjectDao
-          .authorized(
-            user,
-            ObjectType.AnnotationProject,
-            projectId,
-            ActionType.Annotate
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        (withPagination & taskQueryParameters) { (page, taskParams) =>
-          complete {
-            (
-              taskParams.format match {
-                case Some(format) if format.toUpperCase == "SUMMARY" =>
-                  TaskDao.listTaskGeomByStatus(
-                    user,
-                    projectId,
-                    taskParams.status
-                  )
-                case _ =>
-                  TaskDao
-                    .listTasks(
-                      taskParams,
+  def listAnnotationProjectTasks(projectId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          (withPagination & taskQueryParameters) { (page, taskParams) =>
+            complete {
+              (
+                taskParams.format match {
+                  case Some(format) if format.toUpperCase == "SUMMARY" =>
+                    TaskDao.listTaskGeomByStatus(
+                      user,
                       projectId,
-                      page
+                      taskParams.status
                     )
-              }
-            ).transact(xa).unsafeToFuture
+                  case _ =>
+                    TaskDao
+                      .listTasks(
+                        taskParams,
+                        projectId,
+                        page
+                      )
+                }
+              ).transact(xa).unsafeToFuture
+            }
           }
         }
       }
-    }
   }
 
   def createTasks(projectId: UUID): Route = authenticate { user =>
