@@ -43,7 +43,6 @@ BEGIN
   SET task_status_summary = task_statuses.summary
   FROM (
     SELECT
-      statuses.annotation_project_id, 
       CREATE_TASK_SUMMARY(
         jsonb_object_agg(
           statuses.status,
@@ -51,14 +50,13 @@ BEGIN
         )
       ) AS summary
     FROM (
-      SELECT status, annotation_project_id, COUNT(id) AS status_count
+      SELECT status, COUNT(id) AS status_count
       FROM public.tasks
       WHERE annotation_project_id = op_project_id
-      GROUP BY status, annotation_project_id
+      GROUP BY status
     ) statuses
-    GROUP BY statuses.annotation_project_id
   ) AS task_statuses
-  WHERE task_statuses.annotation_project_id = annotation_projects.id;
+  WHERE annotation_projects.id = op_project_id;
 
   -- result is ignored since this is an AFTER trigger
   RETURN NULL;
