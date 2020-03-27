@@ -237,7 +237,7 @@ object Utils {
       Map(
         scene.id.toString ->
           StacAsset(
-            s"./{scene.id}.tiff",
+            s"./${scene.id}.tiff",
             Some("scene"),
             Some(`image/cog`)
           )
