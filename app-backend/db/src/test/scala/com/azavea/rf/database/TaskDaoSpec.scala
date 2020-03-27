@@ -309,7 +309,8 @@ class TaskDaoSpec
                   features = List(
                     fixupTaskFeatureCreate(
                       taskFeatureCreate1,
-                      dbAnnotationProj
+                      dbAnnotationProj,
+                      Some(TaskStatus.Unlabeled)
                     )
                   )
                 ),
@@ -319,7 +320,8 @@ class TaskDaoSpec
                 collection.features.head.id,
                 fixupTaskFeatureCreate(
                   taskFeatureCreate2,
-                  dbAnnotationProj
+                  dbAnnotationProj,
+                  Some(TaskStatus.Labeled)
                 ),
                 dbUser
               )
@@ -328,31 +330,52 @@ class TaskDaoSpec
               // have to delete actions on the task to be able to delete it
               _ <- fr"TRUNCATE TABLE task_actions;".update.run
               delete <- TaskDao.deleteTask(collection.features.head.id)
+              annoProjAfterDelete <- AnnotationProjectDao
+                .unsafeGetById(dbAnnotationProj.id)
             } yield
               (
                 update,
                 delete,
                 annoProjAfterUpdate,
-                collection.features.size
+                collection.features.size,
+                annoProjAfterDelete
               )
 
             val (
               updateResult,
               deleteResult,
               annoProjAfterUpd,
-              taskOriginalCount
+              taskOriginalCount,
+              annoProjAfterDel
             ) = connIO.transact(xa).unsafeRunSync
 
-            if (taskFeatureCreate1.properties.status == taskFeatureCreate2.properties.status) {
-              updateResult.get.properties.actions.length should be(0)
-            } else {
-              updateResult.get.properties.actions.length should be(1)
-            }
+            updateResult.get.properties.actions.length should be(1)
 
             assert(
-              annoProjAfterUpd.taskStatusSummary.valuesIterator
-                .foldLeft(0)(_ + _) == taskOriginalCount,
+              annoProjAfterUpd.taskStatusSummary
+                .get(TaskStatus.Unlabeled.toString) == Some(
+                taskOriginalCount - 1
+              ),
               "For unlabeled, task update should update task status summary in annotation project"
+            )
+            assert(
+              annoProjAfterUpd.taskStatusSummary
+                .get(TaskStatus.Labeled.toString) == Some(taskOriginalCount),
+              "For labeled, task update should update task status summary in annotation project"
+            )
+            assert(
+              annoProjAfterDel.taskStatusSummary
+                .get(TaskStatus.Unlabeled.toString) == Some(
+                taskOriginalCount - 1
+              ),
+              "For unlabeled, task delete should update task status summary in annotation project"
+            )
+            assert(
+              annoProjAfterDel.taskStatusSummary
+                .get(TaskStatus.Labeled.toString) == Some(
+                taskOriginalCount - 1
+              ),
+              "For unlabeled, task delete should update task status summary in annotation project"
             )
             deleteResult should be(1)
             true
