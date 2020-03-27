@@ -178,7 +178,7 @@ object AnnotationProjectDao
     query.filter(id).selectOption
 
   def unsafeGetById(id: UUID): ConnectionIO[AnnotationProject] =
-    annotationProjectByIdQuery(id).unique
+    query.filter(id).select
 
   def getWithRelatedById(
       id: UUID
