@@ -92,7 +92,9 @@ class TaskDaoSpec
             annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
-            val connIO: ConnectionIO[(Task.TaskFeatureCollection, List[Task])] =
+            val connIO: ConnectionIO[
+              (Task.TaskFeatureCollection, List[Task], AnnotationProject)
+            ] =
               for {
                 (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
                   userCreate,
@@ -117,9 +119,19 @@ class TaskDaoSpec
                 fetched <- collection.features traverse { feat =>
                   TaskDao.unsafeGetTaskById(feat.id)
                 }
-              } yield { (collection, fetched) }
+                annoProj <- AnnotationProjectDao
+                  .unsafeGetById(dbAnnotationProj.id)
+              } yield { (collection, fetched, annoProj) }
 
-            val (featureCollection, fetched) = connIO.transact(xa).unsafeRunSync
+            val (featureCollection, fetched, annotationProject) =
+              connIO.transact(xa).unsafeRunSync
+
+            assert(
+              annotationProject.taskStatusSummary.valuesIterator
+                .foldLeft(0)(_ + _) == featureCollection.features.size,
+              "Task insert operation should update task status summary in annotation project"
+            )
+
             assert(
               featureCollection.features.toSet == fetched
                 .map(_.toGeoJSONFeature(Nil))
@@ -275,8 +287,8 @@ class TaskDaoSpec
             orgCreate: Organization.Create,
             platform: Platform,
             projectCreate: Project.Create,
-            taskFeatureCreate1: Task.TaskFeatureCreate,
-            taskFeatureCreate2: Task.TaskFeatureCreate,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskFeatureCreate: Task.TaskFeatureCreate,
             annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
@@ -293,36 +305,86 @@ class TaskDaoSpec
                   dbUser
                 )
               collection <- TaskDao.insertTasks(
-                Task.TaskFeatureCollectionCreate(
-                  features = List(
-                    fixupTaskFeatureCreate(
-                      taskFeatureCreate1,
-                      dbAnnotationProj
-                    )
-                  )
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.Unlabeled)
                 ),
                 dbUser
               )
               update <- TaskDao.updateTask(
                 collection.features.head.id,
                 fixupTaskFeatureCreate(
-                  taskFeatureCreate2,
-                  dbAnnotationProj
+                  taskFeatureCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.Labeled)
                 ),
                 dbUser
               )
+              annoProjAfterUpdate <- AnnotationProjectDao
+                .unsafeGetById(dbAnnotationProj.id)
               // have to delete actions on the task to be able to delete it
               _ <- fr"TRUNCATE TABLE task_actions;".update.run
               delete <- TaskDao.deleteTask(collection.features.head.id)
-            } yield (update, delete)
-            val (updateResult, deleteResult) = connIO.transact(xa).unsafeRunSync
+              annoProjAfterDelete <- AnnotationProjectDao
+                .unsafeGetById(dbAnnotationProj.id)
+              _ <- TaskDao.query
+                .filter(fr"annotation_project_id = ${dbAnnotationProj.id}")
+                .delete
+              annoProjAfterDrop <- AnnotationProjectDao.unsafeGetById(
+                dbAnnotationProj.id
+              )
+            } yield
+              (
+                update,
+                delete,
+                annoProjAfterUpdate,
+                collection.features.size,
+                annoProjAfterDelete,
+                annoProjAfterDrop
+              )
 
-            if (taskFeatureCreate1.properties.status == taskFeatureCreate2.properties.status) {
-              updateResult.get.properties.actions.length should be(0)
-            } else {
-              updateResult.get.properties.actions.length should be(1)
-            }
+            val (
+              updateResult,
+              deleteResult,
+              annoProjAfterUpd,
+              taskOriginalCount,
+              annoProjAfterDel,
+              annoProjAfterDropAll
+            ) = connIO.transact(xa).unsafeRunSync
 
+            updateResult.get.properties.actions.length should be(1)
+
+            assert(
+              annoProjAfterUpd.taskStatusSummary
+                .get(TaskStatus.Unlabeled.toString) == Some(
+                taskOriginalCount - 1
+              ),
+              "For unlabeled, task update should update task status summary in annotation project"
+            )
+            assert(
+              annoProjAfterUpd.taskStatusSummary
+                .get(TaskStatus.Labeled.toString) == Some(1),
+              "For labeled, task update should update task status summary in annotation project"
+            )
+            assert(
+              annoProjAfterDel.taskStatusSummary
+                .get(TaskStatus.Unlabeled.toString) == Some(
+                taskOriginalCount - 1
+              ),
+              "For unlabeled, task delete should update task status summary in annotation project"
+            )
+            assert(
+              annoProjAfterDel.taskStatusSummary
+                .get(TaskStatus.Labeled.toString) == Some(0),
+              "For labeled, task delete should update task status summary in annotation project"
+            )
+
+            assert(
+              annoProjAfterDropAll.taskStatusSummary.valuesIterator
+                .foldLeft(0)(_ + _) == 0,
+              "Task delete all should update task status summary in annotation project"
+            )
             deleteResult should be(1)
             true
           }
@@ -492,7 +554,7 @@ class TaskDaoSpec
 
   }
 
-  test("delete all tasks in a project layer") {
+  test("delete all tasks in a project") {
     check {
       forAll {
         (
