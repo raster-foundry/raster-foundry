@@ -237,7 +237,7 @@ object Utils {
       Map(
         scene.id.toString ->
           StacAsset(
-            URLDecoder.decode(ingestLocation, "utf-8"),
+            s"./{scene.id}.tiff",
             Some("scene"),
             Some(`image/cog`)
           )

@@ -10,7 +10,6 @@ import com.rasterfoundry.datamodel._
 import better.files.{File => ScalaFile}
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
-import com.amazonaws.services.s3.model.PutObjectResult
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
@@ -32,7 +31,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       tempDir: ScalaFile,
       layerId: UUID,
       sceneTaskAnnotation: ExportData
-  ): IO[(List[PutObjectResult], List[ScalaFile])] = {
+  ): IO[List[ScalaFile]] = {
     logger.info(s"Processing Layer Collection: $layerId")
     val layerCollectionPrefix = s"$exportPath/$layerId"
     val labelRootURI = new URI(layerCollectionPrefix)
@@ -56,7 +55,16 @@ final case class WriteStacCatalog(exportId: UUID)(
     )
 
     val sceneItems = sceneTaskAnnotation.scenes flatMap { scene =>
-      Utils.getSceneItem(catalog, layerCollectionPrefix, sceneCollection, scene)
+      (
+        Utils.getSceneItem(
+          catalog,
+          layerCollectionPrefix,
+          sceneCollection,
+          scene
+        ),
+        scene.ingestLocation
+      ).tupled
+
     }
 
     val absoluteLayerCollection =
@@ -83,7 +91,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       )
 
     val updatedSceneLinks = sceneCollection.links ++ sceneItems.map {
-      itemWithAbsolute =>
+      case (itemWithAbsolute, _) =>
         StacLink(
           s"./${itemWithAbsolute.item.id}.json",
           Item,
@@ -105,7 +113,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         catalog,
         sceneTaskAnnotation,
         labelCollection,
-        sceneItems,
+        sceneItems map { _._1 },
         s"$layerCollectionPrefix/${labelCollection.id}",
         labelRootURI
       )
@@ -123,28 +131,16 @@ final case class WriteStacCatalog(exportId: UUID)(
       labelCollection.copy(links = updatedLabelLinks)
     )
     for {
-      s3LabelCollectionResult <- StacFileIO.putObjectToS3(
-        labelCollectionWithPath
-      )
-      s3SceneItemResults <- sceneItems.parTraverse(
-        item => StacFileIO.putObjectToS3(item)
-      )
-      s3SceneCollectionResults <- StacFileIO.putObjectToS3(
-        sceneCollectionWithPath
-      )
-      s3LabelItemResults <- StacFileIO.putObjectToS3(labelItem)
-      s3LayerCollectionResults <- StacFileIO.putObjectToS3(
-        absoluteLayerCollection
-      )
-      s3AnnotationResults <- StacFileIO.putObjectToS3(annotations)
-
       localLabelCollectionResult <- StacFileIO.writeObjectToFilesystem(
         tempDir,
         labelCollectionWithPath
       )
-      localSceneItemResults <- sceneItems.parTraverse(
-        item => StacFileIO.writeObjectToFilesystem(tempDir, item)
-      )
+      localSceneItemResults <- sceneItems.parTraverse {
+        case (item, ingestLocation) => {
+          StacFileIO.writeObjectToFilesystem(tempDir, item) <*
+            StacFileIO.getObject(tempDir, item, ingestLocation)
+        }
+      }
       localSceneCollectionResults <- StacFileIO.writeObjectToFilesystem(
         tempDir,
         sceneCollectionWithPath
@@ -163,22 +159,13 @@ final case class WriteStacCatalog(exportId: UUID)(
       )
 
     } yield {
-      (
-        List(
-          s3LabelCollectionResult,
-          s3SceneCollectionResults,
-          s3LabelItemResults,
-          s3AnnotationResults,
-          s3LayerCollectionResults
-        ) ++ s3SceneItemResults,
-        List(
-          localLabelCollectionResult,
-          localSceneCollectionResults,
-          localLabelItemResults,
-          localAnnotationResults,
-          localLayerCollectionResults
-        ) ++ localSceneItemResults
-      )
+      List(
+        localLabelCollectionResult,
+        localSceneCollectionResults,
+        localLabelItemResults,
+        localAnnotationResults,
+        localLayerCollectionResults
+      ) ++ localSceneItemResults
     }
   }
 
@@ -232,7 +219,6 @@ final case class WriteStacCatalog(exportId: UUID)(
             )
         }
         for {
-          s3CatalogResults <- StacFileIO.putObjectToS3(catalogWithPath)
           _ <- StacFileIO.writeObjectToFilesystem(tempDir, catalogWithPath)
           layer <- layerIO.toList.sequence
           (s3LayerCollectionResults, _) = layer.unzip

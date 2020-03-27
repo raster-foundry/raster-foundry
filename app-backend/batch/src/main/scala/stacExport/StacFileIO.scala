@@ -45,6 +45,8 @@ object StacFileIO extends LazyLogging with Config {
     s3Client.putObject(uri.getBucket, uri.getKey, file.toJava)
   }
 
+  def getObject[T](tempDir: ScalaFile, stacWithAbsolute: ObjectWithAbsolute[T], ingestLocation: String): IO[Unit] = ???
+
   def putObjectToS3[A: Encoder](
       stacWithAbsolute: ObjectWithAbsolute[A]): IO[PutObjectResult] = IO {
     val uri = new AmazonS3URI(stacWithAbsolute.absolutePath)
