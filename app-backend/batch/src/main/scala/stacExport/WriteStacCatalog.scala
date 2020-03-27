@@ -207,7 +207,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         val tempDir = ScalaFile.newTemporaryDirectory()
         tempDir.deleteOnExit()
 
-        val layerIO = layerInfoMap map {
+        val layerIO = layerInfoMap.toList traverse {
           case (layerId, sceneTaskAnnotation) =>
             processLayerCollection(
               exportDef,
@@ -220,11 +220,10 @@ final case class WriteStacCatalog(exportId: UUID)(
         }
         for {
           _ <- StacFileIO.writeObjectToFilesystem(tempDir, catalogWithPath)
-          layer <- layerIO.toList.sequence
-          (s3LayerCollectionResults, _) = layer.unzip
+          _ <- layerIO
           tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
           _ <- IO { tempDir.zipTo(tempZipFile) }
-          s3ZipFile <- StacFileIO.putToS3(
+          _ <- StacFileIO.putToS3(
             s"$exportPath/catalog.zip",
             tempZipFile
           )
@@ -236,12 +235,7 @@ final case class WriteStacCatalog(exportId: UUID)(
               )
             StacExportDao.update(updatedExport, exportDef.id).transact(xa)
           }
-        } yield {
-          val totalResults =
-            (s3CatalogResults :: s3ZipFile :: s3LayerCollectionResults.flatten).length
-          logger.info(s"Uploaded $totalResults to S3")
-          ()
-        }
+        } yield ()
       case _ =>
         IO {
           val msg = "Export definition is missing an annotation project ID"
