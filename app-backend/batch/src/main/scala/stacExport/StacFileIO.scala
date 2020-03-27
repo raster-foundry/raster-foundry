@@ -17,7 +17,7 @@ import io.circe._
 import io.circe.syntax._
 
 import java.io.{BufferedReader, ByteArrayInputStream, InputStreamReader}
-import java.net.{URI, URLDecoder}
+import java.net.URI
 import java.nio.charset.Charset
 
 case class ObjectWithAbsolute[A](absolutePath: String, item: A)
@@ -71,8 +71,10 @@ object StacFileIO extends LazyLogging with Config {
     val tiffKey =
       (key.split("/").dropRight(1) :+ s"${stacWithAbsolute.item.id}.tiff")
         .mkString("/")
-    val localOutputFile = ScalaFile(s"${tempDir.path}/$tiffKey")
-    val sourceUri = URI.create(URLDecoder.decode(ingestLocation, "utf-8"))
+    val localPath = s"${tempDir.path}/$tiffKey"
+    logger.debug(s"Fetching $ingestLocation to $localPath")
+    val localOutputFile = ScalaFile(localPath)
+    val sourceUri = URI.create(ingestLocation)
     IO { s3Client.getObject(sourceUri) } map { resp =>
       val reader =
         new BufferedReader(new InputStreamReader(resp.getObjectContent()))
