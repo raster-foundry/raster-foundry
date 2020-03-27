@@ -436,7 +436,8 @@ trait Filterables extends RFMeta with LazyLogging {
         val taskStatusF = params.projectFilterParams.taskStatusesInclude.toList.toNel map {
           statusList =>
             val statusFilterF = statusList map { status =>
-              Some(fr"(annotation_projects.task_status_summary ->> ${status.toString}) > '0'")
+              Some(
+                fr"(annotation_projects.task_status_summary ->> ${status.toString}) > '0'")
             }
             Fragment.const("(") ++ Fragments
               .orOpt(statusFilterF.toList: _*) ++ Fragment.const(")")
