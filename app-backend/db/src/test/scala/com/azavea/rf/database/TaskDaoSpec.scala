@@ -287,8 +287,8 @@ class TaskDaoSpec
             orgCreate: Organization.Create,
             platform: Platform,
             projectCreate: Project.Create,
-            taskFeatureCreate1: Task.TaskFeatureCreate,
-            taskFeatureCreate2: Task.TaskFeatureCreate,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskFeatureCreate: Task.TaskFeatureCreate,
             annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
@@ -305,21 +305,17 @@ class TaskDaoSpec
                   dbUser
                 )
               collection <- TaskDao.insertTasks(
-                Task.TaskFeatureCollectionCreate(
-                  features = List(
-                    fixupTaskFeatureCreate(
-                      taskFeatureCreate1,
-                      dbAnnotationProj,
-                      Some(TaskStatus.Unlabeled)
-                    )
-                  )
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.Unlabeled)
                 ),
                 dbUser
               )
               update <- TaskDao.updateTask(
                 collection.features.head.id,
                 fixupTaskFeatureCreate(
-                  taskFeatureCreate2,
+                  taskFeatureCreate,
                   dbAnnotationProj,
                   Some(TaskStatus.Labeled)
                 ),
@@ -332,13 +328,20 @@ class TaskDaoSpec
               delete <- TaskDao.deleteTask(collection.features.head.id)
               annoProjAfterDelete <- AnnotationProjectDao
                 .unsafeGetById(dbAnnotationProj.id)
+              _ <- TaskDao.query
+                .filter(fr"annotation_project_id = ${dbAnnotationProj.id}")
+                .delete
+              annoProjAfterDrop <- AnnotationProjectDao.unsafeGetById(
+                dbAnnotationProj.id
+              )
             } yield
               (
                 update,
                 delete,
                 annoProjAfterUpdate,
                 collection.features.size,
-                annoProjAfterDelete
+                annoProjAfterDelete,
+                annoProjAfterDrop
               )
 
             val (
@@ -346,7 +349,8 @@ class TaskDaoSpec
               deleteResult,
               annoProjAfterUpd,
               taskOriginalCount,
-              annoProjAfterDel
+              annoProjAfterDel,
+              annoProjAfterDropAll
             ) = connIO.transact(xa).unsafeRunSync
 
             updateResult.get.properties.actions.length should be(1)
@@ -360,7 +364,7 @@ class TaskDaoSpec
             )
             assert(
               annoProjAfterUpd.taskStatusSummary
-                .get(TaskStatus.Labeled.toString) == Some(taskOriginalCount),
+                .get(TaskStatus.Labeled.toString) == Some(1),
               "For labeled, task update should update task status summary in annotation project"
             )
             assert(
@@ -372,10 +376,14 @@ class TaskDaoSpec
             )
             assert(
               annoProjAfterDel.taskStatusSummary
-                .get(TaskStatus.Labeled.toString) == Some(
-                taskOriginalCount - 1
-              ),
-              "For unlabeled, task delete should update task status summary in annotation project"
+                .get(TaskStatus.Labeled.toString) == Some(0),
+              "For labeled, task delete should update task status summary in annotation project"
+            )
+
+            assert(
+              annoProjAfterDropAll.taskStatusSummary.valuesIterator
+                .foldLeft(0)(_ + _) == 0,
+              "Task delete all should update task status summary in annotation project"
             )
             deleteResult should be(1)
             true
