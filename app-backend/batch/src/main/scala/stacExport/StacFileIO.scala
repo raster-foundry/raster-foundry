@@ -12,12 +12,12 @@ import com.amazonaws.services.s3.model.{
   PutObjectResult
 }
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.server.stac.StacItem
 import io.circe._
 import io.circe.syntax._
 
-import java.io.{BufferedReader, ByteArrayInputStream, InputStreamReader}
-import java.net.URI
+import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 
 case class ObjectWithAbsolute[A](absolutePath: String, item: A)
@@ -48,19 +48,6 @@ object StacFileIO extends LazyLogging with Config {
     s3Client.putObject(uri.getBucket, uri.getKey, file.toJava)
   }
 
-  private def writeUntilEmpty(
-      betterFile: ScalaFile,
-      reader: BufferedReader
-  ): Unit = {
-    val lineMaybeNull = reader.readLine()
-    Option(lineMaybeNull) map { line =>
-      betterFile.append(line)
-    } match {
-      case Some(_) => writeUntilEmpty(betterFile, reader)
-      case None    => ()
-    }
-  }
-
   def getObject(
       tempDir: ScalaFile,
       stacWithAbsolute: ObjectWithAbsolute[StacItem],
@@ -73,13 +60,8 @@ object StacFileIO extends LazyLogging with Config {
         .mkString("/")
     val localPath = s"${tempDir.path}/$tiffKey"
     logger.debug(s"Fetching $ingestLocation to $localPath")
-    val localOutputFile = ScalaFile(localPath)
-    val sourceUri = URI.create(ingestLocation)
-    IO { s3Client.getObject(sourceUri) } map { resp =>
-      val reader =
-        new BufferedReader(new InputStreamReader(resp.getObjectContent()))
-      val created = localOutputFile.createIfNotExists(false, true)
-      writeUntilEmpty(created, reader)
+    IO { GeoTiffRasterSource(ingestLocation) } map { rs =>
+      rs.tiff.write(localPath)
     }
   }
 
