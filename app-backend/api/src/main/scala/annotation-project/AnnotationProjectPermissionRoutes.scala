@@ -2,13 +2,17 @@ package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.user.Auth0Service
+import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.notification.intercom._
+import com.rasterfoundry.notification.intercom.Model._
 
 import akka.http.scaladsl.server._
 import cats.data.OptionT
 import cats.effect.IO
 import cats.implicits._
+import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
@@ -19,9 +23,29 @@ import java.util.UUID
 trait AnnotationProjectPermissionRoutes
     extends CommonHandlers
     with Directives
-    with Authentication {
+    with Authentication
+    with Config {
 
   val xa: Transactor[IO]
+
+  implicit val sttpBackend = AsyncHttpClientCatsBackend[IO]()
+  private val intercomNotifier = new LiveIntercomNotifier[IO]
+
+  private def shareNotify(
+      user: User,
+      annotationProjectId: UUID
+  ): IO[Either[Throwable, Unit]] =
+    intercomNotifier
+      .notifyUser(
+        intercomToken,
+        intercomAdminId,
+        ExternalId(user.id),
+        Message(s"""
+        | ${user.name} has shared a project with you!
+        | ${groundworkUrlBase}/app/projects/${annotationProjectId}/overview
+        | """.trim.stripMargin)
+      )
+      .attempt
 
   def getDefaultShare(user: User): List[ObjectAccessControlRule] =
     List(
@@ -97,11 +121,22 @@ trait AnnotationProjectPermissionRoutes
             })
           }).transact(xa).unsafeToFuture()
         } {
+          val distinctUserIds = acrList
+            .foldLeft(Set.empty[String])(
+              (accum: Set[String], acr: ObjectAccessControlRule) =>
+                acr.getUserId map { accum | Set(_) } getOrElse accum
+            )
+            .toList
           complete {
-            AnnotationProjectDao
+            (AnnotationProjectDao
               .replacePermissions(projectId, acrList)
-              .transact(xa)
-              .unsafeToFuture
+              .transact(xa) <* (distinctUserIds traverse { userId =>
+              // it's safe to do this unsafely because we know the user exists from
+              // the isValidPermission check
+              UserDao.unsafeGetUserById(userId).transact(xa) flatMap { user =>
+                shareNotify(user, projectId)
+              }
+            })).unsafeToFuture
           }
         }
       }
@@ -135,10 +170,14 @@ trait AnnotationProjectPermissionRoutes
           }).transact(xa).unsafeToFuture()
         } {
           complete {
-            AnnotationProjectDao
+            (AnnotationProjectDao
               .addPermission(projectId, acr)
-              .transact(xa)
-              .unsafeToFuture
+              .transact(xa) <*
+              (acr.getUserId traverse { userId =>
+                UserDao.unsafeGetUserById(userId).transact(xa) flatMap { user =>
+                  shareNotify(user, projectId)
+                }
+              })).unsafeToFuture
           }
         }
       }
@@ -296,10 +335,10 @@ trait AnnotationProjectPermissionRoutes
                     val acrs = getDefaultShare(existingUser)
                     Auth0Service
                       .addGroundworkMetadata(existingUser, managementToken) *>
-                      (acrs traverse { acr =>
+                      ((acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)
-                      }).transact(xa).unsafeToFuture
+                      }).transact(xa) <* shareNotify(existingUser, projectId)).unsafeToFuture
                   } map { _.flatten }
               }
             } yield permissions)

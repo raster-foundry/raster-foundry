@@ -266,12 +266,13 @@ lazy val apiDependencies = Seq(
   Dependencies.shapeless,
   Dependencies.sourceCode,
   Dependencies.spray,
+  Dependencies.sttpCatsBackend,
   Dependencies.typesafeConfig
 )
 
 lazy val api = project
   .in(file("api"))
-  .dependsOn(db, common % "test->test;compile->compile", akkautil)
+  .dependsOn(db, common % "test->test;compile->compile", akkautil, notification)
   .settings(apiSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({

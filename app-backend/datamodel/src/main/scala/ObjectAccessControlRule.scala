@@ -19,6 +19,11 @@ final case class ObjectAccessControlRule(
     case (_, Some(subjectIdString)) =>
       s"${subjectType};${subjectIdString};${actionType}"
   }
+
+  def getUserId: Option[String] = subjectType match {
+    case SubjectType.User => subjectId
+    case _ => None
+  }
 }
 
 object ObjectAccessControlRule {
