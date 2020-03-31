@@ -771,6 +771,9 @@ lazy val notification = Project("notification", file("notification"))
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.apacheCommonsEmail,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.circeCore,
       Dependencies.log4cats,
       Dependencies.log4catsSlf4j,
       Dependencies.newtype,
