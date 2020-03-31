@@ -438,7 +438,6 @@ lazy val batch = project
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.apacheAvro,
-      Dependencies.apacheCommonsEmail,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.betterFiles,
@@ -471,10 +470,7 @@ lazy val batch = project
       Dependencies.guava,
       Dependencies.hadoop,
       Dependencies.hikariCP,
-      Dependencies.log4cats,
-      Dependencies.log4catsSlf4j,
       Dependencies.monocleCore,
-      Dependencies.newtype,
       Dependencies.refined,
       Dependencies.scaffeine,
       Dependencies.scaffeine,
@@ -487,8 +483,6 @@ lazy val batch = project
       Dependencies.spray,
       Dependencies.sttpCatsBackend,
       Dependencies.sttpCore,
-      Dependencies.sttpJson,
-      Dependencies.sttpCirce,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
@@ -775,6 +769,7 @@ lazy val notification = Project("notification", file("notification"))
       Dependencies.catsCore,
       Dependencies.catsEffect,
       Dependencies.circeCore,
+      Dependencies.javaMail,
       Dependencies.log4cats,
       Dependencies.log4catsSlf4j,
       Dependencies.newtype,
