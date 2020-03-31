@@ -429,7 +429,7 @@ lazy val db = project
   */
 lazy val batch = project
   .in(file("batch"))
-  .dependsOn(common, backsplashCore, geotrellis)
+  .dependsOn(common, backsplashCore, geotrellis, notification)
   .settings(sharedSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -758,3 +758,23 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
+
+/** Notification project
+  *
+  * For holding all of our shared code related to letting people know about things
+  */
+lazy val notification = Project("notification", file("notification"))
+  .settings(sharedSettings: _*)
+  .settings(publishSettings)
+  .settings({
+    libraryDependencies ++= Seq(
+      Dependencies.apacheCommonsEmail,
+      Dependencies.log4cats,
+      Dependencies.log4catsSlf4j,
+      Dependencies.newtype,
+      Dependencies.sttpCatsBackend,
+      Dependencies.sttpCore,
+      Dependencies.sttpJson,
+      Dependencies.sttpCirce
+    )
+  })

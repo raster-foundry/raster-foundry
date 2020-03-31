@@ -1,7 +1,6 @@
 package com.rasterfoundry.batch.groundwork
 
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.batch.groundwork.types._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
@@ -11,6 +10,8 @@ import com.rasterfoundry.database.{
   UserDao
 }
 import com.rasterfoundry.datamodel.{AnnotationProjectStatus, Task, TaskStatus}
+import com.rasterfoundry.notification.intercom.{IntercomNotifier, LiveIntercomNotifier}
+import com.rasterfoundry.notification.intercom.Model._
 
 import cats.data.OptionT
 import cats.effect.{IO, LiftIO}
