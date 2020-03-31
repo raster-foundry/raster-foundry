@@ -2,39 +2,92 @@ package com.rasterfoundry.notification.email
 
 import com.rasterfoundry.notification.email.Model._
 
+import cats.effect.Sync
+import cats.implicits._
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.apache.commons.mail.HtmlEmail
 import org.apache.commons.mail._
-
-import java.lang.IllegalArgumentException
-import cats.data.Validated
 
 trait EmailNotifier[F[_]] {
 
   def validateEmailSettings(
       config: EmailConfig,
-      fromUserEmail: String,
-      toUserEmail: String
-  ): Validated[ValidationError, EmailSettings]
+      fromUserEmail: FromEmailAddress,
+      toUserEmail: ToEmailAddress
+  ): Either[String, EmailSettings]
 
+  def buildEmail(
+      settings: EmailSettings,
+      displayName: FromEmailDisplayName,
+      subject: Subject,
+      bodyHtml: HtmlBody,
+      bodyPlain: PlainBody
+  ): F[Email]
 }
 
-class NotificationEmail {
+class LiveEmailNotifier[F[_]: Sync] extends EmailNotifier[F] {
 
-  def isValidEmailSettings(
-      host: String,
-      port: Int,
-      encryption: String,
-      platUserEmail: String,
-      pw: String,
-      userEmail: String
-  ): Boolean =
-    host.length != 0 &&
-      (port == 25 || port == 465 || port == 587 || port == 2525) &&
-      encryption.length != 0 &&
-      (encryption == "ssl" || encryption == "tls" || encryption == "starttls") &&
-      platUserEmail.length != 0 &&
-      pw.length != 0 &&
-      userEmail.length != 0
+  implicit val unsafeLoggerF = Slf4jLogger.getLogger[F]
+
+  def validateEmailSettings(
+      config: EmailConfig,
+      fromUserEmail: FromEmailAddress,
+      toUserEmail: ToEmailAddress
+  ): Either[String, EmailSettings] =
+    if (!config.host.underlying.isEmpty &&
+        Set(25, 465, 587, 2525).contains(config.port.underlying) &&
+        !config.username.underlying.isEmpty &&
+        !config.password.underlying.isEmpty &&
+        !fromUserEmail.underlying.isEmpty &&
+        !toUserEmail.underlying.isEmpty) {
+      Right(EmailSettings(config, fromUserEmail, toUserEmail))
+    } else {
+      Left(
+        "Email settings were insufficient to send email. Check configuration."
+      )
+    }
+
+  def buildEmail(
+      settings: EmailSettings,
+      displayName: FromEmailDisplayName,
+      subject: Subject,
+      bodyHtml: HtmlBody,
+      bodyPlain: PlainBody
+  ): F[Email] = {
+    val email = new HtmlEmail()
+
+    Sync[F]
+      .delay({
+        email.setDebug(true)
+        email.setHostName(settings.config.host.underlying)
+        if (settings.config.encryption == StartTLS) {
+          email.setStartTLSEnabled(true)
+          email.setSmtpPort(settings.config.port.underlying)
+        } else {
+          email.setSSLOnConnect(true)
+          email.setSslSmtpPort(settings.config.port.underlying.toString)
+        }
+        email.setAuthenticator(
+          new DefaultAuthenticator(
+            settings.config.username.underlying,
+            settings.config.password.underlying
+          )
+        )
+        email.setFrom(settings.fromUserEmail.underlying, displayName.underlying)
+        email.setSubject(subject.underlying)
+        email.setHtmlMsg(bodyHtml.underlying)
+        email.setTextMsg(bodyPlain.underlying)
+        email.addTo(settings.toUserEmail.underlying)
+      })
+  }
+
+  def sendEmail(email: Email): F[Unit] =
+    Sync[F].delay {
+      email.send
+    } flatMap { s =>
+      Logger[F].debug(s)
+    }
 
   def insufficientSettingsWarning(platId: String, userId: String): String =
     s"Supplied settings are not sufficient to send an email from Platform: ${platId} to User: ${userId}."
@@ -45,38 +98,4 @@ class NotificationEmail {
   def platformNotSubscribedWarning(platId: String): String =
     s"Platform ${platId} did not subscribe to this notification service."
 
-  def setEmail(
-      conf: EmailConfig,
-      to: String,
-      subject: String,
-      bodyHtml: String,
-      bodyPlain: String,
-      emailFrom: String,
-      emailFromDisplayName: String
-  ): Either[Unit, Email] = {
-
-    val email = new HtmlEmail()
-
-    try {
-      email.setDebug(true)
-      email.setHostName(conf.host)
-      if (conf.encryption == "starttls") {
-        email.setStartTLSEnabled(true)
-        email.setSmtpPort(conf.port);
-      } else {
-        email.setSSLOnConnect(true)
-        email.setSslSmtpPort(conf.port.toString)
-      }
-      email.setAuthenticator(new DefaultAuthenticator(conf.uName, conf.uPw))
-      email.setFrom(emailFrom, emailFromDisplayName)
-      email.setSubject(subject)
-      email.setHtmlMsg(bodyHtml)
-      email.setTextMsg(bodyPlain)
-      email.addTo(to)
-      Right(email)
-    } catch {
-      case e: IllegalArgumentException => Left(sendError(e))
-      case e: EmailException           => Left(sendError(e))
-    }
-  }
 }

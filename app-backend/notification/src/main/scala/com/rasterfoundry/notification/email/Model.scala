@@ -19,17 +19,22 @@ object Model {
   @newtype case class FromEmailAddress(underlying: String)
   @newtype case class ToEmailAddress(underlying: String)
 
+  @newtype case class FromEmailDisplayName(underlying: String)
+  @newtype case class Subject(underlying: String)
+  @newtype case class HtmlBody(underlying: String)
+  @newtype case class PlainBody(underlying: String)
+
   final case class EmailConfig(
       host: EmailHost,
       port: EmailPort,
       encryption: EncryptionScheme,
-      uName: EmailUserName,
-      uPw: EmailPassword
+      username: EmailUserName,
+      password: EmailPassword
   )
 
   final case class EmailSettings(
-    config: EmailConfig,
-    fromUserEmail: FromEmailAddress,
-    toUserEmail: ToEmailAddress
+      config: EmailConfig,
+      fromUserEmail: FromEmailAddress,
+      toUserEmail: ToEmailAddress
   )
 }
