@@ -32,16 +32,17 @@ trait AnnotationProjectPermissionRoutes
   private val intercomNotifier = new LiveIntercomNotifier[IO]
 
   private def shareNotify(
-      user: User,
+      sharedUser: User,
+      sharingUser: User,
       annotationProjectId: UUID
   ): IO[Either[Throwable, Unit]] =
     intercomNotifier
       .notifyUser(
         intercomToken,
         intercomAdminId,
-        ExternalId(user.id),
+        ExternalId(sharedUser.id),
         Message(s"""
-        | ${user.name} has shared a project with you!
+        | ${sharingUser.name} has shared a project with you!
         | ${groundworkUrlBase}/app/projects/${annotationProjectId}/overview
         | """.trim.stripMargin)
       )
@@ -133,8 +134,8 @@ trait AnnotationProjectPermissionRoutes
               .transact(xa) <* (distinctUserIds traverse { userId =>
               // it's safe to do this unsafely because we know the user exists from
               // the isValidPermission check
-              UserDao.unsafeGetUserById(userId).transact(xa) flatMap { user =>
-                shareNotify(user, projectId)
+              UserDao.unsafeGetUserById(userId).transact(xa) flatMap { sharedUser =>
+                shareNotify(sharedUser, user, projectId)
               }
             })).unsafeToFuture
           }
@@ -174,8 +175,8 @@ trait AnnotationProjectPermissionRoutes
               .addPermission(projectId, acr)
               .transact(xa) <*
               (acr.getUserId traverse { userId =>
-                UserDao.unsafeGetUserById(userId).transact(xa) flatMap { user =>
-                  shareNotify(user, projectId)
+                UserDao.unsafeGetUserById(userId).transact(xa) flatMap { sharedUser =>
+                  shareNotify(sharedUser, user, projectId)
                 }
               })).unsafeToFuture
           }
@@ -315,7 +316,7 @@ trait AnnotationProjectPermissionRoutes
                           managementToken
                         )
                     }
-                    user <- (auth0User.user_id traverse { userId =>
+                    newUser <- (auth0User.user_id traverse { userId =>
                       UserDao.create(
                         User.Create(
                           userId,
@@ -324,7 +325,7 @@ trait AnnotationProjectPermissionRoutes
                         )
                       )
                     }).transact(xa).unsafeToFuture
-                    acrs = user map { getDefaultShare(_) } getOrElse Nil
+                    acrs = newUser map { getDefaultShare(_) } getOrElse Nil
                     dbAcrs <- (acrs traverse { acr =>
                       AnnotationProjectDao
                         .addPermission(projectId, acr)
@@ -338,7 +339,7 @@ trait AnnotationProjectPermissionRoutes
                       ((acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)
-                      }).transact(xa) <* shareNotify(existingUser, projectId)).unsafeToFuture
+                      }).transact(xa) <* shareNotify(existingUser, user, projectId)).unsafeToFuture
                   } map { _.flatten }
               }
             } yield permissions)
