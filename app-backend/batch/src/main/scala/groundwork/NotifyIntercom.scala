@@ -1,8 +1,8 @@
 package com.rasterfoundry.batch.groundwork
 
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.notification.intercom._
 import com.rasterfoundry.notification.intercom.Model._
+import com.rasterfoundry.notification.intercom._
 
 import cats.effect.IO
 import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend

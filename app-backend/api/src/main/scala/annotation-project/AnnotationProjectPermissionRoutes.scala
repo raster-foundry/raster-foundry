@@ -5,8 +5,8 @@ import com.rasterfoundry.api.user.Auth0Service
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.notification.intercom._
 import com.rasterfoundry.notification.intercom.Model._
+import com.rasterfoundry.notification.intercom._
 
 import akka.http.scaladsl.server._
 import cats.data.OptionT
@@ -134,8 +134,9 @@ trait AnnotationProjectPermissionRoutes
               .transact(xa) <* (distinctUserIds traverse { userId =>
               // it's safe to do this unsafely because we know the user exists from
               // the isValidPermission check
-              UserDao.unsafeGetUserById(userId).transact(xa) flatMap { sharedUser =>
-                shareNotify(sharedUser, user, projectId)
+              UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
+                sharedUser =>
+                  shareNotify(sharedUser, user, projectId)
               }
             })).unsafeToFuture
           }
@@ -175,8 +176,9 @@ trait AnnotationProjectPermissionRoutes
               .addPermission(projectId, acr)
               .transact(xa) <*
               (acr.getUserId traverse { userId =>
-                UserDao.unsafeGetUserById(userId).transact(xa) flatMap { sharedUser =>
-                  shareNotify(sharedUser, user, projectId)
+                UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
+                  sharedUser =>
+                    shareNotify(sharedUser, user, projectId)
                 }
               })).unsafeToFuture
           }
@@ -339,7 +341,9 @@ trait AnnotationProjectPermissionRoutes
                       ((acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)
-                      }).transact(xa) <* shareNotify(existingUser, user, projectId)).unsafeToFuture
+                      }).transact(xa) <* shareNotify(existingUser,
+                                                     user,
+                                                     projectId)).unsafeToFuture
                   } map { _.flatten }
               }
             } yield permissions)

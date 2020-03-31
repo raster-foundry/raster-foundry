@@ -22,7 +22,7 @@ final case class ObjectAccessControlRule(
 
   def getUserId: Option[String] = subjectType match {
     case SubjectType.User => subjectId
-    case _ => None
+    case _                => None
   }
 }
 

@@ -10,8 +10,11 @@ import com.rasterfoundry.database.{
   UserDao
 }
 import com.rasterfoundry.datamodel.{AnnotationProjectStatus, Task, TaskStatus}
-import com.rasterfoundry.notification.intercom.{IntercomNotifier, LiveIntercomNotifier}
 import com.rasterfoundry.notification.intercom.Model._
+import com.rasterfoundry.notification.intercom.{
+  IntercomNotifier,
+  LiveIntercomNotifier
+}
 
 import cats.data.OptionT
 import cats.effect.{IO, LiftIO}
