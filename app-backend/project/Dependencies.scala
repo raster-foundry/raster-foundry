@@ -51,6 +51,7 @@ object Version {
   val jaegerClient = "1.0.0"
   val jaegerCore = "1.0.0"
   val javaMail = "1.5.6"
+  val javaxXmlBind = "2.2.2"
   val json4s = "3.5.0"
   val jsonSmart = "2.3"
   val jts = "1.16.0"
@@ -175,6 +176,7 @@ object Dependencies {
   val jaegerClient = "io.jaegertracing" % "jaeger-client" % "1.0.0"
   val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
   val javaMail = "com.sun.mail" % "javax.mail" % Version.javaMail
+  val javaxXmlBind = "javax.xml.bind" % "jaxb-api" % Version.javaxXmlBind
   val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
   val log4cats = "io.chrisdavenport" %% "log4cats-core" % Version.log4cats
   val log4catsSlf4j = "io.chrisdavenport" %% "log4cats-slf4j" % Version.log4cats

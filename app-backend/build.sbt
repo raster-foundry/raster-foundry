@@ -258,6 +258,7 @@ lazy val apiDependencies = Seq(
   Dependencies.geotrellisVector,
   Dependencies.guava,
   Dependencies.hikariCP,
+  Dependencies.javaxXmlBind,
   Dependencies.nimbusJose,
   Dependencies.nimbusJoseJwt,
   Dependencies.postgres,
@@ -268,6 +269,7 @@ lazy val apiDependencies = Seq(
   Dependencies.sourceCode,
   Dependencies.spray,
   Dependencies.sttpCatsBackend,
+  Dependencies.sttpCore,
   Dependencies.typesafeConfig
 )
 
@@ -305,7 +307,6 @@ lazy val common = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.apacheCommonsEmail,
       Dependencies.apacheHttpClient,
       Dependencies.apacheHttpCore,
       Dependencies.awsBatchSdk,
@@ -330,7 +331,6 @@ lazy val common = project
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisVector,
       Dependencies.geotrellisVectorTestkit,
-      Dependencies.javaMail,
       Dependencies.logbackClassic % Runtime,
       Dependencies.mamlJvm,
       Dependencies.monocleCore,
