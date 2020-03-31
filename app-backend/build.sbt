@@ -766,6 +766,7 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   * For holding all of our shared code related to letting people know about things
   */
 lazy val notification = Project("notification", file("notification"))
+  .dependsOn(datamodel)
   .settings(sharedSettings: _*)
   .settings(publishSettings)
   .settings({
@@ -777,7 +778,6 @@ lazy val notification = Project("notification", file("notification"))
       Dependencies.log4cats,
       Dependencies.log4catsSlf4j,
       Dependencies.newtype,
-      Dependencies.sttpCatsBackend,
       Dependencies.sttpCore,
       Dependencies.sttpJson,
       Dependencies.sttpCirce
