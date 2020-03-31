@@ -7,6 +7,17 @@ object Model {
   sealed abstract class EncryptionScheme(val repr: String) {
     override def toString: String = repr
   }
+  object EncryptionScheme {
+    def fromStringE(s: String) = s.toLowerCase match {
+      case "ssl"      => Right(SSL)
+      case "tls"      => Right(TLS)
+      case "starttls" => Right(StartTLS)
+      case s =>
+        Left(
+          s"$s is not a valid encryption scheme. Must be in ssl, tls, or starttls"
+        )
+    }
+  }
   case object SSL extends EncryptionScheme("ssl")
   case object TLS extends EncryptionScheme("tls")
   case object StartTLS extends EncryptionScheme("starttls")

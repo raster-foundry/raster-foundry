@@ -24,6 +24,8 @@ trait EmailNotifier[F[_]] {
       bodyHtml: HtmlBody,
       bodyPlain: PlainBody
   ): F[Email]
+
+  def sendEmail(email: Email): F[Unit]
 }
 
 class LiveEmailNotifier[F[_]: Sync] extends EmailNotifier[F] {
@@ -94,8 +96,5 @@ class LiveEmailNotifier[F[_]: Sync] extends EmailNotifier[F] {
 
   def userEmailNotificationDisabledWarning(userId: String): String =
     s"User ${userId} disabled email notifications."
-
-  def platformNotSubscribedWarning(platId: String): String =
-    s"Platform ${platId} did not subscribe to this notification service."
 
 }

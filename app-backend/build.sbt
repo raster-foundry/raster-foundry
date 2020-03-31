@@ -379,7 +379,7 @@ lazy val datamodel = project
   */
 lazy val db = project
   .in(file("db"))
-  .dependsOn(common % "compile->compile;test->test")
+  .dependsOn(common % "compile->compile;test->test", notification)
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
