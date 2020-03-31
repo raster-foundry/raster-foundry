@@ -616,7 +616,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
     for {
-      _ <- info(s"Expiring stuck tasks: ${Instant.now}")
+      _ <- info("Expiring stuck tasks")
       defaultUser <- UserDao.unsafeGetUserById("default")
       stuckTasks <- query
         .filter(

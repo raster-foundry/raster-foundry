@@ -12,6 +12,8 @@ import com.amazonaws.services.s3.model.{
   PutObjectResult
 }
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
+import geotrellis.server.stac.StacItem
 import io.circe._
 import io.circe.syntax._
 
@@ -20,13 +22,19 @@ import java.nio.charset.Charset
 
 case class ObjectWithAbsolute[A](absolutePath: String, item: A)
 
+case class SceneItemWithAbsolute(
+    item: ObjectWithAbsolute[StacItem],
+    ingestLocation: String
+)
+
 object StacFileIO extends LazyLogging with Config {
 
   protected def s3Client = S3()
 
   def writeObjectToFilesystem[A: Encoder](
       tempDir: ScalaFile,
-      stacWithAbsolute: ObjectWithAbsolute[A]): IO[ScalaFile] = IO {
+      stacWithAbsolute: ObjectWithAbsolute[A]
+  ): IO[ScalaFile] = IO {
     val absolutePathURI = new AmazonS3URI(stacWithAbsolute.absolutePath)
     val key = absolutePathURI.getKey
     val localOutputPath = s"${tempDir.path}/$key"
@@ -45,8 +53,26 @@ object StacFileIO extends LazyLogging with Config {
     s3Client.putObject(uri.getBucket, uri.getKey, file.toJava)
   }
 
+  def getObject(
+      tempDir: ScalaFile,
+      stacWithAbsolute: ObjectWithAbsolute[StacItem],
+      ingestLocation: String
+  ): IO[Unit] = {
+    val absolutePathURI = new AmazonS3URI(stacWithAbsolute.absolutePath)
+    val key = absolutePathURI.getKey
+    val tiffKey =
+      (key.split("/").dropRight(1) :+ s"${stacWithAbsolute.item.id}.tiff")
+        .mkString("/")
+    val localPath = s"${tempDir.path}/$tiffKey"
+    logger.debug(s"Fetching $ingestLocation to $localPath")
+    IO { GeoTiffRasterSource(ingestLocation) } map { rs =>
+      rs.tiff.write(localPath)
+    }
+  }
+
   def putObjectToS3[A: Encoder](
-      stacWithAbsolute: ObjectWithAbsolute[A]): IO[PutObjectResult] = IO {
+      stacWithAbsolute: ObjectWithAbsolute[A]
+  ): IO[PutObjectResult] = IO {
     val uri = new AmazonS3URI(stacWithAbsolute.absolutePath)
     val key = uri.getKey
     val dataByte = Printer.noSpaces

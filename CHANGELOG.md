@@ -8,6 +8,8 @@
 
 ### Changed
 
+- STAC exports now include underlying imagery [#5380](https://github.com/raster-foundry/raster-foundry/pull/5380)
+
 ### Deprecated
 
 ### Removed
