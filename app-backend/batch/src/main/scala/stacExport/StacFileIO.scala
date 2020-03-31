@@ -22,6 +22,11 @@ import java.nio.charset.Charset
 
 case class ObjectWithAbsolute[A](absolutePath: String, item: A)
 
+case class SceneItemWithAbsolute(
+  item: ObjectWithAbsolute[StacItem],
+  ingestLocation: String
+)
+
 object StacFileIO extends LazyLogging with Config {
 
   protected def s3Client = S3()

@@ -63,7 +63,7 @@ final case class WriteStacCatalog(exportId: UUID)(
           scene
         ),
         scene.ingestLocation
-      ).tupled
+      ).mapN(SceneItemWithAbsolute.apply _)
 
     }
 
@@ -91,7 +91,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       )
 
     val updatedSceneLinks = sceneCollection.links ++ sceneItems.map {
-      case (itemWithAbsolute, _) =>
+      case SceneItemWithAbsolute(itemWithAbsolute, _) =>
         StacLink(
           s"./${itemWithAbsolute.item.id}.json",
           Item,
@@ -113,7 +113,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         catalog,
         sceneTaskAnnotation,
         labelCollection,
-        sceneItems map { _._1 },
+        sceneItems map { _.item },
         s"$layerCollectionPrefix/${labelCollection.id}",
         labelRootURI
       )
@@ -136,7 +136,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         labelCollectionWithPath
       )
       localSceneItemResults <- sceneItems.parTraverse {
-        case (item, ingestLocation) => {
+        case SceneItemWithAbsolute(item, ingestLocation) => {
           StacFileIO.writeObjectToFilesystem(tempDir, item) <*
             StacFileIO.getObject(tempDir, item, ingestLocation)
         }

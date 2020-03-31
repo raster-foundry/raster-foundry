@@ -458,6 +458,7 @@ lazy val batch = project
       Dependencies.fs2,
       Dependencies.fs2,
       Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisContribVLM,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisS3,
