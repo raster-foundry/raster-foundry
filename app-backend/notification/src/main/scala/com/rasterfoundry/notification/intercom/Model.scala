@@ -3,6 +3,7 @@ package com.rasterfoundry.notification.intercom
 import io.circe.{Decoder, Encoder}
 import io.estatico.newtype.macros.newtype
 
+@SuppressWarnings(Array("AsInstanceOf"))
 object Model {
 
   @newtype case class ExternalId(underlying: String)

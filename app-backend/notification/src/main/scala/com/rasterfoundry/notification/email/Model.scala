@@ -2,6 +2,7 @@ package com.rasterfoundry.notification.email
 
 import io.estatico.newtype.macros.newtype
 
+@SuppressWarnings(Array("AsInstanceOf"))
 object Model {
 
   sealed abstract class EncryptionScheme(val repr: String) {
