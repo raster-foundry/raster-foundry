@@ -210,7 +210,8 @@ lazy val root = project
     batch,
     backsplashCore,
     backsplashServer,
-    backsplashExport
+    backsplashExport,
+    notification
   )
 
 lazy val loggingDependencies = Seq(
