@@ -112,6 +112,7 @@ trait CirceJsonbMeta {
     : Meta[List[AnnotationLabelClassGroup.WithLabelClasses]] =
     CirceJsonbMeta[List[AnnotationLabelClassGroup.WithLabelClasses]]
 
-  implicit val annotationProjectTaskStatusSummaryMeta: Meta[Map[String, Int]] =
-    CirceJsonbMeta[Map[String, Int]]
+  implicit val annotationProjectTaskStatusSummaryMeta
+    : Meta[Option[Map[String, Int]]] =
+    CirceJsonbMeta[Option[Map[String, Int]]]
 }

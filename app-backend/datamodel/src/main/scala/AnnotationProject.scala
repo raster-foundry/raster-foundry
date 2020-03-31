@@ -20,7 +20,7 @@ final case class AnnotationProject(
     validatorsTeamId: Option[UUID],
     projectId: Option[UUID],
     status: AnnotationProjectStatus,
-    taskStatusSummary: Map[String, Int]
+    taskStatusSummary: Option[Map[String, Int]] = None
 ) {
   def withRelated(
       tileLayers: List[TileLayer],
@@ -81,7 +81,7 @@ object AnnotationProject {
       status: AnnotationProjectStatus,
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
-      taskStatusSummary: Map[String, Int]
+      taskStatusSummary: Option[Map[String, Int]] = None
   ) {
     def toProject = AnnotationProject(
       id,
@@ -163,7 +163,7 @@ object AnnotationProject {
       status: AnnotationProjectStatus,
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
-      taskStatusSummary: Map[String, Int],
+      taskStatusSummary: Option[Map[String, Int]] = None,
       labelClassSummary: List[LabelClassGroupSummary]
   )
 

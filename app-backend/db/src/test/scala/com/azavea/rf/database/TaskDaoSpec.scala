@@ -126,9 +126,13 @@ class TaskDaoSpec
             val (featureCollection, fetched, annotationProject) =
               connIO.transact(xa).unsafeRunSync
 
+            val projectTaskSummaryCount = annotationProject.taskStatusSummary flatMap {
+              summary =>
+                Some(summary.valuesIterator.foldLeft(0)(_ + _))
+            }
+
             assert(
-              annotationProject.taskStatusSummary.valuesIterator
-                .foldLeft(0)(_ + _) == featureCollection.features.size,
+              projectTaskSummaryCount == Some(featureCollection.features.size),
               "Task insert operation should update task status summary in annotation project"
             )
 
@@ -355,34 +359,37 @@ class TaskDaoSpec
 
             updateResult.get.properties.actions.length should be(1)
 
+            val unlabeledCountAfterUpdate = annoProjAfterUpd.taskStatusSummary
+              .flatMap(_.get(TaskStatus.Unlabeled.toString))
+            val labeledCountAfterUpdate = annoProjAfterUpd.taskStatusSummary
+              .flatMap(_.get(TaskStatus.Labeled.toString))
+            val unlabeledCountAfterDelete = annoProjAfterDel.taskStatusSummary
+              .flatMap(_.get(TaskStatus.Unlabeled.toString))
+            val labeledCountAfterDelete = annoProjAfterDel.taskStatusSummary
+              .flatMap(_.get(TaskStatus.Labeled.toString))
+            val taskCountAfterDropAll = annoProjAfterDropAll.taskStatusSummary flatMap {
+              summary =>
+                Some(summary.valuesIterator.foldLeft(0)(_ + _))
+            }
+
             assert(
-              annoProjAfterUpd.taskStatusSummary
-                .get(TaskStatus.Unlabeled.toString) == Some(
-                taskOriginalCount - 1
-              ),
+              unlabeledCountAfterUpdate == Some(taskOriginalCount - 1),
               "For unlabeled, task update should update task status summary in annotation project"
             )
             assert(
-              annoProjAfterUpd.taskStatusSummary
-                .get(TaskStatus.Labeled.toString) == Some(1),
+              labeledCountAfterUpdate == Some(1),
               "For labeled, task update should update task status summary in annotation project"
             )
             assert(
-              annoProjAfterDel.taskStatusSummary
-                .get(TaskStatus.Unlabeled.toString) == Some(
-                taskOriginalCount - 1
-              ),
+              unlabeledCountAfterDelete == Some(taskOriginalCount - 1),
               "For unlabeled, task delete should update task status summary in annotation project"
             )
             assert(
-              annoProjAfterDel.taskStatusSummary
-                .get(TaskStatus.Labeled.toString) == Some(0),
+              labeledCountAfterDelete == Some(0),
               "For labeled, task delete should update task status summary in annotation project"
             )
-
             assert(
-              annoProjAfterDropAll.taskStatusSummary.valuesIterator
-                .foldLeft(0)(_ + _) == 0,
+              taskCountAfterDropAll == Some(0),
               "Task delete all should update task status summary in annotation project"
             )
             deleteResult should be(1)
