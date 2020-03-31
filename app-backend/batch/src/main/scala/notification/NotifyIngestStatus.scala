@@ -12,8 +12,8 @@ import com.rasterfoundry.database.{
   ProjectLayerDao,
   SceneDao
 }
-import com.rasterfoundry.notification.email.Model._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.notification.email.Model._
 
 import cats.effect.IO
 import cats.implicits._

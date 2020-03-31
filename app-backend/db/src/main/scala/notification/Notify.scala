@@ -4,8 +4,8 @@ import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.notification.templates._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.notification.email._
 import com.rasterfoundry.notification.email.Model._
+import com.rasterfoundry.notification.email._
 
 import cats.effect.{IO, LiftIO}
 import cats.implicits._
@@ -102,7 +102,7 @@ object Notify extends RollbarNotifier {
                 emailData.richBody,
                 emailData.plainBody
               ).attempt
-            }
+          }
         )
     } yield { () }
   }

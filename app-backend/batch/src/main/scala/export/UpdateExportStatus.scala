@@ -20,7 +20,9 @@ import java.util.UUID
 final case class UpdateExportStatus(
     exportId: UUID,
     exportStatus: ExportStatus
-)(implicit xa: Transactor[IO]) extends Config with RollbarNotifier {
+)(implicit xa: Transactor[IO])
+    extends Config
+    with RollbarNotifier {
 
   val name = UpdateExportStatus.name
 
@@ -88,7 +90,9 @@ final case class UpdateExportStatus(
             )
           }
         case _ =>
-          logger.warn(s"No project or analysis found for export ${exportId}").pure[ConnectionIO]
+          logger
+            .warn(s"No project or analysis found for export ${exportId}")
+            .pure[ConnectionIO]
       }
     } yield ()).transact(xa)
   }
