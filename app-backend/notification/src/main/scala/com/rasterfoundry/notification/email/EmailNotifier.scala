@@ -90,11 +90,4 @@ class LiveEmailNotifier[F[_]: Sync] extends EmailNotifier[F] {
     } flatMap { s =>
       Logger[F].debug(s)
     }
-
-  def insufficientSettingsWarning(platId: String, userId: String): String =
-    s"Supplied settings are not sufficient to send an email from Platform: ${platId} to User: ${userId}."
-
-  def userEmailNotificationDisabledWarning(userId: String): String =
-    s"User ${userId} disabled email notifications."
-
 }
