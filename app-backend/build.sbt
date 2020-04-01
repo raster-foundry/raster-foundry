@@ -245,6 +245,7 @@ lazy val apiDependencies = Seq(
   Dependencies.catsCore,
   Dependencies.catsEffect,
   Dependencies.catsFree,
+  Dependencies.catsKernel,
   Dependencies.circeCore,
   Dependencies.circeGeneric,
   Dependencies.circeParser,
