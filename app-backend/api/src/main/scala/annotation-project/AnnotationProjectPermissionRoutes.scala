@@ -35,18 +35,27 @@ trait AnnotationProjectPermissionRoutes
       sharedUser: User,
       sharingUser: User,
       annotationProjectId: UUID
-  ): IO[Either[Throwable, Unit]] =
+  ): IO[Either[Throwable, Unit]] = {
+    val sharer = if (sharingUser.email != "") {
+      sharingUser.email
+    } else if (sharingUser.personalInfo.email != "") {
+      sharingUser.personalInfo.email
+    } else {
+      sharingUser.name
+    }
+
     intercomNotifier
       .notifyUser(
         intercomToken,
         intercomAdminId,
         ExternalId(sharedUser.id),
         Message(s"""
-        | ${sharingUser.name} has shared a project with you!
+        | ${sharer} has shared a project with you!
         | ${groundworkUrlBase}/app/projects/${annotationProjectId}/overview
         | """.trim.stripMargin)
       )
       .attempt
+  }
 
   def getDefaultShare(user: User): List[ObjectAccessControlRule] =
     List(
