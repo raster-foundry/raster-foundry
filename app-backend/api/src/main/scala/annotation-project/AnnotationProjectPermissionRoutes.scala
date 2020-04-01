@@ -172,10 +172,8 @@ trait AnnotationProjectPermissionRoutes
           }).transact(xa).unsafeToFuture()
         } {
           val distinctUserIds = acrList
-            .foldLeft(Set.empty[String])(
-              (accum: Set[String], acr: ObjectAccessControlRule) =>
-                acr.getUserId map { accum | Set(_) } getOrElse accum
-            )
+            .foldMap(acr => acr.getUserId map { Set(_) })
+            .getOrElse(Set.empty)
             .toList
           complete {
             (AnnotationProjectDao
