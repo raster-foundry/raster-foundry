@@ -63,6 +63,8 @@ services:
       - BACKSPLASH_ENABLE_MULTITIFF=false
       - AWS_DEFAULT_PROFILE=raster-foundry
       - GROUNDWORK_URL_BASE=http://localhost:3000/
+      - INTERCOM_ADMIN_ID=bogus
+      - INTERCOM_TOKEN=bogus
     expose:
       - 9000
     volumes:
