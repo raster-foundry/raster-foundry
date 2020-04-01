@@ -1,7 +1,7 @@
 package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.api.user.PasswordResetTicket
-import com.rasterfoundry.datamodel.{AnnotationProject, User}
+import com.rasterfoundry.datamodel.AnnotationProject
 import com.rasterfoundry.notification.email.Model._
 
 object Notifications {

@@ -81,7 +81,7 @@ trait AnnotationProjectPermissionRoutes
         }
       }
       (messageRich, messagePlain) = Notifications.getInvitationMessage(
-        sharingUser,
+        getSharer(sharingUser),
         annotationProject,
         ticket
       )
