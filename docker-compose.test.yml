@@ -62,6 +62,7 @@ services:
       - COURSIER_CACHE=/root/.coursier
       - BACKSPLASH_ENABLE_MULTITIFF=false
       - AWS_DEFAULT_PROFILE=raster-foundry
+      - GROUNDWORK_URL_BASE=http://localhost:3000/
     expose:
       - 9000
     volumes:
