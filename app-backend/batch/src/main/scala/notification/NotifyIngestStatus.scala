@@ -175,18 +175,6 @@ final case class NotifyIngestStatus(sceneId: UUID)(
   ): IO[Unit] =
     (platformsWithConsumers traverse { pU =>
       (pU.getUserEmail, pU.pubSettings.emailIngestNotification) match {
-        case ("", true) =>
-          IO {
-            logger.warn(
-              s"User ${pU.uId} disabled email notifications."
-            )
-          }
-        case ("", false) =>
-          IO {
-            logger.warn(
-              s"platform ${pU.platId} has not enabled email notifications"
-            )
-          }
         case (userEmailAddress, true) =>
           val (ingestEmailSubject, htmlBody, plainBody) =
             createIngestEmailContentForConsumers(pU, scene, ingestStatus)
