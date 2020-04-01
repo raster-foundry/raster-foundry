@@ -51,6 +51,9 @@ final case class UserWithOAuth(
     oauth: Auth0User
 )
 
+@JsonCodec
+final case class PasswordResetTicket(ticket: String)
+
 object UserWithOAuth {
   implicit val encodeUser: Encoder[User] = Encoder.forProduct8(
     "id",
@@ -72,7 +75,7 @@ object UserWithOAuth {
         u.visibility,
         u.dropboxCredential,
         u.planetCredential
-    )
+      )
   )
 }
 @JsonCodec
@@ -94,6 +97,9 @@ object Auth0Service extends Config with LazyLogging {
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
   val userUri = Uri(s"https://$auth0Domain/api/v2/users")
+  val passwordChangeUri = Uri(
+    s"https://$auth0Domain/api/v2/tickets/password-change"
+  )
 
   val authBearerTokenCache: AsyncLoadingCache[Int, ManagementBearerToken] =
     Scaffeine()
@@ -316,5 +322,41 @@ object Auth0Service extends Config with LazyLogging {
         )
       )
       .flatMap { responseAsAuth0User _ }
+  }
+
+  def createPasswordChangeTicket(
+      bearerToken: ManagementBearerToken,
+      resultUrl: String,
+      userId: String,
+      ttlSeconds: Int = 432000,
+      markEmailAsVerified: Boolean = true
+  ): Future[PasswordResetTicket] = {
+    val post = Map(
+      "result_url" -> resultUrl.asJson,
+      "user_id" -> userId.asJson,
+      "ttl_sec" -> ttlSeconds.asJson,
+      "mark_email_as_verified" -> markEmailAsVerified.asJson
+    ).asJson
+
+    val managementBearerHeaders = getBearerHeaders(bearerToken)
+
+    Http()
+      .singleRequest(
+        HttpRequest(
+          method = POST,
+          uri = s"$passwordChangeUri",
+          headers = managementBearerHeaders,
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            post.noSpaces
+          )
+        )
+      ) flatMap {
+      case HttpResponse(StatusCodes.Created, _, entity, _) =>
+        Unmarshal(entity).to[PasswordResetTicket]
+      case HttpResponse(_, _, entity, _) =>
+        logger.error(s"Error entity from Auth0 is: $entity")
+        throw new Exception("Unable to create a password change ticket")
+    }
   }
 }
