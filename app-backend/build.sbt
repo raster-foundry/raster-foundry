@@ -258,7 +258,6 @@ lazy val apiDependencies = Seq(
   Dependencies.geotrellisVector,
   Dependencies.guava,
   Dependencies.hikariCP,
-  Dependencies.javaxXmlBind,
   Dependencies.nimbusJose,
   Dependencies.nimbusJoseJwt,
   Dependencies.postgres,
