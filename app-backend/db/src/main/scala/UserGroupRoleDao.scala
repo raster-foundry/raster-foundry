@@ -411,7 +411,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       inserted <- systemUserO traverse { systemUser =>
         List(orgUgrCreate, platUgrCreate) traverse { ugr =>
           create(ugr.toUserGroupRole(systemUser, MembershipStatus.Approved))
-          }
+        }
       }
     } yield (inserted getOrElse Nil)
   }

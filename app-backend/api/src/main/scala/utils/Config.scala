@@ -25,7 +25,8 @@ trait Config {
   val auth0ClientId = auth0Config.getString("clientId")
   val auth0ManagementClientId = auth0Config.getString("managementClientId")
   val auth0ManagementSecret = auth0Config.getString("managementSecret")
-  val auth0GroundworkConnectionName = auth0Config.getString("groundworkConnectionName")
+  val auth0GroundworkConnectionName =
+    auth0Config.getString("groundworkConnectionName")
 
   val clientEnvironment = clientConfig.getString("clientEnvironment")
 
