@@ -69,7 +69,7 @@ trait AnnotationProjectPermissionRoutes
       annotationProject: AnnotationProject
   ): Future[Unit] = {
     val subject =
-      s"""You've been invited to join the "${annotationProject.name}" on GroundWork!"""
+      s"""You've been invited to join the "${annotationProject.name}" project on GroundWork!"""
     (for {
       ticket <- IO.fromFuture {
         IO {
