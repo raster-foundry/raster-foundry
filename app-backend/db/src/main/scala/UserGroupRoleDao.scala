@@ -392,4 +392,27 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       fr"group_id = ${groupId}"
     )).update.run
   }
+
+  def createDefaultRoles(user: User): ConnectionIO[List[UserGroupRole]] = {
+    val orgUgrCreate = UserGroupRole.Create(
+      user.id,
+      GroupType.Organization,
+      Config.auth0Config.defaultOrganizationId,
+      GroupRole.Member
+    )
+    val platUgrCreate = UserGroupRole.Create(
+      user.id,
+      GroupType.Platform,
+      Config.auth0Config.defaultPlatformId,
+      GroupRole.Member
+    )
+    for {
+      systemUserO <- UserDao.getUserById(Config.auth0Config.systemUser)
+      inserted <- systemUserO traverse { systemUser =>
+        List(orgUgrCreate, platUgrCreate) traverse { ugr =>
+          create(ugr.toUserGroupRole(systemUser, MembershipStatus.Approved))
+          }
+      }
+    } yield (inserted getOrElse Nil)
+  }
 }

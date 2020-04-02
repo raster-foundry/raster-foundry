@@ -300,7 +300,7 @@ object Auth0Service extends Config with LazyLogging {
       bearerToken: ManagementBearerToken
   ): Future[Auth0User] = {
     val post = Map(
-      "connection" -> "Username-Password-Authentication".asJson,
+      "connection" -> auth0GroundworkConnectionName.asJson,
       "email" -> email.asJson,
       "password" -> Random.alphanumeric.take(20).mkString("").asJson,
       "app_metadata" -> Map("annotateApp" -> true).asJson

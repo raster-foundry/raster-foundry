@@ -374,13 +374,16 @@ trait AnnotationProjectPermissionRoutes
                         )
                     }
                     newUser <- (auth0User.user_id traverse { userId =>
-                      UserDao.create(
-                        User.Create(
-                          userId,
-                          email = userByEmail.email,
-                          scope = Scopes.GroundworkUser
+                      for {
+                        user <- UserDao.create(
+                          User.Create(
+                            userId,
+                            email = userByEmail.email,
+                            scope = Scopes.GroundworkUser
+                          )
                         )
-                      )
+                        _ <- UserGroupRoleDao.createDefaultRoles(user)
+                      } yield user
                     }).transact(xa).unsafeToFuture
                     acrs = newUser map { getDefaultShare(_) } getOrElse Nil
                     _ <- (newUser, annotationProjectO).tupled traverse {
