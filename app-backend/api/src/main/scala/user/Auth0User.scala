@@ -303,7 +303,7 @@ object Auth0Service extends Config with LazyLogging {
       "connection" -> "Username-Password-Authentication".asJson,
       "email" -> email.asJson,
       "password" -> Random.alphanumeric.take(20).mkString("").asJson,
-      "username" -> email.takeWhile(_ != '@').take(15).asJson,
+      "username" -> email.takeWhile(c => c != '@' && c != '+').take(15).asJson,
       "app_metadata" -> Map("annotateApp" -> true).asJson
     ).asJson
 
