@@ -2,9 +2,10 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
+import com.rasterfoundry.datamodel.Task.TaskPropertiesCreate
 import com.rasterfoundry.datamodel._
 
-import cats.data.OptionT
+import cats.data.{NonEmptyList, OptionT}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -12,10 +13,12 @@ import doobie.postgres.implicits._
 import geotrellis.vector.{Geometry, Projected}
 import shapeless._
 
+import scala.concurrent.duration._
+
 import java.time.Instant
 import java.util.UUID
 
-object TaskDao extends Dao[Task] {
+object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   override val fieldNames = List(
     "id",
@@ -44,7 +47,7 @@ object TaskDao extends Dao[Task] {
   val cols =
     fr"""
      SELECT
-      distinct(id),
+      id,
       created_at,
       created_by,
       modified_at,
@@ -558,13 +561,20 @@ object TaskDao extends Dao[Task] {
 
   def countProjectTaskByStatus(
       projectId: UUID
-  ): ConnectionIO[Map[TaskStatus, Int]] = {
-    (fr"""
+  ): ConnectionIO[Map[TaskStatus, Int]] = (fr"""
     SELECT status, COUNT(id)
     FROM tasks
     WHERE annotation_project_id = ${projectId}
     GROUP BY status;
-    """).query[(TaskStatus, Int)].to[List].map(_.toMap)
+    """).query[(TaskStatus, Int)].to[List].map { list =>
+    val statusMap = list.toMap
+    List(
+      TaskStatus.Unlabeled,
+      TaskStatus.LabelingInProgress,
+      TaskStatus.Labeled,
+      TaskStatus.ValidationInProgress,
+      TaskStatus.Validated
+    ).fproduct(status => statusMap.getOrElse(status, 0)).toMap
   }
 
   def listTasksByStatus(
@@ -590,5 +600,66 @@ object TaskDao extends Dao[Task] {
            FROM """ ++ tableF ++ fr"""
            WHERE annotation_project_id = ${fromProject}
       """).update.run
+  }
+
+  def getMostRecentStatus(task: Task): ConnectionIO[TaskStatus] =
+    getTaskActions(task.id) map { actions =>
+      actions.toNel map { actions =>
+        actions.tail.foldLeft(actions.head)(
+          (action1: TaskActionStamp, action2: TaskActionStamp) => {
+            if (action1.timestamp.isAfter(action2.timestamp)) action1
+            else action2
+          }
+        )
+      } map { _.fromStatus } getOrElse { TaskStatus.Unlabeled }
+    }
+
+  def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
+    for {
+      _ <- info("Expiring stuck tasks")
+      defaultUser <- UserDao.unsafeGetUserById("default")
+      stuckTasks <- query
+        .filter(
+          taskStatusF(
+            List(
+              TaskStatus.ValidationInProgress.repr,
+              TaskStatus.LabelingInProgress.repr
+            )
+          )
+        )
+        .filter(
+          fr"locked_on <= ${Instant.now.minusMillis(taskExpiration.toMillis)}"
+        )
+        .list
+      _ <- stuckTasks traverse { task =>
+        getMostRecentStatus(task) flatMap { status =>
+          val update =
+            Task.TaskFeatureCreate(
+              TaskPropertiesCreate(
+                status,
+                task.annotationProjectId
+              ),
+              task.geometry
+            )
+          updateTask(task.id, update, defaultUser)
+        }
+      }
+    } yield stuckTasks.length
+
+  def randomTask(
+      queryParams: TaskQueryParameters,
+      annotationProjectIds: NonEmptyList[UUID]
+  ): ConnectionIO[Option[Task.TaskFeature]] = {
+    val builder = query
+      .filter(queryParams)
+      .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
+
+    (selectF ++ Fragments.whereAndOpt(builder.filters: _*) ++ fr"ORDER BY RANDOM() LIMIT 1")
+      .query[Task]
+      .to[List] flatMap { tasks =>
+      tasks.toNel traverse { tasks =>
+        getTaskWithActions(tasks.head.id)
+      }
+    } map { _.flatten }
   }
 }

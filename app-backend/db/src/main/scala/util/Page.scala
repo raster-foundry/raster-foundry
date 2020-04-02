@@ -35,11 +35,27 @@ object Page {
   }
 
   /** Turn a page request into the appropriate SQL fragment */
-  @SuppressWarnings((Array("TraversableHead")))
-  def apply(pageRequest: PageRequest,
-            defaultOrderBy: Fragment = fr"id ASC"): Fragment = {
+  def apply(
+      pageRequest: PageRequest,
+      defaultOrderBy: Fragment = fr"id ASC"
+  ): Fragment = {
     val offset: Int = pageRequest.offset * pageRequest.limit
     val limit: Int = pageRequest.limit
+
+    val orderBy: Fragment = createOrderClause(pageRequest, defaultOrderBy)
+    orderBy ++ fr"LIMIT $limit OFFSET $offset"
+  }
+
+  def apply(pageRequest: Option[PageRequest]): Fragment = pageRequest match {
+    case Some(pr) => apply(pr)
+    case None     => fr""
+  }
+
+  @SuppressWarnings((Array("TraversableHead")))
+  def createOrderClause(
+      pageRequest: PageRequest,
+      defaultOrderBy: Fragment = fr"id ASC"
+  ): Fragment = {
     // Choose a default sort corresponding to the sort order in the first value in the
     // pageRequest -- if there's a combined id + that column index, they need to be sorted
     // the same for postgres to choose to use the index
@@ -52,34 +68,26 @@ object Page {
         }
       }
     }
-    val orderBy =
-      pageRequest.sort.toList
-        .map({
-          case (sortExpr, ord) =>
-            val parsedExpr = sortExprConvertor(sortExpr)
-            (parsedExpr, ord) match {
-              case (Some(expr), Order.Asc) => {
-                Fragment.const(s"$expr ASC")
-              }
-              case (Some(expr), Order.Desc) => {
-                Fragment.const(s"$expr DESC")
-              }
-              case (_, _) => Fragment.empty
+    pageRequest.sort.toList
+      .map({
+        case (sortExpr, ord) =>
+          val parsedExpr = sortExprConvertor(sortExpr)
+          (parsedExpr, ord) match {
+            case (Some(expr), Order.Asc) => {
+              Fragment.const(s"$expr ASC")
             }
-        })
-        // If we don't filter out empty fragments, we'll intercalate commas with spaces
-        .filter(_ != Fragment.empty)
-        .toNel match {
-        case Some(orderStrings) =>
-          fr"ORDER BY" ++ (orderStrings ++ List(defaultSort)).intercalate(fr",")
-        case None => Fragment.empty
-      }
-
-    orderBy ++ fr"LIMIT $limit OFFSET $offset"
-  }
-
-  def apply(pageRequest: Option[PageRequest]): Fragment = pageRequest match {
-    case Some(pr) => apply(pr)
-    case None     => fr""
+            case (Some(expr), Order.Desc) => {
+              Fragment.const(s"$expr DESC")
+            }
+            case (_, _) => Fragment.empty
+          }
+      })
+      // If we don't filter out empty fragments, we'll intercalate commas with spaces
+      .filter(_ != Fragment.empty)
+      .toNel match {
+      case Some(orderStrings) =>
+        fr"ORDER BY" ++ (orderStrings ++ List(defaultSort)).intercalate(fr",")
+      case None => Fragment.empty
+    }
   }
 }

@@ -104,4 +104,15 @@ trait CirceJsonbMeta {
     CirceJsonbMeta[StacExportLicense]
 
   implicit val scopesMeta: Meta[Scope] = CirceJsonbMeta[Scope]
+
+  implicit val annotationProjectTilesMeta: Meta[List[TileLayer]] =
+    CirceJsonbMeta[List[TileLayer]]
+
+  implicit val annotationProjectLabelGroupsMeta
+    : Meta[List[AnnotationLabelClassGroup.WithLabelClasses]] =
+    CirceJsonbMeta[List[AnnotationLabelClassGroup.WithLabelClasses]]
+
+  implicit val annotationProjectTaskStatusSummaryMeta
+    : Meta[Option[Map[String, Int]]] =
+    CirceJsonbMeta[Option[Map[String, Int]]]
 }

@@ -202,3 +202,4 @@ Path,Domain:Action,Verb
 /api/users/me/limits,users:readSelf,get
 /api/users/me/roles,users:readSelf,get
 /api/users/search/,users:search,get
+/api/tasks/random,annotationProjects:readTasks,get

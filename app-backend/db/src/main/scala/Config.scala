@@ -23,4 +23,10 @@ object Config {
     private val tmsConfig = config.getConfig("sceneSearch")
     val bufferPercentage = tmsConfig.getDouble("bufferPercentage")
   }
+
+  object statusReapingConfig {
+    private val statusReapingConfig = config.getConfig("statusReaping")
+    val taskStatusExpirationSeconds =
+      statusReapingConfig.getInt("taskStatusExpirationSeconds")
+  }
 }

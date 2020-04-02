@@ -9,7 +9,7 @@ import geotrellis.vector.reproject.Reproject
 import io.circe._
 import io.circe.syntax._
 
-import java.net.{URI, URLDecoder}
+import java.net.URI
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
@@ -233,11 +233,11 @@ object Utils {
           .asJson
       )
     )
-    val sceneAssetOption = scene.ingestLocation map { ingestLocation =>
+    val sceneAssetOption = scene.ingestLocation map { _ =>
       Map(
         scene.id.toString ->
           StacAsset(
-            URLDecoder.decode(ingestLocation, "utf-8"),
+            s"./${scene.id}.tiff",
             Some("scene"),
             Some(`image/cog`)
           )

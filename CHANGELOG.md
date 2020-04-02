@@ -14,6 +14,27 @@
 
 ### Security
 
+## [1.39.0](https://github.com/raster-foundry/raster-foundry/compare/1.38.1...1.39.0)
+
+### Added
+
+- Added a random task endpoint to get a random task meeting some task query parameters in an annotation project satisfying some annotation project query parameters [#5378](https://github.com/raster-foundry/raster-foundry/pull/5378)
+- Add task status filter to annotation projects [#5373](https://github.com/raster-foundry/raster-foundry/pull/5373) [#5379](https://github.com/raster-foundry/raster-foundry/pull/5379) [#5382](https://github.com/raster-foundry/raster-foundry/pull/5382)
+
+### Changed
+
+- STAC exports now include underlying imagery [#5380](https://github.com/raster-foundry/raster-foundry/pull/5380)
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Automatically reset tasks to their previous state if they're stuck in progress for a configurable length of time [#5367](https://github.com/raster-foundry/raster-foundry/pull/5367)
+
+### Security
+
 ## [1.38.1](https://github.com/raster-foundry/raster-foundry/compare/1.38.0...1.38.1)
 
 ### Fixed
@@ -30,7 +51,6 @@
 
 - TMS polygons are buffered when querying for scenes to put a band aid on errors in footprint calculation in upload processing [#5374](https://github.com/raster-foundry/raster-foundry/pull/5374)
 
-
 ## [1.37.0](https://github.com/raster-foundry/raster-foundry/compare/1.36.0...1.37.0)
 
 ### Added
@@ -40,7 +60,8 @@
 ## [1.36.0](https://github.com/raster-foundry/raster-foundry/compare/1.35.0...1.36.0)
 
 ### Fixed
- - Fixed an issues with upload deserialization [#5356](https://github.com/raster-foundry/raster-foundry/pull/5356)
+
+- Fixed an issues with upload deserialization [#5356](https://github.com/raster-foundry/raster-foundry/pull/5356)
 
 ## [1.35.0](https://github.com/raster-foundry/raster-foundry/compare/1.34.1...1.35.0)
 
@@ -57,7 +78,7 @@
 - Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
 - Added a migration to add annotation project id to tasks [#5296](https://github.com/raster-foundry/raster-foundry/pull/5296)
 - Added annotation project related data models, `Dao` methods, endpoints, and tests [#5301](https://github.com/raster-foundry/raster-foundry/pull/5301), [#5303](https://github.com/raster-foundry/raster-foundry/pull/5303), [#5308](https://github.com/raster-foundry/raster-foundry/pull/5308), [#5318](https://github.com/raster-foundry/raster-foundry/pull/5318)
-- Add /user/me/limits endpoint for listing how many projects, shared, and how much upload space a user is using  [#5320](https://github.com/raster-foundry/raster-foundry/pull/5320)
+- Add /user/me/limits endpoint for listing how many projects, shared, and how much upload space a user is using [#5320](https://github.com/raster-foundry/raster-foundry/pull/5320)
 
 ### Changed
 
@@ -72,6 +93,7 @@
 - Change the `ready` boolean field to a `status` enum field for better descriptions of processing failures [#5350](https://github.com/raster-foundry/raster-foundry/pull/5350)
 
 ### Fixed
+
 - Upgrade pyproj to make app-tasks python3.7 compatible [#5352](https://github.com/raster-foundry/raster-foundry/pull/5352)
 - Upload updates now respect all fields [#5330](https://github.com/raster-foundry/raster-foundry/pull/5330)
 - Removed unused route and fixed spelling in Swagger spec [#5273](https://github.com/raster-foundry/raster-foundry/pull/5273)
@@ -86,17 +108,21 @@
 ## [1.34.0](https://github.com/raster-foundry/raster-foundry/compare/1.33.0...1.34.0)
 
 ### Added
+
 - Support semantic segmentation stac exports [\#5253](https://github.com/raster-foundry/raster-foundry/pull/5253)
 - Added default clipping of non-byte rasters to middle 96 percent of values assuming a normal distribution [\#5264](https://github.com/raster-foundry/raster-foundry/pull/5264)
 
 ### Fixed
+
 - Unified file extension for label item assets and label item asset links [#5252](https://github.com/raster-foundry/raster-foundry/pull/5252)
 - Added index to annotations `task_id` column to make deleting tasks way faster [#5255](https://github.com/raster-foundry/raster-foundry/pull/5255)
 - Explicitly handled case where aggregation of tasks doesn't return geometry statistics in STAC export [#5256](https://github.com/raster-foundry/raster-foundry/pull/5256)
 - Fixed upload processing bug that caused all scenes with simple footprints to fail upload processing [#5268](https://github.com/raster-foundry/raster-foundry/pull/5268)
 
 ## [1.33.0](https://github.com/raster-foundry/raster-foundry/compare/1.32.1...1.33.0)
+
 ### Removed
+
 - CMR and Shapefile support [\#5247](https://github.com/raster-foundry/raster-foundry/pull/5247)
 - Complex color correction (saturation, per-band clipping, contrast adjustment, etc.) [\#5245](https://github.com/raster-foundry/raster-foundry/pull/5245)
 
@@ -140,7 +166,6 @@
 - Used item IDs instead of `"item.json"` for STAC item names [\#5226](https://github.com/raster-foundry/raster-foundry/pull/5226)
 - Fixed a routing bug that prevented viewing tiles under the `/scenes/` routes [\#5213](https://github.com/raster-foundry/raster-foundry/)
 
-
 ## [1.31.0](https://github.com/raster-foundry/raster-foundry/compare/1.30.0...1.31.0)
 
 ### Added
@@ -153,6 +178,7 @@
 - Use default execution contexts for http4s and blaze and switch to using an unbounded pool for doobie transactions [\#5188](https://github.com/raster-foundry/raster-foundry/pull/5188)
 
 ### Removed
+
 - Remove broken RasterSource and Tile caches [\#5190](https://github.com/raster-foundry/raster-foundry/pull/5190)
 
 ## [1.30.0](https://github.com/raster-foundry/raster-foundry/compare/1.29.1...1.30.0)
@@ -173,6 +199,7 @@
 - Remove API spec publishing [\#5174](https://github.com/raster-foundry/raster-foundry/pull/5174)
 
 ### Fixed
+
 - Remove unnecessary coercion of scenes to a nodata value of 0 in single band mode [\#5173](https://github.com/raster-foundry/raster-foundry/pull/5173)
 
 - Made MODIS Aqua datasource id in the frontend a valid UUID [\#5175](https://github.com/raster-foundry/raster-foundry/pull/5175)
@@ -216,6 +243,7 @@
 - Added an ADR for label STAC export [\#5127](https://github.com/raster-foundry/raster-foundry/pull/5127)
 
 ### Fixed
+
 - Better error messages / codes when rendering tiles containing scenes which are missing histograms [/5128](https://github.com/raster-foundry/raster-foundry/pull/5128)
 - Correctly mosaic tiles which have a no-data value other than 0 [\#5131](https://github.com/raster-foundry/raster-foundry/pull/5131)
 
@@ -228,6 +256,7 @@
 - Enabled kicking off STAC export when an export record is created [\#5116](https://github.com/raster-foundry/raster-foundry/pull/5116)
 
 ### Fixed
+
 - Optimized long-running annotation group summary endpoint [/#5155](https://github.com/raster-foundry/raster-foundry/pull/5155)
 
 ## [1.26.0](https://github.com/raster-foundry/raster-foundry/compare/1.25.1...1.26.0)

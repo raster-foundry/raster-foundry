@@ -30,11 +30,14 @@ object Filters {
     )
   }
 
-  def ownerQP(ownerParams: OwnerQueryParameters): List[Option[Fragment]] = {
+  def ownerQP(
+      ownerParams: OwnerQueryParameters,
+      col: Fragment = fr"owner"
+  ): List[Option[Fragment]] = {
     List(
       ownerParams.owner.toList.toNel
         .map({ owners =>
-          Fragments.in(fr"owner", owners)
+          Fragments.in(col, owners)
         })
     )
   }
@@ -76,8 +79,8 @@ object Filters {
       imageParams.minResolution.map(minRes => fr"resolution_meters > $minRes")
     val f4 =
       imageParams.maxResolution.map(maxRes => fr"resolution_meters < $maxRes")
-    val f5 = imageParams.scene.toList.toNel.map(scenes =>
-      Fragments.in(fr"scene", scenes))
+    val f5 = imageParams.scene.toList.toNel
+      .map(scenes => Fragments.in(fr"scene", scenes))
     List(f1, f2, f3, f4, f5)
   }
 

@@ -1,6 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.datamodel._
 
@@ -9,9 +10,12 @@ import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
+import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
+
+import scala.concurrent.duration._
 
 class TaskDaoSpec
     extends FunSuite
@@ -88,7 +92,9 @@ class TaskDaoSpec
             annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
-            val connIO: ConnectionIO[(Task.TaskFeatureCollection, List[Task])] =
+            val connIO: ConnectionIO[
+              (Task.TaskFeatureCollection, List[Task], AnnotationProject)
+            ] =
               for {
                 (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
                   userCreate,
@@ -113,9 +119,23 @@ class TaskDaoSpec
                 fetched <- collection.features traverse { feat =>
                   TaskDao.unsafeGetTaskById(feat.id)
                 }
-              } yield { (collection, fetched) }
+                annoProj <- AnnotationProjectDao
+                  .unsafeGetById(dbAnnotationProj.id)
+              } yield { (collection, fetched, annoProj) }
 
-            val (featureCollection, fetched) = connIO.transact(xa).unsafeRunSync
+            val (featureCollection, fetched, annotationProject) =
+              connIO.transact(xa).unsafeRunSync
+
+            val projectTaskSummaryCount = annotationProject.taskStatusSummary flatMap {
+              summary =>
+                Some(summary.valuesIterator.foldLeft(0)(_ + _))
+            }
+
+            assert(
+              projectTaskSummaryCount == Some(featureCollection.features.size),
+              "Task insert operation should update task status summary in annotation project"
+            )
+
             assert(
               featureCollection.features.toSet == fetched
                 .map(_.toGeoJSONFeature(Nil))
@@ -271,8 +291,8 @@ class TaskDaoSpec
             orgCreate: Organization.Create,
             platform: Platform,
             projectCreate: Project.Create,
-            taskFeatureCreate1: Task.TaskFeatureCreate,
-            taskFeatureCreate2: Task.TaskFeatureCreate,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskFeatureCreate: Task.TaskFeatureCreate,
             annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
@@ -289,36 +309,89 @@ class TaskDaoSpec
                   dbUser
                 )
               collection <- TaskDao.insertTasks(
-                Task.TaskFeatureCollectionCreate(
-                  features = List(
-                    fixupTaskFeatureCreate(
-                      taskFeatureCreate1,
-                      dbAnnotationProj
-                    )
-                  )
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.Unlabeled)
                 ),
                 dbUser
               )
               update <- TaskDao.updateTask(
                 collection.features.head.id,
                 fixupTaskFeatureCreate(
-                  taskFeatureCreate2,
-                  dbAnnotationProj
+                  taskFeatureCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.Labeled)
                 ),
                 dbUser
               )
+              annoProjAfterUpdate <- AnnotationProjectDao
+                .unsafeGetById(dbAnnotationProj.id)
               // have to delete actions on the task to be able to delete it
               _ <- fr"TRUNCATE TABLE task_actions;".update.run
               delete <- TaskDao.deleteTask(collection.features.head.id)
-            } yield (update, delete)
-            val (updateResult, deleteResult) = connIO.transact(xa).unsafeRunSync
+              annoProjAfterDelete <- AnnotationProjectDao
+                .unsafeGetById(dbAnnotationProj.id)
+              _ <- TaskDao.query
+                .filter(fr"annotation_project_id = ${dbAnnotationProj.id}")
+                .delete
+              annoProjAfterDrop <- AnnotationProjectDao.unsafeGetById(
+                dbAnnotationProj.id
+              )
+            } yield
+              (
+                update,
+                delete,
+                annoProjAfterUpdate,
+                collection.features.size,
+                annoProjAfterDelete,
+                annoProjAfterDrop
+              )
 
-            if (taskFeatureCreate1.properties.status == taskFeatureCreate2.properties.status) {
-              updateResult.get.properties.actions.length should be(0)
-            } else {
-              updateResult.get.properties.actions.length should be(1)
+            val (
+              updateResult,
+              deleteResult,
+              annoProjAfterUpd,
+              taskOriginalCount,
+              annoProjAfterDel,
+              annoProjAfterDropAll
+            ) = connIO.transact(xa).unsafeRunSync
+
+            updateResult.get.properties.actions.length should be(1)
+
+            val unlabeledCountAfterUpdate = annoProjAfterUpd.taskStatusSummary
+              .flatMap(_.get(TaskStatus.Unlabeled.toString))
+            val labeledCountAfterUpdate = annoProjAfterUpd.taskStatusSummary
+              .flatMap(_.get(TaskStatus.Labeled.toString))
+            val unlabeledCountAfterDelete = annoProjAfterDel.taskStatusSummary
+              .flatMap(_.get(TaskStatus.Unlabeled.toString))
+            val labeledCountAfterDelete = annoProjAfterDel.taskStatusSummary
+              .flatMap(_.get(TaskStatus.Labeled.toString))
+            val taskCountAfterDropAll = annoProjAfterDropAll.taskStatusSummary flatMap {
+              summary =>
+                Some(summary.valuesIterator.foldLeft(0)(_ + _))
             }
 
+            assert(
+              unlabeledCountAfterUpdate == Some(taskOriginalCount - 1),
+              "For unlabeled, task update should update task status summary in annotation project"
+            )
+            assert(
+              labeledCountAfterUpdate == Some(1),
+              "For labeled, task update should update task status summary in annotation project"
+            )
+            assert(
+              unlabeledCountAfterDelete == Some(taskOriginalCount - 1),
+              "For unlabeled, task delete should update task status summary in annotation project"
+            )
+            assert(
+              labeledCountAfterDelete == Some(0),
+              "For labeled, task delete should update task status summary in annotation project"
+            )
+            assert(
+              taskCountAfterDropAll == Some(0),
+              "Task delete all should update task status summary in annotation project"
+            )
             deleteResult should be(1)
             true
           }
@@ -488,7 +561,7 @@ class TaskDaoSpec
 
   }
 
-  test("delete all tasks in a project layer") {
+  test("delete all tasks in a project") {
     check {
       forAll {
         (
@@ -1048,6 +1121,162 @@ class TaskDaoSpec
 
             val result = connIO.transact(xa).unsafeRunSync
             result should be(None: Option[UnionedGeomExtent])
+            true
+          }
+      }
+    }
+  }
+
+  test("expire locks on stale tasks") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val expiryIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate
+              )
+              dbAnnotationProj <- AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(
+                    projectId = Some(dbProject.id)
+                  ),
+                  dbUser
+                )
+              tasks <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.LabelingInProgress)
+                ),
+                dbUser
+              )
+              _ <- tasks.features traverse { task =>
+                TaskDao.lockTask(task.id)(dbUser)
+              }
+              numberExpiredBogus <- TaskDao.expireStuckTasks(9000 seconds)
+              numberExpired <- TaskDao.expireStuckTasks(0 seconds)
+              listed <- TaskDao.query
+                .filter(fr"annotation_project_id = ${dbAnnotationProj.id}")
+                .list
+            } yield (numberExpiredBogus, numberExpired, listed)
+
+            val (numberExpiredBogus, numberExpired, listed) =
+              expiryIO.transact(xa).unsafeRunSync
+
+            assert(
+              numberExpiredBogus == 0,
+              "Expiration leaves fresh tasks alone"
+            )
+
+            assert(
+              numberExpired == taskFeatureCollectionCreate.features.length,
+              "All inserted tasks expired"
+            )
+            assert(
+              (listed map { _.status } toSet) == Set(TaskStatus.Unlabeled),
+              "All tasks reverted to unlabeled"
+            )
+            true
+          }
+      }
+    }
+  }
+
+  test("get a random task") {
+    check {
+      forAll {
+        (
+            userCreate1: User.Create,
+            userCreate2: User.Create,
+            annotationProjectCreate1: AnnotationProject.Create,
+            annotationProjectCreate2: AnnotationProject.Create,
+            taskFeatureCollectionCreate1: Task.TaskFeatureCollectionCreate,
+            taskFeatureCollectionCreate2: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val randomTaskIO = for {
+              user1 <- UserDao.create(userCreate1)
+              user2 <- UserDao.create(userCreate2)
+              dbAnnotationProject1 <- AnnotationProjectDao.insert(
+                annotationProjectCreate1,
+                user1
+              )
+              dbAnnotationProject2 <- AnnotationProjectDao.insert(
+                annotationProjectCreate2,
+                user2
+              )
+              insertedTasks1 <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate1,
+                  dbAnnotationProject1,
+                  Some(TaskStatus.Unlabeled)
+                ),
+                user1
+              )
+              insertedTasks2 <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate2,
+                  dbAnnotationProject2,
+                  None
+                ),
+                user2
+              )
+              randomTask1 <- TaskDao.randomTask(
+                TaskQueryParameters(
+                  status = Some(TaskStatus.Unlabeled)
+                ),
+                NonEmptyList.one(dbAnnotationProject1.id)
+              )
+              randomTask2 <- TaskDao.randomTask(
+                TaskQueryParameters(),
+                NonEmptyList.one(dbAnnotationProject2.id)
+              )
+              randomTask3 <- TaskDao.randomTask(
+                TaskQueryParameters(
+                  status = Some(TaskStatus.Validated)
+                ),
+                NonEmptyList.one(dbAnnotationProject1.id)
+              )
+            } yield {
+              (
+                insertedTasks1,
+                insertedTasks2,
+                randomTask1,
+                randomTask2,
+                randomTask3
+              )
+            }
+
+            val (
+              project1Tasks,
+              project2Tasks,
+              randomTask1,
+              randomTask2,
+              randomTask3
+            ) =
+              randomTaskIO.transact(xa).unsafeRunSync
+
+            assert(
+              project1Tasks.features.contains(randomTask1.get),
+              "Random task 1 comes from the first project's tasks"
+            )
+            assert(
+              project2Tasks.features.contains(randomTask2.get),
+              "Random task 2 comes from the first project's tasks"
+            )
+            assert(randomTask3.isEmpty, "Task status filters are respected")
+
             true
           }
       }

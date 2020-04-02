@@ -36,7 +36,8 @@ object AnnotationProjectDao
     "labelers_team_id",
     "validators_team_id",
     "project_id",
-    "status"
+    "status",
+    "task_status_summary"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -150,7 +151,9 @@ object AnnotationProjectDao
        ${newAnnotationProject.projectType}, DEFAULT, ${newAnnotationProject.taskSizePixels},
        ${newAnnotationProject.aoi}, ${newAnnotationProject.labelersTeamId},
        ${newAnnotationProject.validatorsTeamId},
-       ${newAnnotationProject.projectId}, ${newAnnotationProject.status})
+       ${newAnnotationProject.projectId}, ${newAnnotationProject.status},
+       '{"UNLABELED": 0, "LABELING_IN_PROGRESS": 0, "LABELED": 0, "VALIDATION_IN_PROGRESS": 0, "VALIDATED": 0 }'::jsonb
+       )
     """).update.withUniqueGeneratedKeys[AnnotationProject](
         fieldNames: _*
       )
@@ -171,13 +174,11 @@ object AnnotationProjectDao
     } yield annotationProject.withRelated(tileLayers, labelClassGroups)
   }
 
-  def annotationProjectByIdQuery(id: UUID): Query0[AnnotationProject] = {
-    (selectF ++ Fragments.whereAndOpt(Some(fr"id = ${id}")))
-      .query[AnnotationProject]
-  }
-
   def getById(id: UUID): ConnectionIO[Option[AnnotationProject]] =
-    annotationProjectByIdQuery(id).option
+    query.filter(id).selectOption
+
+  def unsafeGetById(id: UUID): ConnectionIO[AnnotationProject] =
+    query.filter(id).select
 
   def getWithRelatedById(
       id: UUID
@@ -200,10 +201,9 @@ object AnnotationProjectDao
 
   def getWithRelatedAndSummaryById(
       id: UUID
-  ): ConnectionIO[Option[AnnotationProject.WithRelatedAndSummary]] =
+  ): ConnectionIO[Option[AnnotationProject.WithRelatedAndLabelClassSummary]] =
     for {
       withRelatedO <- getWithRelatedById(id)
-      taskStatusSummary <- TaskDao.countProjectTaskByStatus(id)
       labelClassGroups <- AnnotationLabelClassGroupDao.listByProjectId(id)
       labelClassSummaries <- labelClassGroups traverse { labelClassGroup =>
         AnnotationLabelDao.countByProjectAndGroup(id, labelClassGroup.id).map {
@@ -218,7 +218,6 @@ object AnnotationProjectDao
     } yield {
       withRelatedO map { withRelated =>
         withRelated.withSummary(
-          taskStatusSummary,
           labelClassSummaries
         )
       }
@@ -427,9 +426,9 @@ object AnnotationProjectDao
   ): ConnectionIO[AnnotationProject] = {
     val insertQuery = (fr"""
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
-      fr"""SELECT 
+      fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, project_type, task_size_meters, task_size_pixels,
-             aoi, labelers_team_id, validators_team_id, project_id, status
+             aoi, labelers_team_id, validators_team_id, project_id, status, task_status_summary
            FROM """ ++ tableF ++ fr"""
            WHERE id = ${projectId}
         """)
