@@ -383,6 +383,10 @@ trait AnnotationProjectPermissionRoutes
                           )
                         )
                         _ <- UserGroupRoleDao.createDefaultRoles(user)
+                        _ <- AnnotationProjectDao.copyProject(
+                          UUID.fromString(groundworkSampleProject),
+                          user
+                        )
                       } yield user
                     }).transact(xa).unsafeToFuture
                     acrs = newUser map { getDefaultShare(_) } getOrElse Nil
