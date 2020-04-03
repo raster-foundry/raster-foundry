@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Set `lockedBy` and `lockedOn` to null when expiring tasks [#5385](https://github.com/raster-foundry/raster-foundry/pull/5385)
+
 ### Security
 
 ## [1.39.0](https://github.com/raster-foundry/raster-foundry/compare/1.38.1...1.39.0)
