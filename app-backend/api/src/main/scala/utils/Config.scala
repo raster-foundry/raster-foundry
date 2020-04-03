@@ -1,5 +1,7 @@
 package com.rasterfoundry.api.utils
 
+import com.rasterfoundry.notification.intercom.Model._
+
 import com.typesafe.config.ConfigFactory
 
 trait Config {
@@ -23,10 +25,16 @@ trait Config {
   val auth0ClientId = auth0Config.getString("clientId")
   val auth0ManagementClientId = auth0Config.getString("managementClientId")
   val auth0ManagementSecret = auth0Config.getString("managementSecret")
+  val auth0GroundworkConnectionName =
+    auth0Config.getString("groundworkConnectionName")
 
   val clientEnvironment = clientConfig.getString("clientEnvironment")
 
   val intercomAppId = intercomConfig.getString("appId")
+  val intercomToken = IntercomToken(intercomConfig.getString("token"))
+  val intercomAdminId = UserId(intercomConfig.getString("adminId"))
+  val groundworkUrlBase = intercomConfig.getString("groundworkUrlBase")
+
   val rollbarClientToken = rollbarConfig.getString("clientToken")
 
   val region = s3Config.getString("region")

@@ -1,10 +1,10 @@
-package com.rasterfoundry.batch.groundwork
+package com.rasterfoundry.notification.intercom
 
 import io.circe.{Decoder, Encoder}
 import io.estatico.newtype.macros.newtype
 
 @SuppressWarnings(Array("AsInstanceOf"))
-object types {
+object Model {
 
   @newtype case class ExternalId(underlying: String)
   object ExternalId {

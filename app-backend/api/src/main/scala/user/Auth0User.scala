@@ -51,6 +51,9 @@ final case class UserWithOAuth(
     oauth: Auth0User
 )
 
+@JsonCodec
+final case class PasswordResetTicket(ticket: String)
+
 object UserWithOAuth {
   implicit val encodeUser: Encoder[User] = Encoder.forProduct8(
     "id",
@@ -94,6 +97,9 @@ object Auth0Service extends Config with LazyLogging {
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
   val userUri = Uri(s"https://$auth0Domain/api/v2/users")
+  val passwordChangeUri = Uri(
+    s"https://$auth0Domain/api/v2/tickets/password-change"
+  )
 
   val authBearerTokenCache: AsyncLoadingCache[Int, ManagementBearerToken] =
     Scaffeine()
@@ -114,7 +120,7 @@ object Auth0Service extends Config with LazyLogging {
       case HttpResponse(StatusCodes.Created, _, entity, _) =>
         Unmarshal(entity).to[Auth0User]
       case HttpResponse(StatusCodes.ClientError(400), _, entity, _) =>
-        logger.debug(s"Entity from Auth0 is: $entity")
+        logger.error(s"Entity from Auth0 is: $entity")
         throw new IllegalArgumentException(
           "Request must specify a valid field to update"
         )
@@ -240,7 +246,7 @@ object Auth0Service extends Config with LazyLogging {
         case HttpResponse(StatusCodes.OK, _, _, _) =>
           Future.successful(())
         case HttpResponse(StatusCodes.ClientError(400), _, entity, _) =>
-          logger.debug(s"Entity from Auth0 is: $entity")
+          logger.error(s"Entity from Auth0 is: $entity")
           throw new IllegalArgumentException(
             "Request must specify a valid field to update"
           )
@@ -294,10 +300,9 @@ object Auth0Service extends Config with LazyLogging {
       bearerToken: ManagementBearerToken
   ): Future[Auth0User] = {
     val post = Map(
-      "connection" -> "Username-Password-Authentication".asJson,
+      "connection" -> auth0GroundworkConnectionName.asJson,
       "email" -> email.asJson,
       "password" -> Random.alphanumeric.take(20).mkString("").asJson,
-      "username" -> email.takeWhile(_ != '@').take(15).asJson,
       "app_metadata" -> Map("annotateApp" -> true).asJson
     ).asJson
 
@@ -316,5 +321,41 @@ object Auth0Service extends Config with LazyLogging {
         )
       )
       .flatMap { responseAsAuth0User _ }
+  }
+
+  def createPasswordChangeTicket(
+      bearerToken: ManagementBearerToken,
+      resultUrl: String,
+      userId: String,
+      ttlSeconds: Int = 432000,
+      markEmailAsVerified: Boolean = true
+  ): Future[PasswordResetTicket] = {
+    val post = Map(
+      "result_url" -> resultUrl.asJson,
+      "user_id" -> userId.asJson,
+      "ttl_sec" -> ttlSeconds.asJson,
+      "mark_email_as_verified" -> markEmailAsVerified.asJson
+    ).asJson
+
+    val managementBearerHeaders = getBearerHeaders(bearerToken)
+
+    Http()
+      .singleRequest(
+        HttpRequest(
+          method = POST,
+          uri = s"$passwordChangeUri",
+          headers = managementBearerHeaders,
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            post.noSpaces
+          )
+        )
+      ) flatMap {
+      case HttpResponse(StatusCodes.Created, _, entity, _) =>
+        Unmarshal(entity).to[PasswordResetTicket]
+      case HttpResponse(_, _, entity, _) =>
+        logger.error(s"Error entity from Auth0 is: $entity")
+        throw new Exception("Unable to create a password change ticket")
+    }
   }
 }

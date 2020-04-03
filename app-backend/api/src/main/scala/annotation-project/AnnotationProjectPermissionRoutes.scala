@@ -2,26 +2,100 @@ package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.user.Auth0Service
+import com.rasterfoundry.api.utils.{Config, ManagementBearerToken}
 import com.rasterfoundry.database._
+import com.rasterfoundry.database.notification.Notify
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.notification.intercom.Model._
+import com.rasterfoundry.notification.intercom._
 
 import akka.http.scaladsl.server._
 import cats.data.OptionT
 import cats.effect.IO
 import cats.implicits._
+import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+
+import scala.concurrent.Future
 
 import java.util.UUID
 
 trait AnnotationProjectPermissionRoutes
     extends CommonHandlers
     with Directives
-    with Authentication {
+    with Authentication
+    with Config {
 
   val xa: Transactor[IO]
+
+  implicit val sttpBackend = AsyncHttpClientCatsBackend[IO]()
+  private val intercomNotifier = new LiveIntercomNotifier[IO]
+
+  private def getSharer(sharingUser: User): String =
+    if (sharingUser.email != "") {
+      sharingUser.email
+    } else if (sharingUser.personalInfo.email != "") {
+      sharingUser.personalInfo.email
+    } else {
+      sharingUser.name
+    }
+
+  private def shareNotify(
+      sharedUser: User,
+      sharingUser: User,
+      annotationProjectId: UUID
+  ): IO[Either[Throwable, Unit]] =
+    intercomNotifier
+      .notifyUser(
+        intercomToken,
+        intercomAdminId,
+        ExternalId(sharedUser.id),
+        Message(s"""
+        | ${getSharer(sharingUser)} has shared a project with you!
+        | ${groundworkUrlBase}/app/projects/${annotationProjectId}/overview
+        | """.trim.stripMargin)
+      )
+      .attempt
+
+  private def shareNotifyNewUser(
+      bearerToken: ManagementBearerToken,
+      sharingUser: User,
+      newUserEmail: String,
+      newUserId: String,
+      sharingUserPlatform: Platform,
+      annotationProject: AnnotationProject
+  ): Future[Unit] = {
+    val subject =
+      s"""You've been invited to join the "${annotationProject.name}" project on GroundWork!"""
+    (for {
+      ticket <- IO.fromFuture {
+        IO {
+          Auth0Service.createPasswordChangeTicket(
+            bearerToken,
+            s"$groundworkUrlBase/app/login",
+            newUserId
+          )
+        }
+      }
+      (messageRich, messagePlain) = Notifications.getInvitationMessage(
+        getSharer(sharingUser),
+        annotationProject,
+        ticket
+      )
+      _ <- Notify
+        .sendEmail(
+          sharingUserPlatform.publicSettings,
+          sharingUserPlatform.privateSettings,
+          newUserEmail,
+          subject,
+          messageRich.underlying,
+          messagePlain.underlying
+        )
+    } yield ()).attempt.void.unsafeToFuture
+  }
 
   def getDefaultShare(user: User): List[ObjectAccessControlRule] =
     List(
@@ -97,11 +171,21 @@ trait AnnotationProjectPermissionRoutes
             })
           }).transact(xa).unsafeToFuture()
         } {
+          val distinctUserIds = acrList
+            .foldMap(acr => acr.getUserId map { Set(_) })
+            .getOrElse(Set.empty)
+            .toList
           complete {
-            AnnotationProjectDao
+            (AnnotationProjectDao
               .replacePermissions(projectId, acrList)
-              .transact(xa)
-              .unsafeToFuture
+              .transact(xa) <* (distinctUserIds traverse { userId =>
+              // it's safe to do this unsafely because we know the user exists from
+              // the isValidPermission check
+              UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
+                sharedUser =>
+                  shareNotify(sharedUser, user, projectId)
+              }
+            })).unsafeToFuture
           }
         }
       }
@@ -135,10 +219,15 @@ trait AnnotationProjectPermissionRoutes
           }).transact(xa).unsafeToFuture()
         } {
           complete {
-            AnnotationProjectDao
+            (AnnotationProjectDao
               .addPermission(projectId, acr)
-              .transact(xa)
-              .unsafeToFuture
+              .transact(xa) <*
+              (acr.getUserId traverse { userId =>
+                UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
+                  sharedUser =>
+                    shareNotify(sharedUser, user, projectId)
+                }
+              })).unsafeToFuture
           }
         }
       }
@@ -261,6 +350,14 @@ trait AnnotationProjectPermissionRoutes
                 .findUsersByEmail(userByEmail.email)
                 .transact(xa)
                 .unsafeToFuture
+              userPlatform <- UserDao
+                .unsafeGetUserPlatform(user.id)
+                .transact(xa)
+                .unsafeToFuture
+              annotationProjectO <- AnnotationProjectDao
+                .getById(projectId)
+                .transact(xa)
+                .unsafeToFuture
               permissions <- users match {
                 case Nil =>
                   for {
@@ -276,16 +373,34 @@ trait AnnotationProjectPermissionRoutes
                           managementToken
                         )
                     }
-                    user <- (auth0User.user_id traverse { userId =>
-                      UserDao.create(
-                        User.Create(
-                          userId,
-                          email = userByEmail.email,
-                          scope = Scopes.GroundworkUser
+                    newUser <- (auth0User.user_id traverse { userId =>
+                      for {
+                        user <- UserDao.create(
+                          User.Create(
+                            userId,
+                            email = userByEmail.email,
+                            scope = Scopes.GroundworkUser
+                          )
                         )
-                      )
+                        _ <- UserGroupRoleDao.createDefaultRoles(user)
+                        _ <- AnnotationProjectDao.copyProject(
+                          UUID.fromString(groundworkSampleProject),
+                          user
+                        )
+                      } yield user
                     }).transact(xa).unsafeToFuture
-                    acrs = user map { getDefaultShare(_) } getOrElse Nil
+                    acrs = newUser map { getDefaultShare(_) } getOrElse Nil
+                    _ <- (newUser, annotationProjectO).tupled traverse {
+                      case (newUser, annotationProject) =>
+                        shareNotifyNewUser(
+                          managementToken,
+                          user,
+                          userByEmail.email,
+                          newUser.id,
+                          userPlatform,
+                          annotationProject
+                        )
+                    }
                     dbAcrs <- (acrs traverse { acr =>
                       AnnotationProjectDao
                         .addPermission(projectId, acr)
@@ -296,10 +411,14 @@ trait AnnotationProjectPermissionRoutes
                     val acrs = getDefaultShare(existingUser)
                     Auth0Service
                       .addGroundworkMetadata(existingUser, managementToken) *>
-                      (acrs traverse { acr =>
+                      ((acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)
-                      }).transact(xa).unsafeToFuture
+                      }).transact(xa) <* shareNotify(
+                        existingUser,
+                        user,
+                        projectId
+                      )).unsafeToFuture
                   } map { _.flatten }
               }
             } yield permissions)

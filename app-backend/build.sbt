@@ -210,7 +210,8 @@ lazy val root = project
     batch,
     backsplashCore,
     backsplashServer,
-    backsplashExport
+    backsplashExport,
+    notification
   )
 
 lazy val loggingDependencies = Seq(
@@ -244,6 +245,7 @@ lazy val apiDependencies = Seq(
   Dependencies.catsCore,
   Dependencies.catsEffect,
   Dependencies.catsFree,
+  Dependencies.catsKernel,
   Dependencies.circeCore,
   Dependencies.circeGeneric,
   Dependencies.circeParser,
@@ -266,12 +268,14 @@ lazy val apiDependencies = Seq(
   Dependencies.shapeless,
   Dependencies.sourceCode,
   Dependencies.spray,
+  Dependencies.sttpCatsBackend,
+  Dependencies.sttpCore,
   Dependencies.typesafeConfig
 )
 
 lazy val api = project
   .in(file("api"))
-  .dependsOn(db, common % "test->test;compile->compile", akkautil)
+  .dependsOn(db, common % "test->test;compile->compile", akkautil, notification)
   .settings(apiSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
@@ -303,7 +307,6 @@ lazy val common = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.apacheCommonsEmail,
       Dependencies.apacheHttpClient,
       Dependencies.apacheHttpCore,
       Dependencies.awsBatchSdk,
@@ -328,7 +331,6 @@ lazy val common = project
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisVector,
       Dependencies.geotrellisVectorTestkit,
-      Dependencies.javaMail,
       Dependencies.logbackClassic % Runtime,
       Dependencies.mamlJvm,
       Dependencies.monocleCore,
@@ -377,7 +379,7 @@ lazy val datamodel = project
   */
 lazy val db = project
   .in(file("db"))
-  .dependsOn(common % "compile->compile;test->test")
+  .dependsOn(common % "compile->compile;test->test", notification)
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
@@ -429,14 +431,13 @@ lazy val db = project
   */
 lazy val batch = project
   .in(file("batch"))
-  .dependsOn(common, backsplashCore, geotrellis)
+  .dependsOn(common, backsplashCore, geotrellis, notification)
   .settings(sharedSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.apacheAvro,
-      Dependencies.apacheCommonsEmail,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.betterFiles,
@@ -469,10 +470,7 @@ lazy val batch = project
       Dependencies.guava,
       Dependencies.hadoop,
       Dependencies.hikariCP,
-      Dependencies.log4cats,
-      Dependencies.log4catsSlf4j,
       Dependencies.monocleCore,
-      Dependencies.newtype,
       Dependencies.refined,
       Dependencies.scaffeine,
       Dependencies.scaffeine,
@@ -485,8 +483,6 @@ lazy val batch = project
       Dependencies.spray,
       Dependencies.sttpCatsBackend,
       Dependencies.sttpCore,
-      Dependencies.sttpJson,
-      Dependencies.sttpCirce,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
@@ -758,3 +754,27 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
+
+/** Notification project
+  *
+  * For holding all of our shared code related to letting people know about things
+  */
+lazy val notification = Project("notification", file("notification"))
+  .dependsOn(datamodel)
+  .settings(sharedSettings: _*)
+  .settings(publishSettings)
+  .settings({
+    libraryDependencies ++= Seq(
+      Dependencies.apacheCommonsEmail,
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.circeCore,
+      Dependencies.javaMail,
+      Dependencies.log4cats,
+      Dependencies.log4catsSlf4j,
+      Dependencies.newtype,
+      Dependencies.sttpCore,
+      Dependencies.sttpJson,
+      Dependencies.sttpCirce
+    )
+  })

@@ -2,6 +2,8 @@ package com.rasterfoundry.database
 
 import com.typesafe.config.ConfigFactory
 
+import java.util.UUID
+
 object Config {
   private val config = ConfigFactory.load()
 
@@ -28,5 +30,14 @@ object Config {
     private val statusReapingConfig = config.getConfig("statusReaping")
     val taskStatusExpirationSeconds =
       statusReapingConfig.getInt("taskStatusExpirationSeconds")
+  }
+
+  object auth0Config {
+    private val auth0Config = config.getConfig("auth0")
+    val defaultPlatformId =
+      UUID.fromString(auth0Config.getString("defaultPlatformId"))
+    val defaultOrganizationId =
+      UUID.fromString(auth0Config.getString("defaultOrganizationId"))
+    val systemUser = auth0Config.getString("systemUser")
   }
 }
