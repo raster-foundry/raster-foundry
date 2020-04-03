@@ -641,7 +641,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               ),
               task.geometry
             )
-          updateTask(task.id, update, defaultUser) <* deleteLock(task.id)
+          updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
         }
       }
     } yield stuckTasks.length

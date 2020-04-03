@@ -1189,12 +1189,12 @@ class TaskDaoSpec
             )
 
             assert(
-              listed flatMap { _.lockedBy } == Nil,
+              (listed flatMap { _.lockedBy }) == Nil,
               "All tasks reverted to not being locked by anyone"
             )
 
             assert(
-              listed flatMap { _.lockedOn } == Nil,
+              (listed flatMap { _.lockedOn }) == Nil,
               "All tasks reverted to not being locked at any time"
             )
 
