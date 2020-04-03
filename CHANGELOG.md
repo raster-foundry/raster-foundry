@@ -4,6 +4,8 @@
 
 ### Added
 
+- Notify Groundwork users when annotation projects are shared with them [#5383](https://github.com/raster-foundry/raster-foundry/pull/5383), [#5386](https://github.com/raster-foundry/raster-foundry/pull/5386)
+
 ### Changed
 
 ### Deprecated
@@ -22,7 +24,6 @@
 
 - Added a random task endpoint to get a random task meeting some task query parameters in an annotation project satisfying some annotation project query parameters [#5378](https://github.com/raster-foundry/raster-foundry/pull/5378)
 - Add task status filter to annotation projects [#5373](https://github.com/raster-foundry/raster-foundry/pull/5373) [#5379](https://github.com/raster-foundry/raster-foundry/pull/5379) [#5382](https://github.com/raster-foundry/raster-foundry/pull/5382)
-- Notify Groundwork users when annotation projects are shared with them [#5383](https://github.com/raster-foundry/raster-foundry/pull/5383)
 
 ### Changed
 
