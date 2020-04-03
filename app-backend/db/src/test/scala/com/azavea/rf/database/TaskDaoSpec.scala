@@ -1187,6 +1187,17 @@ class TaskDaoSpec
               (listed map { _.status } toSet) == Set(TaskStatus.Unlabeled),
               "All tasks reverted to unlabeled"
             )
+
+            assert(
+              listed flatMap { _.lockedBy } == Nil,
+              "All tasks reverted to not being locked by anyone"
+            )
+
+            assert(
+              listed flatMap { _.lockedOn } == Nil,
+              "All tasks reverted to not being locked at any time"
+            )
+
             true
           }
       }
