@@ -20,6 +20,7 @@ import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.Json
+import org.postgresql.util.PSQLException
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -173,14 +174,30 @@ trait Authentication extends Directives with LazyLogging {
             platform: Option[Platform],
             user: User
         )
-        // All users will have a platform role, either added by a migration or created with the user if they are new
-        val query = for {
-          (user, roles) <- OptionT[ConnectionIO, (User, List[UserGroupRole])] {
-            UserDao.getUserAndActiveRolesById(userId).flatMap {
+
+        val getOrCreateUserProgram = for {
+          u <- OptionT.liftF(
+            UserDao.getUserAndActiveRolesById(userId).transact(xa)
+          )
+          (user, roles) <- OptionT {
+            u match {
               case UserOptionAndRoles(Some(user), roles) =>
-                Option((user, roles)).pure[ConnectionIO]
+                IO.pure(Some((user, roles)))
               case UserOptionAndRoles(None, _) => {
                 createUserWithRoles(userId, email, name, picture, jwtClaims)
+                  .transact(xa)
+                  .attempt flatMap {
+                  case Right(s) => IO.pure(s)
+                  case Left(e: PSQLException) if e.getSQLState == "23505" => {
+                    logger.debug(s"Handling Duplicate User: $e")
+                    UserDao.getUserAndActiveRolesById(userId).transact(xa) map {
+                      case UserOptionAndRoles(Some(user), roles) =>
+                        Some((user, roles))
+                      case _ => None
+                    }
+                  }
+                  case Left(e) => throw e
+                }
               }
             }
           }
@@ -189,12 +206,15 @@ trait Authentication extends Directives with LazyLogging {
           )
           plat <- OptionT {
             platformRole match {
-              case Some(role) => PlatformDao.getPlatformById(role.groupId)
+              case Some(role) =>
+                PlatformDao
+                  .getPlatformById(role.groupId)
+                  .transact(xa)
               case _ =>
                 logger.error(
                   s"User without a platform tried to log in: ${userId}"
                 )
-                Option.empty[Platform].pure[ConnectionIO]
+                Option.empty[Platform].pure[IO]
             }
           }
           personalInfo = defaultPersonalInfo(user, jwtClaims)
@@ -227,11 +247,13 @@ trait Authentication extends Directives with LazyLogging {
                 UserDao
                   .updateUser(updatedUser, updatedUser.id)
                   .map(_ => updatedUser)
-              case _ => user.pure[ConnectionIO]
+                  .transact(xa)
+              case _ => IO.pure(user)
             }
           }
         } yield MembershipAndUser(Some(plat), userUpdate)
-        onSuccess(query.value.transact(xa).unsafeToFuture).flatMap {
+
+        onSuccess(getOrCreateUserProgram.value.unsafeToFuture).flatMap {
           case Some(MembershipAndUser(plat, userUpdate)) =>
             plat map { _.isActive } match {
               case Some(true) =>
@@ -329,13 +351,14 @@ trait Authentication extends Directives with LazyLogging {
         platformId,
         orgID
       )
-      newUserWithRoles <- {
-        UserDao
-          .createUserWithJWT(systemUser, jwtUser, userRole, userScope)
-          .attempt
-      }
+      newUserWithRoles <- UserDao.createUserWithJWT(
+        systemUser,
+        jwtUser,
+        userRole,
+        userScope
+      )
       _ <- (newUserWithRoles, isGroundworkUser) match {
-        case (Right(user), true) =>
+        case (user, true) =>
           logger.info(s"sample project id = ${groundworkSampleProjectAuth}")
           AnnotationProjectDao.copyProject(
             UUID.fromString(groundworkSampleProjectAuth),
