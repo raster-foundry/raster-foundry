@@ -14,6 +14,16 @@
 
 ### Security
 
+## [1.40.0](https://github.com/raster-foundry/raster-foundry/compare/1.39.0...1.40.0)
+
+### Added
+
+- Notify Groundwork users when annotation projects are shared with them [#5383](https://github.com/raster-foundry/raster-foundry/pull/5383), [#5386](https://github.com/raster-foundry/raster-foundry/pull/5386)
+
+### Fixed
+
+- Set `lockedBy` and `lockedOn` to null when expiring tasks [#5385](https://github.com/raster-foundry/raster-foundry/pull/5385)
+
 ## [1.39.0](https://github.com/raster-foundry/raster-foundry/compare/1.38.1...1.39.0)
 
 ### Added

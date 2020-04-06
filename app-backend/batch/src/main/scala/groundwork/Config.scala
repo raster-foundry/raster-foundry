@@ -1,6 +1,6 @@
 package com.rasterfoundry.batch.groundwork
 
-import com.rasterfoundry.batch.groundwork.types._
+import com.rasterfoundry.notification.intercom.Model._
 
 import com.typesafe.config.ConfigFactory
 

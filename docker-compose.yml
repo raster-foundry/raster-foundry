@@ -68,6 +68,7 @@ services:
       - COURSIER_CACHE=/root/.coursier
       - BACKSPLASH_ENABLE_MULTITIFF=false
       - AWS_DEFAULT_PROFILE=raster-foundry
+      - GROUNDWORK_URL_BASE=http://localhost:3000
     ports:
       - "9000:9000"
       - "9010:9010"
@@ -113,7 +114,7 @@ services:
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
-      - GROUNDWORK_URL_BASE=http://localhost:3000/app
+      - GROUNDWORK_URL_BASE=http://localhost:3000
       - POSTGRES_DB_POOL_SIZE=2
       - LOCAL_INGEST_CORES=2
       - LOCAL_INGEST_MEM_GB=4

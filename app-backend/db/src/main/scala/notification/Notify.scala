@@ -1,68 +1,79 @@
 package com.rasterfoundry.database.notification
 
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.common.notification.Email.{
-  EmailConfig,
-  NotificationEmail
-}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.notification.templates._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.notification.email.Model._
+import com.rasterfoundry.notification.email._
 
+import cats.effect.{IO, LiftIO}
 import cats.implicits._
 import doobie.ConnectionIO
 import doobie.implicits._
-import org.apache.commons.mail.{Email, EmailException}
 
 import java.util.UUID
 
 object Notify extends RollbarNotifier {
-  def sendEmail(publicSettings: Platform.PublicSettings,
-                privateSettings: Platform.PrivateSettings,
-                to: String,
-                subject: String,
-                messageRich: String,
-                messagePlain: String): ConnectionIO[Unit] = {
-    val email = new NotificationEmail
+
+  val notifier = new LiveEmailNotifier[IO]
+
+  def emailConfigFromPlatformSettings(
+      publicSettings: Platform.PublicSettings,
+      privateSettings: Platform.PrivateSettings
+  ): Either[String, EmailConfig] =
+    EncryptionScheme.fromStringE(publicSettings.emailSmtpEncryption) map {
+      encryption =>
+        EmailConfig(
+          EmailHost(publicSettings.emailSmtpHost),
+          EmailPort(publicSettings.emailSmtpPort),
+          encryption,
+          EmailUserName(publicSettings.emailSmtpUserName),
+          EmailPassword(privateSettings.emailPassword)
+        )
+    }
+
+  def sendEmail(
+      publicSettings: Platform.PublicSettings,
+      privateSettings: Platform.PrivateSettings,
+      to: String,
+      subject: String,
+      messageRich: String,
+      messagePlain: String
+  ): IO[Unit] = {
+    val configE: Either[String, EmailConfig] =
+      emailConfigFromPlatformSettings(publicSettings, privateSettings)
+    val emailSettingsE: Either[String, EmailSettings] = configE flatMap {
+      config =>
+        notifier.validateEmailSettings(
+          config,
+          FromEmailAddress(publicSettings.emailFrom),
+          ToEmailAddress(to)
+        )
+    }
+
     for {
-      _ <- publicSettings.emailSmtpUserName match {
-        case "" => ().pure[ConnectionIO]
-        case _ => {
-          val preparedEmail = email.setEmail(
-            EmailConfig(
-              publicSettings.emailSmtpHost,
-              publicSettings.emailSmtpPort,
-              publicSettings.emailSmtpEncryption,
-              publicSettings.emailSmtpUserName,
-              privateSettings.emailPassword
-            ),
-            to,
-            subject,
-            messageRich,
-            messagePlain,
-            publicSettings.emailFrom,
-            publicSettings.emailFromDisplayName
-          )
-          try {
-            preparedEmail
-              .map({ (configuredEmail: Email) =>
-                configuredEmail.send
-              })
-              .pure[ConnectionIO]
-          } catch {
-            case e: EmailException => sendError(e).pure[ConnectionIO]
-          }
-        }
+      emailE <- emailSettingsE traverse { settings =>
+        notifier.buildEmail(
+          settings,
+          FromEmailDisplayName(publicSettings.emailFromDisplayName),
+          Subject(subject),
+          HtmlBody(messageRich),
+          PlainBody(messagePlain)
+        )
       }
-      // Only attempt to send the email if the platform has configured its email settings
+      _ <- emailE traverse { msg =>
+        notifier.sendEmail(msg)
+      }
     } yield { () }
   }
 
-  def sendNotification(platformId: UUID,
-                       messageType: MessageType,
-                       builder: MessageType => ConnectionIO[EmailData],
-                       userFinder: MessageType => ConnectionIO[List[User]])
-    : ConnectionIO[Unit] = {
+  def sendNotification(
+      platformId: UUID,
+      messageType: MessageType,
+      builder: MessageType => ConnectionIO[EmailData],
+      userFinder: MessageType => ConnectionIO[List[User]]
+  ): ConnectionIO[Unit] = {
     for {
       platform <- PlatformDao.unsafeGetPlatformById(platformId)
       publicSettings = platform.publicSettings
@@ -70,7 +81,7 @@ object Notify extends RollbarNotifier {
       emailData <- builder(messageType)
       _ <- logger.debug("Fetching users").pure[ConnectionIO]
       recipients <- userFinder(messageType)
-      emails = recipients map { user =>
+      emailAddresses = recipients map { user =>
         (user.personalInfo.email, user.email) match {
           case ("", loginEmail)  => loginEmail
           case (contactEmail, _) => contactEmail
@@ -79,16 +90,20 @@ object Notify extends RollbarNotifier {
       _ <- logger
         .debug(s"Sending emails to ${recipients.length} admins")
         .pure[ConnectionIO]
-      _ <- emails
-        .map(
-          sendEmail(publicSettings,
-                    privateSettings,
-                    _,
-                    emailData.subject,
-                    emailData.richBody,
-                    emailData.plainBody)
+      _ <- emailAddresses
+        .traverse(
+          emailAddress =>
+            LiftIO[ConnectionIO].liftIO {
+              sendEmail(
+                publicSettings,
+                privateSettings,
+                emailAddress,
+                emailData.subject,
+                emailData.richBody,
+                emailData.plainBody
+              ).attempt
+          }
         )
-        .sequence
     } yield { () }
   }
 }
