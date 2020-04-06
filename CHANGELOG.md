@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Made email to new users who've been shared with prettier, less Star Wars-y [#5388](https://github.com/raster-foundry/raster-foundry/pull/5388)
+
 ### Security
 
 ## [1.40.0](https://github.com/raster-foundry/raster-foundry/compare/1.39.0...1.40.0)
