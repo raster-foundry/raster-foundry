@@ -16,9 +16,6 @@ object Notifications {
     <img src="https://groundwork.azavea.com/assets/img/GroundworkBranding-ProductOfAzavea.png" width="400"/>
   </p>
   <p>
-    <img src="https://user-images.githubusercontent.com/12401491/73973100-f00d2b80-48ef-11ea-9e37-06e7a41bafc6.gif" width="400"/>
-  </p>
-  <p>
     ${sharingUserEmail} needs your help! They've invited you to be a collaborator on their project ${annotationProject.name}.
   </p>
   <p>
