@@ -189,7 +189,7 @@ trait Authentication extends Directives with LazyLogging {
                   .attempt flatMap {
                   case Right(s) => IO.pure(s)
                   case Left(e: PSQLException) if e.getSQLState == "23505" => {
-                    logger.debug(s"Handling Duplicate User: $e")
+                    logger.debug("Handling Duplicate User")
                     UserDao.getUserAndActiveRolesById(userId).transact(xa) map {
                       case UserOptionAndRoles(Some(user), roles) =>
                         Some((user, roles))
