@@ -602,16 +602,11 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       """).update.run
   }
 
-  def getMostRecentStatus(task: Task): ConnectionIO[TaskStatus] =
-    getTaskActions(task.id) map { actions =>
-      actions.toNel map { actions =>
-        actions.tail.foldLeft(actions.head)(
-          (action1: TaskActionStamp, action2: TaskActionStamp) => {
-            if (action1.timestamp.isAfter(action2.timestamp)) action1
-            else action2
-          }
-        )
-      } map { _.fromStatus } getOrElse { TaskStatus.Unlabeled }
+  private def regressTaskStatus(taskStatus: TaskStatus): Option[TaskStatus] =
+    taskStatus match {
+      case TaskStatus.LabelingInProgress   => Some(TaskStatus.Unlabeled)
+      case TaskStatus.ValidationInProgress => Some(TaskStatus.Labeled)
+      case _                               => None
     }
 
   def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
@@ -632,11 +627,11 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         )
         .list
       _ <- stuckTasks traverse { task =>
-        getMostRecentStatus(task) flatMap { status =>
+        regressTaskStatus(task.status) traverse { newStatus =>
           val update =
             Task.TaskFeatureCreate(
               TaskPropertiesCreate(
-                status,
+                newStatus,
                 task.annotationProjectId
               ),
               task.geometry
