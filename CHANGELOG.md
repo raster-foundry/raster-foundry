@@ -12,11 +12,15 @@
 
 ### Fixed
 
-- Simplified task status reversion logic in automatic task lock expiration [#5389](https://github.com/raster-foundry/raster-foundry/pull/5389)
-
 ### Security
 
-## [1.41.0](https://github.com/raster-foundry/raster-foundry/compare/1.40.0...1.41.0)
+## [1.40.2](https://github.com/raster-foundry/raster-foundry/compare/1.40.1...1.40.2)
+
+### Fixed
+
+- Simplified task status reversion logic in automatic task lock expiration [#5389](https://github.com/raster-foundry/raster-foundry/pull/5389)
+
+## [1.40.1](https://github.com/raster-foundry/raster-foundry/compare/1.40.0...1.40.1)
 
 ### Fixed
 
