@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- `LABELED` and `VALIDATED` task locks also automatically expire [#5390](https://github.com/raster-foundry/raster-foundry/pull/5390)
+
 ### Security
 
 ## [1.40.2](https://github.com/raster-foundry/raster-foundry/compare/1.40.1...1.40.2)
