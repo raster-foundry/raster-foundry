@@ -1153,7 +1153,7 @@ class TaskDaoSpec
                   ),
                   dbUser
                 )
-              tasks <- TaskDao.insertTasks(
+              tasksInProgress <- TaskDao.insertTasks(
                 fixupTaskFeaturesCollection(
                   taskFeatureCollectionCreate,
                   dbAnnotationProj,
@@ -1161,8 +1161,17 @@ class TaskDaoSpec
                 ),
                 dbUser
               )
-              _ <- tasks.features traverse { task =>
-                TaskDao.lockTask(task.id)(dbUser)
+              tasksLabeled <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.Labeled)
+                ),
+                dbUser
+              )
+              _ <- (tasksInProgress.features ++ tasksLabeled.features) traverse {
+                task =>
+                  TaskDao.lockTask(task.id)(dbUser)
               }
               numberExpiredBogus <- TaskDao.expireStuckTasks(9000 seconds)
               numberExpired <- TaskDao.expireStuckTasks(0 seconds)
@@ -1174,18 +1183,32 @@ class TaskDaoSpec
             val (numberExpiredBogus, numberExpired, listed) =
               expiryIO.transact(xa).unsafeRunSync
 
+            val statusGroups = listed.groupBy(_.status).mapValues(_.size)
+
             assert(
               numberExpiredBogus == 0,
               "Expiration leaves fresh tasks alone"
             )
 
+            // * 2 because the list gets inserted twice -- once for labeled tasks,
+            // once for in progress tasks
             assert(
-              numberExpired == taskFeatureCollectionCreate.features.length,
+              numberExpired == taskFeatureCollectionCreate.features.length * 2,
               "All inserted tasks expired"
             )
+
             assert(
-              (listed map { _.status } toSet) == Set(TaskStatus.Unlabeled),
-              "All tasks reverted to unlabeled"
+              statusGroups.get(TaskStatus.Labeled) == Some(
+                taskFeatureCollectionCreate.features.length
+              ),
+              "Tasks stuck in labeled kept their status"
+            )
+
+            assert(
+              statusGroups.get(TaskStatus.Unlabeled) == Some(
+                taskFeatureCollectionCreate.features.length
+              ),
+              "Tasks stuck in progress reverted to unlabeled"
             )
 
             assert(

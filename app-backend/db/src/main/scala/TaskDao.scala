@@ -606,6 +606,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     taskStatus match {
       case TaskStatus.LabelingInProgress   => Some(TaskStatus.Unlabeled)
       case TaskStatus.ValidationInProgress => Some(TaskStatus.Labeled)
+      case TaskStatus.Labeled              => Some(TaskStatus.Labeled)
+      case TaskStatus.Validated            => Some(TaskStatus.Validated)
       case _                               => None
     }
 
@@ -618,7 +620,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           taskStatusF(
             List(
               TaskStatus.ValidationInProgress.repr,
-              TaskStatus.LabelingInProgress.repr
+              TaskStatus.LabelingInProgress.repr,
+              TaskStatus.Labeled.repr,
+              TaskStatus.Validated.repr
             )
           )
         )
