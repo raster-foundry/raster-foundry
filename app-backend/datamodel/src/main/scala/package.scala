@@ -23,22 +23,6 @@ import java.util.UUID
 @SuppressWarnings(Array("CatchException"))
 trait JsonCodecs extends GeoJsonImplicits {
 
-  implicit val crsEncoder: Encoder[CRS] =
-    Encoder.encodeString.contramap[CRS] { crs =>
-      crs.epsgCode
-        .map { c =>
-          s"epsg:$c"
-        }
-        .getOrElse(crs.toProj4String)
-    }
-
-  implicit val crsDecoder: Decoder[CRS] =
-    Decoder.decodeString.emap { str =>
-      Either
-        .catchNonFatal(Try(CRS.fromName(str)) getOrElse CRS.fromString(str))
-        .leftMap(_ => "CRS")
-    }
-
   implicit val cellTypeEncoder: Encoder[CellType] =
     Encoder.encodeString.contramap[CellType](CellType.toName)
 

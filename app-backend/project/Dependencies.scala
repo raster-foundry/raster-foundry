@@ -18,10 +18,11 @@ object Version {
   val awsLambdaCore = "1.1.0"
   val awsLambdaSdk = "1.11.535"
   val awsSdkVersion = "1.11.535"
+  val awsSdkV2Version = "2.7.32"
   val awsXrayRecorder = "2.3.0"
   val betterFiles = "3.4.0"
   val caffeine = "2.3.5"
-  val cats = "2.0.0"
+  val cats = "2.1.1"
   val catsEffect = "2.0.0"
   val catsMeow = "0.4.0"
   val catsScalacheck = "0.2.0"
@@ -52,7 +53,7 @@ object Version {
   val javaMail = "1.5.6"
   val json4s = "3.5.0"
   val jsonSmart = "2.3"
-  val jts = "1.16.0"
+  val jts = "1.16.1"
   val log4cats = "1.0.1"
   val logback = "1.2.3"
   val maml = "0.4.0"
@@ -111,6 +112,8 @@ object Dependencies {
   val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsSdkVersion
   val awsXrayRecorder = "com.amazonaws" % "aws-xray-recorder-sdk-core" % Version.awsXrayRecorder
   val awsXraySdk = "com.amazonaws" % "aws-java-sdk-xray" % Version.awsSdkVersion
+  val awsS3SdkV2 = "software.amazon.awssdk" % "s3" % Version.awsSdkV2Version
+  val awsUtilsSdkV2 = "software.amazon.awssdk" % "utils" % Version.awsSdkV2Version
   val betterFiles = "com.github.pathikrit" %% "better-files" % Version.betterFiles
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % Version.caffeine
   val catsCore = "org.typelevel" %% "cats-core" % Version.cats
@@ -174,6 +177,7 @@ object Dependencies {
   val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
   val javaMail = "com.sun.mail" % "javax.mail" % Version.javaMail
   val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
+  val jts = "org.locationtech.jts" % "jts-core" % Version.jts
   val log4cats = "io.chrisdavenport" %% "log4cats-core" % Version.log4cats
   val log4catsSlf4j = "io.chrisdavenport" %% "log4cats-slf4j" % Version.log4cats
   val log4jOverslf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j

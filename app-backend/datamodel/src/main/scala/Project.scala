@@ -223,7 +223,7 @@ object Project extends GeoJsonSupport {
     }
 
     // This has an encoder and no decoder because a Project.WithUser should never be POSTed
-    implicit val withUserEncoder: ObjectEncoder[WithUser] =
+    implicit val withUserEncoder: Encoder.AsObject[WithUser] =
       deriveEncoder[WithUser]
   }
 }

@@ -1,7 +1,8 @@
 package com.rasterfoundry.datamodel
 
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.{HeadObjectRequest}
 import com.amazonaws.services.s3.AmazonS3URI
-import geotrellis.spark.io.s3.S3Client
 import io.circe._
 import io.circe.generic.JsonCodec
 
@@ -52,10 +53,17 @@ object Upload {
         .map(
           s3Uri =>
             s3Client
-              .getObjectMetadata(s3Uri.getBucket, s3Uri.getKey)
-              .getContentLength
+              .headObject(
+                HeadObjectRequest
+                  .builder()
+                  .bucket(s3Uri.getBucket())
+                  .key(s3Uri.getKey())
+                  .build()
+              )
+              .contentLength.toDouble
         )
         .sum
+        .toLong
 
     (uploadStatus, uploadType) match {
       // If uploading or just created, don't calculate uploaded bytes

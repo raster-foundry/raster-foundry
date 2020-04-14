@@ -350,6 +350,8 @@ lazy val datamodel = project
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.awsS3,
+      Dependencies.awsS3SdkV2,
+      Dependencies.awsUtilsSdkV2,
       Dependencies.catsCore,
       Dependencies.catsKernel,
       Dependencies.catsLaws,
@@ -362,15 +364,14 @@ lazy val datamodel = project
       Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisS3,
       Dependencies.geotrellisServerStac,
       Dependencies.geotrellisVector,
       Dependencies.geotrellisVectorTestkit,
+      Dependencies.jts,
       Dependencies.monocleCore,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
       Dependencies.spireMath,
-      Dependencies.spray
     ) ++ loggingDependencies
   })
 
