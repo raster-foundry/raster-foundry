@@ -669,7 +669,6 @@ lazy val backsplashServer =
         Dependencies.catsFree,
         Dependencies.catsKernel,
         Dependencies.catsMeow,
-        Dependencies.catsPar,
         Dependencies.circeCore,
         Dependencies.circeGeneric,
         Dependencies.circeParser,
