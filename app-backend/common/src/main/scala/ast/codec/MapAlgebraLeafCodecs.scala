@@ -3,12 +3,13 @@ package com.rasterfoundry.common.ast.codec
 import com.rasterfoundry.common.ast._
 
 import geotrellis.raster.{io => _, _}
+import geotrellis.raster.io.json.{Implicits => RasterJsonImplicits}
 import io.circe._
 import io.circe.syntax._
 
 import java.security.InvalidParameterException
 
-trait MapAlgebraLeafCodecs {
+trait MapAlgebraLeafCodecs extends RasterJsonImplicits {
   implicit def mapAlgebraDecoder: Decoder[MapAlgebraAST]
   implicit def mapAlgebraEncoder: Encoder[MapAlgebraAST]
 

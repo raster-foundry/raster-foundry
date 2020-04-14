@@ -10,8 +10,6 @@ object Version {
   val akkaSlf4j = "2.4.13"
   val apacheAvro = "1.8.2"
   val apacheCommonsEmail = "1.5"
-  val apacheHttpClient = "4.5.5"
-  val apacheHttpCore = "4.4.9"
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.535"
   val awsCoreSdk = "1.11.535"
@@ -26,7 +24,7 @@ object Version {
   val catsEffect = "2.0.0"
   val catsMeow = "0.4.0"
   val catsScalacheck = "0.2.0"
-  val chronoscala = "0.3.0"
+  val chronoscala = "0.3.2"
   val circe = "0.12.2"
   val circeOptics = "0.12.0"
   val commonsCodec = "1.10"
@@ -88,7 +86,7 @@ object Version {
   val spray = "1.3.4"
   val sttp = "1.5.19"
   val sup = "0.6.0"
-  val typesafeConfig = "1.3.3"
+  val typesafeConfig = "1.3.4"
   val vault = "1.0.0"
 }
 
@@ -103,8 +101,6 @@ object Dependencies {
   val akkatestkit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
   val apacheAvro = "org.apache.avro" % "avro" % Version.apacheAvro
   val apacheCommonsEmail = "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
-  val apacheHttpClient = "org.apache.httpcomponents" % "httpclient" % Version.apacheHttpClient
-  val apacheHttpCore = "org.apache.httpcomponents" % "httpcore" % Version.apacheHttpCore
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsCoreSdk = "com.amazonaws" % "aws-java-sdk-core" % Version.awsCoreSdk
@@ -162,6 +158,7 @@ object Dependencies {
   val geotrellisServerOpenGIS = "com.azavea.geotrellis" %% "geotrellis-server-opengis" % Version.geotrellisServer
   val geotrellisServerStac = "com.azavea.geotrellis" %% "geotrellis-server-stac" % Version.geotrellisServer
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
+  val geotrellisStore = "org.locationtech.geotrellis" %% "geotrellis-store" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
   val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
   val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"

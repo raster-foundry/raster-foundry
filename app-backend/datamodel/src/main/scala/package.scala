@@ -3,7 +3,7 @@ package com.rasterfoundry
 import cats.syntax.either._
 import geotrellis.proj4.{io => _, _}
 import geotrellis.raster.render.{RGB, RGBA}
-import geotrellis.raster.{CellType, GridExtent}
+import geotrellis.raster.GridExtent
 import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import geotrellis.vector.{io => _, _}
 import io.circe._
@@ -22,16 +22,6 @@ import java.util.UUID
 
 @SuppressWarnings(Array("CatchException"))
 trait JsonCodecs extends GeoJsonImplicits {
-
-  implicit val cellTypeEncoder: Encoder[CellType] =
-    Encoder.encodeString.contramap[CellType](CellType.toName)
-
-  implicit val cellTypeDecoder: Decoder[CellType] = Decoder.decodeString.emap {
-    str =>
-      Either
-        .catchNonFatal(CellType.fromName(str))
-        .leftMap(_ => s"Unrecognized cell type: $str")
-  }
 
   implicit val gridExtentEncoder: Encoder[GridExtent[Long]] =
     (a: GridExtent[Long]) =>

@@ -2,8 +2,6 @@ package com.rasterfoundry.common.ast.codec
 
 import com.rasterfoundry.common.ast._
 
-import geotrellis.raster.histogram._
-import geotrellis.raster.io._
 import geotrellis.raster.mapalgebra.focal._
 import geotrellis.raster.render._
 import geotrellis.raster.summary.Statistics
@@ -127,15 +125,6 @@ trait MapAlgebraUtilityCodecs {
   implicit val colorRampEncoder: Encoder[ColorRamp] = new Encoder[ColorRamp] {
     def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
   }
-
-  implicit val histogramDecoder: Decoder[Histogram[Double]] =
-    Decoder[Json].map { js =>
-      js.noSpaces.parseJson.convertTo[Histogram[Double]]
-    }
-  implicit val histogramEncoder: Encoder[Histogram[Double]] =
-    new Encoder[Histogram[Double]] {
-      def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
-    }
 
   implicit val statsDecoder: Decoder[Statistics[Double]] = deriveDecoder
   implicit val statsEncoder: Encoder[Statistics[Double]] = deriveEncoder

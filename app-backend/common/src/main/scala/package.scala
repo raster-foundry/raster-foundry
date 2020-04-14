@@ -7,7 +7,6 @@ import _root_.io.circe.generic.semiauto._
 import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
 import cats.syntax.either._
-import geotrellis.proj4.CRS
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.compression._
@@ -17,27 +16,9 @@ import geotrellis.vector._
 import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import geotrellis.vector.{Extent, MultiPolygon}
 
-import scala.util.Try
-
 import java.nio.ByteOrder
 
 package object common extends GeoJsonImplicits {
-
-  implicit val crsEncoder: Encoder[CRS] =
-    Encoder.encodeString.contramap[CRS] { crs =>
-      crs.epsgCode
-        .map { c =>
-          s"epsg:$c"
-        }
-        .getOrElse(crs.toProj4String)
-    }
-
-  implicit val crsDecoder: Decoder[CRS] =
-    Decoder.decodeString.emap { str =>
-      Either
-        .catchNonFatal(Try(CRS.fromName(str)) getOrElse CRS.fromString(str))
-        .leftMap(_ => "CRS")
-    }
 
   implicit val extentEncoder: Encoder[Extent] =
     new Encoder[Extent] {

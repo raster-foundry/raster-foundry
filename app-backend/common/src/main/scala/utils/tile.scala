@@ -23,19 +23,19 @@ object TileUtils extends LazyLogging {
 
   def fromPointToLatLng(pointCoords: Point): Point = {
     Point(
-      x = (pointCoords.x - 128.0) / (tileSize / 360.0),
+      x = (pointCoords.getX - 128.0) / (tileSize / 360.0),
       y = (2 * math.atan(math.exp(
-        (pointCoords.y - 128.0) / -(tileSize / (2 * math.Pi)))) - math.Pi / 2.0) / (math.Pi / 180.0)
+        (pointCoords.getY - 128.0) / -(tileSize / (2 * math.Pi)))) - math.Pi / 2.0) / (math.Pi / 180.0)
     )
   }
 
   def fromLatLngToPoint(lngLatCoords: Point): Point = {
     val sinY = math.min(
-      math.max(math.sin(lngLatCoords.y * (math.Pi / 180)), -.9999),
+      math.max(math.sin(lngLatCoords.getY * (math.Pi / 180)), -.9999),
       .9999)
 
     Point(
-      x = 128.0 + lngLatCoords.x * (tileSize / 360.0),
+      x = 128.0 + lngLatCoords.getX * (tileSize / 360.0),
       y = 128.0 + 0.5 * math
         .log((1 + sinY) / (1 - sinY)) * -(tileSize / (2 * math.Pi))
     )
@@ -65,15 +65,15 @@ object TileUtils extends LazyLogging {
         y = normalizedTile.y.toDouble * scale + scale
       )
     )
-    val polygon = Extent(se.x, nw.y, nw.x, se.y).toPolygon()
+    val polygon = Extent(se.getX, nw.getY, nw.getX, se.getY).toPolygon()
     Projected(polygon, 4326).reproject(LatLng, WebMercator)(3857)
   }
 
   def getTileAtLatLng(lngLatCoords: Point, zoom: Int): TileCoordinates = {
     val scale = tileSize / math.pow(2, zoom)
     val point = this.fromLatLngToPoint(lngLatCoords)
-    TileCoordinates(x = math.floor(point.x / scale).toInt,
-                    y = math.floor(point.y / scale).toInt,
+    TileCoordinates(x = math.floor(point.getX / scale).toInt,
+                    y = math.floor(point.getY / scale).toInt,
                     z = zoom)
   }
 }

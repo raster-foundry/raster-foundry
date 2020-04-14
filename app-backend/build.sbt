@@ -307,8 +307,6 @@ lazy val common = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.apacheHttpClient,
-      Dependencies.apacheHttpCore,
       Dependencies.awsBatchSdk,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
@@ -326,11 +324,11 @@ lazy val common = project
       Dependencies.geotrellisContribVLM,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisS3,
-      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisStore,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisVector,
       Dependencies.geotrellisVectorTestkit,
+      Dependencies.jts,
       Dependencies.logbackClassic % Runtime,
       Dependencies.mamlJvm,
       Dependencies.monocleCore,
@@ -565,8 +563,6 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
   .settings(
     fork in run := true,
     libraryDependencies ++= Seq(
-      Dependencies.apacheHttpClient,
-      Dependencies.apacheHttpCore,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.catsCore,

@@ -5,7 +5,6 @@ import com.rasterfoundry.datamodel.SingleBandOptions
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
-import geotrellis.raster.histogram._
 import geotrellis.raster.render.{ColorMap, ColorRamp, _}
 
 object ColorRampMosaic extends LazyLogging {

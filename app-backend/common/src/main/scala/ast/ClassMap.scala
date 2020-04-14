@@ -1,7 +1,7 @@
 package com.rasterfoundry.common.ast
 
 import geotrellis.raster._
-import geotrellis.raster.render._
+import geotrellis.raster.render.{BreakMap, ClassBoundaryType, LessThanOrEqualTo, MapStrategy}
 import spire.std.any._
 
 final case class ClassMap(
@@ -11,10 +11,12 @@ final case class ClassMap(
   val options: ClassMap.Options = ClassMap.Options()
 
   lazy val mapStrategy =
-    new MapStrategy(options.boundaryType,
-                    options.ndValue,
-                    options.fallback,
-                    false)
+    new MapStrategy(
+      options.boundaryType,
+      options.ndValue,
+      options.fallback,
+      false
+    )
 
   def toBreakMap =
     new BreakMap(classifications, mapStrategy, { i: Double =>

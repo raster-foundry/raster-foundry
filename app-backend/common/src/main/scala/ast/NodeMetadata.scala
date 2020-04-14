@@ -3,7 +3,7 @@ package com.rasterfoundry.common.ast
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec
 import com.rasterfoundry.datamodel._
 
-import geotrellis.raster.histogram._
+import geotrellis.raster.{io => _, _}
 import geotrellis.raster.render._
 import io.circe._
 
