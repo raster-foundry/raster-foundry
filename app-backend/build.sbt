@@ -361,6 +361,7 @@ lazy val datamodel = project
       Dependencies.circeOptics,
       Dependencies.circeParser,
       Dependencies.circeTest,
+      Dependencies.disciplineScalatest,
       Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,

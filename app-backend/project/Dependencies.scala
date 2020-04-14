@@ -33,6 +33,7 @@ object Version {
   val commonsIO = "2.6"
   val cron4s = "0.6.0"
   val decline = "0.6.0"
+  val disciplineScalatest = "1.0.1"
   val dnsJava = "2.1.8"
   val doobie = "0.8.0"
   val dropbox = "3.0.9"
@@ -69,10 +70,10 @@ object Version {
   val rollbar = "1.4.0"
   val scaffeine = "2.6.0"
   val scala = "2.12.10"
-  val scalaCheck = "1.14.0"
+  val scalaCheck = "1.14.1"
   val scalaCsv = "1.3.6"
   val scalaLogging = "3.9.0"
-  val scalaTest = "3.0.1"
+  val scalaTest = "3.1.1"
   val scalaXml = "1.2.0"
   val scalacache = "0.28.0"
   val scalajHttp = "2.4.1"
@@ -137,6 +138,7 @@ object Dependencies {
   val commonsIO = "commons-io" % "commons-io" % Version.commonsIO
   val cron4s = "com.github.alonsodomin.cron4s" %% "cron4s-core" % Version.cron4s
   val decline = "com.monovore" %% "decline" % Version.decline
+  val disciplineScalatest = "org.typelevel" %% "discipline-scalatest" % Version.disciplineScalatest % "test"
   val doobieCore = "org.tpolecat" %% "doobie-core" % Version.doobie
   val doobieFree = "org.tpolecat" %% "doobie-free" % Version.doobie
   val doobieHikari = "org.tpolecat" %% "doobie-hikari" % Version.doobie
