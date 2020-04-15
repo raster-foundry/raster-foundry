@@ -17,8 +17,10 @@ git.gitTagToVersionNumber in ThisBuild := { tag: String =>
   else None
 }
 
-scalafixDependencies in ThisBuild +=
-  "com.nequissimus" %% "sort-imports" % "0.3.2"
+scalafixDependencies in ThisBuild ++= Seq(
+  "com.nequissimus" %% "sort-imports" % "0.3.2",
+  "org.scalatest" %% "autofix" % "3.1.0.0"
+)
 
 cancelable in Global := true
 
@@ -418,7 +420,7 @@ lazy val db = project
       Dependencies.scalacacheCirce,
       Dependencies.scalacacheCore,
       Dependencies.scalacacheMemcached,
-      Dependencies.scalatest,
+      Dependencies.scalatestplusScalaCheck,
       Dependencies.shapeless,
       Dependencies.sourceCode,
       Dependencies.typesafeConfig

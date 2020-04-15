@@ -11,9 +11,11 @@ import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 class ToolRunDaoSpec
-    extends FunSuite
+    extends AnyFunSuite
     with Matchers
     with Checkers
     with DBTestConfig

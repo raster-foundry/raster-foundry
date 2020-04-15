@@ -7,8 +7,10 @@ import doobie.postgres.circe.jsonb.implicits._
 import io.circe._
 import io.circe.syntax._
 import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class CirceJsonbMetaSpec extends FunSpec with Matchers with DBTestConfig {
+class CirceJsonbMetaSpec extends AnyFunSpec with Matchers with DBTestConfig {
 
   case class JsonClass(id: Int, json: Json)
 

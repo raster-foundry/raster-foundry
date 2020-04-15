@@ -75,6 +75,7 @@ object Version {
   val scalaXml = "1.2.0"
   val scalacache = "0.28.0"
   val scalajHttp = "2.4.1"
+  val scalatestPlus = "3.1.1.1"
   val scapegoat = "1.3.7"
   val scopt = "3.5.0"
   val slf4j = "1.7.25"
@@ -204,6 +205,7 @@ object Dependencies {
   val scalaCsv = "com.github.tototoshi" %% "scala-csv" % Version.scalaCsv
   val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
+  val scalatestplusScalaCheck = "org.scalatestplus" %% "scalacheck-1-14" % Version.scalatestPlus % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
   val slf4j = "org.slf4j" % "slf4j-api" % Version.slf4j
