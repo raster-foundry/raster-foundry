@@ -9,7 +9,6 @@ import java.net._
 object UdpClient {
 
   val printer = Printer(
-    preserveOrder = true,
     dropNullValues = true,
     indent = ""
   )
@@ -19,7 +18,7 @@ object UdpClient {
 
   def write[F[_]](segment: Segment[F])(implicit sf: Sync[F]): F[Unit] =
     Sync[F].delay {
-      val segmentJson = printer.pretty(segment.asJson)
+      val segmentJson = printer.print(segment.asJson)
       val versionString = """{"format": "json", "version": 1}"""
       val payload = s"$versionString\n$segmentJson".getBytes
       val packet = new DatagramPacket(payload, payload.length, address)
