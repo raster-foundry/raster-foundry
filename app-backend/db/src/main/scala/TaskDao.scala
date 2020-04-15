@@ -9,7 +9,6 @@ import cats.data.{NonEmptyList, OptionT}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javatime._
 import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 import geotrellis.vector.{Geometry, Projected}
@@ -17,6 +16,7 @@ import shapeless._
 
 import scala.concurrent.duration._
 
+import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
 
@@ -220,8 +220,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       user: User
   ): Fragment = {
     fr"""(
-        ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id},
-        ${tfc.properties.status}, null, null, ${tfc.geometry}, ${tfc.properties.annotationProjectId}
+        ${UUID.randomUUID}, ${Timestamp.from(Instant.now)}, ${user.id}, ${Timestamp
+      .from(Instant.now)},
+        ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
+        ${tfc.properties.annotationProjectId}
     )"""
   }
 
@@ -544,9 +546,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               UUID.randomUUID(),
               Task.TaskProperties(
                 UUID.randomUUID(),
-                Instant.now(),
+                Timestamp.from(Instant.now()),
                 user.id,
-                Instant.now(),
+                Timestamp.from(Instant.now()),
                 user.id,
                 geomWithStatus.status,
                 None,
@@ -629,7 +631,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           )
         )
         .filter(
-          fr"locked_on <= ${Instant.now.minusMillis(taskExpiration.toMillis)}"
+          fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
         )
         .list
       _ <- stuckTasks traverse { task =>

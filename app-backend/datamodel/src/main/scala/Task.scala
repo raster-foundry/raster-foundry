@@ -5,18 +5,18 @@ import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
-import java.time.Instant
+import java.sql.Timestamp
 import java.util.UUID
 
 case class Task(
     id: UUID,
-    createdAt: Instant,
+    createdAt: Timestamp,
     createdBy: String,
-    modifiedAt: Instant,
+    modifiedAt: Timestamp,
     owner: String,
     status: TaskStatus,
     lockedBy: Option[String],
-    lockedOn: Option[Instant],
+    lockedOn: Option[Timestamp],
     geometry: Projected[Geometry],
     annotationProjectId: UUID
 ) {
@@ -47,13 +47,13 @@ object Task {
 
   final case class TaskProperties(
       id: UUID,
-      createdAt: Instant,
+      createdAt: Timestamp,
       createdBy: String,
-      modifiedAt: Instant,
+      modifiedAt: Timestamp,
       owner: String,
       status: TaskStatus,
       lockedBy: Option[String],
-      lockedOn: Option[Instant],
+      lockedOn: Option[Timestamp],
       actions: List[TaskActionStamp],
       annotationProjectId: UUID
   ) {

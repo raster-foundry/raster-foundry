@@ -4,12 +4,12 @@ import geotrellis.vector.{Geometry, Projected}
 import io.circe._
 import io.circe.generic.semiauto._
 
-import java.time.Instant
+import java.sql.Timestamp
 import java.util.UUID
 
 final case class AnnotationProject(
     id: UUID,
-    createdAt: Instant,
+    createdAt: Timestamp,
     createdBy: String,
     name: String,
     projectType: AnnotationProjectType,
@@ -68,7 +68,7 @@ object AnnotationProject {
 
   final case class WithRelated(
       id: UUID,
-      createdAt: Instant,
+      createdAt: Timestamp,
       createdBy: String,
       name: String,
       projectType: AnnotationProjectType,
@@ -150,7 +150,7 @@ object AnnotationProject {
 
   final case class WithRelatedAndLabelClassSummary(
       id: UUID,
-      createdAt: Instant,
+      createdAt: Timestamp,
       createdBy: String,
       name: String,
       projectType: AnnotationProjectType,
