@@ -403,11 +403,11 @@ lazy val db = project
       Dependencies.geotrellisContribGDAL,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisS3,
-      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisStore,
       Dependencies.geotrellisVector,
       Dependencies.guava,
       Dependencies.hikariCP,
+      Dependencies.jts,
       Dependencies.mamlJvm,
       Dependencies.postgis,
       Dependencies.postgres,
@@ -421,7 +421,6 @@ lazy val db = project
       Dependencies.scalatest,
       Dependencies.shapeless,
       Dependencies.sourceCode,
-      Dependencies.spray,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })

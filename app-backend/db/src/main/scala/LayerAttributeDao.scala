@@ -11,13 +11,11 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
-import geotrellis.raster.histogram.Histogram
+import geotrellis.raster.Histogram
 import geotrellis.raster.io.json._
-import geotrellis.spark.LayerId
+import geotrellis.store.LayerId
 import scalacache.CatsEffect.modes._
 import scalacache._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
 
 import java.util.UUID
 
@@ -27,25 +25,32 @@ final case class LayerAttributeDao()
     with LazyLogging {
   import Cache.HistogramCache._
 
-  def getHistogram(layerId: UUID,
-                   xa: Transactor[IO]): IO[Option[Array[Histogram[Double]]]] =
+  def getHistogram(
+      layerId: UUID,
+      xa: Transactor[IO]
+  ): IO[Option[Array[Histogram[Double]]]] =
     Cache.getOptionCache(s"histogram:$layerId") {
       logger.debug(s"Getting histogram from database")
       LayerAttributeDao
         .getAttribute(LayerId(layerId.toString, 0), "histogram")
         .transact(xa)
-        .map(_.map(attr =>
-          attr.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]))
+        .map(
+          _.flatMap(
+            layerAttribute =>
+              layerAttribute.value.as[Array[Histogram[Double]]].toOption
+          )
+        )
     }
 
   def getProjectLayerHistogram(
       projectLayerId: UUID,
-      xa: Transactor[IO]): IO[List[Array[Histogram[Double]]]] = {
+      xa: Transactor[IO]
+  ): IO[List[Array[Histogram[Double]]]] = {
     LayerAttributeDao
       .getProjectLayerHistogram(projectLayerId)
       .transact(xa)
-      .map(_.map({ attr =>
-        attr.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]
+      .map(_.flatMap({ layerAttribute =>
+        layerAttribute.value.as[Array[Histogram[Double]]].toOption
       }))
   }
 }
@@ -61,7 +66,8 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
     """ ++ tableF
 
   def getProjectLayerHistogram(
-      projectLayerId: UUID): ConnectionIO[List[LayerAttribute]] = {
+      projectLayerId: UUID
+  ): ConnectionIO[List[LayerAttribute]] = {
     query
       .filter(fr"name = 'histogram'")
       .filter(fr"zoom = 0")
@@ -73,7 +79,8 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
 
   def unsafeGetAttribute(
       layerId: LayerId,
-      attributeName: String): ConnectionIO[LayerAttribute] = {
+      attributeName: String
+  ): ConnectionIO[LayerAttribute] = {
     query
       .filter(fr"name = ${attributeName}")
       .filter(fr"zoom = ${layerId.zoom}")
@@ -83,7 +90,8 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
 
   def getAttribute(
       layerId: LayerId,
-      attributeName: String): ConnectionIO[Option[LayerAttribute]] = {
+      attributeName: String
+  ): ConnectionIO[Option[LayerAttribute]] = {
     query
       .filter(fr"name = ${attributeName}")
       .filter(fr"zoom = ${layerId.zoom}")
@@ -92,12 +100,14 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
   }
 
   def listAllAttributes(
-      attributeName: String): ConnectionIO[List[LayerAttribute]] = {
+      attributeName: String
+  ): ConnectionIO[List[LayerAttribute]] = {
     query.filter(fr"name = ${attributeName}").list
   }
 
   def insertLayerAttribute(
-      layerAttribute: LayerAttribute): ConnectionIO[LayerAttribute] = {
+      layerAttribute: LayerAttribute
+  ): ConnectionIO[LayerAttribute] = {
     // This insert includes conflict handling, because if we re-ingest a scene, its layerattributes should already
     // be in the db.
     val insertStatement = fr"INSERT into" ++ tableF ++
@@ -107,10 +117,12 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
           (${layerAttribute.layerName}, ${layerAttribute.zoom}, ${layerAttribute.name}, ${layerAttribute.value})
       ON CONFLICT (layer_name, zoom, name) DO UPDATE set value = ${layerAttribute.value}
       """
-    insertStatement.update.withUniqueGeneratedKeys[LayerAttribute]("layer_name",
-                                                                   "zoom",
-                                                                   "name",
-                                                                   "value")
+    insertStatement.update.withUniqueGeneratedKeys[LayerAttribute](
+      "layer_name",
+      "zoom",
+      "name",
+      "value"
+    )
   }
 
   def layerExists(layerId: LayerId): ConnectionIO[Boolean] = {
@@ -148,7 +160,8 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
   }
 
   def maxZoomsForLayers(
-      layerNames: Set[String]): ConnectionIO[List[(String, Int)]] = {
+      layerNames: Set[String]
+  ): ConnectionIO[List[(String, Int)]] = {
     val f1 = layerNames.toList.toNel.map(lns => in(fr"layer_name", lns))
     (fr"SELECT layer_name, COALESCE(MAX(zoom), 0) as zoom FROM" ++ tableF ++ whereAndOpt(
       f1
@@ -162,7 +175,8 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       case h :: Nil => h
       case _ =>
         throw new Exception(
-          s"Several or zero max zooms found for layer $layerName")
+          s"Several or zero max zooms found for layer $layerName"
+        )
     }
   }
 

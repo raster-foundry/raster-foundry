@@ -7,6 +7,7 @@ import cats.Applicative
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 
 import java.sql.Timestamp

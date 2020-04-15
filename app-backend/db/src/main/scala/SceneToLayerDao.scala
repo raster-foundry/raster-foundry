@@ -181,11 +181,11 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
           results.filter { stl =>
             ((stl.dataFootprint, polygonOption) match {
               case (Some(footprint), Some(polygon)) =>
-                val footprintEnvelope = footprint.envelope
+                val footprintEnvelope = footprint.geom.extent
                 val footprintEnvelopeBuffered = footprintEnvelope.buffer(
                   footprintEnvelope.width / Config.sceneSearch.bufferPercentage
                 )
-                val polygonEnvelope = polygon.envelope
+                val polygonEnvelope = polygon.geom.extent
                 footprintEnvelopeBuffered.intersects(polygonEnvelope)
               case (None, Some(_)) => false
               case _               => true
@@ -214,14 +214,10 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
                 ),
                 stp.sceneType,
                 stp.ingestLocation,
-                stp.dataFootprint flatMap {
-                  _.geom.as[MultiPolygon]
-                },
+                stp.dataFootprint map { _.geom },
                 stp.isSingleBand,
                 stp.singleBandOptions,
-                stp.mask flatMap {
-                  _.geom.as[MultiPolygon]
-                },
+                stp.mask map { _.geom },
                 stp.metadataFields,
                 stp.metadataFiles
               )
@@ -234,14 +230,10 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
               stp.colorCorrectParams,
               stp.sceneType,
               stp.ingestLocation,
-              stp.dataFootprint flatMap {
-                _.geom.as[MultiPolygon]
-              },
+              stp.dataFootprint map { _.geom },
               stp.isSingleBand,
               stp.singleBandOptions,
-              stp.mask flatMap {
-                _.as[MultiPolygon]
-              },
+              stp.mask map { _.geom },
               stp.metadataFields,
               stp.metadataFiles
             )

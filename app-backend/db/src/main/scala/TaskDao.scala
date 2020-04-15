@@ -9,6 +9,8 @@ import cats.data.{NonEmptyList, OptionT}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javatime._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 import geotrellis.vector.{Geometry, Projected}
 import shapeless._

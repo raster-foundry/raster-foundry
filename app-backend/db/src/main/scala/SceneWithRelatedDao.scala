@@ -10,6 +10,7 @@ import cats.data._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
 

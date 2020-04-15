@@ -55,6 +55,8 @@ object RFTransactor {
           new ThreadFactoryBuilder().setNameFormat("db-transaction-%d").build()
         )
       )
+
+    val transactionBlocker: Blocker = Blocker.liftExecutionContext(transactionEC)
   }
 
   def buildTransactor(
@@ -63,7 +65,7 @@ object RFTransactor {
     HikariTransactor.apply[IO](
       config.hikariDataSource,
       config.connectionEC,
-      config.transactionEC
+      config.transactionBlocker
     )
   }
 
@@ -76,7 +78,7 @@ object RFTransactor {
       config.user,
       config.password,
       config.connectionEC,
-      config.transactionEC
+      config.transactionBlocker
     )
   }
 

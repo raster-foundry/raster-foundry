@@ -9,6 +9,7 @@ import cats.data._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import scalacache.CatsEffect.modes._
 import scalacache._
 
@@ -193,7 +194,7 @@ object UserDao extends Dao[User] with Sanitization {
     (fr"INSERT INTO users (" ++ insertFieldsF ++ fr""")
        VALUES
           (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, '', '', false,
-          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, 
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true,
           ${UserVisibility.Private.toString}::user_visibility, DEFAULT, ${newUser.scope})
        """).update.withUniqueGeneratedKeys[User](
       fieldNames: _*

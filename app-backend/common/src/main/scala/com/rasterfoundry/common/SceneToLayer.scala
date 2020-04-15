@@ -3,7 +3,7 @@ package com.rasterfoundry.common
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel._
 
-import geotrellis.vector.{Geometry, Projected}
+import geotrellis.vector.{MultiPolygon, Projected}
 import io.circe._
 import io.circe.generic.JsonCodec
 
@@ -35,10 +35,10 @@ final case class SceneToLayerWithSceneType(
     colorCorrectParams: ColorCorrect.Params,
     sceneType: Option[SceneType] = None,
     ingestLocation: Option[String],
-    dataFootprint: Option[Projected[Geometry]],
+    dataFootprint: Option[Projected[MultiPolygon]],
     isSingleBand: Boolean,
     singleBandOptions: Option[Json],
-    mask: Option[Projected[Geometry]],
+    mask: Option[Projected[MultiPolygon]],
     metadataFields: SceneMetadataFields,
     metadataFiles: List[String]
 )

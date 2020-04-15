@@ -6,8 +6,11 @@ import com.rasterfoundry.database.notification.{GroupNotifier, MessageType}
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.{Order, PageRequest}
 
-import cats._, cats.implicits._
-import doobie._, doobie.implicits._
+import cats._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 
 import java.util.UUID

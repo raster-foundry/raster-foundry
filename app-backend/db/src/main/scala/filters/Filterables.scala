@@ -9,6 +9,7 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments.in
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 import geotrellis.vector.{io => _, _}
 
