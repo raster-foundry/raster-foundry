@@ -11,7 +11,7 @@ import com.rasterfoundry.notification.intercom._
 
 import akka.http.scaladsl.server._
 import cats.data.OptionT
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -32,6 +32,7 @@ trait AnnotationProjectPermissionRoutes
   val xa: Transactor[IO]
 
   implicit val sttpBackend = AsyncHttpClientCatsBackend[IO]()
+  implicit val contextShift: ContextShift[IO]
   private val intercomNotifier = new LiveIntercomNotifier[IO]
 
   private def getSharer(sharingUser: User): String =

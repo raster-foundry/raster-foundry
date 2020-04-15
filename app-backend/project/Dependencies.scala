@@ -3,9 +3,9 @@ import scala.util.Properties
 import sbt._
 
 object Version {
-  val akka = "2.5.16"
-  val akkaCirceJson = "1.22.0"
-  val akkaHttp = "10.1.5"
+  val akka = "2.6.4"
+  val akkaCirceJson = "1.32.0"
+  val akkaHttp = "10.1.11"
   val akkaHttpCors = "0.2.2"
   val akkaSlf4j = "2.4.13"
   val apacheAvro = "1.8.2"
@@ -25,7 +25,7 @@ object Version {
   val catsMeow = "0.4.0"
   val catsScalacheck = "0.2.0"
   val chronoscala = "0.3.2"
-  val circe = "0.12.2"
+  val circe = "0.13.0"
   val circeOptics = "0.12.0"
   val commonsCodec = "1.11"
   val commonsIO = "2.6"
@@ -66,7 +66,7 @@ object Version {
   val postgres = "42.2.9"
   val refined = "0.9.13"
   val rollbar = "1.4.0"
-  val scaffeine = "2.6.0"
+  val scaffeine = "3.1.0"
   val scala = "2.12.10"
   val scalaCheck = "1.14.1"
   val scalaCsv = "1.3.6"
@@ -87,7 +87,7 @@ object Version {
   val spray = "1.3.4"
   val sttp = "1.5.19"
   val sup = "0.6.0"
-  val typesafeConfig = "1.3.4"
+  val typesafeConfig = "1.4.0"
   val vault = "1.0.0"
 }
 

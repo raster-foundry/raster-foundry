@@ -1,8 +1,7 @@
 package com.rasterfoundry.datamodel
 
-import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.{HeadObjectRequest}
-import com.amazonaws.services.s3.AmazonS3URI
+import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3}
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest
 import io.circe._
 import io.circe.generic.JsonCodec
 
@@ -39,7 +38,7 @@ object Upload {
   def create = Upload.apply _
 
   def getBytesUploaded(
-      s3Client: S3Client,
+      s3Client: AmazonS3,
       dataBucket: String,
       files: List[String],
       uploadStatus: UploadStatus,
@@ -53,14 +52,13 @@ object Upload {
         .map(
           s3Uri =>
             s3Client
-              .headObject(
-                HeadObjectRequest
-                  .builder()
-                  .bucket(s3Uri.getBucket())
-                  .key(s3Uri.getKey())
-                  .build()
+              .getObjectMetadata(
+                new GetObjectMetadataRequest(
+                  s3Uri.getBucket,
+                  s3Uri.getKey
+                )
               )
-              .contentLength.toDouble
+              .getContentLength()
         )
         .sum
         .toLong

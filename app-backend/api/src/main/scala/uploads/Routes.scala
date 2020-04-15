@@ -15,7 +15,6 @@ import com.amazonaws.HttpMethod
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import geotrellis.spark.io.s3.S3Client
 
 import java.util.UUID
 
@@ -145,7 +144,7 @@ trait UploadRoutes
           }
 
         val bytesUploaded = Upload.getBytesUploaded(
-          S3Client.DEFAULT,
+          s3.client,
           dataBucket,
           newUpload.files,
           newUpload.uploadStatus,
@@ -178,7 +177,7 @@ trait UploadRoutes
       } {
         entity(as[Upload]) { updateUpload =>
           val updatedBytesUploaded = Upload.getBytesUploaded(
-            S3Client.DEFAULT,
+            s3.client,
             dataBucket,
             updateUpload.files,
             updateUpload.uploadStatus,

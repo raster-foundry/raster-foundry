@@ -6,7 +6,6 @@ import com.rasterfoundry.database.util.RFTransactor
 
 import akka.actor.{ActorSystem, Terminated}
 import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
 import cats.effect.{ContextShift, IO}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.implicits._
@@ -17,13 +16,11 @@ import java.util.concurrent.Executors
 
 object AkkaSystem {
   implicit val system = ActorSystem("rf-system")
-  implicit val materializer = ActorMaterializer()
 }
 
 object Main extends App with Config with Router {
 
   implicit val system = AkkaSystem.system
-  implicit val materializer = AkkaSystem.materializer
 
   implicit val contextShift: ContextShift[IO] =
     IO.contextShift(

@@ -277,7 +277,7 @@ trait ProjectLayerRoutes
         } {
           entity(as[Seq[UUID]]) { sceneIds =>
             if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-              complete(StatusCodes.RequestEntityTooLarge)
+              complete(StatusCodes.PayloadTooLarge)
             }
 
             onSuccess(

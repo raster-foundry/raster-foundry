@@ -20,7 +20,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.Applicative
 import cats.data.NonEmptyList
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -50,6 +50,7 @@ trait ProjectRoutes
 
   val xa: Transactor[IO]
 
+  implicit val contextShift: ContextShift[IO]
   val projectRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
@@ -598,7 +599,7 @@ trait ProjectRoutes
       } {
         entity(as[List[UUID]]) { sceneIds =>
           if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-            complete(StatusCodes.RequestEntityTooLarge)
+            complete(StatusCodes.PayloadTooLarge)
           }
 
           val acceptScenesIO = for {
@@ -688,7 +689,7 @@ trait ProjectRoutes
       } {
         entity(as[Seq[UUID]]) { sceneIds =>
           if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-            complete(StatusCodes.RequestEntityTooLarge)
+            complete(StatusCodes.PayloadTooLarge)
           }
 
           val setOrderIO = for {
@@ -872,7 +873,7 @@ trait ProjectRoutes
         } {
           entity(as[NonEmptyList[UUID]]) { sceneIds =>
             if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-              complete(StatusCodes.RequestEntityTooLarge)
+              complete(StatusCodes.PayloadTooLarge)
             }
 
             val scenesAdded = for {
@@ -911,7 +912,7 @@ trait ProjectRoutes
         } {
           entity(as[Seq[UUID]]) { sceneIds =>
             if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-              complete(StatusCodes.RequestEntityTooLarge)
+              complete(StatusCodes.PayloadTooLarge)
             }
 
             sceneIds.toList.toNel match {
@@ -949,7 +950,7 @@ trait ProjectRoutes
       } {
         entity(as[Seq[UUID]]) { sceneIds =>
           if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-            complete(StatusCodes.RequestEntityTooLarge)
+            complete(StatusCodes.PayloadTooLarge)
           }
 
           val deleteIO = for {
