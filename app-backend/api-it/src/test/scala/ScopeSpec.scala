@@ -19,7 +19,7 @@ import com.typesafe.config.ConfigFactory
 import io.circe._
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.syntax._
-import org.scalatest.FunSpec
+import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import com.github.tototoshi.csv._
 
@@ -83,7 +83,7 @@ object TokenResponse {
   implicit val decTokenResponse: Decoder[TokenResponse] = deriveDecoder
 }
 
-class ScopeSpec extends FunSpec {
+class ScopeSpec extends AnyFunSpec {
 
   implicit val okHttpBackend = OkHttpSyncBackend()
 

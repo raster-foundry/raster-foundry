@@ -297,6 +297,12 @@ lazy val apiIntegrationTest = project
     )
   })
   .settings(Defaults.itSettings)
+  .settings(
+    unusedCompileDependenciesFilter -= moduleFilter(
+      "com.sksamuel.scapegoat",
+      "scalac-scapegoat-plugin"
+    )
+  )
 
 /**
   * Common Settings
@@ -370,7 +376,7 @@ lazy val datamodel = project
       Dependencies.monocleCore,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.spireMath,
+      Dependencies.spireMath
     ) ++ loggingDependencies
   })
 
