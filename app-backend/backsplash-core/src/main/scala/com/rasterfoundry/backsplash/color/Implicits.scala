@@ -2,9 +2,8 @@ package com.rasterfoundry.backsplash.color
 
 import com.rasterfoundry.datamodel._
 
-import geotrellis.raster.render._
-import geotrellis.raster.render.png._
 import geotrellis.raster.{io => _, _}
+import geotrellis.raster.render.RGBA
 import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 
 import scala.math.abs

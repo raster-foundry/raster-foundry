@@ -7,7 +7,7 @@ import cats.data.Validated._
 import cats.data.{NonEmptyList => _}
 import cats.effect._
 import cats.implicits._
-import geotrellis.contrib.vlm.MosaicRasterSource
+import geotrellis.raster.MosaicRasterSource
 import geotrellis.proj4.CRS
 import geotrellis.raster.histogram._
 import geotrellis.server._

@@ -5,12 +5,7 @@ import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import cats.data.{NonEmptyList => NEL}
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff._
-import geotrellis.raster.io.geotiff.reader.GeoTiffReader.GeoTiffInfo
-import geotrellis.raster.io.geotiff.reader.{
-  GeoTiffReader,
-  MalformedGeoTiffException,
-  TiffTagsReader
-}
+import geotrellis.raster.io.geotiff.reader.{GeoTiffInfo, MalformedGeoTiffException}
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.raster.io.geotiff.util._
 import geotrellis.util.ByteReader
@@ -61,8 +56,7 @@ object BacksplashGeotiffReader extends LazyLogging {
     * @param withOverviews
     * @return
     */
-  def getAllTiffTags(byteReader: ByteReader,
-                     withOverviews: Boolean): List[TiffTags] = {
+    def getAllTiffTags(byteReader: ByteReader, withOverviews: Boolean): List[TiffTags] = {
     val oldPos = byteReader.position
     try {
       byteReader.position(0)
@@ -89,13 +83,13 @@ object BacksplashGeotiffReader extends LazyLogging {
         tiffType match {
           case Tiff =>
             val smallStart = byteReader.getInt
-            TiffTagsReader.read(byteReader, smallStart.toLong)(
+            TiffTags.read(byteReader, smallStart.toLong)(
               IntTiffTagOffsetSize
             )
           case _ =>
             byteReader.position(8)
             val bigStart = byteReader.getLong
-            TiffTagsReader.read(byteReader, bigStart)(LongTiffTagOffsetSize)
+            TiffTags.read(byteReader, bigStart)(LongTiffTagOffsetSize)
         }
 
       // IFD overviews may contain not all tags required for a proper work with it
@@ -107,7 +101,7 @@ object BacksplashGeotiffReader extends LazyLogging {
             case Tiff =>
               var ifdOffset = byteReader.getInt
               while (ifdOffset > 0) {
-                tiffTagsBuffer += TiffTagsReader.read(byteReader, ifdOffset)(
+                tiffTagsBuffer += TiffTags.read(byteReader, ifdOffset.toLong)(
                   IntTiffTagOffsetSize
                 )
                 ifdOffset = byteReader.getInt
@@ -115,7 +109,7 @@ object BacksplashGeotiffReader extends LazyLogging {
             case _ =>
               var ifdOffset = byteReader.getLong
               while (ifdOffset > 0) {
-                tiffTagsBuffer += TiffTagsReader.read(byteReader, ifdOffset)(
+                tiffTagsBuffer += TiffTags.read(byteReader, ifdOffset)(
                   LongTiffTagOffsetSize
                 )
                 ifdOffset = byteReader.getLong
@@ -131,18 +125,20 @@ object BacksplashGeotiffReader extends LazyLogging {
     }
   }
 
-  /** Helper function that gets a serializable BacksplashGeoTiffInfo given
+  /** Helper function that gets a serializable GeoTiffInfo given
     * a URI
     *
     * @param uri
     * @return
     */
-  def getBacksplashGeotiffInfo(uri: String): BacksplashGeoTiffInfo = {
-    val reader = getByteReader(uri)
-    val geoTiffInfo = GeoTiffReader.readGeoTiffInfo(reader, true, true)
+  def getGeotiffInfo(uri: String): BacksplashGeoTiffInfo = {
+    val reader      = getByteReader(uri)
+    val geoTiffInfo = GeoTiffInfo.read(reader, true, true)
     logger.debug(
-      s"Some Geotiff Info for $uri: COMPRESSION: ${geoTiffInfo.compression} SEGMENT LAYOUT: ${geoTiffInfo.segmentLayout}")
+      s"Some Geotiff Info for $uri: COMPRESSION: ${geoTiffInfo.compression} SEGMENT LAYOUT: ${geoTiffInfo.segmentLayout}"
+    )
     val tiffTags = NEL.fromListUnsafe(getAllTiffTags(reader, true))
     BacksplashGeoTiffInfo.fromGeotiffInfo(geoTiffInfo, tiffTags)
   }
+
 }

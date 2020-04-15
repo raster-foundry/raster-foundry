@@ -2,7 +2,7 @@ package com.rasterfoundry.backsplash
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.histogram.Histogram
-import geotrellis.vector.{MultiPolygon, Point}
+import geotrellis.vector.MultiPolygon
 import org.locationtech.spatial4j.io.GeohashUtils
 import scalacache._
 import scalacache.caffeine._
@@ -17,9 +17,8 @@ object Cache extends LazyLogging {
         case opt: Option[_] =>
           opt flatMap {
             case mp: MultiPolygon =>
-              mp.centroid.as[Point] map { point =>
-                GeohashUtils.encodeLatLon(point.x, point.y, 15)
-              }
+              val centroid = mp.getCentroid()
+              Some(GeohashUtils.encodeLatLon(centroid.getX(), centroid.getY(), 15))
             case x => Some(x.toString)
           }
         case part => Some(part.toString)
