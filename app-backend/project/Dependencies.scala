@@ -41,8 +41,7 @@ object Version {
   val fs2 = "2.3.0"
   val fs2Cron = "0.2.2"
   val geotrellis = "3.3.0"
-  val geotrellisContrib = "3.16.1-M3"
-  val geotrellisServer = "3.4.0-9-geeb1ede-SNAPSHOT"
+  val geotrellisServer = "4.1.0"
   val guava = "20.0"
   val hadoop = "2.8.4"
   val hikariCP = "3.4.1"
@@ -55,7 +54,7 @@ object Version {
   val jts = "1.16.1"
   val log4cats = "1.0.1"
   val logback = "1.2.3"
-  val maml = "0.4.0"
+  val maml = "0.6.0"
   val monocle = "2.0.4"
   val newtype = "0.4.3"
   val nimbusJose = "0.6.0"
@@ -149,8 +148,6 @@ object Dependencies {
   val flyway = "org.flywaydb" % "flyway-core" % Version.flyway
   val fs2 = "co.fs2" %% "fs2-core" % Version.fs2
   val fs2Cron = "eu.timepit" %% "fs2-cron-core" % Version.fs2Cron
-  val geotrellisContribGDAL = "com.azavea.geotrellis" %% "geotrellis-contrib-gdal" % Version.geotrellisContrib
-  val geotrellisContribVLM = "com.azavea.geotrellis" %% "geotrellis-contrib-vlm" % Version.geotrellisContrib
   val geotrellisGdal = "org.locationtech.geotrellis" %% "geotrellis-gdal" % Version.geotrellis
   val geotrellisLayer = "org.locationtech.geotrellis" %% "geotrellis-layer" % Version.geotrellis
   val geotrellisProj4 = "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellis

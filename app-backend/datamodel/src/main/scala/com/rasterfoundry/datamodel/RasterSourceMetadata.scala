@@ -1,6 +1,6 @@
 package com.rasterfoundry.datamodel
 
-import geotrellis.contrib.vlm.gdal.GDALDataPath
+import geotrellis.raster.gdal.GDALPath
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellType, GridExtent}
 
@@ -16,7 +16,7 @@ import geotrellis.raster.{CellType, GridExtent}
   * @param gridExtent
   * @param resolutions
   */
-final case class RasterSourceMetadata(dataPath: GDALDataPath,
+final case class RasterSourceMetadata(dataPath: GDALPath,
                                       crs: CRS,
                                       bandCount: Int,
                                       cellType: CellType,

@@ -4,15 +4,15 @@ import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.datamodel.{ColorComposite, SingleBandOptions}
 
 import geotrellis.raster._
-import geotrellis.server.ogc.OutputFormat.Png
-import geotrellis.server.ogc.{OgcStyle, OutputFormat}
+import geotrellis.server.ogc.OutputFormat
+import geotrellis.server.ogc.style.OgcStyle
 
 object OgcStyles {
 
   private def toBytes(mbt: MultibandTile,
                       outputFormat: OutputFormat): Array[Byte] =
     outputFormat match {
-      case Png(_)           => mbt.renderPng.bytes
+      case OutputFormat.Png(_)           => mbt.renderPng.bytes
       case OutputFormat.Jpg => mbt.renderJpg.bytes
       // Not implementable without an extent, I think
       case OutputFormat.GeoTiff => ???

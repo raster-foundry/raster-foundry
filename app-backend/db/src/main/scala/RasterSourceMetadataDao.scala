@@ -6,7 +6,7 @@ import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.contrib.vlm.gdal.GDALDataPath
+import geotrellis.raster.gdal.GDALPath
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
 import geotrellis.vector.Extent
@@ -15,8 +15,8 @@ import java.util.UUID
 
 object RasterSourceMetadataDao extends CirceJsonbMeta {
 
-  implicit val dataPathMeta: Meta[GDALDataPath] =
-    Meta[String].timap(GDALDataPath.apply)(_.path)
+  implicit val dataPathMeta: Meta[GDALPath] =
+    Meta[String].timap(GDALPath.apply)(_.value)
 
   implicit val crsMeta: Meta[CRS] =
     Meta[String].timap(CRS.fromString)(_.toProj4String)

@@ -225,7 +225,7 @@ lazy val root = project
   )
 
 lazy val loggingDependencies = Seq(
-  Dependencies.scalaLogging % Runtime,
+  Dependencies.scalaLogging,
   Dependencies.logbackClassic % Runtime
 )
 
@@ -335,7 +335,6 @@ lazy val common = project
       Dependencies.circeTest,
       Dependencies.commonsIO,
       Dependencies.elasticacheClient,
-      Dependencies.geotrellisContribVLM,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisStore,
@@ -362,8 +361,6 @@ lazy val datamodel = project
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.awsS3,
-      Dependencies.awsS3SdkV2,
-      Dependencies.awsUtilsSdkV2,
       Dependencies.catsCore,
       Dependencies.catsKernel,
       Dependencies.catsLaws,
@@ -374,7 +371,7 @@ lazy val datamodel = project
       Dependencies.circeParser,
       Dependencies.circeTest,
       Dependencies.disciplineScalatest,
-      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisGdal,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisServerStac,
@@ -414,7 +411,7 @@ lazy val db = project
       Dependencies.elasticacheClient,
       Dependencies.flyway % Test,
       Dependencies.fs2,
-      Dependencies.geotrellisContribGDAL,
+      Dependencies.geotrellisGdal,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisStore,
@@ -471,8 +468,6 @@ lazy val batch = project
       Dependencies.ficus,
       Dependencies.fs2,
       Dependencies.fs2,
-      Dependencies.geotrellisContribGDAL,
-      Dependencies.geotrellisContribVLM,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisS3,
@@ -642,8 +637,6 @@ lazy val backsplashExport =
         Dependencies.circeShapes,
         Dependencies.commonsIO,
         Dependencies.decline,
-        Dependencies.geotrellisContribGDAL,
-        Dependencies.geotrellisContribVLM,
         Dependencies.geotrellisProj4,
         Dependencies.geotrellisRaster,
         Dependencies.geotrellisS3,
@@ -691,7 +684,6 @@ lazy val backsplashServer =
         Dependencies.doobieHikari,
         Dependencies.fs2,
         Dependencies.fs2Cron,
-        Dependencies.geotrellisContribVLM,
         Dependencies.geotrellisProj4,
         Dependencies.geotrellisRaster,
         Dependencies.geotrellisServer,
