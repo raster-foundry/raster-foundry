@@ -71,7 +71,6 @@ object Version {
   val scalaCsv = "1.3.6"
   val scalaLogging = "3.9.0"
   val scalaTest = "3.1.1"
-  val scalaXml = "1.2.0"
   val scalacache = "0.28.0"
   val scalajHttp = "2.4.1"
   val scalatestPlus = "3.1.1.1"
@@ -83,11 +82,10 @@ object Version {
   val spatial4j = "0.7"
   val spire = "0.16.0"
   val spireMath = "0.13.0"
-  val spray = "1.3.4"
   val sttp = "1.5.19"
   val sup = "0.7.0"
   val typesafeConfig = "1.4.0"
-  val vault = "1.0.0"
+  val vault = "2.0.0"
 }
 
 object Dependencies {
@@ -154,8 +152,6 @@ object Dependencies {
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea.geotrellis" %% "geotrellis-server-core" % Version.geotrellisServer
-  val geotrellisServerOgc = "com.azavea.geotrellis" %% "geotrellis-server-ogc" % Version.geotrellisServer
-  val geotrellisServerOpenGIS = "com.azavea.geotrellis" %% "geotrellis-server-opengis" % Version.geotrellisServer
   val geotrellisServerStac = "com.azavea.geotrellis" %% "geotrellis-server-stac" % Version.geotrellisServer
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val geotrellisStore = "org.locationtech.geotrellis" %% "geotrellis-store" % Version.geotrellis
@@ -195,7 +191,6 @@ object Dependencies {
   val scaffeine = "com.github.blemale" %% "scaffeine" % Version.scaffeine
   val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck % "test"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Version.scalaLogging
-  val scalaXml = "org.scala-lang.modules" %% "scala-xml" % Version.scalaXml
   val scalacacheCaffeine = "com.github.cb372" %% "scalacache-caffeine" % Version.scalacache
   val scalacacheCats = "com.github.cb372" %% "scalacache-cats-effect" % Version.scalacache
   val scalacacheCirce = "com.github.cb372" %% "scalacache-circe" % Version.scalacache
@@ -214,7 +209,6 @@ object Dependencies {
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spire = "org.typelevel" %% "spire" % Version.spire
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath
-  val spray = "io.spray" %% "spray-json" % Version.spray
   val sttpCatsBackend = "com.softwaremill.sttp" %% "async-http-client-backend-cats" % Version.sttp
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % Version.sttp
   val sttpCore = "com.softwaremill.sttp" %% "core" % Version.sttp

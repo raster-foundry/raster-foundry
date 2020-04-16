@@ -7,9 +7,7 @@ import geotrellis.raster.render._
 import geotrellis.raster.summary.Statistics
 import io.circe._
 import io.circe.generic.semiauto._
-import io.circe.parser._
 import io.circe.syntax._
-import spray.json._
 
 import scala.util.Try
 
@@ -128,14 +126,6 @@ trait MapAlgebraUtilityCodecs {
 
   implicit val statsDecoder: Decoder[Statistics[Double]] = deriveDecoder
   implicit val statsEncoder: Encoder[Statistics[Double]] = deriveEncoder
-
-  implicit val sprayJsonEncoder: Encoder[JsValue] = new Encoder[JsValue] {
-    def apply(jsvalue: JsValue): Json =
-      parse(jsvalue.compactPrint) match {
-        case Right(success) => success
-        case Left(fail)     => throw fail
-      }
-  }
 
   val defaultClassMapDecoder: Decoder[ClassMap] = deriveDecoder[ClassMap]
   val hexClassMapDecoder: Decoder[ClassMap] = new Decoder[ClassMap] {
