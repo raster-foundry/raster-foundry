@@ -15,7 +15,7 @@ import cats.data.OptionT
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.colisweb.tracing.core.TracingContextBuilder
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.CellSize

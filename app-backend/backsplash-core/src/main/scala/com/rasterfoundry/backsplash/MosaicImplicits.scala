@@ -12,7 +12,7 @@ import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
-import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.core.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
@@ -77,7 +77,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
   )(implicit contextShift: ContextShift[IO]): IO[Raster[MultibandTile]] = {
     type MBTTriple = (MultibandTile, SingleBandOptions.Params, Option[Double])
     val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
-    val ioMBTwithSBO: IO[List[MBTTriple]] = tracingContext.childSpan(
+    val ioMBTwithSBO: IO[List[MBTTriple]] = tracingContext.span(
       "renderMosaicSingleBand"
     ) use { context =>
       mosaic
@@ -100,7 +100,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         case None      => IO.raiseError(NoScenesException)
       }
       firstIm = mosaic.head
-      histograms <- tracingContext.childSpan("renderMosaicSingleBand.histogram") use {
+      histograms <- tracingContext.span("renderMosaicSingleBand.histogram") use {
         context =>
           firstIm.singleBandOptions map { _.band } map { bd =>
             histStore.projectLayerHistogram(
@@ -170,7 +170,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       tracingContext: TracingContext[IO]
   )(implicit contextShift: ContextShift[IO]): IO[Raster[MultibandTile]] = {
     val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
-    val ioMBT = tracingContext.childSpan("renderMosaic") use { context =>
+    val ioMBT = tracingContext.span("renderMosaic") use { context =>
       mosaic
         .parTraverse((relevant: BacksplashImage[IO]) => {
           val tags = Map(
@@ -181,12 +181,12 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
           )
 
           context
-            .childSpan("renderMosaicMultiband.renderBacksplashImage", tags) use {
+            .span("renderMosaicMultiband.renderBacksplashImage", tags) use {
             childContext =>
               for {
                 imFiber <- relevant.read(z, x, y, childContext).start
                 histsFiber <- {
-                  childContext.childSpan(
+                  childContext.span(
                     "renderMosaicMultiband.readHistogram",
                     tags
                   ) use { _ =>
@@ -195,7 +195,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                 }.start
                 (im, hists) <- (imFiber, histsFiber).tupled.join
                 resultTile <- childContext
-                  .childSpan("renderMosaicMultiband.colorCorrect") use {
+                  .span("renderMosaicMultiband.colorCorrect") use {
                   _ =>
                     IO {
                       im map { mbTile =>
@@ -239,12 +239,12 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
           val mosaic = {
             val mbtIO = self.flatMap {
               case (tracingContext, listBsi) =>
-                tracingContext.childSpan("getMergedRawMosaic") use {
+                tracingContext.span("getMergedRawMosaic") use {
                   childContext =>
                     val listIO = listBsi.parTraverse { bsi =>
                       bsi.read(z, x, y, childContext)
                     }
-                    childContext.childSpan("mergeRawTiles") use { _ =>
+                    childContext.span("mergeRawTiles") use { _ =>
                       listIO.map(_.flatten.reduceOption(_ merge _))
                     }
                 }
@@ -282,7 +282,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             bandCount = mosaic.head.subsetBands.length
             // for single band imagery, after color correction we have RGBA, so
             // the empty tile needs to be four band as well
-            rendered <- context.childSpan("paintedRender") use {
+            rendered <- context.span("paintedRender") use {
               renderContext =>
                 if (bandCount == 3) {
                   renderMosaicMultiband(mosaic, z, x, y, renderContext)
@@ -356,7 +356,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             mosaic <- if (bands.length == 3) {
               val bsm = self.map {
                 case (tracingContext, bsiList) => {
-                  tracingContext.childSpan("paintedMosaicExtentReification") use {
+                  tracingContext.span("paintedMosaicExtentReification") use {
                     childContext =>
                       bsiList parTraverse { relevant =>
                         val tags =
@@ -368,7 +368,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                           imFiber <- relevant
                             .read(extent, cs, childContext)
                             .start
-                          histsFiber <- childContext.childSpan(
+                          histsFiber <- childContext.span(
                             "layerHistogram",
                             tags
                           ) use { context =>
@@ -382,7 +382,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                           }
                           im <- imFiber.join
                           hists <- histsFiber.join
-                          renderedTile <- childContext.childSpan(
+                          renderedTile <- childContext.span(
                             "colorCorrect",
                             tags
                           ) use { _ =>
@@ -432,7 +432,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   histStore
                 )
                 (tracingContext, imageList) <- self
-                corrected <- tracingContext.childSpan(
+                corrected <- tracingContext.span(
                   "singleBandPaintedExtentReification"
                 ) use { childContext =>
                   imageList.parTraverse { bsi =>
@@ -479,11 +479,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         (extent: Extent, cs: CellSize) => {
           val mosaic = self.map {
             case (tracingContext, listBsi) =>
-              tracingContext.childSpan("rawMosaicExtentReification") use {
+              tracingContext.span("rawMosaicExtentReification") use {
                 childContext =>
                   for {
                     mbts <- {
-                      childContext.childSpan("rawMosaicExtentReification.reads") use {
+                      childContext.span("rawMosaicExtentReification.reads") use {
                         grandContext =>
                           listBsi.parTraverse { relevant =>
                             relevant.read(extent, cs, grandContext)
@@ -521,7 +521,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       )(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] = {
         val mosaic = self.flatMap {
           case (tracingContext, bsiList) =>
-            tracingContext.childSpan("mosaicRasterExtents") use {
+            tracingContext.span("mosaicRasterExtents") use {
               childContext =>
                 bsiList.parTraverse({ img =>
                   img.getRasterSource(childContext) map { rs =>

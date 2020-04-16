@@ -7,7 +7,7 @@ import com.rasterfoundry.database.{ProjectLayerDao, SceneDao}
 import com.rasterfoundry.datamodel.{ProjectLayer, Scene}
 
 import cats.effect.IO
-import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.core.TracingContext
 import doobie._
 import doobie.implicits._
 import geotrellis.vector.{Polygon, Projected}
@@ -26,9 +26,9 @@ object Cacheable {
                    @cacheKeyExclude tracingContext: TracingContext[IO])(
       implicit cache: Cache[Scene]): IO[Scene] = {
     val tags = Map("sceneId" -> sceneId.toString)
-    tracingContext.childSpan("cache.getSceneById", tags) use { context =>
+    tracingContext.span("cache.getSceneById", tags) use { context =>
       memoizeF(Some(60 seconds)) {
-        context.childSpan("db.getSceneById", tags) use (_ =>
+        context.span("db.getSceneById", tags) use (_ =>
           SceneDao.getSceneById(sceneId, window).transact(xa)) flatMap {
           case Some(scene) =>
             IO.pure {
@@ -45,9 +45,9 @@ object Cacheable {
                           @cacheKeyExclude tracingContext: TracingContext[IO])(
       implicit cache: Cache[ProjectLayer]): IO[ProjectLayer] = {
     val tags = Map("projectLayerId" -> projectLayerId.toString)
-    tracingContext.childSpan("cache.getProjectLayerById", tags) use { context =>
+    tracingContext.span("cache.getProjectLayerById", tags) use { context =>
       memoizeF(Some(60 seconds)) {
-        context.childSpan("db.getProjectLayerById", tags) use { _ =>
+        context.span("db.getProjectLayerById", tags) use { _ =>
           ProjectLayerDao.getProjectLayerById(projectLayerId).transact(xa)
         } flatMap {
           case Some(projectLayer) =>

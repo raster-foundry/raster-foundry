@@ -106,6 +106,7 @@ lazy val sharedSettings = Seq(
     "imageio-ext Repository" at "https://maven.geo-solutions.it",
     DefaultMavenRepository,
     Resolver.sonatypeRepo("snapshots"),
+    Resolver.bintrayRepo("colisweb", "maven"),
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.bintrayRepo("guizmaii", "maven"),
@@ -115,7 +116,6 @@ lazy val sharedSettings = Seq(
     ("azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/")
       .withAllowInsecureProtocol(true),
     Resolver.bintrayRepo("naftoligug", "maven"),
-    Resolver.bintrayRepo("colisweb", "maven"),
     Classpaths.sbtPluginReleases,
     Opts.resolver.sonatypeReleases,
     Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins"),
@@ -593,7 +593,8 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.http4sDSL,
       Dependencies.jts,
       Dependencies.mamlJvm,
-      Dependencies.opentracing,
+      Dependencies.opentracingCore,
+      Dependencies.opentracingContext,
       Dependencies.scalaCheck,
       Dependencies.scalacacheCaffeine,
       Dependencies.scalacacheCats,
@@ -692,8 +693,9 @@ lazy val backsplashServer =
         Dependencies.http4sServer,
         Dependencies.jts,
         Dependencies.mamlJvm,
-        Dependencies.opentracing,
         Dependencies.opentracingApi,
+        Dependencies.opentracingCore,
+        Dependencies.opentracingContext,
         Dependencies.scalacacheCaffeine,
         Dependencies.scalacacheCats,
         Dependencies.scalacacheCore,
@@ -703,11 +705,6 @@ lazy val backsplashServer =
         Dependencies.typesafeConfig,
         Dependencies.vault
       ) ++ loggingDependencies
-    })
-    .settings({
-      dependencyOverrides ++= Seq(
-        "com.azavea.gdal" % "gdal-warp-bindings" % "33.58d4965"
-      )
     })
     .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
     .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
@@ -738,8 +735,10 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
       Dependencies.jaegerCore,
       Dependencies.nimbusJose,
       Dependencies.nimbusJoseJwt,
-      Dependencies.opentracing,
       Dependencies.opentracingApi,
+      Dependencies.opentracingClient,
+      Dependencies.opentracingCore,
+      Dependencies.opentracingContext,
       Dependencies.scalacacheCaffeine,
       Dependencies.scalacacheCats,
       Dependencies.scalacacheCore,

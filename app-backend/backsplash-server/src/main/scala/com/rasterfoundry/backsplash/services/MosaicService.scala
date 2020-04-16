@@ -11,7 +11,7 @@ import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import com.azavea.maml.ast.{GeomLit, Masking, RasterVar}
 import com.azavea.maml.eval.ConcurrentInterpreter
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.colisweb.tracing.core.TracingContextBuilder
 import doobie.util.transactor.Transactor
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
@@ -58,7 +58,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           ) as user using tracingContext =>
         val polygonBbox: Projected[Polygon] =
           TileUtils.getTileBounds(z, x, y)
-        val getEval = tracingContext.childSpan("getEval") use { childContext =>
+        val getEval = tracingContext.span("getEval") use { childContext =>
           Cacheable.getProjectLayerById(layerId, xa, childContext) map {
             layer =>
               layer.geometry match {
@@ -109,7 +109,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             }
           resp <- fiberResp.join flatMap {
             case Valid(tile) =>
-              tracingContext.childSpan("render") use { _ =>
+              tracingContext.span("render") use { _ =>
                 Ok(tile.renderPng.bytes, pngType)
               }
             case Invalid(e) =>

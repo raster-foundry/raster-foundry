@@ -2,7 +2,7 @@ package com.rasterfoundry
 
 import cats.effect._
 import com.amazonaws.services.s3.AmazonS3URI
-import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.core.TracingContext
 import geotrellis.spark.store.http.util.HttpRangeReader
 import geotrellis.store.s3.util.S3RangeReader
 import geotrellis.util.{FileRangeReader, StreamingByteReader}

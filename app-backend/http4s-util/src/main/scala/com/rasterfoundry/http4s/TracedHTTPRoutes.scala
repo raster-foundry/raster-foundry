@@ -6,8 +6,7 @@ import com.rasterfoundry.http4s.xray.{XrayHttp, XrayRequest}
 import cats.data.{Kleisli, OptionT}
 import cats.effect.Sync
 import cats.implicits._
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
-import com.colisweb.tracing._
+import com.colisweb.tracing.core.{TracingContext, TracingContextBuilder}
 import io.circe.parser._
 import io.opentracing._
 import org.http4s._
@@ -15,6 +14,8 @@ import org.http4s.util.CaseInsensitiveString
 
 import scala.io.Source
 import scala.util.Properties
+
+import java.util.UUID
 
 object TracedHTTPRoutes {
 
@@ -48,6 +49,16 @@ object TracedHTTPRoutes {
     Map(tags: _*)
   }) getOrElse Map.empty
 
+  def getTraceId[F[_]: Sync](req: Request[F]): Map[String, String] =
+    req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id")) match {
+      case Some(header) =>
+        header.value.split('=').reverse.headOption match {
+          case Some(traceId) => Map("amazon_trace_id" -> traceId)
+          case _             => Map.empty[String, String]
+        }
+      case _ => Map.empty[String, String]
+    }
+
   def wrapHttpRoutes[F[_]: Sync](
       routes: Kleisli[OptionT[F, ?], AuthedTraceRequest[F], Response[F]],
       builder: TracingContextBuilder[F]
@@ -60,14 +71,7 @@ object TracedHTTPRoutes {
         "request_url" -> req.uri.path,
         "environment" -> Config.environment
       ) combine {
-        req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id")) match {
-          case Some(header) =>
-            header.value.split('=').reverse.headOption match {
-              case Some(traceId) => Map("amazon_trace_id" -> traceId)
-              case _             => Map.empty[String, String]
-            }
-          case _ => Map.empty[String, String]
-        }
+        getTraceId(req)
       } combine {
         req.headers.get(CaseInsensitiveString("Referer")) match {
           case Some(referer) => Map("referer" -> referer.value)
@@ -96,7 +100,7 @@ object TracedHTTPRoutes {
 
       OptionT {
         builder match {
-          case b: XRayTracer.XRayTracingContextBuilder[F] => {
+          case b: XRayTracer.XRayTracingContextBuilder[F] =>
             val request =
               XrayRequest(
                 req.method.name,
@@ -107,15 +111,19 @@ object TracedHTTPRoutes {
                 req.from.map(_.toString)
               )
             val http = XrayHttp(Some(request), None)
-            b(operationName, tags, Some(http)) use (
+            val traceIdMap = getTraceId(req)
+            b(
+              operationName,
+              tags,
+              Some(http),
+              traceIdMap.values.headOption getOrElse s"${UUID.randomUUID}"
+            ) use (
                 context => transformResponse(context)
             )
-          }
-          case _ => {
-            builder(operationName, tags) use (
+          case _ =>
+            builder.build(operationName, tags) use (
                 context => transformResponse(context)
             )
-          }
         }
       }
     }

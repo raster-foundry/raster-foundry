@@ -8,7 +8,7 @@ import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}
 
 import cats.effect.IO
 import cats.implicits._
-import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.core.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -66,7 +66,7 @@ final case class BacksplashGeotiff(
   )
 
   def getRasterSource(context: TracingContext[IO]): IO[RasterSource] = {
-    context.childSpan("getRasterSource", tags) use { child =>
+    context.span("getRasterSource", tags) use { child =>
       if (enableGDAL) {
         logger.debug(s"Using GDAL Raster Source: ${uri}")
         val rasterSource = GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
@@ -80,10 +80,10 @@ final case class BacksplashGeotiff(
         }
       } else {
         for {
-          infoOption <- child.childSpan("getSceneGeoTiffInfo") use { _ =>
+          infoOption <- child.span("getSceneGeoTiffInfo") use { _ =>
             SceneDao.getSceneGeoTiffInfo(imageId).transact(xa)
           }
-          info <- child.childSpan("getGeotiffInfoFromSource") use { _ =>
+          info <- child.span("getGeotiffInfoFromSource") use { _ =>
             infoOption match {
               case Some(i) => IO.pure(i)
               case _ => {
@@ -100,10 +100,10 @@ final case class BacksplashGeotiff(
               }
             }
           }
-          reader <- child.childSpan("getByteReader") use { _ =>
+          reader <- child.span("getByteReader") use { _ =>
             IO(getByteReader(uri))
           }
-          gtInfo <- child.childSpan("toGeotiffInfo") use { _ =>
+          gtInfo <- child.span("toGeotiffInfo") use { _ =>
             IO(info.toGeotiffInfo(reader))
           }
         } yield {
@@ -124,11 +124,11 @@ final case class BacksplashGeotiff(
       context: TracingContext[IO]
   ): IO[Option[MultibandTile]] = {
     val readTags = tags.combine(Map("zoom" -> z.toString))
-    context.childSpan("read:z_x_y:", readTags) use { childContext =>
+    context.span("read:z_x_y:", readTags) use { childContext =>
       val layoutDefinition = BacksplashImage.tmsLevels(z)
       for {
         rasterSource <- getRasterSource(childContext)
-        tile <- childContext.childSpan("rasterSource.read") use { _ =>
+        tile <- childContext.span("rasterSource.read") use { _ =>
           IO(
             rasterSource
               .reproject(WebMercator)
@@ -155,14 +155,14 @@ final case class BacksplashGeotiff(
   ): IO[Option[MultibandTile]] = {
     val readTags =
       tags.combine(Map("extent" -> extent.toString, "cellSize" -> cs.toString))
-    context.childSpan("read:extent_cs:", readTags) use { child =>
+    context.span("read:extent_cs:", readTags) use { child =>
       val rasterExtent = RasterExtent(extent, cs)
       logger.debug(
         s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)"
       )
       for {
         rasterSource <- getRasterSource(child)
-        tile <- child.childSpan("rasterSource.read:extent_cs:", readTags) use {
+        tile <- child.span("rasterSource.read:extent_cs:", readTags) use {
           _ =>
             IO(
               rasterSource

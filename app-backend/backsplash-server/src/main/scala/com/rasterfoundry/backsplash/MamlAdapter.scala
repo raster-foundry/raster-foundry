@@ -11,7 +11,7 @@ import com.rasterfoundry.database.ProjectDao
 import cats.effect.IO
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{ClassMap => _}
-import com.colisweb.tracing.NoOpTracingContext
+import com.colisweb.tracing.context.NoOpTracingContext
 import doobie.Transactor
 import doobie.implicits._
 
@@ -39,7 +39,7 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
                                 None,
                                 None,
                                 None,
-                                NoOpTracingContext[IO]())
+                                NoOpTracingContext[IO]("no-op-read"))
             } map {
               case (tracingContext, bsiList) =>
                 (tracingContext, bsiList.map { backsplashImage =>
@@ -59,7 +59,7 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
           Map[String, BacksplashMosaic](
             s"${layerId.toString}_${bandActual}" -> (
               layerStore
-                .read(layerId, None, None, None, NoOpTracingContext[IO]()) map {
+                .read(layerId, None, None, None, NoOpTracingContext[IO]("no-op-read")) map {
                 case (tracingContext, bsiList) =>
                   (tracingContext, bsiList map { backsplashIm =>
                     backsplashIm.selectBands(List(bandActual))

@@ -15,7 +15,7 @@ import com.rasterfoundry.datamodel.{BandOverride, SingleBandOptions}
 
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.{ContextShift, IO}
-import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.core.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -104,7 +104,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           tracingContext: TracingContext[IO]
       ): BacksplashMosaic = {
         val tags = Map("sceneId" -> projId.toString)
-        tracingContext.childSpan("sceneStore.read", tags) use { childContext =>
+        tracingContext.span("sceneStore.read", tags) use { childContext =>
           Cacheable.getSceneById(projId, window, xa, childContext) map {
             scene =>
               // We don't actually have a project, so just make something up
@@ -159,9 +159,9 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           tracingContext: TracingContext[IO]
       ): BacksplashMosaic = {
         val tags = Map("projectId" -> projId.toString)
-        tracingContext.childSpan("layerStore.read", tags) use { child =>
+        tracingContext.span("layerStore.read", tags) use { child =>
           for {
-            mosaicDefinitions <- child.childSpan("getMosaicDefinitions", tags) use {
+            mosaicDefinitions <- child.span("getMosaicDefinitions", tags) use {
               _ =>
                 SceneToLayerDao
                   .getMosaicDefinition(projId, window, bandOverride map {

@@ -11,6 +11,8 @@ import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
 import geotrellis.vector.Extent
 
+import scala.util.Try
+
 import java.util.UUID
 
 object RasterSourceMetadataDao extends CirceJsonbMeta {
@@ -19,7 +21,9 @@ object RasterSourceMetadataDao extends CirceJsonbMeta {
     Meta[String].timap(GDALPath.apply)(_.value)
 
   implicit val crsMeta: Meta[CRS] =
-    Meta[String].timap(CRS.fromString)(_.toProj4String)
+    Meta[String].timap(
+      s => Try { CRS.fromString(s) } getOrElse CRS.fromName(s)
+    )(_.toProj4String)
 
   implicit val cellTypeMeta: Meta[CellType] =
     Meta[String].timap(CellType.fromName)(CellType.toName)

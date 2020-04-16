@@ -59,7 +59,7 @@ object Version {
   val newtype = "0.4.3"
   val nimbusJose = "0.6.0"
   val nimbusJoseJwt = "4.41.1"
-  val openTracing = "0.0.6"
+  val opentracingVersion = "2.2.0"
   val opentracingApi = "0.33.0"
   val postgis = "2.2.1"
   val postgres = "42.2.9"
@@ -69,7 +69,7 @@ object Version {
   val scala = "2.12.10"
   val scalaCheck = "1.14.1"
   val scalaCsv = "1.3.6"
-  val scalaLogging = "3.9.0"
+  val scalaLogging = "3.9.2"
   val scalaTest = "3.1.1"
   val scalacache = "0.28.0"
   val scalajHttp = "2.4.1"
@@ -182,8 +182,10 @@ object Dependencies {
   val newtype = "io.estatico" %% "newtype" % Version.newtype
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val nimbusJoseJwt = "com.nimbusds" % "nimbus-jose-jwt" % Version.nimbusJoseJwt
-  val opentracing = "com.colisweb" %% "scala-opentracing" % Version.openTracing
   val opentracingApi = "io.opentracing" % "opentracing-api" % Version.opentracingApi
+  val opentracingCore = "com.colisweb" %% "scala-opentracing-core" % Version.opentracingVersion
+  val opentracingContext = "com.colisweb" %% "scala-opentracing-context" % Version.opentracingVersion
+  val opentracingClient = "com.colisweb" %% "scala-opentracing-http4s-client-blaze" % Version.opentracingVersion
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
   val postgres = "org.postgresql" % "postgresql" % Version.postgres
   val refined = "eu.timepit" %% "refined" % Version.refined

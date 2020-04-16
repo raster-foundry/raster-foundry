@@ -21,7 +21,8 @@ import com.rasterfoundry.datamodel.{
 
 import cats.Applicative
 import cats.effect._
-import com.colisweb.tracing.{NoOpTracingContext, TracingContext}
+import com.colisweb.tracing.core.TracingContext
+import com.colisweb.tracing.context.NoOpTracingContext
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
 import doobie.implicits._
@@ -77,13 +78,13 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
       tracingContext: TracingContext[IO]): IO[Boolean] = {
     val tags =
       Map("projectId" -> projectID.toString, "layerID" -> layerID.toString)
-    tracingContext.childSpan("checkProjectLayerCached", tags) use {
+    tracingContext.span("checkProjectLayerCached", tags) use {
       childContext =>
         {
           memoizeF[IO, Boolean](Some(10 seconds)) {
             logger.debug(
               s"Checking whether layer ${layerID} is in project ${projectID}")
-            childContext.childSpan("layerIsInProject", tags) use (_ =>
+            childContext.span("layerIsInProject", tags) use (_ =>
               ProjectLayerDao.layerIsInProject(layerID, projectID).transact(xa))
           }
         }
@@ -119,7 +120,7 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
   def authProject(user: User,
                   projectId: UUID,
                   tracingContext: TracingContext[IO]): IO[Project] =
-    tracingContext.childSpan(
+    tracingContext.span(
       "authProject",
       Map("user" -> user.id, "projectId" -> projectId.toString)) use { _ =>
       authObject(checkProjectAuthCached, user, projectId)
@@ -131,7 +132,7 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
   def authProjectLayer(projectID: UUID,
                        layerID: UUID,
                        tracingContext: TracingContext[IO] =
-                         NoOpTracingContext[IO]()): IO[Unit] = {
+                         NoOpTracingContext[IO]("no-op-read")): IO[Unit] = {
     checkProjectLayerCached(projectID, layerID, tracingContext) flatMap {
       case false =>
         IO.raiseError(

@@ -16,7 +16,7 @@ import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
 import cats.data.OptionT
 import cats.effect._
 import cats.implicits._
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.colisweb.tracing.core.TracingContextBuilder
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.olegpy.meow.hierarchy._
 import com.typesafe.scalalogging.LazyLogging

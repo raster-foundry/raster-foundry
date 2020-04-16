@@ -1,11 +1,8 @@
 package com.rasterfoundry.http4s
 
 import cats.effect.Sync
-import com.colisweb.tracing.TracingContext.{
-  TracingContextBuilder,
-  TracingContextResource
-}
-import com.colisweb.tracing._
+import com.colisweb.tracing.core.{TracingContextBuilder, TracingContextResource}
+import com.colisweb.tracing.context.OpenTracingContext
 import io.jaegertracing.Configuration
 import io.jaegertracing.Configuration._
 import io.jaegertracing.internal.{JaegerTracer => JT}
@@ -33,13 +30,21 @@ object JaegerTracer {
   def tracingContextBuilder[F[_]: Sync]: TracingContextBuilder[F] = {
     new TracingContextBuilder[F] {
 
-      def apply(
+      def build(
           operationName: String,
-          tags: Map[String, String] = Map.empty): TracingContextResource[F] = {
+          tags: Map[String, String] = Map.empty,
+          correlationId: String = newCorrelationId
+      ): TracingContextResource[F] = {
 
         val service = tags.getOrElse("service", "raster-foundry")
-        OpenTracingContext[F, JT, Span](initTracer(service))(operationName,
-                                                             tags)
+        OpenTracingContext[F, JT, Span](
+          initTracer(service),
+          None,
+          correlationId
+        )(
+          operationName,
+          tags
+        )
       }
     }
   }
