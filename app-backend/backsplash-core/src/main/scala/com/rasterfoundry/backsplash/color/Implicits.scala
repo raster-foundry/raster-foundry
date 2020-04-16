@@ -3,7 +3,13 @@ package com.rasterfoundry.backsplash.color
 import com.rasterfoundry.datamodel._
 
 import geotrellis.raster.{io => _, _}
-import geotrellis.raster.render.RGBA
+import geotrellis.raster.render.{Png, RGBA}
+import geotrellis.raster.render.png.{
+  PaethFilter,
+  PngEncoder,
+  RgbaPngEncoding,
+  Settings
+}
 import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 
 import scala.math.abs
@@ -66,7 +72,7 @@ trait Implicits {
       val g = (color1.green + (color2.green - color1.green) * proportion).toInt
       val b = (color1.blue + (color2.blue - color1.blue) * proportion).toInt
       val a
-        : Double = (color1.alpha + (color2.alpha - color1.alpha) * proportion).toDouble / 2.55
+          : Double = (color1.alpha + (color2.alpha - color1.alpha) * proportion).toDouble / 2.55
       RGBA(r, g, b, a)
     }
 
@@ -106,8 +112,10 @@ trait Implicits {
     }
 
     /** For production of colors according to discrete breaks */
-    private def qual(definition: RenderDefinition,
-                     fallback: RGBA): Double => RGBA = { dbl: Double =>
+    private def qual(
+        definition: RenderDefinition,
+        fallback: RGBA
+    ): Double => RGBA = { dbl: Double =>
       val decomposed = definition.breakpoints.toArray.sortBy(_._1).unzip
       val breaks: Array[Double] = decomposed._1
       val colors: Array[RGBA] = decomposed._2

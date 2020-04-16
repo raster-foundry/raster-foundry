@@ -4,7 +4,6 @@ import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.datamodel.{ColorComposite, SingleBandOptions}
 
 import geotrellis.raster._
-import geotrellis.raster.histogram._
 import geotrellis.server.ogc.OutputFormat.Png
 import geotrellis.server.ogc.{OgcStyle, OutputFormat}
 

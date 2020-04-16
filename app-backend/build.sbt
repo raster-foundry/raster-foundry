@@ -77,6 +77,14 @@ lazy val sharedSettings = Seq(
     "org.slf4j",
     "slf4j-api"
   ),
+  undeclaredCompileDependenciesFilter -= moduleFilter(
+    "org.apache.httpcomponents",
+    "httpclient"
+  ),
+  undeclaredCompileDependenciesFilter -= moduleFilter(
+    "org.apache.httpcomponents",
+    "httpcore"
+  ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
     "log4j" % "log4j",
@@ -568,8 +576,9 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
   .settings(
     fork in run := true,
     libraryDependencies ++= Seq(
-      Dependencies.awsCoreSdk,
       Dependencies.awsS3,
+      Dependencies.awsUtilsSdkV2,
+      Dependencies.awsS3SdkV2,
       Dependencies.catsCore,
       Dependencies.catsEffect,
       Dependencies.catsFree,
@@ -579,6 +588,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.doobieCore,
       Dependencies.doobieFree,
       Dependencies.geotrellisGdal,
+      Dependencies.geotrellisLayer,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisS3,
@@ -591,6 +601,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.geotrellisVector,
       Dependencies.http4sCore,
       Dependencies.http4sDSL,
+      Dependencies.jts,
       Dependencies.mamlJvm,
       Dependencies.opentracing,
       Dependencies.scalaCheck,

@@ -34,13 +34,19 @@ final case class S3(
       AmazonS3ClientBuilder
         .standard()
         .withRegion(region)
+        .withForceGlobalBucketAccessEnabled(true)
         .build()
     case Some(S3RegionString(region)) =>
       AmazonS3ClientBuilder
         .standard()
         .withRegion(region)
+        .withForceGlobalBucketAccessEnabled(true)
         .build()
-    case _ => AmazonS3ClientBuilder.defaultClient()
+    case _ =>
+      AmazonS3ClientBuilder
+        .standard()
+        .withForceGlobalBucketAccessEnabled(true)
+        .build()
   }
 
   // we want to ignore here, because uri.getHost returns null instead of an Option[String] -- thanks Java

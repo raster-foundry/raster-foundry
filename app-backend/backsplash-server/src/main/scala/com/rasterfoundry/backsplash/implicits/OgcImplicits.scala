@@ -27,7 +27,6 @@ import doobie.Transactor
 import doobie.implicits._
 import geotrellis.contrib.vlm.MosaicRasterSource
 import geotrellis.proj4.{CRS, LatLng, WebMercator}
-import geotrellis.raster.histogram.Histogram
 import geotrellis.server.ogc.ows._
 import geotrellis.server.ogc.wcs.WcsModel
 import geotrellis.server.ogc.wms.wmsScope
