@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.layer.Implicits._
-import geotrellis.proj4.WebMercator
+import geotrellis.proj4.{CRS, WebMercator}
 import geotrellis.raster.{MultibandTile, RasterSource}
 import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.geotiff.{GeoTiffPath, GeoTiffRasterSource}
@@ -22,6 +22,8 @@ import geotrellis.raster.{io => _, _}
 import geotrellis.layer.{SpatialKey, ZoomedLayoutScheme}
 import geotrellis.vector.MultiPolygon
 import geotrellis.vector.{io => _, _}
+import geotrellis.vector.io.json.CrsFormats
+import io.circe.Decoder
 import scalacache.CatsEffect.modes._
 import scalacache._
 
@@ -55,6 +57,13 @@ final case class BacksplashGeotiff(
     xa: Transactor[IO]
 ) extends LazyLogging
     with BacksplashImage[IO] {
+
+  implicit val decCrs: Decoder[CRS] = (Decoder.decodeString.emap(s => {
+    println(s"String to decode as crs is: $s")
+    Either
+      .catchNonFatal(CRS.fromName(s))
+      .leftMap(_ => "$s is not a valid CRS name")
+  })) or CrsFormats.crsDecoder
 
   import DBCache.GeotiffInfoCache._
 
@@ -131,7 +140,7 @@ final case class BacksplashGeotiff(
         tile <- childContext.span("rasterSource.read") use { _ =>
           IO(
             rasterSource
-              .reproject(WebMercator)
+              .reproject(WebMercator, method = NearestNeighbor)
               .tileToLayout(layoutDefinition)
               .read(SpatialKey(x, y), subsetBands)
           ).map(_.map { tile =>
@@ -162,25 +171,24 @@ final case class BacksplashGeotiff(
       )
       for {
         rasterSource <- getRasterSource(child)
-        tile <- child.span("rasterSource.read:extent_cs:", readTags) use {
-          _ =>
-            IO(
-              rasterSource
-                .reproject(WebMercator, method = NearestNeighbor)
-                .resampleToGrid(
-                  GridExtent[Long](
-                    rasterExtent.extent,
-                    rasterExtent.cellSize
-                  ),
-                  NearestNeighbor
-                )
-                .read(extent, subsetBands)
-                .map(_.tile)
-            ).attempt
-              .map {
-                case Left(e)              => throw e
-                case Right(multibandTile) => multibandTile
-              }
+        tile <- child.span("rasterSource.read:extent_cs:", readTags) use { _ =>
+          IO(
+            rasterSource
+              .reproject(WebMercator, method = NearestNeighbor)
+              .resampleToGrid(
+                GridExtent[Long](
+                  rasterExtent.extent,
+                  rasterExtent.cellSize
+                ),
+                NearestNeighbor
+              )
+              .read(extent, subsetBands)
+              .map(_.tile)
+          ).attempt
+            .map {
+              case Left(e)              => throw e
+              case Right(multibandTile) => multibandTile
+            }
         }
       } yield {
         tile
