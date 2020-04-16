@@ -85,7 +85,7 @@ object Version {
   val spireMath = "0.13.0"
   val spray = "1.3.4"
   val sttp = "1.5.19"
-  val sup = "0.6.0"
+  val sup = "0.7.0"
   val typesafeConfig = "1.4.0"
   val vault = "1.0.0"
 }
@@ -118,7 +118,7 @@ object Dependencies {
   val catsFree = "org.typelevel" %% "cats-free" % Version.cats
   val catsKernel = "org.typelevel" %% "cats-kernel" % Version.cats
   val catsLaws = "org.typelevel" %% "cats-laws" % Version.cats % Test
-  val catsMeow = "com.olegpy" %% "meow-mtl" % Version.catsMeow
+  val catsMeow = "com.olegpy" %% "meow-mtl-core" % Version.catsMeow
   val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % Version.catsScalacheck % "test"
   val chronoscala = "jp.ne.opt" %% "chronoscala" % Version.chronoscala
   val circeCore = "io.circe" %% "circe-core" % Version.circe

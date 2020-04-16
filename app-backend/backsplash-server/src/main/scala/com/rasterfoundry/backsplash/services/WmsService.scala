@@ -60,11 +60,7 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
               RasterExtent(params.boundingBox, params.width, params.height)
             for {
               rsm <- layers.getWmsModel(projectId, tracingContext)
-              layer = rsm.getLayer(
-                params.crs,
-                params.layers.headOption,
-                params.styles.headOption
-              ) getOrElse {
+              layer = rsm.getLayer(params).headOption getOrElse {
                 params.layers.headOption match {
                   case None =>
                     throw RequirementFailedException(
@@ -135,18 +131,22 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
   def routes: AuthedRoutes[User, IO] = TracedHTTPRoutes[IO] {
     case tracedReq @ GET -> Root / UUIDWrapper(projectId) as _ using tracingContext =>
       val serviceUrl = requestToServiceUrl(tracedReq.authedRequest.req)
-      authedReqToResponse(tracedReq.authedRequest,
-                          projectId,
-                          serviceUrl,
-                          tracingContext)
+      authedReqToResponse(
+        tracedReq.authedRequest,
+        projectId,
+        serviceUrl,
+        tracingContext
+      )
 
     case tracedReq @ GET -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
           _
         ) as _ using tracingContext =>
       val serviceUrl = requestToServiceUrl(tracedReq.authedRequest.req)
-      authedReqToResponse(tracedReq.authedRequest,
-                          projectId,
-                          serviceUrl,
-                          tracingContext)
+      authedReqToResponse(
+        tracedReq.authedRequest,
+        projectId,
+        serviceUrl,
+        tracingContext
+      )
   }
 }

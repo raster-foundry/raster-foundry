@@ -25,13 +25,14 @@ import cats.implicits._
 import com.colisweb.tracing.TracingContext
 import doobie.Transactor
 import doobie.implicits._
-import geotrellis.contrib.vlm.MosaicRasterSource
+import geotrellis.raster.{Histogram, MosaicRasterSource}
 import geotrellis.proj4.{CRS, LatLng, WebMercator}
 import geotrellis.server.ogc.ows._
 import geotrellis.server.ogc.wcs.WcsModel
 import geotrellis.server.ogc.wms.wmsScope
 import geotrellis.server.ogc.wms.{WmsModel, WmsParentLayerMeta}
-import geotrellis.server.ogc.{OgcSource, OgcStyle, SimpleSource}
+import geotrellis.server.ogc.{OgcSource, OgcSourceRepository, SimpleSource}
+import geotrellis.server.ogc.style.OgcStyle
 import opengis.wms.{Name, OnlineResource, Service}
 
 import java.util.UUID
@@ -83,6 +84,7 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
             projectLayer.name,
             projectLayer.id.toString,
             rsm,
+            ogcStyles.headOption map { _.name },
             ogcStyles
           ),
           crs
@@ -118,7 +120,7 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
             Identification("", "", Nil, Nil, None, Nil),
             Provider("", None, None)
           )
-          WcsModel(serviceMeta, sources)
+          WcsModel(serviceMeta, new OgcSourceRepository(sources))
         }
 
       def getWmsModel(
@@ -138,7 +140,7 @@ class OgcImplicits[R: RenderableStore](layers: R, xa: Transactor[IO])(
             None,
             List(LatLng, WebMercator) ++ crs
           )
-          WmsModel(service, parentLayerMeta, sources)
+          WmsModel(service, parentLayerMeta, new OgcSourceRepository(sources))
         }
 
       def getWmsServiceMetadata(

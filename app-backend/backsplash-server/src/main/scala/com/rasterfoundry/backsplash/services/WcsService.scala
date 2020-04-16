@@ -12,18 +12,20 @@ import cats.effect.{ContextShift, IO}
 import com.colisweb.tracing.TracingContext
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.server.ogc.wcs.ops.{GetCoverage, Operations}
-import geotrellis.server.ogc.wcs.params.{
+import geotrellis.server.ogc.params.ParamError
+import geotrellis.server.ogc.wcs.{
+  CapabilitiesView,
+  GetCoverage,
   DescribeCoverageWcsParams,
   GetCapabilitiesWcsParams,
   GetCoverageWcsParams,
-  WcsParams,
-  WcsParamsError
+  WcsParams
 }
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.scalaxml._
 
+import java.net.URL
 import java.util.UUID
 
 class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
@@ -45,21 +47,21 @@ class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     WcsParams(authedReq.req.multiParams) match {
       case Validated.Invalid(errors) =>
         BadRequest(
-          s"Error parsing parameters: ${WcsParamsError.generateErrorMessage(errors.toList)}"
+          s"Error parsing parameters: ${ParamError.generateErrorMessage(errors.toList)}"
         )
 
       case Validated.Valid(p) =>
         p match {
-          case params: GetCapabilitiesWcsParams =>
+          case _: GetCapabilitiesWcsParams =>
             for {
               rsm <- layers.getWcsModel(projectId, tracingContext)
-              resp <- Ok(Operations.getCapabilities(serviceUrl, rsm, params))
+              resp <- Ok(new CapabilitiesView(rsm, new URL(serviceUrl)).toXML)
             } yield resp
 
-          case params: DescribeCoverageWcsParams =>
+          case _: DescribeCoverageWcsParams =>
             for {
               rsm <- layers.getWcsModel(projectId, tracingContext)
-              resp <- Ok(Operations.describeCoverage(rsm, params))
+              resp <- Ok(CapabilitiesView.coverageSummaries(rsm))
             } yield {
               resp
             }
