@@ -77,8 +77,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},
          name = ${org.name},
-         dropbox_credential = ${org.dropboxCredential.token.getOrElse("")},
-         planet_credential = ${org.planetCredential.token.getOrElse("")}
+         dropbox_credential = ${org.dropboxCredential.token},
+         planet_credential = ${org.planetCredential.token}
        WHERE id = ${id}
      """).update.run
   }

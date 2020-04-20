@@ -4,8 +4,9 @@ import com.rasterfoundry.notification.intercom.Model._
 
 import cats.effect.Sync
 import cats.implicits._
-import com.softwaremill.sttp._
-import com.softwaremill.sttp.circe._
+import sttp.client._
+import sttp.client.circe._
+import sttp.model.Uri
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.Json
@@ -21,28 +22,22 @@ trait IntercomNotifier[F[_]] {
 }
 
 class LiveIntercomNotifier[F[_]: Sync](
-    implicit backend: SttpBackend[F, Nothing]
+    implicit backend: SttpBackend[F, Nothing, NothingT]
 ) extends IntercomNotifier[F] {
   val sttpApiBase = "https://api.intercom.io"
 
   implicit val unsafeLoggerF = Slf4jLogger.getLogger[F]
 
   private def responseAsBody[T](
-      resp: Either[String, Either[DeserializationError[io.circe.Error], T]],
+      resp: Either[ResponseError[io.circe.Error], T],
       fallback: => T
   ): F[T] =
     resp match {
       case Left(err) =>
-        Logger[F].error(err) *>
+        Logger[F].error(err)(err.getMessage) *>
           Sync[F].delay(fallback)
-      case Right(deserialized) =>
-        deserialized match {
-          case Left(err) =>
-            Logger[F].error(err.error)(err.message) *>
-              Sync[F].delay(fallback)
-          case Right(body) =>
-            Sync[F].delay(body)
-        }
+      case Right(body) =>
+        Sync[F].delay(body)
     }
 
   def notifyUser(
@@ -54,9 +49,9 @@ class LiveIntercomNotifier[F[_]: Sync](
     val uri = Uri(java.net.URI.create(s"$sttpApiBase/messages"))
     val resp =
       Logger[F].debug(s"Notifying $userId") *>
-        sttp.auth
+        basicRequest.auth
           .bearer(intercomToken.underlying)
-          .header("Accept", MediaTypes.Json)
+          .header("Accept", "application/json")
           .post(uri)
           .body(MessagePost(adminId, userId, msg))
           .response(asJson[Json])

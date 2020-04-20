@@ -746,6 +746,7 @@ lazy val notification = Project("notification", file("notification"))
       Dependencies.newtype,
       Dependencies.sttpCore,
       Dependencies.sttpJson,
-      Dependencies.sttpCirce
+      Dependencies.sttpCirce,
+      Dependencies.sttpModel
     )
   })

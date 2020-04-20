@@ -5,7 +5,7 @@ import com.rasterfoundry.notification.intercom.Model._
 import com.rasterfoundry.notification.intercom._
 
 import cats.effect.IO
-import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
+import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 object NotifyIntercomProgram extends Job {
   val name = "notify-intercom"

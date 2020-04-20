@@ -114,8 +114,7 @@ object SceneDao
         ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
-        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
-      SceneType.Avro)},
+        ${scene.statusFields.ingestStatus}, ${scene.sceneType},
         ${scene.metadataFields.dataPath}, ${scene.metadataFields.crs}, ${scene.metadataFields.bandCount},
         ${scene.metadataFields.cellType}, ${scene.metadataFields.gridExtent}, ${scene.metadataFields.resolutions},
         ${scene.metadataFields.noDataValue}
@@ -201,8 +200,7 @@ object SceneDao
         ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
-        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
-      SceneType.Avro)},
+        ${scene.statusFields.ingestStatus}, ${scene.sceneType},
         ${scene.metadataFields.dataPath}, ${scene.metadataFields.crs}, ${scene.metadataFields.bandCount},
         ${scene.metadataFields.cellType}, ${scene.metadataFields.gridExtent}, ${scene.metadataFields.resolutions}, ${scene.metadataFields.noDataValue}
       )

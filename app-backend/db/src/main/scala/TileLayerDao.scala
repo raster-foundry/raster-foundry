@@ -27,16 +27,19 @@ object TileLayerDao extends Dao[TileLayer] {
   def insertTileLayer(
       layerCreate: TileLayer.Create,
       annotationProject: AnnotationProject
-  ): ConnectionIO[TileLayer] =
+  ): ConnectionIO[TileLayer] = {
+    val isDefault: Boolean = layerCreate.default getOrElse false
+    val isOverlay: Boolean = layerCreate.overlay getOrElse false
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, name, url, is_default, is_overlay, layer_type, annotation_project_id)
     VALUES (
       uuid_generate_v4(), ${layerCreate.name}, ${layerCreate.url},
-      ${layerCreate.default getOrElse false}, ${layerCreate.overlay getOrElse false},
+      ${isDefault}, ${isOverlay},
       ${layerCreate.layerType}, ${annotationProject.id}
     )""").update.withUniqueGeneratedKeys[TileLayer](
       fieldNames: _*
     )
+  }
 
   def listByProjectId(
       projectId: UUID

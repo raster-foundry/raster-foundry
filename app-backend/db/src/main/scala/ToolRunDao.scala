@@ -49,14 +49,15 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
   ): ConnectionIO[ToolRun] = {
     val now = new Timestamp(new java.util.Date().getTime())
     val id = UUID.randomUUID()
+    val owner = newRun.owner getOrElse user.id
 
     sql"""
           INSERT INTO tool_runs
             (id, name, created_at, created_by, modified_at, owner, visibility,
              execution_parameters, project_id, project_layer_id, template_id)
           VALUES
-            (${id}, ${newRun.name}, ${now}, ${user.id}, ${now}, ${newRun.owner
-      .getOrElse(user.id)}, ${newRun.visibility}, ${newRun.executionParameters},
+            (${id}, ${newRun.name}, ${now}, ${user.id}, ${now}, ${owner},
+             ${newRun.visibility}, ${newRun.executionParameters},
              ${newRun.projectId}, ${newRun.projectLayerId}, ${newRun.templateId})
        """.update.withUniqueGeneratedKeys[ToolRun](
       "id",
