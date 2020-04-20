@@ -626,6 +626,7 @@ lazy val backsplashExport =
         Dependencies.mamlJvm,
         Dependencies.scalaCheck,
         Dependencies.scalajHttp,
+        Dependencies.scalatestplusScalaCheck,
         Dependencies.scalatest,
         Dependencies.shapeless,
         Dependencies.typesafeConfig

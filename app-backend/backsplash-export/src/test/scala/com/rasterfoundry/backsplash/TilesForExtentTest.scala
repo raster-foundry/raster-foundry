@@ -1,10 +1,11 @@
 package com.rasterfoundry.backsplash.export
 
 import geotrellis.vector._
-import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.Checkers
 
-class TilesForExtentSpec extends FunSuite with Checkers with Matchers {
+class TilesForExtentSpec extends AnyFunSuite with Checkers with Matchers {
   test("Should produce a list of all tiles under some LatLng extent") {
     val extent = Extent(-103.095703125,
                         39.198205348894795,
