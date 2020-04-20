@@ -77,14 +77,6 @@ lazy val sharedSettings = Seq(
     "org.slf4j",
     "slf4j-api"
   ),
-  undeclaredCompileDependenciesFilter -= moduleFilter(
-    "org.apache.httpcomponents",
-    "httpclient"
-  ),
-  undeclaredCompileDependenciesFilter -= moduleFilter(
-    "org.apache.httpcomponents",
-    "httpcore"
-  ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
     "log4j" % "log4j",
@@ -585,7 +577,9 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.scalacacheCore,
       Dependencies.spatial4j,
       Dependencies.spireMath,
-      Dependencies.typesafeConfig
+      Dependencies.typesafeConfig,
+      "org.apache.httpcomponents" % "httpclient" % "4.5.9",
+      "org.apache.httpcomponents" % "httpcore" % "4.4.11"
     ) ++ loggingDependencies,
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin(

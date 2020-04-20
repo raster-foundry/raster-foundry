@@ -73,7 +73,8 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
       path: String
   ): IO[Either[Throwable, BacksplashGeoTiffInfo]] = {
     IO(BacksplashGeotiffReader.getGeotiffInfo(path)).attempt map {
-      case l @ Left(_) =>
+      case l @ Left(err) =>
+        logger.error("oh no", err)
         logger.error(
           s"""Scene(id='$id'): Failed to fetch geotiff for path "$path"."""
         )
