@@ -22,11 +22,12 @@ trait IntercomNotifier[F[_]] {
 }
 
 class LiveIntercomNotifier[F[_]: Sync](
-    implicit backend: SttpBackend[F, Nothing, NothingT]
+    backend: SttpBackend[F, Nothing, sttp.client.asynchttpclient.WebSocketHandler]
 ) extends IntercomNotifier[F] {
   val sttpApiBase = "https://api.intercom.io"
 
   implicit val unsafeLoggerF = Slf4jLogger.getLogger[F]
+  implicit val sttpBackend = backend
 
   private def responseAsBody[T](
       resp: Either[ResponseError[io.circe.Error], T],

@@ -4,23 +4,33 @@ import com.rasterfoundry.batch.Job
 import com.rasterfoundry.notification.intercom.Model._
 import com.rasterfoundry.notification.intercom._
 
-import cats.effect.IO
+import cats.effect.{Async, IO}
 import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 object NotifyIntercomProgram extends Job {
   val name = "notify-intercom"
 
-  implicit val backend = AsyncHttpClientCatsBackend[IO]()
+  val getBackend = for {
+    backendRef <- Async.memoize {
+      AsyncHttpClientCatsBackend[IO]()
+    }
+    backend <- backendRef
+  } yield backend
 
   def runJob(args: List[String]): IO[Unit] = args match {
     case externalId +: msg +: Nil =>
-      val notifier = new LiveIntercomNotifier[IO]
-      notifier.notifyUser(
-        Config.intercomToken,
-        Config.intercomAdminId,
-        ExternalId(externalId),
-        Message(msg)
-      )
+      for {
+        backend <- getBackend
+        _ <- {
+          val notifier = new LiveIntercomNotifier[IO](backend)
+          notifier.notifyUser(
+            Config.intercomToken,
+            Config.intercomAdminId,
+            ExternalId(externalId),
+            Message(msg)
+          )
+        }
+      } yield ()
     case _ =>
       IO.raiseError(
         new Exception(
