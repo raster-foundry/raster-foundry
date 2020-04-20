@@ -440,7 +440,7 @@ lazy val db = project
   */
 lazy val batch = project
   .in(file("batch"))
-  .dependsOn(common, backsplashCore, geotrellis, notification)
+  .dependsOn(common, backsplashCore, notification)
   .settings(sharedSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -516,21 +516,6 @@ lazy val batch = project
         .inAll
     )
   )
-
-/**
-  * GeoTrellis Settings
-  */
-lazy val geotrellis = project
-  .in(file("geotrellis"))
-  .dependsOn(db, common)
-  .settings(sharedSettings: _*)
-  .settings(noPublishSettings)
-  .settings({
-    libraryDependencies ++= Seq(
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisSpark
-    )
-  })
 
 /**
   * Akkautil Settings
