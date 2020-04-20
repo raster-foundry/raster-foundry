@@ -4,10 +4,6 @@ import com.rasterfoundry.common.S3
 
 import com.amazonaws.services.s3.AmazonS3URI
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster.io.geotiff.reader.TiffTagsReader
-import geotrellis.raster.io.geotiff.tags.TiffTags
-import geotrellis.spark.io.s3.AmazonS3Client
-import geotrellis.spark.io.s3.util.S3RangeReader
 import io.circe.Json
 import io.circe.parser.parse
 import org.apache.commons.io.IOUtils
@@ -41,20 +37,6 @@ package object util extends LazyLogging {
       e.printStackTrace(new PrintWriter(sw))
       sw.toString
     }
-  }
-
-  def getTiffTags(uri: URI): TiffTags = uri.getScheme match {
-    case "file" =>
-      TiffTagsReader.read(uri.toString)
-    case "s3" | "https" | "http" =>
-      val s3Uri = new AmazonS3URI(
-        java.net.URLDecoder.decode(uri.toString, "UTF-8")
-      )
-      val client = new AmazonS3Client(s3Client.client)
-      val s3RangeReader = S3RangeReader(s3Uri.getBucket, s3Uri.getKey, client)
-      TiffTagsReader.read(s3RangeReader)
-    case _ =>
-      throw new IllegalArgumentException(s"Resource at $uri is not valid")
   }
 
   /** Convert URIs into input streams, branching based on URI type */

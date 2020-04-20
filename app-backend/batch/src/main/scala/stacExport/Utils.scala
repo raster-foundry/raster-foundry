@@ -5,6 +5,7 @@ import com.rasterfoundry.datamodel._
 import cats.implicits._
 import geotrellis.proj4.CRS
 import geotrellis.server.stac._
+import geotrellis.vector.methods.Implicits._
 import geotrellis.vector.reproject.Reproject
 import io.circe._
 import io.circe.syntax._
@@ -200,10 +201,10 @@ object Utils {
     }
     val itemBboxOption = sceneFootprintOption.map { footprint =>
       TwoDimBbox(
-        footprint.envelope.xmin,
-        footprint.envelope.ymin,
-        footprint.envelope.xmax,
-        footprint.envelope.ymax
+        footprint.extent.xmin,
+        footprint.extent.ymin,
+        footprint.extent.xmax,
+        footprint.extent.ymax
       )
     }
 

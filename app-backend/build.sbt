@@ -446,7 +446,6 @@ lazy val batch = project
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.apacheAvro,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.betterFiles,
@@ -467,9 +466,10 @@ lazy val batch = project
       Dependencies.ficus,
       Dependencies.fs2,
       Dependencies.fs2,
+      Dependencies.geotrellisGdal,
+      Dependencies.geotrellisLayer,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisS3,
       Dependencies.geotrellisServerStac,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisUtil,
@@ -477,10 +477,9 @@ lazy val batch = project
       Dependencies.guava,
       Dependencies.hadoop,
       Dependencies.hikariCP,
+      Dependencies.jts,
       Dependencies.monocleCore,
       Dependencies.refined,
-      Dependencies.scaffeine,
-      Dependencies.scaffeine,
       Dependencies.scalatest,
       Dependencies.scopt,
       Dependencies.shapeless,

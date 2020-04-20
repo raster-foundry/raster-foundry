@@ -14,9 +14,7 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
-import io.circe.parser._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import io.circe.syntax._
 
 import java.util.UUID
 
@@ -30,7 +28,8 @@ object HistogramBackfill
   val name = "cog-histogram-backfill"
 
   def getScenesToBackfill(
-      implicit xa: Transactor[IO]): IO[List[List[CogTuple]]] = {
+      implicit xa: Transactor[IO]
+  ): IO[List[List[CogTuple]]] = {
     logger.info("Finding COG scenes without histograms in layer_attributes")
     fr"""select
            id, ingest_location
@@ -52,33 +51,27 @@ object HistogramBackfill
   // presence of the ingest location is guaranteed by the filter in the sql string
   @SuppressWarnings(Array("OptionGet"))
   def insertHistogramLayerAttribute(cogTuple: CogTuple)(
-      implicit xa: Transactor[IO],
+      implicit xa: Transactor[IO]
   ): IO[Option[LayerAttribute]] = {
     val histogram = getSceneHistogram(cogTuple._2.get)
-    parse(histogram.toJson.toString).toOption match {
-      case Some(x) if x.toString == "null" =>
-        None.pure[IO]
-      case None =>
-        None.pure[IO]
-      case Some(parsed) =>
-        LayerAttributeDao
-          .insertLayerAttribute(
-            LayerAttribute(
-              cogTuple._1.toString,
-              0,
-              "histogram",
-              parsed
-            )
-          )
-          .map({ layerAttribute: LayerAttribute =>
-            Some(layerAttribute)
-          })
-          .transact(xa)
-    }
+    LayerAttributeDao
+      .insertLayerAttribute(
+        LayerAttribute(
+          cogTuple._1.toString,
+          0,
+          "histogram",
+          histogram.asJson
+        )
+      )
+      .map({ layerAttribute: LayerAttribute =>
+        Some(layerAttribute)
+      })
+      .transact(xa)
   }
 
   def getSceneHistogram(
-      ingestLocation: String): Option[Array[Histogram[Double]]] = {
+      ingestLocation: String
+  ): Option[Array[Histogram[Double]]] = {
     logger.info(s"Fetching histogram for scene at $ingestLocation")
     val histO = CogUtils.histogramFromUri(ingestLocation)
     if (histO.isEmpty) {

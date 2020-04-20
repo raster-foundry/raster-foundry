@@ -11,7 +11,6 @@ import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.notification.NotifyIngestStatus
 import com.rasterfoundry.batch.projectLiberation.ProjectLiberation
 import com.rasterfoundry.batch.stacExport.WriteStacCatalog
-import com.rasterfoundry.batch.stacImport.ReadStacFeature
 
 object Main {
   val modules = Map[String, Array[String] => Unit](
@@ -20,7 +19,6 @@ object Main {
     HistogramBackfill.name -> (HistogramBackfill.main(_)),
     RasterSourceMetadataBackfill.name -> (RasterSourceMetadataBackfill.main(_)),
     NotifyIngestStatus.name -> (NotifyIngestStatus.main(_)),
-    ReadStacFeature.name -> (ReadStacFeature.main(_)),
     WriteStacCatalog.name -> (WriteStacCatalog.main(_)),
     UpdateExportStatus.name -> (UpdateExportStatus.main(_)),
     ImportGeojsonFiles.name -> (ImportGeojsonFiles.main(_)),

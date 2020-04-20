@@ -13,7 +13,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.contrib.vlm.gdal.GDALDataPath
+import geotrellis.raster.gdal.GDALPath
 
 import scala.concurrent.ExecutionContext
 
@@ -72,7 +72,7 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
       id: UUID,
       path: String
   ): IO[Either[Throwable, BacksplashGeoTiffInfo]] = {
-    IO(BacksplashGeotiffReader.getBacksplashGeotiffInfo(path)).attempt map {
+    IO(BacksplashGeotiffReader.getGeotiffInfo(path)).attempt map {
       case l @ Left(_) =>
         logger.error(
           s"""Scene(id='$id'): Failed to fetch geotiff for path "$path"."""
@@ -90,7 +90,7 @@ object RasterSourceMetadataBackfill extends Job with RollbarNotifier {
       backsplashInfo: BacksplashGeoTiffInfo
   )(implicit xa: Transactor[IO]): IO[Int] = {
     val rasterSourceMetadata = RasterSourceMetadata(
-      GDALDataPath(path),
+      GDALPath(path),
       backsplashInfo.crs,
       backsplashInfo.bandCount,
       backsplashInfo.tiffTags.cellType,
