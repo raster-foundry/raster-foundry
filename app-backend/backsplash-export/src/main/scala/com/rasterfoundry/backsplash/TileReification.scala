@@ -6,11 +6,11 @@ import cats.effect._
 import cats.implicits._
 import com.azavea.maml.ast._
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.layer._
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.resample._
 import geotrellis.server._
-import geotrellis.layer._
 
 object TileReification extends LazyLogging {
 

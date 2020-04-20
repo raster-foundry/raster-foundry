@@ -7,8 +7,8 @@ import cats.data.Validated._
 import cats.data.{NonEmptyList => _}
 import cats.effect._
 import cats.implicits._
-import geotrellis.raster.MosaicRasterSource
 import geotrellis.proj4.CRS
+import geotrellis.raster.MosaicRasterSource
 import geotrellis.raster.histogram._
 import geotrellis.server._
 

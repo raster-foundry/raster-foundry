@@ -1,14 +1,14 @@
 package com.rasterfoundry.backsplash
 
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.layer._
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.raster.io.geotiff._
-import geotrellis.layer._
-import geotrellis.vector.{Extent, Point}
 import geotrellis.vector.reproject.Implicits._
+import geotrellis.vector.{Extent, Point}
 
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets

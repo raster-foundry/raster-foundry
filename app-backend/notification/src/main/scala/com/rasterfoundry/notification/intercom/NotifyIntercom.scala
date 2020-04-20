@@ -4,13 +4,13 @@ import com.rasterfoundry.notification.intercom.Model._
 
 import cats.effect.Sync
 import cats.implicits._
-import sttp.client._
-import sttp.client.circe._
-import sttp.model.Uri
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.Json
 import io.circe.syntax._
+import sttp.client._
+import sttp.client.circe._
+import sttp.model.Uri
 
 trait IntercomNotifier[F[_]] {
   def notifyUser(
@@ -22,7 +22,9 @@ trait IntercomNotifier[F[_]] {
 }
 
 class LiveIntercomNotifier[F[_]: Sync](
-    backend: SttpBackend[F, Nothing, sttp.client.asynchttpclient.WebSocketHandler]
+    backend: SttpBackend[F,
+                         Nothing,
+                         sttp.client.asynchttpclient.WebSocketHandler]
 ) extends IntercomNotifier[F] {
   val sttpApiBase = "https://api.intercom.io"
 

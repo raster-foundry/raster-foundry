@@ -173,7 +173,8 @@ trait SceneRoutes
                     "histogram",
                     hist.asJson
                   )
-                ).attempt map {
+                )
+                .attempt map {
                 _.toOption
               }
             } yield insertedScene

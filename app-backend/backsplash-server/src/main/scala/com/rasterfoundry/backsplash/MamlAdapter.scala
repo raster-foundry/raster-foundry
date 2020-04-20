@@ -59,7 +59,11 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
           Map[String, BacksplashMosaic](
             s"${layerId.toString}_${bandActual}" -> (
               layerStore
-                .read(layerId, None, None, None, NoOpTracingContext[IO]("no-op-read")) map {
+                .read(layerId,
+                      None,
+                      None,
+                      None,
+                      NoOpTracingContext[IO]("no-op-read")) map {
                 case (tracingContext, bsiList) =>
                   (tracingContext, bsiList map { backsplashIm =>
                     backsplashIm.selectBands(List(bandActual))

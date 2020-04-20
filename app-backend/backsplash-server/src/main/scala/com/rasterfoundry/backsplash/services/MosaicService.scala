@@ -16,8 +16,8 @@ import doobie.util.transactor.Transactor
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
-import geotrellis.vector.{Polygon, Projected}
 import geotrellis.vector.io.json.Implicits._
+import geotrellis.vector.{Polygon, Projected}
 import io.circe.parser._
 import io.circe.syntax._
 import org.http4s._

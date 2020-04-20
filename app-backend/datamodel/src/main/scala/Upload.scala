@@ -1,7 +1,7 @@
 package com.rasterfoundry.datamodel
 
-import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3}
 import com.amazonaws.services.s3.model.GetObjectMetadataRequest
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3URI}
 import io.circe._
 import io.circe.generic.JsonCodec
 

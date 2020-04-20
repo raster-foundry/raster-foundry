@@ -2,9 +2,9 @@ package com.rasterfoundry.common.utils
 
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.proj4._
 import geotrellis.raster._
+import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.vector.Projected
 import geotrellis.vector._
 
@@ -43,7 +43,7 @@ object CogUtils extends LazyLogging {
                   r =>
                     scala.math.abs(
                       100000 - (rasterSource.rows / r.height) * (rasterSource.cols / r.width)
-                    )
+                  )
                 )
               )
             )

@@ -43,7 +43,8 @@ trait GtWktMeta {
     geometryType[MultiLineString]
   implicit val MultiPolygonType: Meta[Projected[MultiPolygon]] =
     geometryType[MultiPolygon]
-  implicit val LineStringType: Meta[Projected[LineString]] = geometryType[LineString]
+  implicit val LineStringType: Meta[Projected[LineString]] =
+    geometryType[LineString]
   implicit val MultiPointType: Meta[Projected[MultiPoint]] =
     geometryType[MultiPoint]
   implicit val PolygonType: Meta[Projected[Polygon]] =

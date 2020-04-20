@@ -18,7 +18,8 @@ object Cache extends LazyLogging {
           opt flatMap {
             case mp: MultiPolygon =>
               val centroid = mp.getCentroid()
-              Some(GeohashUtils.encodeLatLon(centroid.getX(), centroid.getY(), 15))
+              Some(
+                GeohashUtils.encodeLatLon(centroid.getX(), centroid.getY(), 15))
             case x => Some(x.toString)
           }
         case part => Some(part.toString)

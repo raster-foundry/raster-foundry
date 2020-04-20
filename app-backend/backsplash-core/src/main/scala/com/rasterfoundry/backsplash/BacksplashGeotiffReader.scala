@@ -5,7 +5,10 @@ import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import cats.data.{NonEmptyList => NEL}
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff._
-import geotrellis.raster.io.geotiff.reader.{GeoTiffInfo, MalformedGeoTiffException}
+import geotrellis.raster.io.geotiff.reader.{
+  GeoTiffInfo,
+  MalformedGeoTiffException
+}
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.raster.io.geotiff.util._
 import geotrellis.util.ByteReader
@@ -56,7 +59,8 @@ object BacksplashGeotiffReader extends LazyLogging {
     * @param withOverviews
     * @return
     */
-    def getAllTiffTags(byteReader: ByteReader, withOverviews: Boolean): List[TiffTags] = {
+  def getAllTiffTags(byteReader: ByteReader,
+                     withOverviews: Boolean): List[TiffTags] = {
     val oldPos = byteReader.position
     try {
       byteReader.position(0)
@@ -132,7 +136,7 @@ object BacksplashGeotiffReader extends LazyLogging {
     * @return
     */
   def getGeotiffInfo(uri: String): BacksplashGeoTiffInfo = {
-    val reader      = getByteReader(uri)
+    val reader = getByteReader(uri)
     val geoTiffInfo = GeoTiffInfo.read(reader, true, true)
     logger.debug(
       s"Some Geotiff Info for $uri: COMPRESSION: ${geoTiffInfo.compression} SEGMENT LAYOUT: ${geoTiffInfo.segmentLayout}"

@@ -2,8 +2,8 @@ package com.rasterfoundry
 
 import cats.syntax.either._
 import geotrellis.proj4.{io => _, _}
-import geotrellis.raster.render.{RGB, RGBA}
 import geotrellis.raster.GridExtent
+import geotrellis.raster.render.{RGB, RGBA}
 import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import geotrellis.vector.{io => _, _}
 import io.circe._

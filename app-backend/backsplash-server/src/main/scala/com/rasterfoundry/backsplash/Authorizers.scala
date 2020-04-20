@@ -21,8 +21,8 @@ import com.rasterfoundry.datamodel.{
 
 import cats.Applicative
 import cats.effect._
-import com.colisweb.tracing.core.TracingContext
 import com.colisweb.tracing.context.NoOpTracingContext
+import com.colisweb.tracing.core.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
 import doobie.implicits._
@@ -78,16 +78,15 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
       tracingContext: TracingContext[IO]): IO[Boolean] = {
     val tags =
       Map("projectId" -> projectID.toString, "layerID" -> layerID.toString)
-    tracingContext.span("checkProjectLayerCached", tags) use {
-      childContext =>
-        {
-          memoizeF[IO, Boolean](Some(10 seconds)) {
-            logger.debug(
-              s"Checking whether layer ${layerID} is in project ${projectID}")
-            childContext.span("layerIsInProject", tags) use (_ =>
-              ProjectLayerDao.layerIsInProject(layerID, projectID).transact(xa))
-          }
+    tracingContext.span("checkProjectLayerCached", tags) use { childContext =>
+      {
+        memoizeF[IO, Boolean](Some(10 seconds)) {
+          logger.debug(
+            s"Checking whether layer ${layerID} is in project ${projectID}")
+          childContext.span("layerIsInProject", tags) use (_ =>
+            ProjectLayerDao.layerIsInProject(layerID, projectID).transact(xa))
         }
+      }
     }
   }
 

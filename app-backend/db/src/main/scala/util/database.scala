@@ -56,7 +56,8 @@ object RFTransactor {
         )
       )
 
-    val transactionBlocker: Blocker = Blocker.liftExecutionContext(transactionEC)
+    val transactionBlocker: Blocker =
+      Blocker.liftExecutionContext(transactionEC)
   }
 
   def buildTransactor(

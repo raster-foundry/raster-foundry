@@ -4,11 +4,8 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.datamodel.SingleBandOptions
 
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.raster.render.{Implicits => RenderImplicits, _}
 import geotrellis.raster.{ColorRamp => _, ColorMap => _, _}
-import geotrellis.raster.render.{
-  Implicits => RenderImplicits,
-  _
-}
 
 object ColorRampMosaic extends LazyLogging with RenderImplicits {
 

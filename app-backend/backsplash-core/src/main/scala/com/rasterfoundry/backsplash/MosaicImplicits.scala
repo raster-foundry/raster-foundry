@@ -135,7 +135,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               interpretAsFallback(baseTile, firstNd) merge interpretAsFallback(
                 triple2._1,
                 firstNd
-              )
+            )
           )
           Raster(
             ColorRampMosaic.colorTile(
@@ -239,14 +239,13 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
           val mosaic = {
             val mbtIO = self.flatMap {
               case (tracingContext, listBsi) =>
-                tracingContext.span("getMergedRawMosaic") use {
-                  childContext =>
-                    val listIO = listBsi.parTraverse { bsi =>
-                      bsi.read(z, x, y, childContext)
-                    }
-                    childContext.span("mergeRawTiles") use { _ =>
-                      listIO.map(_.flatten.reduceOption(_ merge _))
-                    }
+                tracingContext.span("getMergedRawMosaic") use { childContext =>
+                  val listIO = listBsi.parTraverse { bsi =>
+                    bsi.read(z, x, y, childContext)
+                  }
+                  childContext.span("mergeRawTiles") use { _ =>
+                    listIO.map(_.flatten.reduceOption(_ merge _))
+                  }
                 }
             }
 
@@ -282,13 +281,12 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             bandCount = mosaic.head.subsetBands.length
             // for single band imagery, after color correction we have RGBA, so
             // the empty tile needs to be four band as well
-            rendered <- context.span("paintedRender") use {
-              renderContext =>
-                if (bandCount == 3) {
-                  renderMosaicMultiband(mosaic, z, x, y, renderContext)
-                } else {
-                  renderMosaicSingleBand(mosaic, z, x, y, renderContext)
-                }
+            rendered <- context.span("paintedRender") use { renderContext =>
+              if (bandCount == 3) {
+                renderMosaicMultiband(mosaic, z, x, y, renderContext)
+              } else {
+                renderMosaicSingleBand(mosaic, z, x, y, renderContext)
+              }
             }
           } yield {
             ProjectedRaster(rendered, WebMercator)
@@ -321,7 +319,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     logger.debug(
       s"Retrieving Histograms for ${relevant.imageId} from histogram store"
     )
-    histStore.layerHistogram(relevant.imageId, relevant.subsetBands, tracingContext)
+    histStore.layerHistogram(relevant.imageId,
+                             relevant.subsetBands,
+                             tracingContext)
   }
 
   // We need to be able to pass information about whether scenes should paint themselves while
@@ -521,26 +521,25 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       )(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] = {
         val mosaic = self.flatMap {
           case (tracingContext, bsiList) =>
-            tracingContext.span("mosaicRasterExtents") use {
-              childContext =>
-                bsiList.parTraverse({ img =>
-                  img.getRasterSource(childContext) map { rs =>
-                    val rasterExtents = rs.resolutions map { cellSize =>
-                      ReprojectRasterExtent(
-                        RasterExtent(
-                          rs.extent,
-                          cellSize.width,
-                          cellSize.height,
-                          rs.cols.toInt,
-                          rs.rows.toInt
-                        ),
-                        rs.crs,
-                        WebMercator
-                      )
-                    }
-                    rasterExtents
+            tracingContext.span("mosaicRasterExtents") use { childContext =>
+              bsiList.parTraverse({ img =>
+                img.getRasterSource(childContext) map { rs =>
+                  val rasterExtents = rs.resolutions map { cellSize =>
+                    ReprojectRasterExtent(
+                      RasterExtent(
+                        rs.extent,
+                        cellSize.width,
+                        cellSize.height,
+                        rs.cols.toInt,
+                        rs.rows.toInt
+                      ),
+                      rs.crs,
+                      WebMercator
+                    )
                   }
-                })
+                  rasterExtents
+                }
+              })
             }
         }
         mosaic.map(

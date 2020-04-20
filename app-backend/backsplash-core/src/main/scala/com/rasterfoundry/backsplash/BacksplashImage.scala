@@ -13,16 +13,16 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.layer.Implicits._
+import geotrellis.layer.{SpatialKey, ZoomedLayoutScheme}
 import geotrellis.proj4.{CRS, WebMercator}
-import geotrellis.raster.{MultibandTile, RasterSource}
 import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.geotiff.{GeoTiffPath, GeoTiffRasterSource}
 import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.raster.{MultibandTile, RasterSource}
 import geotrellis.raster.{io => _, _}
-import geotrellis.layer.{SpatialKey, ZoomedLayoutScheme}
 import geotrellis.vector.MultiPolygon
-import geotrellis.vector.{io => _, _}
 import geotrellis.vector.io.json.CrsFormats
+import geotrellis.vector.{io => _, _}
 import io.circe.Decoder
 import scalacache.CatsEffect.modes._
 import scalacache._

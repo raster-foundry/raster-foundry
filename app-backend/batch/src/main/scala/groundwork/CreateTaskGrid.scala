@@ -19,10 +19,10 @@ import com.rasterfoundry.notification.intercom.{
 import cats.data.OptionT
 import cats.effect.{Async, IO, LiftIO}
 import cats.implicits._
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.{ConnectionIO, Transactor}
+import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import java.util.UUID
 

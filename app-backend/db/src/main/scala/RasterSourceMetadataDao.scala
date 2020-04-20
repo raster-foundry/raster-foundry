@@ -6,9 +6,9 @@ import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.raster.gdal.GDALPath
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
+import geotrellis.raster.gdal.GDALPath
 import geotrellis.vector.Extent
 
 import scala.util.Try

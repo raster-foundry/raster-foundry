@@ -1,7 +1,7 @@
 package com.rasterfoundry.datamodel
 
-import geotrellis.raster.gdal.GDALPath
 import geotrellis.proj4.CRS
+import geotrellis.raster.gdal.GDALPath
 import geotrellis.raster.{CellType, GridExtent}
 
 /** Metadata used in the RasterSourceWithMetadata source

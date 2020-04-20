@@ -2,18 +2,15 @@ package com.rasterfoundry.backsplash.export
 
 import com.rasterfoundry.backsplash.export.ExportableInstances._
 import com.rasterfoundry.backsplash.export.shapes._
-import com.rasterfoundry.common.export._
 import com.rasterfoundry.common.S3
+import com.rasterfoundry.common.export._
 
 import Exportable.ops._
-import com.amazonaws.services.s3.model.{
-  ObjectMetadata,
-  PutObjectRequest
-}
 import _root_.io.circe.parser._
 import _root_.io.circe.shapes._
 import cats.effect._
 import cats.implicits._
+import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.monovore.decline._
 import com.typesafe.scalalogging._
 import geotrellis.raster.io.geotiff.compression._

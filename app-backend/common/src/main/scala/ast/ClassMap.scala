@@ -1,7 +1,12 @@
 package com.rasterfoundry.common.ast
 
 import geotrellis.raster._
-import geotrellis.raster.render.{BreakMap, ClassBoundaryType, LessThanOrEqualTo, MapStrategy}
+import geotrellis.raster.render.{
+  BreakMap,
+  ClassBoundaryType,
+  LessThanOrEqualTo,
+  MapStrategy
+}
 import spire.std.any._
 
 final case class ClassMap(

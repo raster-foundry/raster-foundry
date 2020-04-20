@@ -4,8 +4,8 @@ import com.rasterfoundry.datamodel.BandOverride
 
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
-import com.colisweb.tracing.core.TracingContext
 import com.colisweb.tracing.context.NoOpTracingContext
+import com.colisweb.tracing.core.TracingContext
 import geotrellis.vector.{Polygon, Projected}
 import simulacrum._
 

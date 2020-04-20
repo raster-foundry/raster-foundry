@@ -13,11 +13,11 @@ import akka.http.scaladsl.server._
 import cats.data.OptionT
 import cats.effect.{Async, ContextShift, IO}
 import cats.implicits._
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import scala.concurrent.Future
 
