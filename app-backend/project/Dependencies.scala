@@ -10,6 +10,7 @@ object Version {
   val akkaSlf4j = "2.4.13"
   val apacheAvro = "1.8.2"
   val apacheCommonsEmail = "1.5"
+  val asyncHttpClient = "2.12.1"
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.763"
   val awsCoreSdk = "1.11.763"
@@ -99,6 +100,7 @@ object Dependencies {
   val akkatestkit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
   val apacheAvro = "org.apache.avro" % "avro" % Version.apacheAvro
   val apacheCommonsEmail = "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
+  val asyncHttpClient = "org.asynchttpclient" % "async-http-client" % Version.asyncHttpClient
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsCoreSdk = "com.amazonaws" % "aws-java-sdk-core" % Version.awsCoreSdk

@@ -241,6 +241,7 @@ lazy val apiDependencies = Seq(
   Dependencies.akkaSlf4j,
   Dependencies.akkaStream,
   Dependencies.akkaStream,
+  Dependencies.asyncHttpClient,
   Dependencies.awsCoreSdk,
   Dependencies.awsS3,
   Dependencies.awsStsSdk,
@@ -268,6 +269,7 @@ lazy val apiDependencies = Seq(
   Dependencies.scalatest,
   Dependencies.shapeless,
   Dependencies.sourceCode,
+  Dependencies.sttpAsyncBackend,
   Dependencies.sttpCatsBackend,
   Dependencies.sttpCore,
   Dependencies.typesafeConfig
@@ -438,6 +440,7 @@ lazy val batch = project
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.asyncHttpClient,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.betterFiles,
@@ -478,6 +481,7 @@ lazy val batch = project
       Dependencies.sourceCode,
       Dependencies.sparkCore,
       Dependencies.spireMath,
+      Dependencies.sttpAsyncBackend,
       Dependencies.sttpCatsBackend,
       Dependencies.sttpCore,
       Dependencies.typesafeConfig
