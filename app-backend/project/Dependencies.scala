@@ -71,7 +71,7 @@ object Version {
   val scalaLogging = "3.9.2"
   val scalaTest = "3.1.1"
   val scalacache = "0.28.0"
-  val scalajHttp = "2.4.1"
+  val scalajHttp = "2.4.2"
   val scalatestPlus = "3.1.1.1"
   val scapegoat = "1.3.7"
   val scopt = "3.5.0"
@@ -82,7 +82,7 @@ object Version {
   val spire = "0.16.0"
   val spireMath = "0.13.0"
   val sttp = "2.0.9"
-  val sttpModel = "1.0.0"
+  val sttpModel = "1.0.3"
   val sup = "0.7.0"
   val typesafeConfig = "1.4.0"
   val vault = "2.0.0"
@@ -212,6 +212,7 @@ object Dependencies {
   val spire = "org.typelevel" %% "spire" % Version.spire
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
+  val sttpAsyncBackend = "com.softwaremill.sttp.client" %% "async-http-client-backend" % Version.sttp
   val sttpCatsBackend = "com.softwaremill.sttp.client" %% "async-http-client-backend-cats" % Version.sttp
   val sttpCirce = "com.softwaremill.sttp.client" %% "circe" % Version.sttp
   val sttpCore = "com.softwaremill.sttp.client" %% "core" % Version.sttp

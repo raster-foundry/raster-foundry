@@ -10,8 +10,7 @@ import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.resample._
 import geotrellis.server._
-import geotrellis.spark.SpatialKey
-import geotrellis.spark.tiling._
+import geotrellis.layer._
 
 object TileReification extends LazyLogging {
 
@@ -51,8 +50,10 @@ object TileReification extends LazyLogging {
       def kind(): MamlKind =
         MamlKind.Image
 
-      def tmsReification(self: List[(String, List[Int], Option[Double])],
-                         buffer: Int)(
+      def tmsReification(
+          self: List[(String, List[Int], Option[Double])],
+          buffer: Int
+      )(
           implicit contextShift: ContextShift[IO]
       ) = (z: Int, x: Int, y: Int) => {
         val layoutDefinition = getLayoutDefinition(z)
@@ -63,7 +64,9 @@ object TileReification extends LazyLogging {
             self.headOption
               .getOrElse(
                 throw new Exception(
-                  "Tile location list must contain *some* tile locations"))
+                  "Tile location list must contain *some* tile locations"
+                )
+              )
           val explicitBandcount = first._2.length
           if (explicitBandcount < 1) {
             RasterSources.getOrUpdate(first._1).bandCount
@@ -77,7 +80,7 @@ object TileReification extends LazyLogging {
               IO {
                 val rs = RasterSources
                   .getOrUpdate(uri)
-                  .reproject(WebMercator, NearestNeighbor)
+                  .reproject(WebMercator, method = NearestNeighbor)
                 if (bands.length > rs.bandCount) {
                   val msg =
                     s"Number of bands requested (${bands.length}) is greater than bands in Raster Source (${rs.bandCount})"
@@ -90,12 +93,14 @@ object TileReification extends LazyLogging {
                     case Some(mbtile) => {
                       val noDataValue = getNoDataValue(mbtile.cellType)
                       Some(
-                        mbtile.interpretAs(
-                          mbtile.cellType.withNoData(noDataValue)))
+                        mbtile
+                          .interpretAs(mbtile.cellType.withNoData(noDataValue))
+                      )
                     }
                     case None => {
                       logger.debug(
-                        s"--CRITICAL MISS-- uri: ${uri}; zxy: $z/$x/$y")
+                        s"--CRITICAL MISS-- uri: ${uri}; zxy: $z/$x/$y"
+                      )
                       None
                     }
                   }
@@ -108,7 +113,8 @@ object TileReification extends LazyLogging {
         val exportTile: IO[Raster[MultibandTile]] = subTilesIO.map { subtiles =>
           subtiles.flatten.reduceOption({ (t1, t2) =>
             logger.debug(
-              s"Merging celltypes ct1: ${t1.cellType} ; ct2: ${t2.cellType}")
+              s"Merging celltypes ct1: ${t1.cellType} ; ct2: ${t2.cellType}"
+            )
             t1 merge t2
           }) match {
             case Some(mbtile) =>
@@ -129,8 +135,10 @@ object TileReification extends LazyLogging {
       def kind(): MamlKind =
         MamlKind.Image
 
-      def tmsReification(self: List[(String, Int, Option[Double])],
-                         buffer: Int)(
+      def tmsReification(
+          self: List[(String, Int, Option[Double])],
+          buffer: Int
+      )(
           implicit contextShift: ContextShift[IO]
       ) = (z: Int, x: Int, y: Int) => {
         val layoutDefinition = getLayoutDefinition(z)
@@ -140,17 +148,19 @@ object TileReification extends LazyLogging {
             IO {
               val rs = RasterSources
                 .getOrUpdate(uri)
-                .reproject(WebMercator, NearestNeighbor)
+                .reproject(WebMercator, method = NearestNeighbor)
               if (rs.extent.intersects(extent)) {
-                rs.reproject(WebMercator, NearestNeighbor)
+                rs.reproject(WebMercator, method = NearestNeighbor)
                   .tileToLayout(layoutDefinition, NearestNeighbor)
                   .read(SpatialKey(x, y), Seq(band)) match {
                   case Some(tile) =>
                     logger.debug(
-                      s"--HIT-- uri: ${uri}; celltype: ${tile.cellType}, zxy: $z/$x/$y")
+                      s"--HIT-- uri: ${uri}; celltype: ${tile.cellType}, zxy: $z/$x/$y"
+                    )
                     val noDataValue = getNoDataValue(tile.cellType)
                     Some(
-                      tile.interpretAs(tile.cellType.withNoData(noDataValue)))
+                      tile.interpretAs(tile.cellType.withNoData(noDataValue))
+                    )
                   case None =>
                     logger.debug(s"--MISS-- uri: ${uri}; zxy: $z/$x/$y")
                     None
@@ -164,7 +174,8 @@ object TileReification extends LazyLogging {
         val exportTile = subTilesIO.map { subtiles =>
           subtiles.flatten.reduceOption({ (t1, t2) =>
             logger.debug(
-              s"Merging celltypes ct1: ${t1.cellType}; ct2: ${t2.cellType}")
+              s"Merging celltypes ct1: ${t1.cellType}; ct2: ${t2.cellType}"
+            )
             t1 merge t2
           }) match {
             case Some(tile) =>

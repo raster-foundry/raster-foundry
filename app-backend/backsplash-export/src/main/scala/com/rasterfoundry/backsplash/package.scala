@@ -1,15 +1,14 @@
 package com.rasterfoundry.backsplash
 
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.contrib.vlm._
-import geotrellis.contrib.vlm.gdal.GDALRasterSource
-import geotrellis.contrib.vlm.geotiff._
 import geotrellis.proj4._
 import geotrellis.raster._
+import geotrellis.raster.gdal.GDALRasterSource
+import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.raster.io.geotiff._
-import geotrellis.spark.SpatialKey
-import geotrellis.spark.tiling._
+import geotrellis.layer._
 import geotrellis.vector.{Extent, Point}
+import geotrellis.vector.reproject.Implicits._
 
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -18,10 +17,12 @@ package object export extends LazyLogging {
 
   private val tileSize = ExportConfig.Export.tileSize
 
-  def getTileXY(lat: Double,
-                lng: Double,
-                zoom: Int,
-                displayProjection: CRS = WebMercator): (Int, Int) = {
+  def getTileXY(
+      lat: Double,
+      lng: Double,
+      zoom: Int,
+      displayProjection: CRS = WebMercator
+  ): (Int, Int) = {
     val p = Point(lng, lat).reproject(LatLng, displayProjection)
 
     val webMercator = ZoomedLayoutScheme(WebMercator, 256)
@@ -61,7 +62,8 @@ package object export extends LazyLogging {
     val enableGDAL = ExportConfig.RasterSource.enableGDAL
     if (enableGDAL) {
       GDALRasterSource(
-        URLDecoder.decode(uri, StandardCharsets.UTF_8.toString()))
+        URLDecoder.decode(uri, StandardCharsets.UTF_8.toString())
+      )
     } else {
       new GeoTiffRasterSource(uri)
     }

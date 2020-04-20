@@ -11,6 +11,8 @@ import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.rasterize.Rasterizer
 import geotrellis.server._
+import geotrellis.vector.methods.Implicits._
+import geotrellis.vector.reproject.Implicits._
 
 trait ExportableInstances extends LazyLogging {
   // This is fine because `hasNext` should *never* return true when `allTiles` is empty
@@ -77,13 +79,13 @@ trait ExportableInstances extends LazyLogging {
         self.source.zoom
 
       def exportExtent(self: ExportDefinition[AnalysisExportSource]) =
-        self.source.area.envelope
+        self.source.area.extent
 
       def exportDestination(self: ExportDefinition[AnalysisExportSource]) =
         self.output.destination
 
       def segmentLayout(self: ExportDefinition[AnalysisExportSource]) =
-        exportSegmentLayout(self.source.area.envelope, self.source.zoom)
+        exportSegmentLayout(self.source.area.extent, self.source.zoom)
     }
 
   implicit val exportableMosaic =
@@ -159,13 +161,13 @@ trait ExportableInstances extends LazyLogging {
         DoubleConstantNoDataCellType
 
       def exportExtent(self: ExportDefinition[MosaicExportSource]) =
-        self.source.area.envelope
+        self.source.area.extent
 
       def exportDestination(self: ExportDefinition[MosaicExportSource]) =
         self.output.destination
 
       def segmentLayout(self: ExportDefinition[MosaicExportSource]) =
-        exportSegmentLayout(self.source.area.envelope, self.source.zoom)
+        exportSegmentLayout(self.source.area.extent, self.source.zoom)
     }
 }
 
