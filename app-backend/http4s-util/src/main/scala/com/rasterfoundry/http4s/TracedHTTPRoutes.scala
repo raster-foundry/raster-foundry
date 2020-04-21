@@ -49,7 +49,7 @@ object TracedHTTPRoutes {
     Map(tags: _*)
   }) getOrElse Map.empty
 
-  def getTraceId[F[_]: Sync](req: Request[F]): Map[String, String] =
+  def getTraceId[F[_]](req: Request[F]): Map[String, String] =
     req.headers.get(CaseInsensitiveString("X-Amzn-Trace-Id")) match {
       case Some(header) =>
         header.value.split('=').reverse.headOption match {

@@ -62,7 +62,7 @@ final case class BacksplashGeotiff(
     println(s"String to decode as crs is: $s")
     Either
       .catchNonFatal(CRS.fromName(s))
-      .leftMap(_ => "$s is not a valid CRS name")
+      .leftMap(_ => s"$s is not a valid CRS name")
   })) or CrsFormats.crsDecoder
 
   import DBCache.GeotiffInfoCache._
