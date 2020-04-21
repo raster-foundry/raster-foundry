@@ -5,6 +5,7 @@
 ### Added
 
 ### Changed
+- Add development support for PostgreSQL 12.x/PostGIS 3.x [#5395](https://github.com/raster-foundry/raster-foundry/pull/5395)
 
 - Changed email invitation copy [#5396](https://github.com/raster-foundry/raster-foundry/pull/5396)
 

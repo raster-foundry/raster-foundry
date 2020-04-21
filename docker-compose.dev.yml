@@ -1,7 +1,7 @@
 version: "2.3"
 services:
   postgres-dev:
-    image: quay.io/azavea/postgis:2.3-postgres9.6-slim
+    image: quay.io/azavea/postgis:3-postgres12.2-slim
     volumes:
       - ./data/:/tmp/data/
     env_file: .env
