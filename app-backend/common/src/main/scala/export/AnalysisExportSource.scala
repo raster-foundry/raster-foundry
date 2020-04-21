@@ -3,6 +3,7 @@ package com.rasterfoundry.common.export
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.ast.codec.tree.ExpressionTreeCodec
 import geotrellis.vector.MultiPolygon
+import geotrellis.vector.io.json.Implicits._
 import io.circe.generic.semiauto._
 import io.circe.{Decoder, Encoder}
 

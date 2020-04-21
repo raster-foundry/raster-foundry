@@ -31,7 +31,7 @@ trait JsonCodecs extends GeoJsonImplicits {
         ("cellHeight", a.cellheight.asJson),
         ("cols", a.cols.asJson),
         ("rows", a.rows.asJson)
-    )
+      )
 
   implicit val gridExtentDecoder: Decoder[GridExtent[Long]] = (c: HCursor) =>
     for {
@@ -42,7 +42,7 @@ trait JsonCodecs extends GeoJsonImplicits {
       rows <- c.downField("rows").as[Long]
     } yield {
       new GridExtent[Long](extent, cellWidth, cellHeight, cols, rows)
-  }
+    }
 
   implicit val extentEncoder: Encoder[Extent] =
     new Encoder[Extent] {
@@ -129,9 +129,13 @@ trait JsonCodecs extends GeoJsonImplicits {
         }
         Either
           .catchNonFatal((LocalDate.parse(s1), LocalDate.parse(s2)))
-          .leftMap(_ =>
-            DecodingFailure(s"Could not parse local dates from ($s1, $s2)",
-                            List.empty))
+          .leftMap(
+            _ =>
+              DecodingFailure(
+                s"Could not parse local dates from ($s1, $s2)",
+                List.empty
+              )
+          )
       }
     }
 
@@ -155,7 +159,7 @@ trait JsonCodecs extends GeoJsonImplicits {
       Either.catchNonFatal(UUID.fromString(str)).leftMap(_ => "UUID")
     }
   implicit val uuidDecoder
-    : Decoder[UUID] = directUUIDDecoder or withUUIDFieldUUIDDecoder
+      : Decoder[UUID] = directUUIDDecoder or withUUIDFieldUUIDDecoder
 
   implicit val uriEncoder: Encoder[URI] =
     Encoder.encodeString.contramap[URI] { _.toString }
@@ -212,13 +216,13 @@ trait JsonCodecs extends GeoJsonImplicits {
 
   // TODO: make this tolerate more than one incoming srid
   implicit val projectedGeometryDecoder
-    : Decoder[Projected[Geometry]] = Decoder[Json] map { js =>
+      : Decoder[Projected[Geometry]] = Decoder[Json] map { js =>
     Projected(js.spaces4.parseGeoJson[Geometry], 4326)
       .reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }
 
   implicit val projectedMultiPolygonDecoder
-    : Decoder[Projected[MultiPolygon]] = Decoder[Json] map { js =>
+      : Decoder[Projected[MultiPolygon]] = Decoder[Json] map { js =>
     Projected(js.spaces4.parseGeoJson[MultiPolygon], 4326)
       .reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }

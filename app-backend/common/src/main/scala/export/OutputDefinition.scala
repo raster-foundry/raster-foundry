@@ -1,6 +1,7 @@
 package com.rasterfoundry.common.export
 
 import _root_.io.circe.generic.semiauto._
+import geotrellis.vector.io.json.Implicits._
 import geotrellis.proj4.CRS
 
 final case class OutputDefinition(
