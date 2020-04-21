@@ -102,7 +102,7 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     for {
       _ <- sceneIds.zipWithIndex traverse {
         case (sceneId, idx) =>
-        fr"""
+          fr"""
           UPDATE scenes_to_layers
           SET scene_order = ${idx}
           WHERE project_layer_id = ${projectLayerId}
