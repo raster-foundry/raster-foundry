@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Changed email invitation copy [#5396](https://github.com/raster-foundry/raster-foundry/pull/5396)
+
 ### Deprecated
 
 ### Removed
