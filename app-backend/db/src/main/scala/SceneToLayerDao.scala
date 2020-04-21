@@ -97,20 +97,18 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
 
   def setManualOrder(
       projectLayerId: UUID,
-      sceneIds: Seq[UUID]
-  ): ConnectionIO[Seq[UUID]] = {
-    val updates = for {
-      i <- sceneIds.indices
-    } yield {
-      fr"""
-      UPDATE scenes_to_layers
-      SET scene_order = ${i}
-      WHERE project_layer_id = ${projectLayerId}
-        AND scene_id = ${sceneIds(i)}
-    """.update.run
-    }
+      sceneIds: List[UUID]
+  ): ConnectionIO[List[UUID]] = {
     for {
-      _ <- updates.toList.sequence
+      _ <- sceneIds.zipWithIndex traverse {
+        case (sceneId, idx) =>
+        fr"""
+          UPDATE scenes_to_layers
+          SET scene_order = ${idx}
+          WHERE project_layer_id = ${projectLayerId}
+            AND scene_id = ${sceneId}
+        """.update.run
+      }
       _ <- deleteMosaicDefCache(projectLayerId)
     } yield {
       sceneIds
