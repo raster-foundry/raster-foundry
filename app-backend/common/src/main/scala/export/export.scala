@@ -1,11 +1,11 @@
 package com.rasterfoundry.common
 
-import com.rasterfoundry.JsonCodecs
+import com.rasterfoundry.datamodel._
 
 import geotrellis.raster.CellType
 import io.circe.{Decoder, Encoder}
 
-package object export extends JsonCodecs {
+package object export {
 
   implicit lazy val celltypeDecoder: Decoder[CellType] =
     Decoder[String].map({ CellType.fromName(_) })

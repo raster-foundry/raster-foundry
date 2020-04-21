@@ -59,20 +59,6 @@ trait JsonCodecs extends GeoJsonImplicits {
         .leftMap(_ => "Extent")
     }
 
-  implicit val multipolygonEncoder: Encoder[MultiPolygon] =
-    new Encoder[MultiPolygon] {
-      def apply(mp: MultiPolygon): Json = {
-        parse(mp.toGeoJson) match {
-          case Right(js: Json) => js
-          case Left(e)         => throw e
-        }
-      }
-    }
-
-  implicit val multipolygonDecoder: Decoder[MultiPolygon] = Decoder[Json] map {
-    _.spaces4.parseGeoJson[MultiPolygon]
-  }
-
   // Double key serialization
   implicit val decodeKeyDouble: KeyDecoder[Double] = new KeyDecoder[Double] {
     def apply(key: String): Option[Double] = Try(key.toDouble).toOption
