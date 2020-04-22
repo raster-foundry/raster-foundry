@@ -225,7 +225,7 @@ services:
     entrypoint: ./sbt
 
   app-backend-migrations:
-    image: boxfuse/flyway:5.2.4
+    image: flyway/flyway:6.0.8
     environment:
       - FLYWAY_DRIVER=org.postgresql.Driver
       - FLYWAY_URL=jdbc:postgresql://database.service.rasterfoundry.internal/
