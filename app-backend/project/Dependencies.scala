@@ -38,7 +38,7 @@ object Version {
   val dropbox = "3.0.9"
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
-  val flyway = "5.2.4"
+  val flyway = "6.0.8"
   val fs2 = "1.0.5"
   val fs2Cron = "0.1.0"
   val geotrellis = "3.0.0-M3"
