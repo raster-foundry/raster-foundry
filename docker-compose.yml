@@ -1,7 +1,7 @@
 version: "2.3"
 services:
   postgres:
-    image: quay.io/azavea/postgis:2.3-postgres9.6-slim
+    image: quay.io/azavea/postgis:3-postgres12.2-slim
     volumes:
       - ./data/:/tmp/data/
     env_file: .env
@@ -225,7 +225,7 @@ services:
     entrypoint: ./sbt
 
   app-backend-migrations:
-    image: boxfuse/flyway:5.2.4
+    image: flyway/flyway:6.0.8
     environment:
       - FLYWAY_DRIVER=org.postgresql.Driver
       - FLYWAY_URL=jdbc:postgresql://database.service.rasterfoundry.internal/
