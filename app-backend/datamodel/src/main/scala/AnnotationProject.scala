@@ -4,8 +4,8 @@ import geotrellis.vector.{Geometry, Projected}
 import io.circe._
 import io.circe.generic.semiauto._
 
-import java.time.Instant
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.UUID
 
 final case class AnnotationProject(
@@ -184,7 +184,7 @@ object AnnotationProject {
 
   object WithRelatedAndLabelClassSummary {
     implicit val encRelatedAndSummary
-        : Encoder[WithRelatedAndLabelClassSummary] =
+      : Encoder[WithRelatedAndLabelClassSummary] =
       deriveEncoder
   }
 }
