@@ -183,7 +183,7 @@ object AnnotationProject {
 
   object WithRelatedAndLabelClassSummary {
     implicit val encRelatedAndSummary
-        : Encoder[WithRelatedAndLabelClassSummary] =
+      : Encoder[WithRelatedAndLabelClassSummary] =
       deriveEncoder
   }
 }
