@@ -7,13 +7,14 @@ import _root_.io.circe.generic.semiauto._
 import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
 import cats.syntax.either._
+import geotrellis.proj4.CRS
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.compression._
 import geotrellis.raster.io.geotiff.tags._
 import geotrellis.raster.render.IndexedColorMap
 import geotrellis.vector._
-import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
+import geotrellis.vector.io.json.{CrsFormats, Implicits => GeoJsonImplicits}
 import geotrellis.vector.{Extent, MultiPolygon}
 
 import java.nio.ByteOrder
@@ -132,9 +133,11 @@ package object common extends GeoJsonImplicits {
       final def apply(a: StorageMethod): Json = a match {
         case _: Striped => Json.obj(("storageType", Json.fromString("striped")))
         case Tiled(cols, rows) =>
-          Json.obj(("storageType", Json.fromString("tiled")),
-                   ("cols", Json.fromInt(cols)),
-                   ("rows", Json.fromInt(rows)))
+          Json.obj(
+            ("storageType", Json.fromString("tiled")),
+            ("cols", Json.fromInt(cols)),
+            ("rows", Json.fromInt(rows))
+          )
       }
     }
 
@@ -163,8 +166,10 @@ package object common extends GeoJsonImplicits {
         case NoCompression =>
           Json.obj(("compressionType", Json.fromString("NoCompression")))
         case d: DeflateCompression =>
-          Json.obj(("compressionType", Json.fromString("Deflate")),
-                   ("level", Json.fromInt(d.level)))
+          Json.obj(
+            ("compressionType", Json.fromString("Deflate")),
+            ("level", Json.fromInt(d.level))
+          )
       }
     }
 
@@ -204,6 +209,14 @@ package object common extends GeoJsonImplicits {
     deriveDecoder[TileLayout]
   implicit val geotiffSegmentLayoutDecoder: Decoder[GeoTiffSegmentLayout] =
     deriveDecoder[GeoTiffSegmentLayout]
+
+  // override the crsformats default decoder to be able to decode from an EPSG
+  // name in addition to a proj4 string
+  implicit val decCrs: Decoder[CRS] = (Decoder.decodeString.emap(s => {
+    Either
+      .catchNonFatal(CRS.fromName(s))
+      .leftMap(_ => s"$s is not a valid CRS name")
+  })) or CrsFormats.crsDecoder
 
   implicit val tagsDecoder: Decoder[Tags] = deriveDecoder[Tags]
   implicit val bsgtDecoder: Decoder[BacksplashGeoTiffInfo] =

@@ -154,7 +154,8 @@ object SceneDao
   }
 
   def getSceneGeoTiffInfo(
-      sceneId: UUID): ConnectionIO[Option[BacksplashGeoTiffInfo]] = {
+      sceneId: UUID
+  ): ConnectionIO[Option[BacksplashGeoTiffInfo]] = {
     Cache.getOptionCache(s"SceneInfo:$sceneId", Some(30 minutes)) {
       sql"SELECT backsplash_geotiff_info FROM scenes WHERE id = $sceneId"
         .query[Option[BacksplashGeoTiffInfo]]
@@ -162,8 +163,10 @@ object SceneDao
     }
   }
 
-  def updateSceneGeoTiffInfo(bsi: BacksplashGeoTiffInfo,
-                             id: UUID): ConnectionIO[Int] = {
+  def updateSceneGeoTiffInfo(
+      bsi: BacksplashGeoTiffInfo,
+      id: UUID
+  ): ConnectionIO[Int] = {
     fr"""UPDATE scenes SET backsplash_geotiff_info = ${bsi} WHERE id = ${id}""".update.run
   }
 
@@ -306,8 +309,10 @@ object SceneDao
                 .getProjectsAndLayersBySceneId(scene.id)
                 .flatMap(spls => {
                   for {
-                    _ <- spls.traverse(spl =>
-                      SceneToLayerDao.deleteMosaicDefCache(spl.projectLayerId))
+                    _ <- spls.traverse(
+                      spl =>
+                        SceneToLayerDao.deleteMosaicDefCache(spl.projectLayerId)
+                    )
                   } yield ()
                 })
                 .map(_ => n)

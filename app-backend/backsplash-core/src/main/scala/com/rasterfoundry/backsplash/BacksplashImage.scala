@@ -14,16 +14,14 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.layer.Implicits._
 import geotrellis.layer.{SpatialKey, ZoomedLayoutScheme}
-import geotrellis.proj4.{CRS, WebMercator}
+import geotrellis.proj4.WebMercator
 import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.geotiff.{GeoTiffPath, GeoTiffRasterSource}
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.{MultibandTile, RasterSource}
 import geotrellis.raster.{io => _, _}
 import geotrellis.vector.MultiPolygon
-import geotrellis.vector.io.json.CrsFormats
 import geotrellis.vector.{io => _, _}
-import io.circe.Decoder
 import scalacache.CatsEffect.modes._
 import scalacache._
 
@@ -57,13 +55,6 @@ final case class BacksplashGeotiff(
     xa: Transactor[IO]
 ) extends LazyLogging
     with BacksplashImage[IO] {
-
-  implicit val decCrs: Decoder[CRS] = (Decoder.decodeString.emap(s => {
-    println(s"String to decode as crs is: $s")
-    Either
-      .catchNonFatal(CRS.fromName(s))
-      .leftMap(_ => s"$s is not a valid CRS name")
-  })) or CrsFormats.crsDecoder
 
   import DBCache.GeotiffInfoCache._
 
@@ -136,6 +127,7 @@ final case class BacksplashGeotiff(
     context.span("read:z_x_y:", readTags) use { childContext =>
       val layoutDefinition = BacksplashImage.tmsLevels(z)
       for {
+
         rasterSource <- getRasterSource(childContext)
         tile <- childContext.span("rasterSource.read") use { _ =>
           IO(
