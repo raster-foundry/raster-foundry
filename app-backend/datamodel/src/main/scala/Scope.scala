@@ -47,6 +47,7 @@ object Domain {
   case object Uploads extends Domain("uploads")
   case object Users extends Domain("users")
   case object AnnotationProjects extends Domain("annotationProjects")
+  case object Campaigns extends Domain("campaigns")
 
   def fromStringTry(s: String): Try[Domain] = s match {
     case "analyses"           => Success(Analyses)
@@ -70,6 +71,7 @@ object Domain {
     case "uploads"            => Success(Uploads)
     case "users"              => Success(Users)
     case "annotationProjects" => Success(AnnotationProjects)
+    case "campaigns"          => Success(Campaigns)
     case _                    => Failure(new Exception(s"Cannot parse Domain from string $s"))
   }
 }
@@ -576,7 +578,13 @@ object Scopes {
             Some(10.toLong)
           ),
           ScopedAction(Domain.AnnotationProjects, Action.Share, Some(5.toLong)),
-          ScopedAction(Domain.Projects, Action.Create, None)
+          ScopedAction(Domain.Projects, Action.Create, None),
+          ScopedAction(
+            Domain.Campaigns,
+            Action.Create,
+            Some(10.toLong)
+          ),
+          ScopedAction(Domain.Campaigns, Action.Share, Some(5.toLong))
         ) ++ Set(
           Action.Read,
           Action.Update,
@@ -592,6 +600,21 @@ object Scopes {
           Action.AddScenes,
           Action.ReadPermissions
         ).map(makeScopedAction(Domain.AnnotationProjects, _, None)) ++
+          Set(
+            Action.Read,
+            Action.Update,
+            Action.Delete,
+            Action.CreateAnnotation,
+            Action.DeleteAnnotation,
+            Action.UpdateAnnotation,
+            Action.CreateTaskGrid,
+            Action.CreateTasks,
+            Action.DeleteTasks,
+            Action.UpdateTasks,
+            Action.ReadTasks,
+            Action.AddScenes,
+            Action.ReadPermissions
+          ).map(makeScopedAction(Domain.Campaigns, _, None)) ++
           StacExportsCRUD.actions ++
           UserSelfScope.actions ++
           FeatureFlagsScope.actions

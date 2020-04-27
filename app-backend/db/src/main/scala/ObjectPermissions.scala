@@ -31,6 +31,7 @@ trait ObjectPermissions[Model] {
 
   def isValidObject(id: UUID): ConnectionIO[Boolean] =
     (tableName match {
+      case "campaigns"           => CampaignDao
       case "annotation_projects" => AnnotationProjectDao
       case "projects"            => ProjectDao
       case "scenes"              => SceneDao
@@ -148,7 +149,8 @@ trait ObjectPermissions[Model] {
         case Nil if replace =>
           ApplicativeError[ConnectionIO, Throwable].raiseError(
             new Exception(
-              "Cannot replace permissions with empty permission list")
+              "Cannot replace permissions with empty permission list"
+            )
           )
         case _ =>
           updatePermissionsF(id, acrList, replace).update
@@ -191,7 +193,8 @@ trait ObjectPermissions[Model] {
   ): Fragment =
     (objectType, actionType) match {
       case (ObjectType.Shape, ActionType.View) |
-          (ObjectType.AnnotationProject, ActionType.View) =>
+          (ObjectType.AnnotationProject, ActionType.View) |
+          (ObjectType.Campaign, ActionType.View) =>
         Fragment.empty
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
           (ObjectType.Project, ActionType.Export) |
@@ -245,7 +248,7 @@ trait ObjectPermissions[Model] {
     val inheritedF: Fragment =
       createInheritedF(user, actionType, groupTypeO, groupIdO)
     val acrFilterF
-      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
+        : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
       .const(s"${tableName}acrs")
 
     ownershipTypeO match {
@@ -276,7 +279,7 @@ trait ObjectPermissions[Model] {
         }
       // shared to the requesting user due to group membership
       case Some("inherited") =>
-        if (objectType == ObjectType.Shape || objectType == ObjectType.AnnotationProject) {
+        if (objectType == ObjectType.Shape || objectType == ObjectType.AnnotationProject || objectType == ObjectType.Campaign) {
           Some(inheritedF ++ Fragment.const(s"&& ${tableName}acrs"))
         } else {
           Some(
@@ -315,8 +318,10 @@ trait ObjectPermissions[Model] {
     ) map { action =>
       (action.limit map { limit =>
         val distinctUsers = acrList.foldLeft(Set.empty[String])({
-          case (accum: Set[String],
-                ObjectAccessControlRule(SubjectType.User, Some(subjId), _)) =>
+          case (
+              accum: Set[String],
+              ObjectAccessControlRule(SubjectType.User, Some(subjId), _)
+              ) =>
             accum | Set(subjId)
           case (accum: Set[String], _) => accum
         })
