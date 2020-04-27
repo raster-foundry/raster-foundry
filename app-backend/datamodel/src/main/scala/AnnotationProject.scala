@@ -5,6 +5,7 @@ import io.circe._
 import io.circe.generic.semiauto._
 
 import java.time.Instant
+import java.sql.Timestamp
 import java.util.UUID
 
 final case class AnnotationProject(
@@ -22,7 +23,7 @@ final case class AnnotationProject(
     status: AnnotationProjectStatus,
     taskStatusSummary: Option[Map[String, Int]] = None,
     campaignId: Option[UUID] = None,
-    capturedAt: Option[Instant] = None
+    capturedAt: Option[Timestamp] = None
 ) {
   def withRelated(
       tileLayers: List[TileLayer],
@@ -65,7 +66,7 @@ object AnnotationProject {
       labelClassGroups: List[AnnotationLabelClassGroup.Create],
       status: AnnotationProjectStatus,
       campaignId: Option[UUID] = None,
-      capturedAt: Option[Instant] = None
+      capturedAt: Option[Timestamp] = None
   )
 
   object Create {
@@ -89,7 +90,7 @@ object AnnotationProject {
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
       taskStatusSummary: Option[Map[String, Int]] = None,
       campaignId: Option[UUID] = None,
-      capturedAt: Option[Instant] = None
+      capturedAt: Option[Timestamp] = None
   ) {
     def toProject = AnnotationProject(
       id,
@@ -178,12 +179,12 @@ object AnnotationProject {
       taskStatusSummary: Option[Map[String, Int]] = None,
       labelClassSummary: List[LabelClassGroupSummary],
       campaignId: Option[UUID] = None,
-      capturedAt: Option[Instant] = None
+      capturedAt: Option[Timestamp] = None
   )
 
   object WithRelatedAndLabelClassSummary {
     implicit val encRelatedAndSummary
-      : Encoder[WithRelatedAndLabelClassSummary] =
+        : Encoder[WithRelatedAndLabelClassSummary] =
       deriveEncoder
   }
 }

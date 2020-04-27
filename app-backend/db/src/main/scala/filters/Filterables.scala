@@ -449,6 +449,9 @@ trait Filterables extends RFMeta with LazyLogging {
             params.projectFilterParams.projectType.map({ projectType =>
               fr"annotation_projects.project_type = $projectType"
             }),
+            params.capturedAt.map({ capturedAt =>
+              fr"annotation_projects.captured_at = $capturedAt"
+            }),
             params.campaignId.map({ campaignId =>
               fr"annotation_projects.campaign_id = $campaignId"
             }),

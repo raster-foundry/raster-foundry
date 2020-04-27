@@ -34,7 +34,7 @@ trait QueryParameterDeserializers {
     }
 
   implicit val deserializerAnnotationProjectType
-    : Unmarshaller[String, AnnotationProjectType] =
+      : Unmarshaller[String, AnnotationProjectType] =
     Unmarshaller.strict[String, AnnotationProjectType] { s =>
       AnnotationProjectType.fromString(s)
     }
@@ -214,7 +214,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         groupQueryParameters &
         annotationProjectFilterParameters &
         parameters(
-          'campaignId.as[UUID].?
+          'campaignId.as[UUID].?,
+          'capturedAt.as(deserializerTimestamp).?
         )
     ).as(AnnotationProjectQueryParameters.apply _)
 

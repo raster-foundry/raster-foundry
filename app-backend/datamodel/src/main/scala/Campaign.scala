@@ -3,12 +3,12 @@ package com.rasterfoundry.datamodel
 import io.circe._
 import io.circe.generic.semiauto._
 
-import java.time.Instant
+import java.sql.Timestamp
 import java.util.UUID
 
 final case class Campaign(
     id: UUID,
-    createdAt: Instant,
+    createdAt: Timestamp,
     owner: String,
     name: String,
     campaignType: AnnotationProjectType
