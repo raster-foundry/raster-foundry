@@ -128,10 +128,10 @@ trait Router
           } ~
           pathPrefix("tasks") {
             taskRoutes
-          } ~ 
+          } ~
           pathPrefix("campaigns") {
             campaignRoutes
-          } 
+          }
       } ~
       pathPrefix("config") {
         configRoutes
