@@ -248,7 +248,7 @@ trait ObjectPermissions[Model] {
     val inheritedF: Fragment =
       createInheritedF(user, actionType, groupTypeO, groupIdO)
     val acrFilterF
-      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
+        : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
       .const(s"${tableName}acrs")
 
     ownershipTypeO match {
@@ -328,4 +328,25 @@ trait ObjectPermissions[Model] {
         distinctUsers.size.toLong <= limit
       }) getOrElse { true } // if there's no limit, then the limit is infinity, so this action is allowed
     }) getOrElse { false } // if there's no scope, then the action is not allowed
+
+  def getShareCount(id: UUID, userId: String): ConnectionIO[Long] =
+    getPermissions(id)
+      .map { acrList =>
+        acrList
+          .foldLeft(Set.empty[String])(
+            (accum: Set[String], acr: ObjectAccessControlRule) => {
+              acr match {
+                case ObjectAccessControlRule(
+                    SubjectType.User,
+                    Some(subjectId),
+                    _
+                    ) if subjectId != userId =>
+                  Set(subjectId) | accum
+                case _ => accum
+              }
+            }
+          )
+          .size
+          .toLong
+      }
 }

@@ -324,27 +324,6 @@ object AnnotationProjectDao
   def countUserProjects(user: User): ConnectionIO[Long] =
     query.filter(user).count
 
-  def getShareCount(id: UUID, userId: String): ConnectionIO[Long] =
-    getPermissions(id)
-      .map { acrList =>
-        acrList
-          .foldLeft(Set.empty[String])(
-            (accum: Set[String], acr: ObjectAccessControlRule) => {
-              acr match {
-                case ObjectAccessControlRule(
-                    SubjectType.User,
-                    Some(subjectId),
-                    _
-                    ) if subjectId != userId =>
-                  Set(subjectId) | accum
-                case _ => accum
-              }
-            }
-          )
-          .size
-          .toLong
-      }
-
   def getAllShareCounts(userId: String): ConnectionIO[Map[UUID, Long]] =
     for {
       projectIds <- (fr"select id from " ++ Fragment.const(tableName) ++ fr" where owner = $userId")
@@ -381,7 +360,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",

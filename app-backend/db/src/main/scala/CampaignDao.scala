@@ -111,4 +111,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       }
       n <- query.filter(fr"id = ${id}").delete
     } yield n
+
+  def countUserCampaigns(user: User): ConnectionIO[Long] =
+    query.filter(user).count
+
 }
