@@ -37,7 +37,9 @@ object AnnotationProjectDao
     "validators_team_id",
     "project_id",
     "status",
-    "task_status_summary"
+    "task_status_summary",
+    "campaign_id",
+    "captured_at"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -152,7 +154,8 @@ object AnnotationProjectDao
        ${newAnnotationProject.aoi}, ${newAnnotationProject.labelersTeamId},
        ${newAnnotationProject.validatorsTeamId},
        ${newAnnotationProject.projectId}, ${newAnnotationProject.status},
-       '{"UNLABELED": 0, "LABELING_IN_PROGRESS": 0, "LABELED": 0, "VALIDATION_IN_PROGRESS": 0, "VALIDATED": 0 }'::jsonb
+       '{"UNLABELED": 0, "LABELING_IN_PROGRESS": 0, "LABELED": 0, "VALIDATION_IN_PROGRESS": 0, "VALIDATED": 0 }'::jsonb,
+       ${newAnnotationProject.campaignId}, ${newAnnotationProject.capturedAt}
        )
     """).update.withUniqueGeneratedKeys[AnnotationProject](
         fieldNames: _*
@@ -378,7 +381,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
@@ -428,7 +431,8 @@ object AnnotationProjectDao
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, project_type, task_size_meters, task_size_pixels,
-             aoi, labelers_team_id, validators_team_id, project_id, status, task_status_summary
+             aoi, labelers_team_id, validators_team_id, project_id, status, task_status_summary, campaign_id,
+             captured_at
            FROM """ ++ tableF ++ fr"""
            WHERE id = ${projectId}
         """)
@@ -473,4 +477,7 @@ object AnnotationProjectDao
       )
     } yield annotationProjectCopy
   }
+
+  def listByCampaign(campaignId: UUID): ConnectionIO[List[AnnotationProject]] =
+    query.filter(fr"campaign_id = $campaignId").list
 }
