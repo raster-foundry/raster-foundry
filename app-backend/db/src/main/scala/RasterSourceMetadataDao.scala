@@ -45,7 +45,6 @@ object RasterSourceMetadataDao extends CirceJsonbMeta {
   """
 
   def select(id: UUID): ConnectionIO[RasterSourceMetadata] = {
-    println(s"Getting RS: ${id}")
     (selectF ++ Fragments.whereAnd(fr"id = ${id}"))
       .query[RasterSourceMetadata]
       .unique
