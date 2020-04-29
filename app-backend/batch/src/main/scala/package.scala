@@ -6,7 +6,6 @@ import cats.implicits._
 import geotrellis.layer.SpatialKey
 import geotrellis.raster.split._
 import geotrellis.raster.{CellSize, MultibandTile}
-import geotrellis.spark.tiling._
 import geotrellis.util.Component
 import geotrellis.vector._
 
