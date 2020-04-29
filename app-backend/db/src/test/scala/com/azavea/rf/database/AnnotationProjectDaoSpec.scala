@@ -10,6 +10,9 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
 
+import java.time.Instant
+import java.sql.Timestamp
+
 class AnnotationProjectDaoSpec
     extends AnyFunSuite
     with Matchers
@@ -326,6 +329,107 @@ class AnnotationProjectDaoSpec
           assert(
             result == Option.empty[AnnotationProject],
             "After deletion the project was gone"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("list projects belonging to a campaign") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreates1: List[AnnotationProject.Create],
+            annotationProjectCreates2: List[AnnotationProject.Create],
+            campaignCreate: Campaign.Create
+        ) => {
+          val pageSize = 20
+          val pageRequest = PageRequest(0, pageSize * 2, Map.empty)
+
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            insertedCampaign <- CampaignDao
+              .insertCampaign(campaignCreate, user)
+            insertedProjects <- annotationProjectCreates1
+              .take(pageSize) traverse { toInsert =>
+              AnnotationProjectDao
+                .insert(
+                  toInsert.copy(campaignId = Some(insertedCampaign.id)),
+                  user
+                )
+            }
+            _ <- annotationProjectCreates2
+              .take(pageSize) traverse { toInsert =>
+              AnnotationProjectDao.insert(toInsert, user)
+            }
+            listed <- AnnotationProjectDao
+              .listProjects(
+                pageRequest,
+                AnnotationProjectQueryParameters(
+                  campaignId = Some(insertedCampaign.id)
+                ),
+                user
+              )
+          } yield (listed, insertedProjects)
+
+          val (listedProjects, dbProjects) = listIO.transact(xa).unsafeRunSync
+
+          val expectedIds = (dbProjects.take(pageSize) map { _.id }).toSet
+
+          assert(
+            expectedIds == (listedProjects.results map { _.id }).toSet,
+            "Listed projects are those expected from projects belonging to an inserted campaign"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("list projects by capture timestamp") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreates1: List[AnnotationProject.Create],
+            annotationProjectCreates2: List[AnnotationProject.Create]
+        ) => {
+          val pageSize = 20
+          val pageRequest = PageRequest(0, pageSize * 2, Map.empty)
+          val capturedAt = Timestamp.from(Instant.now());
+
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            insertedProjects <- annotationProjectCreates1
+              .take(pageSize) traverse { toInsert =>
+              AnnotationProjectDao
+                .insert(toInsert.copy(capturedAt = Some(capturedAt)), user)
+            }
+            _ <- annotationProjectCreates2
+              .take(pageSize) traverse { toInsert =>
+              AnnotationProjectDao
+                .insert(toInsert, user)
+            }
+            listed <- AnnotationProjectDao
+              .listProjects(
+                pageRequest,
+                AnnotationProjectQueryParameters(
+                  capturedAt = Some(capturedAt)
+                ),
+                user
+              )
+          } yield (listed, insertedProjects)
+
+          val (listedProjects, dbProjects) =
+            listIO.transact(xa).unsafeRunSync
+
+          assert(
+            listedProjects.count == dbProjects.size,
+            "Listed projects are those with updated capture timestamp"
           )
 
           true

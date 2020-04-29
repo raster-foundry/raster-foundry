@@ -20,7 +20,9 @@ final case class AnnotationProject(
     validatorsTeamId: Option[UUID],
     projectId: Option[UUID],
     status: AnnotationProjectStatus,
-    taskStatusSummary: Option[Map[String, Int]] = None
+    taskStatusSummary: Option[Map[String, Int]] = None,
+    campaignId: Option[UUID] = None,
+    capturedAt: Option[Timestamp] = None
 ) {
   def withRelated(
       tileLayers: List[TileLayer],
@@ -41,7 +43,9 @@ final case class AnnotationProject(
       status,
       tileLayers,
       labelClassGroups,
-      taskStatusSummary
+      taskStatusSummary,
+      campaignId,
+      capturedAt
     )
 }
 
@@ -59,7 +63,9 @@ object AnnotationProject {
       projectId: Option[UUID],
       tileLayers: List[TileLayer.Create],
       labelClassGroups: List[AnnotationLabelClassGroup.Create],
-      status: AnnotationProjectStatus
+      status: AnnotationProjectStatus,
+      campaignId: Option[UUID] = None,
+      capturedAt: Option[Timestamp] = None
   )
 
   object Create {
@@ -81,7 +87,9 @@ object AnnotationProject {
       status: AnnotationProjectStatus,
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
-      taskStatusSummary: Option[Map[String, Int]] = None
+      taskStatusSummary: Option[Map[String, Int]] = None,
+      campaignId: Option[UUID] = None,
+      capturedAt: Option[Timestamp] = None
   ) {
     def toProject = AnnotationProject(
       id,
@@ -96,7 +104,9 @@ object AnnotationProject {
       validatorsTeamId,
       projectId,
       status,
-      taskStatusSummary
+      taskStatusSummary,
+      campaignId,
+      capturedAt
     )
 
     def withSummary(
@@ -117,7 +127,9 @@ object AnnotationProject {
       tileLayers,
       labelClassGroups,
       taskStatusSummary,
-      labelClassSummary
+      labelClassSummary,
+      campaignId,
+      capturedAt
     )
   }
 
@@ -164,7 +176,9 @@ object AnnotationProject {
       tileLayers: List[TileLayer],
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
       taskStatusSummary: Option[Map[String, Int]] = None,
-      labelClassSummary: List[LabelClassGroupSummary]
+      labelClassSummary: List[LabelClassGroupSummary],
+      campaignId: Option[UUID] = None,
+      capturedAt: Option[Timestamp] = None
   )
 
   object WithRelatedAndLabelClassSummary {

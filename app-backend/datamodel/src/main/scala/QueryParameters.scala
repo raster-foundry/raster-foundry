@@ -697,14 +697,32 @@ final case class AnnotationProjectQueryParameters(
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
     projectFilterParams: AnnotationProjectFilterQueryParameters =
-      AnnotationProjectFilterQueryParameters()
+      AnnotationProjectFilterQueryParameters(),
+    campaignId: Option[UUID] = None,
+    capturedAt: Option[Timestamp] = None
 )
 
 object AnnotationProjectQueryParameters {
-  implicit def encGroupQueryParameters
+  implicit def encAnnotationProjectQueryParameters
     : Encoder[AnnotationProjectQueryParameters] =
     deriveEncoder[AnnotationProjectQueryParameters]
-  implicit def decGroupQueryParameters
+  implicit def decAnnotationProjectQueryParameters
     : Decoder[AnnotationProjectQueryParameters] =
     deriveDecoder[AnnotationProjectQueryParameters]
+}
+
+final case class CampaignQueryParameters(
+    ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
+    searchParams: SearchQueryParameters = SearchQueryParameters(),
+    ownershipTypeParams: OwnershipTypeQueryParameters =
+      OwnershipTypeQueryParameters(),
+    groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+    campaignType: Option[AnnotationProjectType] = None
+)
+
+object CampaignQueryParameters {
+  implicit def encCampaignQueryParameters: Encoder[CampaignQueryParameters] =
+    deriveEncoder[CampaignQueryParameters]
+  implicit def decCampaignQueryParameters: Decoder[CampaignQueryParameters] =
+    deriveDecoder[CampaignQueryParameters]
 }

@@ -1,6 +1,7 @@
 package com.rasterfoundry.api
 
 import com.rasterfoundry.api.annotationProject.AnnotationProjectRoutes
+import com.rasterfoundry.api.campaign.CampaignRoutes
 import com.rasterfoundry.api.config.ConfigRoutes
 import com.rasterfoundry.api.datasource.DatasourceRoutes
 import com.rasterfoundry.api.exports.ExportRoutes
@@ -59,7 +60,8 @@ trait Router
     with PlatformRoutes
     with StacRoutes
     with AnnotationProjectRoutes
-    with TaskRoutes {
+    with TaskRoutes
+    with CampaignRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE)
@@ -126,6 +128,9 @@ trait Router
           } ~
           pathPrefix("tasks") {
             taskRoutes
+          } ~
+          pathPrefix("campaigns") {
+            campaignRoutes
           }
       } ~
       pathPrefix("config") {
