@@ -29,15 +29,6 @@ package object batch {
       CellSize(obj.extent.width / obj.cols, obj.extent.height / obj.rows)
   }
 
-  @SuppressWarnings(Array("ClassNames"))
-  implicit class withRasterFoundryTilerKeyMethods(
-      val self: (ProjectedExtent, Int)
-  ) extends TilerKeyMethods[(ProjectedExtent, Int), (SpatialKey, Int)] {
-    def extent = self._1.extent
-
-    def translate(spatialKey: SpatialKey) = (spatialKey, self._2)
-  }
-
   implicit val rfSpatialKeyIntComponent =
     Component[(SpatialKey, Int), SpatialKey](
       from => from._1,
