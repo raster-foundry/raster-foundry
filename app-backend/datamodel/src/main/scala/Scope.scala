@@ -604,15 +604,6 @@ object Scopes {
             Action.Read,
             Action.Update,
             Action.Delete,
-            Action.CreateAnnotation,
-            Action.DeleteAnnotation,
-            Action.UpdateAnnotation,
-            Action.CreateTaskGrid,
-            Action.CreateTasks,
-            Action.DeleteTasks,
-            Action.UpdateTasks,
-            Action.ReadTasks,
-            Action.AddScenes,
             Action.ReadPermissions
           ).map(makeScopedAction(Domain.Campaigns, _, None)) ++
           StacExportsCRUD.actions ++

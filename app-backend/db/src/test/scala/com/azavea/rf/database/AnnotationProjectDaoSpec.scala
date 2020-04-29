@@ -341,18 +341,18 @@ class AnnotationProjectDaoSpec
       forAll(
         (
             userCreate: User.Create,
-            annotationProjectCreates: List[AnnotationProject.Create],
-            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            annotationProjectCreates1: List[AnnotationProject.Create],
+            annotationProjectCreates2: List[AnnotationProject.Create],
             campaignCreate: Campaign.Create
         ) => {
           val pageSize = 20
-          val pageRequest = PageRequest(0, pageSize, Map.empty)
+          val pageRequest = PageRequest(0, pageSize * 2, Map.empty)
 
           val listIO = for {
             user <- UserDao.create(userCreate)
             insertedCampaign <- CampaignDao
               .insertCampaign(campaignCreate, user)
-            insertedProjects <- annotationProjectCreates
+            insertedProjects <- annotationProjectCreates1
               .take(pageSize) traverse { toInsert =>
               AnnotationProjectDao
                 .insert(
@@ -360,15 +360,9 @@ class AnnotationProjectDaoSpec
                   user
                 )
             }
-            _ <- insertedProjects traverse { project =>
-              TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(
-                  taskFeaturesCreate,
-                  project,
-                  Some(TaskStatus.Unlabeled)
-                ),
-                user
-              )
+            _ <- annotationProjectCreates2
+              .take(pageSize) traverse { toInsert =>
+              AnnotationProjectDao.insert(toInsert, user)
             }
             listed <- AnnotationProjectDao
               .listProjects(
@@ -400,29 +394,24 @@ class AnnotationProjectDaoSpec
       forAll(
         (
             userCreate: User.Create,
-            annotationProjectCreates: List[AnnotationProject.Create],
-            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+            annotationProjectCreates1: List[AnnotationProject.Create],
+            annotationProjectCreates2: List[AnnotationProject.Create]
         ) => {
           val pageSize = 20
-          val pageRequest = PageRequest(0, pageSize, Map.empty)
+          val pageRequest = PageRequest(0, pageSize * 2, Map.empty)
           val capturedAt = Timestamp.from(Instant.now());
 
           val listIO = for {
             user <- UserDao.create(userCreate)
-            insertedProjects <- annotationProjectCreates
+            insertedProjects <- annotationProjectCreates1
               .take(pageSize) traverse { toInsert =>
               AnnotationProjectDao
                 .insert(toInsert.copy(capturedAt = Some(capturedAt)), user)
             }
-            _ <- insertedProjects traverse { project =>
-              TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(
-                  taskFeaturesCreate,
-                  project,
-                  Some(TaskStatus.Unlabeled)
-                ),
-                user
-              )
+            _ <- annotationProjectCreates2
+              .take(pageSize) traverse { toInsert =>
+              AnnotationProjectDao
+                .insert(toInsert, user)
             }
             listed <- AnnotationProjectDao
               .listProjects(

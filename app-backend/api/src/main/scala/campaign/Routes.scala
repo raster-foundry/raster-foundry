@@ -231,14 +231,14 @@ trait CampaignRoutes
                 .unsafeToFuture
             ) { campaignO =>
               complete {
-                (campaignO map { campaign =>
+                (campaignO traverse { campaign =>
                   campaign.owner == user.id match {
                     case true => List("*").pure[ConnectionIO]
                     case false =>
                       CampaignDao
                         .listUserActions(user, campaignId)
                   }
-                } getOrElse { List[String]().pure[ConnectionIO] })
+                } map { _.getOrElse(List[String]()) })
                   .transact(xa)
                   .unsafeToFuture()
               }
