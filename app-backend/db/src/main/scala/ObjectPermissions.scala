@@ -31,6 +31,7 @@ trait ObjectPermissions[Model] {
 
   def isValidObject(id: UUID): ConnectionIO[Boolean] =
     (tableName match {
+      case "campaigns"           => CampaignDao
       case "annotation_projects" => AnnotationProjectDao
       case "projects"            => ProjectDao
       case "scenes"              => SceneDao
@@ -148,7 +149,8 @@ trait ObjectPermissions[Model] {
         case Nil if replace =>
           ApplicativeError[ConnectionIO, Throwable].raiseError(
             new Exception(
-              "Cannot replace permissions with empty permission list")
+              "Cannot replace permissions with empty permission list"
+            )
           )
         case _ =>
           updatePermissionsF(id, acrList, replace).update
@@ -191,7 +193,8 @@ trait ObjectPermissions[Model] {
   ): Fragment =
     (objectType, actionType) match {
       case (ObjectType.Shape, ActionType.View) |
-          (ObjectType.AnnotationProject, ActionType.View) =>
+          (ObjectType.AnnotationProject, ActionType.View) |
+          (ObjectType.Campaign, ActionType.View) =>
         Fragment.empty
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
           (ObjectType.Project, ActionType.Export) |
@@ -276,7 +279,7 @@ trait ObjectPermissions[Model] {
         }
       // shared to the requesting user due to group membership
       case Some("inherited") =>
-        if (objectType == ObjectType.Shape || objectType == ObjectType.AnnotationProject) {
+        if (objectType == ObjectType.Shape || objectType == ObjectType.AnnotationProject || objectType == ObjectType.Campaign) {
           Some(inheritedF ++ Fragment.const(s"&& ${tableName}acrs"))
         } else {
           Some(
@@ -315,12 +318,35 @@ trait ObjectPermissions[Model] {
     ) map { action =>
       (action.limit map { limit =>
         val distinctUsers = acrList.foldLeft(Set.empty[String])({
-          case (accum: Set[String],
-                ObjectAccessControlRule(SubjectType.User, Some(subjId), _)) =>
+          case (
+              accum: Set[String],
+              ObjectAccessControlRule(SubjectType.User, Some(subjId), _)
+              ) =>
             accum | Set(subjId)
           case (accum: Set[String], _) => accum
         })
         distinctUsers.size.toLong <= limit
       }) getOrElse { true } // if there's no limit, then the limit is infinity, so this action is allowed
     }) getOrElse { false } // if there's no scope, then the action is not allowed
+
+  def getShareCount(id: UUID, userId: String): ConnectionIO[Long] =
+    getPermissions(id)
+      .map { acrList =>
+        acrList
+          .foldLeft(Set.empty[String])(
+            (accum: Set[String], acr: ObjectAccessControlRule) => {
+              acr match {
+                case ObjectAccessControlRule(
+                    SubjectType.User,
+                    Some(subjectId),
+                    _
+                    ) if subjectId != userId =>
+                  Set(subjectId) | accum
+                case _ => accum
+              }
+            }
+          )
+          .size
+          .toLong
+      }
 }

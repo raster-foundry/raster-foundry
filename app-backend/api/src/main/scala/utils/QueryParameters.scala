@@ -212,6 +212,21 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         ownershipTypeQueryParameters &
         groupQueryParameters &
-        annotationProjectFilterParameters
+        annotationProjectFilterParameters &
+        parameters(
+          'campaignId.as[UUID].?,
+          'capturedAt.as(deserializerTimestamp).?
+        )
     ).as(AnnotationProjectQueryParameters.apply _)
+
+  def campaignQueryParameters =
+    (
+      ownerQueryParameters &
+        searchParams &
+        ownershipTypeQueryParameters &
+        groupQueryParameters &
+        parameters(
+          'campaignType.as(deserializerAnnotationProjectType).?
+        )
+    ).as(CampaignQueryParameters.apply _)
 }

@@ -139,15 +139,16 @@ object Generators extends ArbitraryInstances {
     IngestStatus.Failed
   )
 
-  private def annotationProjectStatusGen: Gen[AnnotationProjectStatus] = Gen.oneOf(
-    AnnotationProjectStatus.Waiting,
-    AnnotationProjectStatus.Queued,
-    AnnotationProjectStatus.Processing,
-    AnnotationProjectStatus.Ready,
-    AnnotationProjectStatus.UnknownFailure,
-    AnnotationProjectStatus.TaskGridFailure,
-    AnnotationProjectStatus.ImageIngestionFailure
-  )
+  private def annotationProjectStatusGen: Gen[AnnotationProjectStatus] =
+    Gen.oneOf(
+      AnnotationProjectStatus.Waiting,
+      AnnotationProjectStatus.Queued,
+      AnnotationProjectStatus.Processing,
+      AnnotationProjectStatus.Ready,
+      AnnotationProjectStatus.UnknownFailure,
+      AnnotationProjectStatus.TaskGridFailure,
+      AnnotationProjectStatus.ImageIngestionFailure
+    )
 
   private def tileLayerTypeGen: Gen[TileLayerType] = Gen.oneOf(
     TileLayerType.MVT,
@@ -726,7 +727,7 @@ object Generators extends ArbitraryInstances {
     }
 
   private def userOrgPlatformGen
-    : Gen[(User.Create, Organization.Create, Platform)] =
+      : Gen[(User.Create, Organization.Create, Platform)] =
     for {
       platform <- platformGen
       orgCreate <- organizationCreateGen map {
@@ -978,7 +979,7 @@ object Generators extends ArbitraryInstances {
     } yield { Task.TaskFeatureCreate(properties, geometry) }
 
   private def taskFeatureCollectionCreateGen
-    : Gen[Task.TaskFeatureCollectionCreate] =
+      : Gen[Task.TaskFeatureCollectionCreate] =
     for {
       features <- Gen.nonEmptyListOf(taskFeatureCreateGen)
     } yield {
@@ -1003,12 +1004,11 @@ object Generators extends ArbitraryInstances {
   private def taskStatusListGen: Gen[List[TaskStatus]] =
     Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
 
-
   private def stacExportCreateGen: Gen[StacExport.Create] =
     for {
       name <- nonEmptyStringGen
       owner <- Gen.const(None)
-      annotationProjectId <-  uuidGen
+      annotationProjectId <- uuidGen
       taskStatuses <- taskStatusListGen
     } yield {
       StacExport.Create(
@@ -1059,17 +1059,26 @@ object Generators extends ArbitraryInstances {
       Gen.const(None),
       tileLayerCreateGen map { List(_) },
       Gen.listOfN(3, labelClassGroupGen),
-      annotationProjectStatusGen
+      annotationProjectStatusGen,
+      Gen.const(None),
+      Gen.const(None)
     ).mapN(AnnotationProject.Create.apply _)
 
   private def annotationLabelWithClassesCreateGen
-    : Gen[AnnotationLabelWithClasses.Create] =
+      : Gen[AnnotationLabelWithClasses.Create] =
     (
       projectedMultiPolygonGen3857 map { (geom: Projected[MultiPolygon]) =>
         Option(geom)
       },
       Gen.const(Nil)
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
+  
+  private def campaignCreateGen
+      : Gen[Campaign.Create] =
+    (
+      nonEmptyStringGen,
+      annotationProjectTypeGen,
+    ).mapN(Campaign.Create.apply _)
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
@@ -1081,12 +1090,12 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbCombinedSceneQueryParams
-      : Arbitrary[CombinedSceneQueryParams] = Arbitrary {
+        : Arbitrary[CombinedSceneQueryParams] = Arbitrary {
       combinedSceneQueryParamsGen
     }
 
     implicit def arbProjectsceneQueryParameters
-      : Arbitrary[ProjectSceneQueryParameters] =
+        : Arbitrary[ProjectSceneQueryParameters] =
       Arbitrary { projectSceneQueryParametersGen }
 
     implicit def arbAnnotationCreate: Arbitrary[Annotation.Create] = Arbitrary {
@@ -1198,7 +1207,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbPlatform: Arbitrary[Platform] = Arbitrary { platformGen }
 
     implicit def arbUserOrgPlatform
-      : Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
+        : Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
       userOrgPlatformGen
     }
 
@@ -1214,11 +1223,11 @@ object Generators extends ArbitraryInstances {
       Arbitrary { searchQueryParametersGen }
 
     implicit def arbObjectAccessControlRule
-      : Arbitrary[ObjectAccessControlRule] =
+        : Arbitrary[ObjectAccessControlRule] =
       Arbitrary { objectAccessControlRuleGen }
 
     implicit def arbListObjectAccessControlRule
-      : Arbitrary[List[ObjectAccessControlRule]] =
+        : Arbitrary[List[ObjectAccessControlRule]] =
       Arbitrary {
         Gen.nonEmptyListOf[ObjectAccessControlRule](
           arbitrary[ObjectAccessControlRule]
@@ -1246,7 +1255,7 @@ object Generators extends ArbitraryInstances {
       Arbitrary { projectLayerCreateGen }
 
     implicit def arbProjectLayerCreateWithScenes
-      : Arbitrary[List[(ProjectLayer.Create, List[Scene.Create])]] = {
+        : Arbitrary[List[(ProjectLayer.Create, List[Scene.Create])]] = {
       val tupGen = for {
         projectLayerCreate <- arbitrary[ProjectLayer.Create]
         sceneCreates <- arbitrary[List[Scene.Create]]
@@ -1255,7 +1264,7 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbAnnotationQueryParameters
-      : Arbitrary[AnnotationQueryParameters] = Arbitrary {
+        : Arbitrary[AnnotationQueryParameters] = Arbitrary {
       annotationQueryParametersGen
     }
 
@@ -1280,13 +1289,13 @@ object Generators extends ArbitraryInstances {
       }
 
     implicit def arbTaskFeatureCollectionCreate
-      : Arbitrary[Task.TaskFeatureCollectionCreate] =
+        : Arbitrary[Task.TaskFeatureCollectionCreate] =
       Arbitrary {
         taskFeatureCollectionCreateGen
       }
 
     implicit def arbTaskGridFeatureCreate
-      : Arbitrary[Task.TaskGridFeatureCreate] =
+        : Arbitrary[Task.TaskGridFeatureCreate] =
       Arbitrary {
         taskGridFeatureCreateGen
       }
@@ -1302,19 +1311,19 @@ object Generators extends ArbitraryInstances {
       }
 
     implicit def arbStacExportQueryParameters
-      : Arbitrary[StacExportQueryParameters] =
+        : Arbitrary[StacExportQueryParameters] =
       Arbitrary {
         stacExportQueryParametersGen
       }
 
     implicit def arbAnnotationProjectCreate
-      : Arbitrary[AnnotationProject.Create] =
+        : Arbitrary[AnnotationProject.Create] =
       Arbitrary {
         annotationProjectCreateGen
       }
 
     implicit def arbAnnotationLabelWithClassesCreate
-      : Arbitrary[AnnotationLabelWithClasses.Create] =
+        : Arbitrary[AnnotationLabelWithClasses.Create] =
       Arbitrary {
         annotationLabelWithClassesCreateGen
       }
@@ -1322,6 +1331,11 @@ object Generators extends ArbitraryInstances {
     implicit def arbTileLayerCreate: Arbitrary[TileLayer.Create] =
       Arbitrary {
         tileLayerCreateGen
+      }
+    
+    implicit def arbCampaignCreate: Arbitrary[Campaign.Create] =
+      Arbitrary {
+        campaignCreateGen
       }
   }
 }
