@@ -45,44 +45,36 @@ object MVTLayerDao {
   ): ConnectionIO[Option[Array[Byte]]] =
     getAnnotationProjectTasksQ(annotationProjectId, z, x, y).option
 
+  //-- AND tasks.annotation_project_id = ${annotationProjectId}
+  // JOIN tasks on annotations.task_id = tasks.id
   private[database] def getAnnotationProjectLabelsQ(
       annotationProjectId: UUID,
       z: Int,
       x: Int,
       y: Int
-  ): Query0[Array[Byte]] =
+  ): Query0[Array[Byte]] = {
     fr"""WITH mvtgeom AS
       (
         SELECT
           ST_AsMVTGeom(
-            annotations.geometry,
+            join_table_join.geometry,
             ST_TileEnvelope(${z},${x},${y})
           ) AS geom,
-          annotations.id,
-          annotations.project_id,
-          annotations.created_at,
-          annotations.created_by,
-          annotations.modified_at,
-          annotations.owner,
-          annotations.label,
-          annotations.description,
-          annotations.machine_generated,
-          annotations.confidence,
-          annotations.quality,
-          annotations.annotation_group,
-          annotations.labeled_by,
-          annotations.verified_by,
-          annotations.project_layer_id,
-          annotations.task_id
-        FROM annotations JOIN tasks on annotations.task_id = tasks.id
+          annotation_label_classes.name,
+          annotation_label_classes.color_hex_code
+        FROM
+          (annotation_labels JOIN annotation_labels_annotation_label_classes on
+           annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id) join_table_join
+          JOIN annotation_label_classes on join_table_join.annotation_class_id = annotation_label_classes.id
         WHERE
           ST_Intersects(
-            annotations.geometry,
+            join_table_join.geometry,
             ST_TileEnvelope(${z},${x},${y})
-          ) AND
-          tasks.annotation_project_id = ${annotationProjectId}
+          )
+          AND join_table_join.annotation_project_id = ${annotationProjectId}
       )
     SELECT ST_AsMVT(mvtgeom.*) FROM mvtgeom;""".query[Array[Byte]]
+  }
 
   def getAnnotationProjectLabels(
       annotationProjectId: UUID,
