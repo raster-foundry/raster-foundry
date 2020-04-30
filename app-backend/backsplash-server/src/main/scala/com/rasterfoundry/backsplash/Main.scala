@@ -144,11 +144,19 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       new SceneService(sceneMosaicImplicits, xa).routes
     )
 
+  val annotationProjectMVTService = authenticators.tokensAuthMiddleware(
+    new AnnotationProjectMVTService(xa).routes
+  )
+
+  val healthcheckService: HttpRoutes[IO] = new HealthcheckService(
+    xa
+  ).routes
+
   private val statusExpirationDuration =
     statusReapingConfig.taskStatusExpirationSeconds.seconds
   private val everyMinute = Cron.unsafeParse("0 * * ? * *")
   val scheduled
-    : fs2.Stream[IO, Int] = awakeEveryCron[IO](everyMinute) *> (fs2.Stream
+      : fs2.Stream[IO, Int] = awakeEveryCron[IO](everyMinute) *> (fs2.Stream
     .eval {
       TaskDao.expireStuckTasks(statusExpirationDuration).transact(xa)
     })
@@ -158,11 +166,10 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       baseMiddleware {
         Router(
           "/" -> mosaicService,
+          "/mvt" -> annotationProjectMVTService,
           "/scenes" -> sceneMosaicService,
           "/tools" -> analysisService,
-          "/healthcheck" -> new HealthcheckService(
-            xa
-          ).routes
+          "/healthcheck" -> healthcheckService
         )
       }
     }
