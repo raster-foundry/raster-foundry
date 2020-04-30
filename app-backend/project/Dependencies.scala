@@ -141,7 +141,6 @@ object Dependencies {
   val doobiePostgres = "org.tpolecat" %% "doobie-postgres" % Version.doobie
   val doobiePostgresCirce = "org.tpolecat" %% "doobie-postgres-circe" % Version.doobie
   val doobieScalatest = "org.tpolecat" %% "doobie-scalatest" % Version.doobie % "test"
-  val doobieSpecs = "org.tpolecat" %% "doobie-specs2" % Version.doobie
   val dropbox = "com.dropbox.core" % "dropbox-core-sdk" % Version.dropbox
   val elasticacheClient = "com.amazonaws" % "elasticache-java-cluster-client" % Version.elasticacheClient
   val ficus = "com.iheart" %% "ficus" % Version.ficus
