@@ -401,6 +401,7 @@ lazy val db = project
       Dependencies.doobieHikari,
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
+      Dependencies.doobieScalatest,
       Dependencies.elasticacheClient,
       Dependencies.flyway % Test,
       Dependencies.fs2,
