@@ -59,7 +59,7 @@
         "gdal-js": "^1.1.2",
         "immutable": "^3.8.2",
         "jointjs": "~2.1.4",
-        "jquery": "~3.1.1",
+        "jquery": "~3.5.0",
         "leaflet": "1.3.0",
         "leaflet-draw": "~1.0.2",
         "leaflet-draw-drag": "~0.4.5",
