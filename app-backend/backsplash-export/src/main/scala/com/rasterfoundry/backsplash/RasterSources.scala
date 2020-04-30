@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.export
 
-import geotrellis.contrib.vlm.RasterSource
+import geotrellis.raster.RasterSource
 
 import scala.collection.mutable
 

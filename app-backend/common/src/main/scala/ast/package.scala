@@ -35,33 +35,44 @@ package object ast {
           Some(s"${self.metadata.flatMap(_.label).getOrElse(self.id)}"),
           None,
           None
-        ))
+        )
+      )
 
     def classify(classmap: ClassMap) =
-      MapAlgebraAST.Classification(List(self),
-                                   UUID.randomUUID(),
-                                   generateMetadata,
-                                   classmap)
+      MapAlgebraAST.Classification(
+        List(self),
+        UUID.randomUUID(),
+        generateMetadata,
+        classmap
+      )
 
     def +(other: MapAlgebraAST): MapAlgebraAST.Operation =
-      MapAlgebraAST.Addition(List(self, other),
-                             UUID.randomUUID(),
-                             generateMetadata)
+      MapAlgebraAST.Addition(
+        List(self, other),
+        UUID.randomUUID(),
+        generateMetadata
+      )
 
     def -(other: MapAlgebraAST): MapAlgebraAST.Operation =
-      MapAlgebraAST.Subtraction(List(self, other),
-                                UUID.randomUUID(),
-                                generateMetadata)
+      MapAlgebraAST.Subtraction(
+        List(self, other),
+        UUID.randomUUID(),
+        generateMetadata
+      )
 
     def *(other: MapAlgebraAST): MapAlgebraAST.Operation =
-      MapAlgebraAST.Multiplication(List(self, other),
-                                   UUID.randomUUID(),
-                                   generateMetadata)
+      MapAlgebraAST.Multiplication(
+        List(self, other),
+        UUID.randomUUID(),
+        generateMetadata
+      )
 
     def /(other: MapAlgebraAST): MapAlgebraAST.Operation =
-      MapAlgebraAST.Division(List(self, other),
-                             UUID.randomUUID(),
-                             generateMetadata)
+      MapAlgebraAST.Division(
+        List(self, other),
+        UUID.randomUUID(),
+        generateMetadata
+      )
 
     def max(other: MapAlgebraAST): MapAlgebraAST.Operation =
       MapAlgebraAST.Max(List(self, other), UUID.randomUUID(), generateMetadata)

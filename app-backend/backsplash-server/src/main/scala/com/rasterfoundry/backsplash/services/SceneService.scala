@@ -15,12 +15,12 @@ import cats.data.OptionT
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.colisweb.tracing.core.TracingContextBuilder
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.CellSize
 import geotrellis.server._
-import geotrellis.vector.{MultiPolygon, Projected}
+import geotrellis.vector._
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
@@ -153,7 +153,7 @@ class SceneService[HistStore](
           )(paintedMosaicExtentReification, cs)
           extent <- IO.pure {
             (scene.dataFootprint orElse scene.tileFootprint) map {
-              _.envelope
+              _.geom.extent
             }
           } flatMap {
             case Some(extent) =>

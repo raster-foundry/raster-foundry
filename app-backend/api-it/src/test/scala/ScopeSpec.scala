@@ -3,23 +3,15 @@ package com.rasterfoundry.api.it
 import com.rasterfoundry.datamodel._
 
 import cats.implicits._
-import com.softwaremill.sttp.{
-  DeserializationError,
-  Empty,
-  Id,
-  Request,
-  RequestT,
-  Response,
-  Uri
-}
-import com.softwaremill.sttp.circe._
-import com.softwaremill.sttp.okhttp.OkHttpSyncBackend
-import com.softwaremill.sttp._
+import sttp.client._
+import sttp.client.circe._
+import sttp.client.okhttp.OkHttpSyncBackend
+import sttp.model.Uri
 import com.typesafe.config.ConfigFactory
 import io.circe._
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.syntax._
-import org.scalatest.FunSpec
+import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import com.github.tototoshi.csv._
 
@@ -83,7 +75,7 @@ object TokenResponse {
   implicit val decTokenResponse: Decoder[TokenResponse] = deriveDecoder
 }
 
-class ScopeSpec extends FunSpec {
+class ScopeSpec extends AnyFunSpec {
 
   implicit val okHttpBackend = OkHttpSyncBackend()
 
@@ -110,19 +102,16 @@ class ScopeSpec extends FunSpec {
 
   val authTokenE: Either[String, TokenResponse] = {
     val tokenRoute = makeRoute("/api/tokens/")
-    val response
-        : Id[Response[Either[DeserializationError[Error], TokenResponse]]] =
-      sttp
+    val response =
+      basicRequest
         .post(tokenRoute)
         .body(Map("refresh_token" -> refreshToken).asJson)
         .response(asJson[TokenResponse])
         .send()
-    response map { resp =>
-      resp.body match {
-        case Right(Right(tokenResp)) => Right(tokenResp)
-        case _                       => {
-          Left("could not get token")
-        }
+    response.body match {
+      case Right(tokenResp) => Right(tokenResp)
+      case _ => {
+        Left("could not get token")
       }
     }
   }
@@ -131,9 +120,9 @@ class ScopeSpec extends FunSpec {
       tokenResp: TokenResponse,
       scope: Scope,
       expectSuccess: Boolean
-  ): RequestT[Empty, String, Nothing] = {
+  ): RequestT[Empty, Either[String, String], Nothing] = {
     val root =
-      sttp.header("X-PolicySim", "true").auth.bearer(tokenResp.id_token)
+      basicRequest.header("X-PolicySim", "true").auth.bearer(tokenResp.id_token)
     val scopeStringNoQuotes = scope.asJson.noSpaces.replace("\"", "")
     if (expectSuccess) {
       root.header("X-PolicySim-Include", scopeStringNoQuotes)
@@ -143,10 +132,10 @@ class ScopeSpec extends FunSpec {
   }
 
   def addMethod(
-      request: RequestT[Empty, String, Nothing],
+      request: RequestT[Empty, Either[String, String], Nothing],
       path: Uri,
       verb: Verb
-  ): Request[Either[DeserializationError[Error], SimResponse], Nothing] =
+  ): Request[Either[ResponseError[Error], SimResponse], Nothing] =
     (verb match {
       case Get    => request.get(path)
       case Post   => request.post(path)
@@ -163,23 +152,19 @@ class ScopeSpec extends FunSpec {
   )
 
   def getSimResult(
-      baseRequest: RequestT[Empty, String, Nothing],
+      baseRequest: RequestT[Empty, Either[String, String], Nothing],
       row: ParsedCsvRow,
       expectation: Boolean
   ) = {
     val requestUri = makeRoute(row.path)
-    val response
-        : Id[Response[Either[DeserializationError[Error], SimResponse]]] =
+    val response =
       addMethod(baseRequest, requestUri, row.verb).send()
     // for some reason I'm not allowed to bail on the Id wrapper in the previous step, though I'd really
     // prefer to. this is a bit janky but I'm not sure what to do about it.
-    val resultBody: Either[String, SimResponse] = response map { resp =>
-      resp.body match {
-        case Right(Right(simResp)) => Right(simResp)
-        case left =>
-          Left(s"body deserialization failed: $left, code: ${resp.code} body: ${response.body}")
-      }
-    }
+    val resultBody: Either[String, SimResponse] = response.body.leftMap(
+      err =>
+        s"body deserialization failed: $err, code: ${response.code} body: ${response.body}"
+    )
     assert(
       resultBody == Right(SimResponse(expectation)),
       s"Authorization expectation failed: received $resultBody, expected $expectation"
@@ -187,12 +172,12 @@ class ScopeSpec extends FunSpec {
   }
 
   def expectAllowed(
-      baseRequest: RequestT[Empty, String, Nothing],
+      baseRequest: RequestT[Empty, Either[String, String], Nothing],
       row: ParsedCsvRow
   ) = getSimResult(baseRequest, row, true)
 
   def expectForbidden(
-      baseRequest: RequestT[Empty, String, Nothing],
+      baseRequest: RequestT[Empty, Either[String, String], Nothing],
       row: ParsedCsvRow
   ): Unit = getSimResult(baseRequest, row, false)
 
@@ -213,7 +198,10 @@ class ScopeSpec extends FunSpec {
           {
             (for {
               tokenResponse <- authTokenE
-              updatedPath = tokenQueryParameterSegment.replaceAllIn(path, s"${tokenResponse.id_token}")
+              updatedPath = tokenQueryParameterSegment.replaceAllIn(
+                path,
+                s"${tokenResponse.id_token}"
+              )
               row <- ParsedCsvRow.fromStringsE(updatedPath, scope, verb)
               baseRequest = getBaseRequest(tokenResponse, row.scope, false)
             } yield { expectForbidden(baseRequest, row) }) getOrElse {
@@ -229,7 +217,10 @@ class ScopeSpec extends FunSpec {
           {
             (for {
               tokenResponse <- authTokenE
-              updatedPath = tokenQueryParameterSegment.replaceAllIn(path, s"${tokenResponse.id_token}")
+              updatedPath = tokenQueryParameterSegment.replaceAllIn(
+                path,
+                s"${tokenResponse.id_token}"
+              )
               row <- ParsedCsvRow.fromStringsE(updatedPath, scope, verb)
               baseRequest = {
                 getBaseRequest(tokenResponse, row.scope, true)

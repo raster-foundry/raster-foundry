@@ -1,13 +1,15 @@
 package com.rasterfoundry.http4s.xray
 
-import cats.data._
 import cats.effect.concurrent.Ref
 import cats.effect.{Resource, Sync, Timer}
 import cats.implicits._
 import com.amazonaws.services.xray.AWSXRayAsync
 import com.amazonaws.xray.entities.TraceID
-import com.colisweb.tracing.TracingContext
-import com.colisweb.tracing.TracingContext.TracingContextResource
+import com.colisweb.tracing.core.{
+  PureLogger,
+  TracingContext,
+  TracingContextResource
+}
 
 import scala.util.Random
 
@@ -16,17 +18,18 @@ import java.time.Instant
 class XRayTracingContext[F[_]: Sync: Timer](
     client: AWSXRayAsync,
     val segment: Segment[F],
-    val tagsRef: Ref[F, Map[String, String]])
-    extends TracingContext[F] {
+    val tagsRef: Ref[F, Map[String, String]]
+) extends TracingContext[F] {
 
-  override def spanId: OptionT[F, String] = OptionT.pure(segment.id)
-  override def traceId: OptionT[F, String] = OptionT.pure(segment.trace_id)
+  def correlationId: String = s"${segment.id}"
+  def logger(implicit slf4jLogger: org.slf4j.Logger): PureLogger[F] =
+    PureLogger(slf4jLogger)
 
   def addTags(tags: Map[String, String]): F[Unit] = {
     tagsRef.update(_ ++ tags)
   }
 
-  def childSpan(
+  def span(
       operationName: String,
       tags: Map[String, String]
   ): TracingContextResource[F] = {
@@ -37,14 +40,16 @@ class XRayTracingContext[F[_]: Sync: Timer](
 
 object XRayTracingContext {
 
-  def apply[F[_]: Sync: Timer](client: AWSXRayAsync,
-                               parentContext: Option[XRayTracingContext[F]] =
-                                 None)(
+  def apply[F[_]: Sync: Timer](
+      client: AWSXRayAsync,
+      parentContext: Option[XRayTracingContext[F]] = None
+  )(
       operationName: String,
       tags: Map[String, String]
   )(http: Option[XrayHttp]): TracingContextResource[F] = {
-    resource(client, parentContext, operationName, tags, http).evalMap(ctx =>
-      ctx.addTags(tags).map(_ => ctx))
+    resource(client, parentContext, operationName, tags, http).evalMap(
+      ctx => ctx.addTags(tags).map(_ => ctx)
+    )
   }
 
   private def resource[F[_]: Sync: Timer](
@@ -52,7 +57,8 @@ object XRayTracingContext {
       parentContext: Option[XRayTracingContext[F]],
       operationName: String,
       tags: Map[String, String],
-      http: Option[XrayHttp]): TracingContextResource[F] = {
+      http: Option[XrayHttp]
+  ): TracingContextResource[F] = {
 
     val acquire: F[(Segment[F], Ref[F, Map[String, String]])] = {
       val spanId = f"${Random.nextLong()}%016x"
@@ -65,16 +71,18 @@ object XRayTracingContext {
           // subsegment
           parentContext match {
             case Some(context) =>
-              Segment[F](operationName,
-                         spanId,
-                         context.segment.trace_id,
-                         start,
-                         None,
-                         Some(true),
-                         Some(context.segment.id),
-                         tags,
-                         Some("subsegment"),
-                         http)
+              Segment[F](
+                operationName,
+                spanId,
+                context.segment.trace_id,
+                start,
+                None,
+                Some(true),
+                Some(context.segment.id),
+                tags,
+                Some("subsegment"),
+                http
+              )
             case _ =>
               Segment[F](
                 operationName,
@@ -86,7 +94,8 @@ object XRayTracingContext {
                 None,
                 tags,
                 None,
-                http)
+                http
+              )
           }
         }
         _ <- UdpClient.write(segment).attempt
@@ -100,9 +109,11 @@ object XRayTracingContext {
         tags <- tagRef.get
         updatedSegment = {
           segment
-            .copy[F](end_time = Some(end),
-                     in_progress = None,
-                     annotations = tags)
+            .copy[F](
+              end_time = Some(end),
+              in_progress = None,
+              annotations = tags
+            )
         }
         _ <- UdpClient.write(updatedSegment).attempt
       } yield ()

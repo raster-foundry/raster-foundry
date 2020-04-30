@@ -12,7 +12,7 @@ import com.amazonaws.services.s3.model.{
   PutObjectResult
 }
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
+import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.server.stac.StacItem
 import io.circe._
 import io.circe.syntax._
@@ -43,7 +43,7 @@ object StacFileIO extends LazyLogging with Config {
     logger.debug(s"Writing to Local File System: $localOutputPath")
     file
       .createIfNotExists(false, true)
-      .append(Printer.spaces2.copy(dropNullValues = true).pretty(data.asJson))
+      .append(Printer.spaces2.copy(dropNullValues = true).print(data.asJson))
     file
   }
 
@@ -77,7 +77,7 @@ object StacFileIO extends LazyLogging with Config {
     val key = uri.getKey
     val dataByte = Printer.noSpaces
       .copy(dropNullValues = true)
-      .pretty(stacWithAbsolute.item.asJson)
+      .print(stacWithAbsolute.item.asJson)
       .getBytes(Charset.forName("UTF-8"))
     val dataStream = new ByteArrayInputStream(dataByte)
     val dataMd = new ObjectMetadata()

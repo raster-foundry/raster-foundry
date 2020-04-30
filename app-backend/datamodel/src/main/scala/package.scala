@@ -2,8 +2,8 @@ package com.rasterfoundry
 
 import cats.syntax.either._
 import geotrellis.proj4.{io => _, _}
+import geotrellis.raster.GridExtent
 import geotrellis.raster.render.{RGB, RGBA}
-import geotrellis.raster.{CellType, GridExtent}
 import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import geotrellis.vector.{io => _, _}
 import io.circe._
@@ -22,32 +22,6 @@ import java.util.UUID
 
 @SuppressWarnings(Array("CatchException"))
 trait JsonCodecs extends GeoJsonImplicits {
-
-  implicit val crsEncoder: Encoder[CRS] =
-    Encoder.encodeString.contramap[CRS] { crs =>
-      crs.epsgCode
-        .map { c =>
-          s"epsg:$c"
-        }
-        .getOrElse(crs.toProj4String)
-    }
-
-  implicit val crsDecoder: Decoder[CRS] =
-    Decoder.decodeString.emap { str =>
-      Either
-        .catchNonFatal(Try(CRS.fromName(str)) getOrElse CRS.fromString(str))
-        .leftMap(_ => "CRS")
-    }
-
-  implicit val cellTypeEncoder: Encoder[CellType] =
-    Encoder.encodeString.contramap[CellType](CellType.toName)
-
-  implicit val cellTypeDecoder: Decoder[CellType] = Decoder.decodeString.emap {
-    str =>
-      Either
-        .catchNonFatal(CellType.fromName(str))
-        .leftMap(_ => s"Unrecognized cell type: $str")
-  }
 
   implicit val gridExtentEncoder: Encoder[GridExtent[Long]] =
     (a: GridExtent[Long]) =>
@@ -84,20 +58,6 @@ trait JsonCodecs extends GeoJsonImplicits {
         }
         .leftMap(_ => "Extent")
     }
-
-  implicit val multipolygonEncoder: Encoder[MultiPolygon] =
-    new Encoder[MultiPolygon] {
-      def apply(mp: MultiPolygon): Json = {
-        parse(mp.toGeoJson) match {
-          case Right(js: Json) => js
-          case Left(e)         => throw e
-        }
-      }
-    }
-
-  implicit val multipolygonDecoder: Decoder[MultiPolygon] = Decoder[Json] map {
-    _.spaces4.parseGeoJson[MultiPolygon]
-  }
 
   // Double key serialization
   implicit val decodeKeyDouble: KeyDecoder[Double] = new KeyDecoder[Double] {
@@ -169,9 +129,13 @@ trait JsonCodecs extends GeoJsonImplicits {
         }
         Either
           .catchNonFatal((LocalDate.parse(s1), LocalDate.parse(s2)))
-          .leftMap(_ =>
-            DecodingFailure(s"Could not parse local dates from ($s1, $s2)",
-                            List.empty))
+          .leftMap(
+            _ =>
+              DecodingFailure(
+                s"Could not parse local dates from ($s1, $s2)",
+                List.empty
+            )
+          )
       }
     }
 

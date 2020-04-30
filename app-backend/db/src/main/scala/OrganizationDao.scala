@@ -10,8 +10,8 @@ import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
-import geotrellis.spark.io.s3.AmazonS3Client
 import org.apache.commons.codec.binary.{Base64 => ApacheBase64}
 
 import java.io.ByteArrayInputStream
@@ -77,8 +77,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},
          name = ${org.name},
-         dropbox_credential = ${org.dropboxCredential.token.getOrElse("")},
-         planet_credential = ${org.planetCredential.token.getOrElse("")}
+         dropbox_credential = ${org.dropboxCredential.token},
+         planet_credential = ${org.planetCredential.token}
        WHERE id = ${id}
      """).update.run
   }
@@ -250,12 +250,11 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     val logoStream = new ByteArrayInputStream(logoByte)
     val md = new ObjectMetadata()
     val s3 = S3()
-    val s3Client = new AmazonS3Client(s3.client)
 
     md.setContentType("image/png")
     md.setContentLength(logoByte.length)
 
-    s3Client.putObject(dataBucket, s"${prefix}/${key}", logoStream, md)
+    s3.client.putObject(dataBucket, s"${prefix}/${key}", logoStream, md)
     s3.client.setObjectAcl(
       dataBucket,
       s"${prefix}/${key}",

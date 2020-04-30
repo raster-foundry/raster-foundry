@@ -9,6 +9,7 @@ import cats.data._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import scalacache.CatsEffect.modes._
 import scalacache._
 
@@ -158,14 +159,16 @@ object UserDao extends Dao[User] with Sanitization {
 
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${userId}"
+    val dropboxCredential = user.dropboxCredential.token.getOrElse("")
+    val planetCredential = user.planetCredential.token.getOrElse("")
 
     for {
       query <- (sql"""
        UPDATE users
        SET
          modified_at = ${updateTime},
-         dropbox_credential = ${user.dropboxCredential.token.getOrElse("")},
-         planet_credential = ${user.planetCredential.token.getOrElse("")},
+         dropbox_credential = ${dropboxCredential},
+         planet_credential = ${planetCredential},
          email_notifications = ${user.emailNotifications},
          email = ${user.email},
          name = ${user.name},
@@ -193,7 +196,7 @@ object UserDao extends Dao[User] with Sanitization {
     (fr"INSERT INTO users (" ++ insertFieldsF ++ fr""")
        VALUES
           (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, '', '', false,
-          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, 
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true,
           ${UserVisibility.Private.toString}::user_visibility, DEFAULT, ${newUser.scope})
        """).update.withUniqueGeneratedKeys[User](
       fieldNames: _*
@@ -278,13 +281,14 @@ object UserDao extends Dao[User] with Sanitization {
 
   def updateOwnUser(user: User): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
+    val planetCredential = user.planetCredential.token.getOrElse("")
     for {
       query <- (
         sql"""
         UPDATE users
         SET
           modified_at = ${updateTime},
-          planet_credential = ${user.planetCredential.token.getOrElse("")},
+          planet_credential = ${planetCredential},
           email_notifications = ${user.emailNotifications},
           visibility = ${user.visibility},
           personal_info = ${user.personalInfo}

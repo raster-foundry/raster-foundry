@@ -143,7 +143,7 @@ services:
 
   backsplash:
     # If changing container, make sure to update app-backend/backsplash-server/Dockerfile as well
-    image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
     depends_on:
       postgres:
         condition: service_healthy

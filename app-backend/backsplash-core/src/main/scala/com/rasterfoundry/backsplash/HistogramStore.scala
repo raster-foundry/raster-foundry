@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash
 
 import cats.effect.IO
-import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.core.TracingContext
 import geotrellis.raster.histogram._
 import simulacrum._
 

@@ -3,13 +3,13 @@ package com.rasterfoundry.datamodel
 import io.circe._
 import io.circe.generic.semiauto._
 
-import java.time.Instant
+import java.sql.Timestamp
 import java.util.UUID
 
 case class TaskActionStamp(
     taskId: UUID,
     userId: String,
-    timestamp: Instant,
+    timestamp: Timestamp,
     fromStatus: TaskStatus,
     toStatus: TaskStatus
 )

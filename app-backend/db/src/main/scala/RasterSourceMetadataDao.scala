@@ -6,20 +6,24 @@ import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.contrib.vlm.gdal.GDALDataPath
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
+import geotrellis.raster.gdal.GDALPath
 import geotrellis.vector.Extent
+
+import scala.util.Try
 
 import java.util.UUID
 
 object RasterSourceMetadataDao extends CirceJsonbMeta {
 
-  implicit val dataPathMeta: Meta[GDALDataPath] =
-    Meta[String].timap(GDALDataPath.apply)(_.path)
+  implicit val dataPathMeta: Meta[GDALPath] =
+    Meta[String].timap(GDALPath.apply)(_.value)
 
   implicit val crsMeta: Meta[CRS] =
-    Meta[String].timap(CRS.fromString)(_.toProj4String)
+    Meta[String].timap(
+      s => Try { CRS.fromString(s) } getOrElse CRS.fromName(s)
+    )(_.toProj4String)
 
   implicit val cellTypeMeta: Meta[CellType] =
     Meta[String].timap(CellType.fromName)(CellType.toName)
@@ -41,7 +45,6 @@ object RasterSourceMetadataDao extends CirceJsonbMeta {
   """
 
   def select(id: UUID): ConnectionIO[RasterSourceMetadata] = {
-    println(s"Getting RS: ${id}")
     (selectF ++ Fragments.whereAnd(fr"id = ${id}"))
       .query[RasterSourceMetadata]
       .unique

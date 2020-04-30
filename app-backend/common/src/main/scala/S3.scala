@@ -8,13 +8,11 @@ import com.amazonaws.auth.{
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
-import geotrellis.spark.io.s3.S3InputFormat
 import jp.ne.opt.chronoscala.Imports._
 import org.apache.commons.io.IOUtils
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 
 import java.io.File
 import java.net._
@@ -36,13 +34,19 @@ final case class S3(
       AmazonS3ClientBuilder
         .standard()
         .withRegion(region)
+        .withForceGlobalBucketAccessEnabled(true)
         .build()
     case Some(S3RegionString(region)) =>
       AmazonS3ClientBuilder
         .standard()
         .withRegion(region)
+        .withForceGlobalBucketAccessEnabled(true)
         .build()
-    case _ => AmazonS3ClientBuilder.defaultClient()
+    case _ =>
+      AmazonS3ClientBuilder
+        .standard()
+        .withForceGlobalBucketAccessEnabled(true)
+        .build()
   }
 
   // we want to ignore here, because uri.getHost returns null instead of an Option[String] -- thanks Java
@@ -81,52 +85,6 @@ final case class S3(
       requesterPays: Boolean = false
   ): S3Object =
     client.getObject(new GetObjectRequest(s3bucket, s3prefix, requesterPays))
-
-  def listKeys(url: String, ext: String, recursive: Boolean): Array[URI] = {
-    val S3InputFormat.S3UrlRx(_, _, bucket, prefix) = url
-    listKeys(bucket, prefix, ext, recursive)
-  }
-
-  /** List the keys to files found within a given bucket */
-  def listKeys(
-      s3bucket: String,
-      s3prefix: String,
-      ext: String,
-      recursive: Boolean = false,
-      requesterPays: Boolean = false
-  ): Array[URI] = {
-    val objectRequest = (new ListObjectsRequest)
-      .withBucketName(s3bucket)
-      .withPrefix(s3prefix)
-      .withMaxKeys(1000)
-      .withRequesterPays(requesterPays)
-
-    // Avoid digging into a deeper directory
-    if (!recursive) objectRequest.withDelimiter("/")
-
-    listKeys(objectRequest).collect {
-      case key if key.endsWith(ext) => new URI(s"s3://${s3bucket}/${key}")
-    }.toArray
-  }
-
-  /** List the keys to files found within a given bucket.
-    * (copied from GeoTrellis codebase)
-    */
-  @SuppressWarnings(Array("NullAssignment")) // copied from GeoTrellis so ignoring null assignment
-  def listKeys(listObjectsRequest: ListObjectsRequest): Seq[String] = {
-    var listing: ObjectListing = null
-    val result = mutable.ListBuffer[String]()
-    do {
-      listing = client.listObjects(listObjectsRequest)
-      // avoid including "directories" in the input split, can cause 403 errors on GET
-      result ++= listing.getObjectSummaries.asScala
-        .map(_.getKey)
-        .filterNot(_ endsWith "/")
-      listObjectsRequest.setMarker(listing.getNextMarker)
-    } while (listing.isTruncated)
-
-    result
-  }
 
   def getSignedUrl(
       bucket: String,
@@ -307,11 +265,5 @@ object S3 {
   def createS3Uri(uri: String): AmazonS3URI = new AmazonS3URI(uri)
 
   def createS3Uri(uri: URI): AmazonS3URI = new AmazonS3URI(uri)
-
-  /** Parse an S3 URI unto its bucket and prefix portions */
-  def parse(uri: URI): (String, String) = {
-    val S3InputFormat.S3UrlRx(_, _, bucket, prefix) = uri.toString
-    (bucket, prefix)
-  }
 
 }

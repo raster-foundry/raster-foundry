@@ -1,11 +1,12 @@
 package com.rasterfoundry.datamodel
 
 import io.circe.syntax._
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 import java.util.UUID
 
-class UploadTestSuite extends FunSuite with Matchers {
+class UploadTestSuite extends AnyFunSuite with Matchers {
 
   test(
     "non-platform admins should not be able to create uploads for other users"

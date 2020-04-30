@@ -4,7 +4,9 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.Thumbnail
 
 import cats.implicits._
-import doobie._, doobie.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 
 import java.util.UUID

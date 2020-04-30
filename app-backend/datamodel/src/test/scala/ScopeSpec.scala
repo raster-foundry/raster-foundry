@@ -5,13 +5,13 @@ import cats.kernel.laws.discipline.MonoidTests
 import io.circe.parser._
 import io.circe.testing.{ArbitraryInstances, CodecTests}
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.FunSuite
 import org.scalatestplus.scalacheck.Checkers
-import org.typelevel.discipline.scalatest.Discipline
+import org.scalatest.funsuite.AnyFunSuite
+import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 class ScopeSpec
-    extends FunSuite
-    with Discipline
+    extends AnyFunSuite
+    with FunSuiteDiscipline
     with Checkers
     with ArbitraryInstances {
 

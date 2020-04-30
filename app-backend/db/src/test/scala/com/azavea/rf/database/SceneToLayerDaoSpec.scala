@@ -11,9 +11,11 @@ import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 class SceneToLayerDaoSpec
-    extends FunSuite
+    extends AnyFunSuite
     with Matchers
     with Checkers
     with DBTestConfig

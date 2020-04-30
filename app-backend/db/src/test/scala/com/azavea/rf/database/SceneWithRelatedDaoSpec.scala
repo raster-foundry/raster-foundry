@@ -12,9 +12,11 @@ import org.scalatestplus.scalacheck.Checkers
 
 import java.sql.Timestamp
 import java.time.LocalDate
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 class SceneWithRelatedDaoSpec
-    extends FunSuite
+    extends AnyFunSuite
     with Matchers
     with Checkers
     with DBTestConfig

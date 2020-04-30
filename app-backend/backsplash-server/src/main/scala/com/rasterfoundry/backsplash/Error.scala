@@ -20,28 +20,33 @@ class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
       case (err: InvariantViolation) =>
         logger.error(
           s"Exception Retrieving ${req.uri.path}, TraceID: ${req.traceID} ${err.getMessage}",
-          err)
+          err
+        )
         throw WrappedDoobieException(err.getMessage)
       case (err: AmazonS3Exception) =>
         logger.error(
           s"Exception Retrieving ${req.uri.path}, TraceID: ${req.traceID} ${err.getMessage}",
-          err)
+          err
+        )
         throw WrappedS3Exception(err.getMessage)
       case (err: IllegalArgumentException) => {
         logger.error(
           s"Exception Retrieving ${req.uri.path}, TraceID: ${req.traceID} ${err.getMessage}",
-          err)
+          err
+        )
         throw RequirementFailedException(err.getMessage)
       }
       case (err: BacksplashException) =>
         logger.error(
           s"Exception Retrieving ${req.uri.path}, TraceID: ${req.traceID} ${err.getMessage}",
-          err)
+          err
+        )
         throw err
       case t =>
         logger.error(
           s"An unmapped error occurred retrieving ${req.uri.path}, TraceID: ${req.traceID}",
-          t)
+          t
+        )
         throw UnknownException(t.getMessage)
     }
   }
@@ -53,8 +58,10 @@ class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
 class RollbarReporter[F[_]](implicit M: MonadError[F, BacksplashException])
     extends RollbarNotifier
     with HttpErrorHandler[F, BacksplashException] {
-  private def wrapError(r: Request[F],
-                        t: BacksplashException): F[Response[F]] = {
+  private def wrapError(
+      r: Request[F],
+      t: BacksplashException
+  ): F[Response[F]] = {
     t match {
       case e @ UningestedScenesException(_) =>
         sendError(e, r.traceID, r.uri.path)

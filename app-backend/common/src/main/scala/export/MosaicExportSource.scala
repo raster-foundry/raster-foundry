@@ -2,6 +2,7 @@ package com.rasterfoundry.common.export
 
 import _root_.io.circe.generic.semiauto._
 import geotrellis.vector.MultiPolygon
+import geotrellis.vector.io.json.Implicits._
 
 final case class MosaicExportSource(
     zoom: Int,

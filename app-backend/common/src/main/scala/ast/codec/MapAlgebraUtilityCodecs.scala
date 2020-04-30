@@ -2,16 +2,12 @@ package com.rasterfoundry.common.ast.codec
 
 import com.rasterfoundry.common.ast._
 
-import geotrellis.raster.histogram._
-import geotrellis.raster.io._
 import geotrellis.raster.mapalgebra.focal._
 import geotrellis.raster.render._
 import geotrellis.raster.summary.Statistics
 import io.circe._
 import io.circe.generic.semiauto._
-import io.circe.parser._
 import io.circe.syntax._
-import spray.json._
 
 import scala.util.Try
 
@@ -128,25 +124,8 @@ trait MapAlgebraUtilityCodecs {
     def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
   }
 
-  implicit val histogramDecoder: Decoder[Histogram[Double]] =
-    Decoder[Json].map { js =>
-      js.noSpaces.parseJson.convertTo[Histogram[Double]]
-    }
-  implicit val histogramEncoder: Encoder[Histogram[Double]] =
-    new Encoder[Histogram[Double]] {
-      def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
-    }
-
   implicit val statsDecoder: Decoder[Statistics[Double]] = deriveDecoder
   implicit val statsEncoder: Encoder[Statistics[Double]] = deriveEncoder
-
-  implicit val sprayJsonEncoder: Encoder[JsValue] = new Encoder[JsValue] {
-    def apply(jsvalue: JsValue): Json =
-      parse(jsvalue.compactPrint) match {
-        case Right(success) => success
-        case Left(fail)     => throw fail
-      }
-  }
 
   val defaultClassMapDecoder: Decoder[ClassMap] = deriveDecoder[ClassMap]
   val hexClassMapDecoder: Decoder[ClassMap] = new Decoder[ClassMap] {

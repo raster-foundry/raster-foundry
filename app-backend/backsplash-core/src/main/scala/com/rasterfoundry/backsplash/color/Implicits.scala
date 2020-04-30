@@ -2,8 +2,13 @@ package com.rasterfoundry.backsplash.color
 
 import com.rasterfoundry.datamodel._
 
-import geotrellis.raster.render._
-import geotrellis.raster.render.png._
+import geotrellis.raster.render.png.{
+  PaethFilter,
+  PngEncoder,
+  RgbaPngEncoding,
+  Settings
+}
+import geotrellis.raster.render.{Png, RGBA}
 import geotrellis.raster.{io => _, _}
 import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 
@@ -107,8 +112,10 @@ trait Implicits {
     }
 
     /** For production of colors according to discrete breaks */
-    private def qual(definition: RenderDefinition,
-                     fallback: RGBA): Double => RGBA = { dbl: Double =>
+    private def qual(
+        definition: RenderDefinition,
+        fallback: RGBA
+    ): Double => RGBA = { dbl: Double =>
       val decomposed = definition.breakpoints.toArray.sortBy(_._1).unzip
       val breaks: Array[Double] = decomposed._1
       val colors: Array[RGBA] = decomposed._2

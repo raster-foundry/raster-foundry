@@ -4,7 +4,7 @@ import com.rasterfoundry.database.filter.Filterables
 import com.rasterfoundry.database.meta.RFMeta
 import com.rasterfoundry.datamodel.Credential
 
-import doobie.util.Meta
+import doobie.Meta
 
 package object database {
   object Implicits extends RFMeta with Filterables {

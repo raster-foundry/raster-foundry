@@ -8,7 +8,6 @@ import com.rasterfoundry.database.TaskDao
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{
   LayerAttributeDao,
-  ProjectDao,
   SceneToLayerDao,
   ToolRunDao
 }
@@ -17,7 +16,7 @@ import com.rasterfoundry.http4s.{JaegerTracer, XRayTracer}
 import cats.data.OptionT
 import cats.effect._
 import cats.implicits._
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.colisweb.tracing.core.TracingContextBuilder
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.olegpy.meow.hierarchy._
 import com.typesafe.scalalogging.LazyLogging
@@ -32,7 +31,6 @@ import org.http4s.syntax.kleisli._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.util.Properties
 
 import java.util.concurrent.{Executors, TimeUnit}
 
@@ -49,12 +47,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   override implicit val contextShift: ContextShift[IO] = rasterIO
 
   val xa = RFTransactor.buildTransactor()
-
-  val ogcUrlPrefix = Properties.envOrNone("ENVIRONMENT") match {
-    case Some("Production") => "https://tiles.rasterfoundry.com"
-    case Some("Staging")    => "https://tiles.staging.rasterfoundry.com"
-    case _                  => "http://localhost:8081"
-  }
 
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
@@ -112,9 +104,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     new ToolStoreImplicits(projectLayerMosaicImplicits, xa)
   import toolStoreImplicits.toolRunDaoStore
 
-  val ogcImplicits = new OgcImplicits(SceneToLayerDao(), xa)
-  import ogcImplicits._
-
   val analysisManager =
     new AnalysisManager(
       ToolRunDao(),
@@ -155,14 +144,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       new SceneService(sceneMosaicImplicits, xa).routes
     )
 
-  val wcsService = authenticators.tokensAuthMiddleware(
-    new WcsService(ProjectDao(), ogcUrlPrefix).routes
-  )
-
-  val wmsService = authenticators.tokensAuthMiddleware(
-    new WmsService(ProjectDao(), ogcUrlPrefix).routes
-  )
-
   private val statusExpirationDuration =
     statusReapingConfig.taskStatusExpirationSeconds.seconds
   private val everyMinute = Cron.unsafeParse("0 * * ? * *")
@@ -179,8 +160,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
           "/" -> mosaicService,
           "/scenes" -> sceneMosaicService,
           "/tools" -> analysisService,
-          "/wcs" -> wcsService,
-          "/wms" -> wmsService,
           "/healthcheck" -> new HealthcheckService(
             xa
           ).routes

@@ -275,9 +275,9 @@ trait ProjectLayerRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          entity(as[Seq[UUID]]) { sceneIds =>
+          entity(as[List[UUID]]) { sceneIds =>
             if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-              complete(StatusCodes.RequestEntityTooLarge)
+              complete(StatusCodes.PayloadTooLarge)
             }
 
             onSuccess(

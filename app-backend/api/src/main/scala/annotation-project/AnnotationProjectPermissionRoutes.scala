@@ -11,13 +11,13 @@ import com.rasterfoundry.notification.intercom._
 
 import akka.http.scaladsl.server._
 import cats.data.OptionT
-import cats.effect.IO
+import cats.effect.{Async, ContextShift, IO}
 import cats.implicits._
-import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import scala.concurrent.Future
 
@@ -31,8 +31,18 @@ trait AnnotationProjectPermissionRoutes
 
   val xa: Transactor[IO]
 
-  implicit val sttpBackend = AsyncHttpClientCatsBackend[IO]()
-  private val intercomNotifier = new LiveIntercomNotifier[IO]
+  val getBackend = for {
+    backendRef <- Async.memoize {
+      AsyncHttpClientCatsBackend[IO]()
+    }
+    backend <- backendRef
+  } yield backend
+
+  implicit val contextShift: ContextShift[IO]
+  private val intercomNotifierIO = for {
+    backend <- getBackend
+    notifier = new LiveIntercomNotifier[IO](backend)
+  } yield notifier
 
   private def getSharer(sharingUser: User): String =
     if (sharingUser.email != "") {
@@ -48,17 +58,19 @@ trait AnnotationProjectPermissionRoutes
       sharingUser: User,
       annotationProjectId: UUID
   ): IO[Either[Throwable, Unit]] =
-    intercomNotifier
-      .notifyUser(
-        intercomToken,
-        intercomAdminId,
-        ExternalId(sharedUser.id),
-        Message(s"""
+    intercomNotifierIO flatMap { intercomNotifier =>
+      intercomNotifier
+        .notifyUser(
+          intercomToken,
+          intercomAdminId,
+          ExternalId(sharedUser.id),
+          Message(s"""
         | ${getSharer(sharingUser)} has shared a project with you!
         | ${groundworkUrlBase}/app/projects/${annotationProjectId}/overview
         | """.trim.stripMargin)
-      )
-      .attempt
+        )
+        .attempt
+    }
 
   private def shareNotifyNewUser(
       bearerToken: ManagementBearerToken,
