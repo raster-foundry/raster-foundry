@@ -1,24 +1,24 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.database.MVTLayerDao
+import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.http4s.TracedHTTPRoutes
+import com.rasterfoundry.http4s.TracedHTTPRoutes._
 
 import cats.data.OptionT
 import cats.effect._
 import cats.implicits._
+import com.colisweb.tracing.core.TracingContext
 import com.colisweb.tracing.core.TracingContextBuilder
+import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import org.http4s.Header
+import org.http4s.Response
+import org.http4s.dsl.Http4sDsl
 
 import java.util.UUID
-import com.rasterfoundry.http4s.TracedHTTPRoutes
-import com.rasterfoundry.http4s.TracedHTTPRoutes._
-import org.http4s.dsl.Http4sDsl
-import com.typesafe.scalalogging.LazyLogging
-import org.http4s.Response
-import com.colisweb.tracing.core.TracingContext
-import com.rasterfoundry.datamodel.User
-import org.http4s.Header
 
 class AnnotationProjectMVTService(xa: Transactor[IO])(
     implicit contextShift: ContextShift[IO],

@@ -1,7 +1,6 @@
 package com.rasterfoundry.database
 
 import doobie._
-import doobie.postgres.implicits._
 
 import java.util.UUID
 

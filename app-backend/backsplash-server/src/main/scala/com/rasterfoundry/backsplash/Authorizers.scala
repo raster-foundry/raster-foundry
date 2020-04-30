@@ -1,12 +1,14 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.database.AnnotationProjectDao
 import com.rasterfoundry.database.{
   ProjectDao,
   ProjectLayerDao,
   SceneDao,
   ToolRunDao
 }
+import com.rasterfoundry.datamodel.AnnotationProject
 import com.rasterfoundry.datamodel.{
   ActionType,
   AuthFailure,
@@ -32,8 +34,6 @@ import scalacache.memoization._
 import scala.concurrent.duration._
 
 import java.util.UUID
-import com.rasterfoundry.datamodel.AnnotationProject
-import com.rasterfoundry.database.AnnotationProjectDao
 
 class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 
@@ -119,7 +119,7 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
                 ProjectLayerDao
                   .layerIsInProject(layerID, projectID)
                   .transact(xa)
-            )
+          )
         }
       }
     }

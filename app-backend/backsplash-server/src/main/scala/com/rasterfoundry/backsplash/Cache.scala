@@ -1,5 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
+import com.rasterfoundry.datamodel.AnnotationProject
 import com.rasterfoundry.datamodel.{
   AuthResult,
   Project,
@@ -13,7 +14,6 @@ import com.rasterfoundry.http4s.{Cache => Http4sUtilCache}
 import com.typesafe.scalalogging.LazyLogging
 import scalacache._
 import scalacache.caffeine._
-import com.rasterfoundry.datamodel.AnnotationProject
 
 object Cache extends LazyLogging {
 
