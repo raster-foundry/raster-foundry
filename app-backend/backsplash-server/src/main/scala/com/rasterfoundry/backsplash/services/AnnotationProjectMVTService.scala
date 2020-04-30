@@ -88,7 +88,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           context
         )
 
-      case GET -> Root / UUIDVar(annotationProjectId) / "labels" / IntVar(z) / IntVar(
+      case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(z) / IntVar(
             x
           ) / IntVar(y) as user using context =>
         getTile(
