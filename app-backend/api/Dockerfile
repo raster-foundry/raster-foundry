@@ -9,4 +9,4 @@ USER rf
 WORKDIR /var/lib/rf
 
 ENTRYPOINT ["java"]
-CMD ["-jar", "api-assembly.jar"]
+CMD ["-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-jar", "api-assembly.jar"]
