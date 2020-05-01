@@ -9,7 +9,7 @@
 ### Changed
 
 - Add development support for PostgreSQL 12.x/PostGIS 3.x [#5395](https://github.com/raster-foundry/raster-foundry/pull/5395)
-- Upgraded GeoTrellis and Tyelevel libraries to Cats 2.x releases [#5393](https://github.com/raster-foundry/raster-foundry/pull/5393)
+- Upgraded GeoTrellis and Tyelevel libraries to Cats 2.x releases [#5393](https://github.com/raster-foundry/raster-foundry/pull/5393), [#5401](https://github.com/raster-foundry/raster-foundry/pull/5401)
 - Changed email invitation copy [#5396](https://github.com/raster-foundry/raster-foundry/pull/5396)
 
 ### Deprecated
