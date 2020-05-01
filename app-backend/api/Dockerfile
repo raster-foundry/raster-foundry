@@ -1,4 +1,4 @@
-FROM quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
+FROM quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
 
 RUN \
     adduser --system --disabled-password --home /var/lib/rf --shell /sbin/nologin --disabled-password --group rf
@@ -9,4 +9,4 @@ USER rf
 WORKDIR /var/lib/rf
 
 ENTRYPOINT ["java"]
-CMD ["-jar", "api-assembly.jar"]
+CMD ["-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-jar", "api-assembly.jar"]
