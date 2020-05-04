@@ -4,6 +4,7 @@
 
 ### Added
 
+- MVT endpoints for annotation project tasks and labels [#5400](https://github.com/raster-foundry/raster-foundry/pull/5400)
 - Support campaigns [#5397](https://github.com/raster-foundry/raster-foundry/pull/5397)
 
 ### Changed
