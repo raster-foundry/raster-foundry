@@ -19,6 +19,24 @@ object CogUtils extends LazyLogging {
     )
   }
 
+  private def viableCellSizes(
+      rs: RasterSource,
+      baseCellSize: CellSize,
+      sizes: List[CellSize],
+      target: Long
+  ): List[CellSize] = {
+    val width = rs.cols
+    val height = rs.rows
+
+    val isGood: CellSize => Boolean = (cs: CellSize) => {
+      val cellCount = width / (cs.width / baseCellSize.width) * (height / (cs.height / baseCellSize.height))
+      logger.debug(s"Cell count for $cs: $cellCount")
+      cellCount < target
+    }
+
+    sizes.filter(isGood)
+  }
+
   def histogramFromUri(
       uri: String,
       buckets: Int = 80
@@ -29,11 +47,15 @@ object CogUtils extends LazyLogging {
     // We may need to adjust this number depending on how fast our API is able to process it, these
     // numbers are based off local testing
     val rasterSource = GeoTiffRasterSource(uri)
-    rasterSource.resolutions
-      .filter(
-        r => (rasterSource.rows / r.height) * (rasterSource.cols / r.width) < 400000
-      )
-      .toNel
+    logger.debug(s"Base cell size is: ${rasterSource.cellSize}")
+    val viable = viableCellSizes(
+      rasterSource,
+      rasterSource.cellSize,
+      rasterSource.resolutions,
+      400000
+    )
+    logger.debug(s"Number of viable cell sizes: ${viable.size}")
+    viable.toNel
       .flatMap(
         resNel =>
           rasterSource
@@ -43,7 +65,7 @@ object CogUtils extends LazyLogging {
                   r =>
                     scala.math.abs(
                       100000 - (rasterSource.rows / r.height) * (rasterSource.cols / r.width)
-                  )
+                    )
                 )
               )
             )
