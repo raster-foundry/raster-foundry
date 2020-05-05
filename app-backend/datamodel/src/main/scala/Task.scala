@@ -3,9 +3,9 @@ package com.rasterfoundry.datamodel
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._
-import io.circe.refined._
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.refined._
 
 import java.sql.Timestamp
 import java.util.UUID
