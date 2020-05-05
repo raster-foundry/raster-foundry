@@ -62,7 +62,8 @@ class CreateTaskGrid(
       )
       taskProperties = Task.TaskPropertiesCreate(
         TaskStatus.Unlabeled,
-        annotationProject.id
+        annotationProject.id,
+        None
       )
       _ <- OptionT.liftF {
         TaskDao

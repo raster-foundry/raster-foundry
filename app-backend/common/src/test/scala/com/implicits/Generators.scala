@@ -4,6 +4,8 @@ import com.rasterfoundry.datamodel._
 
 import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
+import eu.timepit.refined.auto._
+import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.server.stac.Proprietary
 import geotrellis.vector.testkit.Rectangle
 import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
@@ -967,10 +969,18 @@ object Generators extends ArbitraryInstances {
     for {
       status <- taskStatusGen
       annotationProjectId <- uuidGen
+      note <- if (status == TaskStatus.Flagged) {
+        nonEmptyStringGen map { s =>
+          Some(NonEmptyString.unsafeFrom(s))
+        }
+      } else {
+        Gen.const(None)
+      }
     } yield {
       Task.TaskPropertiesCreate(
         status,
-        annotationProjectId
+        annotationProjectId,
+        note
       )
     }
 
@@ -1074,12 +1084,11 @@ object Generators extends ArbitraryInstances {
       },
       Gen.const(Nil)
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
-  
-  private def campaignCreateGen
-      : Gen[Campaign.Create] =
+
+  private def campaignCreateGen: Gen[Campaign.Create] =
     (
       nonEmptyStringGen,
-      annotationProjectTypeGen,
+      annotationProjectTypeGen
     ).mapN(Campaign.Create.apply _)
 
   object Implicits {
@@ -1334,7 +1343,7 @@ object Generators extends ArbitraryInstances {
       Arbitrary {
         tileLayerCreateGen
       }
-    
+
     implicit def arbCampaignCreate: Arbitrary[Campaign.Create] =
       Arbitrary {
         campaignCreateGen

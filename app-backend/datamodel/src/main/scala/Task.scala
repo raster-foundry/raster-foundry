@@ -1,7 +1,9 @@
 package com.rasterfoundry.datamodel
 
+import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._
+import io.circe.refined._
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -28,7 +30,21 @@ case class Task(
     )
   }
 
-  def toProperties(actions: List[TaskActionStamp]): Task.TaskProperties =
+  def toProperties(actions: List[TaskActionStamp]): Task.TaskProperties = {
+    // If task actions get out of sync from task status updates, it's possible
+    // that the task will have a null note and a status of flagged. That's not great,
+    // but I think preserving our freedom to fix things in the db if things go wrong
+    // is more important than demanding consistency everywhere always.
+    // It should be hard for them to get out of sync with the check constraint on task
+    // actions, but you never know.
+    // This grabs the note from the most recent task action, rather than the most recent
+    // task action
+    val statusNote: Option[NonEmptyString] =
+      if (this.status == TaskStatus.Flagged) {
+        actions
+          .sortBy(-_.timestamp.toInstant.getEpochSecond)
+          .headOption flatMap { _.note }
+      } else None
     Task.TaskProperties(
       this.id,
       this.createdAt,
@@ -39,8 +55,10 @@ case class Task(
       this.lockedBy,
       this.lockedOn,
       actions,
-      this.annotationProjectId
+      this.annotationProjectId,
+      statusNote
     )
+  }
 }
 
 object Task {
@@ -55,12 +73,14 @@ object Task {
       lockedBy: Option[String],
       lockedOn: Option[Timestamp],
       actions: List[TaskActionStamp],
-      annotationProjectId: UUID
+      annotationProjectId: UUID,
+      note: Option[NonEmptyString]
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
         this.status,
-        this.annotationProjectId
+        this.annotationProjectId,
+        this.note
       )
     }
   }
@@ -72,7 +92,8 @@ object Task {
 
   case class TaskPropertiesCreate(
       status: TaskStatus,
-      annotationProjectId: UUID
+      annotationProjectId: UUID,
+      note: Option[NonEmptyString]
   )
 
   object TaskPropertiesCreate {
@@ -135,7 +156,7 @@ object Task {
           (
             tfc._type,
             tfc.features
-        )
+          )
       )
 
     implicit val decTaskFeatureCollection: Decoder[TaskFeatureCollection] =
@@ -152,12 +173,12 @@ object Task {
 
   object TaskFeatureCollectionCreate {
     implicit val decTaskFeatureCollectionCreate
-      : Decoder[TaskFeatureCollectionCreate] =
+        : Decoder[TaskFeatureCollectionCreate] =
       Decoder.forProduct2("type", "features")(
         TaskFeatureCollectionCreate.apply _
       )
     implicit val encTaskFeatureCollectionCreate
-      : Encoder[TaskFeatureCollectionCreate] =
+        : Encoder[TaskFeatureCollectionCreate] =
       Encoder.forProduct2("type", "features")(
         tfc => (tfc._type, tfc.features)
       )
@@ -169,10 +190,10 @@ object Task {
 
   object TaskGridCreateProperties {
     implicit val encTaskGridCreateProperties
-      : Encoder[TaskGridCreateProperties] =
+        : Encoder[TaskGridCreateProperties] =
       deriveEncoder
     implicit val decTaskGridCreateProperties
-      : Decoder[TaskGridCreateProperties] =
+        : Decoder[TaskGridCreateProperties] =
       deriveDecoder
   }
 

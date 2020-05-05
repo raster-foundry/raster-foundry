@@ -1,6 +1,8 @@
 package com.rasterfoundry.datamodel
 
+import eu.timepit.refined.types.string.NonEmptyString
 import io.circe._
+import io.circe.refined._
 import io.circe.generic.semiauto._
 
 import java.sql.Timestamp
@@ -11,7 +13,8 @@ case class TaskActionStamp(
     userId: String,
     timestamp: Timestamp,
     fromStatus: TaskStatus,
-    toStatus: TaskStatus
+    toStatus: TaskStatus,
+    note: Option[NonEmptyString]
 )
 
 object TaskActionStamp {
