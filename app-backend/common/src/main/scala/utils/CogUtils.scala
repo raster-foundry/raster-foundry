@@ -65,7 +65,7 @@ object CogUtils extends LazyLogging {
                   r =>
                     scala.math.abs(
                       100000 - (rasterSource.rows / r.height) * (rasterSource.cols / r.width)
-                    )
+                  )
                 )
               )
             )
