@@ -4,6 +4,7 @@
 
 ### Added
 
+- Additional statuses for tasks indicating invalid tasks and flagged tasks [#5403](https://github.com/raster-foundry/raster-foundry/pull/5403)
 - MVT endpoints for annotation project tasks and labels [#5400](https://github.com/raster-foundry/raster-foundry/pull/5400)
 - Support campaigns [#5397](https://github.com/raster-foundry/raster-foundry/pull/5397)
 
