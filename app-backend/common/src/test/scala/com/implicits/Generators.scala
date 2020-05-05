@@ -86,7 +86,9 @@ object Generators extends ArbitraryInstances {
       TaskStatus.LabelingInProgress,
       TaskStatus.Labeled,
       TaskStatus.ValidationInProgress,
-      TaskStatus.Validated
+      TaskStatus.Validated,
+      TaskStatus.Flagged,
+      TaskStatus.Invalid
     )
 
   private def userVisibilityGen: Gen[UserVisibility] =
