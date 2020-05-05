@@ -146,7 +146,9 @@ trait AnnotationProjectTaskRoutes
             StatusCodes.Created,
             TaskDao
               .insertTasksByGrid(
-                Task.TaskPropertiesCreate(TaskStatus.Unlabeled, projectId, None),
+                Task.TaskPropertiesCreate(TaskStatus.Unlabeled,
+                                          projectId,
+                                          None),
                 tgf,
                 user
               )
