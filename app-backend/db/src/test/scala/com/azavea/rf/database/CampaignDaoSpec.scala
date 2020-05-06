@@ -106,7 +106,8 @@ class CampaignDaoSpec
 
           val (dbCampaign, Some(fetchedCampaign)) =
             getIO.transact(xa).unsafeRunSync
-
+          println(dbCampaign)
+          println(fetchedCampaign)
           assert(
             dbCampaign == fetchedCampaign,
             "Inserted campaign matched the fetched campaign"

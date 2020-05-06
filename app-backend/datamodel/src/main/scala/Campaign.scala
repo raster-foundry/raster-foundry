@@ -15,12 +15,12 @@ final case class Campaign(
     description: Option[String] = None,
     videoLink: Option[String] = None,
     partnerName: Option[String] = None,
-    partnerLogo: Option[Array[Byte]] = None
+    partnerLogo: Option[String] = None
 )
 
 object Campaign {
   implicit val encCampaign: Encoder[Campaign] = deriveEncoder
-  implicit val decCampaignt: Decoder[Campaign] = deriveDecoder
+  implicit val decCampaign: Decoder[Campaign] = deriveDecoder
 
   final case class Create(
       name: String,
@@ -28,7 +28,7 @@ object Campaign {
       description: Option[String] = None,
       videoLink: Option[String] = None,
       partnerName: Option[String] = None,
-      partnerLogo: Option[Array[Byte]] = None
+      partnerLogo: Option[String] = None
   )
 
   object Create {

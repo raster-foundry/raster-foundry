@@ -1088,7 +1088,19 @@ object Generators extends ArbitraryInstances {
   private def campaignCreateGen: Gen[Campaign.Create] =
     (
       nonEmptyStringGen,
-      annotationProjectTypeGen
+      annotationProjectTypeGen,
+      Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
+        Some(_)
+      }),
+      Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
+        Some(_)
+      }),
+      Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
+        Some(_)
+      }),
+      Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
+        Some(_)
+      })
     ).mapN(Campaign.Create.apply _)
 
   object Implicits {
