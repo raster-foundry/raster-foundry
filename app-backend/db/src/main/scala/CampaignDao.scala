@@ -20,7 +20,11 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "created_at",
     "owner",
     "name",
-    "campaign_type"
+    "campaign_type",
+    "description",
+    "video_link",
+    "partner_name",
+    "partner_logo"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -85,7 +89,9 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""VALUES
       (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
-       ${campaignCreate.campaignType}
+       ${campaignCreate.campaignType}, ${campaignCreate.description},
+       ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
+       ${campaignCreate.partnerLogo}
        )
     """).update.withUniqueGeneratedKeys[Campaign](
       fieldNames: _*
@@ -99,7 +105,11 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
 
   def updateCampaign(campaign: Campaign, id: UUID): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
-      name = ${campaign.name}
+      name = ${campaign.name},
+      description = ${campaign.description},
+      video_link = ${campaign.videoLink},
+      partner_name = ${campaign.partnerName},
+      partner_logo = ${campaign.partnerLogo}
     WHERE
       id = $id
     """).update.run;

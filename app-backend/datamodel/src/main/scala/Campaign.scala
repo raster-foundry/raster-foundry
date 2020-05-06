@@ -11,7 +11,11 @@ final case class Campaign(
     createdAt: Timestamp,
     owner: String,
     name: String,
-    campaignType: AnnotationProjectType
+    campaignType: AnnotationProjectType,
+    description: Option[String] = None,
+    videoLink: Option[String] = None,
+    partnerName: Option[String] = None,
+    partnerLogo: Option[Array[Byte]] = None
 )
 
 object Campaign {
@@ -20,7 +24,11 @@ object Campaign {
 
   final case class Create(
       name: String,
-      campaignType: AnnotationProjectType
+      campaignType: AnnotationProjectType,
+      description: Option[String] = None,
+      videoLink: Option[String] = None,
+      partnerName: Option[String] = None,
+      partnerLogo: Option[Array[Byte]] = None
   )
 
   object Create {

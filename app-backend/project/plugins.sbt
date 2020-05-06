@@ -25,3 +25,5 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.11")
 addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.9")
 
 addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.4.0-RC1")
+
+addSbtPlugin("org.scalameta" % "sbt-metals" % "0.7.0")
