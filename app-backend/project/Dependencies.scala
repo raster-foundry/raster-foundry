@@ -126,6 +126,7 @@ object Dependencies {
   val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Version.circe
   val circeOptics = "io.circe" %% "circe-optics" % Version.circeOptics
   val circeParser = "io.circe" %% "circe-parser" % Version.circe
+  val circeRefined = "io.circe" %% "circe-refined" % Version.circe
   val circeShapes = "io.circe" %% "circe-shapes" % Version.circe
   val circeTest = "io.circe" %% "circe-testing" % Version.circe % "test"
   val clistCore = "org.backuity.clist" %% "clist-core" % "3.5.0"
@@ -140,6 +141,7 @@ object Dependencies {
   val doobieHikari = "org.tpolecat" %% "doobie-hikari" % Version.doobie
   val doobiePostgres = "org.tpolecat" %% "doobie-postgres" % Version.doobie
   val doobiePostgresCirce = "org.tpolecat" %% "doobie-postgres-circe" % Version.doobie
+  val doobieRefined = "org.tpolecat" %% "doobie-refined" % Version.doobie
   val doobieScalatest = "org.tpolecat" %% "doobie-scalatest" % Version.doobie % "test"
   val dropbox = "com.dropbox.core" % "dropbox-core-sdk" % Version.dropbox
   val elasticacheClient = "com.amazonaws" % "elasticache-java-cluster-client" % Version.elasticacheClient

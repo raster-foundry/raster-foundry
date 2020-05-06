@@ -1,0 +1,2 @@
+ALTER TYPE task_status ADD VALUE 'FLAGGED';
+ALTER TYPE task_status ADD VALUE 'INVALID';
