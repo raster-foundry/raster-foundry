@@ -98,7 +98,6 @@ services:
     image: raster-foundry-batch
     ports:
       - "9040:9040"
-      - "9020:9020"
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-backend/batch/target/scala-2.12/batch-assembly.jar:/opt/raster-foundry/jars/batch-assembly.jar
