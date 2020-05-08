@@ -11,16 +11,24 @@ final case class Campaign(
     createdAt: Timestamp,
     owner: String,
     name: String,
-    campaignType: AnnotationProjectType
+    campaignType: AnnotationProjectType,
+    description: Option[String] = None,
+    videoLink: Option[String] = None,
+    partnerName: Option[String] = None,
+    partnerLogo: Option[String] = None
 )
 
 object Campaign {
   implicit val encCampaign: Encoder[Campaign] = deriveEncoder
-  implicit val decCampaignt: Decoder[Campaign] = deriveDecoder
+  implicit val decCampaign: Decoder[Campaign] = deriveDecoder
 
   final case class Create(
       name: String,
-      campaignType: AnnotationProjectType
+      campaignType: AnnotationProjectType,
+      description: Option[String] = None,
+      videoLink: Option[String] = None,
+      partnerName: Option[String] = None,
+      partnerLogo: Option[String] = None
   )
 
   object Create {
