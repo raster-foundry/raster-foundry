@@ -417,6 +417,7 @@ lazy val db = project
       Dependencies.geotrellisVector,
       Dependencies.guava,
       Dependencies.hikariCP,
+      Dependencies.javaFaker,
       Dependencies.jts,
       Dependencies.mamlJvm,
       Dependencies.postgis,
