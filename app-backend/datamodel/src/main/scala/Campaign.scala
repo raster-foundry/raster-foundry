@@ -15,7 +15,8 @@ final case class Campaign(
     description: Option[String] = None,
     videoLink: Option[String] = None,
     partnerName: Option[String] = None,
-    partnerLogo: Option[String] = None
+    partnerLogo: Option[String] = None,
+    parentCampaignId: Option[UUID] = None
 )
 
 object Campaign {
@@ -28,7 +29,8 @@ object Campaign {
       description: Option[String] = None,
       videoLink: Option[String] = None,
       partnerName: Option[String] = None,
-      partnerLogo: Option[String] = None
+      partnerLogo: Option[String] = None,
+      parentCampaignId: Option[UUID] = None
   )
 
   object Create {

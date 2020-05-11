@@ -25,6 +25,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 import java.net.URLEncoder
+import java.util.UUID
 
 @JsonCodec
 final case class Auth0User(
@@ -304,6 +305,40 @@ object Auth0Service extends Config with LazyLogging {
       "email" -> email.asJson,
       "password" -> Random.alphanumeric.take(20).mkString("").asJson,
       "app_metadata" -> Map("annotateApp" -> true).asJson
+    ).asJson
+
+    val managementBearerHeaders = getBearerHeaders(bearerToken)
+
+    Http()
+      .singleRequest(
+        HttpRequest(
+          method = POST,
+          uri = s"$userUri",
+          headers = managementBearerHeaders,
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            post.noSpaces
+          )
+        )
+      )
+      .flatMap { responseAsAuth0User _ }
+  }
+
+  def createERUser(
+      userName: String,
+      bearerToken: ManagementBearerToken,
+      platformId: UUID,
+      organizationId: UUID
+  ): Future[Auth0User] = {
+    val post = Map(
+      "connection" -> auth0ErConnectionName.asJson,
+      "email" -> s"${userName}@er.com".asJson,
+      "username" -> userName.asJson,
+      "password" -> s"${userName}*".asJson,
+      "app_metadata" -> Map(
+        "organization" -> organizationId,
+        "platform" -> platformId
+      ).asJson
     ).asJson
 
     val managementBearerHeaders = getBearerHeaders(bearerToken)

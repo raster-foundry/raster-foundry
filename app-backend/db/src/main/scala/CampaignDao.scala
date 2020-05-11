@@ -24,7 +24,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "description",
     "video_link",
     "partner_name",
-    "partner_logo"
+    "partner_logo",
+    "parent_campaign_id"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -91,7 +92,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
        ${campaignCreate.campaignType}, ${campaignCreate.description},
        ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
-       ${campaignCreate.partnerLogo}
+       ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId}
        )
     """).update.withUniqueGeneratedKeys[Campaign](
       fieldNames: _*
@@ -126,4 +127,28 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
   def countUserCampaigns(user: User): ConnectionIO[Long] =
     query.filter(user).count
 
+  def copyCampaign(id: UUID, user: User): ConnectionIO[Campaign] = {
+    val insertQuery = (fr"""
+           INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+      fr"""SELECT
+             uuid_generate_v4(), now(), ${user.id}, name, campaign_type, description, video_link,
+             partner_name, partner_logo, ${id}""" ++
+      fr"""FROM """ ++ tableF ++ fr"""
+           WHERE id = ${id}
+        """)
+    for {
+      campaignCopy <- insertQuery.update
+        .withUniqueGeneratedKeys[Campaign](
+          fieldNames: _*
+        )
+      annotationProjects <- AnnotationProjectDao.listByCampaign(id)
+      _ <- annotationProjects traverse { project =>
+        AnnotationProjectDao.copyProject(
+          project.id,
+          user,
+          Some(campaignCopy.id)
+        )
+      }
+    } yield campaignCopy
+  }
 }

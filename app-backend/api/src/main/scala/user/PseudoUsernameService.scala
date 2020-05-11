@@ -2,10 +2,11 @@ package com.rasterfoundry.api.user
 
 import com.rasterfoundry.datamodel.PseudoUsernameType
 
+import com.github.javafaker._
+
 import scala.util.Random
 
 import java.util.UUID
-import com.github.javafaker._
 
 object PseudoUsernameService {
 

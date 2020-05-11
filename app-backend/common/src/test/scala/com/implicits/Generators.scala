@@ -1105,7 +1105,10 @@ object Generators extends ArbitraryInstances {
       }),
       Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
         Some(_)
-      })
+      }),
+      Gen.oneOf(Gen.const(None), uuidGen map {
+        Some(_)
+      }),
     ).mapN(Campaign.Create.apply _)
 
   object Implicits {

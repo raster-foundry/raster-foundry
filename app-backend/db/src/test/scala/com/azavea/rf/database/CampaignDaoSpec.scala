@@ -26,7 +26,10 @@ class CampaignDaoSpec
           val insertIO = for {
             user <- UserDao.create(userCreate)
             inserted <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
           } yield (inserted, user)
 
           val (insertedCampaign, insertedUser) =
@@ -64,7 +67,8 @@ class CampaignDaoSpec
             user <- UserDao.create(userCreate)
             insertedCampaigns <- campaignCreates
               .take(pageSize) traverse { toInsert =>
-              CampaignDao.insertCampaign(toInsert, user)
+              CampaignDao
+                .insertCampaign(toInsert.copy(parentCampaignId = None), user)
             }
             listed <- CampaignDao
               .listCampaigns(
@@ -99,7 +103,10 @@ class CampaignDaoSpec
           val getIO = for {
             user <- UserDao.create(userCreate)
             inserted <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
             fetched <- CampaignDao
               .getCampaignById(inserted.id)
           } yield (inserted, fetched)
@@ -129,9 +136,15 @@ class CampaignDaoSpec
           val updateIO = for {
             user <- UserDao.create(userCreate)
             inserted1 <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
             inserted2 <- CampaignDao
-              .insertCampaign(campaignCreateUpdate, user)
+              .insertCampaign(
+                campaignCreateUpdate.copy(parentCampaignId = None),
+                user
+              )
             _ <- CampaignDao.updateCampaign(inserted2, inserted1.id)
             fetched <- CampaignDao.getCampaignById(inserted1.id)
           } yield fetched
@@ -158,7 +171,10 @@ class CampaignDaoSpec
           val deleteIO = for {
             user <- UserDao.create(userCreate)
             inserted <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
             deleted <- CampaignDao.deleteCampaign(inserted.id, user)
             fetched <- CampaignDao.getCampaignById(inserted.id)
           } yield { (deleted, fetched) }
