@@ -174,7 +174,7 @@ object Dependencies {
   val http4sXml = "org.http4s" %% "http4s-scala-xml" % Version.http4s
   val jaegerClient = "io.jaegertracing" % "jaeger-client" % "1.0.0"
   val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
-  val javaFaker = "com.github.javafaker" % "javafaker" % Version.javaFaker 
+  val javaFaker = "com.github.javafaker" % "javafaker" % Version.javaFaker
   val javaMail = "com.sun.mail" % "javax.mail" % Version.javaMail
   val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
   val jts = "org.locationtech.jts" % "jts-core" % Version.jts
