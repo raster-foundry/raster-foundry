@@ -20,6 +20,7 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import io.circe.syntax._
 
 import scala.collection.JavaConverters._
 
@@ -295,13 +296,8 @@ trait UserRoutes
             for {
               userNames <- names traverse { name =>
                 for {
-                  auth0User <- Auth0Service.createERUser(
-                    name,
-                    managementToken,
-                    userBulkCreate.platformId,
-                    userBulkCreate.organizationId
-                  )
-                  _ <- (auth0User.user_id traverse { userId =>
+                  auth0User <- Auth0Service.createERUser(name, managementToken)
+                  newUser <- (auth0User.user_id traverse { userId =>
                     for {
                       user <- UserDao.create(
                         User.Create(
@@ -316,12 +312,21 @@ trait UserRoutes
                         Some(userBulkCreate.platformId),
                         Some(userBulkCreate.organizationId)
                       )
-                      campaignCopy <- userBulkCreate.campaignId traverse {
-                        campaignId =>
-                          CampaignDao.copyCampaign(campaignId, user)
+                      _ <- userBulkCreate.campaignId traverse { campaignId =>
+                        CampaignDao.copyCampaign(campaignId, user)
                       }
-                    } yield campaignCopy
+                    } yield user
                   }).transact(xa).unsafeToFuture
+                  _ <- newUser traverse { u =>
+                    Auth0Service.addUserMetadata(
+                      u.id,
+                      managementToken,
+                      Map(
+                        "organization" -> userBulkCreate.organizationId,
+                        "platform" -> userBulkCreate.platformId
+                      ).asJson
+                    )
+                  }
                 } yield name
               }
             } yield userNames

@@ -25,7 +25,6 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 import java.net.URLEncoder
-import java.util.UUID
 
 @JsonCodec
 final case class Auth0User(
@@ -76,7 +75,7 @@ object UserWithOAuth {
         u.visibility,
         u.dropboxCredential,
         u.planetCredential
-    )
+      )
   )
 }
 @JsonCodec
@@ -224,22 +223,22 @@ object Auth0Service extends Config with LazyLogging {
   }
 
   // don't need a read method because patch is idempotent
-  def addGroundworkMetadata(
-      user: User,
-      bearerToken: ManagementBearerToken
+  def addUserMetadata(
+      userId: String,
+      bearerToken: ManagementBearerToken,
+      metaData: Json
   ): Future[Unit] = {
-    val patch = Map("app_metadata" -> Map("annotateApp" -> true)).asJson
     val managementBearerHeaders = getBearerHeaders(bearerToken)
 
     Http()
       .singleRequest(
         HttpRequest(
           method = PATCH,
-          uri = s"$userUri/${user.id}",
+          uri = s"$userUri/${userId}",
           headers = managementBearerHeaders,
           entity = HttpEntity(
             ContentTypes.`application/json`,
-            patch.noSpaces
+            metaData.noSpaces
           )
         )
       )
@@ -326,19 +325,13 @@ object Auth0Service extends Config with LazyLogging {
 
   def createERUser(
       userName: String,
-      bearerToken: ManagementBearerToken,
-      platformId: UUID,
-      organizationId: UUID
+      bearerToken: ManagementBearerToken
   ): Future[Auth0User] = {
     val post = Map(
       "connection" -> auth0ErConnectionName.asJson,
       "email" -> s"${userName}@${auth0ErConnectionName}.com".asJson,
       "username" -> userName.asJson,
-      "password" -> s"${userName}*".asJson,
-      "app_metadata" -> Map(
-        "organization" -> organizationId,
-        "platform" -> platformId
-      ).asJson
+      "password" -> s"${userName}*".asJson
     ).asJson
 
     val managementBearerHeaders = getBearerHeaders(bearerToken)
