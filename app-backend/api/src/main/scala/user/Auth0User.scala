@@ -332,7 +332,7 @@ object Auth0Service extends Config with LazyLogging {
   ): Future[Auth0User] = {
     val post = Map(
       "connection" -> auth0ErConnectionName.asJson,
-      "email" -> s"${userName}@er.com".asJson,
+      "email" -> s"${userName}@${auth0ErConnectionName}.com".asJson,
       "username" -> userName.asJson,
       "password" -> s"${userName}*".asJson,
       "app_metadata" -> Map(
