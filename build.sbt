@@ -199,7 +199,7 @@ lazy val credentialsSettings = Seq(
 )
 
 lazy val root = project
-  .in(file("."))
+  .in(file("./app-backend"))
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
   .aggregate(
@@ -277,7 +277,7 @@ lazy val apiDependencies = Seq(
 )
 
 lazy val api = project
-  .in(file("api"))
+  .in(file("app-backend/api"))
   .dependsOn(db, common % "test->test;compile->compile", akkautil, notification)
   .settings(apiSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
@@ -286,7 +286,7 @@ lazy val api = project
   })
 
 lazy val apiIntegrationTest = project
-  .in(file("api-it"))
+  .in(file("app-backend/api-it"))
   .configs(IntegrationTest)
   .dependsOn(db)
   .settings({
@@ -311,7 +311,7 @@ lazy val apiIntegrationTest = project
   * Common Settings
   */
 lazy val common = project
-  .in(file("common"))
+  .in(file("app-backend/common"))
   .dependsOn(datamodel)
   .settings(apiSettings: _*)
   .settings({
@@ -350,7 +350,7 @@ lazy val common = project
   })
 
 lazy val datamodel = project
-  .in(file("datamodel"))
+  .in(file("app-backend/datamodel"))
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
@@ -385,7 +385,7 @@ lazy val datamodel = project
   * DB Settings
   */
 lazy val db = project
-  .in(file("db"))
+  .in(file("app-backend/db"))
   .dependsOn(common % "compile->compile;test->test", notification)
   .settings(sharedSettings: _*)
   .settings({
@@ -440,7 +440,7 @@ lazy val db = project
   * Batch Settings
   */
 lazy val batch = project
-  .in(file("batch"))
+  .in(file("app-backend/batch"))
   .dependsOn(common, backsplashCore, notification)
   .settings(sharedSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
@@ -522,7 +522,7 @@ lazy val batch = project
   * Akkautil Settings
   */
 lazy val akkautil = project
-  .in(file("akkautil"))
+  .in(file("app-backend/akkautil"))
   .dependsOn(common, db, datamodel)
   .settings(sharedSettings: _*)
   .settings({
@@ -549,7 +549,7 @@ lazy val akkautil = project
 /**
   * Backsplash Core Settings
   */
-lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
+lazy val backsplashCore = Project("backsplash-core", file("app-backend/backsplash-core"))
   .dependsOn(common, db)
   .settings(sharedSettings: _*)
   .settings(
@@ -704,7 +704,7 @@ lazy val backsplashServer =
 /**
   * http4s Utility project
   */
-lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
+lazy val http4sUtil = Project("http4s-util", file("app-backend/http4s-util"))
   .dependsOn(db)
   .settings(sharedSettings: _*)
   .settings(publishSettings)
@@ -742,7 +742,7 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   *
   * For holding all of our shared code related to letting people know about things
   */
-lazy val notification = Project("notification", file("notification"))
+lazy val notification = Project("notification", file("app-backend/notification"))
   .dependsOn(datamodel)
   .settings(sharedSettings: _*)
   .settings(publishSettings)
