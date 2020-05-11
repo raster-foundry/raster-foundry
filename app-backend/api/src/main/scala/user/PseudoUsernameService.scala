@@ -12,7 +12,10 @@ object PseudoUsernameService {
 
   def createPseudoName(peudoUserNameType: PseudoUsernameType): String = {
     val uuidSeg =
-      UUID.randomUUID.toString().split("-").toList(1 + (new Random).nextInt(3))
+      UUID.randomUUID
+        .toString()
+        .split("-")
+        .toIndexedSeq(1 + (new Random).nextInt(3))
     val faker = new Faker();
     (peudoUserNameType match {
       case PseudoUsernameType.GameOfThrones =>
