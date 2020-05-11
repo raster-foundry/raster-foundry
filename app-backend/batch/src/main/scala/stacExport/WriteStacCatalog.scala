@@ -33,7 +33,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       sceneTaskAnnotation: ExportData
   ): IO[List[ScalaFile]] = {
     logger.info(s"Processing Layer Collection: $layerId")
-    val layerCollectionPrefix = s"$exportPath/$layerId"
+    val layerCollectionPrefix = s"$exportPath/layer-collection"
     val labelRootURI = new URI(layerCollectionPrefix)
     val layerCollectionAbsolutePath =
       s"$layerCollectionPrefix/collection.json"
@@ -50,7 +50,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       Utils.getLabelCollection(exportDef, catalog, layerCollection)
 
     val annotations = ObjectWithAbsolute(
-      s"$layerCollectionPrefix/${labelCollection.id}/data.geojson",
+      s"$layerCollectionPrefix/labels/data.geojson",
       sceneTaskAnnotation.annotations
     )
 
@@ -73,14 +73,14 @@ final case class WriteStacCatalog(exportId: UUID)(
         layerCollection.copy(
           links = layerCollection.links ++ List(
             StacLink(
-              s"./${sceneCollection.id}/collection.json",
+              s"./scenes/collection.json",
               Child,
               Some(`application/json`),
               Some(s"Scene Collection: ${sceneCollection.id}"),
               List()
             ),
             StacLink(
-              s"./${labelCollection.id}/collection.json",
+              s"./labels/collection.json",
               Child,
               Some(`application/json`),
               Some(s"Label Collection: ${labelCollection.id}"),
@@ -93,7 +93,7 @@ final case class WriteStacCatalog(exportId: UUID)(
     val updatedSceneLinks = sceneCollection.links ++ sceneItems.map {
       case SceneItemWithAbsolute(itemWithAbsolute, _) =>
         StacLink(
-          s"./${itemWithAbsolute.item.id}.json",
+          s"./items/${itemWithAbsolute.item.id}.json",
           Item,
           Some(`application/json`),
           None,
@@ -105,7 +105,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       sceneCollection.copy(links = updatedSceneLinks)
 
     val sceneCollectionWithPath = ObjectWithAbsolute(
-      s"$layerCollectionPrefix/${sceneCollection.id}/collection.json",
+      s"$layerCollectionPrefix/scenes/collection.json",
       updatedSceneCollection
     )
     val labelItem =
@@ -114,12 +114,12 @@ final case class WriteStacCatalog(exportId: UUID)(
         sceneTaskAnnotation,
         labelCollection,
         sceneItems map { _.item },
-        s"$layerCollectionPrefix/${labelCollection.id}",
+        s"$layerCollectionPrefix/labels",
         labelRootURI
       )
 
     val updatedLabelLinks = StacLink(
-      s"./${labelItem.item.id}.json",
+      s"./items/${labelItem.item.id}.json",
       Item,
       Some(`application/json`),
       None,
@@ -127,7 +127,7 @@ final case class WriteStacCatalog(exportId: UUID)(
     ) :: labelCollection.links
 
     val labelCollectionWithPath = ObjectWithAbsolute(
-      s"$layerCollectionPrefix/${labelCollection.id}/collection.json",
+      s"$layerCollectionPrefix/labels/collection.json",
       labelCollection.copy(links = updatedLabelLinks)
     )
     for {
@@ -195,7 +195,7 @@ final case class WriteStacCatalog(exportId: UUID)(
 
     dbIO.transact(xa) flatMap {
       case (exportDef, Some(layerInfoMap)) =>
-        val currentPath = s"s3://$dataBucket/stac-exports"
+        val currentPath = s"s3://$dataBucket"
         val exportPath = s"$currentPath/${exportDef.id}"
         logger.info(s"Writing export under prefix: $exportPath")
         val layerIds = layerInfoMap.keys.toList

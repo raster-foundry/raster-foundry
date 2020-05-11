@@ -20,7 +20,7 @@ import java.util.{Date, UUID}
 object Utils {
 
   private val relativeCatalogRoot = StacLink(
-    "../../catalog.json",
+    "../../../catalog.json",
     StacRoot,
     Some(`application/json`),
     Some("Root"),
@@ -54,7 +54,7 @@ object Utils {
       )
     ) ++ layerIds.map { layerId =>
       StacLink(
-        s"./$layerId/collection.json",
+        s"./layer-collection/collection.json",
         Child,
         Some(`application/json`),
         Some(s"Layer Collection $layerId"),
@@ -92,14 +92,14 @@ object Utils {
     val labelItemSelfAbsPath = s"$absPath/$labelItemId.json"
     val labelItemLinks = List(
       StacLink(
-        "./collection.json",
+        "../collection.json",
         Parent,
         Some(`application/json`),
         Some("Label Collection"),
         List()
       ),
       StacLink(
-        "./collection.json",
+        "../collection.json",
         Collection,
         Some(`application/json`),
         Some("Label Collection"),
@@ -113,11 +113,12 @@ object Utils {
       StacLink(
         relativeStacItemPath,
         Source,
-        Some(`image/cog`),
-        Some("Source image STAC item for the label item"),
+        Some(`application/json`),
+        Some("Source image STAC item for this label item"),
         List(item.item.id)
       )
     })
+
     val dateTime = labelCollection.extent.temporal.interval.headOption match {
       case Some(interval) =>
         interval.value match {
@@ -215,6 +216,7 @@ object Utils {
       ),
       relativeCatalogRoot
     )
+
     val sceneProperties = JsonObject.fromMap(
       Map(
         "datetime" -> scene.filterFields.acquisitionDate
@@ -235,7 +237,7 @@ object Utils {
       )
     }
     val sceneItemAbsolutePath =
-      s"$layerCollectionAbsolutePath/${sceneCollection.id}/${scene.id}.json"
+      s"$layerCollectionAbsolutePath/scenes/${scene.id}/${scene.id}.json"
 
     (sceneFootprintOption, itemBboxOption, sceneAssetOption).tupled.map {
       case (sceneFootprint, itemBbox, sceneAsset) =>
