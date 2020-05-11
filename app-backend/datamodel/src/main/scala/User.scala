@@ -3,6 +3,7 @@ package com.rasterfoundry.datamodel
 import cats.syntax.either._
 import io.circe._
 import io.circe.generic.JsonCodec
+import io.circe.generic.semiauto._
 
 import java.net.{URI, URLEncoder}
 import java.security.InvalidParameterException
@@ -249,9 +250,23 @@ object User {
 
 @JsonCodec final case class UserEmail(email: String)
 
-@JsonCodec final case class UserThin(id: String,
-                                     email: String,
-                                     profileImageUri: String)
+@JsonCodec final case class UserThin(
+    id: String,
+    email: String,
+    profileImageUri: String
+)
 object UserThin {
   def fromUser(user: User) = UserThin(user.id, user.email, user.profileImageUri)
+}
+
+case class UserBulkCreate(
+    count: Int,
+    peudoUserNameType: PseudoUsernameType,
+    organizationId: UUID,
+    platformId: UUID,
+    campaignId: Option[UUID] = None
+)
+
+object UserBulkCreate {
+  implicit val decUserBulkCreate: Decoder[UserBulkCreate] = deriveDecoder
 }
