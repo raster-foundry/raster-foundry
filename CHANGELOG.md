@@ -20,6 +20,8 @@
 
 ### Fixed
 
+- Don't write `self` links to STAC roots [#5405](https://github.com/raster-foundry/raster-foundry/pull/5405)
+
 ### Security
 
 ## [1.40.3](https://github.com/raster-foundry/raster-foundry/compare/1.40.2...1.40.3)
