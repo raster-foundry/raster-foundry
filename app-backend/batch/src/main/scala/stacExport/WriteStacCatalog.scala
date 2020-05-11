@@ -93,7 +93,7 @@ final case class WriteStacCatalog(exportId: UUID)(
     val updatedSceneLinks = sceneCollection.links ++ sceneItems.map {
       case SceneItemWithAbsolute(itemWithAbsolute, _) =>
         StacLink(
-          s"./items/${itemWithAbsolute.item.id}.json",
+          s"./${itemWithAbsolute.item.id}.json",
           Item,
           Some(`application/json`),
           None,
@@ -119,7 +119,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       )
 
     val updatedLabelLinks = StacLink(
-      s"./items/${labelItem.item.id}.json",
+      s"./${labelItem.item.id}.json",
       Item,
       Some(`application/json`),
       None,
