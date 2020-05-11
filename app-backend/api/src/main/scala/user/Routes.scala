@@ -6,10 +6,10 @@ import com.rasterfoundry.akkautil.{
   CommonHandlers,
   UserErrorHandler
 }
+import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.api.utils.Config
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
