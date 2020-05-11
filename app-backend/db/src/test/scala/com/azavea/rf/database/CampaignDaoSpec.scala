@@ -241,6 +241,10 @@ class CampaignDaoSpec
               .toSet,
             "Copy of the project has the id from the copied campaign"
           )
+          assert(
+            Some(originalCampaign.id) == copiedCampaign.parentCampaignId,
+            "Copy of the campaign has the parent campaign id"
+          )
           true
         }
       )

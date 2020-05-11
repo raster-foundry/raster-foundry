@@ -352,7 +352,10 @@ class AnnotationProjectDaoSpec
           val listIO = for {
             user <- UserDao.create(userCreate)
             insertedCampaign <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
             insertedProjects <- annotationProjectCreates1
               .take(pageSize) traverse { toInsert =>
               AnnotationProjectDao
