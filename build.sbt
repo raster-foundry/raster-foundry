@@ -549,53 +549,54 @@ lazy val akkautil = project
 /**
   * Backsplash Core Settings
   */
-lazy val backsplashCore = Project("backsplash-core", file("app-backend/backsplash-core"))
-  .dependsOn(common, db)
-  .settings(sharedSettings: _*)
-  .settings(
-    fork in run := true,
-    libraryDependencies ++= Seq(
-      Dependencies.awsS3,
-      Dependencies.awsUtilsSdkV2,
-      Dependencies.awsS3SdkV2,
-      Dependencies.catsCore,
-      Dependencies.catsEffect,
-      Dependencies.catsFree,
-      Dependencies.catsKernel,
-      Dependencies.circeCore,
-      Dependencies.circeParser,
-      Dependencies.doobieCore,
-      Dependencies.doobieFree,
-      Dependencies.geotrellisGdal,
-      Dependencies.geotrellisLayer,
-      Dependencies.geotrellisProj4,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisS3,
-      Dependencies.geotrellisServer,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisUtil,
-      Dependencies.geotrellisVector,
-      Dependencies.http4sCore,
-      Dependencies.http4sDSL,
-      Dependencies.jts,
-      Dependencies.mamlJvm,
-      Dependencies.opentracingCore,
-      Dependencies.opentracingContext,
-      Dependencies.scalaCheck,
-      Dependencies.scalacacheCaffeine,
-      Dependencies.scalacacheCats,
-      Dependencies.scalacacheCore,
-      Dependencies.spatial4j,
-      Dependencies.spireMath,
-      Dependencies.typesafeConfig,
-      "org.apache.httpcomponents" % "httpclient" % "4.5.9",
-      "org.apache.httpcomponents" % "httpcore" % "4.4.11"
-    ) ++ loggingDependencies,
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-    addCompilerPlugin(
-      "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
+lazy val backsplashCore =
+  Project("backsplash-core", file("app-backend/backsplash-core"))
+    .dependsOn(common, db)
+    .settings(sharedSettings: _*)
+    .settings(
+      fork in run := true,
+      libraryDependencies ++= Seq(
+        Dependencies.awsS3,
+        Dependencies.awsUtilsSdkV2,
+        Dependencies.awsS3SdkV2,
+        Dependencies.catsCore,
+        Dependencies.catsEffect,
+        Dependencies.catsFree,
+        Dependencies.catsKernel,
+        Dependencies.circeCore,
+        Dependencies.circeParser,
+        Dependencies.doobieCore,
+        Dependencies.doobieFree,
+        Dependencies.geotrellisGdal,
+        Dependencies.geotrellisLayer,
+        Dependencies.geotrellisProj4,
+        Dependencies.geotrellisRaster,
+        Dependencies.geotrellisS3,
+        Dependencies.geotrellisServer,
+        Dependencies.geotrellisSpark,
+        Dependencies.geotrellisUtil,
+        Dependencies.geotrellisVector,
+        Dependencies.http4sCore,
+        Dependencies.http4sDSL,
+        Dependencies.jts,
+        Dependencies.mamlJvm,
+        Dependencies.opentracingCore,
+        Dependencies.opentracingContext,
+        Dependencies.scalaCheck,
+        Dependencies.scalacacheCaffeine,
+        Dependencies.scalacacheCats,
+        Dependencies.scalacacheCore,
+        Dependencies.spatial4j,
+        Dependencies.spireMath,
+        Dependencies.typesafeConfig,
+        "org.apache.httpcomponents" % "httpclient" % "4.5.9",
+        "org.apache.httpcomponents" % "httpcore" % "4.4.11"
+      ) ++ loggingDependencies,
+      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
+      addCompilerPlugin(
+        "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
+      )
     )
-  )
 
 /**
   * Backsplash Export Settings
@@ -742,24 +743,25 @@ lazy val http4sUtil = Project("http4s-util", file("app-backend/http4s-util"))
   *
   * For holding all of our shared code related to letting people know about things
   */
-lazy val notification = Project("notification", file("app-backend/notification"))
-  .dependsOn(datamodel)
-  .settings(sharedSettings: _*)
-  .settings(publishSettings)
-  .settings({
-    libraryDependencies ++= Seq(
-      Dependencies.apacheCommonsEmail,
-      Dependencies.catsCore,
-      Dependencies.catsEffect,
-      Dependencies.circeCore,
-      Dependencies.javaMail,
-      Dependencies.log4cats,
-      Dependencies.log4catsSlf4j,
-      Dependencies.newtype,
-      Dependencies.sttpCore,
-      Dependencies.sttpJson,
-      Dependencies.sttpAsyncBackend,
-      Dependencies.sttpCirce,
-      Dependencies.sttpModel
-    )
-  })
+lazy val notification =
+  Project("notification", file("app-backend/notification"))
+    .dependsOn(datamodel)
+    .settings(sharedSettings: _*)
+    .settings(publishSettings)
+    .settings({
+      libraryDependencies ++= Seq(
+        Dependencies.apacheCommonsEmail,
+        Dependencies.catsCore,
+        Dependencies.catsEffect,
+        Dependencies.circeCore,
+        Dependencies.javaMail,
+        Dependencies.log4cats,
+        Dependencies.log4catsSlf4j,
+        Dependencies.newtype,
+        Dependencies.sttpCore,
+        Dependencies.sttpJson,
+        Dependencies.sttpAsyncBackend,
+        Dependencies.sttpCirce,
+        Dependencies.sttpModel
+      )
+    })
