@@ -9,7 +9,7 @@ addCommandAlias(
 
 addCommandAlias(
   "fix",
-  ";scalafix;scalafmt"
+  ";scalafix;scalafmt;scalafmtSbt"
 )
 
 git.gitTagToVersionNumber in ThisBuild := { tag: String =>
