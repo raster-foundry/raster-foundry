@@ -361,7 +361,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
@@ -437,7 +437,9 @@ object AnnotationProjectDao
                     labelClass.colorHexCode,
                     labelClass.default,
                     labelClass.determinant,
-                    labelClass.index
+                    labelClass.index,
+                    labelClass.geometryType,
+                    labelClass.description
                   )
                 }
               ),

@@ -1050,7 +1050,12 @@ object Generators extends ArbitraryInstances {
       Gen.const("#AB34DE"),
       Gen.option(arbitrary[Boolean]),
       Gen.option(arbitrary[Boolean]),
-      Gen.choose(0, 100)
+      Gen.choose(0, 100),
+      Gen.option(Gen.oneOf(
+        LabelGeomType.PointLabel,
+        LabelGeomType.PolygonLabel
+      )),
+      Gen.option(nonEmptyStringGen)
     ).mapN(AnnotationLabelClass.Create.apply _)
 
   private def labelClassGroupGen: Gen[AnnotationLabelClassGroup.Create] =

@@ -92,4 +92,11 @@ trait EnumMeta {
       TileLayerType.fromString,
       _.repr
     )
+
+  implicit val labelGeomTypeMeta: Meta[LabelGeomType] =
+    pgEnumString(
+      "label_geom_type",
+      LabelGeomType.fromString,
+      _.repr
+    )
 }
