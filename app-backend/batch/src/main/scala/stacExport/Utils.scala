@@ -237,7 +237,7 @@ object Utils {
       )
     }
     val sceneItemAbsolutePath =
-      s"$layerCollectionAbsolutePath/scenes/${scene.id}.json"
+      s"$layerCollectionAbsolutePath/images/${scene.id}.json"
 
     (sceneFootprintOption, itemBboxOption, sceneAssetOption).tupled.map {
       case (sceneFootprint, itemBbox, sceneAsset) =>
