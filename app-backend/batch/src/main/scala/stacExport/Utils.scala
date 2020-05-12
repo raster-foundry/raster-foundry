@@ -54,7 +54,7 @@ object Utils {
       )
     ) ++ layerIds.map { layerId =>
       StacLink(
-        s"./layer-collection/collection.json",
+        "./layer-collection/collection.json",
         Child,
         Some(`application/json`),
         Some(s"Layer Collection $layerId"),
