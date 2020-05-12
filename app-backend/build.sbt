@@ -595,6 +595,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
     addCompilerPlugin(
       "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
     )
+  )
 
 /**
   * Backsplash Export Settings
