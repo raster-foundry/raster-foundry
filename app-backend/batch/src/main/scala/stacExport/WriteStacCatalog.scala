@@ -73,7 +73,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         layerCollection.copy(
           links = layerCollection.links ++ List(
             StacLink(
-              s"./scenes/collection.json",
+              s"./images/collection.json",
               Child,
               Some(`application/json`),
               Some(s"Scene Collection: ${sceneCollection.id}"),
@@ -105,7 +105,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       sceneCollection.copy(links = updatedSceneLinks)
 
     val sceneCollectionWithPath = ObjectWithAbsolute(
-      s"$layerCollectionPrefix/scenes/collection.json",
+      s"$layerCollectionPrefix/images/collection.json",
       updatedSceneCollection
     )
     val labelItem =
