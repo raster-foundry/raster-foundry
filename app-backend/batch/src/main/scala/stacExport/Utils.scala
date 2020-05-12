@@ -179,7 +179,7 @@ object Utils {
   def getSceneItem(
       catalog: StacCatalog,
       layerCollectionAbsolutePath: String,
-      sceneCollection: StacCollection,
+      imageCollection: StacCollection,
       scene: Scene
   ): Option[ObjectWithAbsolute[StacItem]] = {
 
@@ -204,14 +204,14 @@ object Utils {
         "./collection.json",
         Parent,
         Some(`application/json`),
-        Some("Scene Collection"),
+        Some("Images Collection"),
         List()
       ),
       StacLink(
         "./collection.json",
         Collection,
         Some(`application/json`),
-        Some("Scene Collection"),
+        Some("Images Collection"),
         List()
       ),
       relativeCatalogRoot
@@ -252,7 +252,7 @@ object Utils {
             itemBbox,
             sceneLinks,
             sceneAsset,
-            Some(sceneCollection.id),
+            Some(imageCollection.id),
             sceneProperties
           )
         )
@@ -284,27 +284,27 @@ object Utils {
     )
   }
 
-  def getSceneCollection(
+  def getImagesCollection(
       exportDefinition: StacExport,
       catalog: StacCatalog,
       layerStacCollection: StacCollection
   ): StacCollection = {
-    val sceneCollectionId = UUID.randomUUID().toString
-    val sceneCollectionOwnLinks = List(
+    val imageCollectionId = UUID.randomUUID().toString
+    val imageCollectionOwnLinks = List(
       relativeCatalogRoot,
       relativeLayerCollection
     )
     exportDefinition.createStacCollection(
       catalog.stacVersion,
-      sceneCollectionId,
-      Some("Scene Collection"),
-      s"Scene collection in layer ${layerStacCollection.id}",
+      imageCollectionId,
+      Some("Images Collection"),
+      s"Images collection in layer ${layerStacCollection.id}",
       List[String](),
       "1",
       List[StacProvider](),
       layerStacCollection.extent,
       JsonObject.empty,
-      sceneCollectionOwnLinks
+      imageCollectionOwnLinks
     )
   }
 

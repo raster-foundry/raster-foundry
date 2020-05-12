@@ -44,8 +44,8 @@ final case class WriteStacCatalog(exportId: UUID)(
       sceneTaskAnnotation
     )
 
-    val sceneCollection =
-      Utils.getSceneCollection(exportDef, catalog, layerCollection)
+    val imageCollection =
+      Utils.getImagesCollection(exportDef, catalog, layerCollection)
     val labelCollection =
       Utils.getLabelCollection(exportDef, catalog, layerCollection)
 
@@ -59,7 +59,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         Utils.getSceneItem(
           catalog,
           layerCollectionPrefix,
-          sceneCollection,
+          imageCollection,
           scene
         ),
         scene.ingestLocation
@@ -76,7 +76,7 @@ final case class WriteStacCatalog(exportId: UUID)(
               "./images/collection.json",
               Child,
               Some(`application/json`),
-              Some(s"Scene Collection: ${sceneCollection.id}"),
+              Some(s"Images Collection: ${imageCollection.id}"),
               List()
             ),
             StacLink(
@@ -90,7 +90,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         )
       )
 
-    val updatedSceneLinks = sceneCollection.links ++ sceneItems.map {
+    val updatedSceneLinks = imageCollection.links ++ sceneItems.map {
       case SceneItemWithAbsolute(itemWithAbsolute, _) =>
         StacLink(
           s"./${itemWithAbsolute.item.id}.json",
@@ -102,9 +102,9 @@ final case class WriteStacCatalog(exportId: UUID)(
     }
 
     val updatedSceneCollection: StacCollection =
-      sceneCollection.copy(links = updatedSceneLinks)
+      imageCollection.copy(links = updatedSceneLinks)
 
-    val sceneCollectionWithPath = ObjectWithAbsolute(
+    val imageCollectionWithPath = ObjectWithAbsolute(
       s"$layerCollectionPrefix/images/collection.json",
       updatedSceneCollection
     )
@@ -143,7 +143,7 @@ final case class WriteStacCatalog(exportId: UUID)(
       }
       localSceneCollectionResults <- StacFileIO.writeObjectToFilesystem(
         tempDir,
-        sceneCollectionWithPath
+        imageCollectionWithPath
       )
       localLabelItemResults <- StacFileIO.writeObjectToFilesystem(
         tempDir,
@@ -190,7 +190,7 @@ final case class WriteStacCatalog(exportId: UUID)(
     } yield (exportDefinition, layerSceneTaskAnnotation)
 
     logger.info(
-      s"Creating content bundle with layers, scenes, and labels for record $exportId..."
+      s"Creating content bundle with layers, images, and labels for record $exportId..."
     )
 
     dbIO.transact(xa) flatMap {
