@@ -322,8 +322,10 @@ trait UserRoutes
                       u.id,
                       managementToken,
                       Map(
-                        "organization" -> userBulkCreate.organizationId,
-                        "platform" -> userBulkCreate.platformId
+                        "app_metadata" -> Map(
+                          "organization" -> userBulkCreate.organizationId,
+                          "platform" -> userBulkCreate.platformId
+                        )
                       ).asJson
                     )
                   }
