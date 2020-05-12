@@ -195,7 +195,7 @@ final case class WriteStacCatalog(exportId: UUID)(
 
     dbIO.transact(xa) flatMap {
       case (exportDef, Some(layerInfoMap)) =>
-        val currentPath = s"s3://$dataBucket"
+        val currentPath = s"s3://$dataBucket/stac-exports"
         val exportPath = s"$currentPath/${exportDef.id}"
         logger.info(s"Writing export under prefix: $exportPath")
         val layerIds = layerInfoMap.keys.toList
