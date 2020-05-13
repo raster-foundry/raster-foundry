@@ -7,8 +7,9 @@
 - Additional statuses for tasks indicating invalid tasks and flagged tasks [#5403](https://github.com/raster-foundry/raster-foundry/pull/5403)
 - MVT endpoints for annotation project tasks and labels [#5400](https://github.com/raster-foundry/raster-foundry/pull/5400)
 - Support campaigns [#5397](https://github.com/raster-foundry/raster-foundry/pull/5397) [#5404](https://github.com/raster-foundry/raster-foundry/pull/5404)
-- Added support for creating users in bulk [#5406](https://github.com/raster-foundry/raster-foundry/pull/5406)
+- Add support for creating users in bulk [#5406](https://github.com/raster-foundry/raster-foundry/pull/5406)
 - Add geometry type and description to Annotation Label Classes [#5408](https://github.com/raster-foundry/raster-foundry/pull/5408)
+- Add image quality to tile layers [#5409](https://github.com/raster-foundry/raster-foundry/pull/5409)
 
 ### Changed
 
