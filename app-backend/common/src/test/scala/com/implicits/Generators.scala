@@ -1041,7 +1041,15 @@ object Generators extends ArbitraryInstances {
       nonEmptyStringGen,
       Gen.option(arbitrary[Boolean]),
       Gen.option(arbitrary[Boolean]),
-      tileLayerTypeGen
+      tileLayerTypeGen,
+      Gen.option(
+        Gen.oneOf(
+          TileLayerQuality.NA,
+          TileLayerQuality.Good,
+          TileLayerQuality.Better,
+          TileLayerQuality.Best
+        )
+      )
     ).mapN(TileLayer.Create.apply _)
 
   private def labelClassCreateGen: Gen[AnnotationLabelClass.Create] =
@@ -1051,10 +1059,12 @@ object Generators extends ArbitraryInstances {
       Gen.option(arbitrary[Boolean]),
       Gen.option(arbitrary[Boolean]),
       Gen.choose(0, 100),
-      Gen.option(Gen.oneOf(
-        LabelGeomType.PointLabel,
-        LabelGeomType.PolygonLabel
-      )),
+      Gen.option(
+        Gen.oneOf(
+          LabelGeomType.PointLabel,
+          LabelGeomType.PolygonLabel
+        )
+      ),
       Gen.option(nonEmptyStringGen)
     ).mapN(AnnotationLabelClass.Create.apply _)
 
