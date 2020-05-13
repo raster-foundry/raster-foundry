@@ -4,17 +4,15 @@ import com.rasterfoundry.datamodel.PseudoUsernameType
 
 import com.github.javafaker._
 
-import scala.util.Random
-
 import java.util.UUID
 
 object PseudoUsernameService {
 
   def createPseudoName(peudoUserNameType: PseudoUsernameType): String = {
     val uuidSegments = UUID.randomUUID
-        .toString()
-        .split("-")
-        .toIndexedSeq
+      .toString()
+      .split("-")
+      .toIndexedSeq
     val uuidSegOne = uuidSegments(1)
     val uuidSegTwo = uuidSegments(2)
     val faker = new Faker();
