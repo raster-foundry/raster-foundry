@@ -11,29 +11,30 @@ import java.util.UUID
 object PseudoUsernameService {
 
   def createPseudoName(peudoUserNameType: PseudoUsernameType): String = {
-    val uuidSeg =
-      UUID.randomUUID
+    val uuidSegments = UUID.randomUUID
         .toString()
         .split("-")
-        .toIndexedSeq(1 + (new Random).nextInt(3))
+        .toIndexedSeq
+    val uuidSegOne = uuidSegments(1)
+    val uuidSegTwo = uuidSegments(2)
     val faker = new Faker();
     (peudoUserNameType match {
       case PseudoUsernameType.GameOfThrones =>
-        s"${faker.gameOfThrones().character()} at ${faker.gameOfThrones().house()} ${uuidSeg}"
+        s"${faker.gameOfThrones().character()} ${uuidSegOne} ${uuidSegTwo}"
       case PseudoUsernameType.HarryPotter =>
-        s"${faker.harryPotter().character()} at ${faker.harryPotter().location()} ${uuidSeg}"
+        s"${faker.harryPotter().character()} ${uuidSegOne} ${uuidSegTwo}"
       case PseudoUsernameType.Hobbit =>
-        s"${faker.hobbit().character()} at ${faker.hobbit().location()} ${uuidSeg}"
+        s"${faker.hobbit().character()} ${uuidSegOne} ${uuidSegTwo}"
       case PseudoUsernameType.LordOfTheRings =>
-        s"${faker.lordOfTheRings().character()} at ${faker.lordOfTheRings().location()} ${uuidSeg}"
+        s"${faker.lordOfTheRings().character()} ${uuidSegOne} ${uuidSegTwo}"
       case PseudoUsernameType.Pokemon =>
-        s"${faker.pokemon().name()} at ${faker.pokemon().location()} ${uuidSeg}"
+        s"${faker.pokemon().name()} ${uuidSegOne} ${uuidSegTwo}"
       case PseudoUsernameType.RickAndMorty =>
-        s"${faker.rickAndMorty().character()} at ${faker.rickAndMorty().location()} ${uuidSeg}"
+        s"${faker.rickAndMorty().character()} ${uuidSegOne} ${uuidSegTwo}"
       case PseudoUsernameType.SuperHero =>
         s"${faker.superhero().prefix()} ${faker
           .superhero()
-          .descriptor()} ${faker.superhero().suffix()} ${uuidSeg}"
+          .descriptor()} ${uuidSegOne} ${uuidSegTwo}"
     }).replaceAll("\\s", "-")
   }
 
