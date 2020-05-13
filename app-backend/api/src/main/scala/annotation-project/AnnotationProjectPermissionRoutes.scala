@@ -17,6 +17,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import io.circe.syntax._
 import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import scala.concurrent.Future
@@ -422,7 +423,11 @@ trait AnnotationProjectPermissionRoutes
                   existingUsers traverse { existingUser =>
                     val acrs = getDefaultShare(existingUser)
                     Auth0Service
-                      .addGroundworkMetadata(existingUser, managementToken) *>
+                      .addUserMetadata(
+                        existingUser.id,
+                        managementToken,
+                        Map("app_metadata" -> Map("annotateApp" -> true)).asJson
+                      ) *>
                       ((acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)

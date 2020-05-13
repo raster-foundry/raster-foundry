@@ -26,7 +26,10 @@ class CampaignDaoSpec
           val insertIO = for {
             user <- UserDao.create(userCreate)
             inserted <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
           } yield (inserted, user)
 
           val (insertedCampaign, insertedUser) =
@@ -64,7 +67,8 @@ class CampaignDaoSpec
             user <- UserDao.create(userCreate)
             insertedCampaigns <- campaignCreates
               .take(pageSize) traverse { toInsert =>
-              CampaignDao.insertCampaign(toInsert, user)
+              CampaignDao
+                .insertCampaign(toInsert.copy(parentCampaignId = None), user)
             }
             listed <- CampaignDao
               .listCampaigns(
@@ -99,7 +103,10 @@ class CampaignDaoSpec
           val getIO = for {
             user <- UserDao.create(userCreate)
             inserted <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
             fetched <- CampaignDao
               .getCampaignById(inserted.id)
           } yield (inserted, fetched)
@@ -129,9 +136,15 @@ class CampaignDaoSpec
           val updateIO = for {
             user <- UserDao.create(userCreate)
             inserted1 <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
             inserted2 <- CampaignDao
-              .insertCampaign(campaignCreateUpdate, user)
+              .insertCampaign(
+                campaignCreateUpdate.copy(parentCampaignId = None),
+                user
+              )
             _ <- CampaignDao.updateCampaign(inserted2, inserted1.id)
             fetched <- CampaignDao.getCampaignById(inserted1.id)
           } yield fetched
@@ -158,7 +171,10 @@ class CampaignDaoSpec
           val deleteIO = for {
             user <- UserDao.create(userCreate)
             inserted <- CampaignDao
-              .insertCampaign(campaignCreate, user)
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
             deleted <- CampaignDao.deleteCampaign(inserted.id, user)
             fetched <- CampaignDao.getCampaignById(inserted.id)
           } yield { (deleted, fetched) }
@@ -170,11 +186,68 @@ class CampaignDaoSpec
             result == Option.empty[Campaign],
             "The inserted campaign was gone after deletion"
           )
-
           true
         }
       )
     }
   }
 
+  test("copy a campaign") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            annotationProjectCreate: AnnotationProject.Create
+        ) => {
+          val copyIO = for {
+            user <- UserDao.create(userCreate)
+            insertedCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
+            insertedProject <- AnnotationProjectDao
+              .insert(
+                annotationProjectCreate.copy(
+                  campaignId = Some(insertedCampaign.id)
+                ),
+                user
+              )
+            campaignCopy <- CampaignDao.copyCampaign(insertedCampaign.id, user)
+            projectCopy <- AnnotationProjectDao.listByCampaign(campaignCopy.id)
+          } yield {
+            (insertedCampaign, insertedProject, campaignCopy, projectCopy)
+          }
+
+          val (
+            originalCampaign,
+            originalProject,
+            copiedCampaign,
+            copiedProject
+          ) = copyIO.transact(xa).unsafeRunSync
+
+          assert(
+            originalCampaign.name == copiedCampaign.name,
+            "Copy of the campaign worked"
+          )
+          assert(
+            Set(originalProject.name) == copiedProject.map(_.name).toSet,
+            "Copy of the project worked"
+          )
+          assert(
+            Set(Some(copiedCampaign.id)) == copiedProject
+              .map(_.campaignId)
+              .toSet,
+            "Copy of the project has the id from the copied campaign"
+          )
+          assert(
+            Some(originalCampaign.id) == copiedCampaign.parentCampaignId,
+            "Copy of the campaign has the parent campaign id"
+          )
+          true
+        }
+      )
+    }
+  }
 }

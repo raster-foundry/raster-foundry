@@ -396,17 +396,21 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     )).update.run
   }
 
-  def createDefaultRoles(user: User): ConnectionIO[List[UserGroupRole]] = {
+  def createDefaultRoles(
+      user: User,
+      platformId: Option[UUID] = None,
+      organizationId: Option[UUID] = None
+  ): ConnectionIO[List[UserGroupRole]] = {
     val orgUgrCreate = UserGroupRole.Create(
       user.id,
       GroupType.Organization,
-      Config.auth0Config.defaultOrganizationId,
+      organizationId.getOrElse(Config.auth0Config.defaultOrganizationId),
       GroupRole.Member
     )
     val platUgrCreate = UserGroupRole.Create(
       user.id,
       GroupType.Platform,
-      Config.auth0Config.defaultPlatformId,
+      platformId.getOrElse(Config.auth0Config.defaultPlatformId),
       GroupRole.Member
     )
     for {

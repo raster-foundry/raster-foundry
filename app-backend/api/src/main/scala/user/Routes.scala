@@ -6,6 +6,7 @@ import com.rasterfoundry.akkautil.{
   CommonHandlers,
   UserErrorHandler
 }
+import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
@@ -13,11 +14,13 @@ import com.rasterfoundry.datamodel._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
+import cats.implicits._
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import io.circe.syntax._
 
 import scala.collection.JavaConverters._
 
@@ -32,7 +35,8 @@ trait UserRoutes
     with CommonHandlers
     with UserErrorHandler
     with QueryParametersCommon
-    with LazyLogging {
+    with LazyLogging
+    with Config {
 
   implicit val xa: Transactor[IO]
 
@@ -69,6 +73,11 @@ trait UserRoutes
         pathEndOrSingleSlash {
           get { getUserByEncodedAuthId(authIdEncoded) } ~
             put { updateUserByEncodedAuthId(authIdEncoded) }
+        }
+      } ~
+      pathPrefix("bulk-create") {
+        pathEndOrSingleSlash {
+          post { createUserBulk }
         }
       }
   }
@@ -267,6 +276,55 @@ trait UserRoutes
       searchParams { (searchParams) =>
         complete {
           UserDao.searchUsers(user, searchParams).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def createUserBulk: Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Users, Action.BulkCreate, None),
+      user
+    ) {
+      entity(as[UserBulkCreate]) { userBulkCreate =>
+        complete {
+          Auth0Service.getManagementBearerToken flatMap { managementToken =>
+            val names = PseudoUsernameService.createPseudoNames(
+              userBulkCreate.count,
+              userBulkCreate.peudoUserNameType
+            )
+            for {
+              userNames <- names traverse { name =>
+                for {
+                  auth0User <- Auth0Service
+                    .createAnonymizedUser(name, managementToken)
+                  newUser <- (auth0User.user_id traverse { userId =>
+                    UserDao.createUserWithCampaign(
+                      UserInfo(
+                        userId,
+                        s"$name@$auth0AnonymizedConnectionName.com",
+                        name
+                      ),
+                      userBulkCreate
+                    )
+
+                  }).transact(xa).unsafeToFuture
+                  _ <- newUser traverse { u =>
+                    Auth0Service.addUserMetadata(
+                      u.id,
+                      managementToken,
+                      Map(
+                        "app_metadata" -> Map(
+                          "organization" -> userBulkCreate.organizationId,
+                          "platform" -> userBulkCreate.platformId
+                        )
+                      ).asJson
+                    )
+                  }
+                } yield name
+              }
+            } yield userNames
+          }
         }
       }
     }

@@ -9,7 +9,7 @@ addCommandAlias(
 
 addCommandAlias(
   "fix",
-  ";scalafix;scalafmt"
+  ";scalafix;scalafmt;scalafmtSbt"
 )
 
 git.gitTagToVersionNumber in ThisBuild := { tag: String =>
@@ -260,6 +260,7 @@ lazy val apiDependencies = Seq(
   Dependencies.geotrellisVector,
   Dependencies.guava,
   Dependencies.hikariCP,
+  Dependencies.javaFaker,
   Dependencies.jts,
   Dependencies.nimbusJose,
   Dependencies.nimbusJoseJwt,

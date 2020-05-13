@@ -405,14 +405,20 @@ object AnnotationProjectDao
 
   def copyProject(
       projectId: UUID,
-      user: User
+      user: User,
+      campaignIdO: Option[UUID] = None
   ): ConnectionIO[AnnotationProject] = {
+    val campaignId = campaignIdO match {
+      case Some(id) => fr"${id}"
+      case None     => fr"campaign_id"
+    }
     val insertQuery = (fr"""
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, project_type, task_size_meters, task_size_pixels,
-             aoi, labelers_team_id, validators_team_id, project_id, status, task_status_summary, campaign_id,
-             captured_at
+             aoi, labelers_team_id, validators_team_id, project_id, status, task_status_summary, """ ++
+      campaignId ++
+      fr""",captured_at
            FROM """ ++ tableF ++ fr"""
            WHERE id = ${projectId}
         """)

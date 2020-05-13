@@ -48,6 +48,7 @@ object Version {
   val http4s = "0.21.3"
   val jaegerClient = "1.0.0"
   val jaegerCore = "1.0.0"
+  val javaFaker = "1.0.2"
   val javaMail = "1.5.6"
   val json4s = "3.5.0"
   val jsonSmart = "2.3"
@@ -173,6 +174,7 @@ object Dependencies {
   val http4sXml = "org.http4s" %% "http4s-scala-xml" % Version.http4s
   val jaegerClient = "io.jaegertracing" % "jaeger-client" % "1.0.0"
   val jaegerCore = "io.jaegertracing" % "jaeger-core" % Version.jaegerCore
+  val javaFaker = "com.github.javafaker" % "javafaker" % Version.javaFaker
   val javaMail = "com.sun.mail" % "javax.mail" % Version.javaMail
   val jsonSmart = "net.minidev" % "json-smart" % Version.jsonSmart
   val jts = "org.locationtech.jts" % "jts-core" % Version.jts

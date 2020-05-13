@@ -312,4 +312,27 @@ object UserDao extends Dao[User] with Sanitization {
         .filter(Fragments.in(fr"id", ids))
         .list
     ).map(UserThin.fromUser(_)).value
+
+  def createUserWithCampaign(
+      userInfo: UserInfo,
+      userBulkCreate: UserBulkCreate
+  ): ConnectionIO[User] =
+    for {
+      user <- UserDao.create(
+        User.Create(
+          userInfo.id,
+          email = userInfo.email,
+          name = userInfo.name,
+          scope = Scopes.GroundworkUser
+        )
+      )
+      _ <- UserGroupRoleDao.createDefaultRoles(
+        user,
+        Some(userBulkCreate.platformId),
+        Some(userBulkCreate.organizationId)
+      )
+      _ <- userBulkCreate.campaignId traverse { campaignId =>
+        CampaignDao.copyCampaign(campaignId, user)
+      }
+    } yield user
 }
