@@ -270,3 +270,9 @@ case class UserBulkCreate(
 object UserBulkCreate {
   implicit val decUserBulkCreate: Decoder[UserBulkCreate] = deriveDecoder
 }
+
+case class UserInfo(
+    id: String,
+    email: String,
+    name: String
+)

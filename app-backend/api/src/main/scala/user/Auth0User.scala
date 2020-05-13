@@ -323,13 +323,13 @@ object Auth0Service extends Config with LazyLogging {
       .flatMap { responseAsAuth0User _ }
   }
 
-  def createERUser(
+  def createAnonymizedUser(
       userName: String,
       bearerToken: ManagementBearerToken
   ): Future[Auth0User] = {
     val post = Map(
-      "connection" -> auth0ErConnectionName.asJson,
-      "email" -> s"${userName}@${auth0ErConnectionName}.com".asJson,
+      "connection" -> auth0AnonymizedConnectionName.asJson,
+      "email" -> s"${userName}@${auth0AnonymizedConnectionName}.com".asJson,
       "username" -> userName.asJson,
       "password" -> s"${userName}*".asJson
     ).asJson

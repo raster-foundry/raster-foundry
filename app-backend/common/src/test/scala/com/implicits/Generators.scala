@@ -1094,21 +1094,11 @@ object Generators extends ArbitraryInstances {
     (
       nonEmptyStringGen,
       annotationProjectTypeGen,
-      Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
-        Some(_)
-      }),
-      Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
-        Some(_)
-      }),
-      Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
-        Some(_)
-      }),
-      Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
-        Some(_)
-      }),
-      Gen.oneOf(Gen.const(None), uuidGen map {
-        Some(_)
-      }),
+      Gen.option(nonEmptyStringGen),
+      Gen.option(nonEmptyStringGen),
+      Gen.option(nonEmptyStringGen),
+      Gen.option(nonEmptyStringGen),
+      Gen.option(uuidGen),
     ).mapN(Campaign.Create.apply _)
 
   object Implicits {

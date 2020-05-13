@@ -87,6 +87,7 @@ object Action {
     }
   case object AddScenes extends Action("addScenes")
   case object AddUser extends Action("addUser")
+  case object BulkCreate extends Action("bulkCreate")
   case object ColorCorrect extends Action("colorCorrect")
   case object Create extends Action("create")
   case object CreateAnnotation extends Action("createAnnotation")
@@ -124,6 +125,7 @@ object Action {
   def fromStringTry(s: String): Try[Action] = s match {
     case "addScenes"            => Success(AddScenes)
     case "addUser"              => Success(AddUser)
+    case "bulkCreate"           => Success(BulkCreate)
     case "colorCorrect"         => Success(ColorCorrect)
     case "create"               => Success(Create)
     case "createAnnotation"     => Success(CreateAnnotation)

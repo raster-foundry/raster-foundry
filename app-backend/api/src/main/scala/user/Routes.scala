@@ -283,7 +283,7 @@ trait UserRoutes
 
   def createUserBulk: Route = authenticate { user =>
     authorizeScope(
-      ScopedAction(Domain.Organizations, Action.AddUser, None),
+      ScopedAction(Domain.Users, Action.BulkCreate, None),
       user
     ) {
       entity(as[UserBulkCreate]) { userBulkCreate =>
@@ -296,26 +296,18 @@ trait UserRoutes
             for {
               userNames <- names traverse { name =>
                 for {
-                  auth0User <- Auth0Service.createERUser(name, managementToken)
+                  auth0User <- Auth0Service
+                    .createAnonymizedUser(name, managementToken)
                   newUser <- (auth0User.user_id traverse { userId =>
-                    for {
-                      user <- UserDao.create(
-                        User.Create(
-                          userId,
-                          email = s"$name@$auth0ErConnectionName.com",
-                          name = name,
-                          scope = Scopes.GroundworkUser
-                        )
-                      )
-                      _ <- UserGroupRoleDao.createDefaultRoles(
-                        user,
-                        Some(userBulkCreate.platformId),
-                        Some(userBulkCreate.organizationId)
-                      )
-                      _ <- userBulkCreate.campaignId traverse { campaignId =>
-                        CampaignDao.copyCampaign(campaignId, user)
-                      }
-                    } yield user
+                    UserDao.createUserWithCampaign(
+                      UserInfo(
+                        userId,
+                        s"$name@$auth0AnonymizedConnectionName.com",
+                        name
+                      ),
+                      userBulkCreate
+                    )
+
                   }).transact(xa).unsafeToFuture
                   _ <- newUser traverse { u =>
                     Auth0Service.addUserMetadata(
