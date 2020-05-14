@@ -1,5 +1,4 @@
 CREATE TYPE public.tile_layer_quality AS ENUM (
-  'NA',
   'GOOD',
   'BETTER',
   'BEST'

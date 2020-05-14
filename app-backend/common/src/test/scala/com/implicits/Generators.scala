@@ -1044,7 +1044,6 @@ object Generators extends ArbitraryInstances {
       tileLayerTypeGen,
       Gen.option(
         Gen.oneOf(
-          TileLayerQuality.NA,
           TileLayerQuality.Good,
           TileLayerQuality.Better,
           TileLayerQuality.Best

@@ -8,13 +8,11 @@ sealed abstract class TileLayerQuality(val repr: String) {
 }
 
 object TileLayerQuality {
-  case object NA extends TileLayerQuality("NA")
   case object Good extends TileLayerQuality("GOOD")
   case object Better extends TileLayerQuality("BETTER")
   case object Best extends TileLayerQuality("BEST")
 
   def fromString(s: String): TileLayerQuality = s.toUpperCase match {
-    case "NA"     => NA
     case "GOOD"   => Good
     case "BETTER" => Better
     case "BEST"   => Best
