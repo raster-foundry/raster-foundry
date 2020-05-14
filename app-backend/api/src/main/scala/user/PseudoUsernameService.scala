@@ -29,6 +29,8 @@ object PseudoUsernameService {
         s"${faker.pokemon().name()} ${uuidSegOne} ${uuidSegTwo}"
       case PseudoUsernameType.RickAndMorty =>
         s"${faker.rickAndMorty().character()} ${uuidSegOne} ${uuidSegTwo}"
+      case PseudoUsernameType.StarTrek =>
+        s"${faker.starTrek().character()} ${uuidSegOne} ${uuidSegTwo}"
       case PseudoUsernameType.SuperHero =>
         s"${faker.superhero().prefix()} ${faker
           .superhero()

@@ -12,7 +12,8 @@ final case class TileLayer(
     default: Boolean,
     overlay: Boolean,
     layerType: TileLayerType,
-    annotationProjectId: UUID
+    annotationProjectId: UUID,
+    quality: Option[TileLayerQuality] = None
 )
 
 object TileLayer {
@@ -24,7 +25,8 @@ object TileLayer {
       url: String,
       default: Option[Boolean],
       overlay: Option[Boolean],
-      layerType: TileLayerType
+      layerType: TileLayerType,
+      quality: Option[TileLayerQuality] = None
   )
 
   object Create {

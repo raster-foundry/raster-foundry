@@ -19,7 +19,8 @@ object TileLayerDao extends Dao[TileLayer] {
     "is_default",
     "is_overlay",
     "layer_type",
-    "annotation_project_id"
+    "annotation_project_id",
+    "quality"
   )
 
   def selectF: Fragment = fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ tableF
@@ -30,12 +31,12 @@ object TileLayerDao extends Dao[TileLayer] {
   ): ConnectionIO[TileLayer] = {
     val isDefault: Boolean = layerCreate.default getOrElse false
     val isOverlay: Boolean = layerCreate.overlay getOrElse false
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-      (id, name, url, is_default, is_overlay, layer_type, annotation_project_id)
-    VALUES (
+    (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+      fr"""VALUES (
       uuid_generate_v4(), ${layerCreate.name}, ${layerCreate.url},
       ${isDefault}, ${isOverlay},
-      ${layerCreate.layerType}, ${annotationProject.id}
+      ${layerCreate.layerType}, ${annotationProject.id},
+      ${layerCreate.quality}
     )""").update.withUniqueGeneratedKeys[TileLayer](
       fieldNames: _*
     )
@@ -61,7 +62,7 @@ object TileLayerDao extends Dao[TileLayer] {
     (fr"""
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
-           uuid_generate_v4(), name, url, is_default, is_overlay, layer_type, ${toProject}
+           uuid_generate_v4(), name, url, is_default, is_overlay, layer_type, ${toProject}, quality
            FROM""" ++ tableF ++ fr"""
            WHERE annotation_project_id = ${fromProject}
        """).update.run

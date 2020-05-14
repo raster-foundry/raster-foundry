@@ -14,6 +14,7 @@ object PseudoUsernameType {
   case object LordOfTheRings extends PseudoUsernameType("LORD_OF_THE_RINGS")
   case object Pokemon extends PseudoUsernameType("POKEMON")
   case object RickAndMorty extends PseudoUsernameType("RICK_AND_MORTY")
+  case object StarTrek extends PseudoUsernameType("STAR_TREK")
   case object SuperHero extends PseudoUsernameType("SUPER_HERO")
 
   def fromString(s: String): PseudoUsernameType = s.toUpperCase match {
@@ -23,6 +24,7 @@ object PseudoUsernameType {
     case "LORD_OF_THE_RINGS" => LordOfTheRings
     case "POKEMON"           => Pokemon
     case "RICK_AND_MORTY"    => RickAndMorty
+    case "STAR_TREK"         => StarTrek
     case "SUPER_HERO"        => SuperHero
     case _                   => throw new Exception(s"Invalid string: $s")
   }
