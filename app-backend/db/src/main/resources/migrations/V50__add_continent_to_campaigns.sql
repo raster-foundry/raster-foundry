@@ -10,3 +10,7 @@ CREATE TYPE public.continent AS ENUM (
 
 ALTER TABLE public.campaigns
 ADD COLUMN continent continent;
+
+CREATE INDEX IF NOT EXISTS campaigns_continent_idx
+ON public.campaigns
+USING btree (continent);
