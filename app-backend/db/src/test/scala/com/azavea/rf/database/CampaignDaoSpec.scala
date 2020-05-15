@@ -9,6 +9,7 @@ import org.scalacheck.Prop.forAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
+import scala.util.Random
 
 class CampaignDaoSpec
     extends AnyFunSuite
@@ -245,6 +246,71 @@ class CampaignDaoSpec
             Some(originalCampaign.id) == copiedCampaign.parentCampaignId,
             "Copy of the campaign has the parent campaign id"
           )
+          true
+        }
+      )
+    }
+  }
+
+  test("list campaigns by continent") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            campaignCreates1: List[Campaign.Create],
+            campaignCreates2: List[Campaign.Create]
+        ) => {
+          val pageSize = 30
+          val pageRequest = PageRequest(0, pageSize, Map.empty)
+          val continents = List(
+            Continent.Asia,
+            Continent.Africa,
+            Continent.Antarctica,
+            Continent.Australia,
+            Continent.Europe,
+            Continent.NorthAmerica,
+            Continent.SouthAmerica
+          )
+          val continent = continents((new Random).nextInt(continents.size))
+
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            _ <- campaignCreates1
+              .take(pageSize) traverse { toInsert =>
+              CampaignDao
+                .insertCampaign(
+                  toInsert.copy(parentCampaignId = None, continent = None),
+                  user
+                )
+            }
+            insertedCampaigns2 <- campaignCreates2
+              .take(pageSize) traverse { toInsert =>
+              CampaignDao
+                .insertCampaign(
+                  toInsert.copy(
+                    parentCampaignId = None,
+                    continent = Some(continent)
+                  ),
+                  user
+                )
+            }
+            listed <- CampaignDao
+              .listCampaigns(
+                pageRequest,
+                CampaignQueryParameters(continent = Some(continent)),
+                user
+              )
+          } yield (listed, insertedCampaigns2)
+
+          val (listedCampaigns, dbCampaigns) = listIO.transact(xa).unsafeRunSync
+
+          val expectedIds = (dbCampaigns.take(pageSize) map { _.id }).toSet
+
+          assert(
+            expectedIds == (listedCampaigns.results map { _.id }).toSet,
+            "Listed campaigns are those expected from campaign insertion with specified continent"
+          )
+
           true
         }
       )

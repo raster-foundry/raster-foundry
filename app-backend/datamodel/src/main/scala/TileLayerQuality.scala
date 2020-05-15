@@ -16,6 +16,7 @@ object TileLayerQuality {
     case "GOOD"   => Good
     case "BETTER" => Better
     case "BEST"   => Best
+    case _        => throw new Exception(s"Invalid TileLayerQuality: ${s}")
   }
 
   implicit val encTileLayerQuality: Encoder[TileLayerQuality] =

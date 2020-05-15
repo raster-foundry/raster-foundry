@@ -468,6 +468,9 @@ trait Filterables extends RFMeta with LazyLogging {
           Filters.searchQP(params.searchParams, List("name")) ++
           List(params.campaignType.map({ campaignType =>
             fr"campaign_type = $campaignType"
+          }),
+          params.continent.map({ continent =>
+            fr"continent = $continent"
           }))
     }
 }

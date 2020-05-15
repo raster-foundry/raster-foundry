@@ -1108,6 +1108,15 @@ object Generators extends ArbitraryInstances {
       Gen.option(nonEmptyStringGen),
       Gen.option(nonEmptyStringGen),
       Gen.option(uuidGen),
+      Gen.option(Gen.oneOf(
+        Continent.Asia,
+        Continent.Africa,
+        Continent.Antarctica,
+        Continent.Australia,
+        Continent.Europe,
+        Continent.NorthAmerica,
+        Continent.SouthAmerica
+      ))
     ).mapN(Campaign.Create.apply _)
 
   object Implicits {
