@@ -258,7 +258,7 @@ class CampaignDaoSpec
             userCreate: User.Create,
             campaignCreates1: List[Campaign.Create],
             campaignCreates2: List[Campaign.Create],
-            continentOpt: Option[Continent]
+            continent: Continent
         ) => {
           val pageSize = 30
           val pageRequest = PageRequest(0, pageSize, Map.empty)
@@ -278,7 +278,7 @@ class CampaignDaoSpec
                 .insertCampaign(
                   toInsert.copy(
                     parentCampaignId = None,
-                    continent = continentOpt
+                    continent = Some(continent)
                   ),
                   user
                 )
@@ -286,7 +286,7 @@ class CampaignDaoSpec
             listed <- CampaignDao
               .listCampaigns(
                 pageRequest,
-                CampaignQueryParameters(continent = continentOpt),
+                CampaignQueryParameters(continent = Some(continent)),
                 user
               )
           } yield (listed, insertedCampaigns2)
