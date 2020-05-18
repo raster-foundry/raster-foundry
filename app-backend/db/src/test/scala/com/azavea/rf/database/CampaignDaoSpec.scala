@@ -9,7 +9,6 @@ import org.scalacheck.Prop.forAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
-import scala.util.Random
 
 class CampaignDaoSpec
     extends AnyFunSuite
@@ -258,21 +257,11 @@ class CampaignDaoSpec
         (
             userCreate: User.Create,
             campaignCreates1: List[Campaign.Create],
-            campaignCreates2: List[Campaign.Create]
+            campaignCreates2: List[Campaign.Create],
+            continentOpt: Option[Continent]
         ) => {
           val pageSize = 30
           val pageRequest = PageRequest(0, pageSize, Map.empty)
-          val continents = List(
-            Continent.Asia,
-            Continent.Africa,
-            Continent.Antarctica,
-            Continent.Australia,
-            Continent.Europe,
-            Continent.NorthAmerica,
-            Continent.SouthAmerica
-          )
-          val continent = continents((new Random).nextInt(continents.size))
-
           val listIO = for {
             user <- UserDao.create(userCreate)
             _ <- campaignCreates1
@@ -289,7 +278,7 @@ class CampaignDaoSpec
                 .insertCampaign(
                   toInsert.copy(
                     parentCampaignId = None,
-                    continent = Some(continent)
+                    continent = continentOpt
                   ),
                   user
                 )
@@ -297,7 +286,7 @@ class CampaignDaoSpec
             listed <- CampaignDao
               .listCampaigns(
                 pageRequest,
-                CampaignQueryParameters(continent = Some(continent)),
+                CampaignQueryParameters(continent = continentOpt),
                 user
               )
           } yield (listed, insertedCampaigns2)
