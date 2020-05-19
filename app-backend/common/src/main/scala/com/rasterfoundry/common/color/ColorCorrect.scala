@@ -183,7 +183,8 @@ object ColorCorrect extends LazyLogging {
               val newMax = stats.mean + (stats.stddev * 2.05)
               // assume non-negative values, otherwise visualization is weird
               // I think this happens because the distribution is non-normal
-              iMaxMin(index) = (if (newMin < 0) 0 else newMin.toInt, newMax.toInt)
+              iMaxMin(index) =
+                (if (newMin < 0) 0 else newMin.toInt, newMax.toInt)
             case (min, max, _) => iMaxMin(index) = (min, max)
           }
         }
