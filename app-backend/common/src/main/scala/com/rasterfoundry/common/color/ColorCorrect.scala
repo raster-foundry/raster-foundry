@@ -160,9 +160,9 @@ object ColorCorrect extends LazyLogging {
     val _rgbTile = rgbTile
     val _rgbHist = rgbHist
 
+    var isCorrected = false
     val layerRgbClipping = {
       val range = 1 until 255
-      var isCorrected = true
       val iMaxMin: Array[(Int, Int)] = Array.ofDim(3)
       cfor(0)(_ < _rgbHist.length, _ + 1) { index =>
         val hst = _rgbHist(index)
@@ -173,16 +173,19 @@ object ColorCorrect extends LazyLogging {
         // if data is a byte raster (0, 255) don't do anything
         // else if stats are available, clip assuming a normal distribution
         // else use the histogram's min/max
-        (imin, imax, statsOption) match {
-          case (0, 255, _)         => iMaxMin(index) = (0, 255)
-          case (_, _, Some(stats)) =>
-            // assuming a normal distribution, clips 2nd and 98th percentiles of values
-            val newMin = stats.mean + (stats.stddev * -2.05)
-            val newMax = stats.mean + (stats.stddev * 2.05)
-            // assume non-negative values, otherwise visualization is weird
-            // I think this happens because the distribution is non-normal
-            iMaxMin(index) = (if (newMin < 0) 0 else newMin.toInt, newMax.toInt)
-          case (min, max, _) => iMaxMin(index) = (min, max)
+        if (imin >= 0 && imax <= 255) {
+          iMaxMin(index) = (0, 255)
+        } else {
+          (imin, imax, statsOption) match {
+            case (_, _, Some(stats)) =>
+              // assuming a normal distribution, clips 2nd and 98th percentiles of values
+              val newMin = stats.mean + (stats.stddev * -2.05)
+              val newMax = stats.mean + (stats.stddev * 2.05)
+              // assume non-negative values, otherwise visualization is weird
+              // I think this happens because the distribution is non-normal
+              iMaxMin(index) = (if (newMin < 0) 0 else newMin.toInt, newMax.toInt)
+            case (min, max, _) => iMaxMin(index) = (min, max)
+          }
         }
         logger.trace(s"Histogram Min/Max: ${iMaxMin(index)}")
 
