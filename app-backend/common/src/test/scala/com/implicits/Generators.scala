@@ -1099,6 +1099,17 @@ object Generators extends ArbitraryInstances {
       Gen.const(Nil)
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
 
+  private def continentGen: Gen[Continent] =
+    Gen.oneOf(
+      Continent.Asia,
+      Continent.Africa,
+      Continent.Antarctica,
+      Continent.Australia,
+      Continent.Europe,
+      Continent.NorthAmerica,
+      Continent.SouthAmerica
+    )
+
   private def campaignCreateGen: Gen[Campaign.Create] =
     (
       nonEmptyStringGen,
@@ -1108,6 +1119,7 @@ object Generators extends ArbitraryInstances {
       Gen.option(nonEmptyStringGen),
       Gen.option(nonEmptyStringGen),
       Gen.option(uuidGen),
+      Gen.option(continentGen)
     ).mapN(Campaign.Create.apply _)
 
   object Implicits {
@@ -1362,6 +1374,10 @@ object Generators extends ArbitraryInstances {
       Arbitrary {
         tileLayerCreateGen
       }
+
+    implicit def arbContinent: Arbitrary[Continent] = Arbitrary {
+      continentGen
+    }
 
     implicit def arbCampaignCreate: Arbitrary[Campaign.Create] =
       Arbitrary {

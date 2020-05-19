@@ -106,4 +106,11 @@ trait EnumMeta {
       TileLayerQuality.fromString,
       _.repr
     )
+
+  implicit val continentMeta: Meta[Continent] =
+    pgEnumString(
+      "continent",
+      Continent.fromString,
+      _.repr
+    )
 }

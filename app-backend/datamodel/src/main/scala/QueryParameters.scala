@@ -717,7 +717,8 @@ final case class CampaignQueryParameters(
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
-    campaignType: Option[AnnotationProjectType] = None
+    campaignType: Option[AnnotationProjectType] = None,
+    continent: Option[Continent] = None
 )
 
 object CampaignQueryParameters {

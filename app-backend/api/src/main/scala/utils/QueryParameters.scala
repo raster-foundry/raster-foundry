@@ -39,6 +39,11 @@ trait QueryParameterDeserializers {
       AnnotationProjectType.fromString(s)
     }
 
+  implicit val deserializerContinent: Unmarshaller[String, Continent] =
+    Unmarshaller.strict[String, Continent] { s =>
+      Continent.fromString(s)
+    }
+
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
@@ -226,7 +231,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         ownershipTypeQueryParameters &
         groupQueryParameters &
         parameters(
-          'campaignType.as(deserializerAnnotationProjectType).?
+          'campaignType.as(deserializerAnnotationProjectType).?,
+          'continent.as(deserializerContinent).?
         )
     ).as(CampaignQueryParameters.apply _)
 }

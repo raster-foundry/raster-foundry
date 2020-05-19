@@ -25,7 +25,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "video_link",
     "partner_name",
     "partner_logo",
-    "parent_campaign_id"
+    "parent_campaign_id",
+    "continent"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -92,7 +93,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
        ${campaignCreate.campaignType}, ${campaignCreate.description},
        ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
-       ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId}
+       ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId},
+       ${campaignCreate.continent}
        )
     """).update.withUniqueGeneratedKeys[Campaign](
       fieldNames: _*
@@ -110,7 +112,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       description = ${campaign.description},
       video_link = ${campaign.videoLink},
       partner_name = ${campaign.partnerName},
-      partner_logo = ${campaign.partnerLogo}
+      partner_logo = ${campaign.partnerLogo},
+      continent = ${campaign.continent}
     WHERE
       id = $id
     """).update.run;
@@ -132,7 +135,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, campaign_type, description, video_link,
-             partner_name, partner_logo, ${id}""" ++
+             partner_name, partner_logo, ${id}, continent""" ++
       fr"""FROM """ ++ tableF ++ fr"""
            WHERE id = ${id}
         """)
