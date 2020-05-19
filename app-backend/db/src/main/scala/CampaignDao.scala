@@ -27,7 +27,10 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "partner_logo",
     "parent_campaign_id",
     "continent",
-    "tags"
+    "tags",
+    "children_count",
+    "status"
+
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -89,7 +92,11 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       campaignCreate: Campaign.Create,
       user: User
   ): ConnectionIO[Campaign] =
-    (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+    (fr"INSERT INTO" ++ tableF ++ fr"""(
+      id, created_at, owner, name, campaign_type, description,
+      video_link, partner_name, partner_logo, parent_campaign_id,
+      continent
+    )""" ++
       fr"""VALUES
       (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
        ${campaignCreate.campaignType}, ${campaignCreate.description},
@@ -148,7 +155,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, campaign_type, description, video_link,
-             partner_name, partner_logo, ${id}, continent, ${tagCol}""" ++
+             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, status""" ++
       fr"""FROM """ ++ tableF ++ fr"""
            WHERE id = ${id}
         """)

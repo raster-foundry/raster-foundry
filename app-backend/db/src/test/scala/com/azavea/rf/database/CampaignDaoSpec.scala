@@ -47,6 +47,10 @@ class CampaignDaoSpec
             insertedCampaign.owner == insertedUser.id,
             "Inserted campaign owner is correct"
           )
+          assert(
+            insertedCampaign.childrenCount == 0,
+            "Inserted campaign has no children, yay"
+          )
           true
         }
       )
@@ -192,64 +196,92 @@ class CampaignDaoSpec
     }
   }
 
-  test("copy a campaign") {
+  test("copy a campaign for users") {
     check {
       forAll(
         (
+            userCreates: List[User.Create],
             userCreate: User.Create,
             campaignCreate: Campaign.Create,
             annotationProjectCreate: AnnotationProject.Create
         ) => {
           val copyIO = for {
-            user <- UserDao.create(userCreate)
+            parent <- UserDao.create(userCreate)
+            children <- userCreates traverse { u =>
+              UserDao.create(u)
+            }
             insertedCampaign <- CampaignDao
               .insertCampaign(
                 campaignCreate.copy(parentCampaignId = None),
-                user
+                parent
               )
             insertedProject <- AnnotationProjectDao
               .insert(
                 annotationProjectCreate.copy(
-                  campaignId = Some(insertedCampaign.id)
+                  campaignId = Some(insertedCampaign.id),
+                  status = AnnotationProjectStatus.Waiting
                 ),
-                user
+                parent
               )
-            campaignCopy <- CampaignDao.copyCampaign(insertedCampaign.id, user)
-            projectCopy <- AnnotationProjectDao.listByCampaign(campaignCopy.id)
+            _ <- AnnotationProjectDao.update(
+              insertedProject.toProject
+                .copy(status = AnnotationProjectStatus.Ready),
+              insertedProject.id
+            )
+            campaignCopies <- children traverse { child =>
+              CampaignDao.copyCampaign(insertedCampaign.id, child)
+            }
+            insertedCampaignAfterCopy <- CampaignDao.unsafeGetCampaignById(
+              insertedCampaign.id
+            )
+            projectCopies <- (campaignCopies traverse { c =>
+              AnnotationProjectDao.listByCampaign(c.id)
+            }) map (_.flatten)
           } yield {
-            (insertedCampaign, insertedProject, campaignCopy, projectCopy)
+            (
+              insertedCampaignAfterCopy,
+              insertedProject,
+              campaignCopies,
+              projectCopies
+            )
           }
 
           val (
             originalCampaign,
             originalProject,
-            copiedCampaign,
-            copiedProject
+            copiedCampaigns,
+            copiedProjects
           ) = copyIO.transact(xa).unsafeRunSync
 
           assert(
-            originalCampaign.name == copiedCampaign.name,
-            "Copy of the campaign worked"
-          )
-          assert(
-            Set(originalProject.name) == copiedProject.map(_.name).toSet,
-            "Copy of the project worked"
-          )
-          assert(
-            Set(Some(copiedCampaign.id)) == copiedProject
-              .map(_.campaignId)
-              .toSet,
-            "Copy of the project has the id from the copied campaign"
-          )
-          assert(
-            Some(originalCampaign.id) == copiedCampaign.parentCampaignId,
-            "Copy of the campaign has the parent campaign id"
-          )
-          assert(
-            originalCampaign.tags.toSet == copiedCampaign.tags.toSet,
-            "Copy of the campaign has the parent campaign tags"
-          )
-          true
+            originalCampaign.childrenCount == userCreates.size,
+            "Original campaign's children count is the same as the number of users to be added")
+
+          userCreates.size match {
+            case 0 => true
+            case _ =>
+              assert(
+                Set(originalCampaign.name) == copiedCampaigns.map(_.name).toSet,
+                "Copy of the campaign worked"
+              )
+              assert(
+                Set(originalProject.name) == copiedProjects.map(_.name).toSet,
+                "Copy of the project worked"
+              )
+              assert(
+                copiedCampaigns.map(c => Some(c.id)).toSet == copiedProjects
+                  .map(_.campaignId)
+                  .toSet,
+                "Copy of the project has the id from the copied campaign"
+              )
+              assert(
+                Set(Some(originalCampaign.id)) == copiedCampaigns
+                  .map(_.parentCampaignId)
+                  .toSet,
+                "Copy of the campaign has the parent campaign id"
+              )
+              true
+          }
         }
       )
     }
@@ -311,14 +343,11 @@ class CampaignDaoSpec
             "Copy of the campaign has the parent campaign id"
           )
           assert(
-            clone.tags.toSet == copiedCampaign.tags.toSet,
-            "Copy of the campaign has the given tags"
+            originalCampaign.tags.toSet == copiedCampaign.tags.toSet,
+            "Copy of the campaign has the parent campaign tags"
           )
           true
-        }
-      )
-    }
-  }
+        })}}
 
   test("list campaigns by continent") {
     check {
