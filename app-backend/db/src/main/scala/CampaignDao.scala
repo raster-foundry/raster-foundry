@@ -26,7 +26,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "partner_name",
     "partner_logo",
     "parent_campaign_id",
-    "continent"
+    "continent",
+    "tags"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -94,7 +95,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
        ${campaignCreate.campaignType}, ${campaignCreate.description},
        ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
        ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId},
-       ${campaignCreate.continent}
+       ${campaignCreate.continent}, ${campaignCreate.tags}
        )
     """).update.withUniqueGeneratedKeys[Campaign](
       fieldNames: _*
@@ -113,7 +114,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       video_link = ${campaign.videoLink},
       partner_name = ${campaign.partnerName},
       partner_logo = ${campaign.partnerLogo},
-      continent = ${campaign.continent}
+      continent = ${campaign.continent},
+      tags = ${campaign.tags}
     WHERE
       id = $id
     """).update.run;
@@ -130,12 +132,23 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
   def countUserCampaigns(user: User): ConnectionIO[Long] =
     query.filter(user).count
 
-  def copyCampaign(id: UUID, user: User): ConnectionIO[Campaign] = {
+  def copyCampaign(
+      id: UUID,
+      user: User,
+      tagsO: Option[List[String]] = None
+  ): ConnectionIO[Campaign] = {
+    val tagCol = tagsO
+      .map(
+        tags =>
+          Fragment
+            .const(s"ARRAY[${tags.map(t => s"'${t}'").mkString(",")}]::text[]")
+      )
+      .getOrElse(Fragment.const("tags"))
     val insertQuery = (fr"""
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, campaign_type, description, video_link,
-             partner_name, partner_logo, ${id}, continent""" ++
+             partner_name, partner_logo, ${id}, continent, ${tagCol}""" ++
       fr"""FROM """ ++ tableF ++ fr"""
            WHERE id = ${id}
         """)

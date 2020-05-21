@@ -48,22 +48,28 @@ trait CampaignRoutes
               deleteCampaign(campaignId)
             }
         } ~
-          pathPrefix("permissions") {
+          pathPrefix("clone") {
             pathEndOrSingleSlash {
-              get {
-                listCampaignPermissions(campaignId)
-              } ~
-                put {
-                  replaceCampaignPermissions(campaignId)
-                } ~
-                post {
-                  addCampaignPermission(campaignId)
-                } ~
-                delete {
-                  deleteCampaignPermissions(campaignId)
-                }
+              post {
+                cloneCampaign(campaignId)
+              }
             }
-          } ~
+          } ~ pathPrefix("permissions") {
+          pathEndOrSingleSlash {
+            get {
+              listCampaignPermissions(campaignId)
+            } ~
+              put {
+                replaceCampaignPermissions(campaignId)
+              } ~
+              post {
+                addCampaignPermission(campaignId)
+              } ~
+              delete {
+                deleteCampaignPermissions(campaignId)
+              }
+          }
+        } ~
           pathPrefix("projects") {
             pathEndOrSingleSlash {
               get {
@@ -200,6 +206,36 @@ trait CampaignRoutes
             .unsafeToFuture
         ) {
           completeSingleOrNotFound
+        }
+      }
+    }
+  }
+
+  def cloneCampaign(campaignId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Campaigns, Action.Clone, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        CampaignDao
+          .authorized(
+            user,
+            ObjectType.Campaign,
+            campaignId,
+            ActionType.Edit
+          )
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Campaign.Clone]) { campaignClone =>
+          onSuccess(
+            CampaignDao
+              .copyCampaign(campaignId, user, Some(campaignClone.tags))
+              .transact(xa)
+              .unsafeToFuture
+          ) { campaign =>
+            complete((StatusCodes.Created, campaign))
+          }
         }
       }
     }
