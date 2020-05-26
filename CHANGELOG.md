@@ -10,6 +10,7 @@
 - Add support for creating users in bulk [#5406](https://github.com/raster-foundry/raster-foundry/pull/5406)
 - Add geometry type and description to Annotation Label Classes [#5408](https://github.com/raster-foundry/raster-foundry/pull/5408)
 - Add image quality to tile layers [#5409](https://github.com/raster-foundry/raster-foundry/pull/5409)
+- Add campaign clone endpoint, add tags to campaigns table [#5413](https://github.com/raster-foundry/raster-foundry/pull/5413)
 
 ### Changed
 

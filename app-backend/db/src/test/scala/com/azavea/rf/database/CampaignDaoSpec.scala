@@ -245,6 +245,75 @@ class CampaignDaoSpec
             Some(originalCampaign.id) == copiedCampaign.parentCampaignId,
             "Copy of the campaign has the parent campaign id"
           )
+          assert(
+            originalCampaign.tags.toSet == copiedCampaign.tags.toSet,
+            "Copy of the campaign has the parent campaign tags"
+          )
+          true
+        }
+      )
+    }
+  }
+
+  test("copy a campaign with new tags") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            clone: Campaign.Clone
+        ) => {
+          val copyIO = for {
+            user <- UserDao.create(userCreate)
+            insertedCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
+            insertedProject <- AnnotationProjectDao
+              .insert(
+                annotationProjectCreate.copy(
+                  campaignId = Some(insertedCampaign.id)
+                ),
+                user
+              )
+            campaignCopy <- CampaignDao
+              .copyCampaign(insertedCampaign.id, user, Some(clone.tags))
+            projectCopy <- AnnotationProjectDao.listByCampaign(campaignCopy.id)
+          } yield {
+            (insertedCampaign, insertedProject, campaignCopy, projectCopy)
+          }
+
+          val (
+            originalCampaign,
+            originalProject,
+            copiedCampaign,
+            copiedProject
+          ) = copyIO.transact(xa).unsafeRunSync
+
+          assert(
+            originalCampaign.name == copiedCampaign.name,
+            "Copy of the campaign worked"
+          )
+          assert(
+            Set(originalProject.name) == copiedProject.map(_.name).toSet,
+            "Copy of the project worked"
+          )
+          assert(
+            Set(Some(copiedCampaign.id)) == copiedProject
+              .map(_.campaignId)
+              .toSet,
+            "Copy of the project has the id from the copied campaign"
+          )
+          assert(
+            Some(originalCampaign.id) == copiedCampaign.parentCampaignId,
+            "Copy of the campaign has the parent campaign id"
+          )
+          assert(
+            clone.tags.toSet == copiedCampaign.tags.toSet,
+            "Copy of the campaign has the given tags"
+          )
           true
         }
       )

@@ -17,7 +17,8 @@ final case class Campaign(
     partnerName: Option[String] = None,
     partnerLogo: Option[String] = None,
     parentCampaignId: Option[UUID] = None,
-    continent: Option[Continent] = None
+    continent: Option[Continent] = None,
+    tags: List[String] = List.empty
 )
 
 object Campaign {
@@ -32,10 +33,19 @@ object Campaign {
       partnerName: Option[String] = None,
       partnerLogo: Option[String] = None,
       parentCampaignId: Option[UUID] = None,
-      continent: Option[Continent] = None
+      continent: Option[Continent] = None,
+      tags: List[String] = List.empty
   )
 
   object Create {
     implicit val decCreate: Decoder[Create] = deriveDecoder
+  }
+
+  final case class Clone(
+      tags: List[String] = List.empty
+  )
+
+  object Clone {
+    implicit val decClone: Decoder[Clone] = deriveDecoder
   }
 }
