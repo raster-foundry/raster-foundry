@@ -222,7 +222,7 @@ trait CampaignRoutes
             user,
             ObjectType.Campaign,
             campaignId,
-            ActionType.Edit
+            ActionType.View
           )
           .transact(xa)
           .unsafeToFuture
