@@ -30,7 +30,6 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "tags",
     "children_count",
     "status"
-
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -95,7 +94,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     (fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, owner, name, campaign_type, description,
       video_link, partner_name, partner_logo, parent_campaign_id,
-      continent
+      continent, tags
     )""" ++
       fr"""VALUES
       (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},

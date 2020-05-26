@@ -344,8 +344,8 @@ class CampaignDaoSpec
             "Copy of the campaign has the parent campaign id"
           )
           assert(
-            originalCampaign.tags.toSet == copiedCampaign.tags.toSet,
-            "Copy of the campaign has the parent campaign tags"
+            clone.tags.toSet == copiedCampaign.tags.toSet,
+            "Copy of the campaign has the given tags"
           )
           true
         }
