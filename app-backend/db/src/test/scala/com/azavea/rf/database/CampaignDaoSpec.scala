@@ -255,7 +255,8 @@ class CampaignDaoSpec
 
           assert(
             originalCampaign.childrenCount == userCreates.size,
-            "Original campaign's children count is the same as the number of users to be added")
+            "Original campaign's children count is the same as the number of users to be added"
+          )
 
           userCreates.size match {
             case 0 => true
@@ -347,7 +348,10 @@ class CampaignDaoSpec
             "Copy of the campaign has the parent campaign tags"
           )
           true
-        })}}
+        }
+      )
+    }
+  }
 
   test("list campaigns by continent") {
     check {
