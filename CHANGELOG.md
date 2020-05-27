@@ -4,6 +4,20 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.41.0](https://github.com/raster-foundry/raster-foundry/compare/1.40.3...1.41.0)
+
+### Added
+
 - Additional statuses for tasks indicating invalid tasks and flagged tasks [#5403](https://github.com/raster-foundry/raster-foundry/pull/5403)
 - MVT endpoints for annotation project tasks and labels [#5400](https://github.com/raster-foundry/raster-foundry/pull/5400)
 - Support campaigns [#5397](https://github.com/raster-foundry/raster-foundry/pull/5397) [#5404](https://github.com/raster-foundry/raster-foundry/pull/5404) [#5410](https://github.com/raster-foundry/raster-foundry/pull/5410)
@@ -21,15 +35,9 @@
 - Upgraded GeoTrellis and Tyelevel libraries to Cats 2.x releases [#5393](https://github.com/raster-foundry/raster-foundry/pull/5393), [#5401](https://github.com/raster-foundry/raster-foundry/pull/5401), [#5402](https://github.com/raster-foundry/raster-foundry/pull/5402)
 - Relaxed criteria used to determine whether or not to clip and stretch imagery [#5411](https://github.com/raster-foundry/raster-foundry/pull/5411)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Don't write `self` links to STAC roots [#5405](https://github.com/raster-foundry/raster-foundry/pull/5405)
-
-### Security
 
 ## [1.40.3](https://github.com/raster-foundry/raster-foundry/compare/1.40.2...1.40.3)
 
