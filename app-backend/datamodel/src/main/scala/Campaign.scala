@@ -20,7 +20,7 @@ final case class Campaign(
     continent: Option[Continent] = None,
     tags: List[String] = List.empty,
     childrenCount: Int,
-    status: Map[String, Int]
+    projectStatuses: Map[String, Int]
 )
 
 object Campaign {

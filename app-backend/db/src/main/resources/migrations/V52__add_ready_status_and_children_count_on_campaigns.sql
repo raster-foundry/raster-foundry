@@ -1,34 +1,34 @@
--- update campaigns table to include children_count and status columns
+-- update campaigns table to include children_count and project_statuses columns
 ALTER TABLE public.campaigns
 ADD COLUMN children_count INTEGER NOT NULL default 0,
-ADD COLUMN status jsonb NOT NULL default '{"WAITING": 0, "QUEUED": 0, "PROCESSING": 0, "READY": 0, "UNKNOWN_FAILURE": 0, "TASK_GRID_FAILURE": 0, "IMAGE_INGESTION_FAILURE": 0}'::jsonb;
+ADD COLUMN project_statuses jsonb NOT NULL default '{"WAITING": 0, "QUEUED": 0, "PROCESSING": 0, "READY": 0, "UNKNOWN_FAILURE": 0, "TASK_GRID_FAILURE": 0, "IMAGE_INGESTION_FAILURE": 0}'::jsonb;
 
 -- add indices
 CREATE INDEX IF NOT EXISTS campaigns_children_count_idx
 ON public.campaigns
 USING btree (children_count);
-CREATE INDEX IF NOT EXISTS campaigns_status_idx
+CREATE INDEX IF NOT EXISTS campaigns_project_statuses_idx
 ON public.campaigns
-USING gin (status);
+USING gin (project_statuses);
 
 -- a function to construct status jsonb for campaign
-CREATE OR REPLACE FUNCTION CREATE_CAMPAIGN_STATUS (
-  status jsonb
+CREATE OR REPLACE FUNCTION CREATE_CAMPAIGN_PROJECT_STATUSES (
+  project_statuses jsonb
 )
 RETURNS jsonb AS
 $func$
 DECLARE
   st text;
-  new_status jsonb := '{}'::jsonb;
+  new_project_statuses jsonb := '{}'::jsonb;
 BEGIN
   FOREACH st IN ARRAY enum_range(NULL::annotation_project_status)::text[] LOOP
-    IF (status->>st) IS NULL THEN
-      new_status := new_status || jsonb_build_object(st, 0);
+    IF (project_statuses->>st) IS NULL THEN
+      new_project_statuses := new_project_statuses || jsonb_build_object(st, 0);
     ELSE
-      new_status := new_status || status;
+      new_project_statuses := new_project_statuses || project_statuses;
     END IF;
   END LOOP;
-  RETURN new_status;
+  RETURN new_project_statuses;
 END;
 $func$
 LANGUAGE 'plpgsql';
@@ -45,13 +45,13 @@ FROM (
 ) campaign_children_count
 WHERE campaign_children_count.id = campaigns.id;
 
--- update status column for existing campaigns
+-- update project_statuses column for existing campaigns
 UPDATE public.campaigns
-SET status = annotation_project_statuses.project_status
+SET project_statuses = annotation_project_statuses.project_status
 FROM (
   SELECT
   statuses.campaign_id, 
-  CREATE_CAMPAIGN_STATUS(
+  CREATE_CAMPAIGN_PROJECT_STATUSES(
     jsonb_object_agg(
       statuses.status,
       statuses.status_count
@@ -101,8 +101,8 @@ END;
 $BODY$
 LANGUAGE 'plpgsql';
 
--- define the trigger function to update status for campaigns
-CREATE OR REPLACE FUNCTION UPDATE_CAMPAIGN_STATUS()
+-- define the trigger function to update project_statuses for campaigns
+CREATE OR REPLACE FUNCTION UPDATE_CAMPAIGN_PROJECT_STATUSES()
   RETURNS trigger AS
 $BODY$
 DECLARE
@@ -117,10 +117,10 @@ BEGIN
   -- update status for the parent campaign
   IF op_campaign_id IS NOT NULL THEN
     UPDATE public.campaigns
-    SET status = annotation_project_statuses.project_status
+    SET project_statuses = annotation_project_statuses.project_status
     FROM (
       SELECT
-      CREATE_CAMPAIGN_STATUS(
+      CREATE_CAMPAIGN_PROJECT_STATUSES(
         jsonb_object_agg(
           statuses.status,
           statuses.status_count
@@ -149,8 +149,8 @@ CREATE TRIGGER update_campaign_children_count
   EXECUTE PROCEDURE UPDATE_CAMPAIGN_CHILDREN_COUNT();
 
 -- add a trigger to UPDATE operation on campaigns table
-CREATE TRIGGER update_campaign_status
+CREATE TRIGGER update_campaign_project_statuses
   AFTER UPDATE OF status
   ON annotation_projects
   FOR EACH ROW
-  EXECUTE PROCEDURE UPDATE_CAMPAIGN_STATUS();
+  EXECUTE PROCEDURE UPDATE_CAMPAIGN_PROJECT_STATUSES();
