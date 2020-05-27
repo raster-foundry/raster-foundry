@@ -23,9 +23,7 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
-import io.circe.parser._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext
 
@@ -167,17 +165,16 @@ trait SceneRoutes
           case (Some(hist), Some(SceneType.COG), true) =>
             for {
               insertedScene <- SceneDao.insert(updatedScene, user)
-              _ <- parse(hist.toJson.toString) traverse { parsed =>
-                LayerAttributeDao
-                  .insertLayerAttribute(
-                    LayerAttribute(
-                      insertedScene.id.toString,
-                      0,
-                      "histogram",
-                      parsed
-                    )
+              _ <- LayerAttributeDao
+                .insertLayerAttribute(
+                  LayerAttribute(
+                    insertedScene.id.toString,
+                    0,
+                    "histogram",
+                    hist.asJson
                   )
-              } map {
+                )
+                .attempt map {
                 _.toOption
               }
             } yield insertedScene

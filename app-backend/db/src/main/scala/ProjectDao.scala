@@ -12,6 +12,7 @@ import cats.effect.{Async, IO, LiftIO}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
 import geotrellis.proj4.{CRS, WebMercator}
@@ -245,18 +246,6 @@ object ProjectDao
       projectDeleteCount
     }
   }
-
-  def getShareCount(projectId: UUID, userId: String): ConnectionIO[Long] =
-    ProjectDao
-      .getPermissions(projectId)
-      .map { acrList =>
-        acrList.collect {
-          case ObjectAccessControlRule(subjType, Some(subjectId), _)
-              if subjType == SubjectType.User && subjectId != userId =>
-            subjectId
-        }
-      }
-      .map(_.distinct.length.toLong)
 
   def updateSceneIngestStatus(projectLayerId: UUID): ConnectionIO[Int] = {
     val updateStatusQuery =

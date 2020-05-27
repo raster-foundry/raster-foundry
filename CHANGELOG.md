@@ -14,6 +14,31 @@
 
 ### Security
 
+## [1.41.0](https://github.com/raster-foundry/raster-foundry/compare/1.40.3...1.41.0)
+
+### Added
+
+- Additional statuses for tasks indicating invalid tasks and flagged tasks [#5403](https://github.com/raster-foundry/raster-foundry/pull/5403)
+- MVT endpoints for annotation project tasks and labels [#5400](https://github.com/raster-foundry/raster-foundry/pull/5400)
+- Support campaigns [#5397](https://github.com/raster-foundry/raster-foundry/pull/5397) [#5404](https://github.com/raster-foundry/raster-foundry/pull/5404) [#5410](https://github.com/raster-foundry/raster-foundry/pull/5410)
+- Add support for creating users in bulk [#5406](https://github.com/raster-foundry/raster-foundry/pull/5406)
+- Add geometry type and description to Annotation Label Classes [#5408](https://github.com/raster-foundry/raster-foundry/pull/5408)
+- Add image quality to tile layers [#5409](https://github.com/raster-foundry/raster-foundry/pull/5409)
+- Add campaign children count and status flag [#5412](https://github.com/raster-foundry/raster-foundry/pull/5412)
+- Add campaign clone endpoint, add tags to campaigns table [#5413](https://github.com/raster-foundry/raster-foundry/pull/5413)
+
+### Changed
+
+- STAC exports' files now have friendlier names for humans [#5407](https://github.com/raster-foundry/raster-foundry/pull/5407)
+- Changed email invitation copy [#5396](https://github.com/raster-foundry/raster-foundry/pull/5396)
+- Add development support for PostgreSQL 12.x/PostGIS 3.x [#5395](https://github.com/raster-foundry/raster-foundry/pull/5395)
+- Upgraded GeoTrellis and Tyelevel libraries to Cats 2.x releases [#5393](https://github.com/raster-foundry/raster-foundry/pull/5393), [#5401](https://github.com/raster-foundry/raster-foundry/pull/5401), [#5402](https://github.com/raster-foundry/raster-foundry/pull/5402)
+- Relaxed criteria used to determine whether or not to clip and stretch imagery [#5411](https://github.com/raster-foundry/raster-foundry/pull/5411)
+
+### Fixed
+
+- Don't write `self` links to STAC roots [#5405](https://github.com/raster-foundry/raster-foundry/pull/5405)
+
 ## [1.40.3](https://github.com/raster-foundry/raster-foundry/compare/1.40.2...1.40.3)
 
 ### Fixed

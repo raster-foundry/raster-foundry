@@ -5,14 +5,15 @@ import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
 
 /** We only need to test inserting a single image and listing images because inserting
   *  many is tested in inserting a scene from a Scene.Create
   */
 class ImageDaoSpec
-    extends FunSuite
+    extends AnyFunSuite
     with Matchers
     with Checkers
     with DBTestConfig

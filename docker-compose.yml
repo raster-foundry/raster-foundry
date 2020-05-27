@@ -1,7 +1,7 @@
 version: "2.3"
 services:
   postgres:
-    image: quay.io/azavea/postgis:2.3-postgres9.6-slim
+    image: quay.io/azavea/postgis:3-postgres12.2-slim
     volumes:
       - ./data/:/tmp/data/
     env_file: .env
@@ -53,7 +53,7 @@ services:
 
   api-server:
     # If changing container, make sure to update app-backend/api/Dockerfile as well
-    image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:memcached.service.rasterfoundry.internal
@@ -143,7 +143,7 @@ services:
 
   backsplash:
     # If changing container, make sure to update app-backend/backsplash-server/Dockerfile as well
-    image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
     depends_on:
       postgres:
         condition: service_healthy
@@ -225,7 +225,7 @@ services:
     entrypoint: ./sbt
 
   app-backend-migrations:
-    image: boxfuse/flyway:5.2.4
+    image: flyway/flyway:6.0.8
     environment:
       - FLYWAY_DRIVER=org.postgresql.Driver
       - FLYWAY_URL=jdbc:postgresql://database.service.rasterfoundry.internal/

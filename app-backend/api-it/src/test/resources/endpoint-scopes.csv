@@ -202,4 +202,17 @@ Path,Domain:Action,Verb
 /api/users/me/limits,users:readSelf,get
 /api/users/me/roles,users:readSelf,get
 /api/users/search/,users:search,get
+/api/users/bulk-create/,users:bulkCreate,post
 /api/tasks/random,annotationProjects:readTasks,get
+/api/campaigns/,campaigns:read,get
+/api/campaigns/,campaigns:create,post
+/api/campaigns/{campaignId},campaigns:read,get
+/api/campaigns/{campaignId},campaigns:update,put
+/api/campaigns/{campaignId},campaigns:delete,delete
+/api/campaigns/{campaignId}/actions,campaigns:readPermissions,get
+/api/campaigns/{campaignId}/projects,annotationProjects:read,get
+/api/campaigns/{campaignId}/permissions,campaigns:readPermissions,get
+/api/campaigns/{campaignId}/permissions,campaigns:share,put
+/api/campaigns/{campaignId}/permissions,campaigns:share,post
+/api/campaigns/{campaignId}/permissions,campaigns:share,delete
+/api/campaigns/{campaignId}/clone,campaigns:clone,post

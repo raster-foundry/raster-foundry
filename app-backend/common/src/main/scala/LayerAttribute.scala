@@ -1,6 +1,6 @@
 package com.rasterfoundry.common
 
-import geotrellis.spark.LayerId
+import geotrellis.store.LayerId
 import io.circe._
 import io.circe.generic.JsonCodec
 

@@ -8,7 +8,7 @@ object Notifications {
   def getInvitationMessage(
       sharingUserEmail: String,
       annotationProject: AnnotationProject,
-      passwordResetTicket: PasswordResetTicket,
+      passwordResetTicket: PasswordResetTicket
   ): (HtmlBody, PlainBody) = {
     val richBody = HtmlBody(s"""
 <html>
@@ -55,7 +55,7 @@ object Notifications {
               </p>
 
               <p>
-                <a href="${passwordResetTicket.ticket}">Accept their invitation</a>
+                <a href="${passwordResetTicket.ticket}">Create an account and accept their invitation.</a>
               </p>
 
               <p>GroundWork is an image annotation tool designed for working with geospatial data like satellite, drone, and aerial imagery.</p>

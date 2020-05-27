@@ -4,11 +4,10 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.datamodel.SingleBandOptions
 
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster._
-import geotrellis.raster.histogram._
-import geotrellis.raster.render.{ColorMap, ColorRamp, _}
+import geotrellis.raster.render.{Implicits => RenderImplicits, _}
+import geotrellis.raster.{ColorRamp => _, ColorMap => _, _}
 
-object ColorRampMosaic extends LazyLogging {
+object ColorRampMosaic extends LazyLogging with RenderImplicits {
 
   def parseColor(color: String): Int = {
     Integer.parseUnsignedInt(
@@ -63,9 +62,11 @@ object ColorRampMosaic extends LazyLogging {
   }
 
   @SuppressWarnings(Array("CatchThrowable", "TraversableLast"))
-  def colorMapFromVector(colors: Vector[String],
-                         options: SingleBandOptions.Params,
-                         hist: Histogram[Double]): ColorMap = {
+  def colorMapFromVector(
+      colors: Vector[String],
+      options: SingleBandOptions.Params,
+      hist: Histogram[Double]
+  ): ColorMap = {
     val cleanedColors = colors map { color =>
       try {
         parseColor(color)
@@ -104,18 +105,22 @@ object ColorRampMosaic extends LazyLogging {
       .withFallbackColor(lastColor)
   }
 
-  def colorTile(tile: MultibandTile,
-                histogram: List[Histogram[Double]],
-                options: SingleBandOptions.Params): MultibandTile = {
+  def colorTile(
+      tile: MultibandTile,
+      histogram: List[Histogram[Double]],
+      options: SingleBandOptions.Params
+  ): MultibandTile = {
     val singleBandTile = tile.band(0)
     val hist: Histogram[Double] = histogram match {
       case Nil =>
         throw new MetadataException(
-          "Received an empty list of histograms for single band color correction")
+          "Received an empty list of histograms for single band color correction"
+        )
       case hist +: Nil => hist
       case _ =>
         throw new MetadataException(
-          "Received too many histograms for single band color correction")
+          "Received too many histograms for single band color correction"
+        )
     }
     val cmap =
       (options.colorScheme.asArray, options.colorScheme.asObject) match {

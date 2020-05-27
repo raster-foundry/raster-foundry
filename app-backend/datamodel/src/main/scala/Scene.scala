@@ -31,6 +31,12 @@ final case class SceneStatusFields(
     ingestStatus: IngestStatus
 )
 
+object SceneStatusFields {
+  def tupled = (SceneStatusFields.apply _).tupled
+
+  type TupleType = (JobStatus, JobStatus, IngestStatus)
+}
+
 @JsonCodec
 final case class SceneMetadataFields(
     dataPath: Option[String] = None,
@@ -41,12 +47,6 @@ final case class SceneMetadataFields(
     resolutions: Option[List[GridExtent[Long]]] = None,
     noDataValue: Option[Double] = None
 )
-
-object SceneStatusFields {
-  def tupled = (SceneStatusFields.apply _).tupled
-
-  type TupleType = (JobStatus, JobStatus, IngestStatus)
-}
 
 @JsonCodec
 final case class Scene(
@@ -234,7 +234,7 @@ object Scene {
       filterFields: SceneFilterFields = new SceneFilterFields(),
       statusFields: SceneStatusFields,
       sceneType: Option[SceneType] = None,
-      metadataFields: SceneMetadataFields = new SceneMetadataFields(),
+      metadataFields: SceneMetadataFields = new SceneMetadataFields()
   ) {
     def toScene: Scene =
       Scene(

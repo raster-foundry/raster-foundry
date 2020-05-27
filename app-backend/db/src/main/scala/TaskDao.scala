@@ -9,12 +9,16 @@ import cats.data.{NonEmptyList, OptionT}
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
+import doobie.refined.implicits._
+import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.{Geometry, Projected}
 import shapeless._
 
 import scala.concurrent.duration._
 
+import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
 
@@ -94,11 +98,12 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       taskId: UUID,
       initialStatus: TaskStatus,
       newStatus: TaskStatus,
-      userId: String
+      userId: String,
+      note: Option[NonEmptyString]
   ): ConnectionIO[Int] =
     if (initialStatus != newStatus) {
-      fr"""INSERT INTO task_actions (task_id, user_id, timestamp, from_status, to_status) VALUES (
-          $taskId, $userId, now(), $initialStatus, $newStatus
+      fr"""INSERT INTO task_actions (task_id, user_id, timestamp, from_status, to_status, note) VALUES (
+          $taskId, $userId, now(), $initialStatus, $newStatus, $note
           )""".update.run
     } else {
       0.pure[ConnectionIO]
@@ -113,7 +118,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   def getTaskActions(taskId: UUID): ConnectionIO[List[TaskActionStamp]] = {
     Dao
       .QueryBuilder[TaskActionStamp](
-        fr"select task_id, user_id, timestamp, from_status, to_status FROM task_actions",
+        fr"select task_id, user_id, timestamp, from_status, to_status, note FROM task_actions",
         fr"task_actions",
         Nil
       )
@@ -151,7 +156,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           taskId,
           initial.status,
           updateTask.properties.status,
-          user.id
+          user.id,
+          updateTask.properties.note
         )
       )
       withActions <- OptionT(getTaskWithActions(taskId))
@@ -218,8 +224,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       user: User
   ): Fragment = {
     fr"""(
-        ${UUID.randomUUID}, ${Instant.now}, ${user.id}, ${Instant.now}, ${user.id},
-        ${tfc.properties.status}, null, null, ${tfc.geometry}, ${tfc.properties.annotationProjectId}
+        ${UUID.randomUUID}, ${Timestamp.from(Instant.now)}, ${user.id}, ${Timestamp
+      .from(Instant.now)},
+        ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
+        ${tfc.properties.annotationProjectId}
     )"""
   }
 
@@ -542,15 +550,19 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               UUID.randomUUID(),
               Task.TaskProperties(
                 UUID.randomUUID(),
-                Instant.now(),
+                Timestamp.from(Instant.now()),
                 user.id,
-                Instant.now(),
+                Timestamp.from(Instant.now()),
                 user.id,
                 geomWithStatus.status,
                 None,
                 None,
                 List(),
-                annotationProjectId
+                annotationProjectId,
+                // since this is a fake task feature that exists I think for the purpose of
+                // providing a geojson interface over the task status geom summary,
+                // it's fine to pretend that the note is always None
+                None
               ),
               geomWithStatus.geometry
             )
@@ -627,7 +639,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           )
         )
         .filter(
-          fr"locked_on <= ${Instant.now.minusMillis(taskExpiration.toMillis)}"
+          fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
         )
         .list
       _ <- stuckTasks traverse { task =>
@@ -636,7 +648,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             Task.TaskFeatureCreate(
               TaskPropertiesCreate(
                 newStatus,
-                task.annotationProjectId
+                task.annotationProjectId,
+                None
               ),
               task.geometry
             )

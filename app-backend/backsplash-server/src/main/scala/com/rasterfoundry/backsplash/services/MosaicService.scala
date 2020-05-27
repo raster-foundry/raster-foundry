@@ -11,12 +11,13 @@ import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import com.azavea.maml.ast.{GeomLit, Masking, RasterVar}
 import com.azavea.maml.eval.ConcurrentInterpreter
-import com.colisweb.tracing.TracingContext.TracingContextBuilder
+import com.colisweb.tracing.core.TracingContextBuilder
 import doobie.util.transactor.Transactor
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
-import geotrellis.vector.{MultiPolygon, Polygon, Projected}
+import geotrellis.vector.io.json.Implicits._
+import geotrellis.vector.{Polygon, Projected}
 import io.circe.parser._
 import io.circe.syntax._
 import org.http4s._
@@ -57,17 +58,15 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           ) as user using tracingContext =>
         val polygonBbox: Projected[Polygon] =
           TileUtils.getTileBounds(z, x, y)
-        val getEval = tracingContext.childSpan("getEval") use { childContext =>
+        val getEval = tracingContext.span("getEval") use { childContext =>
           Cacheable.getProjectLayerById(layerId, xa, childContext) map {
             layer =>
-              layer.geometry flatMap {
-                _.geom.as[MultiPolygon]
-              } match {
+              layer.geometry match {
                 case Some(mask) =>
                   // Intermediate val to anchor the implicit resolution with multiple argument lists
                   val expression =
                     Masking(
-                      List(GeomLit(mask.toGeoJson), RasterVar("mosaic"))
+                      List(GeomLit(mask.geom.toGeoJson), RasterVar("mosaic"))
                     )
                   val param =
                     layers.read(
@@ -110,7 +109,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             }
           resp <- fiberResp.join flatMap {
             case Valid(tile) =>
-              tracingContext.childSpan("render") use { _ =>
+              tracingContext.span("render") use { _ =>
                 Ok(tile.renderPng.bytes, pngType)
               }
             case Invalid(e) =>

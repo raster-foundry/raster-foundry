@@ -2,24 +2,8 @@ package com.rasterfoundry.backsplash.server
 
 import com.typesafe.config.ConfigFactory
 
-import java.util.UUID
-
 object Config {
   private val config = ConfigFactory.load()
-
-  object publicData {
-    private val publicDataConfig = config.getConfig("publicData")
-    val landsat8DatasourceId =
-      UUID.fromString(publicDataConfig.getString("landsat8DatasourceId"))
-    val sentinel2DatasourceId =
-      UUID.fromString(publicDataConfig.getString("sentinel2DatasourceId"))
-    val landsat45ThematicMapperDatasourceId =
-      UUID.fromString(publicDataConfig.getString("landsat45TMDatasourceId"))
-    val landsat7ETMDatasourceId =
-      UUID.fromString(publicDataConfig.getString("landsat7ETMDatasourceId"))
-    val enableMultiTiff =
-      publicDataConfig.getBoolean("enableMultiTiff")
-  }
 
   object parallelism {
     private val parallelismConfig = config.getConfig("parallelism")

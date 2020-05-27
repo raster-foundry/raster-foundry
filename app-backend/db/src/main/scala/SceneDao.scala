@@ -13,6 +13,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
 import geotrellis.vector.{Geometry, Polygon, Projected}
@@ -113,8 +114,7 @@ object SceneDao
         ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
-        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
-      SceneType.Avro)},
+        ${scene.statusFields.ingestStatus}, ${scene.sceneType},
         ${scene.metadataFields.dataPath}, ${scene.metadataFields.crs}, ${scene.metadataFields.bandCount},
         ${scene.metadataFields.cellType}, ${scene.metadataFields.gridExtent}, ${scene.metadataFields.resolutions},
         ${scene.metadataFields.noDataValue}
@@ -154,7 +154,8 @@ object SceneDao
   }
 
   def getSceneGeoTiffInfo(
-      sceneId: UUID): ConnectionIO[Option[BacksplashGeoTiffInfo]] = {
+      sceneId: UUID
+  ): ConnectionIO[Option[BacksplashGeoTiffInfo]] = {
     Cache.getOptionCache(s"SceneInfo:$sceneId", Some(30 minutes)) {
       sql"SELECT backsplash_geotiff_info FROM scenes WHERE id = $sceneId"
         .query[Option[BacksplashGeoTiffInfo]]
@@ -162,8 +163,10 @@ object SceneDao
     }
   }
 
-  def updateSceneGeoTiffInfo(bsi: BacksplashGeoTiffInfo,
-                             id: UUID): ConnectionIO[Int] = {
+  def updateSceneGeoTiffInfo(
+      bsi: BacksplashGeoTiffInfo,
+      id: UUID
+  ): ConnectionIO[Int] = {
     fr"""UPDATE scenes SET backsplash_geotiff_info = ${bsi} WHERE id = ${id}""".update.run
   }
 
@@ -200,8 +203,7 @@ object SceneDao
         ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
-        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
-      SceneType.Avro)},
+        ${scene.statusFields.ingestStatus}, ${scene.sceneType},
         ${scene.metadataFields.dataPath}, ${scene.metadataFields.crs}, ${scene.metadataFields.bandCount},
         ${scene.metadataFields.cellType}, ${scene.metadataFields.gridExtent}, ${scene.metadataFields.resolutions}, ${scene.metadataFields.noDataValue}
       )
@@ -307,8 +309,10 @@ object SceneDao
                 .getProjectsAndLayersBySceneId(scene.id)
                 .flatMap(spls => {
                   for {
-                    _ <- spls.traverse(spl =>
-                      SceneToLayerDao.deleteMosaicDefCache(spl.projectLayerId))
+                    _ <- spls.traverse(
+                      spl =>
+                        SceneToLayerDao.deleteMosaicDefCache(spl.projectLayerId)
+                    )
                   } yield ()
                 })
                 .map(_ => n)

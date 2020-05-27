@@ -5,14 +5,15 @@ import com.rasterfoundry.database._
 
 import doobie._, doobie.implicits._
 import geotrellis.vector._
-import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
+class GtVectorMetaSpec extends AnyFunSpec with Matchers with DBTestConfig {
 
   case class GeometryClass(
       id: Int,
       point: Projected[Point],
-      line: Projected[Line],
+      line: Projected[LineString],
       poly: Projected[Polygon],
       multipoly: Projected[MultiPolygon]
   )
@@ -45,7 +46,7 @@ class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
     //val point = new Point(1, 2)
     val point = Projected(Point(1, 2), 3857)
     val line =
-      Projected(Line(Point(0, 1), Point(123, 412), Point(51, 12)), 3857)
+      Projected(LineString(Point(0, 1), Point(123, 412), Point(51, 12)), 3857)
     val poly = Projected(
       Polygon(Array(Point(0, 0), Point(0, 1), Point(1, 1), Point(0, 0))),
       3857

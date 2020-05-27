@@ -252,7 +252,7 @@ class ProjectLiberation(tileHost: URI) {
             ) VALUES """) ++ recordsNel.map(_._2).intercalate(fr",")).update
           .withGeneratedKeys[UUID]("id")
           .compile
-          .to[List]
+          .toList
           .attempt
           .map({
             case Right(ids) =>
@@ -364,7 +364,7 @@ class ProjectLiberation(tileHost: URI) {
           .intercalate(fr",")).update
           .withGeneratedKeys[UUID]("id")
           .compile
-          .to[List]
+          .toList
           .map(ids => (Map(recordsNel.map(_._1).toList.zip(ids): _*)))
           .attempt
           .map { result =>
@@ -482,7 +482,7 @@ class ProjectLiberation(tileHost: URI) {
           )
         }
       }
-    } yield ()).value.compile.to[List] map { results =>
+    } yield ()).value.compile.toList map { results =>
       val anyFailures = results.exists(_.isLeft)
       if (anyFailures) {
         Either.left[FailureStage, Unit](CreateLabels)

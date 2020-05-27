@@ -7,7 +7,7 @@ import com.rasterfoundry.database.LayerAttributeDao
 
 import cats.effect.IO
 import cats.implicits._
-import com.colisweb.tracing.TracingContext
+import com.colisweb.tracing.core.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
 import geotrellis.raster.histogram._
@@ -69,7 +69,7 @@ trait HistogramStoreImplicits
                          layerId: UUID,
                          subsetBands: List[Int],
                          tracingContext: TracingContext[IO]) = {
-        tracingContext.childSpan("layerAttributeDao.getHistogram") use { _ =>
+        tracingContext.span("layerAttributeDao.getHistogram") use { _ =>
           self
             .getHistogram(layerId, xa)
             .map({
@@ -95,7 +95,7 @@ trait HistogramStoreImplicits
           subsetBands: List[Int],
           tracingContext: TracingContext[IO]
       ): IO[Array[Histogram[Double]]] = {
-        tracingContext.childSpan("layerAttributeDao.getProjectLayerHistogram") use {
+        tracingContext.span("layerAttributeDao.getProjectLayerHistogram") use {
           _ =>
             self
               .getProjectLayerHistogram(projectLayerId, xa)

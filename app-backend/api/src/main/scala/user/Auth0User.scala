@@ -223,22 +223,22 @@ object Auth0Service extends Config with LazyLogging {
   }
 
   // don't need a read method because patch is idempotent
-  def addGroundworkMetadata(
-      user: User,
-      bearerToken: ManagementBearerToken
+  def addUserMetadata(
+      userId: String,
+      bearerToken: ManagementBearerToken,
+      metaData: Json
   ): Future[Unit] = {
-    val patch = Map("app_metadata" -> Map("annotateApp" -> true)).asJson
     val managementBearerHeaders = getBearerHeaders(bearerToken)
 
     Http()
       .singleRequest(
         HttpRequest(
           method = PATCH,
-          uri = s"$userUri/${user.id}",
+          uri = s"$userUri/${userId}",
           headers = managementBearerHeaders,
           entity = HttpEntity(
             ContentTypes.`application/json`,
-            patch.noSpaces
+            metaData.noSpaces
           )
         )
       )
@@ -304,6 +304,34 @@ object Auth0Service extends Config with LazyLogging {
       "email" -> email.asJson,
       "password" -> Random.alphanumeric.take(20).mkString("").asJson,
       "app_metadata" -> Map("annotateApp" -> true).asJson
+    ).asJson
+
+    val managementBearerHeaders = getBearerHeaders(bearerToken)
+
+    Http()
+      .singleRequest(
+        HttpRequest(
+          method = POST,
+          uri = s"$userUri",
+          headers = managementBearerHeaders,
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            post.noSpaces
+          )
+        )
+      )
+      .flatMap { responseAsAuth0User _ }
+  }
+
+  def createAnonymizedUser(
+      userName: String,
+      bearerToken: ManagementBearerToken
+  ): Future[Auth0User] = {
+    val post = Map(
+      "connection" -> auth0AnonymizedConnectionName.asJson,
+      "email" -> s"${userName}@${auth0AnonymizedConnectionName}.com".asJson,
+      "username" -> userName.asJson,
+      "password" -> s"${userName}*".asJson
     ).asJson
 
     val managementBearerHeaders = getBearerHeaders(bearerToken)

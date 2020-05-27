@@ -7,8 +7,8 @@ import cats.data.Validated._
 import cats.data.{NonEmptyList => _}
 import cats.effect._
 import cats.implicits._
-import geotrellis.contrib.vlm.MosaicRasterSource
 import geotrellis.proj4.CRS
+import geotrellis.raster.MosaicRasterSource
 import geotrellis.raster.histogram._
 import geotrellis.server._
 
@@ -18,7 +18,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
       implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
     bsm flatMap {
       case (tracingContext, backsplashImages) =>
-        tracingContext.childSpan("bsm.toRasterSource") use { childContext =>
+        tracingContext.span("bsm.toRasterSource") use { childContext =>
           backsplashImages.toNel match {
             case Some(images) =>
               images parTraverse { image =>
@@ -37,7 +37,7 @@ object BacksplashMosaic extends ToHistogramStoreOps {
       implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
     bsm flatMap {
       case (tracingContext, backsplashImages) =>
-        tracingContext.childSpan("bsm.getRasterSourceOriginalCRS") use {
+        tracingContext.span("bsm.getRasterSourceOriginalCRS") use {
           childContext =>
             backsplashImages.toNel match {
               case Some(images) =>
@@ -77,11 +77,11 @@ object BacksplashMosaic extends ToHistogramStoreOps {
       cs: ContextShift[IO]): IO[List[Histogram[Double]]] =
     for {
       (tracingContext, allImages) <- mosaic
-      histArrays <- tracingContext.childSpan("getAllImageHistograms") use {
+      histArrays <- tracingContext.span("getAllImageHistograms") use {
         childContext =>
           allImages parTraverse { im =>
             {
-              childContext.childSpan("layerHistogram") use { histogramContext =>
+              childContext.span("layerHistogram") use { histogramContext =>
                 histStore.layerHistogram(im.imageId,
                                          im.subsetBands,
                                          histogramContext)

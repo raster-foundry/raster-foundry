@@ -97,8 +97,6 @@ object Annotation extends LazyLogging {
       case other   => other
     })
 
-  def tupled = (Annotation.apply _).tupled
-  def create = Create.apply _
   @ConfiguredJsonCodec
   final case class GeoJSON(
       id: UUID,

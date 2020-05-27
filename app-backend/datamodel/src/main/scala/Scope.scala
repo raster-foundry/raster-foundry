@@ -47,6 +47,7 @@ object Domain {
   case object Uploads extends Domain("uploads")
   case object Users extends Domain("users")
   case object AnnotationProjects extends Domain("annotationProjects")
+  case object Campaigns extends Domain("campaigns")
 
   def fromStringTry(s: String): Try[Domain] = s match {
     case "analyses"           => Success(Analyses)
@@ -70,6 +71,7 @@ object Domain {
     case "uploads"            => Success(Uploads)
     case "users"              => Success(Users)
     case "annotationProjects" => Success(AnnotationProjects)
+    case "campaigns"          => Success(Campaigns)
     case _                    => Failure(new Exception(s"Cannot parse Domain from string $s"))
   }
 }
@@ -85,7 +87,9 @@ object Action {
     }
   case object AddScenes extends Action("addScenes")
   case object AddUser extends Action("addUser")
+  case object BulkCreate extends Action("bulkCreate")
   case object ColorCorrect extends Action("colorCorrect")
+  case object Clone extends Action("clone")
   case object Create extends Action("create")
   case object CreateAnnotation extends Action("createAnnotation")
   case object CreateExport extends Action("createExport")
@@ -122,7 +126,9 @@ object Action {
   def fromStringTry(s: String): Try[Action] = s match {
     case "addScenes"            => Success(AddScenes)
     case "addUser"              => Success(AddUser)
+    case "bulkCreate"           => Success(BulkCreate)
     case "colorCorrect"         => Success(ColorCorrect)
+    case "clone"                => Success(Clone)
     case "create"               => Success(Create)
     case "createAnnotation"     => Success(CreateAnnotation)
     case "createExport"         => Success(CreateExport)
@@ -576,7 +582,13 @@ object Scopes {
             Some(10.toLong)
           ),
           ScopedAction(Domain.AnnotationProjects, Action.Share, Some(5.toLong)),
-          ScopedAction(Domain.Projects, Action.Create, None)
+          ScopedAction(Domain.Projects, Action.Create, None),
+          ScopedAction(
+            Domain.Campaigns,
+            Action.Create,
+            Some(10.toLong)
+          ),
+          ScopedAction(Domain.Campaigns, Action.Share, Some(5.toLong))
         ) ++ Set(
           Action.Read,
           Action.Update,
@@ -592,6 +604,12 @@ object Scopes {
           Action.AddScenes,
           Action.ReadPermissions
         ).map(makeScopedAction(Domain.AnnotationProjects, _, None)) ++
+          Set(
+            Action.Read,
+            Action.Update,
+            Action.Delete,
+            Action.ReadPermissions
+          ).map(makeScopedAction(Domain.Campaigns, _, None)) ++
           StacExportsCRUD.actions ++
           UserSelfScope.actions ++
           FeatureFlagsScope.actions

@@ -12,7 +12,9 @@ final case class AnnotationLabelClass(
     colorHexCode: String,
     default: Option[Boolean],
     determinant: Option[Boolean],
-    index: Int
+    index: Int,
+    geometryType: Option[LabelGeomType] = None,
+    description: Option[String] = None
 )
 
 object AnnotationLabelClass {
@@ -26,7 +28,9 @@ object AnnotationLabelClass {
       colorHexCode: String,
       default: Option[Boolean],
       determinant: Option[Boolean],
-      index: Int
+      index: Int,
+      geometryType: Option[LabelGeomType] = None,
+      description: Option[String] = None
   )
 
   object Create {

@@ -6,8 +6,11 @@ import com.rasterfoundry.database.notification.{GroupNotifier, MessageType}
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.{Order, PageRequest}
 
-import cats._, cats.implicits._
-import doobie._, doobie.implicits._
+import cats._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 
 import java.util.UUID
@@ -393,17 +396,21 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     )).update.run
   }
 
-  def createDefaultRoles(user: User): ConnectionIO[List[UserGroupRole]] = {
+  def createDefaultRoles(
+      user: User,
+      platformId: Option[UUID] = None,
+      organizationId: Option[UUID] = None
+  ): ConnectionIO[List[UserGroupRole]] = {
     val orgUgrCreate = UserGroupRole.Create(
       user.id,
       GroupType.Organization,
-      Config.auth0Config.defaultOrganizationId,
+      organizationId.getOrElse(Config.auth0Config.defaultOrganizationId),
       GroupRole.Member
     )
     val platUgrCreate = UserGroupRole.Create(
       user.id,
       GroupType.Platform,
-      Config.auth0Config.defaultPlatformId,
+      platformId.getOrElse(Config.auth0Config.defaultPlatformId),
       GroupRole.Member
     )
     for {

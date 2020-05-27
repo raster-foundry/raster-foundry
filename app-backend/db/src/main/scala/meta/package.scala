@@ -9,6 +9,8 @@ import geotrellis.raster.CellType
 import io.circe.syntax._
 import org.postgresql.util.PGobject
 
+import scala.util.Try
+
 import java.net.URI
 import java.time.LocalDate
 
@@ -20,7 +22,9 @@ package object meta {
       with PermissionsMeta {
 
     implicit val crsMeta: Meta[CRS] =
-      Meta[String].timap(CRS.fromString)(_.toProj4String)
+      Meta[String].timap(
+        s => Try { CRS.fromString(s) } getOrElse { CRS.fromName(s) }
+      )(_.toProj4String)
 
     implicit val cellTypeMeta: Meta[CellType] =
       Meta[String].timap(CellType.fromName)(CellType.toName)

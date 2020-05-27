@@ -2,16 +2,17 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel.PageRequest
+import com.rasterfoundry.datamodel.PageRequest
 import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
-import com.rasterfoundry.datamodel.PageRequest
 
 class AnnotationDaoSpec
-    extends FunSuite
+    extends AnyFunSuite
     with Matchers
     with Checkers
     with DBTestConfig

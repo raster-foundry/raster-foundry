@@ -1,17 +1,16 @@
 package com.rasterfoundry
 
 import cats.effect._
-import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
-import com.colisweb.tracing.TracingContext
-import geotrellis.contrib.vlm.config.S3Config
-import geotrellis.spark.io.http.util.HttpRangeReader
-import geotrellis.spark.io.s3.AmazonS3Client
-import geotrellis.spark.io.s3.util.S3RangeReader
+import com.amazonaws.services.s3.AmazonS3URI
+import com.colisweb.tracing.core.TracingContext
+import geotrellis.spark.store.http.util.HttpRangeReader
+import geotrellis.store.s3.util.S3RangeReader
 import geotrellis.util.{FileRangeReader, StreamingByteReader}
 import io.circe.KeyEncoder
 import org.apache.http.client.utils.URLEncodedUtils
 import org.http4s.Request
 import org.http4s.util.CaseInsensitiveString
+import software.amazon.awssdk.services.s3.S3Client
 
 import java.net.{URI, URL}
 import java.nio.charset.Charset
@@ -45,19 +44,7 @@ package object backsplash {
     * we try to reuse it and only instantiate one
     *
     */
-  lazy val s3Client = {
-    val builder = AmazonS3ClientBuilder
-      .standard()
-      .withForceGlobalBucketAccessEnabled(true)
-
-    val client = S3Config.region
-      .fold(builder) { region =>
-        builder.setRegion(region); builder
-      }
-      .build
-
-    new AmazonS3Client(client)
-  }
+  lazy val s3Client = S3Client.builder().build()
 
   /** Replicates byte reader functionality in GeoTrellis that we don't get
     * access to

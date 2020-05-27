@@ -222,8 +222,11 @@ object Project extends GeoJsonSupport {
       )
     }
 
-    // This has an encoder and no decoder because a Project.WithUser should never be POSTed
-    implicit val withUserEncoder: ObjectEncoder[WithUser] =
+    implicit val withUserEncoder: Encoder.AsObject[WithUser] =
       deriveEncoder[WithUser]
+    // While this should never be summoned in practice, it's necessary for akka-http-circe
+    // to believe that it can marshall a Project.WithUser
+    implicit val withUserDecoder: Decoder[WithUser] =
+      deriveDecoder
   }
 }

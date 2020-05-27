@@ -1,7 +1,5 @@
 package com.rasterfoundry.datamodel
 
-import com.rasterfoundry.JsonCodecs
-
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.vector.{Geometry, Projected}
 import io.circe.generic.JsonCodec
@@ -66,7 +64,7 @@ final case class ProjectLayerProperties(
     minZoomLevel: Option[Int]
 )
 
-object ProjectLayer extends LazyLogging with JsonCodecs {
+object ProjectLayer extends LazyLogging {
 
   def cacheKey(id: UUID): String = s"project:layer:$id"
 

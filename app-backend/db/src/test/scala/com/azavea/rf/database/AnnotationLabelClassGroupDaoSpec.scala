@@ -7,12 +7,14 @@ import doobie._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID
 
 class AnnotationLabelClassGroupDaoSpec
-    extends FunSuite
+    extends AnyFunSuite
     with Matchers
     with Checkers
     with DBTestConfig

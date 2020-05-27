@@ -9,6 +9,7 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments.in
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 import geotrellis.vector.{io => _, _}
 
@@ -449,8 +450,27 @@ trait Filterables extends RFMeta with LazyLogging {
             params.projectFilterParams.projectType.map({ projectType =>
               fr"annotation_projects.project_type = $projectType"
             }),
+            params.capturedAt.map({ capturedAt =>
+              fr"annotation_projects.captured_at = $capturedAt"
+            }),
+            params.campaignId.map({ campaignId =>
+              fr"annotation_projects.campaign_id = $campaignId"
+            }),
             taskStatusF
           )
+    }
+
+  implicit val campaignQueryParametersFilter
+    : Filterable[Any, CampaignQueryParameters] =
+    Filterable[Any, CampaignQueryParameters] {
+      params: CampaignQueryParameters =>
+        Filters.ownerQP(params.ownerParams, fr"owner") ++
+          Filters.searchQP(params.searchParams, List("name")) ++
+          List(params.campaignType.map({ campaignType =>
+            fr"campaign_type = $campaignType"
+          }), params.continent.map({ continent =>
+            fr"continent = $continent"
+          }))
     }
 }
 

@@ -5,6 +5,7 @@ import com.rasterfoundry.datamodel._
 import cats.implicits._
 import geotrellis.proj4.CRS
 import geotrellis.server.stac._
+import geotrellis.vector.methods.Implicits._
 import geotrellis.vector.reproject.Reproject
 import io.circe._
 import io.circe.syntax._
@@ -35,24 +36,14 @@ object Utils {
   )
 
   def getStacCatalog(
-      currentPath: String,
       export: StacExport,
       stacVersion: String,
       layerIds: List[UUID]
   ): StacCatalog = {
     val catalogId = export.id.toString
-    val catalogParentPath = s"$currentPath/$catalogId"
     val catalogDescription =
       s"Exported from Raster Foundry ${new Timestamp(new Date().getTime).toString}"
     val catalogOwnLinks = List(
-      StacLink(
-        // s3://<prefix>/<catalogId>/catalog.json
-        s"$catalogParentPath/catalog.json",
-        Self,
-        Some(`application/json`),
-        Some(s"Catalog $catalogId"),
-        List()
-      ),
       // s3://<prefix>/<catalogId>/catalog.json
       StacLink(
         "./catalog.json",
@@ -63,7 +54,7 @@ object Utils {
       )
     ) ++ layerIds.map { layerId =>
       StacLink(
-        s"./$layerId/collection.json",
+        "./layer-collection/collection.json",
         Child,
         Some(`application/json`),
         Some(s"Layer Collection $layerId"),
@@ -122,11 +113,12 @@ object Utils {
       StacLink(
         relativeStacItemPath,
         Source,
-        Some(`image/cog`),
-        Some("Source image STAC item for the label item"),
+        Some(`application/json`),
+        Some("Source image STAC item for this label item"),
         List(item.item.id)
       )
     })
+
     val dateTime = labelCollection.extent.temporal.interval.headOption match {
       case Some(interval) =>
         interval.value match {
@@ -187,7 +179,7 @@ object Utils {
   def getSceneItem(
       catalog: StacCatalog,
       layerCollectionAbsolutePath: String,
-      sceneCollection: StacCollection,
+      imageCollection: StacCollection,
       scene: Scene
   ): Option[ObjectWithAbsolute[StacItem]] = {
 
@@ -200,10 +192,10 @@ object Utils {
     }
     val itemBboxOption = sceneFootprintOption.map { footprint =>
       TwoDimBbox(
-        footprint.envelope.xmin,
-        footprint.envelope.ymin,
-        footprint.envelope.xmax,
-        footprint.envelope.ymax
+        footprint.extent.xmin,
+        footprint.extent.ymin,
+        footprint.extent.xmax,
+        footprint.extent.ymax
       )
     }
 
@@ -212,18 +204,19 @@ object Utils {
         "./collection.json",
         Parent,
         Some(`application/json`),
-        Some("Scene Collection"),
+        Some("Images Collection"),
         List()
       ),
       StacLink(
         "./collection.json",
         Collection,
         Some(`application/json`),
-        Some("Scene Collection"),
+        Some("Images Collection"),
         List()
       ),
       relativeCatalogRoot
     )
+
     val sceneProperties = JsonObject.fromMap(
       Map(
         "datetime" -> scene.filterFields.acquisitionDate
@@ -244,7 +237,7 @@ object Utils {
       )
     }
     val sceneItemAbsolutePath =
-      s"$layerCollectionAbsolutePath/${sceneCollection.id}/${scene.id}.json"
+      s"$layerCollectionAbsolutePath/images/${scene.id}.json"
 
     (sceneFootprintOption, itemBboxOption, sceneAssetOption).tupled.map {
       case (sceneFootprint, itemBbox, sceneAsset) =>
@@ -259,7 +252,7 @@ object Utils {
             itemBbox,
             sceneLinks,
             sceneAsset,
-            Some(sceneCollection.id),
+            Some(imageCollection.id),
             sceneProperties
           )
         )
@@ -291,27 +284,27 @@ object Utils {
     )
   }
 
-  def getSceneCollection(
+  def getImagesCollection(
       exportDefinition: StacExport,
       catalog: StacCatalog,
       layerStacCollection: StacCollection
   ): StacCollection = {
-    val sceneCollectionId = UUID.randomUUID().toString
-    val sceneCollectionOwnLinks = List(
+    val imageCollectionId = UUID.randomUUID().toString
+    val imageCollectionOwnLinks = List(
       relativeCatalogRoot,
       relativeLayerCollection
     )
     exportDefinition.createStacCollection(
       catalog.stacVersion,
-      sceneCollectionId,
-      Some("Scene Collection"),
-      s"Scene collection in layer ${layerStacCollection.id}",
+      imageCollectionId,
+      Some("Images Collection"),
+      s"Images collection in layer ${layerStacCollection.id}",
       List[String](),
       "1",
       List[StacProvider](),
       layerStacCollection.extent,
       JsonObject.empty,
-      sceneCollectionOwnLinks
+      imageCollectionOwnLinks
     )
   }
 

@@ -3,16 +3,16 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
-import doobie._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID
 
 class AnnotationLabelClassDaoSpec
-    extends FunSuite
+    extends AnyFunSuite
     with Matchers
     with Checkers
     with DBTestConfig
@@ -30,9 +30,7 @@ class AnnotationLabelClassDaoSpec
             labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
           )
 
-          val listIO: ConnectionIO[
-            (List[AnnotationLabelClass], List[AnnotationLabelClass])
-          ] = for {
+          val listIO = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao.insert(toInsert, user)
             labelClassGroup = inserted.labelClassGroups.head
@@ -46,13 +44,43 @@ class AnnotationLabelClassDaoSpec
               )
           } yield { (listedReal, listedBogus) }
 
-          val (listedReal, listedBogus) = listIO.transact(xa).unsafeRunSync
+          val (listedReal, listedBogus) =
+            listIO.transact(xa).unsafeRunSync
 
           val expectedNames =
             (toInsert.labelClassGroups flatMap { group =>
               group.classes map { _.name }
             }).toSet
 
+          val labelClassCreate = toInsert.labelClassGroups
+            .map(_.classes)
+            .flatten
+            .toSet
+
+          val insertedLabelClassCreate = listedReal
+            .map(
+              alc =>
+                AnnotationLabelClass.Create(
+                  alc.name,
+                  alc.colorHexCode,
+                  alc.default,
+                  alc.determinant,
+                  alc.index,
+                  alc.geometryType,
+                  alc.description
+                )
+            )
+            .toSet
+
+          assert(
+            labelClassCreate === insertedLabelClassCreate,
+            "Label classes to be inserted are the same as those after inserting"
+          )
+
+          assert(
+            expectedNames === (listedReal map { _.name }).toSet,
+            "Class names to create match those listed for real label class group"
+          )
           assert(
             expectedNames === (listedReal map { _.name }).toSet,
             "Class names to create match those listed for real label class group"

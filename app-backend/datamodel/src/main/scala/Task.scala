@@ -1,22 +1,24 @@
 package com.rasterfoundry.datamodel
 
+import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.refined._
 
-import java.time.Instant
+import java.sql.Timestamp
 import java.util.UUID
 
 case class Task(
     id: UUID,
-    createdAt: Instant,
+    createdAt: Timestamp,
     createdBy: String,
-    modifiedAt: Instant,
+    modifiedAt: Timestamp,
     owner: String,
     status: TaskStatus,
     lockedBy: Option[String],
-    lockedOn: Option[Instant],
+    lockedOn: Option[Timestamp],
     geometry: Projected[Geometry],
     annotationProjectId: UUID
 ) {
@@ -28,7 +30,21 @@ case class Task(
     )
   }
 
-  def toProperties(actions: List[TaskActionStamp]): Task.TaskProperties =
+  def toProperties(actions: List[TaskActionStamp]): Task.TaskProperties = {
+    // If task actions get out of sync from task status updates, it's possible
+    // that the task will have a null note and a status of flagged. That's not great,
+    // but I think preserving our freedom to fix things in the db if things go wrong
+    // is more important than demanding consistency everywhere always.
+    // It should be hard for them to get out of sync with the check constraint on task
+    // actions, but you never know.
+    // This grabs the note from the most recent task action, rather than the most recent
+    // task action
+    val statusNote: Option[NonEmptyString] =
+      if (this.status == TaskStatus.Flagged) {
+        actions
+          .sortBy(-_.timestamp.toInstant.getEpochSecond)
+          .headOption flatMap { _.note }
+      } else None
     Task.TaskProperties(
       this.id,
       this.createdAt,
@@ -39,28 +55,32 @@ case class Task(
       this.lockedBy,
       this.lockedOn,
       actions,
-      this.annotationProjectId
+      this.annotationProjectId,
+      statusNote
     )
+  }
 }
 
 object Task {
 
   final case class TaskProperties(
       id: UUID,
-      createdAt: Instant,
+      createdAt: Timestamp,
       createdBy: String,
-      modifiedAt: Instant,
+      modifiedAt: Timestamp,
       owner: String,
       status: TaskStatus,
       lockedBy: Option[String],
-      lockedOn: Option[Instant],
+      lockedOn: Option[Timestamp],
       actions: List[TaskActionStamp],
-      annotationProjectId: UUID
+      annotationProjectId: UUID,
+      note: Option[NonEmptyString]
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
         this.status,
-        this.annotationProjectId
+        this.annotationProjectId,
+        this.note
       )
     }
   }
@@ -72,7 +92,8 @@ object Task {
 
   case class TaskPropertiesCreate(
       status: TaskStatus,
-      annotationProjectId: UUID
+      annotationProjectId: UUID,
+      note: Option[NonEmptyString]
   )
 
   object TaskPropertiesCreate {
