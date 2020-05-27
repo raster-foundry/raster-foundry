@@ -18,7 +18,9 @@ final case class Campaign(
     partnerLogo: Option[String] = None,
     parentCampaignId: Option[UUID] = None,
     continent: Option[Continent] = None,
-    tags: List[String] = List.empty
+    tags: List[String] = List.empty,
+    childrenCount: Int,
+    projectStatuses: Map[String, Int]
 )
 
 object Campaign {

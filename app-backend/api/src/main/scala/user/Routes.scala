@@ -20,7 +20,6 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import io.circe.syntax._
 
 import scala.collection.JavaConverters._
 
@@ -298,7 +297,7 @@ trait UserRoutes
                 for {
                   auth0User <- Auth0Service
                     .createAnonymizedUser(name, managementToken)
-                  newUser <- (auth0User.user_id traverse { userId =>
+                  _ <- (auth0User.user_id traverse { userId =>
                     UserDao.createUserWithCampaign(
                       UserInfo(
                         userId,
@@ -309,18 +308,6 @@ trait UserRoutes
                     )
 
                   }).transact(xa).unsafeToFuture
-                  _ <- newUser traverse { u =>
-                    Auth0Service.addUserMetadata(
-                      u.id,
-                      managementToken,
-                      Map(
-                        "app_metadata" -> Map(
-                          "organization" -> userBulkCreate.organizationId,
-                          "platform" -> userBulkCreate.platformId
-                        )
-                      ).asJson
-                    )
-                  }
                 } yield name
               }
             } yield userNames

@@ -115,4 +115,7 @@ trait CirceJsonbMeta {
   implicit val annotationProjectTaskStatusSummaryMeta
     : Meta[Option[Map[String, Int]]] =
     CirceJsonbMeta[Option[Map[String, Int]]]
+
+  implicit val campaignStatusMeta: Meta[Map[String, Int]] =
+    CirceJsonbMeta[Map[String, Int]]
 }
