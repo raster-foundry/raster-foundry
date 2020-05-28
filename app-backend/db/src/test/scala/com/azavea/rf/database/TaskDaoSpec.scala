@@ -14,6 +14,8 @@ import doobie.postgres.implicits._
 import eu.timepit.refined.refineMV
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.string.NonEmptyString
+import monocle.Lens
+import monocle.macros.GenLens
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.funsuite.AnyFunSuite
@@ -1255,6 +1257,8 @@ class TaskDaoSpec
             }
 
             val baseCreate = taskFeatureCollectionCreate.features.head
+            val noteLens: Lens[Task.TaskFeatureCreate, Option[NonEmptyString]] =
+              GenLens[Task.TaskFeatureCreate](_.properties.note)
 
             val expiryIO = for {
               (dbUser, _, _) <- insertUserOrgPlatform(
@@ -1275,39 +1279,27 @@ class TaskDaoSpec
                 fixedUp.copy(features = List(fixedUp.features.head)),
                 dbUser
               ) map { _.features.head }
-              fixedUp1 = {
-                val base = fixupTaskFeatureCreate(
+              fixedUp1 = noteLens.modify(_ => maybeNote(firstStatus))(
+                fixupTaskFeatureCreate(
                   baseCreate,
                   dbAnnotationProject,
                   Some(firstStatus)
                 )
-                base.copy(
-                  properties =
-                    base.properties.copy(note = maybeNote(firstStatus))
-                )
-              }
-              fixedUp2 = {
-                val base = fixupTaskFeatureCreate(
+              )
+              fixedUp2 = noteLens.modify(_ => maybeNote(nextStatus))(
+                fixupTaskFeatureCreate(
                   baseCreate,
                   dbAnnotationProject,
                   Some(nextStatus)
                 )
-                base.copy(
-                  properties =
-                    base.properties.copy(note = maybeNote(nextStatus))
-                )
-              }
-              fixedUp3 = {
-                val base = fixupTaskFeatureCreate(
+              )
+              fixedUp3 = noteLens.modify(_ => maybeNote(finalStatus))(
+                fixupTaskFeatureCreate(
                   baseCreate,
                   dbAnnotationProject,
                   Some(finalStatus)
                 )
-                base.copy(
-                  properties =
-                    base.properties.copy(note = maybeNote(finalStatus))
-                )
-              }
+              )
               _ <- TaskDao.updateTask(
                 insertedTask.id,
                 fixedUp1,
