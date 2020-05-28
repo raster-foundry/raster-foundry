@@ -614,11 +614,19 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       """).update.run
   }
 
-  private def regressTaskStatus(taskStatus: TaskStatus): TaskStatus =
+  private def regressTaskStatus(
+      taskId: UUID,
+      taskStatus: TaskStatus
+  ): ConnectionIO[TaskStatus] =
     taskStatus match {
-      case TaskStatus.LabelingInProgress   => TaskStatus.Unlabeled
-      case TaskStatus.ValidationInProgress => TaskStatus.Labeled
-      case status                          => status
+      case TaskStatus.LabelingInProgress | TaskStatus.ValidationInProgress =>
+        getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
+          stamps
+            .sortBy(stamp => -stamp.timestamp.toInstant.getEpochSecond)
+            .headOption map { _.fromStatus } getOrElse { TaskStatus.Unlabeled }
+        })
+
+      case status => status.pure[ConnectionIO]
     }
 
   def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
@@ -631,17 +639,18 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         )
         .list
       _ <- stuckTasks traverse { task =>
-        val newStatus = regressTaskStatus(task.status)
-        val update =
-          Task.TaskFeatureCreate(
-            TaskPropertiesCreate(
-              newStatus,
-              task.annotationProjectId,
-              None
-            ),
-            task.geometry
-          )
-        updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
+        regressTaskStatus(task.id, task.status) flatMap { newStatus =>
+          val update =
+            Task.TaskFeatureCreate(
+              TaskPropertiesCreate(
+                newStatus,
+                task.annotationProjectId,
+                None
+              ),
+              task.geometry
+            )
+          updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
+        }
       }
     } yield stuckTasks.length
 
