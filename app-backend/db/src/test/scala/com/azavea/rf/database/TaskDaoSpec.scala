@@ -1155,72 +1155,75 @@ class TaskDaoSpec
                   ),
                   dbUser
                 )
-              tasksInProgress <- TaskDao.insertTasks(
+              insertedTasks <- TaskDao.insertTasks(
                 fixupTaskFeaturesCollection(
                   taskFeatureCollectionCreate,
                   dbAnnotationProj,
-                  Some(TaskStatus.LabelingInProgress)
+                  None
                 ),
                 dbUser
               )
-              tasksLabeled <- TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(
-                  taskFeatureCollectionCreate,
-                  dbAnnotationProj,
-                  Some(TaskStatus.Labeled)
-                ),
-                dbUser
-              )
-              _ <- (tasksInProgress.features ++ tasksLabeled.features) traverse {
-                task =>
-                  TaskDao.lockTask(task.id)(dbUser)
+              _ <- insertedTasks.features traverse { task =>
+                TaskDao.lockTask(task.id)(dbUser)
               }
               numberExpiredBogus <- TaskDao.expireStuckTasks(9000 seconds)
               numberExpired <- TaskDao.expireStuckTasks(0 seconds)
-              listed <- TaskDao.query
+              listedTasks <- TaskDao.query
                 .filter(fr"annotation_project_id = ${dbAnnotationProj.id}")
                 .list
-            } yield (numberExpiredBogus, numberExpired, listed)
+            } yield
+              (insertedTasks, numberExpiredBogus, numberExpired, listedTasks)
 
-            val (numberExpiredBogus, numberExpired, listed) =
+            val (
+              insertedTasks,
+              numberExpiredBogus,
+              numberExpired,
+              listedTasks
+            ) =
               expiryIO.transact(xa).unsafeRunSync
 
-            val statusGroups = listed.groupBy(_.status).mapValues(_.size)
+            val insertedById =
+              insertedTasks.features.groupBy(_.id).mapValues(_.head)
+            val listedById = listedTasks.groupBy(_.id).mapValues(_.head)
+
+            val statusPairs = insertedById.keys.toList map { taskId =>
+              val insertedTaskStatus =
+                insertedById.get(taskId).get.properties.status
+              val listedTaskStatus = listedById.get(taskId).get.status
+              (insertedTaskStatus, listedTaskStatus)
+            }
 
             assert(
               numberExpiredBogus == 0,
               "Expiration leaves fresh tasks alone"
             )
 
-            // * 2 because the list gets inserted twice -- once for labeled tasks,
-            // once for in progress tasks
             assert(
-              numberExpired == taskFeatureCollectionCreate.features.length * 2,
+              numberExpired == taskFeatureCollectionCreate.features.length,
               "All inserted tasks expired"
             )
 
             assert(
-              statusGroups.get(TaskStatus.Labeled) == Some(
-                taskFeatureCollectionCreate.features.length
-              ),
-              "Tasks stuck in labeled kept their status"
-            )
-
-            assert(
-              statusGroups.get(TaskStatus.Unlabeled) == Some(
-                taskFeatureCollectionCreate.features.length
-              ),
-              "Tasks stuck in progress reverted to unlabeled"
-            )
-
-            assert(
-              (listed flatMap { _.lockedBy }) == Nil,
+              (listedTasks flatMap { _.lockedBy }) == Nil,
               "All tasks reverted to not being locked by anyone"
             )
 
             assert(
-              (listed flatMap { _.lockedOn }) == Nil,
+              (listedTasks flatMap { _.lockedOn }) == Nil,
               "All tasks reverted to not being locked at any time"
+            )
+
+            assert(
+              statusPairs.foldLeft(true)(
+                (base: Boolean, tup: (TaskStatus, TaskStatus)) => {
+                  val (insertedStatus, listedStatus) = tup
+                  base &&
+                  (insertedStatus === listedStatus
+                  || insertedStatus === TaskStatus.LabelingInProgress
+                  || insertedStatus === TaskStatus.ValidationInProgress)
+                }
+              ),
+              "Only tasks in progress had their statuses changed"
             )
 
             true
