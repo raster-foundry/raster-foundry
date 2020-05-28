@@ -11,13 +11,16 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
 import doobie.postgres.implicits._
+import eu.timepit.refined.refineMV
+import eu.timepit.refined.auto._
+import eu.timepit.refined.types.string.NonEmptyString
 import org.scalacheck.Prop.forAll
 import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
 
 import scala.concurrent.duration._
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 
 class TaskDaoSpec
     extends AnyFunSuite
@@ -1224,6 +1227,115 @@ class TaskDaoSpec
                 }
               ),
               "Only tasks in progress had their statuses changed"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
+  test("task unlocking respects most recent status") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            firstStatus: TaskStatus,
+            nextStatus: TaskStatus,
+            finalStatus: TaskStatus
+        ) =>
+          {
+            val maybeNote: TaskStatus => Option[NonEmptyString] = {
+              case TaskStatus.Flagged => Some(refineMV("something wrong"))
+              case _                  => None
+            }
+
+            val baseCreate = taskFeatureCollectionCreate.features.head
+
+            val expiryIO = for {
+              (dbUser, _, _) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform
+              )
+              dbAnnotationProject <- AnnotationProjectDao.insert(
+                annotationProjectCreate,
+                dbUser
+              )
+              fixedUp = fixupTaskFeaturesCollection(
+                taskFeatureCollectionCreate,
+                dbAnnotationProject,
+                None
+              )
+              insertedTask <- TaskDao.insertTasks(
+                fixedUp.copy(features = List(fixedUp.features.head)),
+                dbUser
+              ) map { _.features.head }
+              fixedUp1 = {
+                val base = fixupTaskFeatureCreate(
+                  baseCreate,
+                  dbAnnotationProject,
+                  Some(firstStatus)
+                )
+                base.copy(
+                  properties =
+                    base.properties.copy(note = maybeNote(firstStatus))
+                )
+              }
+              fixedUp2 = {
+                val base = fixupTaskFeatureCreate(
+                  baseCreate,
+                  dbAnnotationProject,
+                  Some(nextStatus)
+                )
+                base.copy(
+                  properties =
+                    base.properties.copy(note = maybeNote(nextStatus))
+                )
+              }
+              fixedUp3 = {
+                val base = fixupTaskFeatureCreate(
+                  baseCreate,
+                  dbAnnotationProject,
+                  Some(finalStatus)
+                )
+                base.copy(
+                  properties =
+                    base.properties.copy(note = maybeNote(finalStatus))
+                )
+              }
+              _ <- TaskDao.updateTask(
+                insertedTask.id,
+                fixedUp1,
+                dbUser
+              )
+              _ <- TaskDao.updateTask(
+                insertedTask.id,
+                fixedUp2,
+                dbUser
+              )
+              _ <- TaskDao.updateTask(
+                insertedTask.id,
+                fixedUp3,
+                dbUser
+              )
+              _ <- TaskDao.expireStuckTasks(0 seconds)
+              retrieved <- TaskDao.unsafeGetTaskById(insertedTask.id)
+            } yield retrieved.status
+
+            val postExpirationStatus = expiryIO.transact(xa).unsafeRunSync
+
+            assert(
+              postExpirationStatus === finalStatus ||
+                (postExpirationStatus === nextStatus && Set[TaskStatus](
+                  TaskStatus.LabelingInProgress,
+                  TaskStatus.ValidationInProgress
+                ).contains(finalStatus)),
+              "If validation or labeling was in progress, status reverted to second-to-last"
             )
 
             true
