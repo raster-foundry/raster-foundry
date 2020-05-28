@@ -614,13 +614,11 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       """).update.run
   }
 
-  private def regressTaskStatus(taskStatus: TaskStatus): Option[TaskStatus] =
+  private def regressTaskStatus(taskStatus: TaskStatus): TaskStatus =
     taskStatus match {
-      case TaskStatus.LabelingInProgress   => Some(TaskStatus.Unlabeled)
-      case TaskStatus.ValidationInProgress => Some(TaskStatus.Labeled)
-      case TaskStatus.Labeled              => Some(TaskStatus.Labeled)
-      case TaskStatus.Validated            => Some(TaskStatus.Validated)
-      case _                               => None
+      case TaskStatus.LabelingInProgress   => TaskStatus.Unlabeled
+      case TaskStatus.ValidationInProgress => TaskStatus.Labeled
+      case status                          => status
     }
 
   def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
@@ -629,32 +627,21 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       defaultUser <- UserDao.unsafeGetUserById("default")
       stuckTasks <- query
         .filter(
-          taskStatusF(
-            List(
-              TaskStatus.ValidationInProgress.repr,
-              TaskStatus.LabelingInProgress.repr,
-              TaskStatus.Labeled.repr,
-              TaskStatus.Validated.repr
-            )
-          )
-        )
-        .filter(
           fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
         )
         .list
       _ <- stuckTasks traverse { task =>
-        regressTaskStatus(task.status) traverse { newStatus =>
-          val update =
-            Task.TaskFeatureCreate(
-              TaskPropertiesCreate(
-                newStatus,
-                task.annotationProjectId,
-                None
-              ),
-              task.geometry
-            )
-          updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
-        }
+        val newStatus = regressTaskStatus(task.status)
+        val update =
+          Task.TaskFeatureCreate(
+            TaskPropertiesCreate(
+              newStatus,
+              task.annotationProjectId,
+              None
+            ),
+            task.geometry
+          )
+        updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
       }
     } yield stuckTasks.length
 
