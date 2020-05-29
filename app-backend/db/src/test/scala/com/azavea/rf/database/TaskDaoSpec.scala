@@ -11,13 +11,18 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
 import doobie.postgres.implicits._
+import eu.timepit.refined.refineMV
+import eu.timepit.refined.auto._
+import eu.timepit.refined.types.string.NonEmptyString
+import monocle.Lens
+import monocle.macros.GenLens
 import org.scalacheck.Prop.forAll
 import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
 
 import scala.concurrent.duration._
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 
 class TaskDaoSpec
     extends AnyFunSuite
@@ -1155,72 +1160,174 @@ class TaskDaoSpec
                   ),
                   dbUser
                 )
-              tasksInProgress <- TaskDao.insertTasks(
+              insertedTasks <- TaskDao.insertTasks(
                 fixupTaskFeaturesCollection(
                   taskFeatureCollectionCreate,
                   dbAnnotationProj,
-                  Some(TaskStatus.LabelingInProgress)
+                  None
                 ),
                 dbUser
               )
-              tasksLabeled <- TaskDao.insertTasks(
-                fixupTaskFeaturesCollection(
-                  taskFeatureCollectionCreate,
-                  dbAnnotationProj,
-                  Some(TaskStatus.Labeled)
-                ),
-                dbUser
-              )
-              _ <- (tasksInProgress.features ++ tasksLabeled.features) traverse {
-                task =>
-                  TaskDao.lockTask(task.id)(dbUser)
+              _ <- insertedTasks.features traverse { task =>
+                TaskDao.lockTask(task.id)(dbUser)
               }
               numberExpiredBogus <- TaskDao.expireStuckTasks(9000 seconds)
               numberExpired <- TaskDao.expireStuckTasks(0 seconds)
-              listed <- TaskDao.query
+              listedTasks <- TaskDao.query
                 .filter(fr"annotation_project_id = ${dbAnnotationProj.id}")
                 .list
-            } yield (numberExpiredBogus, numberExpired, listed)
+            } yield
+              (insertedTasks, numberExpiredBogus, numberExpired, listedTasks)
 
-            val (numberExpiredBogus, numberExpired, listed) =
+            val (
+              insertedTasks,
+              numberExpiredBogus,
+              numberExpired,
+              listedTasks
+            ) =
               expiryIO.transact(xa).unsafeRunSync
 
-            val statusGroups = listed.groupBy(_.status).mapValues(_.size)
+            val insertedById =
+              insertedTasks.features.groupBy(_.id).mapValues(_.head)
+            val listedById = listedTasks.groupBy(_.id).mapValues(_.head)
+
+            val statusPairs = insertedById.keys.toList map { taskId =>
+              val insertedTaskStatus =
+                insertedById.get(taskId).get.properties.status
+              val listedTaskStatus = listedById.get(taskId).get.status
+              (insertedTaskStatus, listedTaskStatus)
+            }
 
             assert(
               numberExpiredBogus == 0,
               "Expiration leaves fresh tasks alone"
             )
 
-            // * 2 because the list gets inserted twice -- once for labeled tasks,
-            // once for in progress tasks
             assert(
-              numberExpired == taskFeatureCollectionCreate.features.length * 2,
+              numberExpired == taskFeatureCollectionCreate.features.length,
               "All inserted tasks expired"
             )
 
             assert(
-              statusGroups.get(TaskStatus.Labeled) == Some(
-                taskFeatureCollectionCreate.features.length
-              ),
-              "Tasks stuck in labeled kept their status"
-            )
-
-            assert(
-              statusGroups.get(TaskStatus.Unlabeled) == Some(
-                taskFeatureCollectionCreate.features.length
-              ),
-              "Tasks stuck in progress reverted to unlabeled"
-            )
-
-            assert(
-              (listed flatMap { _.lockedBy }) == Nil,
+              (listedTasks flatMap { _.lockedBy }) == Nil,
               "All tasks reverted to not being locked by anyone"
             )
 
             assert(
-              (listed flatMap { _.lockedOn }) == Nil,
+              (listedTasks flatMap { _.lockedOn }) == Nil,
               "All tasks reverted to not being locked at any time"
+            )
+
+            assert(
+              statusPairs.foldLeft(true)(
+                (base: Boolean, tup: (TaskStatus, TaskStatus)) => {
+                  val (insertedStatus, listedStatus) = tup
+                  base &&
+                  (insertedStatus === listedStatus
+                  || insertedStatus === TaskStatus.LabelingInProgress
+                  || insertedStatus === TaskStatus.ValidationInProgress)
+                }
+              ),
+              "Only tasks in progress had their statuses changed"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
+  test("task unlocking respects most recent status") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            firstStatus: TaskStatus,
+            nextStatus: TaskStatus,
+            finalStatus: TaskStatus
+        ) =>
+          {
+            val maybeNote: TaskStatus => Option[NonEmptyString] = {
+              case TaskStatus.Flagged => Some(refineMV("something wrong"))
+              case _                  => None
+            }
+
+            val baseCreate = taskFeatureCollectionCreate.features.head
+            val noteLens: Lens[Task.TaskFeatureCreate, Option[NonEmptyString]] =
+              GenLens[Task.TaskFeatureCreate](_.properties.note)
+
+            val expiryIO = for {
+              (dbUser, _, _) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform
+              )
+              dbAnnotationProject <- AnnotationProjectDao.insert(
+                annotationProjectCreate,
+                dbUser
+              )
+              fixedUp = fixupTaskFeaturesCollection(
+                taskFeatureCollectionCreate,
+                dbAnnotationProject,
+                None
+              )
+              insertedTask <- TaskDao.insertTasks(
+                fixedUp.copy(features = List(fixedUp.features.head)),
+                dbUser
+              ) map { _.features.head }
+              fixedUp1 = noteLens.modify(_ => maybeNote(firstStatus))(
+                fixupTaskFeatureCreate(
+                  baseCreate,
+                  dbAnnotationProject,
+                  Some(firstStatus)
+                )
+              )
+              fixedUp2 = noteLens.modify(_ => maybeNote(nextStatus))(
+                fixupTaskFeatureCreate(
+                  baseCreate,
+                  dbAnnotationProject,
+                  Some(nextStatus)
+                )
+              )
+              fixedUp3 = noteLens.modify(_ => maybeNote(finalStatus))(
+                fixupTaskFeatureCreate(
+                  baseCreate,
+                  dbAnnotationProject,
+                  Some(finalStatus)
+                )
+              )
+              _ <- TaskDao.updateTask(
+                insertedTask.id,
+                fixedUp1,
+                dbUser
+              )
+              _ <- TaskDao.updateTask(
+                insertedTask.id,
+                fixedUp2,
+                dbUser
+              )
+              _ <- TaskDao.updateTask(
+                insertedTask.id,
+                fixedUp3,
+                dbUser
+              )
+              _ <- TaskDao.expireStuckTasks(0 seconds)
+              retrieved <- TaskDao.unsafeGetTaskById(insertedTask.id)
+            } yield retrieved.status
+
+            val postExpirationStatus = expiryIO.transact(xa).unsafeRunSync
+
+            assert(
+              postExpirationStatus === finalStatus ||
+                (postExpirationStatus === nextStatus && Set[TaskStatus](
+                  TaskStatus.LabelingInProgress,
+                  TaskStatus.ValidationInProgress
+                ).contains(finalStatus)),
+              "If validation or labeling was in progress, status reverted to second-to-last"
             )
 
             true

@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Task lock expiration now consults previous status, unlocks tasks in any status [#5414](https://github.com/raster-foundry/raster-foundry/pull/5414)
+
 ### Deprecated
 
 ### Removed

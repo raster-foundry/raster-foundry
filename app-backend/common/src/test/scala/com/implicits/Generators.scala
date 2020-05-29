@@ -1329,6 +1329,10 @@ object Generators extends ArbitraryInstances {
       } yield { NEL(h, t) }
     }
 
+    implicit def arbTaskStatus: Arbitrary[TaskStatus] = Arbitrary {
+      taskStatusGen
+    }
+
     implicit def arbTaskFeatureCreate: Arbitrary[Task.TaskFeatureCreate] =
       Arbitrary {
         taskFeatureCreateGen

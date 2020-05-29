@@ -614,13 +614,19 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       """).update.run
   }
 
-  private def regressTaskStatus(taskStatus: TaskStatus): Option[TaskStatus] =
+  private def regressTaskStatus(
+      taskId: UUID,
+      taskStatus: TaskStatus
+  ): ConnectionIO[TaskStatus] =
     taskStatus match {
-      case TaskStatus.LabelingInProgress   => Some(TaskStatus.Unlabeled)
-      case TaskStatus.ValidationInProgress => Some(TaskStatus.Labeled)
-      case TaskStatus.Labeled              => Some(TaskStatus.Labeled)
-      case TaskStatus.Validated            => Some(TaskStatus.Validated)
-      case _                               => None
+      case TaskStatus.LabelingInProgress | TaskStatus.ValidationInProgress =>
+        getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
+          stamps
+            .sortBy(stamp => -stamp.timestamp.toInstant.getEpochSecond)
+            .headOption map { _.fromStatus } getOrElse { TaskStatus.Unlabeled }
+        })
+
+      case status => status.pure[ConnectionIO]
     }
 
   def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
@@ -629,21 +635,11 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       defaultUser <- UserDao.unsafeGetUserById("default")
       stuckTasks <- query
         .filter(
-          taskStatusF(
-            List(
-              TaskStatus.ValidationInProgress.repr,
-              TaskStatus.LabelingInProgress.repr,
-              TaskStatus.Labeled.repr,
-              TaskStatus.Validated.repr
-            )
-          )
-        )
-        .filter(
           fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
         )
         .list
       _ <- stuckTasks traverse { task =>
-        regressTaskStatus(task.status) traverse { newStatus =>
+        regressTaskStatus(task.id, task.status) flatMap { newStatus =>
           val update =
             Task.TaskFeatureCreate(
               TaskPropertiesCreate(

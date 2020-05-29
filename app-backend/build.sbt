@@ -420,6 +420,7 @@ lazy val db = project
       Dependencies.hikariCP,
       Dependencies.jts,
       Dependencies.mamlJvm,
+      Dependencies.monocleCore % "test",
       Dependencies.postgis,
       Dependencies.postgres,
       Dependencies.refined,
