@@ -34,7 +34,7 @@ trait QueryParameterDeserializers {
     }
 
   implicit val deserializerAnnotationProjectType
-    : Unmarshaller[String, AnnotationProjectType] =
+      : Unmarshaller[String, AnnotationProjectType] =
     Unmarshaller.strict[String, AnnotationProjectType] { s =>
       AnnotationProjectType.fromString(s)
     }
@@ -232,7 +232,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         groupQueryParameters &
         parameters(
           'campaignType.as(deserializerAnnotationProjectType).?,
-          'continent.as(deserializerContinent).?
+          'continent.as(deserializerContinent).?,
+          'isActive.as[Boolean].?
         )
     ).as(CampaignQueryParameters.apply _)
 }

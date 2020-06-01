@@ -216,16 +216,19 @@ trait CampaignRoutes
       ScopedAction(Domain.Campaigns, Action.Clone, None),
       user
     ) {
-      authorizeAuthResultAsync {
-        CampaignDao
-          .authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.View
-          )
-          .transact(xa)
-          .unsafeToFuture
+      authorizeAsync {
+        (for {
+          auth1 <- CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.View
+            )
+          auth2 <- CampaignDao.isActiveCampaign(campaignId)
+        } yield {
+          auth1.toBoolean && auth2
+        }).transact(xa).unsafeToFuture()
       } {
         entity(as[Campaign.Clone]) { campaignClone =>
           onSuccess(

@@ -347,6 +347,10 @@ class CampaignDaoSpec
             clone.tags.toSet == copiedCampaign.tags.toSet,
             "Copy of the campaign has the given tags"
           )
+          assert(
+            copiedCampaign.isActive == true,
+            "Copy of the campaign is active"
+          )
           true
         }
       )
@@ -400,6 +404,63 @@ class CampaignDaoSpec
           assert(
             expectedIds == (listedCampaigns.results map { _.id }).toSet,
             "Listed campaigns are those expected from campaign insertion with specified continent"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("list only active campaigns ") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            campaignCreates1: List[Campaign.Create],
+            campaignCreates2: List[Campaign.Create]
+        ) => {
+          val pageSize = 30
+          val pageRequest = PageRequest(0, pageSize, Map.empty)
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            insertedCampaigns1 <- campaignCreates1
+              .take(pageSize) traverse { toInsert =>
+              CampaignDao
+                .insertCampaign(
+                  toInsert.copy(parentCampaignId = None),
+                  user
+                )
+            }
+            _ <- insertedCampaigns1 traverse { campaign =>
+              CampaignDao
+                .updateCampaign(campaign.copy(isActive = false), campaign.id)
+            }
+            insertedCampaigns2 <- campaignCreates2
+              .take(pageSize) traverse { toInsert =>
+              CampaignDao
+                .insertCampaign(
+                  toInsert.copy(
+                    parentCampaignId = None
+                  ),
+                  user
+                )
+            }
+            listed <- CampaignDao
+              .listCampaigns(
+                pageRequest,
+                CampaignQueryParameters(isActive = Some(true)),
+                user
+              )
+          } yield (listed, insertedCampaigns2)
+
+          val (listedCampaigns, dbCampaigns) = listIO.transact(xa).unsafeRunSync
+
+          val expectedIds = (dbCampaigns.take(pageSize) map { _.id }).toSet
+
+          assert(
+            expectedIds == (listedCampaigns.results map { _.id }).toSet,
+            "Listed campaigns are those expected from campaign insertion that are active"
           )
 
           true
