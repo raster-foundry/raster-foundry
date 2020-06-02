@@ -28,6 +28,7 @@
 - Add image quality to tile layers [#5409](https://github.com/raster-foundry/raster-foundry/pull/5409)
 - Add campaign children count and status flag [#5412](https://github.com/raster-foundry/raster-foundry/pull/5412)
 - Add campaign clone endpoint, add tags to campaigns table [#5413](https://github.com/raster-foundry/raster-foundry/pull/5413)
+- Enable archiving campaigns [#5415](https://github.com/raster-foundry/raster-foundry/pull/5415)
 
 ### Changed
 

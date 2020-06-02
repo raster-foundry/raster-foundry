@@ -438,14 +438,17 @@ trait Filterables extends RFMeta with LazyLogging {
           statusList =>
             val statusFilterF = statusList map { status =>
               Some(
-                fr"(annotation_projects.task_status_summary ->> ${status.toString}) > '0'")
+                fr"(annotation_projects.task_status_summary ->> ${status.toString}) > '0'"
+              )
             }
             Fragment.const("(") ++ Fragments
               .orOpt(statusFilterF.toList: _*) ++ Fragment.const(")")
         }
         Filters.ownerQP(params.ownerParams, fr"annotation_projects.owner") ++
-          Filters.searchQP(params.searchParams,
-                           List("annotation_projects.name")) ++
+          Filters.searchQP(
+            params.searchParams,
+            List("annotation_projects.name")
+          ) ++
           List(
             params.projectFilterParams.projectType.map({ projectType =>
               fr"annotation_projects.project_type = $projectType"
@@ -466,11 +469,17 @@ trait Filterables extends RFMeta with LazyLogging {
       params: CampaignQueryParameters =>
         Filters.ownerQP(params.ownerParams, fr"owner") ++
           Filters.searchQP(params.searchParams, List("name")) ++
-          List(params.campaignType.map({ campaignType =>
-            fr"campaign_type = $campaignType"
-          }), params.continent.map({ continent =>
-            fr"continent = $continent"
-          }))
+          List(
+            params.campaignType.map({ campaignType =>
+              fr"campaign_type = $campaignType"
+            }),
+            params.continent.map({ continent =>
+              fr"continent = $continent"
+            }),
+            params.isActive.map({ isActive =>
+              fr"is_active = $isActive"
+            })
+          )
     }
 }
 

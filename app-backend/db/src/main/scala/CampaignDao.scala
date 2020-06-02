@@ -29,7 +29,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "continent",
     "tags",
     "children_count",
-    "project_statuses"
+    "project_statuses",
+    "is_active"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -121,7 +122,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       partner_name = ${campaign.partnerName},
       partner_logo = ${campaign.partnerLogo},
       continent = ${campaign.continent},
-      tags = ${campaign.tags}
+      tags = ${campaign.tags},
+      is_active = ${campaign.isActive}
     WHERE
       id = $id
     """).update.run;
@@ -154,7 +156,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, campaign_type, description, video_link,
-             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, project_statuses""" ++
+             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, project_statuses, true""" ++
       fr"""FROM """ ++ tableF ++ fr"""
            WHERE id = ${id}
         """)
@@ -173,4 +175,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       }
     } yield campaignCopy
   }
+
+  def isActiveCampaign(id: UUID): ConnectionIO[Boolean] =
+    query.filter(id).filter(fr"is_active = ${true}").exists
 }
