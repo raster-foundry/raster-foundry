@@ -217,6 +217,23 @@ trait CampaignRoutes
       user
     ) {
       authorizeAsync {
+        (
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.View
+            ) map {
+            _.toBoolean
+          },
+          CampaignDao.isActiveCampaign(campaignId)
+        ).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
         (for {
           auth1 <- CampaignDao
             .authorized(

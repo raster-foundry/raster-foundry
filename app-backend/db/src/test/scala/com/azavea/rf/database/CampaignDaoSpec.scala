@@ -448,7 +448,7 @@ class CampaignDaoSpec
             }
             listed <- CampaignDao
               .listCampaigns(
-                pageRequest,
+                pageRequest.copy(limit = pageSize * 2),
                 CampaignQueryParameters(isActive = Some(true)),
                 user
               )
