@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Enable sorting by `children_count` on `campaigns` table and `captured_at` on `annotation_projects` table [#5416](https://github.com/raster-foundry/raster-foundry/pull/5416)
 
 ### Changed
 
