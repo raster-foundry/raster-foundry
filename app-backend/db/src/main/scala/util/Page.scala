@@ -30,6 +30,8 @@ object Page {
       case "id"           => Some("id")
       case "role"         => Some("role")
       case "visibility"   => Some("visibility")
+      case "childrenCount"=> Some("children_count")
+      case "capturedAt"   => Some("captured_at")
       case _              => None
     }
   }
