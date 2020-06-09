@@ -155,11 +155,18 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   private val statusExpirationDuration =
     statusReapingConfig.taskStatusExpirationSeconds.seconds
   private val everyMinute = Cron.unsafeParse("0 * * ? * *")
-  val scheduled
-      : fs2.Stream[IO, Int] = awakeEveryCron[IO](everyMinute) *> (fs2.Stream
+  val scheduled: fs2.Stream[IO, Either[Unit, Int]] = awakeEveryCron[IO](
+    everyMinute
+  ) *> (fs2.Stream
     .eval {
       TaskDao.expireStuckTasks(statusExpirationDuration).transact(xa)
     })
+    .attempt
+    .map {
+      _.leftMap { err =>
+        logger.error(err.getMessage)
+      }
+    }
 
   def router =
     errorHandling {
@@ -191,7 +198,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(router.orNotFound)
       .serve
-      .concurrently(scheduled.attempt)
+      .concurrently(scheduled)
 
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
   logger.info(s"Server Started (${canSelect})")
