@@ -83,14 +83,14 @@ object Generators extends ArbitraryInstances {
     Gen.oneOf(Visibility.Public, Visibility.Organization, Visibility.Private)
 
   private def taskStatusGen: Gen[TaskStatus] =
-    Gen.oneOf(
-      TaskStatus.Unlabeled,
-      TaskStatus.LabelingInProgress,
-      TaskStatus.Labeled,
-      TaskStatus.ValidationInProgress,
-      TaskStatus.Validated,
-      TaskStatus.Flagged,
-      TaskStatus.Invalid
+    Gen.frequency(
+      (1, TaskStatus.Unlabeled),
+      (1, TaskStatus.LabelingInProgress),
+      (1, TaskStatus.Labeled),
+      (1, TaskStatus.ValidationInProgress),
+      (1, TaskStatus.Validated),
+      (6, TaskStatus.Flagged),
+      (1, TaskStatus.Invalid)
     )
 
   private def userVisibilityGen: Gen[UserVisibility] =
