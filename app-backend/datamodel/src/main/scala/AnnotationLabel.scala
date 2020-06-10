@@ -137,7 +137,7 @@ object AnnotationLabelWithClasses {
       properties: AnnotationLabelWithClassesPropertiesCreate
   ) {
     def toAnnotationLabelWithClassesCreate
-        : AnnotationLabelWithClasses.Create = {
+      : AnnotationLabelWithClasses.Create = {
       AnnotationLabelWithClasses.Create(
         geometry,
         properties.annotationLabelClasses,
@@ -204,7 +204,7 @@ object AnnotationLabelWithClasses {
                 "annotationTaskId" -> geojson.properties.annotationTaskId.asJson
               ) ++ geojson.classMap.map(e => (e._1 -> e._2.asJson))
             )
-          )
+        )
       )
   }
 }
