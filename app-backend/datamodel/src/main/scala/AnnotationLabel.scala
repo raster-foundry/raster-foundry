@@ -17,7 +17,8 @@ final case class AnnotationLabel(
     createdBy: String,
     geometry: Option[Projected[Geometry]],
     annotationProjectId: UUID,
-    annotationTaskId: UUID
+    annotationTaskId: UUID,
+    description: Option[String] = None
 )
 
 @JsonCodec
@@ -25,12 +26,14 @@ final case class AnnotationLabelProperties(
     createdAt: Timestamp,
     createdBy: String,
     annotationProjectId: UUID,
-    annotationTaskId: UUID
+    annotationTaskId: UUID,
+    description: Option[String] = None
 )
 
 final case class AnnotationLabelPropertiesCreate(
     annotationProjectId: UUID,
-    annotationTaskId: UUID
+    annotationTaskId: UUID,
+    description: Option[String] = None
 )
 
 @JsonCodec
@@ -46,7 +49,8 @@ final case class AnnotationLabelWithClasses(
     geometry: Option[Projected[Geometry]],
     annotationProjectId: UUID,
     annotationTaskId: UUID,
-    annotationLabelClasses: List[UUID]
+    annotationLabelClasses: List[UUID],
+    description: Option[String] = None
 ) extends GeoJSONSerializable[AnnotationLabelWithClasses.GeoJSON] {
   def toGeoJSONFeature = AnnotationLabelWithClasses.GeoJSON(
     this.id,
@@ -56,7 +60,8 @@ final case class AnnotationLabelWithClasses(
       this.createdBy,
       this.annotationProjectId,
       this.annotationTaskId,
-      this.annotationLabelClasses
+      this.annotationLabelClasses,
+      this.description
     )
   )
 
@@ -97,7 +102,8 @@ object AnnotationLabelWithClasses {
 
   final case class Create(
       geometry: Option[Projected[Geometry]],
-      annotationLabelClasses: List[UUID]
+      annotationLabelClasses: List[UUID],
+      description: Option[String] = None
   ) {
     def toAnnotationLabelWithClasses(
         annotationProjectId: UUID,
@@ -112,7 +118,8 @@ object AnnotationLabelWithClasses {
         geometry,
         annotationProjectId,
         annotationTaskId,
-        annotationLabelClasses
+        annotationLabelClasses,
+        description
       )
     }
   }
@@ -130,10 +137,11 @@ object AnnotationLabelWithClasses {
       properties: AnnotationLabelWithClassesPropertiesCreate
   ) {
     def toAnnotationLabelWithClassesCreate
-      : AnnotationLabelWithClasses.Create = {
+        : AnnotationLabelWithClasses.Create = {
       AnnotationLabelWithClasses.Create(
         geometry,
-        properties.annotationLabelClasses
+        properties.annotationLabelClasses,
+        properties.description
       )
     }
   }
@@ -196,14 +204,15 @@ object AnnotationLabelWithClasses {
                 "annotationTaskId" -> geojson.properties.annotationTaskId.asJson
               ) ++ geojson.classMap.map(e => (e._1 -> e._2.asJson))
             )
-        )
+          )
       )
   }
 }
 
 @JsonCodec
 final case class AnnotationLabelWithClassesPropertiesCreate(
-    annotationLabelClasses: List[UUID]
+    annotationLabelClasses: List[UUID],
+    description: Option[String] = None
 )
 
 @JsonCodec
@@ -212,7 +221,8 @@ final case class AnnotationLabelWithClassesProperties(
     createdBy: String,
     annotationProjectId: UUID,
     annotationTaskId: UUID,
-    annotationLabelClasses: List[UUID]
+    annotationLabelClasses: List[UUID],
+    description: Option[String] = None
 )
 
 final case class StacGeoJSONFeatureCollection(
