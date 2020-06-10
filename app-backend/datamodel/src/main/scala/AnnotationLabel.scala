@@ -49,8 +49,8 @@ final case class AnnotationLabelWithClasses(
     geometry: Option[Projected[Geometry]],
     annotationProjectId: UUID,
     annotationTaskId: UUID,
-    annotationLabelClasses: List[UUID],
-    description: Option[String] = None
+    description: Option[String] = None,
+    annotationLabelClasses: List[UUID]
 ) extends GeoJSONSerializable[AnnotationLabelWithClasses.GeoJSON] {
   def toGeoJSONFeature = AnnotationLabelWithClasses.GeoJSON(
     this.id,
@@ -118,8 +118,8 @@ object AnnotationLabelWithClasses {
         geometry,
         annotationProjectId,
         annotationTaskId,
-        annotationLabelClasses,
-        description
+        description,
+        annotationLabelClasses
       )
     }
   }
