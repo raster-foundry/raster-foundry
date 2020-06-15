@@ -1096,7 +1096,8 @@ object Generators extends ArbitraryInstances {
       projectedMultiPolygonGen3857 map { (geom: Projected[MultiPolygon]) =>
         Option(geom)
       },
-      Gen.const(Nil)
+      Gen.const(Nil),
+      Gen.option(nonEmptyStringGen)
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
 
   private def continentGen: Gen[Continent] =
