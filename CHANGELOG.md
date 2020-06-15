@@ -9,7 +9,7 @@
 
 ### Changed
 
-- Task lock expiration now consults previous status, unlocks tasks in any status [#5414](https://github.com/raster-foundry/raster-foundry/pull/5414)
+- Task lock expiration now consults previous status, unlocks tasks in any status, and preserves notes [#5414](https://github.com/raster-foundry/raster-foundry/pull/5414), [#5419](https://github.com/raster-foundry/raster-foundry/pull/5419)
 
 ### Deprecated
 

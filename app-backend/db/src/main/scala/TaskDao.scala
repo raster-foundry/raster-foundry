@@ -617,16 +617,37 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   private def regressTaskStatus(
       taskId: UUID,
       taskStatus: TaskStatus
-  ): ConnectionIO[TaskStatus] =
+  ): ConnectionIO[(TaskStatus, Option[NonEmptyString])] =
     taskStatus match {
+      // if it's not currently flagged, then it might have come from flagged, which means
+      // that two statuses ago it was flagged -- so the note is in the second most recent
+      // task action stamp
       case TaskStatus.LabelingInProgress | TaskStatus.ValidationInProgress =>
+        getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
+          val sorted = stamps
+            .sortBy(stamp => -stamp.timestamp.toInstant.getEpochSecond)
+          val previousStatus = sorted.headOption map { _.fromStatus } getOrElse {
+            TaskStatus.Unlabeled
+          }
+          val previousNote = if (previousStatus == TaskStatus.Flagged) {
+            sorted.drop(1).headOption flatMap { _.note }
+          } else {
+            None
+          }
+          (previousStatus, previousNote)
+        })
+      // if it's flagged currently, then the note is in the most recent task action stamp
+      case TaskStatus.Flagged =>
         getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
           stamps
             .sortBy(stamp => -stamp.timestamp.toInstant.getEpochSecond)
-            .headOption map { _.fromStatus } getOrElse { TaskStatus.Unlabeled }
+            .headOption map { stamp =>
+            (TaskStatus.Flagged, stamp.note)
+          } getOrElse { (TaskStatus.Flagged, None) }
         })
-
-      case status => status.pure[ConnectionIO]
+      // if a status is anything else (not flagged, not in progress), then it's safe to
+      // return it without a note
+      case status => (status, Option.empty[NonEmptyString]).pure[ConnectionIO]
     }
 
   def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
@@ -639,17 +660,18 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         )
         .list
       _ <- stuckTasks traverse { task =>
-        regressTaskStatus(task.id, task.status) flatMap { newStatus =>
-          val update =
-            Task.TaskFeatureCreate(
-              TaskPropertiesCreate(
-                newStatus,
-                task.annotationProjectId,
-                None
-              ),
-              task.geometry
-            )
-          updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
+        regressTaskStatus(task.id, task.status) flatMap {
+          case (newStatus, newNote) =>
+            val update =
+              Task.TaskFeatureCreate(
+                TaskPropertiesCreate(
+                  newStatus,
+                  task.annotationProjectId,
+                  newNote
+                ),
+                task.geometry
+              )
+            updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
         }
       }
     } yield stuckTasks.length
