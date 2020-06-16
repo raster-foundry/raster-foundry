@@ -1,1 +1,0 @@
-version in ThisBuild := "dev"
