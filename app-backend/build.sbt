@@ -50,7 +50,7 @@ lazy val sharedSettings = Seq(
   version := {
     // TODO: leave an explaination as to why this is here. e.g. Vagrant -> not
     // mounting .git -> separate sbt container for development
-    if(git.gitHeadCommit.value.isEmpty) "dev"
+    if (git.gitHeadCommit.value.isEmpty) "dev"
     else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
       git.gitDescribedVersion.value.get + "-SNAPSHOT"
     else
