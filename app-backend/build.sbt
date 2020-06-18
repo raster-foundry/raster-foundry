@@ -48,8 +48,6 @@ lazy val sharedSettings = Seq(
   // only appends the `-SNAPSHOT` suffix if there are uncommitted
   // changes in the workspace.
   version := {
-    // TODO: leave an explaination as to why this is here. e.g. Vagrant -> not
-    // mounting .git -> separate sbt container for development
     if (git.gitHeadCommit.value.isEmpty) "dev"
     else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
       git.gitDescribedVersion.value.get + "-SNAPSHOT"
