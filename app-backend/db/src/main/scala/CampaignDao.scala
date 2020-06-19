@@ -181,7 +181,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
 
   def getCloneOwners(id: UUID): ConnectionIO[List[UserThin]] =
     for {
-      campaigns <- query.filter(fr"parent_campaign_id = ${id}").list
+      campaigns <- query.filter(fr"parent_campaign_id = $id").list
       userIds = campaigns.map(_.owner)
       users <- UserDao.getUsersByIds(userIds)
       userThins = users.map(u => UserThin.fromUser(u))

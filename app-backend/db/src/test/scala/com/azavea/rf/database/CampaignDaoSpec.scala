@@ -507,7 +507,7 @@ class CampaignDaoSpec
             insertedCampaignAfterCopy <- CampaignDao.unsafeGetCampaignById(
               insertedCampaign.id
             )
-          } yield insertedCampaignAfterCopy
+          } yield insertedCampaign
 
           val originalCampaign = copyIO.transact(xa).unsafeRunSync
 
