@@ -303,4 +303,30 @@ trait CampaignRoutes
       }
     }
   }
+
+  def listCampaignCloneOwners(campaignId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Campaigns, Action.Clone, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        CampaignDao
+          .authorized(
+            user,
+            ObjectType.Campaign,
+            campaignId,
+            ActionType.Edit
+          )
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          CampaignDao
+            .getCloneOwners(campaignId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+    }
+  }
 }

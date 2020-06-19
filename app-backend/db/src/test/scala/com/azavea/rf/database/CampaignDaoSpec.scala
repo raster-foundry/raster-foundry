@@ -468,4 +468,61 @@ class CampaignDaoSpec
       )
     }
   }
+
+  test("get users who have campaign copies") {
+    check {
+      forAll(
+        (
+            userCreates: List[User.Create],
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            annotationProjectCreate: AnnotationProject.Create
+        ) => {
+          val copyIO = for {
+            parent <- UserDao.create(userCreate)
+            children <- userCreates traverse { u =>
+              UserDao.create(u)
+            }
+            insertedCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                parent
+              )
+            insertedProject <- AnnotationProjectDao
+              .insert(
+                annotationProjectCreate.copy(
+                  campaignId = Some(insertedCampaign.id),
+                  status = AnnotationProjectStatus.Waiting
+                ),
+                parent
+              )
+            _ <- AnnotationProjectDao.update(
+              insertedProject.toProject
+                .copy(status = AnnotationProjectStatus.Ready),
+              insertedProject.id
+            )
+            _ <- children traverse { child =>
+              CampaignDao.copyCampaign(insertedCampaign.id, child)
+            }
+            insertedCampaignAfterCopy <- CampaignDao.unsafeGetCampaignById(
+              insertedCampaign.id
+            )
+          } yield insertedCampaignAfterCopy
+
+          val originalCampaign = copyIO.transact(xa).unsafeRunSync
+
+          val cloneOwners = CampaignDao
+            .getCloneOwners(originalCampaign.id)
+            .transact(xa)
+            .unsafeRunSync
+
+          assert(
+            cloneOwners.length == userCreates.size,
+            "Returned number of clone owners matches the number of users created"
+          )
+          true
+        }
+      )
+    }
+  }
 }
