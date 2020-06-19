@@ -504,20 +504,13 @@ class CampaignDaoSpec
             _ <- children traverse { child =>
               CampaignDao.copyCampaign(insertedCampaign.id, child)
             }
-            insertedCampaignAfterCopy <- CampaignDao.unsafeGetCampaignById(
-              insertedCampaign.id
-            )
-          } yield insertedCampaign
+            cloneOwners <- CampaignDao.getCloneOwners(insertedCampaign.id)
+          } yield cloneOwners
 
-          val originalCampaign = copyIO.transact(xa).unsafeRunSync
-
-          val cloneOwners = CampaignDao
-            .getCloneOwners(originalCampaign.id)
-            .transact(xa)
-            .unsafeRunSync
+          val cloneOwners = copyIO.transact(xa).unsafeRunSync
 
           assert(
-            cloneOwners.length == userCreates.size,
+            cloneOwners.length == userCreates.length,
             "Returned number of clone owners matches the number of users created"
           )
           true
