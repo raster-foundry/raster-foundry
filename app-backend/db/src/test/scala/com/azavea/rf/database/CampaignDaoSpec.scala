@@ -475,8 +475,7 @@ class CampaignDaoSpec
         (
             userCreates: List[User.Create],
             userCreate: User.Create,
-            campaignCreate: Campaign.Create,
-            annotationProjectCreate: AnnotationProject.Create
+            campaignCreate: Campaign.Create
         ) => {
           val copyIO = for {
             parent <- UserDao.create(userCreate)
@@ -488,30 +487,24 @@ class CampaignDaoSpec
                 campaignCreate.copy(parentCampaignId = None),
                 parent
               )
-            insertedProject <- AnnotationProjectDao
-              .insert(
-                annotationProjectCreate.copy(
-                  campaignId = Some(insertedCampaign.id),
-                  status = AnnotationProjectStatus.Waiting
-                ),
-                parent
-              )
-            _ <- AnnotationProjectDao.update(
-              insertedProject.toProject
-                .copy(status = AnnotationProjectStatus.Ready),
-              insertedProject.id
-            )
             _ <- children traverse { child =>
               CampaignDao.copyCampaign(insertedCampaign.id, child)
             }
             cloneOwners <- CampaignDao.getCloneOwners(insertedCampaign.id)
           } yield cloneOwners
 
-          val cloneOwners = copyIO.transact(xa).unsafeRunSync
+          val owners = copyIO.transact(xa).unsafeRunSync
 
           assert(
-            cloneOwners.length == userCreates.length,
+            owners.length == userCreates.length,
             "Returned number of clone owners matches the number of users created"
+          )
+          assert(
+            userCreates
+              .map(u => owners.find(_.id == u.id))
+              .flatten
+              .length == userCreates.length,
+            "All users for whom clones were made are returned in the list of clone"
           )
           true
         }
