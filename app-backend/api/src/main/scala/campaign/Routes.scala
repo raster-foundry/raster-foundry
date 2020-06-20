@@ -54,22 +54,30 @@ trait CampaignRoutes
                 cloneCampaign(campaignId)
               }
             }
-          } ~ pathPrefix("permissions") {
-          pathEndOrSingleSlash {
-            get {
-              listCampaignPermissions(campaignId)
-            } ~
-              put {
-                replaceCampaignPermissions(campaignId)
-              } ~
-              post {
-                addCampaignPermission(campaignId)
-              } ~
-              delete {
-                deleteCampaignPermissions(campaignId)
+          } ~
+          pathPrefix("clone-owners") {
+            pathEndOrSingleSlash {
+              get {
+                listCampaignCloneOwners(campaignId)
               }
-          }
-        } ~
+            }
+          } ~
+          pathPrefix("permissions") {
+            pathEndOrSingleSlash {
+              get {
+                listCampaignPermissions(campaignId)
+              } ~
+                put {
+                  replaceCampaignPermissions(campaignId)
+                } ~
+                post {
+                  addCampaignPermission(campaignId)
+                } ~
+                delete {
+                  deleteCampaignPermissions(campaignId)
+                }
+            }
+          } ~
           pathPrefix("projects") {
             pathEndOrSingleSlash {
               get {
@@ -299,6 +307,32 @@ trait CampaignRoutes
                   .unsafeToFuture()
               }
             }
+        }
+      }
+    }
+  }
+
+  def listCampaignCloneOwners(campaignId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Campaigns, Action.Clone, None),
+      user
+    ) {
+      authorizeAuthResultAsync {
+        CampaignDao
+          .authorized(
+            user,
+            ObjectType.Campaign,
+            campaignId,
+            ActionType.Edit
+          )
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          CampaignDao
+            .getCloneOwners(campaignId)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
