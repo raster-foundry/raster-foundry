@@ -242,25 +242,55 @@ trait CampaignRoutes
           })
           .transact(xa)
           .unsafeToFuture
-        (for {
-          auth1 <- CampaignDao
-            .authorized(
-              user,
-              ObjectType.Campaign,
-              campaignId,
-              ActionType.View
-            )
-          auth2 <- CampaignDao.isActiveCampaign(campaignId)
-        } yield {
-          auth1.toBoolean && auth2
-        }).transact(xa).unsafeToFuture()
       } {
         entity(as[Campaign.Clone]) { campaignClone =>
           onSuccess(
-            CampaignDao
-              .copyCampaign(campaignId, user, Some(campaignClone.tags))
-              .transact(xa)
-              .unsafeToFuture
+            (campaignClone.grantAccessToParentCampaignOwner match {
+              case false =>
+                CampaignDao.copyCampaign(
+                  campaignId,
+                  user,
+                  Some(campaignClone.tags)
+                )
+              case true =>
+                for {
+                  copiedCampaign <- CampaignDao.copyCampaign(
+                    campaignId,
+                    user,
+                    Some(campaignClone.tags)
+                  )
+                  copiedProjects <- AnnotationProjectDao.listByCampaign(
+                    campaignId
+                  )
+                  originalCampaignO <- CampaignDao.getCampaignById(campaignId)
+                  originalCampaignOwnerO = originalCampaignO map { _.owner }
+                  _ <- CampaignDao.addPermission(
+                    copiedCampaign.id,
+                    ObjectAccessControlRule(
+                      SubjectType.User,
+                      originalCampaignOwnerO,
+                      ActionType.View
+                    )
+                  )
+                  _ <- copiedProjects traverse { project =>
+                    AnnotationProjectDao.addPermissionsMany(
+                      project.id,
+                      List(
+                        ObjectAccessControlRule(
+                          SubjectType.User,
+                          originalCampaignOwnerO,
+                          ActionType.View
+                        ),
+                        ObjectAccessControlRule(
+                          SubjectType.User,
+                          originalCampaignOwnerO,
+                          ActionType.Annotate
+                        )
+                      )
+                    )
+                  }
+                } yield copiedCampaign
+            }).transact(xa).unsafeToFuture
           ) { campaign =>
             complete((StatusCodes.Created, campaign))
           }
