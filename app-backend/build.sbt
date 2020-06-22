@@ -146,7 +146,7 @@ lazy val noPublishSettings = Seq(
 lazy val publishSettings = Seq(
   organization := "com.rasterfoundry",
   organizationName := "Raster Foundry",
-  organizationHomepage := Some(new URL("https://rasterfoundry.com/")),
+  organizationHomepage := Some(new URL("https://rasterfoundry.azavea.com/")),
   description := "A platform to find, combine and analyze earth imagery at any scale.",
 ) ++ sonatypeSettings ++ credentialSettings
 

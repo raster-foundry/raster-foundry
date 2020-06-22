@@ -78,7 +78,6 @@ services:
       - ./data/:/opt/data/
       - $HOME/.sbt:/root/.sbt
       - $HOME/.coursier:/root/.coursier
-      - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.12/
@@ -184,7 +183,6 @@ services:
       - ./data/:/opt/data/
       - $HOME/.sbt:/root/.sbt
       - $HOME/.coursier:/root/.coursier
-      - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/backsplash-server/target/scala-2.12/
@@ -218,7 +216,6 @@ services:
       - ./data/:/opt/data/
       - $HOME/.sbt:/root/.sbt
       - $HOME/.coursier:/root/.coursier
-      - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
