@@ -260,7 +260,7 @@ trait CampaignRoutes
                     Some(campaignClone.tags)
                   )
                   copiedProjects <- AnnotationProjectDao.listByCampaign(
-                    campaignId
+                    copiedCampaign.id
                   )
                   originalCampaignO <- CampaignDao.getCampaignById(campaignId)
                   originalCampaignOwnerO = originalCampaignO map { _.owner }

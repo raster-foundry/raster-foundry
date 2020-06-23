@@ -315,9 +315,10 @@ object UserDao extends Dao[User] with Sanitization {
 
   def createUserWithCampaign(
       userInfo: UserInfo,
-      userBulkCreate: UserBulkCreate
-  ): ConnectionIO[User] =
-    for {
+      userBulkCreate: UserBulkCreate,
+      parentUser: User
+  ): ConnectionIO[UserWithCampaign] = {
+    val userWithCampaignIO = for {
       user <- UserDao.create(
         User.Create(
           userInfo.id,
@@ -331,8 +332,50 @@ object UserDao extends Dao[User] with Sanitization {
         Some(userBulkCreate.platformId),
         Some(userBulkCreate.organizationId)
       )
-      _ <- userBulkCreate.campaignId traverse { campaignId =>
+      copiedCampaignO <- userBulkCreate.campaignId traverse { campaignId =>
         CampaignDao.copyCampaign(campaignId, user)
       }
-    } yield user
+    } yield UserWithCampaign(user, copiedCampaignO)
+
+    userBulkCreate.grantAccessToParentCampaignOwner match {
+      case false => userWithCampaignIO
+      case true =>
+        for {
+          userAndCampaign <- userWithCampaignIO
+          projectsO <- userAndCampaign.campaignO traverse { campaign =>
+            AnnotationProjectDao.listByCampaign(campaign.id)
+          }
+          _ <- userAndCampaign.campaignO traverse { campaign =>
+            CampaignDao.addPermission(
+              campaign.id,
+              ObjectAccessControlRule(
+                SubjectType.User,
+                Some(parentUser.id),
+                ActionType.View
+              )
+            )
+          }
+          _ <- projectsO traverse { projects =>
+            projects traverse { project =>
+              AnnotationProjectDao.addPermissionsMany(
+                project.id,
+                List(
+                  ObjectAccessControlRule(
+                    SubjectType.User,
+                    Some(parentUser.id),
+                    ActionType.View
+                  ),
+                  ObjectAccessControlRule(
+                    SubjectType.User,
+                    Some(parentUser.id),
+                    ActionType.Annotate
+                  )
+                )
+              )
+            }
+          }
+        } yield userAndCampaign
+    }
+  }
+
 }
