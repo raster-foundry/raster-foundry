@@ -468,4 +468,38 @@ object AnnotationProjectDao
 
   def listByCampaign(campaignId: UUID): ConnectionIO[List[AnnotationProject]] =
     query.filter(fr"campaign_id = $campaignId").list
+
+  def assignUsersToProjectsByCampaign(
+      campaignId: UUID,
+      usersO: Option[List[User]]
+  ): ConnectionIO[List[AnnotationProject]] =
+    for {
+      projects <- AnnotationProjectDao.listByCampaign(
+        campaignId
+      )
+      _ <- projects traverse { project =>
+        usersO traverse { users =>
+          val rules =
+            users.foldLeft(List[ObjectAccessControlRule]())(
+              (acc, user) =>
+                acc ++ List(
+                  ObjectAccessControlRule(
+                    SubjectType.User,
+                    Some(user.id),
+                    ActionType.View
+                  ),
+                  ObjectAccessControlRule(
+                    SubjectType.User,
+                    Some(user.id),
+                    ActionType.Annotate
+                  )
+              )
+            )
+          AnnotationProjectDao.addPermissionsMany(
+            project.id,
+            rules
+          )
+        }
+      }
+    } yield projects
 }

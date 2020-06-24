@@ -45,7 +45,8 @@ object Campaign {
   }
 
   final case class Clone(
-      tags: List[String] = List.empty
+      tags: List[String] = List.empty,
+      grantAccessToParentCampaignOwner: Boolean = false
   )
 
   object Clone {

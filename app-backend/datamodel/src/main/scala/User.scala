@@ -264,7 +264,9 @@ case class UserBulkCreate(
     peudoUserNameType: PseudoUsernameType,
     organizationId: UUID,
     platformId: UUID,
-    campaignId: Option[UUID] = None
+    campaignId: Option[UUID] = None,
+    grantAccessToParentCampaignOwner: Boolean = false,
+    grantAccessToChildrenCampaignOwner: Boolean = false
 )
 
 object UserBulkCreate {
@@ -276,3 +278,5 @@ case class UserInfo(
     email: String,
     name: String
 )
+
+case class UserWithCampaign(user: User, campaignO: Option[Campaign])
