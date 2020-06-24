@@ -3,9 +3,8 @@ package com.rasterfoundry
 import cats.effect._
 import com.amazonaws.services.s3.AmazonS3URI
 import com.colisweb.tracing.core.TracingContext
-import geotrellis.spark.store.http.util.HttpRangeReader
 import geotrellis.store.s3.util.S3RangeReader
-import geotrellis.util.{FileRangeReader, StreamingByteReader}
+import geotrellis.util.{FileRangeReader, HttpRangeReader, StreamingByteReader}
 import io.circe.KeyEncoder
 import org.apache.http.client.utils.URLEncodedUtils
 import org.http4s.Request
