@@ -28,7 +28,7 @@ node {
 
     env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
 
-    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME =~ /test\// || env.BRANCH_NAME =~ /hotfix\// ) {
+    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME =~ /test\// || env.BRANCH_NAME =~ /hotfix\//) {
         env.RF_DEPLOYMENT_BRANCH = 'develop'
         env.RF_DEPLOYMENT_ENVIRONMENT = "Staging"
 
@@ -48,11 +48,11 @@ node {
                           credentialsId: 'SONATYPE_PASSWORD',
                           variable: 'SONATYPE_PASSWORD'],
                           [$class: 'StringBinding',
-                          credentialsId: 'PGP_HEX_KEY',
-                          variable: 'PGP_HEX_KEY'],
+                          credentialsId: 'GPG_KEY',
+                          variable: 'GPG_KEY'],
                           [$class: 'StringBinding',
-                          credentialsId: 'PGP_PASSPHRASE',
-                          variable: 'PGP_PASSPHRASE']]) {
+                          credentialsId: 'GPG_KEY_ID',
+                          variable: 'GPG_KEY_ID']]) {
           wrap([$class: 'AnsiColorBuildWrapper']) {
             sh './scripts/cipublish'
           }

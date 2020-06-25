@@ -35,7 +35,7 @@ object PseudoUsernameService {
         s"${faker.superhero().prefix()} ${faker
           .superhero()
           .descriptor()} ${uuidSegOne} ${uuidSegTwo}"
-    }).replaceAll("\\s", "-")
+    }).replaceAll("\\s", "-").toLowerCase().capitalize
   }
 
   def createPseudoNames(

@@ -1142,7 +1142,10 @@ object Generators extends ArbitraryInstances {
     ).mapN(Campaign.Create.apply _)
 
   private def campaignCloneGen: Gen[Campaign.Clone] =
-    stringListGen.map(Campaign.Clone.apply _)
+    (
+      stringListGen,
+      arbitrary[Boolean]
+    ).mapN(Campaign.Clone.apply _)
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {

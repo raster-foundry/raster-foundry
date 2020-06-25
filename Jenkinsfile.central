@@ -44,21 +44,26 @@ node {
                         credentialsId: 'SONATYPE_PASSWORD',
                         variable: 'SONATYPE_PASSWORD'],
                         [$class: 'StringBinding',
-                        credentialsId: 'PGP_HEX_KEY',
-                        variable: 'PGP_HEX_KEY'],
+                        credentialsId: 'GPG_KEY',
+                        variable: 'GPG_KEY'],
                         [$class: 'StringBinding',
-                        credentialsId: 'PGP_PASSPHRASE',
-                        variable: 'PGP_PASSPHRASE']]) {
+                        credentialsId: 'GPG_KEY_ID',
+                        variable: 'GPG_KEY_ID']]) {
         wrap([$class: 'AnsiColorBuildWrapper']) {
           sh """#!/bin/bash
             docker-compose \
-               -f "docker-compose.test.yml" \
-               run --rm --no-deps \
-               -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
-               -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
-               -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
-               -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
-               build "gitSnapshots ;release release-version ${params.RELEASE_TAG} with-defaults"
+                -f "${DIR}/../docker-compose.test.yml" \
+                run --rm --no-deps --entrypoint "bash -c" \
+                -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
+                -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
+                -e GPG_KEY_ID="${GPG_KEY_ID}" \
+                build "
+                    gpg --keyserver keyserver.ubuntu.com \
+                        --recv-keys ${GPG_KEY_ID} &&
+                    echo ${GPG_KEY} | base64 -d >signing_key.asc &&
+                    gpg --import signing_key.asc &&
+                    ./sbt ";sonatypeOpen ${BUILD_NUMBER};publish;sonatypeRelease"
+                "
           """
         }
       }

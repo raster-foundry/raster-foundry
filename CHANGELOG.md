@@ -4,12 +4,7 @@
 
 ### Added
 
-- Enable sorting by `children_count` on `campaigns` table and `captured_at` on `annotation_projects` table [#5416](https://github.com/raster-foundry/raster-foundry/pull/5416)
-- Add description field to annotation label [#5420](https://github.com/raster-foundry/raster-foundry/pull/5420)
-
 ### Changed
-
-- Task lock expiration now consults previous status, unlocks tasks in any status, and preserves notes [#5414](https://github.com/raster-foundry/raster-foundry/pull/5414), [#5419](https://github.com/raster-foundry/raster-foundry/pull/5419)
 
 ### Deprecated
 
@@ -18,6 +13,19 @@
 ### Fixed
 
 ### Security
+
+## [1.42.0](https://github.com/raster-foundry/raster-foundry/compare/1.41.0...1.42.0)
+
+- Add endpoint for listing users who own a clone of a specified campaign [#5424](https://github.com/raster-foundry/raster-foundry/pull/5424)
+- Enable sorting by `children_count` on `campaigns` table and `captured_at` on `annotation_projects` table [#5416](https://github.com/raster-foundry/raster-foundry/pull/5416)
+- Add description field to annotation label [#5420](https://github.com/raster-foundry/raster-foundry/pull/5420)
+
+### Changed
+
+- Task lock expiration now consults previous status, unlocks tasks in any status, and preserves notes [#5414](https://github.com/raster-foundry/raster-foundry/pull/5414), [#5419](https://github.com/raster-foundry/raster-foundry/pull/5419)
+- Upgraded to GeoTrellis 3.4 [#5426](https://github.com/raster-foundry/raster-foundry/pull/5426)
+- Update campaign clone endpoint and user bulk create endpoint [#5425](https://github.com/raster-foundry/raster-foundry/pull/5425)
+- Upgrade to sbt-gpg and GnuPG 2+ [#5423](https://github.com/raster-foundry/raster-foundry/pull/5423)
 
 ## [1.41.0](https://github.com/raster-foundry/raster-foundry/compare/1.40.3...1.41.0)
 

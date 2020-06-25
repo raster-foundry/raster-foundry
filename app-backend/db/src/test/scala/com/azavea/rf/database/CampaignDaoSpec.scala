@@ -468,4 +468,47 @@ class CampaignDaoSpec
       )
     }
   }
+
+  test("get users who have campaign copies") {
+    check {
+      forAll(
+        (
+            userCreates: List[User.Create],
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create
+        ) => {
+          val copyIO = for {
+            parent <- UserDao.create(userCreate)
+            children <- userCreates traverse { u =>
+              UserDao.create(u)
+            }
+            insertedCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                parent
+              )
+            _ <- children traverse { child =>
+              CampaignDao.copyCampaign(insertedCampaign.id, child)
+            }
+            cloneOwners <- CampaignDao.getCloneOwners(insertedCampaign.id)
+          } yield cloneOwners
+
+          val owners = copyIO.transact(xa).unsafeRunSync
+
+          assert(
+            owners.length == userCreates.length,
+            "Returned number of clone owners matches the number of users created"
+          )
+          assert(
+            userCreates
+              .map(u => owners.find(_.id == u.id))
+              .flatten
+              .length == userCreates.length,
+            "All users for whom clones were made are returned in the list of clone"
+          )
+          true
+        }
+      )
+    }
+  }
 }

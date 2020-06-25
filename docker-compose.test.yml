@@ -73,7 +73,6 @@ services:
       - ./data/:/opt/data/
       - $HOME/.sbt:/root/.sbt
       - $HOME/.coursier:/root/.coursier
-      - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.12/
@@ -126,11 +125,9 @@ services:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./scratch/:/opt/raster-foundry/scratch/
       - ./.git:/opt/raster-foundry/.git
-      - ./.bintray:/root/.bintray
       - $HOME/.coursier:/root/.coursier
       - $HOME/.sbt:/root/.sbt
       - $HOME/.aws:/root/.aws:ro
-      - $HOME/.gnupg:/root/.gnupg:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
 
@@ -152,7 +149,6 @@ services:
       - ./data/:/opt/data/
       - $HOME/.sbt:/root/.sbt
       - $HOME/.coursier:/root/.coursier
-      - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
