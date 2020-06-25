@@ -13,6 +13,7 @@
 - Task lock expiration now consults previous status, unlocks tasks in any status, and preserves notes [#5414](https://github.com/raster-foundry/raster-foundry/pull/5414), [#5419](https://github.com/raster-foundry/raster-foundry/pull/5419)
 - Upgraded to GeoTrellis 3.4 [#5426](https://github.com/raster-foundry/raster-foundry/pull/5426)
 - Update campaign clone endpoint and user bulk create endpoint [#5425](https://github.com/raster-foundry/raster-foundry/pull/5425)
+- Upgrade to sbt-gpg and GnuPG 2+ [#5423](https://github.com/raster-foundry/raster-foundry/pull/5423)
 
 ### Deprecated
 
