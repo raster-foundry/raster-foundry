@@ -62,10 +62,6 @@ lazy val sharedSettings = Seq(
     "scalac-scapegoat-plugin"
   ),
   unusedCompileDependenciesFilter -= moduleFilter(
-    "org.apache.spark",
-    "spark-core"
-  ),
-  unusedCompileDependenciesFilter -= moduleFilter(
     "io.jaegertracing",
     "jaeger-client"
   ),
@@ -344,7 +340,6 @@ lazy val common = project
       Dependencies.rollbar,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.sparkCore,
       Dependencies.spireMath,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
@@ -487,7 +482,6 @@ lazy val batch = project
       Dependencies.scopt,
       Dependencies.shapeless,
       Dependencies.sourceCode,
-      Dependencies.sparkCore,
       Dependencies.spireMath,
       Dependencies.sttpAsyncBackend,
       Dependencies.sttpCatsBackend,
@@ -574,7 +568,6 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisS3,
       Dependencies.geotrellisServer,
-      Dependencies.geotrellisSpark,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisVector,
       Dependencies.http4sCore,
