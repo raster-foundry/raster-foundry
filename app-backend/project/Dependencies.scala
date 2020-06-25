@@ -40,7 +40,7 @@ object Version {
   val flyway = "6.0.8"
   val fs2 = "2.3.0"
   val fs2Cron = "0.2.2"
-  val geotrellis = "3.3.0"
+  val geotrellis = "3.4.0"
   val geotrellisServer = "4.1.0"
   val guava = "20.0"
   val hadoop = "2.8.4"
@@ -79,7 +79,6 @@ object Version {
   val scopt = "3.5.0"
   val slf4j = "1.7.25"
   val sourceCode = "0.2.1"
-  val spark = "2.4.2"
   val spatial4j = "0.7"
   val spire = "0.16.0"
   val spireMath = "0.13.0"
@@ -157,7 +156,6 @@ object Dependencies {
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea.geotrellis" %% "geotrellis-server-core" % Version.geotrellisServer
   val geotrellisServerStac = "com.azavea.geotrellis" %% "geotrellis-server-stac" % Version.geotrellisServer
-  val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val geotrellisStore = "org.locationtech.geotrellis" %% "geotrellis-store" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
   val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
@@ -211,8 +209,6 @@ object Dependencies {
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
   val slf4j = "org.slf4j" % "slf4j-api" % Version.slf4j
   val sourceCode = "com.lihaoyi" %% "sourcecode" % Version.sourceCode
-  val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
-  val sparkCore = "org.apache.spark" %% "spark-core" % Version.spark
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spire = "org.typelevel" %% "spire" % Version.spire
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath

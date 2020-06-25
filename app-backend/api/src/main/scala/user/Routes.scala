@@ -292,25 +292,57 @@ trait UserRoutes
               userBulkCreate.count,
               userBulkCreate.peudoUserNameType
             )
-            for {
-              userNames <- names traverse { name =>
+            val uwcsFuture = for {
+              userWithCampaigns <- names traverse { name =>
                 for {
                   auth0User <- Auth0Service
                     .createAnonymizedUser(name, managementToken)
-                  _ <- (auth0User.user_id traverse { userId =>
+                  userWithCampaign <- (auth0User.user_id traverse { userId =>
                     UserDao.createUserWithCampaign(
                       UserInfo(
                         userId,
                         s"$name@$auth0AnonymizedConnectionName.com",
                         name
                       ),
-                      userBulkCreate
+                      userBulkCreate,
+                      user
                     )
-
                   }).transact(xa).unsafeToFuture
-                } yield name
+                } yield userWithCampaign
               }
-            } yield userNames
+            } yield userWithCampaigns
+
+            userBulkCreate.grantAccessToChildrenCampaignOwner match {
+              case false =>
+                for {
+                  uwcs <- uwcsFuture
+                } yield
+                  uwcs traverse { uwc =>
+                    uwc.map(_.user.name)
+                  }
+              case true =>
+                for {
+                  uwcs <- uwcsFuture
+                  usersO = uwcs traverse { uwc =>
+                    uwc.map(_.user)
+                  }
+                  campaignsO = uwcs traverse { uwc =>
+                    uwc.flatMap(_.campaignO)
+                  }
+                  _ <- campaignsO traverse { campaigns =>
+                    campaigns traverse { campaign =>
+                      AnnotationProjectDao
+                        .assignUsersToProjectsByCampaign(campaign.id, usersO)
+                        .transact(xa)
+                        .unsafeToFuture()
+                    }
+                  }
+                } yield
+                  usersO map { users =>
+                    users map { _.name }
+                  }
+
+            }
           }
         }
       }

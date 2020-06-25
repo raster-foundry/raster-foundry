@@ -10,7 +10,7 @@ DIR="$(dirname "$0")"
 
 function usage() {
     echo -n \
-"Usage: $(basename "$0")
+        "Usage: $(basename "$0")
 
 Publish container images to Elastic Container Registry (ECR) and
 other artifacts to S3.
@@ -30,8 +30,8 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         if [[ -n "${AWS_ECR_ENDPOINT}" ]]; then
             echo "Building sbt container for migrations"
             GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-                      -f "${DIR}/../docker-compose.test.yml"\
-                      build app-migrations
+                -f "${DIR}/../docker-compose.test.yml" \
+                build app-migrations
 
             echo "Building JARs (application, backsplash)"
             docker-compose \
@@ -42,13 +42,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             echo "Building python lambda functions"
             rm -rf "${DIR}/../app-lambda/opt/"*
             docker-compose -f "${DIR}/../docker-compose.test.yml" \
-                           run --rm --no-deps lambda \
-                           pip install -t opt/ ./
+                run --rm --no-deps lambda \
+                pip install -t opt/ ./
             docker-compose -f "${DIR}/../docker-compose.test.yml" \
-                           run --rm --no-deps lambda \
-                           cp -r "/opt/raster-foundry/app-lambda/rflambda/" "/opt/raster-foundry/app-lambda/opt/"
+                run --rm --no-deps lambda \
+                cp -r "/opt/raster-foundry/app-lambda/rflambda/" "/opt/raster-foundry/app-lambda/opt/"
             pushd "${DIR}/../app-lambda/opt/"
-              zip -9 -r ../package.zip ./*
+            zip -9 -r ../package.zip ./*
             popd
 
             echo "Uploading python Lambda Function"
@@ -57,14 +57,14 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/package-${GIT_COMMIT}.zip"
             rm "${DIR}/../app-lambda/package.zip"
 
-	    echo "Generating typescript interface stubs from Scala datamodel"
-	    docker-compose -f docker-compose.test.yml \
-			   run --rm \
-			   panrec
-	    aws s3 cp --recursive \
-		"${DIR}/../stubs/" \
-		"s3://${RF_ARTIFACTS_BUCKET}/ts-stubs/${GIT_COMMIT}/"
-	    rm -r "${DIR}/../stubs"
+            echo "Generating typescript interface stubs from Scala datamodel"
+            docker-compose -f docker-compose.test.yml \
+                run --rm \
+                panrec
+            aws s3 cp --recursive \
+                "${DIR}/../stubs/" \
+                "s3://${RF_ARTIFACTS_BUCKET}/ts-stubs/${GIT_COMMIT}/"
+            rm -r "${DIR}/../stubs"
 
             # Build publishable sbt projects as SNAPSHOT artifacts and
             # publish to Sonatype OSSRH (Snapshot Repository).
@@ -72,38 +72,43 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 echo "Publishing SNAPSHOT artifacts to Sonatype OSSRH (Snapshot Repository)"
 
                 docker-compose \
-                   -f "${DIR}/../docker-compose.test.yml" \
-                   run --rm --no-deps \
-                   -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
-                   -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
-                   -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
-                   -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
-                   build gitSnapshots publishSigned
+                    -f "${DIR}/../docker-compose.test.yml" \
+                    run --rm --no-deps --entrypoint "bash -c" \
+                    -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
+                    -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
+                    -e GPG_KEY_ID="${GPG_KEY_ID}" \
+                    build "
+                        gpg --keyserver keyserver.ubuntu.com \
+                            --recv-keys ${GPG_KEY_ID} &&
+                        echo ${GPG_KEY} | base64 -d >signing_key.asc &&
+                        gpg --import signing_key.asc &&
+                        ./sbt publish
+                    "
             fi
 
             echo "Building container images"
             GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-                      -f "${DIR}/../docker-compose.yml" \
-                      -f "${DIR}/../docker-compose.test.yml"\
-                      build nginx-api api-server nginx-backsplash backsplash
+                -f "${DIR}/../docker-compose.yml" \
+                -f "${DIR}/../docker-compose.test.yml" \
+                build nginx-api api-server nginx-backsplash backsplash
 
             # Evaluate the return value of the get-login subcommand, which
             # is a docker login command with temporarily ECR credentials.
             eval "$(aws ecr get-login --no-include-email)"
 
             docker tag "raster-foundry-nginx-api:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
+                "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
             docker tag "raster-foundry-api-server:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
+                "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker tag "raster-foundry-batch:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
+                "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
             docker tag "raster-foundry-app-migrations:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
+                "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
             docker tag "raster-foundry-nginx-backsplash:${GIT_COMMIT}" \
-                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-backsplash:${GIT_COMMIT}"
+                "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-backsplash:${GIT_COMMIT}"
             docker tag "raster-foundry-backsplash:${GIT_COMMIT}" \
-                    "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"
+                "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
 

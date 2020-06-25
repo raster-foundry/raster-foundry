@@ -216,3 +216,4 @@ Path,Domain:Action,Verb
 /api/campaigns/{campaignId}/permissions,campaigns:share,post
 /api/campaigns/{campaignId}/permissions,campaigns:share,delete
 /api/campaigns/{campaignId}/clone,campaigns:clone,post
+/api/campaigns/{campaignId}/clone-owners,campaigns:clone,get

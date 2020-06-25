@@ -83,14 +83,14 @@ object Generators extends ArbitraryInstances {
     Gen.oneOf(Visibility.Public, Visibility.Organization, Visibility.Private)
 
   private def taskStatusGen: Gen[TaskStatus] =
-    Gen.oneOf(
-      TaskStatus.Unlabeled,
-      TaskStatus.LabelingInProgress,
-      TaskStatus.Labeled,
-      TaskStatus.ValidationInProgress,
-      TaskStatus.Validated,
-      TaskStatus.Flagged,
-      TaskStatus.Invalid
+    Gen.frequency(
+      (1, TaskStatus.Unlabeled),
+      (1, TaskStatus.LabelingInProgress),
+      (1, TaskStatus.Labeled),
+      (1, TaskStatus.ValidationInProgress),
+      (1, TaskStatus.Validated),
+      (6, TaskStatus.Flagged),
+      (1, TaskStatus.Invalid)
     )
 
   private def userVisibilityGen: Gen[UserVisibility] =
@@ -1096,7 +1096,8 @@ object Generators extends ArbitraryInstances {
       projectedMultiPolygonGen3857 map { (geom: Projected[MultiPolygon]) =>
         Option(geom)
       },
-      Gen.const(Nil)
+      Gen.const(Nil),
+      Gen.option(nonEmptyStringGen)
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
 
   private def continentGen: Gen[Continent] =
@@ -1124,7 +1125,10 @@ object Generators extends ArbitraryInstances {
     ).mapN(Campaign.Create.apply _)
 
   private def campaignCloneGen: Gen[Campaign.Clone] =
-    stringListGen.map(Campaign.Clone.apply _)
+    (
+      stringListGen,
+      arbitrary[Boolean]
+    ).mapN(Campaign.Clone.apply _)
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
@@ -1327,6 +1331,10 @@ object Generators extends ArbitraryInstances {
         h <- arbitrary[T]
         t <- arbitrary[List[T]]
       } yield { NEL(h, t) }
+    }
+
+    implicit def arbTaskStatus: Arbitrary[TaskStatus] = Arbitrary {
+      taskStatusGen
     }
 
     implicit def arbTaskFeatureCreate: Arbitrary[Task.TaskFeatureCreate] =

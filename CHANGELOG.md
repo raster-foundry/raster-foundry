@@ -14,6 +14,19 @@
 
 ### Security
 
+## [1.42.0](https://github.com/raster-foundry/raster-foundry/compare/1.41.0...1.42.0)
+
+- Add endpoint for listing users who own a clone of a specified campaign [#5424](https://github.com/raster-foundry/raster-foundry/pull/5424)
+- Enable sorting by `children_count` on `campaigns` table and `captured_at` on `annotation_projects` table [#5416](https://github.com/raster-foundry/raster-foundry/pull/5416)
+- Add description field to annotation label [#5420](https://github.com/raster-foundry/raster-foundry/pull/5420)
+
+### Changed
+
+- Task lock expiration now consults previous status, unlocks tasks in any status, and preserves notes [#5414](https://github.com/raster-foundry/raster-foundry/pull/5414), [#5419](https://github.com/raster-foundry/raster-foundry/pull/5419)
+- Upgraded to GeoTrellis 3.4 [#5426](https://github.com/raster-foundry/raster-foundry/pull/5426)
+- Update campaign clone endpoint and user bulk create endpoint [#5425](https://github.com/raster-foundry/raster-foundry/pull/5425)
+- Upgrade to sbt-gpg and GnuPG 2+ [#5423](https://github.com/raster-foundry/raster-foundry/pull/5423)
+
 ## [1.41.0](https://github.com/raster-foundry/raster-foundry/compare/1.40.3...1.41.0)
 
 ### Added
@@ -26,6 +39,7 @@
 - Add image quality to tile layers [#5409](https://github.com/raster-foundry/raster-foundry/pull/5409)
 - Add campaign children count and status flag [#5412](https://github.com/raster-foundry/raster-foundry/pull/5412)
 - Add campaign clone endpoint, add tags to campaigns table [#5413](https://github.com/raster-foundry/raster-foundry/pull/5413)
+- Enable archiving campaigns [#5415](https://github.com/raster-foundry/raster-foundry/pull/5415)
 
 ### Changed
 

@@ -27,19 +27,27 @@ trait CampaignProjectRoutes
       ScopedAction(Domain.AnnotationProjects, Action.Read, None),
       user
     ) {
-      (withPagination & annotationProjectQueryParameters) {
-        (page, annotationProjectQP) =>
-          complete {
-            AnnotationProjectDao
-              .listProjects(
-                page,
-                annotationProjectQP.copy(campaignId = Some(campaignId)),
-                user
-              )
-              .transact(xa)
-              .unsafeToFuture
-          }
+      authorizeAsync {
+        CampaignDao
+          .isActiveCampaign(campaignId)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        (withPagination & annotationProjectQueryParameters) {
+          (page, annotationProjectQP) =>
+            complete {
+              AnnotationProjectDao
+                .listProjects(
+                  page,
+                  annotationProjectQP.copy(campaignId = Some(campaignId)),
+                  user
+                )
+                .transact(xa)
+                .unsafeToFuture
+            }
+        }
       }
+
     }
   }
 }

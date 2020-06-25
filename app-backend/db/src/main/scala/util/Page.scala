@@ -21,16 +21,18 @@ object Page {
       // the COALESCE of these two columns is indexed already
       case "acquisitionDatetime" =>
         Some("COALESCE(acquisition_date, created_at)")
-      case "sunAzimuth"   => Some("sun_azimuth")
-      case "sunElevation" => Some("sun_elevation")
-      case "cloudCover"   => Some("cloud_cover")
-      case "createdAt"    => Some("created_at")
-      case "modifiedAt"   => Some("modified_at")
-      case "title"        => Some("title")
-      case "id"           => Some("id")
-      case "role"         => Some("role")
-      case "visibility"   => Some("visibility")
-      case _              => None
+      case "sunAzimuth"    => Some("sun_azimuth")
+      case "sunElevation"  => Some("sun_elevation")
+      case "cloudCover"    => Some("cloud_cover")
+      case "createdAt"     => Some("created_at")
+      case "modifiedAt"    => Some("modified_at")
+      case "title"         => Some("title")
+      case "id"            => Some("id")
+      case "role"          => Some("role")
+      case "visibility"    => Some("visibility")
+      case "childrenCount" => Some("children_count")
+      case "capturedAt"    => Some("captured_at")
+      case _               => None
     }
   }
 

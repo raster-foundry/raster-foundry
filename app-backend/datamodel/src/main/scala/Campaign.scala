@@ -20,7 +20,8 @@ final case class Campaign(
     continent: Option[Continent] = None,
     tags: List[String] = List.empty,
     childrenCount: Int,
-    projectStatuses: Map[String, Int]
+    projectStatuses: Map[String, Int],
+    isActive: Boolean
 )
 
 object Campaign {
@@ -44,7 +45,8 @@ object Campaign {
   }
 
   final case class Clone(
-      tags: List[String] = List.empty
+      tags: List[String] = List.empty,
+      grantAccessToParentCampaignOwner: Boolean = false
   )
 
   object Clone {
