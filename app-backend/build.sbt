@@ -1,21 +1,10 @@
 import xerial.sbt.Sonatype._
-import ReleaseTransformations._
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
-
-addCommandAlias(
-  "gitSnapshots",
-  ";set version in ThisBuild := git.gitDescribedVersion.value.get + \"-SNAPSHOT\""
-)
 
 addCommandAlias(
   "fix",
   ";scalafix;scalafmt;scalafmtSbt"
 )
-
-git.gitTagToVersionNumber in ThisBuild := { tag: String =>
-  if (tag matches "[0-9]+\\..*") Some(tag)
-  else None
-}
 
 scalafixDependencies in ThisBuild ++= Seq(
   "com.nequissimus" %% "sort-imports" % "0.3.2",
@@ -55,6 +44,16 @@ scalaVersion in ThisBuild := Version.scala
   * Shared settings across all subprojects
   */
 lazy val sharedSettings = Seq(
+  // We are overriding the default behavior of sbt-git which, by default,
+  // only appends the `-SNAPSHOT` suffix if there are uncommitted
+  // changes in the workspace.
+  version := {
+    if (git.gitHeadCommit.value.isEmpty) "dev"
+    else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
+      git.gitDescribedVersion.value.get + "-SNAPSHOT"
+    else
+      git.gitDescribedVersion.value.get
+  },
   scapegoatVersion in ThisBuild := "1.3.8",
   scalaVersion in ThisBuild := Version.scala,
   unusedCompileDependenciesFilter -= moduleFilter(
@@ -141,13 +140,14 @@ lazy val noPublishSettings = Seq(
 )
 
 lazy val publishSettings = Seq(
-  // Add the default sonatype repository setting
-  publishTo := sonatypePublishTo.value,
-  publishMavenStyle := true,
   organization := "com.rasterfoundry",
   organizationName := "Raster Foundry",
-  organizationHomepage := Some(new URL("https://www.rasterfoundry.com")),
+  organizationHomepage := Some(new URL("https://rasterfoundry.azavea.com/")),
   description := "A platform to find, combine and analyze earth imagery at any scale.",
+) ++ sonatypeSettings ++ credentialSettings
+
+lazy val sonatypeSettings = Seq(
+  publishMavenStyle := true,
   sonatypeProfileName := "com.rasterfoundry",
   sonatypeProjectHosting := Some(
     GitHubHosting(
@@ -161,37 +161,28 @@ lazy val publishSettings = Seq(
       id = "azavea",
       name = "Azavea Inc.",
       email = "systems@azavea.com",
-      url = url("https://www.azavea.com")
+      url = url("https://azavea.com/")
     )
   ),
   licenses := Seq(
     "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")
   ),
-  pgpPassphrase := Some(
-    System.getenv().getOrDefault("PGP_PASSPHRASE", "").toCharArray
-  ),
-  pgpSecretRing := file("/root/.gnupg/secring.gpg"),
-  usePgpKeyHex(System.getenv().getOrDefault("PGP_HEX_KEY", "0")),
-  releaseProcess := Seq[ReleaseStep](
-    inquireVersions,
-    setReleaseVersion,
-    releaseStepCommand("publishSigned"),
-    releaseStepCommand("sonatypeReleaseAll")
-  )
-) ++ credentialsSettings
+  publishTo := sonatypePublishTo.value
+)
 
-lazy val credentialsSettings = Seq(
-  // http://web.archive.org/web/20170923125655/http://www.cakesolutions.net/teamblogs/publishing-artefacts-to-oss-sonatype-nexus-using-sbt-and-travis-ci
-  credentials ++= (for {
-    username <- Option(System.getenv().get("SONATYPE_USERNAME"))
-    password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
-  } yield
-    Credentials(
-      "Sonatype Nexus Repository Manager",
-      "oss.sonatype.org",
-      username,
-      password
-    )).toSeq
+lazy val credentialSettings = Seq(
+  credentials += Credentials(
+    "GnuPG Key ID",
+    "gpg",
+    System.getenv().get("GPG_KEY_ID"),
+    "ignored"
+  ),
+  credentials += Credentials(
+    "Sonatype Nexus Repository Manager",
+    "oss.sonatype.org",
+    System.getenv().get("SONATYPE_USERNAME"),
+    System.getenv().get("SONATYPE_PASSWORD")
+  )
 )
 
 lazy val root = project
