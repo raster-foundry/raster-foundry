@@ -15,6 +15,21 @@ cancelable in Global := true
 
 onChangedBuildSource := ReloadOnSourceChanges
 
+scapegoatVersion in ThisBuild := "1.3.8"
+
+scalaVersion in ThisBuild := Version.scala
+
+// We are overriding the default behavior of sbt-git which, by default,
+// only appends the `-SNAPSHOT` suffix if there are uncommitted
+// changes in the workspace.
+version in ThisBuild := {
+  if (git.gitHeadCommit.value.isEmpty) "dev"
+  else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
+    git.gitDescribedVersion.value.get + "-SNAPSHOT"
+  else
+    git.gitDescribedVersion.value.get
+}
+
 val scalaOptions = Seq(
   "-deprecation",
   "-unchecked",
@@ -38,24 +53,10 @@ val scalaOptions = Seq(
   "100"
 )
 
-scalaVersion in ThisBuild := Version.scala
-
 /**
   * Shared settings across all subprojects
   */
 lazy val sharedSettings = Seq(
-  // We are overriding the default behavior of sbt-git which, by default,
-  // only appends the `-SNAPSHOT` suffix if there are uncommitted
-  // changes in the workspace.
-  version := {
-    if (git.gitHeadCommit.value.isEmpty) "dev"
-    else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
-      git.gitDescribedVersion.value.get + "-SNAPSHOT"
-    else
-      git.gitDescribedVersion.value.get
-  },
-  scapegoatVersion in ThisBuild := "1.3.8",
-  scalaVersion in ThisBuild := Version.scala,
   unusedCompileDependenciesFilter -= moduleFilter(
     "com.sksamuel.scapegoat",
     "scalac-scapegoat-plugin"
