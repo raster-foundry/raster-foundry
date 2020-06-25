@@ -93,6 +93,12 @@ object Generators extends ArbitraryInstances {
       (1, TaskStatus.Invalid)
     )
 
+  private def taskTypeGen: Gen[TaskType] =
+    Gen.frequency(
+      (1, TaskType.Label),
+      (1, TaskType.Review)
+    )
+
   private def userVisibilityGen: Gen[UserVisibility] =
     Gen.oneOf(UserVisibility.Public, UserVisibility.Private)
 
@@ -976,11 +982,22 @@ object Generators extends ArbitraryInstances {
       } else {
         Gen.const(None)
       }
+      taskType <- Gen.oneOf(
+        Gen.const(None),
+        taskTypeGen map { Some(_) }
+      )
+      reviews <- Gen.oneOf(
+        Gen.const(None),
+        Gen.const(().asJson) map { Some(_) }
+      )
     } yield {
       Task.TaskPropertiesCreate(
         status,
         annotationProjectId,
-        note
+        note,
+        taskType,
+        None,
+        reviews
       )
     }
 
@@ -1332,6 +1349,10 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbTaskStatus: Arbitrary[TaskStatus] = Arbitrary {
       taskStatusGen
+    }
+
+    implicit def arbTaskType: Arbitrary[TaskType] = Arbitrary {
+      taskTypeGen
     }
 
     implicit def arbTaskFeatureCreate: Arbitrary[Task.TaskFeatureCreate] =

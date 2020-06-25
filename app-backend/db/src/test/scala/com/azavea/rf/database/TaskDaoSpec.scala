@@ -399,6 +399,14 @@ class TaskDaoSpec
               taskCountAfterDropAll == Some(0),
               "Task delete all should update task status summary in annotation project"
             )
+            assert(
+              updateResult.get.properties.taskType == taskFeatureCreate.properties.taskType
+                .getOrElse(
+                  taskFeaturesCreate.features.head.properties.taskType
+                    .getOrElse(TaskType.Label)
+                ),
+              "taskType is updated correctly -- and so other fields should be too"
+            )
             deleteResult should be(1)
             true
           }
@@ -1419,6 +1427,78 @@ class TaskDaoSpec
               "Random task 2 comes from the first project's tasks"
             )
             assert(randomTask3.isEmpty, "Task status filters are respected")
+
+            true
+          }
+      }
+    }
+  }
+  test("listing some children of a task") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            annotationProjectCreate: AnnotationProject.Create
+        ) =>
+          {
+            val connIO =
+              for {
+                (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                  userCreate,
+                  orgCreate,
+                  platform,
+                  projectCreate
+                )
+                dbAnnotationProj <- AnnotationProjectDao
+                  .insert(
+                    annotationProjectCreate.copy(
+                      projectId = Some(dbProject.id)
+                    ),
+                    dbUser
+                  )
+                tasks <- TaskDao.insertTasks(
+                  fixupTaskFeaturesCollection(
+                    taskFeaturesCreate,
+                    dbAnnotationProj
+                  ),
+                  dbUser
+                )
+                _ <- tasks.features.tail traverse { f =>
+                  TaskDao.updateTask(
+                    f.id,
+                    Task.TaskFeatureCreate(
+                      f.properties.toCreate
+                        .copy(parentTaskId = Some(tasks.features.head.id)),
+                      f.geometry,
+                      "Feature"
+                    ),
+                    dbUser
+                  )
+                }
+                children <- TaskDao.children(
+                  tasks.features.head.properties.id,
+                  PageRequest(0, 10, Map.empty)
+                )
+                parents <- TaskDao.listTasks(
+                  TaskQueryParameters(),
+                  dbAnnotationProj.id,
+                  PageRequest(0, 10, Map.empty)
+                )
+              } yield { (parents, children) }
+
+            val (parents, children) = connIO.transact(xa).unsafeRunSync
+            assert(
+              parents.count == 1,
+              "Count of parents should be correct"
+            )
+            assert(
+              children.count == taskFeaturesCreate.features.length - 1,
+              "Count of children should be correct"
+            )
 
             true
           }
