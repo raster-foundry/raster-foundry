@@ -146,9 +146,15 @@ trait AnnotationProjectTaskRoutes
             StatusCodes.Created,
             TaskDao
               .insertTasksByGrid(
-                Task.TaskPropertiesCreate(TaskStatus.Unlabeled,
-                                          projectId,
-                                          None),
+                Task
+                  .TaskPropertiesCreate(
+                    TaskStatus.Unlabeled,
+                    projectId,
+                    None,
+                    None,
+                    None,
+                    None
+                  ),
                 tgf,
                 user
               )
@@ -415,4 +421,31 @@ trait AnnotationProjectTaskRoutes
         }
       }
     }
+
+  def children(projectId: UUID, taskId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+      user
+    ) {
+      {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          withPagination { page =>
+            complete {
+              TaskDao.children(taskId, page).transact(xa).unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+  }
 }

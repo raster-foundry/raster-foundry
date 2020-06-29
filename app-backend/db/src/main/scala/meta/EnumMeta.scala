@@ -113,4 +113,11 @@ trait EnumMeta {
       Continent.fromString,
       _.repr
     )
+
+  implicit val taskTypeMeta: Meta[TaskType] =
+    pgEnumString(
+      "task_type",
+      TaskType.fromString,
+      _.repr
+    )
 }

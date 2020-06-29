@@ -9,7 +9,12 @@ import com.rasterfoundry.database.{
   TaskDao,
   UserDao
 }
-import com.rasterfoundry.datamodel.{AnnotationProjectStatus, Task, TaskStatus}
+import com.rasterfoundry.datamodel.{
+  AnnotationProjectStatus,
+  Task,
+  TaskStatus,
+  TaskType
+}
 import com.rasterfoundry.notification.intercom.Model._
 import com.rasterfoundry.notification.intercom.{
   IntercomNotifier,
@@ -63,6 +68,9 @@ class CreateTaskGrid(
       taskProperties = Task.TaskPropertiesCreate(
         TaskStatus.Unlabeled,
         annotationProject.id,
+        None,
+        Some(TaskType.Label),
+        None,
         None
       )
       _ <- OptionT.liftF {

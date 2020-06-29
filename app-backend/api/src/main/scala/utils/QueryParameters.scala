@@ -44,6 +44,11 @@ trait QueryParameterDeserializers {
       Continent.fromString(s)
     }
 
+  implicit val deserializerTaskType: Unmarshaller[String, TaskType] =
+    Unmarshaller.strict[String, TaskType] { s =>
+      TaskType.fromString(s)
+    }
+
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
@@ -182,7 +187,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionEndTime.as(deserializerTimestamp).?,
       'actionMinCount.as[Int].?,
       'actionMaxCount.as[Int].?,
-      'format.as[String].?
+      'format.as[String].?,
+      'taskType.as(deserializerTaskType).?
     ).as(TaskQueryParameters.apply _)
 
   def userTaskActivityParameters =

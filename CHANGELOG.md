@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Add support for task children [#5427](https://github.com/raster-foundry/raster-foundry/pull/5427)
 
 ### Changed
 
