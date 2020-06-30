@@ -7,7 +7,7 @@ object HealthCheck extends LazyLogging {
   val name = "healthcheck"
 
   def run(): Unit = {
-    logger.info("Batch containers and he batch jar are friends")
+    logger.info("Batch containers and the batch jar are friends")
   }
 
   def main(args: Array[String]): Unit = {
