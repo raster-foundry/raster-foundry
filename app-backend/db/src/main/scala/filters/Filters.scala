@@ -178,11 +178,15 @@ object Filters {
 
   def taskQP(taskQP: TaskQueryParameters)(
       implicit putTaskStatus: Put[TaskStatus],
+      putTaskType: Put[TaskType],
       putGeom: Put[Projected[Polygon]]
   ): List[Option[Fragment]] =
     List(
       taskQP.status map { qp =>
         fr"status = $qp "
+      },
+      taskQP.taskType map { qp =>
+        fr"task_type = $qp "
       },
       taskQP.locked map {
         case true  => fr"locked_by IS NOT NULL"

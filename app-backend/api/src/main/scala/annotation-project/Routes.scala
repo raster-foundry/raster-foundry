@@ -130,7 +130,13 @@ trait AnnotationProjectRoutes
                           deleteTaskLabels(projectId, taskId)
                         }
                     }
+                  } ~ pathPrefix("children") {
+                  pathEndOrSingleSlash {
+                    get {
+                      children(projectId, taskId)
+                    }
                   }
+                }
               }
           } ~ pathPrefix("actions") {
           pathEndOrSingleSlash {

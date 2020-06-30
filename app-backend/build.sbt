@@ -130,7 +130,8 @@ lazy val sharedSettings = Seq(
     "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
   ),
   addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
-  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
+  test in assembly := {}
 ) ++ publishSettings
 
 lazy val noPublishSettings = Seq(
@@ -216,7 +217,6 @@ lazy val apiSettings = sharedSettings ++ Seq(
   connectInput in run := true,
   cancelable in Global := true,
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
-  test in assembly := {}
 )
 
 lazy val apiDependencies = Seq(
@@ -272,6 +272,9 @@ lazy val api = project
   .settings({
     libraryDependencies ++= apiDependencies ++ loggingDependencies
   })
+  .settings(
+    assemblyJarName in assembly := "api-assembly.jar"
+  )
 
 lazy val apiIntegrationTest = project
   .in(file("api-it"))
@@ -374,6 +377,7 @@ lazy val datamodel = project
 lazy val db = project
   .in(file("db"))
   .dependsOn(common % "compile->compile;test->test", notification)
+  .settings(name := "database")
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
@@ -423,6 +427,7 @@ lazy val db = project
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
+  .settings(testOptions in Test += Tests.Argument("-oD"))
 
 /**
   * Batch Settings
@@ -504,6 +509,7 @@ lazy val batch = project
         .inAll
     )
   )
+  .settings(assemblyJarName in assembly := "batch-assembly.jar")
 
 /**
   * Akkautil Settings
@@ -685,7 +691,6 @@ lazy val backsplashServer =
     })
     .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
     .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
-    .settings(test in assembly := {})
 
 /**
   * http4s Utility project

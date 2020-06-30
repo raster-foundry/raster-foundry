@@ -14,6 +14,7 @@ import doobie.postgres.implicits._
 import doobie.refined.implicits._
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.{Geometry, Projected}
+import io.circe.syntax._
 import shapeless._
 
 import scala.concurrent.duration._
@@ -34,7 +35,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     "locked_by",
     "locked_on",
     "geometry",
-    "annotation_project_id"
+    "annotation_project_id",
+    "task_type",
+    "parent_task_id",
+    "reviews"
   )
 
   type MaybeEmptyUnionedGeomExtent =
@@ -48,39 +52,36 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       "tasks left join task_actions on tasks.id = task_actions.task_id"
     )
 
-  val cols =
-    fr"""
-     SELECT
-      id,
-      created_at,
-      created_by,
-      modified_at,
-      owner,
-      status,
-      locked_by,
-      locked_on,
-      geometry,
-      annotation_project_id
-    FROM
-    """
-
   val selectF: Fragment =
-    cols ++ tableF
+    fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ tableF
 
   val listF: Fragment =
-    cols ++ joinTableF
+    fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ joinTableF
 
   val insertF: Fragment =
     fr"INSERT INTO " ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")"
 
-  def updateF(taskId: UUID, update: Task.TaskFeatureCreate): Fragment =
-    fr"UPDATE " ++ tableF ++ fr"""SET
+  def updateF(taskId: UUID, update: Task.TaskFeatureCreate): Fragment = {
+    val taskTypeF = update.properties.taskType match {
+      case Some(taskType) => fr"task_type = ${taskType},"
+      case None           => Fragment.empty
+    }
+    val reviewsF = update.properties.reviews match {
+      case Some(reviews) => fr"reviews = ${reviews},"
+      case None          => Fragment.empty
+    }
+    val restF = fr"""
       status = ${update.properties.status},
       geometry = ${update.geometry},
-      annotation_project_id = ${update.properties.annotationProjectId}
+      annotation_project_id = ${update.properties.annotationProjectId},
+      parent_task_id = ${update.properties.parentTaskId}
+    """
+
+    fr"UPDATE " ++ tableF ++ fr"SET" ++ taskTypeF ++ reviewsF ++ restF ++ fr"""
     WHERE
       id = $taskId
     """;
+  }
 
   def setLockF(taskId: UUID, user: User): Fragment =
     fr"UPDATE " ++ tableF ++ fr"""SET
@@ -179,6 +180,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       )
       .filter(queryParams)
       .filter(fr"annotation_project_id = $annotationProjectId")
+      .filter(fr"parent_task_id IS NULL")
 
   def listTasks(
       queryParams: TaskQueryParameters,
@@ -202,6 +204,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           query
             .filter(queryParams)
             .filter(fr"annotation_project_id = $annotationProjectId")
+            .filter(fr"parent_task_id IS NULL")
             .page(pageRequest)
       }
       withActions <- paginatedResponse.results.toList traverse { task =>
@@ -223,11 +226,13 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       tfc: Task.TaskFeatureCreate,
       user: User
   ): Fragment = {
+    val t = tfc.properties.taskType.getOrElse(TaskType.fromString("LABEL"))
+    val r = tfc.properties.reviews.getOrElse("{}".asJson)
     fr"""(
         ${UUID.randomUUID}, ${Timestamp.from(Instant.now)}, ${user.id}, ${Timestamp
       .from(Instant.now)},
         ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
-        ${tfc.properties.annotationProjectId}
+        ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r}::jsonb
     )"""
   }
 
@@ -291,7 +296,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           null,
           null,
           cell,
-          ${taskProperties.annotationProjectId}
+          ${taskProperties.annotationProjectId},
+          ${TaskType.Label.toString()}::task_type,
+          null,
+          '{}'::jsonb
         FROM (
           SELECT (
             ST_Dump(
@@ -559,10 +567,13 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                 None,
                 List(),
                 annotationProjectId,
+                None,
+                TaskType.Label,
+                None,
+                "{}".asJson
                 // since this is a fake task feature that exists I think for the purpose of
                 // providing a geojson interface over the task status geom summary,
                 // it's fine to pretend that the note is always None
-                None
               ),
               geomWithStatus.geometry
             )
@@ -608,9 +619,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
            uuid_generate_v4(), now(), ${user.id}, now(), ${user.id},
-           'UNLABELED', null, null, geometry, ${toProject}
+           'UNLABELED', null, null, geometry, ${toProject}, task_type,
+           null, reviews
            FROM """ ++ tableF ++ fr"""
-           WHERE annotation_project_id = ${fromProject}
+           WHERE annotation_project_id = ${fromProject} AND parent_task_id IS NULL
       """).update.run
   }
 
@@ -667,7 +679,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                 TaskPropertiesCreate(
                   newStatus,
                   task.annotationProjectId,
-                  newNote
+                  newNote,
+                  Some(task.taskType),
+                  task.parentTaskId,
+                  Some(task.reviews)
                 ),
                 task.geometry
               )
@@ -682,6 +697,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   ): ConnectionIO[Option[Task.TaskFeature]] = {
     val builder = query
       .filter(queryParams)
+      .filter(fr"parent_task_id IS NULL")
       .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
 
     (selectF ++ Fragments.whereAndOpt(builder.filters: _*) ++ fr"ORDER BY RANDOM() LIMIT 1")
@@ -691,5 +707,30 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         getTaskWithActions(tasks.head.id)
       }
     } map { _.flatten }
+  }
+
+  def children(
+      taskId: UUID,
+      pageRequest: PageRequest
+  ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] = {
+
+    for {
+      paginatedResponse <- query
+        .filter(fr"parent_task_id = $taskId")
+        .page(pageRequest)
+
+      withActions <- paginatedResponse.results.toList traverse { task =>
+        unsafeGetActionsForTask(task)
+      }
+    } yield {
+      PaginatedGeoJsonResponse(
+        paginatedResponse.count,
+        paginatedResponse.hasPrevious,
+        paginatedResponse.hasNext,
+        paginatedResponse.page,
+        paginatedResponse.pageSize,
+        withActions
+      )
+    }
   }
 }

@@ -14,6 +14,16 @@
 
 ### Security
 
+## [1.43.0](https://github.com/raster-foundry/raster-foundry/compare/1.42.0...1.43.0)
+
+### Added
+
+- Add support for task children [#5427](https://github.com/raster-foundry/raster-foundry/pull/5427)
+
+### Changed
+
+- Upgraded sbt-assembly to 0.15.0 and removed superfluous build.sbt files [#5434](https://github.com/raster-foundry/raster-foundry/pull/5434/files)
+
 ## [1.42.0](https://github.com/raster-foundry/raster-foundry/compare/1.41.0...1.42.0)
 
 - Add endpoint for listing users who own a clone of a specified campaign [#5424](https://github.com/raster-foundry/raster-foundry/pull/5424)

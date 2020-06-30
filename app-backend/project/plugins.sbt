@@ -4,7 +4,7 @@ addSbtPlugin("io.crashbox" % "sbt-gpg" % "0.2.1")
 
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.3.3")
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.15.0")
 
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 
