@@ -1,7 +1,6 @@
 package com.rasterfoundry.batch.healthcheck
 
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster.geotiff.GeoTiffRasterSource
 
 object HealthCheck extends LazyLogging {
   val name = "healthcheck"
