@@ -7,6 +7,8 @@
 
 ### Changed
 
+- Upgraded sbt-assembly to 0.15.0 and removed superfluous build.sbt files [#5434](https://github.com/raster-foundry/raster-foundry/pull/5434/files)
+
 ### Deprecated
 
 ### Removed
