@@ -272,6 +272,9 @@ lazy val api = project
   .settings({
     libraryDependencies ++= apiDependencies ++ loggingDependencies
   })
+  .settings(
+    assemblyJarName in assembly := "api-assembly.jar"
+  )
 
 lazy val apiIntegrationTest = project
   .in(file("api-it"))
@@ -374,6 +377,7 @@ lazy val datamodel = project
 lazy val db = project
   .in(file("db"))
   .dependsOn(common % "compile->compile;test->test", notification)
+  .settings(name := "database")
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
@@ -423,6 +427,7 @@ lazy val db = project
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
+  .settings(testOptions in Test += Tests.Argument("-oD"))
 
 /**
   * Batch Settings
@@ -504,6 +509,7 @@ lazy val batch = project
         .inAll
     )
   )
+  .settings(assemblyJarName in assembly := "batch-assembly.jar")
 
 /**
   * Akkautil Settings
