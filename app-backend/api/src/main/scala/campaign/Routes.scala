@@ -62,6 +62,13 @@ trait CampaignRoutes
               }
             }
           } ~
+          pathPrefix("random-review-task") {
+            pathEndOrSingleSlash {
+              get {
+                getReviewTask(campaignId)
+              }
+            }
+          } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               get {
@@ -365,6 +372,31 @@ trait CampaignRoutes
             .unsafeToFuture
         }
       }
+    }
+  }
+
+  def getReviewTask(campaignId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Campaigns, Action.Read, None),
+      user
+    ) {
+      authorizeAsync {
+        CampaignDao
+          .isActiveCampaign(campaignId)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          CampaignDao
+            .randomReviewTask(
+              campaignId,
+              user
+            )
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+
     }
   }
 }
