@@ -10,6 +10,7 @@ import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 
 import java.util.UUID
+import java.sql.Timestamp
 
 object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
 
@@ -179,11 +180,62 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
   def isActiveCampaign(id: UUID): ConnectionIO[Boolean] =
     query.filter(id).filter(fr"is_active = ${true}").exists
 
+  def getChildren(campaignId: UUID): ConnectionIO[List[Campaign]] =
+    query.filter(fr"parent_campaign_id = $campaignId").list
+
   def getCloneOwners(id: UUID): ConnectionIO[List[UserThin]] =
     for {
-      campaigns <- query.filter(fr"parent_campaign_id = $id").list
+      campaigns <- getChildren(id)
       userIds = campaigns.map(_.owner)
       users <- UserDao.getUsersByIds(userIds)
       userThins = users.map(u => UserThin.fromUser(u))
     } yield userThins
+
+  def getProjectMapping(
+      childCampaignId: UUID,
+      parentDateMap: Map[Timestamp, UUID]
+  ): ConnectionIO[List[(ChildAnnotationProjectId, ParentAnnotationProjectId)]] =
+    AnnotationProjectDao.listByCampaign(childCampaignId) map { childProjects =>
+      childProjects flatMap { project =>
+        project.capturedAt flatMap { parentDateMap.get(_) } map { parentId =>
+          (
+            ChildAnnotationProjectId(project.id),
+            ParentAnnotationProjectId(parentId)
+          )
+        }
+      }
+    }
+
+  def retrieveChildCampaignAnnotations(campaignId: UUID): ConnectionIO[Unit] =
+    for {
+      childCampaigns <- getChildren(campaignId)
+      parentProjects <- AnnotationProjectDao.listByCampaign(campaignId)
+      // create a map from capture dates to parent projects. we're assuming for
+      // now that capture date is unique within a campaign
+      captureDates = Map((parentProjects flatMap { project =>
+        project.capturedAt map { dt =>
+          (dt, project.id)
+        }
+      }): _*)
+      // for each campaign, build a map of its annotation projects to the parent's
+      // annotation projects
+      childParentMappings <- childCampaigns traverse { campaign =>
+        getProjectMapping(campaign.id, captureDates)
+      }
+      // mash all those maps together -- there should be no collisions, since annotation
+      // projects can only be in a single campaign
+      childParentMapping = childParentMappings.combineAll
+      // now we have a map of child annotation projects to parent annotation projects,
+      // so we no longer care about campaigns
+      _ <- childParentMapping traverse {
+        case (
+            childId,
+            parentId
+            ) =>
+          AnnotationLabelDao.copyProjectAnnotations(
+            childId,
+            parentId
+          )
+      }
+    } yield (())
 }
