@@ -334,16 +334,13 @@ trait UserRoutes
                     campaigns traverse { campaign =>
                       val campaingRulesO = usersO.map(
                         users =>
-                          users.foldLeft(List[ObjectAccessControlRule]())(
-                            (acc, user) =>
-                              acc ++ List(
-                                ObjectAccessControlRule(
-                                  SubjectType.User,
-                                  Some(user.id),
-                                  ActionType.View
-                                )
+                          users map { user =>
+                            ObjectAccessControlRule(
+                              SubjectType.User,
+                              Some(user.id),
+                              ActionType.View
                             )
-                        )
+                          }
                       )
                       (
                         campaingRulesO match {
