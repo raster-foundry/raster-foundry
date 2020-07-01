@@ -340,7 +340,7 @@ trait UserRoutes
                               Some(user.id),
                               ActionType.View
                             )
-                          }
+                        }
                       )
                       (
                         campaingRulesO match {
