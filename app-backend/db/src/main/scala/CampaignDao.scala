@@ -9,8 +9,8 @@ import doobie.implicits._
 import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 
-import java.util.UUID
 import java.sql.Timestamp
+import java.util.UUID
 
 object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
 

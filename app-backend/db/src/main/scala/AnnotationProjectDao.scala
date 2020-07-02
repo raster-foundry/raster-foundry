@@ -361,7 +361,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-                )
+              )
             )
         }.flatten,
         "vector",
@@ -494,7 +494,7 @@ object AnnotationProjectDao
                     Some(user.id),
                     ActionType.Annotate
                   )
-                )
+              )
             )
           AnnotationProjectDao.addPermissionsMany(
             project.id,
