@@ -199,14 +199,14 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   def copyProjectAnnotations(
       childAnnotationProjectId: ChildAnnotationProjectId,
       parentAnnotationProjectId: ParentAnnotationProjectId
-  ): ConnectionIO[Unit] =
+  ): ConnectionIO[List[(UUID, UUID)]] =
     for {
       parentTask <- TaskDao.query
         .filter(
           fr"annotation_project_id = ${parentAnnotationProjectId.parentAnnotationProjectId}"
         )
         .select
-      _ <- fr"""
+      result <- fr"""
       WITH source_labels_with_classes AS (
         SELECT * FROM
           (annotation_labels JOIN annotation_labels_annotation_label_classes ON
@@ -239,9 +239,15 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         FROM unnested JOIN label_class_history
         ON unnested.class_id = label_class_history.child_label_class_id
       )
-      """.update.run
+      """.update
+        .withGeneratedKeys[(UUID, UUID)](
+          "annotation_label_id",
+          "annotation_class_id"
+        )
+        .compile
+        .toList
       // ^^ works fine to create new labels... but how to get their classes?
       // thinking through maybe a temp table strategy? i don't know how to keep the label
       // join information around. maybe i can do it with CTEs if I think harder about it
-    } yield ()
+    } yield result
 }

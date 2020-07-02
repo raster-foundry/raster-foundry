@@ -11,6 +11,7 @@ import org.scalacheck.Prop.forAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
+
 import scala.util.Random
 
 class CampaignDaoSpec
@@ -18,7 +19,8 @@ class CampaignDaoSpec
     with Matchers
     with Checkers
     with DBTestConfig
-    with PropTestHelpers {
+    with PropTestHelpers
+    with ConnectionIOLogger {
   test("insert a campaign") {
     check {
       forAll(
@@ -579,9 +581,10 @@ class CampaignDaoSpec
                 },
                 dbChildUser
               )
-              _ <- CampaignDao.retrieveChildCampaignAnnotations(
+              result <- CampaignDao.retrieveChildCampaignAnnotations(
                 dbParentCampaign.id
               )
+              _ <- warn(s"label class mapping after copy: ${result}")
               labelCountOnParentProject <- AnnotationLabelDao.query
                 .filter(
                   fr"annotation_project_id = ${dbParentAnnotationProject.id}"
@@ -593,8 +596,11 @@ class CampaignDaoSpec
               retrievalIO.transact(xa).unsafeRunSync
 
             assert(
-              parentLabelCount.toInt == childInsertedLabels.length,
+              parentLabelCount == childInsertedLabels.length,
               "Parent project has the same count of labels as the child project"
+            )
+            println(
+              s"Passed with ($parentLabelCount, ${childInsertedLabels.length}) results"
             )
             true
           }
