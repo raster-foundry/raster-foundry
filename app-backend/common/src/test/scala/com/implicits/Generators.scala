@@ -1104,7 +1104,9 @@ object Generators extends ArbitraryInstances {
       Gen.listOfN(3, labelClassGroupGen),
       annotationProjectStatusGen,
       Gen.const(None),
-      Gen.const(None)
+      // always generate a timestamp -- copying child project labels back requires one,
+      // and it doesn't hurt anything else to have one
+      Gen.const(Some(Timestamp.valueOf(LocalDate.now.atStartOfDay)))
     ).mapN(AnnotationProject.Create.apply _)
 
   private def annotationLabelWithClassesCreateGen
