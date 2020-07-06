@@ -208,7 +208,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
 
   def retrieveChildCampaignAnnotations(
       campaignId: UUID
-  ): ConnectionIO[List[(UUID, UUID)]] =
+  ): ConnectionIO[Unit] =
     for {
       childCampaigns <- getChildren(campaignId)
       parentProjects <- AnnotationProjectDao.listByCampaign(campaignId)
@@ -229,15 +229,9 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       childParentMapping = childParentMappings.combineAll
       // now we have a map of child annotation projects to parent annotation projects,
       // so we no longer care about campaigns
-      result <- childParentMapping traverse {
-        case (
-            childId,
-            parentId
-            ) =>
-          AnnotationLabelDao.copyProjectAnnotations(
-            childId,
-            parentId
-          )
+      _ <- childParentMapping traverse {
+        case (childId, parentId) =>
+          AnnotationLabelDao.copyProjectAnnotations(childId, parentId)
       }
-    } yield result.flatten
+    } yield ()
 }

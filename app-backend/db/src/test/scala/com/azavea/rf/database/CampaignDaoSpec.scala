@@ -581,10 +581,9 @@ class CampaignDaoSpec
                 },
                 dbChildUser
               )
-              result <- CampaignDao.retrieveChildCampaignAnnotations(
+              _ <- CampaignDao.retrieveChildCampaignAnnotations(
                 dbParentCampaign.id
               )
-              _ <- warn(s"label class mapping after copy: ${result}")
               labelCountOnParentProject <- AnnotationLabelDao.query
                 .filter(
                   fr"annotation_project_id = ${dbParentAnnotationProject.id}"
@@ -598,9 +597,6 @@ class CampaignDaoSpec
             assert(
               parentLabelCount == childInsertedLabels.length,
               "Parent project has the same count of labels as the child project"
-            )
-            println(
-              s"Passed with ($parentLabelCount, ${childInsertedLabels.length}) results"
             )
             true
           }

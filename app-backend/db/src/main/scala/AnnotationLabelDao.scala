@@ -199,14 +199,14 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   def copyProjectAnnotations(
       childAnnotationProjectId: ChildAnnotationProjectId,
       parentAnnotationProjectId: ParentAnnotationProjectId
-  ): ConnectionIO[List[(UUID, UUID)]] =
+  ): ConnectionIO[Unit] =
     for {
       parentTask <- TaskDao.query
         .filter(
           fr"annotation_project_id = ${parentAnnotationProjectId.parentAnnotationProjectId}"
         )
         .select
-      result <- fr"""
+      _ <- fr"""
       WITH source_labels_with_classes AS (
         SELECT * FROM
           (annotation_labels JOIN annotation_labels_annotation_label_classes ON
@@ -214,16 +214,24 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         WHERE
           annotation_project_id = ${childAnnotationProjectId.childAnnotationProjectId}
       ),
-      grouped AS (
+      -- is this identical to selecting from annotation labels? probably! but running everything
+      -- through the join table makes me feel more optimistic about likelihood of writing
+      -- correct SQL for what I'm doing
+      source_labels AS (
         SELECT id, created_at, created_by, annotation_project_id, annotation_task_id,
-               geometry, description, array_agg(label_class_id) as class_ids
+               geometry, description
+        FROM source_labels_with_classes
+      ),
+      label_ids_to_classes AS (
+        SELECT id, array_agg(annotation_class_id) as class_ids
         FROM source_labels_with_classes GROUP BY id
       ),
       new_labels AS (
-        SELECT uuid_generate_v4(), created_at, created_by,
-               ${parentAnnotationProjectId.parentAnnotationProjectId}, ${parentTask.id},
-               geometry, description, class_ids
-        FROM grouped
+        SELECT uuid_generate_v4() as id, created_at, created_by,
+               ${parentAnnotationProjectId.parentAnnotationProjectId} as annotation_project_id,
+               ${parentTask.id} as annotation_task_id,
+               geometry, description
+        FROM source_labels
       ),
       new_labels_insert AS (
         INSERT INTO annotation_labels (
@@ -232,22 +240,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         )
       ),
       unnested as (
-        SELECT id, unnest(class_ids) as class_id FROM new_labels
+        SELECT id, unnest(class_ids) as class_id FROM label_ids_to_classes
       )
       INSERT INTO annotation_labels_annotation_label_classes (
         SELECT id, parent_label_class_id
         FROM unnested JOIN label_class_history
         ON unnested.class_id = label_class_history.child_label_class_id
       )
-      """.update
-        .withGeneratedKeys[(UUID, UUID)](
-          "annotation_label_id",
-          "annotation_class_id"
-        )
-        .compile
-        .toList
-      // ^^ works fine to create new labels... but how to get their classes?
-      // thinking through maybe a temp table strategy? i don't know how to keep the label
-      // join information around. maybe i can do it with CTEs if I think harder about it
-    } yield result
+      """.update.run
+    } yield ()
 }
