@@ -9,7 +9,9 @@ import doobie.postgres.implicits._
 
 import java.util.UUID
 
-object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
+object AnnotationLabelClassGroupDao
+    extends Dao[AnnotationLabelClassGroup]
+    with ConnectionIOLogger {
   val tableName = "annotation_label_class_groups"
 
   def selectF: Fragment =
@@ -18,7 +20,8 @@ object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
   def insertAnnotationLabelClassGroup(
       groupCreate: AnnotationLabelClassGroup.Create,
       annotationProject: AnnotationProject,
-      indexFallback: Int
+      indexFallback: Int,
+      parentAnnotationLabelClasses: List[AnnotationLabelClass] = Nil
   ): ConnectionIO[AnnotationLabelClassGroup.WithLabelClasses] = {
     val index = groupCreate.index getOrElse indexFallback
     val groupIO = (fr"INSERT INTO" ++ tableF ++ fr"""
@@ -32,11 +35,23 @@ object AnnotationLabelClassGroupDao extends Dao[AnnotationLabelClassGroup] {
     )
     for {
       labelClassGroup <- groupIO
-      labelClasses <- groupCreate.classes traverse { labelClass =>
-        AnnotationLabelClassDao.insertAnnotationLabelClass(
-          labelClass,
-          labelClassGroup
-        )
+      labelClasses <- parentAnnotationLabelClasses.toNel map { parentClasses =>
+        parentClasses.toList.zip(groupCreate.classes) traverse {
+          case (parentClass, labelClass) =>
+            AnnotationLabelClassDao.insertAnnotationLabelClass(
+              labelClass,
+              labelClassGroup,
+              parent = Some(parentClass)
+            )
+        }
+      } getOrElse {
+        groupCreate.classes traverse { labelClass =>
+          AnnotationLabelClassDao.insertAnnotationLabelClass(
+            labelClass,
+            labelClassGroup,
+            parent = None
+          )
+        }
       }
     } yield labelClassGroup.withLabelClasses(labelClasses)
   }

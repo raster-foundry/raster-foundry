@@ -4,6 +4,8 @@
 
 ### Added
 
+- Campaigns can copy labels back from their children's annotation projects [#5436](https://github.com/raster-foundry/raster-foundry/pull/5436)
+
 ### Changed
 
 ### Deprecated

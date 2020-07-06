@@ -1,6 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.types._
 import com.rasterfoundry.datamodel._
 
 import cats.data._
@@ -195,4 +196,54 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       ).asJson
     fcIo.value
   }
+
+  def copyProjectAnnotations(
+      childAnnotationProjectId: ChildAnnotationProjectId,
+      parentAnnotationProjectId: ParentAnnotationProjectId
+  ): ConnectionIO[Unit] =
+    for {
+      parentTask <- TaskDao.query
+        .filter(
+          fr"annotation_project_id = ${parentAnnotationProjectId.parentAnnotationProjectId}"
+        )
+        .select
+      _ <- fr"""
+      WITH source_labels_with_classes AS (
+        SELECT * FROM
+          (annotation_labels JOIN annotation_labels_annotation_label_classes ON
+             annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id)
+        WHERE
+          annotation_project_id = ${childAnnotationProjectId.childAnnotationProjectId}
+      ),
+      -- is this identical to selecting from annotation labels? probably! but running everything
+      -- through the join table makes me feel more optimistic about likelihood of writing
+      -- correct SQL for what I'm doing
+      source_labels AS (
+        SELECT id, created_at, created_by, annotation_project_id, annotation_task_id,
+               geometry, description
+        FROM source_labels_with_classes
+      ),
+      label_ids_to_classes AS (
+        SELECT id, array_agg(annotation_class_id) as class_ids
+        FROM source_labels_with_classes GROUP BY id
+      ),
+      new_labels_insert AS (
+        INSERT INTO annotation_labels (
+          SELECT uuid_generate_v4() as id, created_at, created_by,
+                 ${parentAnnotationProjectId.parentAnnotationProjectId} as annotation_project_id,
+                 ${parentTask.id} as annotation_task_id,
+                 geometry, description
+          FROM source_labels
+        )
+      ),
+      unnested as (
+        SELECT id, unnest(class_ids) as class_id FROM label_ids_to_classes
+      )
+      INSERT INTO annotation_labels_annotation_label_classes (
+        SELECT id, parent_label_class_id
+        FROM unnested JOIN label_class_history
+        ON unnested.class_id = label_class_history.child_label_class_id
+      )
+      """.update.run
+    } yield ()
 }
