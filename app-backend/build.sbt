@@ -144,7 +144,7 @@ lazy val publishSettings = Seq(
   organization := "com.rasterfoundry",
   organizationName := "Raster Foundry",
   organizationHomepage := Some(new URL("https://rasterfoundry.azavea.com/")),
-  description := "A platform to find, combine and analyze earth imagery at any scale.",
+  description := "A platform to find, combine and analyze earth imagery at any scale."
 ) ++ sonatypeSettings ++ credentialSettings
 
 lazy val sonatypeSettings = Seq(
@@ -216,7 +216,7 @@ lazy val apiSettings = sharedSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
   cancelable in Global := true,
-  resolvers += Resolver.bintrayRepo("azavea", "maven"),
+  resolvers += Resolver.bintrayRepo("azavea", "maven")
 )
 
 lazy val apiDependencies = Seq(
@@ -411,6 +411,7 @@ lazy val db = project
       Dependencies.jts,
       Dependencies.mamlJvm,
       Dependencies.monocleCore % "test",
+      Dependencies.newtype,
       Dependencies.postgis,
       Dependencies.postgres,
       Dependencies.refined,
