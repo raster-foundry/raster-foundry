@@ -1,6 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.types._
 import com.rasterfoundry.datamodel._
 
 import cats.data._
