@@ -33,16 +33,16 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       parent: Option[AnnotationLabelClass]
   ): ConnectionIO[AnnotationLabelClass] =
     for {
-      newLabel <- (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+      newLabelClass <- (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
         fr"""VALUES (
         uuid_generate_v4(), ${classCreate.name}, ${annotationLabelGroup.id},
         ${classCreate.colorHexCode}, ${classCreate.default}, ${classCreate.determinant},
         ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description}
       )""").update.withUniqueGeneratedKeys[AnnotationLabelClass](fieldNames: _*)
       _ <- parent traverse { parentClass =>
-        fr"INSERT INTO label_class_history VALUES (${parentClass.id}, ${newLabel.id})".update.run
+        fr"INSERT INTO label_class_history VALUES (${parentClass.id}, ${newLabelClass.id})".update.run
       }
-    } yield newLabel
+    } yield newLabelClass
 
   def listAnnotationLabelClassByGroupId(
       groupId: UUID

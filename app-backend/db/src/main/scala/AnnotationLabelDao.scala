@@ -227,17 +227,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         SELECT id, array_agg(annotation_class_id) as class_ids
         FROM source_labels_with_classes GROUP BY id
       ),
-      new_labels AS (
-        SELECT uuid_generate_v4() as id, created_at, created_by,
-               ${parentAnnotationProjectId.parentAnnotationProjectId} as annotation_project_id,
-               ${parentTask.id} as annotation_task_id,
-               geometry, description
-        FROM source_labels
-      ),
       new_labels_insert AS (
         INSERT INTO annotation_labels (
-          SELECT id, created_at, created_by, annotation_project_id, annotation_task_id, geometry, description
-          FROM new_labels
+          SELECT uuid_generate_v4() as id, created_at, created_by,
+                 ${parentAnnotationProjectId.parentAnnotationProjectId} as annotation_project_id,
+                 ${parentTask.id} as annotation_task_id,
+                 geometry, description
+          FROM source_labels
         )
       ),
       unnested as (
