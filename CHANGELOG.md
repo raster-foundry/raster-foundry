@@ -4,6 +4,7 @@
 
 ### Added
 
+- Campaigns can provide a random reviewable task for users to review [#5435](https://github.com/raster-foundry/raster-foundry/pull/5435)
 - Campaigns can copy labels back from their children's annotation projects [#5436](https://github.com/raster-foundry/raster-foundry/pull/5436)
 
 ### Changed
