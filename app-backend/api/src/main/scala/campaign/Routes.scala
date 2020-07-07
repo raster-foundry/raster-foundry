@@ -405,26 +405,32 @@ trait CampaignRoutes
       }
 
     }
-    
-  def retrieveChildCampaignLabels(campaignId: UUID): Route = authenticate {
-    user =>
-      authorizeScope(
-        ScopedAction(Domain.Campaigns, Action.Clone, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          CampaignDao
-            .authorized(user, ObjectType.Campaign, campaignId, ActionType.Edit)
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          onSuccess {
+
+    def retrieveChildCampaignLabels(campaignId: UUID): Route = authenticate {
+      user =>
+        authorizeScope(
+          ScopedAction(Domain.Campaigns, Action.Clone, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
             CampaignDao
-              .retrieveChildCampaignAnnotations(campaignId)
+              .authorized(
+                user,
+                ObjectType.Campaign,
+                campaignId,
+                ActionType.Edit
+              )
               .transact(xa)
               .unsafeToFuture
-          } { complete(StatusCodes.NoContent) }
+          } {
+            onSuccess {
+              CampaignDao
+                .retrieveChildCampaignAnnotations(campaignId)
+                .transact(xa)
+                .unsafeToFuture
+            } { complete(StatusCodes.NoContent) }
+          }
         }
-      }
+    }
   }
 }
