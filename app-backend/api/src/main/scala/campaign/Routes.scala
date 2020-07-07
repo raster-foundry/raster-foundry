@@ -69,6 +69,13 @@ trait CampaignRoutes
               }
             }
           } ~
+          pathPrefix("retrieve-child-labels") {
+            pathEndOrSingleSlash {
+              post {
+                retrieveChildCampaignLabels(campaignId)
+              }
+            }
+          } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               get {
@@ -398,5 +405,26 @@ trait CampaignRoutes
       }
 
     }
+    
+  def retrieveChildCampaignLabels(campaignId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Clone, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          CampaignDao
+            .authorized(user, ObjectType.Campaign, campaignId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          onSuccess {
+            CampaignDao
+              .retrieveChildCampaignAnnotations(campaignId)
+              .transact(xa)
+              .unsafeToFuture
+          } { complete(StatusCodes.NoContent) }
+        }
+      }
   }
 }

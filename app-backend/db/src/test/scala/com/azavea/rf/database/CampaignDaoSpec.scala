@@ -1,21 +1,26 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
 import cats.implicits._
 import doobie.implicits._
+import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
+
+import scala.util.Random
 
 class CampaignDaoSpec
     extends AnyFunSuite
     with Matchers
     with Checkers
     with DBTestConfig
-    with PropTestHelpers {
+    with PropTestHelpers
+    with ConnectionIOLogger {
   test("insert a campaign") {
     check {
       forAll(
@@ -823,6 +828,87 @@ class CampaignDaoSpec
               "When a user has already validated a task, no tasks are returned"
             )
 
+  test("copy annotations back from child campaigns") {
+    check {
+      forAll {
+        (
+            users: (User.Create, User.Create),
+            sourceCampaignCreate: Campaign.Create,
+            sourceAnnotationProject: AnnotationProject.Create,
+            sourceTaskFeature: Task.TaskFeatureCreate,
+            childLabels: List[AnnotationLabelWithClasses.Create]
+        ) =>
+          {
+            val (parentUser, childUser) = users
+            val retrievalIO = for {
+              dbParentUser <- UserDao.create(parentUser)
+              dbParentCampaign <- CampaignDao.insertCampaign(
+                sourceCampaignCreate.copy(parentCampaignId = None),
+                dbParentUser
+              )
+              dbParentAnnotationProject <- AnnotationProjectDao.insert(
+                sourceAnnotationProject.copy(
+                  campaignId = Some(dbParentCampaign.id)
+                ),
+                dbParentUser
+              )
+              _ <- TaskDao.insertTasks(
+                Task.TaskFeatureCollectionCreate(
+                  _type = "FeatureCollection",
+                  features = List(
+                    sourceTaskFeature.copy(
+                      properties = sourceTaskFeature.properties.copy(
+                        annotationProjectId = dbParentAnnotationProject.id
+                      )
+                    )
+                  )
+                ),
+                dbParentUser
+              )
+              dbChildUser <- UserDao.create(childUser)
+              dbChildCampaign <- CampaignDao.copyCampaign(
+                dbParentCampaign.id,
+                dbChildUser
+              )
+              childProject <- AnnotationProjectDao.listByCampaign(
+                dbChildCampaign.id
+              ) map { _.head }
+              childProjectWithRelated <- AnnotationProjectDao
+                .getWithRelatedById(childProject.id) map { _.get }
+              childClasses = childProjectWithRelated.labelClassGroups flatMap {
+                _.labelClasses
+              } map { _.id }
+              childTask <- TaskDao.query
+                .filter(fr"annotation_project_id = ${childProject.id}")
+                .select
+              childInserted <- AnnotationLabelDao.insertAnnotations(
+                childProject.id,
+                childTask.id,
+                childLabels map { labelCreate =>
+                  labelCreate.copy(
+                    annotationLabelClasses =
+                      Random.shuffle(childClasses).take(1)
+                  )
+                },
+                dbChildUser
+              )
+              _ <- CampaignDao.retrieveChildCampaignAnnotations(
+                dbParentCampaign.id
+              )
+              labelCountOnParentProject <- AnnotationLabelDao.query
+                .filter(
+                  fr"annotation_project_id = ${dbParentAnnotationProject.id}"
+                )
+                .count
+            } yield (childInserted, labelCountOnParentProject)
+
+            val (childInsertedLabels, parentLabelCount) =
+              retrievalIO.transact(xa).unsafeRunSync
+
+            assert(
+              parentLabelCount == childInsertedLabels.length,
+              "Parent project has the same count of labels as the child project"
+            )
             true
           }
       }

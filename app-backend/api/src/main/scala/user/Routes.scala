@@ -18,6 +18,7 @@ import cats.implicits._
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
@@ -331,8 +332,30 @@ trait UserRoutes
                   }
                   _ <- campaignsO traverse { campaigns =>
                     campaigns traverse { campaign =>
-                      AnnotationProjectDao
-                        .assignUsersToProjectsByCampaign(campaign.id, usersO)
+                      val campaingRulesO = usersO.map(
+                        users =>
+                          users map { user =>
+                            ObjectAccessControlRule(
+                              SubjectType.User,
+                              Some(user.id),
+                              ActionType.View
+                            )
+                        }
+                      )
+                      (
+                        campaingRulesO match {
+                          case Some(rules) =>
+                            CampaignDao.addPermissionsMany(
+                              campaign.id,
+                              rules
+                            )
+                          case _ =>
+                            List[ObjectAccessControlRule]().pure[ConnectionIO]
+
+                        },
+                        AnnotationProjectDao
+                          .assignUsersToProjectsByCampaign(campaign.id, usersO)
+                      ).tupled
                         .transact(xa)
                         .unsafeToFuture()
                     }
