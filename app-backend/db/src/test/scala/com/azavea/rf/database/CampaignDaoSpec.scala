@@ -827,6 +827,7 @@ class CampaignDaoSpec
               randomTask.isEmpty,
               "When a user has already validated a task, no tasks are returned"
             )
+            true
           }
       }
     }
