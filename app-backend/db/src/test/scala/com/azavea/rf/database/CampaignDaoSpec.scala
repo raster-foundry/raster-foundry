@@ -827,6 +827,10 @@ class CampaignDaoSpec
               randomTask.isEmpty,
               "When a user has already validated a task, no tasks are returned"
             )
+          }
+      }
+    }
+  }
 
   test("copy annotations back from child campaigns") {
     check {

@@ -68,7 +68,7 @@ class AnnotationLabelClassDaoSpec
                   alc.index,
                   alc.geometryType,
                   alc.description
-                )
+              )
             )
             .toSet
 
