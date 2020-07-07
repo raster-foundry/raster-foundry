@@ -517,6 +517,322 @@ class CampaignDaoSpec
     }
   }
 
+  test("no tasks are returned when all have been validated") {
+    check {
+      forAll(
+        (
+            userCreateBase: User.Create,
+            userCreates: List[User.Create],
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) => {
+          val copyIO = for {
+            parent <- UserDao.create(userCreate)
+            children <- userCreateBase :: userCreates traverse { u =>
+              UserDao.create(u)
+            }
+            insertedCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                parent
+              )
+            insertedProject <- AnnotationProjectDao
+              .insert(
+                annotationProjectCreate.copy(
+                  campaignId = Some(insertedCampaign.id),
+                  status = AnnotationProjectStatus.Waiting
+                ),
+                parent
+              )
+            _ <- AnnotationProjectDao.update(
+              insertedProject.toProject
+                .copy(status = AnnotationProjectStatus.Ready),
+              insertedProject.id
+            )
+            campaignCopies <- children traverse { child =>
+              CampaignDao.copyCampaign(insertedCampaign.id, child)
+            }
+            projectCopies <- (campaignCopies traverse { c =>
+              AnnotationProjectDao.listByCampaign(c.id)
+            }) map (_.flatten)
+            projectCopiesWithRelated <- projectCopies traverse { pc =>
+              AnnotationProjectDao.getWithRelatedById(pc.id)
+            } map (_.flatten)
+            tasks <- TaskDao.insertTasks(
+              fixupTaskFeaturesCollection(
+                taskFeaturesCreate,
+                projectCopiesWithRelated.head
+              ),
+              parent
+            )
+            _ <- TaskDao.updateTask(
+              tasks.features.head.id,
+              Task.TaskFeatureCreate(
+                tasks.features.head.properties.toCreate
+                  .copy(
+                    status = TaskStatus.Labeled,
+                    parentTaskId = None,
+                    taskType = Some(TaskType.Label)
+                  ),
+                tasks.features.head.geometry,
+                "Feature"
+              ),
+              parent
+            )
+            _ <- tasks.features.tail traverse { f =>
+              TaskDao.updateTask(
+                f.id,
+                Task.TaskFeatureCreate(
+                  f.properties.toCreate
+                    .copy(
+                      status = TaskStatus.Validated,
+                      parentTaskId = Some(tasks.features.head.id),
+                      taskType = Some(TaskType.Review)
+                    ),
+                  f.geometry,
+                  "Feature"
+                ),
+                parent
+              )
+            }
+            randomTask <- CampaignDao
+              .randomReviewTask(insertedCampaign.id, parent)
+          } yield randomTask
+
+          val randomTask = copyIO.transact(xa).unsafeRunSync
+
+          assert(
+            randomTask.isEmpty,
+            "When all tasks are validated no tasks should be returned"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("a task is returned when none have been validated") {
+    check {
+      forAll(
+        (
+            userCreate1: User.Create,
+            userCreate2: User.Create,
+            userCreates: List[User.Create],
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) => {
+          val copyIO = for {
+            parent <- UserDao.create(userCreate)
+            children <- userCreate1 :: userCreate2 :: userCreates traverse {
+              u =>
+                UserDao.create(u)
+            }
+            insertedCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                parent
+              )
+            insertedProject <- AnnotationProjectDao
+              .insert(
+                annotationProjectCreate.copy(
+                  campaignId = Some(insertedCampaign.id),
+                  status = AnnotationProjectStatus.Waiting
+                ),
+                parent
+              )
+            _ <- AnnotationProjectDao.update(
+              insertedProject.toProject
+                .copy(status = AnnotationProjectStatus.Ready),
+              insertedProject.id
+            )
+            campaignCopies <- children traverse { child =>
+              CampaignDao.copyCampaign(insertedCampaign.id, child)
+            }
+            projectCopies <- (campaignCopies traverse { c =>
+              AnnotationProjectDao.listByCampaign(c.id)
+            }) map (_.flatten)
+            projectCopiesWithRelated <- projectCopies traverse { pc =>
+              AnnotationProjectDao.getWithRelatedById(pc.id)
+            } map (_.flatten)
+            tasks <- TaskDao.insertTasks(
+              fixupTaskFeaturesCollection(
+                taskFeaturesCreate,
+                projectCopiesWithRelated.head
+              ),
+              parent
+            )
+            _ <- TaskDao.updateTask(
+              tasks.features.head.id,
+              Task.TaskFeatureCreate(
+                tasks.features.head.properties.toCreate
+                  .copy(
+                    status = TaskStatus.Labeled,
+                    taskType = Some(TaskType.Label)
+                  ),
+                tasks.features.head.geometry,
+                "Feature"
+              ),
+              parent
+            )
+            _ <- tasks.features.tail traverse { f =>
+              TaskDao.updateTask(
+                f.id,
+                Task.TaskFeatureCreate(
+                  f.properties.toCreate
+                    .copy(
+                      status = TaskStatus.Labeled,
+                      parentTaskId = Some(tasks.features.head.id),
+                      taskType = Some(TaskType.Review)
+                    ),
+                  f.geometry,
+                  "Feature"
+                ),
+                parent
+              )
+            }
+            randomTask <- CampaignDao
+              .randomReviewTask(insertedCampaign.id, parent)
+          } yield (tasks, randomTask)
+          val (tasks, randomTask) = copyIO.transact(xa).unsafeRunSync
+
+          assert(
+            tasks.features.length > 1 == randomTask.isDefined,
+            "When no tasks are validated one task should be returned"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("a task is not returned when parent has been validated by user") {
+    check {
+      forAll {
+        (
+            userCreates: List[User.Create],
+            userCreates1: (User.Create, User.Create, User.Create),
+            campaignCreate: Campaign.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeatureCreates: (Task.TaskFeatureCreate, Task.TaskFeatureCreate),
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val (userCreate1, userCreate2, userCreate3) = userCreates1
+            val (taskFeatureCreate1, taskFeatureCreate2) = taskFeatureCreates
+            val copyIO = for {
+              parent <- UserDao.create(userCreate1)
+              children <- userCreate2 :: userCreate3 :: userCreates traverse {
+                u =>
+                  UserDao.create(u)
+              }
+              insertedCampaign <- CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  parent
+                )
+              insertedProject <- AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(
+                    campaignId = Some(insertedCampaign.id),
+                    status = AnnotationProjectStatus.Waiting
+                  ),
+                  parent
+                )
+              _ <- AnnotationProjectDao.update(
+                insertedProject.toProject
+                  .copy(status = AnnotationProjectStatus.Ready),
+                insertedProject.id
+              )
+              campaignCopies <- children traverse { child =>
+                CampaignDao.copyCampaign(insertedCampaign.id, child)
+              }
+              projectCopies <- (campaignCopies traverse { c =>
+                AnnotationProjectDao.listByCampaign(c.id)
+              }) map (_.flatten)
+              projectCopiesWithRelated <- projectCopies traverse { pc =>
+                AnnotationProjectDao.getWithRelatedById(pc.id)
+              } map (_.flatten)
+              tasks <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  Task.TaskFeatureCollectionCreate(
+                    features = taskFeatureCreate1 :: taskFeatureCreate2.copy(
+                      properties = taskFeatureCreate2.properties.copy(
+                        status = TaskStatus.Labeled
+                      )
+                    ) :: taskFeatureCollectionCreate.features
+                  ),
+                  projectCopiesWithRelated.head
+                ),
+                parent
+              )
+              _ <- TaskDao.updateTask(
+                tasks.features.head.id,
+                Task.TaskFeatureCreate(
+                  tasks.features.head.properties.toCreate
+                    .copy(
+                      status = TaskStatus.Labeled,
+                      taskType = Some(TaskType.Label)
+                    ),
+                  tasks.features.head.geometry,
+                  "Feature"
+                ),
+                parent
+              )
+              _ <- TaskDao.updateTask(
+                tasks.features(1).id,
+                Task.TaskFeatureCreate(
+                  tasks
+                    .features(1)
+                    .properties
+                    .toCreate
+                    .copy(
+                      status = TaskStatus.Validated,
+                      parentTaskId = Some(tasks.features.head.id),
+                      taskType = Some(TaskType.Review)
+                    ),
+                  tasks.features(1).geometry,
+                  "Feature"
+                ),
+                parent
+              )
+              _ <- tasks.features.drop(2) traverse { f =>
+                TaskDao.updateTask(
+                  f.id,
+                  Task.TaskFeatureCreate(
+                    f.properties.toCreate
+                      .copy(
+                        status = TaskStatus.Labeled,
+                        parentTaskId = Some(tasks.features.head.id),
+                        taskType = Some(TaskType.Review)
+                      ),
+                    f.geometry,
+                    "Feature"
+                  ),
+                  parent
+                )
+              }
+              randomTask <- CampaignDao
+                .randomReviewTask(insertedCampaign.id, parent)
+            } yield randomTask
+
+            val randomTask = copyIO.transact(xa).unsafeRunSync
+
+            assert(
+              randomTask.isEmpty,
+              "When a user has already validated a task, no tasks are returned"
+            )
+            true
+          }
+      }
+    }
+  }
+
   test("copy annotations back from child campaigns") {
     check {
       forAll {

@@ -417,7 +417,12 @@ class AnnotationLabelDaoSpec
                 group.classes
                   .map(_.name)
                   .toSet
-                  .contains(labelProperties.toMap.get(groupName).map(_.asString).flatten.get),
+                  .contains(
+                    labelProperties.toMap
+                      .get(groupName)
+                      .map(_.asString)
+                      .flatten
+                      .get),
                 "stac label value for group name exists"
               )
             })
