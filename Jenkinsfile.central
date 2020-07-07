@@ -19,7 +19,7 @@ node {
     stage('checkout') {
       checkout([
         $class: 'GitSCM',
-        branches: [[name: params.RELEASE_TAG]],
+        branches: [[name: 'cb4ba12']],
         extensions: scm.extensions + [[$class: 'CloneOption', noTags: false, reference: '', shallow: false]],
         userRemoteConfigs: scm.userRemoteConfigs
       ])
