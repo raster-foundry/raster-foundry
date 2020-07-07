@@ -357,19 +357,14 @@ object Auth0Service extends Config with LazyLogging {
 
   def waitForJobToComplete(
       jobId: String,
-      jobComplete: Boolean,
       numTries: Int,
       bearerToken: ManagementBearerToken
   ): Future[Either[BulkCreateError, String]] = {
-    if (jobComplete) {
-      Future.successful(Right(jobId))
-    } else if (numTries > 15) {
-      Future.failed {
-        val e =
-          BulkJobProcessTimeout("Exhausted tries when bulk creating users")
-        logger.error(e.error)
-        Left(e)
-      }
+    if (numTries > 15) {
+      val e =
+        BulkJobProcessTimeout("Exhausted tries when bulk creating users")
+      logger.error(e.error)
+      Future.successful(Left(e))
     } else {
       // Wait one second before requesting to not spam Auth0
       Thread.sleep(1000)
@@ -380,22 +375,20 @@ object Auth0Service extends Config with LazyLogging {
         .send()
         .flatMap { response =>
           response.body match {
-            case Left(_) =>
-              Future {
-                val e = BulkJobSubmitError(
-                  s"Error Processing: ${response.code} - ${response.statusText}"
-                )
-                logger.error(e.error)
-                Left(e)
-              }
+            case Left(_) => {
+              val e = BulkJobSubmitError(
+                s"Error Processing: ${response.code} - ${response.statusText}"
+              )
+              logger.error(e.error)
+              Future.successful(Left(e))
+            }
             case Right(status) =>
               status.status match {
                 case "completed" =>
-                  waitForJobToComplete(jobId, true, numTries, bearerToken)
+                  Future.successful(Right(jobId))
                 case _ =>
                   waitForJobToComplete(
                     jobId,
-                    jobComplete,
                     numTries + 1,
                     bearerToken
                   )
@@ -409,9 +402,9 @@ object Auth0Service extends Config with LazyLogging {
       bulkCreateId: String
   ): Future[Either[BulkCreateError, List[Auth0User]]] = {
     val q = s"""app_metadata.bulkCreateId:"$bulkCreateId""""
+    val requestUri = uri"https://$auth0Domain/api/v2/users?q=$q&per_page=100"
     for {
       managementToken <- authBearerTokenCache.get(1)
-      requestUri = uri"https://$auth0Domain/api/v2/users?q=$q&per_page=100"
       authHeader = s"Bearer ${managementToken.access_token}"
       response <- basicRequest
         .header("Authorization", authHeader)
@@ -419,15 +412,12 @@ object Auth0Service extends Config with LazyLogging {
         .response(asJson[List[Auth0User]])
         .send()
         .map { r =>
-          r.body match {
-            case Left(_) => {
-              val e = BulkJobRequestUsersError(
-                s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
-              )
-              logger.error(e.error)
-              Left(e)
-            }
-            case Right(r) => Right(r)
+          r.body.leftMap { _ =>
+            val e = BulkJobRequestUsersError(
+              s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
+            )
+            logger.error(e.error)
+            e
           }
         }
     } yield response
@@ -480,7 +470,7 @@ object Auth0Service extends Config with LazyLogging {
           }
       }
       _ <- EitherT(
-        waitForJobToComplete(createResponse.id, false, 0, managementToken)
+        waitForJobToComplete(createResponse.id, 0, managementToken)
       )
       users <- EitherT(getBulkCreatedUsers(bulkCreateId.toString))
     } yield users
