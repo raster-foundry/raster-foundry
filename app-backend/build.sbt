@@ -220,6 +220,8 @@ lazy val apiSettings = sharedSettings ++ Seq(
 )
 
 lazy val apiDependencies = Seq(
+  Dependencies.bcrypt,
+  Dependencies.betterFiles,
   Dependencies.akkaActor,
   Dependencies.akkaCirceJson,
   Dependencies.akkaHttp,
@@ -261,6 +263,7 @@ lazy val apiDependencies = Seq(
   Dependencies.sttpAsyncBackend,
   Dependencies.sttpCatsBackend,
   Dependencies.sttpCore,
+  Dependencies.sttpAkka,
   Dependencies.typesafeConfig
 )
 

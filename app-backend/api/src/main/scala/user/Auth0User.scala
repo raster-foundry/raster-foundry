@@ -12,12 +12,19 @@ import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import better.files._
+import cats.data.EitherT
+import cats.implicits._
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
+import com.github.t3hnar.bcrypt._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
+import sttp.client._
+import sttp.client.akkahttp._
+import sttp.client.circe._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -25,6 +32,14 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 import java.net.URLEncoder
+import java.util.UUID
+
+sealed trait BulkCreateError {
+  val error: String
+}
+case class BulkJobSubmitError(error: String) extends BulkCreateError
+case class BulkJobProcessTimeout(error: String) extends BulkCreateError
+case class BulkJobRequestUsersError(error: String) extends BulkCreateError
 
 @JsonCodec
 final case class Auth0User(
@@ -43,6 +58,15 @@ final case class Auth0User(
     nickname: Option[String],
     given_name: Option[String],
     family_name: Option[String]
+)
+
+@JsonCodec
+final case class Auth0UserBulkCreate(
+    username: String,
+    email: String,
+    email_verified: Boolean,
+    password_hash: String,
+    app_metadata: Map[String, String]
 )
 
 @JsonCodec
@@ -94,6 +118,8 @@ final case class UserWithOAuthUpdate(
 object Auth0Service extends Config with LazyLogging {
 
   import com.rasterfoundry.api.AkkaSystem._
+
+  implicit val sttpBackend = AkkaHttpBackend()
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
   val userUri = Uri(s"https://$auth0Domain/api/v2/users")
@@ -323,32 +349,142 @@ object Auth0Service extends Config with LazyLogging {
       .flatMap { responseAsAuth0User _ }
   }
 
-  def createAnonymizedUser(
-      userName: String,
+  @JsonCodec
+  final case class ImportResponse(status: String, id: String)
+
+  @JsonCodec
+  final case class Auth0JobStatus(status: String)
+
+  def waitForJobToComplete(
+      jobId: String,
+      jobComplete: Boolean,
+      numTries: Int,
       bearerToken: ManagementBearerToken
-  ): Future[Auth0User] = {
-    val post = Map(
-      "connection" -> auth0AnonymizedConnectionName.asJson,
-      "email" -> s"${userName}@${auth0AnonymizedConnectionName}.com".asJson,
-      "username" -> userName.asJson,
-      "password" -> s"${userName}*".asJson
-    ).asJson
+  ): Future[Either[BulkCreateError, String]] = {
+    if (jobComplete) {
+      Future(Right(jobId))
+    } else if (numTries > 15) {
+      Future {
+        val e =
+          BulkJobProcessTimeout("Exhausted tries when bulk creating users")
+        logger.error(e.error)
+        Left(e)
+      }
+    } else {
+      // Wait one second before requesting to not spam Auth0
+      Thread.sleep(1000)
+      basicRequest
+        .header("Authorization", s"Bearer ${bearerToken.access_token}")
+        .get(uri"https://$auth0Domain/api/v2/jobs/$jobId")
+        .response(asJson[Auth0JobStatus])
+        .send()
+        .flatMap { response =>
+          response.body match {
+            case Left(_) =>
+              Future {
+                val e = BulkJobSubmitError(
+                  s"Error Processing: ${response.code} - ${response.statusText}"
+                )
+                logger.error(e.error)
+                Left(e)
+              }
+            case Right(status) =>
+              status.status match {
+                case "completed" =>
+                  waitForJobToComplete(jobId, true, numTries, bearerToken)
+                case _ =>
+                  waitForJobToComplete(
+                    jobId,
+                    jobComplete,
+                    numTries + 1,
+                    bearerToken
+                  )
+              }
+          }
+        }
+    }
+  }
 
-    val managementBearerHeaders = getBearerHeaders(bearerToken)
+  def getBulkCreatedUsers(
+      bulkCreateId: String
+  ): Future[Either[BulkCreateError, List[Auth0User]]] = {
+    val q = s"""app_metadata.bulkCreateId:"$bulkCreateId""""
+    for {
+      managementToken <- authBearerTokenCache.get(1)
+      requestUri = uri"https://$auth0Domain/api/v2/users?q=$q&per_page=100"
+      authHeader = s"Bearer ${managementToken.access_token}"
+      response <- basicRequest
+        .header("Authorization", authHeader)
+        .get(requestUri)
+        .response(asJson[List[Auth0User]])
+        .send()
+        .map { r =>
+          r.body match {
+            case Left(_) => {
+              val e = BulkJobRequestUsersError(
+                s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
+              )
+              logger.error(e.error)
+              Left(e)
+            }
+            case Right(r) => Right(r)
+          }
+        }
+    } yield response
 
-    Http()
-      .singleRequest(
-        HttpRequest(
-          method = POST,
-          uri = s"$userUri",
-          headers = managementBearerHeaders,
-          entity = HttpEntity(
-            ContentTypes.`application/json`,
-            post.noSpaces
-          )
+  }
+
+  def bulkCreateUsers(
+      userIds: List[String]
+  ): Future[Either[BulkCreateError, List[Auth0User]]] = {
+    val bulkCreateId = UUID.randomUUID()
+    val usersToCreate = userIds
+      .map(
+        uid =>
+          Auth0UserBulkCreate(
+            uid,
+            s"$uid@${auth0AnonymizedConnectionName}.com",
+            true,
+            uid.bcrypt(10),
+            Map("bulkCreateId" -> bulkCreateId.toString)
         )
       )
-      .flatMap { responseAsAuth0User _ }
+      .asJson
+      .noSpaces
+    val tempFile = File.newTemporaryFile()
+    tempFile.write(usersToCreate)
+    val bulkCreateProgram = for {
+      managementToken <- EitherT.right(authBearerTokenCache.get(1))
+      createResponse <- EitherT {
+        basicRequest
+          .header("Authorization", s"Bearer ${managementToken.access_token}")
+          .multipartBody(
+            multipart("upsert", true),
+            multipart("connection_id", auth0AnonymizedConnectionId),
+            multipartFile("users", tempFile.path)
+          )
+          .response(asJson[ImportResponse])
+          .post(uri"https://$auth0Domain/api/v2/jobs/users-imports")
+          .send()
+          .map { r =>
+            r.body match {
+              case Left(_) => {
+                val e = BulkJobSubmitError(
+                  s"Status Code: ${r.code}, Status Text: ${r.statusText}"
+                )
+                logger.error(e.error)
+                Left(e)
+              }
+              case Right(importResponse) => Right(importResponse)
+            }
+          }
+      }
+      _ <- EitherT(
+        waitForJobToComplete(createResponse.id, false, 0, managementToken)
+      )
+      users <- EitherT(getBulkCreatedUsers(bulkCreateId.toString))
+    } yield users
+    bulkCreateProgram.value
   }
 
   def createPasswordChangeTicket(

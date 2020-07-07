@@ -288,84 +288,94 @@ trait UserRoutes
     ) {
       entity(as[UserBulkCreate]) { userBulkCreate =>
         complete {
-          Auth0Service.getManagementBearerToken flatMap { managementToken =>
-            val names = PseudoUsernameService.createPseudoNames(
-              userBulkCreate.count,
-              userBulkCreate.peudoUserNameType
-            )
-            val uwcsFuture = for {
-              userWithCampaigns <- names traverse { name =>
-                for {
-                  auth0User <- Auth0Service
-                    .createAnonymizedUser(name, managementToken)
-                  userWithCampaign <- (auth0User.user_id traverse { userId =>
-                    UserDao.createUserWithCampaign(
-                      UserInfo(
-                        userId,
-                        s"$name@$auth0AnonymizedConnectionName.com",
-                        name
-                      ),
-                      userBulkCreate,
-                      user
-                    )
-                  }).transact(xa).unsafeToFuture
-                } yield userWithCampaign
-              }
-            } yield userWithCampaigns
+          val names = PseudoUsernameService.createPseudoNames(
+            userBulkCreate.count,
+            userBulkCreate.peudoUserNameType
+          )
 
-            userBulkCreate.grantAccessToChildrenCampaignOwner match {
-              case false =>
-                for {
-                  uwcs <- uwcsFuture
-                } yield
-                  uwcs traverse { uwc =>
-                    uwc.map(_.user.name)
-                  }
-              case true =>
-                for {
-                  uwcs <- uwcsFuture
-                  usersO = uwcs traverse { uwc =>
-                    uwc.map(_.user)
-                  }
-                  campaignsO = uwcs traverse { uwc =>
-                    uwc.flatMap(_.campaignO)
-                  }
-                  _ <- campaignsO traverse { campaigns =>
-                    campaigns traverse { campaign =>
-                      val campaingRulesO = usersO.map(
-                        users =>
-                          users map { user =>
-                            ObjectAccessControlRule(
-                              SubjectType.User,
-                              Some(user.id),
-                              ActionType.View
-                            )
-                        }
+          val createdUsers = Auth0Service.bulkCreateUsers(names).map {
+            // At this point, if we have an error we throw because the server should return a 500
+            case Left(e)      => throw new Exception(e.error)
+            case Right(users) => users
+          }
+
+          val uwcsFuture = for {
+            users <- createdUsers
+            userWithCampaigns <- users traverse { auth0User =>
+              for {
+                userWithCampaign <- (auth0User.user_id, auth0User.username).tupled traverse {
+                  case (userId, username) =>
+                    UserDao
+                      .createUserWithCampaign(
+                        UserInfo(
+                          userId,
+                          s"${username}@$auth0AnonymizedConnectionName.com",
+                          username
+                        ),
+                        userBulkCreate,
+                        user
                       )
-                      (
-                        campaingRulesO match {
-                          case Some(rules) =>
-                            CampaignDao.addPermissionsMany(
-                              campaign.id,
-                              rules
-                            )
-                          case _ =>
-                            List[ObjectAccessControlRule]().pure[ConnectionIO]
-
-                        },
-                        AnnotationProjectDao
-                          .assignUsersToProjectsByCampaign(campaign.id, usersO)
-                      ).tupled
-                        .transact(xa)
-                        .unsafeToFuture()
-                    }
-                  }
-                } yield
-                  usersO map { users =>
-                    users map { _.name }
-                  }
-
+                      .transact(xa)
+                      .unsafeToFuture
+                }
+              } yield userWithCampaign
             }
+          } yield userWithCampaigns
+
+          userBulkCreate.grantAccessToChildrenCampaignOwner match {
+            case false =>
+              for {
+                uwcs <- uwcsFuture
+              } yield
+                uwcs traverse { uwc =>
+                  uwc.map(_.user.name)
+                }
+            case true =>
+              for {
+                uwcs <- uwcsFuture
+                usersO = uwcs traverse { uwc =>
+                  uwc.map(_.user)
+                }
+                campaignsO = uwcs traverse { uwc =>
+                  uwc.flatMap(_.campaignO)
+                }
+                _ <- campaignsO traverse { campaigns =>
+                  campaigns traverse { campaign =>
+                    val campaingRulesO = usersO.map(
+                      users =>
+                        users map { user =>
+                          ObjectAccessControlRule(
+                            SubjectType.User,
+                            Some(user.id),
+                            ActionType.View
+                          )
+                      }
+                    )
+                    (
+                      campaingRulesO match {
+                        case Some(rules) =>
+                          CampaignDao.addPermissionsMany(
+                            campaign.id,
+                            rules
+                          )
+                        case _ =>
+                          List[ObjectAccessControlRule]().pure[ConnectionIO]
+
+                      },
+                      AnnotationProjectDao
+                        .assignUsersToProjectsByCampaign(campaign.id, usersO)
+                    ).tupled
+                      .transact(xa)
+                      .unsafeToFuture()
+                  }
+                }
+              } yield
+                usersO map { users =>
+                  users map {
+                    _.name
+                  }
+                }
+
           }
         }
       }
