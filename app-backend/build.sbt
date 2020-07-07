@@ -168,7 +168,7 @@ lazy val sonatypeSettings = Seq(
   licenses := Seq(
     "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")
   ),
-  publishTo := sonatypePublishTo.value
+  publishTo := sonatypePublishToBundle.value
 )
 
 lazy val credentialSettings = Seq(
