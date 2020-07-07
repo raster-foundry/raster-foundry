@@ -694,7 +694,6 @@ lazy val backsplashServer =
 lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   .dependsOn(db)
   .settings(sharedSettings: _*)
-  .settings(publishSettings)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.awsXrayRecorder,
@@ -732,7 +731,6 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
 lazy val notification = Project("notification", file("notification"))
   .dependsOn(datamodel)
   .settings(sharedSettings: _*)
-  .settings(publishSettings)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.apacheCommonsEmail,
