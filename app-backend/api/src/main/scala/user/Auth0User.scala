@@ -362,7 +362,7 @@ object Auth0Service extends Config with LazyLogging {
       bearerToken: ManagementBearerToken
   ): Future[Either[BulkCreateError, String]] = {
     if (jobComplete) {
-      Future(Right(jobId))
+      Future.successful(Right(jobId))
     } else if (numTries > 15) {
       Future {
         val e =
