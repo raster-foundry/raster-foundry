@@ -260,10 +260,13 @@ lazy val apiDependencies = Seq(
   Dependencies.scalatest,
   Dependencies.shapeless,
   Dependencies.sourceCode,
+  Dependencies.sttpAkka,
   Dependencies.sttpAsyncBackend,
   Dependencies.sttpCatsBackend,
+  Dependencies.sttpCirce,
   Dependencies.sttpCore,
-  Dependencies.sttpAkka,
+  Dependencies.sttpJson,
+  Dependencies.sttpModel,
   Dependencies.typesafeConfig
 )
 
