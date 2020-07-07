@@ -193,7 +193,6 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       userThins = users.map(u => UserThin.fromUser(u))
     } yield userThins
 
-  <<<<<<< HEAD
   def randomReviewTask(
       campaignId: UUID,
       user: User
@@ -268,7 +267,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       }
     } map { _.flatten }
   }
-  =======
+
   def getProjectMapping(
       childCampaignId: UUID,
       parentDateMap: Map[Timestamp, UUID]
@@ -312,5 +311,4 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           AnnotationLabelDao.copyProjectAnnotations(childId, parentId)
       }
     } yield ()
-  >>>>>>> develop
 }
