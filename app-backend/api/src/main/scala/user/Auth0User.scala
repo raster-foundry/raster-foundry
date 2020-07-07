@@ -364,7 +364,7 @@ object Auth0Service extends Config with LazyLogging {
     if (jobComplete) {
       Future.successful(Right(jobId))
     } else if (numTries > 15) {
-      Future {
+      Future.failed {
         val e =
           BulkJobProcessTimeout("Exhausted tries when bulk creating users")
         logger.error(e.error)
