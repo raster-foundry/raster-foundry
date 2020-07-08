@@ -243,6 +243,13 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           ON r.id = parent_tasks.id
         GROUP BY parent_tasks.id
         HAVING SUM(r.reviewed) >= 1
+      ),
+      candidate_campaigns (id) AS (
+        SELECT id from campaigns
+        WHERE
+          parent_campaign_id = ${campaignId}
+        AND
+          owner <> ${user.id}
       )
       SELECT tasks.*, annotation_projects.campaign_id
       FROM tasks
@@ -253,6 +260,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
         AND parent_task_id NOT IN (SELECT id FROM reviewed_ids)
         AND parent_task_id IS NOT NULL
         AND task_type = ${TaskType.Review.toString}::task_type
+        AND annotation_projects.campaign_id IN (select id from candidate_campaigns)
       ORDER BY RANDOM() LIMIT 1;
     """
       .query[Task.TaskWithCampaign]
