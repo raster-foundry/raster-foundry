@@ -29,6 +29,8 @@ trait Config {
     auth0Config.getString("groundworkConnectionName")
   val auth0AnonymizedConnectionName =
     auth0Config.getString("anonymizedUserCreateConnectionName")
+  val auth0AnonymizedConnectionId =
+    auth0Config.getString("anonymizedUserCreateConnectionId")
 
   val clientEnvironment = clientConfig.getString("clientEnvironment")
 
