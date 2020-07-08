@@ -11,7 +11,7 @@ node {
         regex: /^\d+\.\d+\.\d+$/]
     ])
   ])
-    
+
   try {
     env.AWS_DEFAULT_REGION = "us-east-1"
 
@@ -52,7 +52,7 @@ node {
         wrap([$class: 'AnsiColorBuildWrapper']) {
           sh """#!/bin/bash
             docker-compose \
-                -f "${DIR}/../docker-compose.test.yml" \
+                -f docker-compose.test.yml \
                 run --rm --no-deps --entrypoint "bash -c" \
                 -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
                 -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
@@ -62,13 +62,13 @@ node {
                         --recv-keys ${GPG_KEY_ID} &&
                     echo ${GPG_KEY} | base64 -d >signing_key.asc &&
                     gpg --import signing_key.asc &&
-                    ./sbt ";sonatypeOpen ${BUILD_NUMBER};publish;sonatypeRelease"
+                    ./sbt ';set version in ThisBuild := \\"${params.RELEASE_TAG}\\";sonatypeBundleClean;publish;sonatypeBundleRelease'
                 "
           """
         }
       }
     }
-    
+
     slackMessage = "*<https://github.com/raster-foundry/raster-foundry/tree/${params.RELEASE_TAG}|${params.RELEASE_TAG}>* deployed to Maven Central :tada:"
     slackSend color: 'warning', message: slackMessage
   } catch(err) {

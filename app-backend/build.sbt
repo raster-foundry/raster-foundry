@@ -15,6 +15,21 @@ cancelable in Global := true
 
 onChangedBuildSource := ReloadOnSourceChanges
 
+scapegoatVersion in ThisBuild := "1.3.8"
+
+scalaVersion in ThisBuild := Version.scala
+
+// We are overriding the default behavior of sbt-git which, by default,
+// only appends the `-SNAPSHOT` suffix if there are uncommitted
+// changes in the workspace.
+version in ThisBuild := {
+  if (git.gitHeadCommit.value.isEmpty) "dev"
+  else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
+    git.gitDescribedVersion.value.get + "-SNAPSHOT"
+  else
+    git.gitDescribedVersion.value.get
+}
+
 val scalaOptions = Seq(
   "-deprecation",
   "-unchecked",
@@ -38,24 +53,10 @@ val scalaOptions = Seq(
   "100"
 )
 
-scalaVersion in ThisBuild := Version.scala
-
 /**
   * Shared settings across all subprojects
   */
 lazy val sharedSettings = Seq(
-  // We are overriding the default behavior of sbt-git which, by default,
-  // only appends the `-SNAPSHOT` suffix if there are uncommitted
-  // changes in the workspace.
-  version := {
-    if (git.gitHeadCommit.value.isEmpty) "dev"
-    else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
-      git.gitDescribedVersion.value.get + "-SNAPSHOT"
-    else
-      git.gitDescribedVersion.value.get
-  },
-  scapegoatVersion in ThisBuild := "1.3.8",
-  scalaVersion in ThisBuild := Version.scala,
   unusedCompileDependenciesFilter -= moduleFilter(
     "com.sksamuel.scapegoat",
     "scalac-scapegoat-plugin"
@@ -168,7 +169,7 @@ lazy val sonatypeSettings = Seq(
   licenses := Seq(
     "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")
   ),
-  publishTo := sonatypePublishTo.value
+  publishTo := sonatypePublishToBundle.value
 )
 
 lazy val credentialSettings = Seq(
@@ -699,7 +700,6 @@ lazy val backsplashServer =
 lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   .dependsOn(db)
   .settings(sharedSettings: _*)
-  .settings(publishSettings)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.awsXrayRecorder,
@@ -737,7 +737,6 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
 lazy val notification = Project("notification", file("notification"))
   .dependsOn(datamodel)
   .settings(sharedSettings: _*)
-  .settings(publishSettings)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.apacheCommonsEmail,
