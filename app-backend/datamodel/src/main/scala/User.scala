@@ -1,9 +1,13 @@
 package com.rasterfoundry.datamodel
 
 import cats.syntax.either._
+import eu.timepit.refined._
+import eu.timepit.refined.api._
+import eu.timepit.refined.numeric._
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto._
+import io.circe.refined._
 
 import java.net.{URI, URLEncoder}
 import java.security.InvalidParameterException
@@ -260,7 +264,7 @@ object UserThin {
 }
 
 case class UserBulkCreate(
-    count: Int,
+    count: Int Refined Interval.Closed[W.`1`.T, W.`40`.T],
     peudoUserNameType: PseudoUsernameType,
     organizationId: UUID,
     platformId: UUID,

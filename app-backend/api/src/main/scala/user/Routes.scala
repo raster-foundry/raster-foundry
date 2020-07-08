@@ -289,7 +289,7 @@ trait UserRoutes
       entity(as[UserBulkCreate]) { userBulkCreate =>
         complete {
           val names = PseudoUsernameService.createPseudoNames(
-            userBulkCreate.count,
+            userBulkCreate.count.value,
             userBulkCreate.peudoUserNameType
           )
 
