@@ -14,6 +14,18 @@
 
 ### Security
 
+## [1.44.0](https://github.com/raster-foundry/raster-foundry/compare/1.43.0...1.44.0)
+
+### Added
+
+- Campaigns can provide a random reviewable task for users to review [#5435](https://github.com/raster-foundry/raster-foundry/pull/5435)
+- Campaigns can copy labels back from their children's annotation projects [#5436](https://github.com/raster-foundry/raster-foundry/pull/5436)
+
+### Fixed
+
+- Fix Maven Central release pipeline hanging behavior [#5438](https://github.com/raster-foundry/raster-foundry/pull/5438)
+
+
 ## [1.43.0](https://github.com/raster-foundry/raster-foundry/compare/1.42.0...1.43.0)
 
 ### Added

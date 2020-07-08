@@ -62,6 +62,20 @@ trait CampaignRoutes
               }
             }
           } ~
+          pathPrefix("random-review-task") {
+            pathEndOrSingleSlash {
+              get {
+                getReviewTask(campaignId)
+              }
+            }
+          } ~
+          pathPrefix("retrieve-child-labels") {
+            pathEndOrSingleSlash {
+              post {
+                retrieveChildCampaignLabels(campaignId)
+              }
+            }
+          } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               get {
@@ -366,5 +380,57 @@ trait CampaignRoutes
         }
       }
     }
+  }
+
+  def getReviewTask(campaignId: UUID): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.Campaigns, Action.Read, None),
+      user
+    ) {
+      authorizeAsync {
+        CampaignDao
+          .isActiveCampaign(campaignId)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          CampaignDao
+            .randomReviewTask(
+              campaignId,
+              user
+            )
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+
+    }
+  }
+
+  def retrieveChildCampaignLabels(campaignId: UUID): Route = authenticate {
+    user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Clone, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.Edit
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          onSuccess {
+            CampaignDao
+              .retrieveChildCampaignAnnotations(campaignId)
+              .transact(xa)
+              .unsafeToFuture
+          } { complete(StatusCodes.NoContent) }
+        }
+      }
   }
 }

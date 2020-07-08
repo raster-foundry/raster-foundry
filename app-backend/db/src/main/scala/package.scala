@@ -7,6 +7,7 @@ import com.rasterfoundry.datamodel.Credential
 import doobie.Meta
 
 package object database {
+
   object Implicits extends RFMeta with Filterables {
     def fromString(s: String): Credential = {
       Credential.apply(Some(s))

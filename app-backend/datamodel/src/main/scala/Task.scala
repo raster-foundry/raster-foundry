@@ -1,5 +1,7 @@
 package com.rasterfoundry.datamodel
 
+import com.rasterfoundry.datamodel.Task.TaskWithCampaign
+
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._
@@ -65,6 +67,25 @@ case class Task(
       this.reviews
     )
   }
+
+  def toTaskWithCampaign(campaignId: UUID): Task.TaskWithCampaign = {
+    TaskWithCampaign(
+      this.id,
+      this.createdAt,
+      this.createdBy,
+      this.modifiedAt,
+      this.owner,
+      this.status,
+      this.lockedBy,
+      this.lockedOn,
+      this.geometry,
+      this.annotationProjectId,
+      this.taskType,
+      this.parentTaskId,
+      this.reviews,
+      campaignId
+    )
+  }
 }
 
 object Task {
@@ -102,6 +123,104 @@ object Task {
     implicit val decTaskProperties: Decoder[TaskProperties] = deriveDecoder
   }
 
+  final case class TaskWithCampaign(
+      id: UUID,
+      createdAt: Timestamp,
+      createdBy: String,
+      modifiedAt: Timestamp,
+      owner: String,
+      status: TaskStatus,
+      lockedBy: Option[String],
+      lockedOn: Option[Timestamp],
+      geometry: Projected[Geometry],
+      annotationProjectId: UUID,
+      taskType: TaskType,
+      parentTaskId: Option[UUID],
+      reviews: Json,
+      campaignId: UUID
+  ) {
+    def toTask: Task = {
+      Task(
+        this.id,
+        this.createdAt,
+        this.createdBy,
+        this.modifiedAt,
+        this.owner,
+        this.status,
+        this.lockedBy,
+        this.lockedOn,
+        this.geometry,
+        this.annotationProjectId,
+        this.taskType,
+        this.parentTaskId,
+        this.reviews
+      )
+    }
+
+    def toProperties(
+        actions: List[TaskActionStamp]
+    ): TaskPropertiesWithCampaign = {
+      val statusNote: Option[NonEmptyString] =
+        if (this.status == TaskStatus.Flagged) {
+          actions
+            .sortBy(-_.timestamp.toInstant.getEpochSecond)
+            .headOption flatMap { _.note }
+        } else None
+      Task.TaskPropertiesWithCampaign(
+        this.id,
+        this.createdAt,
+        this.createdBy,
+        this.modifiedAt,
+        this.owner,
+        this.status,
+        this.lockedBy,
+        this.lockedOn,
+        actions,
+        this.annotationProjectId,
+        statusNote,
+        this.taskType,
+        this.parentTaskId,
+        this.reviews,
+        this.campaignId
+      )
+    }
+
+    def toGeoJSONFeature(
+        actions: List[TaskActionStamp]
+    ): Task.TaskFeatureWithCampaign = {
+      Task.TaskFeatureWithCampaign(
+        this.id,
+        this.toProperties(actions),
+        this.geometry
+      )
+    }
+  }
+
+  final case class TaskPropertiesWithCampaign(
+      id: UUID,
+      createdAt: Timestamp,
+      createdBy: String,
+      modifiedAt: Timestamp,
+      owner: String,
+      status: TaskStatus,
+      lockedBy: Option[String],
+      lockedOn: Option[Timestamp],
+      actions: List[TaskActionStamp],
+      annotationProjectId: UUID,
+      note: Option[NonEmptyString],
+      taskType: TaskType,
+      parentTaskId: Option[UUID],
+      reviews: Json,
+      campaignId: UUID
+  )
+
+  object TaskPropertiesWithCampaign {
+    implicit val encTaskPropertiesWithCampaign
+      : Encoder[TaskPropertiesWithCampaign] = deriveEncoder
+    implicit val decTaskPropertiesWithCamapgin
+      : Decoder[TaskPropertiesWithCampaign] = deriveDecoder
+  }
+
   final case class TaskPropertiesCreate(
       status: TaskStatus,
       annotationProjectId: UUID,
@@ -133,6 +252,24 @@ object Task {
     implicit val decTaskFeature: Decoder[TaskFeature] =
       Decoder.forProduct4("id", "properties", "geometry", "type")(
         TaskFeature.apply _
+      )
+  }
+
+  case class TaskFeatureWithCampaign(
+      id: UUID,
+      properties: TaskPropertiesWithCampaign,
+      geometry: Projected[Geometry],
+      _type: String = "Feature"
+  )
+
+  object TaskFeatureWithCampaign {
+    implicit val encTaskFeature: Encoder[TaskFeatureWithCampaign] =
+      Encoder.forProduct4("id", "type", "properties", "geometry")(
+        tf => (tf.id, tf._type, tf.properties, tf.geometry)
+      )
+    implicit val decTaskFeature: Decoder[TaskFeatureWithCampaign] =
+      Decoder.forProduct4("id", "properties", "geometry", "type")(
+        TaskFeatureWithCampaign.apply _
       )
   }
 

@@ -450,7 +450,8 @@ object AnnotationProjectDao
                 }
               ),
               annotationProjectCopy,
-              0
+              0,
+              labelClasses
             )
         } yield newClassGroup
       }

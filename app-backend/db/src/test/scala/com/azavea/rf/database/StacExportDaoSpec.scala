@@ -65,7 +65,9 @@ class StacExportDaoSpec
             "Sent and inserted StacExport taskStatuses should be the same"
           )
           assert(
-            se.annotationProjectId.map(_ == seCreate.annotationProjectId).getOrElse(false),
+            se.annotationProjectId
+              .map(_ == seCreate.annotationProjectId)
+              .getOrElse(false),
             "Sent and inserted StacExport annotation project ids should be the same"
           )
           true
