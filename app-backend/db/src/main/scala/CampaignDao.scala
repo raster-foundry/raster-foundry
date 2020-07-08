@@ -244,7 +244,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
         GROUP BY parent_tasks.id
         HAVING SUM(r.reviewed) >= 1
       )
-      SELECT *, annotation_projects.campaign_id
+      SELECT tasks.*, annotation_projects.campaign_id
       FROM tasks
       JOIN annotation_projects
         ON tasks.annotation_project_id = annotation_projects.id
