@@ -19,6 +19,7 @@ object Version {
   val awsSdkV2Version = "2.12.0"
   val awsXrayRecorder = "2.3.0"
   val betterFiles = "3.4.0"
+  val bcrypt = "4.1"
   val caffeine = "2.3.5"
   val cats = "2.1.1"
   val catsEffect = "2.1.2"
@@ -112,6 +113,7 @@ object Dependencies {
   val awsS3SdkV2 = "software.amazon.awssdk" % "s3" % Version.awsSdkV2Version
   val awsUtilsSdkV2 = "software.amazon.awssdk" % "utils" % Version.awsSdkV2Version
   val betterFiles = "com.github.pathikrit" %% "better-files" % Version.betterFiles
+  val bcrypt = "com.github.t3hnar" %% "scala-bcrypt" % Version.bcrypt
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % Version.caffeine
   val catsCore = "org.typelevel" %% "cats-core" % Version.cats
   val catsEffect = "org.typelevel" %% "cats-effect" % Version.catsEffect
@@ -213,6 +215,7 @@ object Dependencies {
   val spire = "org.typelevel" %% "spire" % Version.spire
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
+  val sttpAkka = "com.softwaremill.sttp.client" %% "akka-http-backend" % Version.sttp
   val sttpAsyncBackend = "com.softwaremill.sttp.client" %% "async-http-client-backend" % Version.sttp
   val sttpCatsBackend = "com.softwaremill.sttp.client" %% "async-http-client-backend-cats" % Version.sttp
   val sttpCirce = "com.softwaremill.sttp.client" %% "circe" % Version.sttp

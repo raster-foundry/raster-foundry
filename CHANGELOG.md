@@ -14,6 +14,12 @@
 
 ### Security
 
+## [1.44.1](https://github.com/raster-foundry/raster-foundry/compare/1.44.0...1.44.1)
+
+### Fixed
+
+- Random tasks can only be drawn from sibling projects [#5440](https://github.com/raster-foundry/raster-foundry/pull/5440)
+
 ## [1.44.0](https://github.com/raster-foundry/raster-foundry/compare/1.43.0...1.44.0)
 
 ### Added
