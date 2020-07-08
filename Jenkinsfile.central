@@ -62,7 +62,7 @@ node {
                         --recv-keys ${GPG_KEY_ID} &&
                     echo ${GPG_KEY} | base64 -d >signing_key.asc &&
                     gpg --import signing_key.asc &&
-                    ./sbt ';set version in ThisBuild := \\"${params.RELEASE_TAG}\\";publish;sonatypeBundleRelease'
+                    ./sbt ';set version in ThisBuild := \\"${params.RELEASE_TAG}\\";sonatypeBundleClean;publish;sonatypeBundleRelease'
                 "
           """
         }
