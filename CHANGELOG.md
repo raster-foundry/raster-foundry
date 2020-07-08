@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Fix Maven Central release pipeline hanging behavior [#5438](https://github.com/raster-foundry/raster-foundry/pull/5438)
+
 ### Security
 
 ## [1.42.0](https://github.com/raster-foundry/raster-foundry/compare/1.41.0...1.42.0)
