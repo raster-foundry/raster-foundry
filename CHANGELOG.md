@@ -12,6 +12,9 @@
 
 ### Fixed
 
+- Filtered locked tasks out of random tasks endpoint [#5442](https://github.com/raster-foundry/raster-foundry/pull/5442)
+- Prevented `label_class_history` from blocking annotation project deletion [#5442](https://github.com/raster-foundry/raster-foundry/pull/5442)
+
 ### Security
 
 ## [1.44.1](https://github.com/raster-foundry/raster-foundry/compare/1.44.0...1.44.1)
