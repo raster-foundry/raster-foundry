@@ -5,6 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.geotiff.GeoTiffRasterSource
+import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.vector.Projected
 import geotrellis.vector._
 
@@ -19,24 +20,6 @@ object CogUtils extends LazyLogging {
     )
   }
 
-  private def viableCellSizes(
-      rs: RasterSource,
-      baseCellSize: CellSize,
-      sizes: List[CellSize],
-      target: Long
-  ): List[CellSize] = {
-    val width = rs.cols
-    val height = rs.rows
-
-    val isGood: CellSize => Boolean = (cs: CellSize) => {
-      val cellCount = width / (cs.width / baseCellSize.width) * (height / (cs.height / baseCellSize.height))
-      logger.debug(s"Cell count for $cs: $cellCount")
-      cellCount < target
-    }
-
-    sizes.filter(isGood)
-  }
-
   def histogramFromUri(
       uri: String,
       buckets: Int = 80
@@ -48,29 +31,11 @@ object CogUtils extends LazyLogging {
     // numbers are based off local testing
     val rasterSource = GeoTiffRasterSource(uri)
     logger.debug(s"Base cell size is: ${rasterSource.cellSize}")
-    val viable = viableCellSizes(
-      rasterSource,
-      rasterSource.cellSize,
-      rasterSource.resolutions,
-      400000
-    )
-    logger.debug(s"Number of viable cell sizes: ${viable.size}")
-    viable.toNel
-      .flatMap(
-        resNel =>
-          rasterSource
-            .resampleToGrid(
-              rasterSource.gridExtent.withResolution(
-                resNel.toList.minBy(
-                  r =>
-                    scala.math.abs(
-                      100000 - (rasterSource.rows / r.height) * (rasterSource.cols / r.width)
-                  )
-                )
-              )
-            )
-            .read()
-            .map(_.tile.histogramDouble(buckets))
-      )
+    val targetCellSize = TargetCellSize(rasterSource.resolutions.sortBy(_.height).max)
+
+    rasterSource
+      .resample(targetCellSize, ResampleMethods.NearestNeighbor, OverviewStrategy.DEFAULT)
+      .read()
+      .map(_.tile.histogramDouble(buckets))
   }
 }
