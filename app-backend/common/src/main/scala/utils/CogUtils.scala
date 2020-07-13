@@ -1,6 +1,5 @@
 package com.rasterfoundry.common.utils
 
-import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4._
 import geotrellis.raster._
@@ -13,9 +12,11 @@ object CogUtils extends LazyLogging {
 
   def getTiffExtent(uri: String): Projected[MultiPolygon] = {
     val rasterSource = GeoTiffRasterSource(uri)
-    val crs = rasterSource.crs
     Projected(
-      MultiPolygon(rasterSource.extent.reproject(crs, WebMercator).toPolygon()),
+      MultiPolygon(
+        rasterSource.extent
+          .reproject(rasterSource.crs, WebMercator)
+          .toPolygon()),
       3857
     )
   }
@@ -24,17 +25,14 @@ object CogUtils extends LazyLogging {
       uri: String,
       buckets: Int = 80
   ): Option[Array[Histogram[Double]]] = {
-    // Get the smallest overview and calculate histogrm from that
+    // Get the smallest overview and calculate histogram from that
     val rasterSource = GeoTiffRasterSource(uri)
+    val bandCount = rasterSource.bandCount
     logger.debug(s"Base cell size is: ${rasterSource.cellSize}")
-    val targetCellSize = TargetCellSize(
-      rasterSource.resolutions.sortBy(_.height).max)
-
-    rasterSource
-      .resample(targetCellSize,
-                ResampleMethods.NearestNeighbor,
-                OverviewStrategy.DEFAULT)
-      .read()
-      .map(_.tile.histogramDouble(buckets))
+    // This is to workaround https://github.com/locationtech/geotrellis/issues/3269
+    // where not all overviews are actually overviews
+    val lastOverview =
+      rasterSource.tiff.overviews.filter(_.bandCount == bandCount).last
+    Some(lastOverview.tile.bands.map(_.histogramDouble(buckets)).toArray)
   }
 }
