@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 s3 = boto3.resource("s3", region_name="eu-central-1")
 
 
+debug_data_bucket = os.getenv("RF_DEBUG_DATA_BUCKET")
+
+
 @contextmanager
 def get_tempdir(debug=False):
     """Returns a temporary directory that is cleaned up after usage
@@ -129,10 +132,13 @@ def gcs_path_for_landsat_id(landsat_id):
 def notify_intercom(user_id: str, message: str) -> None:
     subprocess.check_call(
         [
-            "java", "-cp",
+            "java",
+            "-cp",
             "/opt/raster-foundry/jars/batch-assembly.jar",
             "com.rasterfoundry.batch.Main",
-            "notify-intercom", user_id, message
+            "notify-intercom",
+            user_id,
+            message,
         ]
     )
 
@@ -237,6 +243,28 @@ def dropbox_upload_export(access_token, local_path, remote_fname):
                 upload_session_result.session_id, uploaded_so_far
             )
         client.files_upload_session_finish("", cursor, CommitInfo(remote_fname))
+
+
+def copy_to_debug(upload):
+    if debug_data_bucket is None:
+        logger.warn(
+            f"Skipping debug data upload, since no debug data bucket has been set"
+        )
+        return
+    s3_client = boto3.client("s3")
+    for inf in upload.files:
+        source_bucket, source_key = s3_bucket_and_key_from_url(inf)
+        logger.info(
+            "Copying %s to bucket: %s, key: %s. It will be available in the debug bucket for 14 days.",
+            inf,
+            debug_data_bucket,
+            source_key,
+        )
+        s3_client.copy_object(
+            Bucket=debug_data_bucket,
+            Key=source_key,
+            CopySource={"Bucket": source_bucket, "Key": source_key},
+        )
 
 
 class JobStatus(object):

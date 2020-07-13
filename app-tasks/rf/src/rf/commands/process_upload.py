@@ -11,11 +11,12 @@ from ..uploads.landsat_historical import LandsatHistoricalSceneFactory
 from ..uploads.planet.factories import PlanetSceneFactory
 from ..uploads.modis.factories import MODISSceneFactory
 from ..utils.exception_reporting import wrap_rollbar
-from ..utils.io import get_session, notify_intercom
+from ..utils.io import get_session, notify_intercom, copy_to_debug
 
 logger = logging.getLogger(__name__)
 HOST = os.getenv("RF_HOST")
 JOB_ATTEMPT = int(os.getenv("AWS_BATCH_JOB_ATTEMPT", -1))
+print(f"JOB ATTEMPT: {JOB_ATTEMPT}")
 
 
 class TaskGridError(Exception):
@@ -171,13 +172,15 @@ def process_upload(upload_id):
             notify_intercom(
                 upload.owner,
                 (
-                    "Your project \"{annotationProjectName}\" failed to process. If "
+                    'Your project "{annotationProjectName}" failed to process. If '
                     "you'd like help troubleshooting, please reach out to us here or at "
                     "groundwork@azavea.com."
                 ).format(annotationProjectName=annotationProject.name),
             )
+            copy_to_debug(upload)
         elif JOB_ATTEMPT >= 3:
             upload.update_upload_status("FAILED")
+            copy_to_debug(upload)
         else:
             upload.update_upload_status("QUEUED")
             if annotationProject is not None:
