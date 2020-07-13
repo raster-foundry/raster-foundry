@@ -4,7 +4,6 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.geotiff.GeoTiffRasterSource
-import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.vector.Projected
 import geotrellis.vector._
 
