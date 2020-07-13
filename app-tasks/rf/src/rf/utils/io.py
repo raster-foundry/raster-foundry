@@ -19,6 +19,7 @@ s3 = boto3.resource("s3", region_name="eu-central-1")
 
 
 debug_data_bucket = os.getenv("RF_DEBUG_DATA_BUCKET")
+data_bucket = os.getenv("DATA_BUCKET")
 
 
 @contextmanager
@@ -254,6 +255,11 @@ def copy_to_debug(upload):
     s3_client = boto3.client("s3")
     for inf in upload.files:
         source_bucket, source_key = s3_bucket_and_key_from_url(inf)
+        if source_bucket != data_bucket:
+            logger.info(
+                "Not uploading %s since it is not in RF user uploads bucket", inf
+            )
+            continue
         logger.info(
             "Copying %s to bucket: %s, key: %s. It will be available in the debug bucket for 14 days.",
             inf,
