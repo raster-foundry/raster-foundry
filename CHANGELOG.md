@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Improve histogram generation when COGs are POSTed to the scenes endopint [#5444](https://github.com/raster-foundry/raster-foundry/pull/5444)
+
 ### Deprecated
 
 ### Removed
