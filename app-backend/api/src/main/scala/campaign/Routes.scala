@@ -264,14 +264,16 @@ trait CampaignRoutes
                 CampaignDao.copyCampaign(
                   campaignId,
                   user,
-                  Some(campaignClone.tags)
+                  Some(campaignClone.tags),
+                  campaignClone.copyResourceLink
                 )
               case true =>
                 for {
                   copiedCampaign <- CampaignDao.copyCampaign(
                     campaignId,
                     user,
-                    Some(campaignClone.tags)
+                    Some(campaignClone.tags),
+                    campaignClone.copyResourceLink
                   )
                   copiedProjects <- AnnotationProjectDao.listByCampaign(
                     copiedCampaign.id
