@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Failed uploads copy source imagery to S3 if they're in a Raster Foundry user data bucket [#5446](https://github.com/raster-foundry/raster-foundry/pull/5446)
+
 ### Deprecated
 
 ### Removed
