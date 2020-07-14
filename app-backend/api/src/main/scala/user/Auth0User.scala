@@ -452,7 +452,7 @@ object Auth0Service extends Config with LazyLogging {
             multipart("upsert", true),
             multipart("connection_id", auth0AnonymizedConnectionId),
             multipartFile("users", tempFile.path),
-            multipart("send_completion_email", true)
+            multipart("send_completion_email", false)
           )
           .response(asJson[ImportResponse])
           .post(uri"https://$auth0Domain/api/v2/jobs/users-imports")
