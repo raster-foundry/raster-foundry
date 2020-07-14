@@ -31,7 +31,7 @@ object CogUtils extends LazyLogging {
     // This is to workaround https://github.com/locationtech/geotrellis/issues/3269
     // where not all overviews are actually overviews
     val lastOverview =
-      rasterSource.tiff.overviews.filter(_.bandCount == bandCount).last
-    Some(lastOverview.tile.bands.map(_.histogramDouble(buckets)).toArray)
+      rasterSource.tiff.overviews.filter(_.bandCount == bandCount).lastOption
+    lastOverview.map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
   }
 }
