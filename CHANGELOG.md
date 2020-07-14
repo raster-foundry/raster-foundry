@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Add support for campaign resource links [#5445](https://github.com/raster-foundry/raster-foundry/pull/5445)
 
 ### Changed
 
