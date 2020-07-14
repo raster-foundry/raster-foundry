@@ -333,7 +333,12 @@ object UserDao extends Dao[User] with Sanitization {
         Some(userBulkCreate.organizationId)
       )
       copiedCampaignO <- userBulkCreate.campaignId traverse { campaignId =>
-        CampaignDao.copyCampaign(campaignId, user)
+        CampaignDao.copyCampaign(
+          campaignId,
+          user,
+          None,
+          userBulkCreate.copyResourceLink
+        )
       }
     } yield UserWithCampaign(user, copiedCampaignO)
 

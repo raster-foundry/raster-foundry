@@ -208,7 +208,8 @@ class CampaignDaoSpec
             userCreates: List[User.Create],
             userCreate: User.Create,
             campaignCreate: Campaign.Create,
-            annotationProjectCreate: AnnotationProject.Create
+            annotationProjectCreate: AnnotationProject.Create,
+            copyResourceLink: Boolean
         ) => {
           val copyIO = for {
             parent <- UserDao.create(userCreate)
@@ -234,7 +235,12 @@ class CampaignDaoSpec
               insertedProject.id
             )
             campaignCopies <- children traverse { child =>
-              CampaignDao.copyCampaign(insertedCampaign.id, child)
+              CampaignDao.copyCampaign(
+                insertedCampaign.id,
+                child,
+                None,
+                copyResourceLink
+              )
             }
             insertedCampaignAfterCopy <- CampaignDao.unsafeGetCampaignById(
               insertedCampaign.id
@@ -285,6 +291,14 @@ class CampaignDaoSpec
                   .map(_.parentCampaignId)
                   .toSet,
                 "Copy of the campaign has the parent campaign id"
+              )
+              assert(
+                if (copyResourceLink)
+                  Set(originalCampaign.resourceLink) == copiedCampaigns
+                    .map(_.resourceLink)
+                    .toSet
+                else Set(None) == copiedCampaigns.map(_.resourceLink).toSet,
+                "Selectively copying the resource link works"
               )
               true
           }
