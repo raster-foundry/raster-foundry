@@ -23,7 +23,7 @@ and overwrites the existing dump.
 function create_database_backup() {
     if [ -f data/database.pgdump ]; then
         echo "Renaming old database dump"
-        HASH=$(date + '%N')
+        HASH=$(date +%N)
         mv "data/database.pgdump" "data/database.pgdump.${HASH}"
     fi
     echo "Creating new dev database dump"
