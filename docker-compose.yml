@@ -121,6 +121,8 @@ services:
       - AWS_DEFAULT_PROFILE=raster-foundry
       - BACKSPLASH_ENABLE_GDAL=true
       - RF_LOG_LEVEL=DEBUG
+      - AWS_BATCH_JOB_ATTEMPT
+      - RF_DEBUG_DATA_BUCKET
     command: rf
     links:
       - postgres:database.service.rasterfoundry.internal

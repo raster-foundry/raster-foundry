@@ -1140,12 +1140,14 @@ object Generators extends ArbitraryInstances {
       Gen.option(nonEmptyStringGen),
       Gen.option(uuidGen),
       Gen.option(continentGen),
-      stringListGen
+      stringListGen,
+      Gen.option(nonEmptyStringGen)
     ).mapN(Campaign.Create.apply _)
 
   private def campaignCloneGen: Gen[Campaign.Clone] =
     (
       stringListGen,
+      arbitrary[Boolean],
       arbitrary[Boolean]
     ).mapN(Campaign.Clone.apply _)
 
