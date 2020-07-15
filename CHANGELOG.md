@@ -3,12 +3,8 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
-- Add support for campaign resource links [#5445](https://github.com/raster-foundry/raster-foundry/pull/5445)
 
 ### Changed
-
-- Failed uploads copy source imagery to S3 if they're in a Raster Foundry user data bucket [#5446](https://github.com/raster-foundry/raster-foundry/pull/5446)
-- Improve histogram generation when COGs are POSTed to the scenes endpoint [#5444](https://github.com/raster-foundry/raster-foundry/pull/5444)
 
 ### Deprecated
 
@@ -16,10 +12,23 @@
 
 ### Fixed
 
+### Security
+
+## [1.45.0(https://github.com/raster-foundry/raster-foundry/compare/1.44.2...1.45.0)
+
+### Added
+- Add support for campaign resource links [#5445](https://github.com/raster-foundry/raster-foundry/pull/5445)
+
+### Changed
+
+- Failed uploads copy source imagery to S3 if they're in a Raster Foundry user data bucket [#5446](https://github.com/raster-foundry/raster-foundry/pull/5446)
+- Improve histogram generation when COGs are POSTed to the scenes endpoint [#5444](https://github.com/raster-foundry/raster-foundry/pull/5444)
+
+### Fixed
+
 - Copied back labels should be associated with label classes [#5448](https://github.com/raster-foundry/raster-foundry/pull/5448)
 - `load_development_data --create` should correctly provide a time format parameter [#5448](https://github.com/raster-foundry/raster-foundry/pull/5448)
 
-### Security
 
 ## [1.44.2](https://github.com/raster-foundry/raster-foundry/compare/1.44.1...1.44.2)
 
