@@ -33,7 +33,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "tags",
     "children_count",
     "project_statuses",
-    "is_active"
+    "is_active",
+    "resource_link"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -98,14 +99,14 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     (fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, owner, name, campaign_type, description,
       video_link, partner_name, partner_logo, parent_campaign_id,
-      continent, tags
+      continent, tags, resource_link
     )""" ++
       fr"""VALUES
       (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
        ${campaignCreate.campaignType}, ${campaignCreate.description},
        ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
        ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId},
-       ${campaignCreate.continent}, ${campaignCreate.tags}
+       ${campaignCreate.continent}, ${campaignCreate.tags}, ${campaignCreate.resourceLink}
        )
     """).update.withUniqueGeneratedKeys[Campaign](
       fieldNames: _*
@@ -126,7 +127,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       partner_logo = ${campaign.partnerLogo},
       continent = ${campaign.continent},
       tags = ${campaign.tags},
-      is_active = ${campaign.isActive}
+      is_active = ${campaign.isActive},
+      resource_link = ${campaign.resourceLink}
     WHERE
       id = $id
     """).update.run;
@@ -146,7 +148,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
   def copyCampaign(
       id: UUID,
       user: User,
-      tagsO: Option[List[String]] = None
+      tagsO: Option[List[String]] = None,
+      copyResourceLink: Boolean = false
   ): ConnectionIO[Campaign] = {
     val tagCol = tagsO
       .map(
@@ -155,11 +158,12 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
             .const(s"ARRAY[${tags.map(t => s"'${t}'").mkString(",")}]::text[]")
       )
       .getOrElse(Fragment.const("tags"))
+    val resourceLinkF = if (copyResourceLink) fr"resource_link" else fr"null"
     val insertQuery = (fr"""
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, campaign_type, description, video_link,
-             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, project_statuses, true""" ++
+             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, project_statuses, true, ${resourceLinkF}""" ++
       fr"""FROM """ ++ tableF ++ fr"""
            WHERE id = ${id}
         """)

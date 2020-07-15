@@ -21,7 +21,8 @@ final case class Campaign(
     tags: List[String] = List.empty,
     childrenCount: Int,
     projectStatuses: Map[String, Int],
-    isActive: Boolean
+    isActive: Boolean,
+    resourceLink: Option[String] = None
 )
 
 object Campaign {
@@ -37,7 +38,8 @@ object Campaign {
       partnerLogo: Option[String] = None,
       parentCampaignId: Option[UUID] = None,
       continent: Option[Continent] = None,
-      tags: List[String] = List.empty
+      tags: List[String] = List.empty,
+      resourceLink: Option[String] = None
   )
 
   object Create {
@@ -46,7 +48,8 @@ object Campaign {
 
   final case class Clone(
       tags: List[String] = List.empty,
-      grantAccessToParentCampaignOwner: Boolean = false
+      grantAccessToParentCampaignOwner: Boolean = false,
+      copyResourceLink: Boolean = false
   )
 
   object Clone {
