@@ -41,6 +41,7 @@ class GeoTiffS3SceneFactory(object):
         """Args:
             upload (Upload): instance of upload model to create scenes for
         """
+        raise Exception("oh no")
         self._upload = upload
         self.isProjectUpload = upload.projectId is not None
         self.files = self._upload.files
