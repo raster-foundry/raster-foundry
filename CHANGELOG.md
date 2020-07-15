@@ -15,6 +15,9 @@
 
 ### Fixed
 
+- Copied back labels should be associated with label classes [#5448](https://github.com/raster-foundry/raster-foundry/pull/5448)
+- `load_development_data --create` should correctly provide a time format parameter [#5448](https://github.com/raster-foundry/raster-foundry/pull/5448)
+
 ### Security
 
 ## [1.44.2](https://github.com/raster-foundry/raster-foundry/compare/1.44.1...1.44.2)
