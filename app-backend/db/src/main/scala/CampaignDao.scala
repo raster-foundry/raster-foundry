@@ -262,7 +262,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
         AND task_type = ${TaskType.Review.toString}::task_type
         AND annotation_projects.campaign_id IN (select id from candidate_campaigns)
         AND (locked_by = ${user.id} OR locked_by IS NULL)
-        AND status = ${TaskStatus.Labeled.toString}::task_status
+        AND tasks.status = ${TaskStatus.Labeled.toString}::task_status
       ORDER BY RANDOM() LIMIT 1;
     """
       .query[Task.TaskWithCampaign]
