@@ -6,3 +6,5 @@
   locationtech-snapshots: http://nexus.internal.azavea.com/repository/locationtech-snapshots/
   azavea-snapshots: http://nexus.internal.azavea.com/repository/azavea-snapshots/
   azavea-releases: http://nexus.internal.azavea.com/repository/azavea-releases/
+  eclipse-proxy-snapshots: http://nexus.rasterfoundry.internal/repository/eclipse-snapshots/
+
