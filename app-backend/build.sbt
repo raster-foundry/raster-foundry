@@ -99,6 +99,7 @@ lazy val sharedSettings = Seq(
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.bintrayRepo("guizmaii", "maven"),
     Resolver.bintrayRepo("zamblauskas", "maven"), // for scala-csv-parser
+    "eclipse-snapshots" at "https://repo.eclipse.org/content/groups/snapshots",
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     ("azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/")
