@@ -4,6 +4,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
+import cats.Monoid
 import cats.implicits._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -928,6 +929,148 @@ class CampaignDaoSpec
               parentLabelCount == childInsertedLabels.length,
               "Parent project has the same count of labels as the child project"
             )
+            true
+          }
+      }
+    }
+  }
+
+  test(
+    "child campaign owners can view each other campaign and can view + annotate each other project"
+  ) {
+    check {
+      forAll {
+        (
+            parentUserCreate: User.Create,
+            childUserCreates: List[User.Create],
+            childUserCreatedSecondBatch: List[User.Create],
+            parentCampaignCreate: Campaign.Create,
+            parentAnnotationProjectCreate: AnnotationProject.Create
+        ) =>
+          {
+            implicit val andMonoid: Monoid[Boolean] =
+              Monoid.instance[Boolean](true, _ && _)
+            val authedIO = for {
+              // create a parent user, parent campaign, and a project
+              parentUser <- UserDao.create(parentUserCreate)
+              parentCampaign <- CampaignDao
+                .insertCampaign(
+                  parentCampaignCreate.copy(parentCampaignId = None),
+                  parentUser
+                )
+              _ <- AnnotationProjectDao.insert(
+                parentAnnotationProjectCreate.copy(
+                  campaignId = Some(parentCampaign.id)
+                ),
+                parentUser
+              )
+              // create a first batch of users, clone the parent campaign for them
+              // then grant access to the first batch of child campaign owners
+              childUsers <- childUserCreates take 5 traverse { childUserCreate =>
+                UserDao.create(childUserCreate)
+              }
+              childCampaigns <- childUsers traverse { childUser =>
+                CampaignDao.copyCampaign(parentCampaign.id, childUser)
+              }
+              childProjects <- (childCampaigns traverse { childCampaign =>
+                AnnotationProjectDao.listByCampaign(childCampaign.id)
+              }) map { projects =>
+                projects.flatten
+              }
+              _ <- CampaignDao.grantCloneChildrenAccessById(
+                parentCampaign.id,
+                ActionType.View
+              )
+              // create a second batch of users, clone the parent campaign for them
+              // then grant access to the second batch of child campaign owners
+              childUsersSecondBatch <- childUserCreatedSecondBatch take 3 traverse {
+                childUserCreate =>
+                  UserDao.create(childUserCreate)
+              }
+              childCampaignsSecondBatch <- childUsersSecondBatch traverse {
+                childUser =>
+                  CampaignDao.copyCampaign(parentCampaign.id, childUser)
+              }
+              childProjectsSecondBatch <- (childCampaignsSecondBatch traverse {
+                childCampaign =>
+                  AnnotationProjectDao.listByCampaign(childCampaign.id)
+              }) map { projects =>
+                projects.flatten
+              }
+              secondGrant <- CampaignDao.grantCloneChildrenAccessById(
+                parentCampaign.id,
+                ActionType.View
+              )
+              // concatenate all child campaign users
+              allChildCampaignOwners = childUsers ++ childUsersSecondBatch
+              // get all child campaigns of this parent campaign
+              // it will returan all of the above two batches
+              // then check if all child campaign owner can view all other
+              // child campaigns
+              allChildCampaigns <- CampaignDao.getChildren(parentCampaign.id)
+              canChildrenViewEachOthersCampaigns <- allChildCampaigns traverse {
+                childCampaign =>
+                  allChildCampaignOwners traverse { childUser =>
+                    CampaignDao
+                      .authorized(
+                        childUser,
+                        ObjectType.Campaign,
+                        childCampaign.id,
+                        ActionType.View
+                      )
+                      .map(_.toBoolean)
+                  } map { canAllChildrenViewThisCampaign =>
+                    canAllChildrenViewThisCampaign.combineAll
+                  }
+              } map { areAllCampaignsViewable =>
+                areAllCampaignsViewable.combineAll
+              }
+              // all child projects are concatenated
+              // then check if all child users have access to all child projects
+              allChildProjects = childProjects ++ childProjectsSecondBatch
+              canChildrenViewAndAnnotateEachOtherProjects <- allChildProjects traverse {
+                childProject =>
+                  allChildCampaignOwners traverse { childUser =>
+                    val canViewIO = AnnotationProjectDao
+                      .authorized(
+                        childUser,
+                        ObjectType.AnnotationProject,
+                        childProject.id,
+                        ActionType.View
+                      )
+                      .map(_.toBoolean)
+                    val canAnnotateIO = AnnotationProjectDao
+                      .authorized(
+                        childUser,
+                        ObjectType.AnnotationProject,
+                        childProject.id,
+                        ActionType.Annotate
+                      )
+                      .map(_.toBoolean)
+                    (canViewIO, canAnnotateIO).tupled.map { authResult =>
+                      authResult._1 && authResult._2
+                    }
+                  } map { canAllChildrenAccessThisProject =>
+                    canAllChildrenAccessThisProject.combineAll
+                  }
+              } map { areAllProjectsAccessible =>
+                areAllProjectsAccessible.combineAll
+              }
+            } yield {
+              (
+                secondGrant,
+                canChildrenViewEachOthersCampaigns && canChildrenViewAndAnnotateEachOtherProjects
+              )
+
+            }
+
+            val (_, authorized) = authedIO.transact(xa).unsafeRunSync()
+
+            assert(
+              authorized,
+              "Child campaign owners can view each other campaign and can view + annotate each other project"
+            )
+
             true
           }
       }

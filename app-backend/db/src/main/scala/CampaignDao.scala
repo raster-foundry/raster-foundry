@@ -325,4 +325,30 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           AnnotationLabelDao.copyProjectAnnotations(childId, parentId)
       }
     } yield ()
+
+  def grantCloneChildrenAccessById(
+      id: UUID,
+      childrenActionType: ActionType
+  ): ConnectionIO[Unit] =
+    for {
+      campaigns <- CampaignDao.getChildren(id)
+      ownerIds = campaigns.map(_.owner)
+      campaingRules = ownerIds.map { ownerId =>
+        ObjectAccessControlRule(
+          SubjectType.User,
+          Some(ownerId),
+          childrenActionType
+        )
+      }
+      _ <- campaigns traverse { campaign =>
+        CampaignDao.addPermissionsMany(
+          campaign.id,
+          campaingRules
+        ) *>
+          AnnotationProjectDao.assignUsersToProjectsByCampaign(
+            campaign.id,
+            ownerIds
+          )
+      }
+    } yield ()
 }
