@@ -14,6 +14,11 @@
 
 ### Security
 
+## [1.46.0](https://github.com/raster-foundry/raster-foundry/compare/1.45.0...1.46.0)
+
+### Fixed
+- Fixed tile rendering by updating GeoTrellis to 3.4.1 [#5449](https://github.com/raster-foundry/raster-foundry/pull/5449)
+
 ## [1.45.0(https://github.com/raster-foundry/raster-foundry/compare/1.44.2...1.45.0)
 
 ### Added
