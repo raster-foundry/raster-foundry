@@ -4,3 +4,4 @@
   maven-proxy-releases: http://nexus.rasterfoundry.internal/repository/maven-public/
   locationtech-proxy-releases: http://nexus.rasterfoundry.internal/repository/locationtech-releases/
   locationtech-proxy-snapshots: http://nexus.rasterfoundry.internal/repository/locationtech-snapshots/
+  eclipse-proxy-snapshots: http://nexus.rasterfoundry.internal/repository/eclipse-snapshots/
