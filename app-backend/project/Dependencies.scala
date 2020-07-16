@@ -41,7 +41,7 @@ object Version {
   val flyway = "6.0.8"
   val fs2 = "2.3.0"
   val fs2Cron = "0.2.2"
-  val geotrellis = "3.4.1"
+  val geotrellis = "3.4.1-SNAPSHOT"
   val geotrellisServer = "4.1.0"
   val guava = "20.0"
   val hadoop = "2.8.4"
