@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Fixed the ACR assignment issue on the user bulk creation endpoint [#5450](https://github.com/raster-foundry/raster-foundry/pull/5450)
+
 ### Security
 
 ## [1.46.0](https://github.com/raster-foundry/raster-foundry/compare/1.45.0...1.46.0)
