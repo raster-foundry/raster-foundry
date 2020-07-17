@@ -336,39 +336,10 @@ trait UserRoutes
                 usersO = uwcs traverse { uwc =>
                   uwc.map(_.user)
                 }
-                campaignsO = uwcs traverse { uwc =>
-                  uwc.flatMap(_.campaignO)
-                }
-                _ <- campaignsO traverse { campaigns =>
-                  campaigns traverse { campaign =>
-                    val campaingRulesO = usersO.map(
-                      users =>
-                        users map { user =>
-                          ObjectAccessControlRule(
-                            SubjectType.User,
-                            Some(user.id),
-                            ActionType.View
-                          )
-                      }
-                    )
-                    (
-                      campaingRulesO match {
-                        case Some(rules) =>
-                          CampaignDao.addPermissionsMany(
-                            campaign.id,
-                            rules
-                          )
-                        case _ =>
-                          List[ObjectAccessControlRule]().pure[ConnectionIO]
-
-                      },
-                      AnnotationProjectDao
-                        .assignUsersToProjectsByCampaign(campaign.id, usersO)
-                    ).tupled
-                      .transact(xa)
-                      .unsafeToFuture()
-                  }
-                }
+                _ <- (userBulkCreate.campaignId traverse { campaignId =>
+                  CampaignDao
+                    .grantCloneChildrenAccessById(campaignId, ActionType.View)
+                }).transact(xa).unsafeToFuture()
               } yield
                 usersO map { users =>
                   users map {
