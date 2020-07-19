@@ -457,7 +457,7 @@ trait AnnotationProjectPermissionRoutes
                             .addPermission(projectId, acr)
                         }).transact(xa) <* (
                           canUserAnnotateIO flatMap {
-                            case true =>
+                            case false =>
                               shareNotify(
                                 existingUser,
                                 user,
