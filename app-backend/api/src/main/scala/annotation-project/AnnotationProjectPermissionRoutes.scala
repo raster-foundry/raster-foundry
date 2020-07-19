@@ -110,17 +110,14 @@ trait AnnotationProjectPermissionRoutes
     } yield ()).attempt.void.unsafeToFuture
   }
 
-  def getDefaultShare(user: User): List[ObjectAccessControlRule] =
+  def getDefaultShare(
+      user: User
+  ): List[ObjectAccessControlRule] =
     List(
       ObjectAccessControlRule(
         SubjectType.User,
         Some(user.id),
         ActionType.View
-      ),
-      ObjectAccessControlRule(
-        SubjectType.User,
-        Some(user.id),
-        ActionType.Annotate
       ),
       ObjectAccessControlRule(
         SubjectType.User,
@@ -354,91 +351,125 @@ trait AnnotationProjectPermissionRoutes
       Action.Share,
       user
     ) {
-      entity(as[UserEmail]) { userByEmail =>
-        complete {
-          Auth0Service.getManagementBearerToken flatMap { managementToken =>
-            (for {
-              // Everything has to be Futures here because of methods in akka-http / Auth0Service
-              users <- UserDao
-                .findUsersByEmail(userByEmail.email)
-                .transact(xa)
-                .unsafeToFuture
-              userPlatform <- UserDao
-                .unsafeGetUserPlatform(user.id)
-                .transact(xa)
-                .unsafeToFuture
-              annotationProjectO <- AnnotationProjectDao
-                .getById(projectId)
-                .transact(xa)
-                .unsafeToFuture
-              permissions <- users match {
-                case Nil =>
-                  for {
-                    auth0User <- OptionT {
-                      Auth0Service.findGroundworkUser(
-                        userByEmail.email,
-                        managementToken
-                      )
-                    } getOrElseF {
-                      Auth0Service
-                        .createGroundworkUser(
+      entity(as[UserShareInfo]) { userByEmail =>
+        authorizeAsync {
+          (userByEmail.actionType match {
+            case ActionType.Annotate | ActionType.Validate =>
+              true.pure[ConnectionIO]
+            case _ => false.pure[ConnectionIO]
+          }).transact(xa).unsafeToFuture()
+        } {
+          complete {
+            Auth0Service.getManagementBearerToken flatMap { managementToken =>
+              (for {
+                // Everything has to be Futures here because of methods in akka-http / Auth0Service
+                users <- UserDao
+                  .findUsersByEmail(userByEmail.email)
+                  .transact(xa)
+                  .unsafeToFuture
+                userPlatform <- UserDao
+                  .unsafeGetUserPlatform(user.id)
+                  .transact(xa)
+                  .unsafeToFuture
+                annotationProjectO <- AnnotationProjectDao
+                  .getById(projectId)
+                  .transact(xa)
+                  .unsafeToFuture
+                permissions <- users match {
+                  case Nil =>
+                    for {
+                      auth0User <- OptionT {
+                        Auth0Service.findGroundworkUser(
                           userByEmail.email,
                           managementToken
                         )
-                    }
-                    newUser <- (auth0User.user_id traverse { userId =>
-                      for {
-                        user <- UserDao.create(
-                          User.Create(
-                            userId,
-                            email = userByEmail.email,
-                            scope = Scopes.GroundworkUser
+                      } getOrElseF {
+                        Auth0Service
+                          .createGroundworkUser(
+                            userByEmail.email,
+                            managementToken
                           )
+                      }
+                      newUserOpt <- (auth0User.user_id traverse { userId =>
+                        for {
+                          user <- UserDao.create(
+                            User.Create(
+                              userId,
+                              email = userByEmail.email,
+                              scope = Scopes.GroundworkUser
+                            )
+                          )
+                          _ <- UserGroupRoleDao.createDefaultRoles(user)
+                          _ <- AnnotationProjectDao.copyProject(
+                            UUID.fromString(groundworkSampleProject),
+                            user
+                          )
+                        } yield user
+                      }).transact(xa).unsafeToFuture
+                      acrs = newUserOpt map { newUser =>
+                        getDefaultShare(newUser) :+ ObjectAccessControlRule(
+                          SubjectType.User,
+                          Some(newUser.id),
+                          userByEmail.actionType
                         )
-                        _ <- UserGroupRoleDao.createDefaultRoles(user)
-                        _ <- AnnotationProjectDao.copyProject(
-                          UUID.fromString(groundworkSampleProject),
-                          user
-                        )
-                      } yield user
-                    }).transact(xa).unsafeToFuture
-                    acrs = newUser map { getDefaultShare(_) } getOrElse Nil
-                    _ <- (newUser, annotationProjectO).tupled traverse {
-                      case (newUser, annotationProject) =>
-                        shareNotifyNewUser(
-                          managementToken,
-                          user,
-                          userByEmail.email,
-                          newUser.id,
-                          userPlatform,
-                          annotationProject
-                        )
-                    }
-                    dbAcrs <- (acrs traverse { acr =>
-                      AnnotationProjectDao
-                        .addPermission(projectId, acr)
-                    }).transact(xa).unsafeToFuture
-                  } yield dbAcrs
-                case existingUsers =>
-                  existingUsers traverse { existingUser =>
-                    val acrs = getDefaultShare(existingUser)
-                    Auth0Service
-                      .addUserMetadata(
-                        existingUser.id,
-                        managementToken,
-                        Map("app_metadata" -> Map("annotateApp" -> true)).asJson
-                      ) *>
-                      ((acrs traverse { acr =>
+                      } getOrElse Nil
+                      _ <- (newUserOpt, annotationProjectO).tupled traverse {
+                        case (newUser, annotationProject) =>
+                          shareNotifyNewUser(
+                            managementToken,
+                            user,
+                            userByEmail.email,
+                            newUser.id,
+                            userPlatform,
+                            annotationProject
+                          )
+                      }
+                      dbAcrs <- (acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)
-                      }).transact(xa) <* shareNotify(
-                        existingUser,
-                        user,
-                        projectId
-                      )).unsafeToFuture
-                  } map { _.flatten }
-              }
-            } yield permissions)
+                      }).transact(xa).unsafeToFuture
+                    } yield dbAcrs
+                  case existingUsers =>
+                    existingUsers traverse { existingUser =>
+                      val acrs =
+                        getDefaultShare(existingUser) :+ ObjectAccessControlRule(
+                          SubjectType.User,
+                          Some(existingUser.id),
+                          userByEmail.actionType
+                        )
+                      val canUserAnnotateIO = AnnotationProjectDao
+                        .authorized(
+                          existingUser,
+                          ObjectType.AnnotationProject,
+                          projectId,
+                          ActionType.Annotate
+                        )
+                        .map(_.toBoolean)
+                        .transact(xa)
+                      Auth0Service
+                        .addUserMetadata(
+                          existingUser.id,
+                          managementToken,
+                          Map("app_metadata" -> Map("annotateApp" -> true)).asJson
+                        ) *>
+                        ((acrs traverse { acr =>
+                          AnnotationProjectDao
+                            .addPermission(projectId, acr)
+                        }).transact(xa) <* (
+                          canUserAnnotateIO flatMap {
+                            case true =>
+                              shareNotify(
+                                existingUser,
+                                user,
+                                projectId
+                              )
+                            case _ => IO.pure(())
+                          }
+                        )).unsafeToFuture
+                    } map { _.flatten }
+                }
+              } yield permissions)
+            }
           }
         }
       }
