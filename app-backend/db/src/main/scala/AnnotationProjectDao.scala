@@ -361,7 +361,7 @@ object AnnotationProjectDao
                 StacLabelItemProperties.StacLabelItemClasses(
                   group.name,
                   classes.map(_.name)
-              )
+                )
             )
         }.flatten,
         "vector",
@@ -493,7 +493,7 @@ object AnnotationProjectDao
                   Some(userId),
                   ActionType.Annotate
                 )
-            )
+              )
           )
         AnnotationProjectDao.addPermissionsMany(
           project.id,
@@ -501,4 +501,43 @@ object AnnotationProjectDao
         )
       }
     } yield projects
+
+  /*
+    If no action specified, we see it as just assigning Annotate action
+    If the action param is Annotate, the existing Validate action, if any, needs to be removed
+    If the action param is Validate, existing actions should stay untouched
+   */
+  def handleSharedPermissions(
+      projectId: UUID,
+      userId: String,
+      acrs: List[ObjectAccessControlRule],
+      actionTypeOpt: Option[ActionType]
+  ): ConnectionIO[List[List[ObjectAccessControlRule]]] =
+    actionTypeOpt match {
+      case Some(ActionType.Annotate) | None =>
+        for {
+          permissions <- getPermissions(projectId)
+          permissionsToKeep = permissions collect {
+            case p
+                if p.subjectId != Some(userId) && p.actionType != ActionType.Validate =>
+              p
+          }
+          _ <- permissionsToKeep match {
+            case Nil => deletePermissions(projectId)
+            case ps if ps.toSet != permissions.toSet =>
+              replacePermissions(projectId, ps) map { _ =>
+                permissions.size - ps.size
+              }
+            case _ =>
+              0.pure[ConnectionIO]
+          }
+          resultedPermissions <- acrs traverse { acr =>
+            addPermission(projectId, acr)
+          }
+        } yield resultedPermissions
+      case _ =>
+        acrs traverse { acr =>
+          addPermission(projectId, acr)
+        }
+    }
 }

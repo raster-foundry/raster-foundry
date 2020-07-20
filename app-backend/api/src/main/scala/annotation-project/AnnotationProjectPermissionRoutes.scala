@@ -111,9 +111,10 @@ trait AnnotationProjectPermissionRoutes
   }
 
   def getDefaultShare(
-      user: User
-  ): List[ObjectAccessControlRule] =
-    List(
+      user: User,
+      actionTypeOpt: Option[ActionType] = None
+  ): List[ObjectAccessControlRule] = {
+    val default = List(
       ObjectAccessControlRule(
         SubjectType.User,
         Some(user.id),
@@ -125,6 +126,27 @@ trait AnnotationProjectPermissionRoutes
         ActionType.Export
       )
     )
+    val annotate = ObjectAccessControlRule(
+      SubjectType.User,
+      Some(user.id),
+      ActionType.Annotate
+    )
+    val validate = ObjectAccessControlRule(
+      SubjectType.User,
+      Some(user.id),
+      ActionType.Validate
+    )
+    actionTypeOpt match {
+      case Some(actionType) if actionType == ActionType.Validate =>
+        default :+ annotate :+ validate
+      case Some(actionType) if actionType == ActionType.Annotate =>
+        default :+ annotate
+      case None =>
+        default :+ annotate
+      case _ =>
+        default
+    }
+  }
 
   def listPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeScope(
@@ -354,7 +376,7 @@ trait AnnotationProjectPermissionRoutes
       entity(as[UserShareInfo]) { userByEmail =>
         authorizeAsync {
           (userByEmail.actionType match {
-            case ActionType.Annotate | ActionType.Validate =>
+            case Some(ActionType.Annotate) | Some(ActionType.Validate) | None =>
               true.pure[ConnectionIO]
             case _ => false.pure[ConnectionIO]
           }).transact(xa).unsafeToFuture()
@@ -407,23 +429,28 @@ trait AnnotationProjectPermissionRoutes
                         } yield user
                       }).transact(xa).unsafeToFuture
                       acrs = newUserOpt map { newUser =>
-                        getDefaultShare(newUser) :+ ObjectAccessControlRule(
-                          SubjectType.User,
-                          Some(newUser.id),
-                          userByEmail.actionType
-                        )
+                        getDefaultShare(newUser, userByEmail.actionType)
                       } getOrElse Nil
                       _ <- (newUserOpt, annotationProjectO).tupled traverse {
                         case (newUser, annotationProject) =>
-                          shareNotifyNewUser(
-                            managementToken,
-                            user,
-                            userByEmail.email,
-                            newUser.id,
-                            userPlatform,
-                            annotationProject
-                          )
+                          // if silent param is not provided, we notify
+                          val isSilent = userByEmail.silent.getOrElse(false)
+                          if (!isSilent) {
+                            shareNotifyNewUser(
+                              managementToken,
+                              user,
+                              userByEmail.email,
+                              newUser.id,
+                              userPlatform,
+                              annotationProject
+                            )
+                          } else {
+                            Future.unit
+                          }
                       }
+                      // this is not an existing user,
+                      // there is no project specific ACR yet,
+                      // so no need to remove Validate action if only want Annotate
                       dbAcrs <- (acrs traverse { acr =>
                         AnnotationProjectDao
                           .addPermission(projectId, acr)
@@ -432,32 +459,24 @@ trait AnnotationProjectPermissionRoutes
                   case existingUsers =>
                     existingUsers traverse { existingUser =>
                       val acrs =
-                        getDefaultShare(existingUser) :+ ObjectAccessControlRule(
-                          SubjectType.User,
-                          Some(existingUser.id),
-                          userByEmail.actionType
-                        )
-                      val canUserAnnotateIO = AnnotationProjectDao
-                        .authorized(
-                          existingUser,
-                          ObjectType.AnnotationProject,
-                          projectId,
-                          ActionType.Annotate
-                        )
-                        .map(_.toBoolean)
-                        .transact(xa)
+                        getDefaultShare(existingUser, userByEmail.actionType)
                       Auth0Service
                         .addUserMetadata(
                           existingUser.id,
                           managementToken,
                           Map("app_metadata" -> Map("annotateApp" -> true)).asJson
                         ) *>
-                        ((acrs traverse { acr =>
-                          AnnotationProjectDao
-                            .addPermission(projectId, acr)
-                        }).transact(xa) <* (
-                          canUserAnnotateIO flatMap {
-                            case false =>
+                        (AnnotationProjectDao
+                          .handleSharedPermissions(
+                            projectId,
+                            existingUser.id,
+                            acrs,
+                            userByEmail.actionType
+                          )
+                          .transact(xa) <* (
+                          // if silent param is not provided, we notify
+                          userByEmail.silent match {
+                            case Some(false) | None =>
                               shareNotify(
                                 existingUser,
                                 user,
