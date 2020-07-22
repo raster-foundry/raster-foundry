@@ -333,6 +333,13 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       case _          => true
     }
 
+  def hasStatus(
+      taskId: UUID,
+      statuses: List[TaskStatus]
+  ): ConnectionIO[Boolean] =
+    getTaskById(taskId)
+      .map(_.exists(task => statuses.contains(task.status)))
+
   def lockTask(
       taskId: UUID
   )(user: User): ConnectionIO[Option[Task.TaskFeature]] =
