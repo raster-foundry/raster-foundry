@@ -137,11 +137,9 @@ trait AnnotationProjectPermissionRoutes
       ActionType.Validate
     )
     actionTypeOpt match {
-      case Some(actionType) if actionType == ActionType.Validate =>
+      case Some(ActionType.Validate) =>
         default :+ annotate :+ validate
-      case Some(actionType) if actionType == ActionType.Annotate =>
-        default :+ annotate
-      case None =>
+      case Some(ActionType.Annotate) | None =>
         default :+ annotate
       case _ =>
         default
@@ -374,12 +372,12 @@ trait AnnotationProjectPermissionRoutes
       user
     ) {
       entity(as[UserShareInfo]) { userByEmail =>
-        authorizeAsync {
+        authorize {
           (userByEmail.actionType match {
             case Some(ActionType.Annotate) | Some(ActionType.Validate) | None =>
-              true.pure[ConnectionIO]
-            case _ => false.pure[ConnectionIO]
-          }).transact(xa).unsafeToFuture()
+              true
+            case _ => false
+          })
         } {
           complete {
             Auth0Service.getManagementBearerToken flatMap { managementToken =>
