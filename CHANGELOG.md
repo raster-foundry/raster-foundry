@@ -5,6 +5,7 @@
 ### Added
 
 ### Changed
+- Update annotation project share endpoint for validation use case [#5452](https://github.com/raster-foundry/raster-foundry/pull/5452)
 
 ### Deprecated
 

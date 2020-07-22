@@ -252,7 +252,11 @@ object User {
   }
 }
 
-@JsonCodec final case class UserEmail(email: String)
+@JsonCodec final case class UserShareInfo(
+    email: String,
+    actionType: Option[ActionType] = None,
+    silent: Option[Boolean] = None
+)
 
 @JsonCodec final case class UserThin(
     id: String,
