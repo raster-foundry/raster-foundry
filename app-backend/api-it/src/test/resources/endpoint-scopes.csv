@@ -42,6 +42,7 @@ Path,Domain:Action,Verb
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:read,get
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:deleteAnnotation,delete
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/children,annotationProjects:readTasks,get
+/api/annotation-projects/{annotationProjectID}/tasks/{taskID}/validate,annotationProjects:createAnnotation,post
 /api/licenses/,licenses:read,get
 /api/licenses/{licenseID},licenses:read,get
 /api/map-tokens/,mapTokens:read,get
