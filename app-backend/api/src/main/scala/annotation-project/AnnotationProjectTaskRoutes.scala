@@ -363,7 +363,14 @@ trait AnnotationProjectTaskRoutes
                 projectId,
                 ActionType.Annotate
               )
-            auth2 <- TaskDao.hasStatus(
+            auth2 <- AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Validate
+              )
+            auth3 <- TaskDao.hasStatus(
               taskId,
               List(
                 TaskStatus.Unlabeled,
@@ -372,7 +379,7 @@ trait AnnotationProjectTaskRoutes
               )
             )
           } yield {
-            auth1.toBoolean && auth2
+            (auth1.toBoolean || auth2.toBoolean) && auth3
           }).transact(xa).unsafeToFuture
         } {
           entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
