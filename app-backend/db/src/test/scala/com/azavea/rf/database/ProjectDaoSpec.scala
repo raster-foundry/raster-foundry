@@ -41,9 +41,13 @@ class ProjectDaoSpec
                 platform,
                 project
               )
-            } yield dbProject
-            val insertedProject =
+              dbProjectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
+                dbProject.defaultLayerId
+              )
+            } yield (dbProject, dbProjectLayer)
+            val (insertedProject, insertedDefaultLayer) =
               projInsertIO.transact(xa).unsafeRunSync
+
             insertedProject.name == project.name &&
             insertedProject.description == project.description &&
             insertedProject.visibility == project.visibility &&
@@ -52,7 +56,9 @@ class ProjectDaoSpec
             insertedProject.aoiCadenceMillis == project.aoiCadenceMillis &&
             insertedProject.tags == project.tags &&
             insertedProject.isSingleBand == project.isSingleBand &&
-            insertedProject.singleBandOptions == project.singleBandOptions
+            insertedProject.singleBandOptions == project.singleBandOptions &&
+            insertedProject.isSingleBand == insertedDefaultLayer.isSingleBand &&
+            insertedProject.singleBandOptions == insertedDefaultLayer.singleBandOptions
           }
       }
     }
