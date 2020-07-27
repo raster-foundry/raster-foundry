@@ -39,6 +39,7 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
                                 None,
                                 None,
                                 None,
+                                None,
                                 NoOpTracingContext[IO]("no-op-read"))
             } map {
               case (tracingContext, bsiList) =>
@@ -60,6 +61,7 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
             s"${layerId.toString}_${bandActual}" -> (
               layerStore
                 .read(layerId,
+                      None,
                       None,
                       None,
                       None,
