@@ -5,16 +5,23 @@
 ### Added
 
 ### Changed
-- Update annotation project share endpoint for validation use case [#5452](https://github.com/raster-foundry/raster-foundry/pull/5452)
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
-- Fixed a tiff tag parsing bug and allow for disabling color correction via a query parameter [#5455](https://github.com/raster-foundry/raster-foundry/pull/5455)
 
 ### Security
+
+## [1.47.0](https://github.com/raster-foundry/raster-foundry/compare/1.46.1...1.47.0)
+
+### Changed
+- Update annotation project share endpoint for validation use case [#5452](https://github.com/raster-foundry/raster-foundry/pull/5452)
+
+
+### Fixed
+- Fixed a tiff tag parsing bug and allow for disabling color correction via a query parameter [#5455](https://github.com/raster-foundry/raster-foundry/pull/5455)
 
 ## [1.46.1](https://github.com/raster-foundry/raster-foundry/compare/1.46.0...1.46.1)
 
