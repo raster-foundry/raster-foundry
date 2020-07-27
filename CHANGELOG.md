@@ -12,6 +12,7 @@
 ### Removed
 
 ### Fixed
+- Fixed a tiff tag parsing bug and allow for disabling color correction via a query parameter [#5455](https://github.com/raster-foundry/raster-foundry/pull/5455)
 
 ### Security
 
