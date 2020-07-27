@@ -53,7 +53,8 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     TracedHTTPRoutes[IO] {
       case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
             layerId
-          ) / IntVar(z) / IntVar(x) / IntVar(y) :? BandOverrideQueryParamDecoder(
+          ) / IntVar(z) / IntVar(x) / IntVar(y) :? DisableAutoCorrectionQueryParamDecoder(
+            disableAutoCorrect) :? BandOverrideQueryParamDecoder(
             bandOverride
           ) as user using tracingContext =>
         val polygonBbox: Projected[Polygon] =
@@ -74,6 +75,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                       Some(polygonBbox),
                       bandOverride,
                       None,
+                      disableAutoCorrect,
                       childContext
                     )
                   LayerTms(
@@ -88,6 +90,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                       Some(polygonBbox),
                       bandOverride,
                       None,
+                      disableAutoCorrect,
                       childContext
                     )
                   )
@@ -129,7 +132,12 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
         )
         for {
           authFiber <- authorizers.authProject(user, projectId).start
-          mosaic = layers.read(layerId, None, overrides, None, tracingContext)
+          mosaic = layers.read(layerId,
+                               None,
+                               overrides,
+                               None,
+                               None,
+                               tracingContext)
           histFiber <- LayerHistogram.identity(mosaic, 4000).start
           _ <- authFiber.join.handleErrorWith { error =>
             histFiber.cancel *> IO.raiseError(error)
@@ -165,7 +173,11 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             case Right(uuids) =>
               for {
                 authFiber <- authorizers.authProject(user, projectId).start
-                mosaic = layers.read(layerId, None, overrides, uuids.toNel)
+                mosaic = layers.read(layerId,
+                                     None,
+                                     overrides,
+                                     uuids.toNel,
+                                     None)
                 histFiber <- LayerHistogram.identity(mosaic, 4000).start
                 _ <- authFiber.join.handleErrorWith { error =>
                   histFiber.cancel *> IO.raiseError(error)
@@ -191,6 +203,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             layerId
           ) / "export"
             :? ExtentQueryParamMatcher(extent)
+            :? DisableAutoCorrectionQueryParamDecoder(disableAutoCorrect)
             :? ZoomQueryParamMatcher(zoom)
             :? BandOverrideQueryParamDecoder(bandOverride) as user using tracingContext =>
         tracingContext.addTags(
@@ -211,7 +224,8 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 layerId,
                 Some(Projected(projectedExtent, 3857)),
                 bandOverride,
-                None
+                None,
+                disableAutoCorrect
               )
             )(rawMosaicExtentReification, cs)
           case _ =>
@@ -220,7 +234,8 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 layerId,
                 Some(Projected(projectedExtent, 3857)),
                 bandOverride,
-                None
+                None,
+                disableAutoCorrect
               )
             )(paintedMosaicExtentReification, cs)
         }

@@ -35,11 +35,12 @@ object ColorCorrect extends LazyLogging {
     def colorCorrect(
         tile: MultibandTile,
         hist: Seq[Histogram[Double]],
-        nodataValue: Option[Double]
+        nodataValue: Option[Double],
+        disableAutoCorrect: Option[Boolean]
     ): MultibandTile = {
       val indexedHist = hist.toIndexedSeq
       val rgbHist = Seq(redBand, greenBand, blueBand) map { indexedHist(_) }
-      ColorCorrect(tile, rgbHist, nodataValue)
+      ColorCorrect(tile, rgbHist, nodataValue, disableAutoCorrect)
     }
   }
 
@@ -156,9 +157,15 @@ object ColorCorrect extends LazyLogging {
 
   def apply(rgbTile: MultibandTile,
             rgbHist: Seq[Histogram[Double]],
-            noDataValue: Option[Double]): MultibandTile = {
+            noDataValue: Option[Double],
+            disableAutoCorrectOption: Option[Boolean]): MultibandTile = {
     val _rgbTile = rgbTile
     val _rgbHist = rgbHist
+
+    val disableCorrection = disableAutoCorrectOption match {
+      case Some(true) => true
+      case _          => false
+    }
 
     var isCorrected = false
     val layerRgbClipping = {
@@ -179,8 +186,12 @@ object ColorCorrect extends LazyLogging {
           (imin, imax, statsOption) match {
             case (_, _, Some(stats)) =>
               // assuming a normal distribution, clips 2nd and 98th percentiles of values
-              val newMin = stats.mean + (stats.stddev * -2.05)
-              val newMax = stats.mean + (stats.stddev * 2.05)
+              val newMin =
+                if (disableCorrection) imin
+                else stats.mean + (stats.stddev * -2.05)
+              val newMax =
+                if (disableCorrection) imax
+                else stats.mean + (stats.stddev * 2.05)
               // assume non-negative values, otherwise visualization is weird
               // I think this happens because the distribution is non-normal
               iMaxMin(index) =

@@ -52,6 +52,7 @@ final case class BacksplashGeotiff(
     mask: Option[MultiPolygon],
     footprint: MultiPolygon,
     metadata: SceneMetadataFields,
+    disableAutoCorrect: Option[Boolean],
     xa: Transactor[IO]
 ) extends LazyLogging
     with BacksplashImage[IO] {
@@ -203,6 +204,7 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
   val projectLayerId: UUID
   val mask: Option[MultiPolygon]
   val metadata: SceneMetadataFields
+  val disableAutoCorrect: Option[Boolean]
 
   val enableGDAL = Config.RasterSource.enableGDAL
 

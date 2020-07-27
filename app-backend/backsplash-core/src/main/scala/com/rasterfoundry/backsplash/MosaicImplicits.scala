@@ -198,18 +198,20 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   .span("renderMosaicMultiband.colorCorrect") use {
                   _ =>
                     IO {
-                      im map { mbTile =>
-                        val noDataValue = getNoDataValue(mbTile.cellType)
-                        logger.debug(
-                          s"NODATA Value: $noDataValue with CellType: ${mbTile.cellType}"
-                        )
-                        relevant.corrections.colorCorrect(
-                          mbTile,
-                          hists,
-                          relevant.metadata.noDataValue orElse noDataValue orElse Some(
-                            0
+                      im map {
+                        mbTile =>
+                          val noDataValue = getNoDataValue(mbTile.cellType)
+                          logger.debug(
+                            s"NODATA Value: $noDataValue with CellType: ${mbTile.cellType}"
                           )
-                        )
+                          relevant.corrections.colorCorrect(
+                            mbTile,
+                            hists,
+                            relevant.metadata.noDataValue orElse noDataValue orElse Some(
+                              0
+                            ),
+                            relevant.disableAutoCorrect
+                          )
                       }
                     }
                 }
@@ -394,7 +396,8 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                                 relevant.corrections.colorCorrect(
                                   mbTile,
                                   hists,
-                                  None
+                                  None,
+                                  relevant.disableAutoCorrect
                                 )
                               }
                             }
