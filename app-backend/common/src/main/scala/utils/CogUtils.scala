@@ -26,6 +26,7 @@ object CogUtils extends LazyLogging {
   ): Option[Array[Histogram[Double]]] = {
     // Get the smallest overview and calculate histogram from that
     val rasterSource = GeoTiffRasterSource(uri)
-    rasterSource.tiff.overviews.lastOption.map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
+    rasterSource.tiff.overviews.lastOption
+      .map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
   }
 }
