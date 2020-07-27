@@ -26,12 +26,6 @@ object CogUtils extends LazyLogging {
   ): Option[Array[Histogram[Double]]] = {
     // Get the smallest overview and calculate histogram from that
     val rasterSource = GeoTiffRasterSource(uri)
-    val bandCount = rasterSource.bandCount
-    logger.debug(s"Base cell size is: ${rasterSource.cellSize}")
-    // This is to workaround https://github.com/locationtech/geotrellis/issues/3269
-    // where not all overviews are actually overviews
-    val lastOverview =
-      rasterSource.tiff.overviews.filter(_.bandCount == bandCount).lastOption
-    lastOverview.map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
+    rasterSource.tiff.overviews.lastOption.map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
   }
 }
