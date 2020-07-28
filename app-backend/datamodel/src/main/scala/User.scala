@@ -263,8 +263,26 @@ object User {
     email: String,
     profileImageUri: String
 )
+
 object UserThin {
   def fromUser(user: User) = UserThin(user.id, user.email, user.profileImageUri)
+}
+
+@JsonCodec final case class UserThinWithActionType(
+    id: String,
+    email: String,
+    profileImageUri: String,
+    actionType: ActionType
+)
+
+object UserThinWithActionType {
+  def fromUser(user: User, actionType: ActionType) =
+    UserThinWithActionType(
+      user.id,
+      user.email,
+      user.profileImageUri,
+      actionType
+    )
 }
 
 case class UserBulkCreate(
