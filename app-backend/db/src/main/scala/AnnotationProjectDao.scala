@@ -369,20 +369,36 @@ object AnnotationProjectDao
       )
     } yield stacInfo).value
 
-  def getSharedUsers(projectId: UUID): ConnectionIO[List[UserThin]] = {
+  def getSharedUsers(
+      projectId: UUID
+  ): ConnectionIO[List[UserThinWithActionType]] = {
     for {
       permissions <- getPermissions(projectId)
-      idsNel = permissions
-        .filter(
-          _.subjectType == SubjectType.User
-        )
-        .flatMap(_.subjectId)
-        .toNel
-      users <- idsNel match {
-        case Some(ids) => UserDao.getThinUsersForIds(ids)
-        case _         => List.empty.pure[ConnectionIO]
+      userThins <- permissions traverse {
+        case ObjectAccessControlRule(
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Annotate
+            ) =>
+          UserDao
+            .getUserById(subjectId)
+            .map(
+              _.map(UserThinWithActionType.fromUser(_, ActionType.Annotate))
+            )
+        case ObjectAccessControlRule(
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Validate
+            ) =>
+          UserDao
+            .getUserById(subjectId)
+            .map(
+              _.map(UserThinWithActionType.fromUser(_, ActionType.Validate))
+            )
+        case _ =>
+          Option.empty[UserThinWithActionType].pure[ConnectionIO]
       }
-    } yield users
+    } yield { userThins.flatten }
   }
 
   def deleteSharedUser(projectId: UUID, userId: String): ConnectionIO[Int] = {

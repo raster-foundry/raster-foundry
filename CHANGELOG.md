@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Add validation specific endpoint [#5453](https://github.com/raster-foundry/raster-foundry/pull/5453)
 
 ### Changed
 

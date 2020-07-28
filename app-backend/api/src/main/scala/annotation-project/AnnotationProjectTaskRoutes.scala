@@ -348,51 +348,85 @@ trait AnnotationProjectTaskRoutes
       }
   }
 
-  def addTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate {
-    user =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
+  def addTaskLabels(projectId: UUID, taskId: UUID): Route =
+    addLabels(
+      projectId,
+      taskId,
+      ActionType.Annotate,
+      List(
+        TaskStatus.Unlabeled,
+        TaskStatus.LabelingInProgress,
+        TaskStatus.Labeled
+      )
+    )
+
+  def validateTaskLabels(projectId: UUID, taskId: UUID): Route =
+    addLabels(
+      projectId,
+      taskId,
+      ActionType.Validate,
+      List(
+        TaskStatus.Labeled,
+        TaskStatus.ValidationInProgress,
+        TaskStatus.Validated
+      )
+    )
+
+  private def addLabels(
+      projectId: UUID,
+      taskId: UUID,
+      actionType: ActionType,
+      requiredStatuses: List[TaskStatus]
+  ): Route = authenticate { user =>
+    authorizeScope(
+      ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+      user
+    ) {
+      authorizeAsync {
+        (for {
+          auth1 <- AnnotationProjectDao
             .authorized(
               user,
               ObjectType.AnnotationProject,
               projectId,
-              ActionType.Annotate
+              actionType
             )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
-            val annotationLabelWithClassesCreate = fc.features map {
-              _.toAnnotationLabelWithClassesCreate
-            }
-            onSuccess(
-              AnnotationLabelDao
-                .insertAnnotations(
-                  projectId,
-                  taskId,
-                  annotationLabelWithClassesCreate.toList,
-                  user
+          auth2 <- TaskDao.hasStatus(
+            taskId,
+            requiredStatuses
+          )
+        } yield {
+          auth1.toBoolean && auth2
+        }).transact(xa).unsafeToFuture
+      } {
+        entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
+          val annotationLabelWithClassesCreate = fc.features map {
+            _.toAnnotationLabelWithClassesCreate
+          }
+          onSuccess(
+            AnnotationLabelDao
+              .insertAnnotations(
+                projectId,
+                taskId,
+                annotationLabelWithClassesCreate.toList,
+                user
+              )
+              .transact(xa)
+              .unsafeToFuture
+              .map { annotations: List[AnnotationLabelWithClasses] =>
+                fromSeqToFeatureCollection[
+                  AnnotationLabelWithClasses,
+                  AnnotationLabelWithClasses.GeoJSON
+                ](
+                  annotations
                 )
-                .transact(xa)
-                .unsafeToFuture
-                .map { annotations: List[AnnotationLabelWithClasses] =>
-                  fromSeqToFeatureCollection[
-                    AnnotationLabelWithClasses,
-                    AnnotationLabelWithClasses.GeoJSON
-                  ](
-                    annotations
-                  )
-                }
-            ) { createdAnnotation =>
-              complete((StatusCodes.Created, createdAnnotation))
-            }
+              }
+          ) { createdAnnotation =>
+            complete((StatusCodes.Created, createdAnnotation))
           }
         }
       }
+    }
   }
 
   def deleteTaskLabels(projectId: UUID, task: UUID): Route =
