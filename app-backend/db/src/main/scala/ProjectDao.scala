@@ -118,20 +118,20 @@ object ProjectDao
     for {
       defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
         ProjectLayer(
-          UUID.randomUUID(),
-          now,
-          now,
-          "Project default layer",
-          None,
-          "#738FFC",
-          None,
-          None,
-          None,
-          None,
-          false,
-          None,
-          None,
-          None
+          UUID.randomUUID(), //id
+          now, // createdAt
+          now, // modifiedAt
+          "Project default layer", //name
+          None, // projectId
+          "#738FFC", // colorGroupHex
+          None, // smartLayerId
+          None, // rangeStart
+          None, // rangeEnd
+          None, // geometry
+          newProject.isSingleBand, //isSingleBand
+          newProject.singleBandOptions, // singleBandOptions
+          None, // overviewsLocation
+          None // minZoomLevel
         )
       )
       project <- (fr"INSERT INTO" ++ tableF ++ fr"""
