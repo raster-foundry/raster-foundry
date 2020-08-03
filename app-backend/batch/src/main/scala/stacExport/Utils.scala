@@ -2,8 +2,8 @@ package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.datamodel._
 
-import com.azavea.stac4s._
 import cats.implicits._
+import com.azavea.stac4s._
 import geotrellis.proj4.CRS
 import geotrellis.vector.methods.Implicits._
 import geotrellis.vector.reproject.Reproject

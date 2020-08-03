@@ -10,10 +10,10 @@ import com.rasterfoundry.datamodel._
 import better.files.{File => ScalaFile}
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
+import com.azavea.stac4s._
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
-import com.azavea.stac4s._
 
 import java.net.URI
 import java.util.UUID

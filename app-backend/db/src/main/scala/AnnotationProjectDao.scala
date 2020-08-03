@@ -364,7 +364,7 @@ object AnnotationProjectDao
                   LabelClassClasses.NamedLabelClasses(
                     classes.map(_.name).toNel.getOrElse(NonEmptyList.of(""))
                   )
-                )
+              )
             )
         },
         "Label Item",
@@ -521,7 +521,7 @@ object AnnotationProjectDao
                   Some(userId),
                   ActionType.Annotate
                 )
-              )
+            )
           )
         AnnotationProjectDao.addPermissionsMany(
           project.id,
