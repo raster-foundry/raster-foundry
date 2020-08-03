@@ -256,6 +256,7 @@ lazy val apiDependencies = Seq(
   Dependencies.nimbusJose,
   Dependencies.nimbusJoseJwt,
   Dependencies.postgres,
+  Dependencies.refined,
   Dependencies.scaffeine,
   Dependencies.scalaCheck,
   Dependencies.scalatest,
@@ -431,6 +432,7 @@ lazy val db = project
       Dependencies.scalatestplusScalaCheck,
       Dependencies.shapeless,
       Dependencies.sourceCode,
+      Dependencies.stac4s,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
@@ -479,6 +481,7 @@ lazy val batch = project
       Dependencies.hikariCP,
       Dependencies.jts,
       Dependencies.monocleCore,
+      Dependencies.refined,
       Dependencies.scalatest,
       Dependencies.scopt,
       Dependencies.shapeless,
