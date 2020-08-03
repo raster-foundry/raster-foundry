@@ -65,7 +65,7 @@ object Version {
   val opentracingApi = "0.33.0"
   val postgis = "2.2.1"
   val postgres = "42.2.12"
-  val refined = "0.9.13"
+  val refined = "0.9.15"
   val rollbar = "1.4.0"
   val scaffeine = "3.1.0"
   val scala = "2.12.10"
