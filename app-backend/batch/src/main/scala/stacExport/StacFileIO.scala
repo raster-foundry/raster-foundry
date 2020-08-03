@@ -11,9 +11,9 @@ import com.amazonaws.services.s3.model.{
   PutObjectRequest,
   PutObjectResult
 }
+import com.azavea.stac4s.StacItem
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.geotiff.GeoTiffRasterSource
-import geotrellis.server.stac.StacItem
 import io.circe._
 import io.circe.syntax._
 

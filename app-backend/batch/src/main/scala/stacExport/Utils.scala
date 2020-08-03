@@ -2,9 +2,9 @@ package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.datamodel._
 
+import com.azavea.stac4s._
 import cats.implicits._
 import geotrellis.proj4.CRS
-import geotrellis.server.stac._
 import geotrellis.vector.methods.Implicits._
 import geotrellis.vector.reproject.Reproject
 import io.circe._
@@ -21,18 +21,16 @@ object Utils {
 
   private val relativeCatalogRoot = StacLink(
     "../../catalog.json",
-    StacRoot,
+    StacLinkType.StacRoot,
     Some(`application/json`),
-    Some("Root"),
-    List()
+    Some("Root")
   )
 
   private val relativeLayerCollection = StacLink(
     "../collection.json",
-    Parent,
+    StacLinkType.Parent,
     Some(`application/json`),
-    Some("Layer Collection"),
-    List()
+    Some("Layer Collection")
   )
 
   def getStacCatalog(
@@ -47,22 +45,25 @@ object Utils {
       // s3://<prefix>/<catalogId>/catalog.json
       StacLink(
         "./catalog.json",
-        StacRoot,
+        StacLinkType.StacRoot,
         Some(`application/json`),
-        Some(s"Catalog $catalogId"),
-        List()
+        Some(s"Catalog $catalogId")
       )
     ) ++ layerIds.map { layerId =>
       StacLink(
         "./layer-collection/collection.json",
-        Child,
+        StacLinkType.Child,
         Some(`application/json`),
-        Some(s"Layer Collection $layerId"),
-        List()
+        Some(s"Layer Collection $layerId")
       )
     }
+    // below should be scope-specific
+    // since exports implement "label" extension on STAC Item level
+    // this field should be an empty list on catalog
+    val stacExtensions = List()
     StacCatalog(
       stacVersion,
+      stacExtensions, // list of exten
       catalogId,
       None,
       catalogDescription,
@@ -93,29 +94,33 @@ object Utils {
     val labelItemLinks = List(
       StacLink(
         "./collection.json",
-        Parent,
+        StacLinkType.Parent,
         Some(`application/json`),
-        Some("Label Collection"),
-        List()
+        Some("Label Collection")
       ),
       StacLink(
         "./collection.json",
-        Collection,
+        StacLinkType.Collection,
         Some(`application/json`),
-        Some("Label Collection"),
-        List()
+        Some("Label Collection")
       ),
       relativeCatalogRoot
     ) ++ sceneItems.map(item => {
       val stacItemURI = new URI(item.absolutePath)
       val relativeStacItemPath =
         s"../${catalogRootPath.relativize(stacItemURI)}"
+      // specify which scene assets these labels are created on
+      val labelAssets = JsonObject.fromMap(
+        Map(
+          "label:assets" -> List(item.item.id).asJson
+        )
+      )
       StacLink(
         relativeStacItemPath,
-        Source,
+        StacLinkType.Source,
         Some(`application/json`),
         Some("Source image STAC item for this label item"),
-        List(item.item.id)
+        labelAssets
       )
     })
 
@@ -128,34 +133,27 @@ object Utils {
         }
       case _ => new Timestamp(new java.util.Date().getTime)
     }
-    val labelItemProperties = StacLabelItemProperties(
-      sceneTaskAnnotation.labelItemsPropsThin.property,
-      sceneTaskAnnotation.labelItemsPropsThin.classes,
-      "Labels in layer",
-      sceneTaskAnnotation.labelItemsPropsThin._type,
-      Some(List(sceneTaskAnnotation.labelItemsPropsThin.task)),
-      Some(List("manual")),
-      None,
-      dateTime
-    )
+
     val labelItemPropertiesJsonObj = JsonObject.fromMap(
       Map(
-        "label:property" -> labelItemProperties.property.asJson,
-        "label:classes" -> labelItemProperties.classes.asJson,
-        "label:description" -> labelItemProperties.description.asJson,
-        "label:type" -> labelItemProperties._type.asJson,
-        "label:task" -> labelItemProperties.task.asJson,
-        "label:method" -> labelItemProperties.method.asJson,
-        "label:overview" -> labelItemProperties.overview.asJson,
-        "datetime" -> labelItemProperties.datetime.asJson
+        "label:properties" -> sceneTaskAnnotation.labelItemExtension.properties.asJson,
+        "label:classes" -> sceneTaskAnnotation.labelItemExtension.classes.asJson,
+        "label:description" -> sceneTaskAnnotation.labelItemExtension.description.asJson,
+        "label:type" -> sceneTaskAnnotation.labelItemExtension._type.asJson,
+        "label:tasks" -> sceneTaskAnnotation.labelItemExtension.tasks.asJson,
+        "label:methods" -> sceneTaskAnnotation.labelItemExtension.methods.asJson,
+        "label:overviews" -> sceneTaskAnnotation.labelItemExtension.overviews.asJson,
+        "datetime" -> dateTime.asJson
       )
     )
     val labelDataRelLink = "./data.geojson"
     val labelAsset = Map(
-      labelItemId ->
-        StacAsset(
+      "label" ->
+        StacItemAsset(
           labelDataRelLink,
           Some("Label Data Feature Collection"),
+          Some("Label Data Feature Collection"),
+          Set(StacAssetRole.Data),
           Some(`application/geo+json`)
         )
     )
@@ -202,17 +200,15 @@ object Utils {
     val sceneLinks = List(
       StacLink(
         "./collection.json",
-        Parent,
+        StacLinkType.Parent,
         Some(`application/json`),
-        Some("Images Collection"),
-        List()
+        Some("Images Collection")
       ),
       StacLink(
         "./collection.json",
-        Collection,
+        StacLinkType.Collection,
         Some(`application/json`),
-        Some("Images Collection"),
-        List()
+        Some("Images Collection")
       ),
       relativeCatalogRoot
     )
@@ -229,9 +225,11 @@ object Utils {
     val sceneAssetOption = scene.ingestLocation map { _ =>
       Map(
         scene.id.toString ->
-          StacAsset(
+          StacItemAsset(
             s"./${scene.id}.tiff",
             Some("scene"),
+            Some("scene"),
+            Set(StacAssetRole.Data),
             Some(`image/cog`)
           )
       )
@@ -272,13 +270,14 @@ object Utils {
 
     exportDefinition.createStacCollection(
       catalog.stacVersion,
+      List(),
       UUID.randomUUID().toString,
       Some("Label Collection"),
       s"Label Collection in layer ${layerStacCollection.id}",
       List[String](),
-      "1",
       List[StacProvider](),
       layerStacCollection.extent,
+      JsonObject.empty,
       JsonObject.empty,
       labelCollectionLinks
     )
@@ -296,13 +295,14 @@ object Utils {
     )
     exportDefinition.createStacCollection(
       catalog.stacVersion,
+      List(),
       imageCollectionId,
       Some("Images Collection"),
       s"Images collection in layer ${layerStacCollection.id}",
       List[String](),
-      "1",
       List[StacProvider](),
       layerStacCollection.extent,
+      JsonObject.empty,
       JsonObject.empty,
       imageCollectionOwnLinks
     )
@@ -319,17 +319,15 @@ object Utils {
     val layerLinks = List(
       StacLink(
         layerRootPath,
-        Parent,
+        StacLinkType.Parent,
         Some(`application/json`),
-        Some(s"Catalog ${catalog.id}"),
-        List()
+        Some(s"Catalog ${catalog.id}")
       ),
       StacLink(
         layerRootPath,
-        StacRoot,
+        StacLinkType.StacRoot,
         Some(`application/json`),
-        Some("Root Catalog"),
-        List()
+        Some("Root Catalog")
       )
     )
 
@@ -354,13 +352,14 @@ object Utils {
 
     exportDefinition.createStacCollection(
       catalog.stacVersion,
+      List(),
       layerId.toString,
       Some("Layers"),
       "Project Layer Collection",
       List[String](),
-      "1.0",
       List[StacProvider](),
       layerExtent,
+      JsonObject.empty,
       JsonObject.empty,
       layerLinks
     )

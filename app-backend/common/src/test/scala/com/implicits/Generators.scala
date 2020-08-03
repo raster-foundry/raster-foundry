@@ -4,9 +4,9 @@ import com.rasterfoundry.datamodel._
 
 import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
+import com.azavea.stac4s.Proprietary
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.string.NonEmptyString
-import geotrellis.server.stac.Proprietary
 import geotrellis.vector.testkit.Rectangle
 import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
 import io.circe.syntax._

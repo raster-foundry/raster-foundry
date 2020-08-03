@@ -8,6 +8,7 @@ import com.rasterfoundry.datamodel._
 import cats.data._
 import cats.effect.{IO, LiftIO}
 import cats.implicits._
+import com.azavea.stac4s.extensions.label._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -337,7 +338,7 @@ object AnnotationProjectDao
 
   def getAnnotationProjectStacInfo(
       annotationProjectId: UUID
-  ): ConnectionIO[Option[StacLabelItemPropertiesThin]] =
+  ): ConnectionIO[Option[LabelItemExtension]] =
     (for {
       annotationProject <- OptionT {
         getProjectById(annotationProjectId)
@@ -351,21 +352,32 @@ object AnnotationProjectDao
           .map((group.id, _))
       })
       groupToLabelClasses = groupedLabelClasses.map(g => g._1 -> g._2).toMap
-      stacInfo = StacLabelItemPropertiesThin(
-        labelGroups.map(_.name),
-        labelGroups.map { group =>
+      stacInfo = LabelItemExtension(
+        LabelProperties.VectorLabelProperties(labelGroups.map(_.name)),
+        labelGroups.flatMap { group =>
           groupToLabelClasses
             .get(group.id)
             .map(
               classes =>
-                StacLabelItemProperties.StacLabelItemClasses(
-                  group.name,
-                  classes.map(_.name)
-              )
+                LabelClass(
+                  LabelClassName.VectorName(group.name),
+                  LabelClassClasses.NamedLabelClasses(
+                    classes.map(_.name).toNel.getOrElse(NonEmptyList.of(""))
+                  )
+                )
             )
-        }.flatten,
-        "vector",
-        annotationProject.projectType.toString.toLowerCase
+        },
+        "Label Item",
+        LabelType.Vector,
+        annotationProject.projectType match {
+          case AnnotationProjectType.Classification =>
+            List(LabelTask.Classification)
+          case AnnotationProjectType.Detection => List(LabelTask.Detection)
+          case AnnotationProjectType.Segmentation =>
+            List(LabelTask.Segmentation)
+        },
+        List(), // methods
+        List() // overviews
       )
     } yield stacInfo).value
 
@@ -509,7 +521,7 @@ object AnnotationProjectDao
                   Some(userId),
                   ActionType.Annotate
                 )
-            )
+              )
           )
         AnnotationProjectDao.addPermissionsMany(
           project.id,

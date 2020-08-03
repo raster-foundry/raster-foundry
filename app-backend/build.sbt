@@ -374,7 +374,8 @@ lazy val datamodel = project
       Dependencies.refined,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.spireMath
+      Dependencies.spireMath,
+      Dependencies.stac4s
     ) ++ loggingDependencies
   })
 
@@ -487,6 +488,7 @@ lazy val batch = project
       Dependencies.shapeless,
       Dependencies.sourceCode,
       Dependencies.spireMath,
+      Dependencies.stac4s,
       Dependencies.sttpAsyncBackend,
       Dependencies.sttpCatsBackend,
       Dependencies.sttpCore,

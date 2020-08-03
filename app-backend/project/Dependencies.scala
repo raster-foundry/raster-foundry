@@ -83,6 +83,7 @@ object Version {
   val spatial4j = "0.7"
   val spire = "0.16.0"
   val spireMath = "0.13.0"
+  val stac4s = "0.0.12-3-g699a2cf"
   val sttp = "2.0.9"
   val sttpModel = "1.0.3"
   val sup = "0.7.0"
@@ -214,6 +215,7 @@ object Dependencies {
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spire = "org.typelevel" %% "spire" % Version.spire
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath
+  val stac4s = "com.azavea.stac4s" %% "core" % Version.stac4s
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
   val sttpAkka = "com.softwaremill.sttp.client" %% "akka-http-backend" % Version.sttp
   val sttpAsyncBackend = "com.softwaremill.sttp.client" %% "async-http-client-backend" % Version.sttp
