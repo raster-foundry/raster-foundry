@@ -196,7 +196,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         logger.info(s"Writing export under prefix: $exportPath")
         val layerIds = layerInfoMap.keys.toList
         val catalog: StacCatalog =
-          Utils.getStacCatalog(exportDef, "0.8.0", layerIds)
+          Utils.getStacCatalog(exportDef, "1.0.0-beta.1", layerIds)
         val catalogWithPath =
           ObjectWithAbsolute(s"$exportPath/catalog.json", catalog)
 
