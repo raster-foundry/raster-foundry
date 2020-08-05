@@ -1,64 +1,66 @@
 package com.rasterfoundry.datamodel
 
-import geotrellis.server.stac.{
-  StacCollection,
-  StacExtent,
-  StacLink,
-  StacProvider,
-  License => StacLinkLicense
-}
+import com.azavea.stac4s._
 import io.circe.JsonObject
 import io.circe.generic.JsonCodec
+import io.circe.syntax._
 
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 @JsonCodec
-final case class StacExport(id: UUID,
-                            createdAt: Timestamp,
-                            createdBy: String,
-                            modifiedAt: Timestamp,
-                            owner: String,
-                            name: String,
-                            license: StacExportLicense,
-                            exportLocation: Option[String],
-                            exportStatus: ExportStatus,
-                            taskStatuses: List[String],
-                            annotationProjectId: Option[UUID]) {
-  def createStacCollection(stacVersion: String,
-                           id: String,
-                           title: Option[String],
-                           description: String,
-                           keywords: List[String],
-                           version: String,
-                           providers: List[StacProvider],
-                           extent: StacExtent,
-                           properties: JsonObject,
-                           links: List[StacLink]): StacCollection = {
+final case class StacExport(
+    id: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    owner: String,
+    name: String,
+    license: StacExportLicense,
+    exportLocation: Option[String],
+    exportStatus: ExportStatus,
+    taskStatuses: List[String],
+    annotationProjectId: Option[UUID]
+) {
+  def createStacCollection(
+      stacVersion: String,
+      stacExtensions: List[String],
+      id: String,
+      title: Option[String],
+      description: String,
+      keywords: List[String],
+      providers: List[StacProvider],
+      extent: StacExtent,
+      summaries: JsonObject,
+      properties: JsonObject,
+      links: List[StacLink],
+      extensionFields: JsonObject = ().asJsonObject
+  ): StacCollection = {
     val updatedLinks = license.url match {
       case Some(url) =>
         StacLink(
           url,
-          StacLinkLicense,
+          StacLinkType.License,
           None,
-          None,
-          List()
+          None
         ) :: links
       case _ => links
     }
 
     StacCollection(
       stacVersion,
+      stacExtensions,
       id,
       title,
       description,
       keywords,
-      version,
       license.license,
       providers,
       extent,
+      summaries,
       properties,
-      updatedLinks
+      updatedLinks,
+      extensionFields
     )
   }
 }
@@ -100,12 +102,13 @@ object StacExport {
     )
 
   @JsonCodec
-  final case class Create(name: String,
-                          owner: Option[String],
-                          license: StacExportLicense,
-                          taskStatuses: List[TaskStatus],
-                          annotationProjectId: UUID)
-      extends OwnerCheck {
+  final case class Create(
+      name: String,
+      owner: Option[String],
+      license: StacExportLicense,
+      taskStatuses: List[TaskStatus],
+      annotationProjectId: UUID
+  ) extends OwnerCheck {
     def toStacExport(user: User): StacExport = {
       val id = UUID.randomUUID()
       val now = new Timestamp(new Date().getTime)

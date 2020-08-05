@@ -1,6 +1,6 @@
 package com.rasterfoundry.datamodel
 
-import geotrellis.server.stac.StacLicense
+import com.azavea.stac4s.StacLicense
 import io.circe._
 import io.circe.generic.semiauto._
 

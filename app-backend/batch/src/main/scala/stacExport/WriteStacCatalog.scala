@@ -10,10 +10,10 @@ import com.rasterfoundry.datamodel._
 import better.files.{File => ScalaFile}
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
+import com.azavea.stac4s._
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
-import geotrellis.server.stac._
 
 import java.net.URI
 import java.util.UUID
@@ -74,17 +74,15 @@ final case class WriteStacCatalog(exportId: UUID)(
           links = layerCollection.links ++ List(
             StacLink(
               "./images/collection.json",
-              Child,
+              StacLinkType.Child,
               Some(`application/json`),
-              Some(s"Images Collection: ${imageCollection.id}"),
-              List()
+              Some(s"Images Collection: ${imageCollection.id}")
             ),
             StacLink(
               "./labels/collection.json",
-              Child,
+              StacLinkType.Child,
               Some(`application/json`),
-              Some(s"Label Collection: ${labelCollection.id}"),
-              List()
+              Some(s"Label Collection: ${labelCollection.id}")
             )
           )
         )
@@ -94,10 +92,9 @@ final case class WriteStacCatalog(exportId: UUID)(
       case SceneItemWithAbsolute(itemWithAbsolute, _) =>
         StacLink(
           s"./${itemWithAbsolute.item.id}.json",
-          Item,
+          StacLinkType.Item,
           Some(`application/json`),
-          None,
-          List()
+          None
         )
     }
 
@@ -120,10 +117,9 @@ final case class WriteStacCatalog(exportId: UUID)(
 
     val updatedLabelLinks = StacLink(
       s"./${labelItem.item.id}.json",
-      Item,
+      StacLinkType.Item,
       Some(`application/json`),
-      None,
-      List()
+      None
     ) :: labelCollection.links
 
     val labelCollectionWithPath = ObjectWithAbsolute(
@@ -200,7 +196,7 @@ final case class WriteStacCatalog(exportId: UUID)(
         logger.info(s"Writing export under prefix: $exportPath")
         val layerIds = layerInfoMap.keys.toList
         val catalog: StacCatalog =
-          Utils.getStacCatalog(exportDef, "0.8.0", layerIds)
+          Utils.getStacCatalog(exportDef, "1.0.0-beta.1", layerIds)
         val catalogWithPath =
           ObjectWithAbsolute(s"$exportPath/catalog.json", catalog)
 
