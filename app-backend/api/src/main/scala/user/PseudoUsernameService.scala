@@ -200,6 +200,7 @@ object PseudoUsernameService {
     "Pumi"
   )
 
+  @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
   def createPseudoName(peudoUserNameType: PseudoUsernameType): String = {
     val uuidSegments = UUID.randomUUID
       .toString()
