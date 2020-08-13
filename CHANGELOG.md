@@ -3,7 +3,9 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+
 - Add validation specific endpoint [#5453](https://github.com/raster-foundry/raster-foundry/pull/5453)
+- Added three additional categories for usernames when bulk-creating [#5458](https://github.com/raster-foundry/raster-foundry/pull/5458)
 
 ### Changed
 
