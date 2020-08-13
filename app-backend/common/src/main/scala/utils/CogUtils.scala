@@ -9,23 +9,24 @@ import geotrellis.vector._
 
 object CogUtils extends LazyLogging {
 
-  def getTiffExtent(uri: String): Projected[MultiPolygon] = {
-    val rasterSource = GeoTiffRasterSource(uri)
+  def getTiffExtent(
+      rasterSource: GeoTiffRasterSource
+  ): Projected[MultiPolygon] = {
     Projected(
       MultiPolygon(
         rasterSource.extent
           .reproject(rasterSource.crs, WebMercator)
-          .toPolygon()),
+          .toPolygon()
+      ),
       3857
     )
   }
 
   def histogramFromUri(
-      uri: String,
+      rasterSource: GeoTiffRasterSource,
       buckets: Int = 80
   ): Option[Array[Histogram[Double]]] = {
     // Get the smallest overview and calculate histogram from that
-    val rasterSource = GeoTiffRasterSource(uri)
     rasterSource.tiff.overviews.lastOption
       .map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
   }
