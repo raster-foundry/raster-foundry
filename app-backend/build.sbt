@@ -247,6 +247,7 @@ lazy val apiDependencies = Seq(
   Dependencies.doobieHikari,
   Dependencies.doobiePostgres,
   Dependencies.dropbox,
+  Dependencies.geotrellisGdal,
   Dependencies.geotrellisRaster,
   Dependencies.geotrellisVector,
   Dependencies.guava,

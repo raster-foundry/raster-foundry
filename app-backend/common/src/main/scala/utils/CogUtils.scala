@@ -3,14 +3,17 @@ package com.rasterfoundry.common.utils
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4._
 import geotrellis.raster._
-import geotrellis.raster.geotiff.GeoTiffRasterSource
+import geotrellis.raster._
+import geotrellis.raster.gdal.GDALRasterSource
+import geotrellis.raster.io.geotiff.OverviewStrategy
+import geotrellis.raster.resample.ResampleMethod
 import geotrellis.vector.Projected
 import geotrellis.vector._
 
 object CogUtils extends LazyLogging {
 
   def getTiffExtent(
-      rasterSource: GeoTiffRasterSource
+      rasterSource: GDALRasterSource
   ): Projected[MultiPolygon] = {
     Projected(
       MultiPolygon(
@@ -23,11 +26,21 @@ object CogUtils extends LazyLogging {
   }
 
   def histogramFromUri(
-      rasterSource: GeoTiffRasterSource,
+      rasterSource: GDALRasterSource,
       buckets: Int = 80
   ): Option[Array[Histogram[Double]]] = {
-    // Get the smallest overview and calculate histogram from that
-    rasterSource.tiff.overviews.lastOption
+    val largestCellSize = rasterSource.resolutions
+      .maxBy(_.resolution)
+
+    val resampleTarget = TargetCellSize(largestCellSize)
+    rasterSource
+      .resample(
+        resampleTarget,
+        ResampleMethod.DEFAULT,
+        OverviewStrategy.DEFAULT
+      )
+      .read
       .map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
+
   }
 }

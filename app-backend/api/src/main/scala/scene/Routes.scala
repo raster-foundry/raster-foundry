@@ -21,7 +21,7 @@ import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import geotrellis.raster.geotiff.GeoTiffRasterSource
+import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.syntax._
@@ -127,7 +127,7 @@ trait SceneRoutes
     authorizeScope(ScopedAction(Domain.Scenes, Action.Create, None), user) {
       entity(as[Scene.Create]) { newScene =>
         val rasterSourceOption =
-          newScene.ingestLocation.map(location => GeoTiffRasterSource(location))
+          newScene.ingestLocation.map(location => GDALRasterSource(location))
         val tileFootprint = (
           newScene.sceneType,
           newScene.tileFootprint
