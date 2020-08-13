@@ -329,6 +329,7 @@ lazy val common = project
       Dependencies.circeTest,
       Dependencies.commonsIO,
       Dependencies.elasticacheClient,
+      Dependencies.geotrellisGdal,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisStore,
