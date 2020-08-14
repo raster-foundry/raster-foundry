@@ -17,6 +17,7 @@
 ### Fixed
 
 - Apply single band settings to project default layer upon project create [#5454](https://github.com/raster-foundry/raster-foundry/pull/5454)
+- Switched to GDALRasterSource in COG scene posts to fetch metadata without timeouts [#5459](https://github.com/raster-foundry/raster-foundry/pull/5459)
 
 ### Security
 
