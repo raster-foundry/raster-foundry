@@ -28,6 +28,8 @@ import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext
 
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 
 trait SceneRoutes
@@ -127,7 +129,10 @@ trait SceneRoutes
     authorizeScope(ScopedAction(Domain.Scenes, Action.Create, None), user) {
       entity(as[Scene.Create]) { newScene =>
         val rasterSourceOption =
-          newScene.ingestLocation.map(location => GDALRasterSource(location))
+          newScene.ingestLocation.map(
+            location =>
+              GDALRasterSource(URLDecoder.decode(location, UTF_8.toString))
+          )
         val tileFootprint = (
           newScene.sceneType,
           newScene.tileFootprint
