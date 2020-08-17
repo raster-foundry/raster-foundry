@@ -29,8 +29,10 @@ object BacksplashGeotiffReader extends LazyLogging {
     * @return
     */
   def readMultibandWithInfo(providedInfo: GeoTiffInfo): MultibandGeoTiff = {
-    def getMultiband(geoTiffTile: GeoTiffMultibandTile,
-                     info: GeoTiffInfo): MultibandGeoTiff = {
+    def getMultiband(
+        geoTiffTile: GeoTiffMultibandTile,
+        info: GeoTiffInfo
+    ): MultibandGeoTiff = {
 
       new MultibandGeoTiff(
         geoTiffTile,
@@ -59,8 +61,10 @@ object BacksplashGeotiffReader extends LazyLogging {
     * @param withOverviews
     * @return
     */
-  def getAllTiffTags(byteReader: ByteReader,
-                     withOverviews: Boolean): List[TiffTags] = {
+  def getAllTiffTags(
+      byteReader: ByteReader,
+      withOverviews: Boolean
+  ): List[TiffTags] = {
     val oldPos = byteReader.position
     try {
       byteReader.position(0)
