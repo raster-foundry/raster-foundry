@@ -17,6 +17,8 @@ import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.syntax._
 
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 
 object HistogramBackfill
@@ -74,7 +76,9 @@ object HistogramBackfill
       ingestLocation: String
   ): Option[Array[Histogram[Double]]] = {
     logger.info(s"Fetching histogram for scene at $ingestLocation")
-    val rasterSource = GDALRasterSource(ingestLocation)
+    val rasterSource = GDALRasterSource(
+      URLDecoder.decode(ingestLocation, UTF_8.toString())
+    )
     val histO = CogUtils.histogramFromUri(rasterSource)
     if (histO.isEmpty) {
       logger.info(s"Fetching histogram for scene at $ingestLocation failed")
