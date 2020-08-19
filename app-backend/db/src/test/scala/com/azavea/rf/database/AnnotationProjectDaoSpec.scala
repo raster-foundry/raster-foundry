@@ -302,6 +302,16 @@ class AnnotationProjectDaoSpec
             "Readiness was updated"
           )
 
+          assert(
+            afterUpdate.campaignId == annotationProjectUpdate.campaignId,
+            "Readiness was updated"
+          )
+
+          assert(
+            afterUpdate.capturedAt == annotationProjectUpdate.capturedAt,
+            "Readiness was updated"
+          )
+
           true
         }
       )

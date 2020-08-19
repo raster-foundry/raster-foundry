@@ -966,8 +966,9 @@ class CampaignDaoSpec
               )
               // create a first batch of users, clone the parent campaign for them
               // then grant access to the first batch of child campaign owners
-              childUsers <- childUserCreates take 5 traverse { childUserCreate =>
-                UserDao.create(childUserCreate)
+              childUsers <- childUserCreates take 5 traverse {
+                childUserCreate =>
+                  UserDao.create(childUserCreate)
               }
               childCampaigns <- childUsers traverse { childUser =>
                 CampaignDao.copyCampaign(parentCampaign.id, childUser)
@@ -1069,6 +1070,67 @@ class CampaignDaoSpec
             assert(
               authorized,
               "Child campaign owners can view each other campaign and can view + annotate each other project"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
+  test("update campaign projects statuses should update campaign status") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            annotationProjectCreateOne: AnnotationProject.Create,
+            annotationProjectCreateTwo: AnnotationProject.Create
+        ) =>
+          {
+            val updateCampaignProjectIO = for {
+              user <- UserDao.create(userCreate)
+              insertedCampaign <- CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
+              insertedProjOne <- AnnotationProjectDao.insert(
+                annotationProjectCreateOne.copy(
+                  status = AnnotationProjectStatus.Waiting,
+                  campaignId = Some(insertedCampaign.id)
+                ),
+                user
+              )
+              insertedProjTwo <- AnnotationProjectDao.insert(
+                annotationProjectCreateTwo
+                  .copy(
+                    status = AnnotationProjectStatus.Waiting,
+                    campaignId = Some(insertedCampaign.id)
+                  ),
+                user
+              )
+              _ <- AnnotationProjectDao.update(
+                insertedProjOne.toProject
+                  .copy(status = AnnotationProjectStatus.Ready),
+                insertedProjOne.id
+              )
+              _ <- AnnotationProjectDao.update(
+                insertedProjTwo.toProject
+                  .copy(status = AnnotationProjectStatus.Ready),
+                insertedProjTwo.id
+              )
+              _ <- AnnotationProjectDao.deleteById(insertedProjOne.id, user)
+              updatedCampaign <- CampaignDao.unsafeGetCampaignById(
+                insertedCampaign.id
+              )
+            } yield updatedCampaign
+
+            val campaign = updateCampaignProjectIO.transact(xa).unsafeRunSync()
+
+            assert(
+              campaign.projectStatuses.get("READY") == Some(1),
+              "Campaign project status should be updated by the triggers"
             )
 
             true
