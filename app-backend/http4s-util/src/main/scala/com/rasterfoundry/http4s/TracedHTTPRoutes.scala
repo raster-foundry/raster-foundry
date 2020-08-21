@@ -86,7 +86,8 @@ object TracedHTTPRoutes {
         val responseOptionWithTags = routes.run(tracedRequest) semiflatMap {
           response =>
             val traceTags = Map(
-              "http_status" -> response.status.code.toString
+              "http_status" -> response.status.code.toString,
+              "user_id" -> authedReq.context.id
             ) ++ tags ++
               response.headers.toList
                 .map(h => (s"response_header_${h.name}" -> h.value))
