@@ -10,7 +10,7 @@ BEGIN
   -- the NEW variable holds row for INSERT/UPDATE operations
   -- the OLD variable holds row for DELETE operations
   -- store the campaign ID from the annotation project update
-  IF TG_OP = 'UPDATE' THEN
+  IF TG_OP = 'UPDATE' OR TG_OP = 'INSERT'  THEN
     op_campaign_id := NEW.campaign_id;
   ELSE
     op_campaign_id := OLD.campaign_id;
@@ -43,7 +43,7 @@ $BODY$
 LANGUAGE 'plpgsql';
 
 CREATE TRIGGER update_campaign_project_statuses
-  AFTER UPDATE OF status OR DELETE
+  AFTER UPDATE OF status OR DELETE OR INSERT
   ON annotation_projects
   FOR EACH ROW
   EXECUTE PROCEDURE UPDATE_CAMPAIGN_PROJECT_STATUSES();
