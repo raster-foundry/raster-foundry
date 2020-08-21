@@ -1110,6 +1110,9 @@ class CampaignDaoSpec
                   ),
                 user
               )
+              campaignAfterPrjInsert <- CampaignDao.unsafeGetCampaignById(
+                insertedCampaign.id
+              )
               _ <- AnnotationProjectDao.update(
                 insertedProjOne.toProject
                   .copy(status = AnnotationProjectStatus.Ready),
@@ -1120,16 +1123,27 @@ class CampaignDaoSpec
                   .copy(status = AnnotationProjectStatus.Ready),
                 insertedProjTwo.id
               )
-              _ <- AnnotationProjectDao.deleteById(insertedProjOne.id, user)
-              updatedCampaign <- CampaignDao.unsafeGetCampaignById(
+              campaignAfterPrjUpdate <- CampaignDao.unsafeGetCampaignById(
                 insertedCampaign.id
               )
-            } yield updatedCampaign
+              _ <- AnnotationProjectDao.deleteById(insertedProjOne.id, user)
+              campaignAfterPrjDelete <- CampaignDao.unsafeGetCampaignById(
+                insertedCampaign.id
+              )
+            } yield (campaignAfterPrjInsert, campaignAfterPrjUpdate, campaignAfterPrjDelete)
 
-            val campaign = updateCampaignProjectIO.transact(xa).unsafeRunSync()
+            val (afterInsert, afterUpdate, afterDelete) = updateCampaignProjectIO.transact(xa).unsafeRunSync()
 
             assert(
-              campaign.projectStatuses.get("READY") == Some(1),
+              afterInsert.projectStatuses.get("WAITING") == Some(2),
+              "Campaign project status should be updated by the triggers"
+            )
+            assert(
+              afterUpdate.projectStatuses.get("READY") == Some(2),
+              "Campaign project status should be updated by the triggers"
+            )
+            assert(
+              afterDelete.projectStatuses.get("READY") == Some(1),
               "Campaign project status should be updated by the triggers"
             )
 
