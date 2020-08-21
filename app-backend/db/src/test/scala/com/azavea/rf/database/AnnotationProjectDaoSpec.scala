@@ -270,45 +270,51 @@ class AnnotationProjectDaoSpec
         (
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
-            annotationProjectUpdate: AnnotationProject.Create
+            annotationProjectUpdate: AnnotationProject.Create,
+            campaignCreate: Campaign.Create
         ) => {
           val updateIO = for {
             user <- UserDao.create(userCreate)
+            insertedCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                user
+              )
             inserted1 <- AnnotationProjectDao
               .insert(annotationProjectCreate, user)
             inserted2 <- AnnotationProjectDao
-              .insert(annotationProjectUpdate, user)
+              .insert(annotationProjectUpdate.copy(campaignId = Some(insertedCampaign.id)), user)
             _ <- AnnotationProjectDao.update(inserted2.toProject, inserted1.id)
-            fetched <- AnnotationProjectDao.getById(inserted1.id)
-          } yield fetched
+            fetched <- AnnotationProjectDao.unsafeGetById(inserted1.id)
+          } yield (fetched, inserted2)
 
-          val Some(afterUpdate) = updateIO.transact(xa).unsafeRunSync
+          val (afterUpdate, insertedPrj2) = updateIO.transact(xa).unsafeRunSync
 
           assert(
-            afterUpdate.name == annotationProjectUpdate.name,
+            afterUpdate.name == insertedPrj2.name,
             "Name was updated"
           )
           assert(
-            afterUpdate.labelersTeamId == annotationProjectUpdate.labelersTeamId,
+            afterUpdate.labelersTeamId == insertedPrj2.labelersTeamId,
             "Labelers were updated"
           )
           assert(
-            afterUpdate.validatorsTeamId == annotationProjectUpdate.validatorsTeamId,
+            afterUpdate.validatorsTeamId == insertedPrj2.validatorsTeamId,
             "Validators were updated"
           )
 
           assert(
-            afterUpdate.status == annotationProjectUpdate.status,
+            afterUpdate.status == insertedPrj2.status,
             "Readiness was updated"
           )
 
           assert(
-            afterUpdate.campaignId == annotationProjectUpdate.campaignId,
+            afterUpdate.campaignId == insertedPrj2.campaignId,
             "Readiness was updated"
           )
 
           assert(
-            afterUpdate.capturedAt == annotationProjectUpdate.capturedAt,
+            afterUpdate.capturedAt == insertedPrj2.capturedAt,
             "Readiness was updated"
           )
 
