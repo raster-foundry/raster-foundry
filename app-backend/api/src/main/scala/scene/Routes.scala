@@ -16,8 +16,9 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
-import cats.effect.IO
+import cats.effect.{Blocker, IO}
 import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -31,6 +32,7 @@ import scala.concurrent.ExecutionContext
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
+import java.util.concurrent.Executors
 
 trait SceneRoutes
     extends Authentication
@@ -43,6 +45,18 @@ trait SceneRoutes
     with HistogramJsonFormats {
 
   implicit val ec: ExecutionContext
+
+  val rasterIOContext = ExecutionContext.fromExecutor(
+    Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
+    )
+  )
+
+  implicit val rasterIOContextShift = IO.contextShift(rasterIOContext)
+
+  val blocker = Blocker.liftExecutionContext(rasterIOContext)
+
+  val cogUtils = new CogUtils[IO](blocker)
 
   val xa: Transactor[IO]
 
@@ -133,69 +147,76 @@ trait SceneRoutes
             location =>
               GDALRasterSource(URLDecoder.decode(location, UTF_8.toString))
           )
-        val tileFootprint = (
+        val tileFootprintIO = (
           newScene.sceneType,
           newScene.tileFootprint
         ) match {
           case (Some(SceneType.COG), None) => {
             logger.info(s"Generating Footprint for Newly Added COG")
-            rasterSourceOption.map(rs => CogUtils.getTiffExtent(rs))
+            rasterSourceOption traverse { rs =>
+              cogUtils.getTiffExtent(rs)
+            }
           }
           case (_, tf @ Some(_)) => {
             logger.info("Not generating footprint, already exists")
-            tf
+            IO.pure(tf)
           }
-          case _ => None
+          case _ => IO.pure(None)
         }
 
-        val histogram: Option[Array[Histogram[Double]]] =
+        val histogramIO: IO[Option[Array[Histogram[Double]]]] =
           (newScene.sceneType) match {
             case Some(SceneType.COG) =>
-              rasterSourceOption.flatMap(rs => CogUtils.histogramFromUri(rs))
-            case _ => None
+              rasterSourceOption
+                .traverse(rs => cogUtils.histogramFromUri(rs)) map { _.flatten }
+            case _ => IO.pure(Option.empty)
           }
 
-        val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
-          case (Some(_), None) => tileFootprint
-          case _               => newScene.dataFootprint
+        val dataFootprintIO = tileFootprintIO map { tf =>
+          (tf, newScene.dataFootprint) match {
+            case (Some(_), None) => tf
+            case _               => newScene.dataFootprint
+          }
         }
 
-        val updatedScene = newScene
-          .copy(dataFootprint = dataFootprint, tileFootprint = tileFootprint)
-
-        val insertedScene = (
-          histogram,
-          newScene.sceneType,
-          !newScene.ingestLocation.isEmpty
-        ) match {
-          case (Some(hist), Some(SceneType.COG), true) =>
-            for {
-              insertedScene <- SceneDao.insert(updatedScene, user)
-              _ <- LayerAttributeDao
-                .insertLayerAttribute(
-                  LayerAttribute(
-                    insertedScene.id.toString,
-                    0,
-                    "histogram",
-                    hist.asJson
+        val insertFut = for {
+          histogram <- histogramIO.unsafeToFuture
+          (tileFootprint, dataFootprint) <- (tileFootprintIO, dataFootprintIO).tupled.unsafeToFuture
+          updatedScene = newScene
+            .copy(dataFootprint = dataFootprint, tileFootprint = tileFootprint)
+          sceneInsert = (
+            histogram,
+            newScene.sceneType,
+            !newScene.ingestLocation.isEmpty
+          ) match {
+            case (Some(hist), Some(SceneType.COG), true) =>
+              for {
+                insertedScene <- SceneDao.insert(updatedScene, user)
+                _ <- LayerAttributeDao
+                  .insertLayerAttribute(
+                    LayerAttribute(
+                      insertedScene.id.toString,
+                      0,
+                      "histogram",
+                      hist.asJson
+                    )
                   )
-                )
-                .attempt map {
-                _.toOption
-              }
-            } yield insertedScene
-          case (_, _, false) =>
-            SceneDao.insert(updatedScene, user)
-          case _ =>
-            throw new IllegalArgumentException(
-              "Unable to generate histograms for scene. Please verify that appropriate " ++
-                "overviews exist. Histogram generation requires an overview smaller than 600x600."
-            )
-        }
-        val histogramAndInsertFut =
-          insertedScene.transact(xa).unsafeToFuture()
+                  .attempt map {
+                  _.toOption
+                }
+              } yield insertedScene
+            case (_, _, false) =>
+              SceneDao.insert(updatedScene, user)
+            case _ =>
+              throw new IllegalArgumentException(
+                "Unable to generate histograms for scene. Please verify that appropriate " ++
+                  "overviews exist. Histogram generation requires an overview smaller than 600x600."
+              )
+          }
+          histogramAndInsertFut <- sceneInsert.transact(xa).unsafeToFuture
+        } yield histogramAndInsertFut
 
-        onSuccess(histogramAndInsertFut) { scene =>
+        onSuccess(insertFut) { scene =>
           if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested)
             kickoffSceneIngest(scene.id)
           complete((StatusCodes.Created, scene))
