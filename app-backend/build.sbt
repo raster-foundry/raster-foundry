@@ -323,6 +323,7 @@ lazy val common = project
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.catsCore,
+      Dependencies.catsEffect,
       Dependencies.catsScalacheck,
       Dependencies.chronoscala,
       Dependencies.circeCore,
