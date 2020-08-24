@@ -7,8 +7,10 @@ import com.rasterfoundry.common.utils.CogUtils
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{LayerAttributeDao, SceneDao}
 
+import cats.effect.Blocker
 import cats.effect.IO
 import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -17,14 +19,27 @@ import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.syntax._
 
+import scala.concurrent.ExecutionContext
+
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
+import java.util.concurrent.Executors
 
 object HistogramBackfill
     extends Job
     with RollbarNotifier
     with HistogramJsonFormats {
+
+  val rasterIOContext = ExecutionContext.fromExecutor(
+    Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
+    )
+  )
+
+  val blocker = Blocker.liftExecutionContext(rasterIOContext)
+
+  val cogUtils = new CogUtils[IO](blocker)
 
   type CogTuple = (UUID, Option[String])
 
@@ -57,33 +72,37 @@ object HistogramBackfill
       implicit xa: Transactor[IO]
   ): IO[Option[LayerAttribute]] = {
     val histogram = getSceneHistogram(cogTuple._2.get)
-    LayerAttributeDao
-      .insertLayerAttribute(
-        LayerAttribute(
-          cogTuple._1.toString,
-          0,
-          "histogram",
-          histogram.asJson
+    histogram flatMap { hist =>
+      LayerAttributeDao
+        .insertLayerAttribute(
+          LayerAttribute(
+            cogTuple._1.toString,
+            0,
+            "histogram",
+            hist.asJson
+          )
         )
-      )
-      .map({ layerAttribute: LayerAttribute =>
-        Some(layerAttribute)
-      })
-      .transact(xa)
+        .map({ layerAttribute: LayerAttribute =>
+          Some(layerAttribute)
+        })
+        .transact(xa)
+    }
+
   }
 
   def getSceneHistogram(
       ingestLocation: String
-  ): Option[Array[Histogram[Double]]] = {
+  ): IO[Option[Array[Histogram[Double]]]] = {
     logger.info(s"Fetching histogram for scene at $ingestLocation")
     val rasterSource = GDALRasterSource(
       URLDecoder.decode(ingestLocation, UTF_8.toString())
     )
-    val histO = CogUtils.histogramFromUri(rasterSource)
-    if (histO.isEmpty) {
-      logger.info(s"Fetching histogram for scene at $ingestLocation failed")
+    cogUtils.histogramFromUri(rasterSource) map {
+      case hist @ Some(_) => hist
+      case None =>
+        logger.info(s"Fetching histogram for scene at $ingestLocation failed")
+        None
     }
-    histO
   }
 
   def runJob(args: List[String]): IO[Unit] = {

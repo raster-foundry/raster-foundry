@@ -1,5 +1,6 @@
 package com.rasterfoundry.common.utils
 
+import cats.effect.{Blocker, ContextShift, Sync}
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4._
 import geotrellis.raster._
@@ -7,14 +8,16 @@ import geotrellis.raster._
 import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster.resample.ResampleMethod
-import geotrellis.vector.Projected
 import geotrellis.vector._
 
-object CogUtils extends LazyLogging {
+class CogUtils[F[_]: Sync](
+    blocker: Blocker
+)(implicit contextShift: ContextShift[F])
+    extends LazyLogging {
 
   def getTiffExtent(
       rasterSource: GDALRasterSource
-  ): Projected[MultiPolygon] = {
+  ): F[Projected[MultiPolygon]] = blocker.delay {
     Projected(
       MultiPolygon(
         rasterSource.extent
@@ -28,7 +31,7 @@ object CogUtils extends LazyLogging {
   def histogramFromUri(
       rasterSource: GDALRasterSource,
       buckets: Int = 80
-  ): Option[Array[Histogram[Double]]] = {
+  ): F[Option[Array[Histogram[Double]]]] = blocker.delay {
     val largestCellSize = rasterSource.resolutions
       .maxBy(_.resolution)
 
@@ -43,4 +46,5 @@ object CogUtils extends LazyLogging {
       .map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
 
   }
+
 }
