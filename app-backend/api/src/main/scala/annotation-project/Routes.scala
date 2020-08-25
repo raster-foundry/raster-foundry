@@ -117,20 +117,25 @@ trait AnnotationProjectRoutes
                       unlockTask(projectId, taskId)
                     }
                   }
-                } ~
-                  pathPrefix("labels") {
-                    pathEndOrSingleSlash {
-                      get {
-                        listTaskLabels(projectId, taskId)
+                } ~ pathPrefix("labels") {
+                  pathEndOrSingleSlash {
+                    get {
+                      listTaskLabels(projectId, taskId)
+                    } ~
+                      post {
+                        addTaskLabels(projectId, taskId)
                       } ~
-                        post {
-                          addTaskLabels(projectId, taskId)
-                        } ~
-                        delete {
-                          deleteTaskLabels(projectId, taskId)
-                        }
+                      delete {
+                        deleteTaskLabels(projectId, taskId)
+                      }
+                  }
+                } ~ pathPrefix("validate") {
+                  pathEndOrSingleSlash {
+                    post {
+                      validateTaskLabels(projectId, taskId)
                     }
-                  } ~ pathPrefix("children") {
+                  }
+                } ~ pathPrefix("children") {
                   pathEndOrSingleSlash {
                     get {
                       children(projectId, taskId)

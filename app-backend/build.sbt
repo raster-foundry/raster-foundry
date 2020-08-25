@@ -247,6 +247,7 @@ lazy val apiDependencies = Seq(
   Dependencies.doobieHikari,
   Dependencies.doobiePostgres,
   Dependencies.dropbox,
+  Dependencies.geotrellisGdal,
   Dependencies.geotrellisRaster,
   Dependencies.geotrellisVector,
   Dependencies.guava,
@@ -328,6 +329,7 @@ lazy val common = project
       Dependencies.circeTest,
       Dependencies.commonsIO,
       Dependencies.elasticacheClient,
+      Dependencies.geotrellisGdal,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisStore,
@@ -366,7 +368,6 @@ lazy val datamodel = project
       Dependencies.geotrellisGdal,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisServerStac,
       Dependencies.geotrellisVector,
       Dependencies.geotrellisVectorTestkit,
       Dependencies.jts,
@@ -374,7 +375,8 @@ lazy val datamodel = project
       Dependencies.refined,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.spireMath
+      Dependencies.spireMath,
+      Dependencies.stac4s
     ) ++ loggingDependencies
   })
 
@@ -432,6 +434,7 @@ lazy val db = project
       Dependencies.scalatestplusScalaCheck,
       Dependencies.shapeless,
       Dependencies.sourceCode,
+      Dependencies.stac4s,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
@@ -473,7 +476,6 @@ lazy val batch = project
       Dependencies.geotrellisLayer,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisServerStac,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisVector,
       Dependencies.guava,
@@ -487,6 +489,7 @@ lazy val batch = project
       Dependencies.shapeless,
       Dependencies.sourceCode,
       Dependencies.spireMath,
+      Dependencies.stac4s,
       Dependencies.sttpAsyncBackend,
       Dependencies.sttpCatsBackend,
       Dependencies.sttpCore,

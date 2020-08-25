@@ -21,12 +21,15 @@ import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext
 
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 
 trait SceneRoutes
@@ -125,17 +128,20 @@ trait SceneRoutes
   def createScene: Route = authenticate { user =>
     authorizeScope(ScopedAction(Domain.Scenes, Action.Create, None), user) {
       entity(as[Scene.Create]) { newScene =>
+        val rasterSourceOption =
+          newScene.ingestLocation.map(
+            location =>
+              GDALRasterSource(URLDecoder.decode(location, UTF_8.toString))
+          )
         val tileFootprint = (
           newScene.sceneType,
-          newScene.ingestLocation,
           newScene.tileFootprint
         ) match {
-          case (Some(SceneType.COG), Some(ingestLocation), None) => {
-            logger.debug(s"Ingest location is: $ingestLocation")
+          case (Some(SceneType.COG), None) => {
             logger.info(s"Generating Footprint for Newly Added COG")
-            Some(CogUtils.getTiffExtent(ingestLocation))
+            rasterSourceOption.map(rs => CogUtils.getTiffExtent(rs))
           }
-          case (_, _, tf @ Some(_)) => {
+          case (_, tf @ Some(_)) => {
             logger.info("Not generating footprint, already exists")
             tf
           }
@@ -143,9 +149,9 @@ trait SceneRoutes
         }
 
         val histogram: Option[Array[Histogram[Double]]] =
-          (newScene.sceneType, newScene.ingestLocation) match {
-            case (Some(SceneType.COG), Some(ingestLocation)) =>
-              CogUtils.histogramFromUri(ingestLocation)
+          (newScene.sceneType) match {
+            case Some(SceneType.COG) =>
+              rasterSourceOption.flatMap(rs => CogUtils.histogramFromUri(rs))
             case _ => None
           }
 

@@ -8,6 +8,7 @@ import com.rasterfoundry.datamodel._
 import cats.data._
 import cats.effect.{IO, LiftIO}
 import cats.implicits._
+import com.azavea.stac4s.extensions.label._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -298,7 +299,9 @@ object AnnotationProjectDao
       validators_team_id = ${project.validatorsTeamId},
       task_size_meters= ${project.taskSizeMeters},
       aoi = ${project.aoi},
-      status = ${project.status}
+      status = ${project.status},
+      campaign_id = ${project.campaignId},
+      captured_at = ${project.capturedAt}
     WHERE
       id = $id
     """).update.run;
@@ -337,7 +340,7 @@ object AnnotationProjectDao
 
   def getAnnotationProjectStacInfo(
       annotationProjectId: UUID
-  ): ConnectionIO[Option[StacLabelItemPropertiesThin]] =
+  ): ConnectionIO[Option[LabelItemExtension]] =
     (for {
       annotationProject <- OptionT {
         getProjectById(annotationProjectId)
@@ -351,38 +354,65 @@ object AnnotationProjectDao
           .map((group.id, _))
       })
       groupToLabelClasses = groupedLabelClasses.map(g => g._1 -> g._2).toMap
-      stacInfo = StacLabelItemPropertiesThin(
-        labelGroups.map(_.name),
-        labelGroups.map { group =>
+      stacInfo = LabelItemExtension(
+        LabelProperties.VectorLabelProperties(labelGroups.map(_.name)),
+        labelGroups.flatMap { group =>
           groupToLabelClasses
             .get(group.id)
             .map(
               classes =>
-                StacLabelItemProperties.StacLabelItemClasses(
-                  group.name,
-                  classes.map(_.name)
+                LabelClass(
+                  LabelClassName.VectorName(group.name),
+                  LabelClassClasses.NamedLabelClasses(
+                    classes.map(_.name).toNel.getOrElse(NonEmptyList.of(""))
+                  )
               )
             )
-        }.flatten,
-        "vector",
-        annotationProject.projectType.toString.toLowerCase
+        },
+        "Label Item",
+        LabelType.Vector,
+        annotationProject.projectType match {
+          case AnnotationProjectType.Classification =>
+            List(LabelTask.Classification)
+          case AnnotationProjectType.Detection => List(LabelTask.Detection)
+          case AnnotationProjectType.Segmentation =>
+            List(LabelTask.Segmentation)
+        },
+        List(), // methods
+        List() // overviews
       )
     } yield stacInfo).value
 
-  def getSharedUsers(projectId: UUID): ConnectionIO[List[UserThin]] = {
+  def getSharedUsers(
+      projectId: UUID
+  ): ConnectionIO[List[UserThinWithActionType]] = {
     for {
       permissions <- getPermissions(projectId)
-      idsNel = permissions
-        .filter(
-          _.subjectType == SubjectType.User
-        )
-        .flatMap(_.subjectId)
-        .toNel
-      users <- idsNel match {
-        case Some(ids) => UserDao.getThinUsersForIds(ids)
-        case _         => List.empty.pure[ConnectionIO]
+      userThins <- permissions traverse {
+        case ObjectAccessControlRule(
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Annotate
+            ) =>
+          UserDao
+            .getUserById(subjectId)
+            .map(
+              _.map(UserThinWithActionType.fromUser(_, ActionType.Annotate))
+            )
+        case ObjectAccessControlRule(
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Validate
+            ) =>
+          UserDao
+            .getUserById(subjectId)
+            .map(
+              _.map(UserThinWithActionType.fromUser(_, ActionType.Validate))
+            )
+        case _ =>
+          Option.empty[UserThinWithActionType].pure[ConnectionIO]
       }
-    } yield users
+    } yield { userThins.flatten }
   }
 
   def deleteSharedUser(projectId: UUID, userId: String): ConnectionIO[Int] = {

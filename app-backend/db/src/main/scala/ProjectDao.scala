@@ -118,20 +118,20 @@ object ProjectDao
     for {
       defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
         ProjectLayer(
-          UUID.randomUUID(),
-          now,
-          now,
-          "Project default layer",
-          None,
-          "#738FFC",
-          None,
-          None,
-          None,
-          None,
-          false,
-          None,
-          None,
-          None
+          UUID.randomUUID(), //id
+          now, // createdAt
+          now, // modifiedAt
+          "Project default layer", //name
+          None, // projectId
+          "#738FFC", // colorGroupHex
+          None, // smartLayerId
+          None, // rangeStart
+          None, // rangeEnd
+          None, // geometry
+          newProject.isSingleBand, //isSingleBand
+          newProject.singleBandOptions, // singleBandOptions
+          None, // overviewsLocation
+          None // minZoomLevel
         )
       )
       project <- (fr"INSERT INTO" ++ tableF ++ fr"""
@@ -629,67 +629,4 @@ object ProjectDao
         case _ => None
       }
     } yield { projectType.map(MLProjectType.fromString(_)) }
-
-  def getAnnotationProjectStacInfo(
-      projectId: UUID
-  ): ConnectionIO[Option[StacLabelItemPropertiesThin]] = {
-    val projectStacInfoF: Fragment = fr"""
-    SELECT
-      project_labels.name AS label_name,
-      project_label_groups.name AS label_group_name
-    FROM
-    (
-      SELECT labels.id, labels.name, labels."labelGroup" as label_group_id
-      FROM
-          projects,
-          jsonb_to_recordset((projects.extras->'annotate')::jsonb ->'labels') AS  labels(id uuid, name text, "labelGroup" uuid)
-      WHERE projects.id = ${projectId}
-    ) as project_labels
-    LEFT JOIN
-    (
-      SELECT labelGroups.key as id, labelGroups.value as name
-      FROM
-          projects,
-          jsonb_each_text((projects.extras->'annotate')::jsonb ->'labelGroups') as labelGroups
-      WHERE projects.id = ${projectId}
-    ) as project_label_groups
-    ON project_labels.label_group_id::uuid = project_label_groups.id::uuid;
-    """
-    projectStacInfoF
-      .query[ProjectStacInfo]
-      .to[List]
-      .map(infoList => {
-        infoList.length match {
-          case 0 => None
-          case _ =>
-            val stacClasses
-              : List[StacLabelItemProperties.StacLabelItemClasses] = (infoList
-              .groupBy(_.labelGroupName match {
-                case Some(groupName) if groupName.nonEmpty => groupName
-                case _                                     => "label"
-              })
-              .map {
-                case (propName, info) =>
-                  StacLabelItemProperties.StacLabelItemClasses(
-                    propName,
-                    info.traverse(_.labelName).getOrElse(List())
-                )
-            } toList)
-            val groupNamesDry = stacClasses.map(_.name).toSet
-            val (property, taskType) =
-              groupNamesDry.size match {
-                case 1 => (List("label"), "detection")
-                case _ => (groupNamesDry.toList, "classification")
-              }
-            Some(
-              StacLabelItemPropertiesThin(
-                property,
-                stacClasses,
-                "vector",
-                taskType
-              )
-            )
-        }
-      })
-  }
 }

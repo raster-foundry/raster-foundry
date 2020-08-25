@@ -65,7 +65,7 @@ object Version {
   val opentracingApi = "0.33.0"
   val postgis = "2.2.1"
   val postgres = "42.2.12"
-  val refined = "0.9.13"
+  val refined = "0.9.15"
   val rollbar = "1.4.0"
   val scaffeine = "3.1.0"
   val scala = "2.12.10"
@@ -83,6 +83,7 @@ object Version {
   val spatial4j = "0.7"
   val spire = "0.16.0"
   val spireMath = "0.13.0"
+  val stac4s = "0.0.12-3-g699a2cf"
   val sttp = "2.0.9"
   val sttpModel = "1.0.3"
   val sup = "0.7.0"
@@ -157,7 +158,6 @@ object Dependencies {
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea.geotrellis" %% "geotrellis-server-core" % Version.geotrellisServer
-  val geotrellisServerStac = "com.azavea.geotrellis" %% "geotrellis-server-stac" % Version.geotrellisServer
   val geotrellisStore = "org.locationtech.geotrellis" %% "geotrellis-store" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
   val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
@@ -214,6 +214,7 @@ object Dependencies {
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spire = "org.typelevel" %% "spire" % Version.spire
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath
+  val stac4s = "com.azavea.stac4s" %% "core" % Version.stac4s
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
   val sttpAkka = "com.softwaremill.sttp.client" %% "akka-http-backend" % Version.sttp
   val sttpAsyncBackend = "com.softwaremill.sttp.client" %% "async-http-client-backend" % Version.sttp
