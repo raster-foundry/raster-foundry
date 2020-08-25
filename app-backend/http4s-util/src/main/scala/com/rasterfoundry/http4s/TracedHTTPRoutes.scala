@@ -69,7 +69,8 @@ object TracedHTTPRoutes {
       val tags = Map(
         "http_method" -> req.method.name,
         "request_url" -> req.uri.path,
-        "environment" -> Config.environment
+        "environment" -> Config.environment,
+        "user_id" -> authedReq.context.id
       ) combine {
         getTraceId(req)
       } combine {
