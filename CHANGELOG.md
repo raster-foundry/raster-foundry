@@ -4,6 +4,20 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.48.0](https://github.com/raster-foundry/raster-foundry/compare/1.47.0...1.48.0)
+
+### Added
+
 - Add validation specific endpoint [#5453](https://github.com/raster-foundry/raster-foundry/pull/5453)
 - Added three additional categories for usernames when bulk-creating [#5458](https://github.com/raster-foundry/raster-foundry/pull/5458)
 
@@ -13,16 +27,10 @@
 - Update annotation project update endpoint [#5461](https://github.com/raster-foundry/raster-foundry/pull/5461)
 - Update annotation project status DB trigger to listen to delete actions in addition to update [#5461](https://github.com/raster-foundry/raster-foundry/pull/5461)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Apply single band settings to project default layer upon project create [#5454](https://github.com/raster-foundry/raster-foundry/pull/5454)
 - Switched to GDALRasterSource in COG scene posts to fetch metadata without timeouts [#5459](https://github.com/raster-foundry/raster-foundry/pull/5459), [#5460](https://github.com/raster-foundry/raster-foundry/pull/5460)
-
-### Security
 
 ## [1.47.0](https://github.com/raster-foundry/raster-foundry/compare/1.46.1...1.47.0)
 
