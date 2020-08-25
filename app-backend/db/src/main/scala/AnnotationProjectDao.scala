@@ -299,7 +299,9 @@ object AnnotationProjectDao
       validators_team_id = ${project.validatorsTeamId},
       task_size_meters= ${project.taskSizeMeters},
       aoi = ${project.aoi},
-      status = ${project.status}
+      status = ${project.status},
+      campaign_id = ${project.campaignId},
+      captured_at = ${project.capturedAt}
     WHERE
       id = $id
     """).update.run;
