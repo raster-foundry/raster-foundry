@@ -45,7 +45,12 @@ class LiveIntercomNotifier[F[_]: Sync](
           .header("Accept", "application/json")
           .post(uri)
           .body(MessagePost(adminId, userId, msg))
-          .send()
+          .send() flatMap { resp =>
+        resp.body match {
+          case Left(err) => Logger[F].error(err)
+          case _         => ().pure[F]
+        }
+      }
 
     resp.void
   }
