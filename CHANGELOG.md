@@ -4,6 +4,8 @@
 
 ### Added
 
+- Send notifications at the conclusion of STAC exports [#5470](https://github.com/raster-foundry/raster-foundry/pull/5470)
+
 ### Changed
 
 ### Deprecated
