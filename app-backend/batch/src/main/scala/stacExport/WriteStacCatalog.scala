@@ -266,11 +266,13 @@ final case class WriteStacCatalog(
             }
           } yield ()
         case (exportDef, _) =>
-          val message = Message(s"""
+          val message = Message(
+            """
         | Somehow you had an export without an associated annotation project.
         | This shouldn't happen. Please reply to this message to let us know
         | how you got here.
-        """.trim.stripMargin)
+        """.trim.stripMargin
+          )
           notify(ExternalId(exportDef.owner), message) *>
             IO {
               val msg = "Export definition is missing an annotation project ID"
