@@ -7,6 +7,11 @@ import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
+import com.rasterfoundry.notification.intercom.{
+  IntercomNotifier,
+  LiveIntercomNotifier
+}
 
 import better.files.{File => ScalaFile}
 import cats.effect.{ContextShift, IO}
@@ -15,15 +20,10 @@ import com.azavea.stac4s._
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
+import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import java.net.URI
 import java.util.UUID
-import com.rasterfoundry.notification.intercom.{
-  IntercomNotifier,
-  LiveIntercomNotifier
-}
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
-import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
 
 final case class WriteStacCatalog(
     exportId: UUID,
@@ -192,7 +192,7 @@ final case class WriteStacCatalog(
 
       logger.info(s"Getting STAC export data for record $exportId...")
       val dbIO
-          : ConnectionIO[(StacExport, Option[(UUID, Map[UUID, ExportData])])] =
+        : ConnectionIO[(StacExport, Option[(UUID, Map[UUID, ExportData])])] =
         for {
           exportDefinition <- StacExportDao.unsafeGetById(exportId)
           _ <- StacExportDao.update(
