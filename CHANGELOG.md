@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Failed Intercom API interaction no longer throws an exception [#5468](https://github.com/raster-foundry/raster-foundry/pull/5468)
+
 ### Deprecated
 
 ### Removed
