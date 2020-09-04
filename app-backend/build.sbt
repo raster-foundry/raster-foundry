@@ -73,6 +73,10 @@ lazy val sharedSettings = Seq(
     "org.slf4j",
     "slf4j-api"
   ),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "org.slf4j",
+    "slf4j-api"
+  ),
   // Try to keep logging sane and make sure to use slf4j + logback
   excludeDependencies ++= Seq(
     "log4j" % "log4j",
@@ -293,7 +297,6 @@ lazy val apiIntegrationTest = project
     libraryDependencies ++= Seq(
       Dependencies.scalaCsv % "test",
       Dependencies.sttpCore % "test",
-      Dependencies.sttpJson % "test",
       Dependencies.sttpCirce % "test",
       Dependencies.sttpOkHttpBackend % "test",
       Dependencies.scalatest
@@ -487,6 +490,7 @@ lazy val batch = project
       Dependencies.scalatest,
       Dependencies.scopt,
       Dependencies.shapeless,
+      Dependencies.slf4j,
       Dependencies.sourceCode,
       Dependencies.spireMath,
       Dependencies.stac4s,
@@ -757,7 +761,6 @@ lazy val notification = Project("notification", file("notification"))
       Dependencies.log4catsSlf4j,
       Dependencies.newtype,
       Dependencies.sttpCore,
-      Dependencies.sttpJson,
       Dependencies.sttpAsyncBackend,
       Dependencies.sttpCirce,
       Dependencies.sttpModel

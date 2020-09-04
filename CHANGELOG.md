@@ -14,12 +14,30 @@
 
 ### Security
 
+## [1.49.0](https://github.com/raster-foundry/raster-foundry/compare/1.48.0...1.49.0)
+
+### Added
+
+### Changed
+
+- Failed Intercom API interaction no longer throws an exception [#5468](https://github.com/raster-foundry/raster-foundry/pull/5468)
+- Do not render low zoom levels that are blank for imagery [#5472](https://github.com/raster-foundry/raster-foundry/pull/5472)
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
 ## [1.48.0](https://github.com/raster-foundry/raster-foundry/compare/1.47.0...1.48.0)
 
 ### Added
 
 - Add validation specific endpoint [#5453](https://github.com/raster-foundry/raster-foundry/pull/5453)
 - Added three additional categories for usernames when bulk-creating [#5458](https://github.com/raster-foundry/raster-foundry/pull/5458)
+- Included user IDs in traces [#5464](https://github.com/raster-foundry/raster-foundry/pull/5464)
 
 ### Changed
 
