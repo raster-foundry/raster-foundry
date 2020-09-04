@@ -127,24 +127,38 @@ final case class BacksplashGeotiff(
     val readTags = tags.combine(Map("zoom" -> z.toString))
     context.span("read:z_x_y:", readTags) use { childContext =>
       val layoutDefinition = BacksplashImage.tmsLevels(z)
-      for {
+      val cellArea = BacksplashImage.getWebMercatorPixelArea(z)
+      val requiredPixelRatio = 3.9
 
-        rasterSource <- getRasterSource(childContext)
-        tile <- childContext.span("rasterSource.read") use { _ =>
-          IO(
-            rasterSource
-              .reproject(WebMercator, method = NearestNeighbor)
-              .tileToLayout(layoutDefinition)
-              .read(SpatialKey(x, y), subsetBands)
-          ).map(_.map { tile =>
-              tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
-            })
-            .attempt
+      // If the data footprint isn't big enough to fill two pixels, just
+      // don't even bother
+      logger.debug(
+        s"Area: ${footprint.getArea}. Required: ${requiredPixelRatio * cellArea}"
+      )
+
+      if (footprint.getArea < requiredPixelRatio * cellArea) {
+        childContext.span("rasterSource.invisiTile") use { _ =>
+          IO.pure(Option.empty)
         }
-      } yield {
-        tile match {
-          case Left(e)              => throw e
-          case Right(multiBandTile) => multiBandTile
+      } else {
+        for {
+          rasterSource <- getRasterSource(childContext)
+          tile <- childContext.span("rasterSource.read") use { _ =>
+            IO(
+              rasterSource
+                .reproject(WebMercator, method = NearestNeighbor)
+                .tileToLayout(layoutDefinition)
+                .read(SpatialKey(x, y), subsetBands)
+            ).map(_.map { tile =>
+                tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
+              })
+              .attempt
+          }
+        } yield {
+          tile match {
+            case Left(e)              => throw e
+            case Right(multiBandTile) => multiBandTile
+          }
         }
       }
     }
@@ -237,4 +251,10 @@ object BacksplashImage {
     val scheme = ZoomedLayoutScheme(WebMercator, 256)
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
+
+  def getWebMercatorPixelArea(zoom: Int): Double = {
+    val level = tmsLevels(zoom)
+    (level.cellwidth * level.cellheight)
+  }
+
 }

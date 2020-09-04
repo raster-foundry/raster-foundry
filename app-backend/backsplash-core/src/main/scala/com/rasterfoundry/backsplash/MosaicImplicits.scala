@@ -34,8 +34,8 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
 
   val streamConcurrency = Config.parallelism.streamConcurrency
 
-  // To be used when folding over/merging tiles
   val invisiCellType = IntUserDefinedNoDataCellType(0)
+
   val invisiTile = IntUserDefinedNoDataArrayTile(
     Array.fill(65536)(0),
     256,
@@ -130,7 +130,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             extent
           )
         case someTiles =>
-          val outTile = someTiles.foldLeft(MultibandTile(invisiTile))(
+          val outTile = someTiles.foldLeft(
+            MultibandTile(invisiTile)
+          )(
             (baseTile: MultibandTile, triple2: MBTTriple) =>
               interpretAsFallback(baseTile, firstNd) merge interpretAsFallback(
                 triple2._1,
@@ -225,7 +227,14 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     mergeTiles(ioMBT).map {
       case Some(t) => Raster(t, extent)
       case _ =>
-        Raster(MultibandTile(invisiTile, invisiTile, invisiTile), extent)
+        Raster(
+          MultibandTile(
+            invisiTile,
+            invisiTile,
+            invisiTile
+          ),
+          extent
+        )
     }
   }
 
@@ -255,7 +264,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               case Some(t) => Raster(t, extent)
               case _ =>
                 Raster(
-                  MultibandTile(invisiTile, invisiTile, invisiTile),
+                  MultibandTile(
+                    invisiTile,
+                    invisiTile,
+                    invisiTile
+                  ),
                   extent
                 )
             }
@@ -297,7 +310,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               IO.pure(
                 ProjectedRaster(
                   Raster(
-                    MultibandTile(invisiTile, invisiTile, invisiTile),
+                    MultibandTile(
+                      invisiTile,
+                      invisiTile,
+                      invisiTile
+                    ),
                     Extent(0, 0, 256, 256)
                   ),
                   WebMercator
@@ -321,9 +338,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     logger.debug(
       s"Retrieving Histograms for ${relevant.imageId} from histogram store"
     )
-    histStore.layerHistogram(relevant.imageId,
-                             relevant.subsetBands,
-                             tracingContext)
+    histStore.layerHistogram(
+      relevant.imageId,
+      relevant.subsetBands,
+      tracingContext
+    )
   }
 
   // We need to be able to pass information about whether scenes should paint themselves while
@@ -407,7 +426,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                             case Some(mbTile) =>
                               Some(
                                 Raster(
-                                  mbTile.interpretAs(invisiCellType),
+                                  mbTile.interpretAs(
+                                    invisiCellType
+                                  ),
                                   extent
                                 )
                               )
@@ -421,7 +442,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                     case Some(r) => r
                     case _ =>
                       Raster(
-                        MultibandTile(invisiTile, invisiTile, invisiTile),
+                        MultibandTile(
+                          invisiTile,
+                          invisiTile,
+                          invisiTile
+                        ),
                         extent
                       )
                   })
@@ -445,7 +470,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                           case Some(mbt) =>
                             ColorRampMosaic.colorTile(mbt, histograms, opts)
                           case _ =>
-                            MultibandTile(invisiTile, invisiTile, invisiTile)
+                            MultibandTile(
+                              invisiTile,
+                              invisiTile,
+                              invisiTile
+                            )
                         }
                       case _ =>
                         IO.raiseError(
@@ -461,7 +490,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   case Some(r) => Raster(r, extent)
                   case _ =>
                     Raster(
-                      MultibandTile(invisiTile, invisiTile, invisiTile),
+                      MultibandTile(
+                        invisiTile,
+                        invisiTile,
+                        invisiTile
+                      ),
                       extent
                     )
                 }
@@ -500,7 +533,11 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                       case Some(r) => r
                       case _ =>
                         Raster(
-                          MultibandTile(invisiTile, invisiTile, invisiTile),
+                          MultibandTile(
+                            invisiTile,
+                            invisiTile,
+                            invisiTile
+                          ),
                           extent
                         )
                     }
