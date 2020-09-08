@@ -256,9 +256,9 @@ final case class WriteStacCatalog(
             }
             _ <- AnnotationProjectDao
               .unsafeGetById(annotationProjectId)
-              .transact(xa) flatMap { projectName =>
+              .transact(xa) flatMap { project =>
               val message = Message(s"""
-              | Your STAC export for project ${projectName} has completed!
+              | Your STAC export for project ${project.name} has completed!
               | You can see exports for your project at
               | ${GroundworkConfig.groundworkUrlBase}/app/projects/${annotationProjectId}/exports 
               """.trim.stripMargin)
