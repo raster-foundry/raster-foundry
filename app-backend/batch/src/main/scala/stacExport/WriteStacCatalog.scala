@@ -192,7 +192,7 @@ final case class WriteStacCatalog(
 
       logger.info(s"Getting STAC export data for record $exportId...")
       val dbIO
-        : ConnectionIO[(StacExport, Option[(UUID, Map[UUID, ExportData])])] =
+          : ConnectionIO[(StacExport, Option[(UUID, Map[UUID, ExportData])])] =
         for {
           exportDefinition <- StacExportDao.unsafeGetById(exportId)
           _ <- StacExportDao.update(
@@ -256,7 +256,7 @@ final case class WriteStacCatalog(
             }
             _ <- AnnotationProjectDao
               .unsafeGetById(annotationProjectId)
-              .transact(xa) map { projectName =>
+              .transact(xa) flatMap { projectName =>
               val message = Message(s"""
               | Your STAC export for project ${projectName} has completed!
               | You can see exports for your project at
