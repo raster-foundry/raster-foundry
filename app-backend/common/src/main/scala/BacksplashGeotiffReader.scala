@@ -206,9 +206,6 @@ object BacksplashGeotiffReader extends LazyLogging {
   def getGeotiffInfo(uri: String): BacksplashGeoTiffInfo = {
     val reader = getByteReader(uri)
     val geoTiffInfo = GeoTiffInfo.read(reader, true, true)
-    logger.debug(
-      s"Some Geotiff Info for $uri: COMPRESSION: ${geoTiffInfo.compression} SEGMENT LAYOUT: ${geoTiffInfo.segmentLayout}"
-    )
     val tiffTags = NEL.fromListUnsafe(getAllTiffTags(reader, true))
     BacksplashGeoTiffInfo.fromGeotiffInfo(geoTiffInfo, tiffTags)
   }
