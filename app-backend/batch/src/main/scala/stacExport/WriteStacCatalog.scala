@@ -192,7 +192,7 @@ final case class WriteStacCatalog(
 
       logger.info(s"Getting STAC export data for record $exportId...")
       val dbIO
-          : ConnectionIO[(StacExport, Option[(UUID, Map[UUID, ExportData])])] =
+        : ConnectionIO[(StacExport, Option[(UUID, Map[UUID, ExportData])])] =
         for {
           exportDefinition <- StacExportDao.unsafeGetById(exportId)
           _ <- StacExportDao.update(
