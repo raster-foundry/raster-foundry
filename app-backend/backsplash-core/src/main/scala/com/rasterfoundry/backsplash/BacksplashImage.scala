@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash
 
-import com.rasterfoundry.common.{BacksplashGeoTiffInfo, BacksplashGeotiffReader}
 import com.rasterfoundry.common.color._
+import com.rasterfoundry.common.{BacksplashGeoTiffInfo, BacksplashGeotiffReader}
 import com.rasterfoundry.database.SceneDao
 import com.rasterfoundry.database.util.{Cache => DBCache}
 import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}

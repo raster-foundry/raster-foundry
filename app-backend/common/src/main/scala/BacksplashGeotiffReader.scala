@@ -11,13 +11,13 @@ import geotrellis.raster.io.geotiff.reader.{
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.raster.io.geotiff.util._
 import geotrellis.store.s3.util.S3RangeReader
+import geotrellis.util.ByteReader
 import geotrellis.util.{
   ByteReader,
   FileRangeReader,
   HttpRangeReader,
   StreamingByteReader
 }
-import geotrellis.util.ByteReader
 import org.apache.http.client.utils.URLEncodedUtils
 import software.amazon.awssdk.services.s3.S3Client
 

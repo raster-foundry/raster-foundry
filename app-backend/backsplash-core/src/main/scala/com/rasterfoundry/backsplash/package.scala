@@ -2,7 +2,6 @@ package com.rasterfoundry
 
 import cats.effect._
 import com.colisweb.tracing.core.TracingContext
-
 import io.circe.KeyEncoder
 import org.http4s.Request
 import org.http4s.util.CaseInsensitiveString
