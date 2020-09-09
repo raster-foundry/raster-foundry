@@ -4,6 +4,8 @@
 
 ### Added
 
+- Creating a scene from a COG eagerly fetches GeoTiff information [#5473](https://github.com/raster-foundry/raster-foundry/pull/5473)
+
 ### Changed
 
 ### Deprecated
