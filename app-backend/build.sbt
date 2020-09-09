@@ -336,6 +336,7 @@ lazy val common = project
       Dependencies.geotrellisGdal,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
+      Dependencies.geotrellisS3,
       Dependencies.geotrellisStore,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisVector,

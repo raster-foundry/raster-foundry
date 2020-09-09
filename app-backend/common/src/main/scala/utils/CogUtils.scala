@@ -1,9 +1,11 @@
 package com.rasterfoundry.common.utils
 
+import com.rasterfoundry.common.{BacksplashGeoTiffInfo, BacksplashGeotiffReader}
+
 import cats.effect.{Blocker, ContextShift, Sync}
+import cats.syntax.functor._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4._
-import geotrellis.raster._
 import geotrellis.raster._
 import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.io.geotiff.OverviewStrategy
@@ -17,7 +19,7 @@ class CogUtils[F[_]: Sync](
 
   def getTiffExtent(
       rasterSource: GDALRasterSource
-  ): F[Projected[MultiPolygon]] = blocker.delay {
+  ): F[Projected[MultiPolygon]] = Sync[F].delay {
     Projected(
       MultiPolygon(
         rasterSource.extent
@@ -31,7 +33,7 @@ class CogUtils[F[_]: Sync](
   def histogramFromUri(
       rasterSource: GDALRasterSource,
       buckets: Int = 80
-  ): F[Option[Array[Histogram[Double]]]] = blocker.delay {
+  ): F[Option[Array[Histogram[Double]]]] = Sync[F].delay {
     val largestCellSize = rasterSource.resolutions
       .maxBy(_.resolution)
 
@@ -47,4 +49,13 @@ class CogUtils[F[_]: Sync](
 
   }
 
+  def getGeoTiffInfo(
+      uri: String
+  ): F[BacksplashGeoTiffInfo] =
+    blocker.delay(
+      BacksplashGeotiffReader.getGeotiffInfo(uri)
+    ) map { data =>
+      logger.debug(s"Got backsplash geotiff info for $uri")
+      data
+    }
 }

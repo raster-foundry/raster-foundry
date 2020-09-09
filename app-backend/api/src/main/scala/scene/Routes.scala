@@ -47,8 +47,9 @@ trait SceneRoutes
   implicit val ec: ExecutionContext
 
   val rasterIOContext = ExecutionContext.fromExecutor(
-    Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
+    Executors.newFixedThreadPool(
+      4,
+      new ThreadFactoryBuilder().setNameFormat("geotiffinfo-%d").build()
     )
   )
 
@@ -183,7 +184,13 @@ trait SceneRoutes
           histogram <- histogramIO.unsafeToFuture
           (tileFootprint, dataFootprint) <- (tileFootprintIO, dataFootprintIO).tupled.unsafeToFuture
           updatedScene = newScene
-            .copy(dataFootprint = dataFootprint, tileFootprint = tileFootprint)
+            .copy(
+              dataFootprint = dataFootprint,
+              tileFootprint = tileFootprint,
+              statusFields = newScene.statusFields.copy(
+                ingestStatus = IngestStatus.NotIngested
+              )
+            )
           sceneInsert = (
             histogram,
             newScene.sceneType,
@@ -214,6 +221,23 @@ trait SceneRoutes
               )
           }
           histogramAndInsertFut <- sceneInsert.transact(xa).unsafeToFuture
+          _ <- (newScene.ingestLocation traverse { uri =>
+            cogUtils.getGeoTiffInfo(uri) flatMap { geotiffInfo =>
+              (SceneDao
+                .updateSceneGeoTiffInfo(geotiffInfo, histogramAndInsertFut.id)
+                *> SceneDao.update(
+                  histogramAndInsertFut
+                    .copy(
+                      statusFields = histogramAndInsertFut.statusFields
+                        .copy(ingestStatus = IngestStatus.Ingested)
+                    )
+                    .toScene,
+                  histogramAndInsertFut.id,
+                  user
+                ))
+                .transact(xa)
+            }
+          }).attempt.start.unsafeToFuture
         } yield histogramAndInsertFut
 
         onSuccess(insertFut) { scene =>
