@@ -7,8 +7,7 @@ import com.rasterfoundry.common.utils.CogUtils
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{LayerAttributeDao, SceneDao}
 
-import cats.effect.Blocker
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie._
@@ -37,16 +36,14 @@ object HistogramBackfill
     )
   )
 
-  val blocker = Blocker.liftExecutionContext(rasterIOContext)
-
-  val cogUtils = new CogUtils[IO](blocker)
+  val cogUtils = new CogUtils[IO](ContextShift[IO], rasterIOContext)
 
   type CogTuple = (UUID, Option[String])
 
   val name = "cog-histogram-backfill"
 
-  def getScenesToBackfill(
-      implicit xa: Transactor[IO]
+  def getScenesToBackfill(implicit
+      xa: Transactor[IO]
   ): IO[List[List[CogTuple]]] = {
     logger.info("Finding COG scenes without histograms in layer_attributes")
     fr"""select
@@ -68,8 +65,8 @@ object HistogramBackfill
 
   // presence of the ingest location is guaranteed by the filter in the sql string
   @SuppressWarnings(Array("OptionGet"))
-  def insertHistogramLayerAttribute(cogTuple: CogTuple)(
-      implicit xa: Transactor[IO]
+  def insertHistogramLayerAttribute(cogTuple: CogTuple)(implicit
+      xa: Transactor[IO]
   ): IO[Option[LayerAttribute]] = {
     val histogram = getSceneHistogram(cogTuple._2.get)
     histogram flatMap { hist =>
