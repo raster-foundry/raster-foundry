@@ -42,9 +42,9 @@ object HistogramBackfill
 
   val name = "cog-histogram-backfill"
 
-  def getScenesToBackfill(implicit
-      xa: Transactor[IO]
-  ): IO[List[List[CogTuple]]] = {
+  def getScenesToBackfill(
+      implicit
+      xa: Transactor[IO]): IO[List[List[CogTuple]]] = {
     logger.info("Finding COG scenes without histograms in layer_attributes")
     fr"""select
            id, ingest_location
@@ -65,9 +65,9 @@ object HistogramBackfill
 
   // presence of the ingest location is guaranteed by the filter in the sql string
   @SuppressWarnings(Array("OptionGet"))
-  def insertHistogramLayerAttribute(cogTuple: CogTuple)(implicit
-      xa: Transactor[IO]
-  ): IO[Option[LayerAttribute]] = {
+  def insertHistogramLayerAttribute(cogTuple: CogTuple)(
+      implicit
+      xa: Transactor[IO]): IO[Option[LayerAttribute]] = {
     val histogram = getSceneHistogram(cogTuple._2.get)
     histogram flatMap { hist =>
       LayerAttributeDao

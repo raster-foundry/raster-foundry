@@ -147,8 +147,7 @@ trait SceneRoutes
         entity(as[Scene.Create]) { newScene =>
           val rasterSourceOption =
             newScene.ingestLocation.map(location =>
-              GDALRasterSource(URLDecoder.decode(location, UTF_8.toString))
-            )
+              GDALRasterSource(URLDecoder.decode(location, UTF_8.toString)))
           val tileFootprintIO = (
             newScene.sceneType,
             newScene.tileFootprint
@@ -185,38 +184,35 @@ trait SceneRoutes
 
           val insertFut = for {
             histogram <- histogramIO.unsafeToFuture
-            (tileFootprint, dataFootprint) <-
-              (tileFootprintIO, dataFootprintIO).tupled.unsafeToFuture
-            updatedScene =
-              newScene
-                .copy(
-                  dataFootprint = dataFootprint,
-                  tileFootprint = tileFootprint,
-                  statusFields = newScene.statusFields.copy(
-                    ingestStatus = IngestStatus.NotIngested
-                  )
+            (tileFootprint, dataFootprint) <- (tileFootprintIO, dataFootprintIO).tupled.unsafeToFuture
+            updatedScene = newScene
+              .copy(
+                dataFootprint = dataFootprint,
+                tileFootprint = tileFootprint,
+                statusFields = newScene.statusFields.copy(
+                  ingestStatus = IngestStatus.NotIngested
                 )
+              )
             sceneInsert = (
-                histogram,
-                newScene.sceneType,
-                !newScene.ingestLocation.isEmpty
+              histogram,
+              newScene.sceneType,
+              !newScene.ingestLocation.isEmpty
             ) match {
               case (Some(hist), Some(SceneType.COG), true) =>
                 for {
                   insertedScene <- SceneDao.insert(updatedScene, user)
-                  _ <-
-                    LayerAttributeDao
-                      .insertLayerAttribute(
-                        LayerAttribute(
-                          insertedScene.id.toString,
-                          0,
-                          "histogram",
-                          hist.asJson
-                        )
+                  _ <- LayerAttributeDao
+                    .insertLayerAttribute(
+                      LayerAttribute(
+                        insertedScene.id.toString,
+                        0,
+                        "histogram",
+                        hist.asJson
                       )
-                      .attempt map {
-                      _.toOption
-                    }
+                    )
+                    .attempt map {
+                    _.toOption
+                  }
                 } yield insertedScene
               case (_, _, false) =>
                 SceneDao.insert(updatedScene, user)
@@ -228,25 +224,25 @@ trait SceneRoutes
             }
             histogramAndInsertFut <- sceneInsert.transact(xa).unsafeToFuture
             _ <- (newScene.ingestLocation traverse { uri =>
-                cogUtils.getGeoTiffInfo(uri) flatMap { geotiffInfo =>
-                  (SceneDao
-                    .updateSceneGeoTiffInfo(
-                      geotiffInfo,
-                      histogramAndInsertFut.id
-                    )
-                    *> SceneDao.update(
-                      histogramAndInsertFut
-                        .copy(
-                          statusFields = histogramAndInsertFut.statusFields
-                            .copy(ingestStatus = IngestStatus.Ingested)
-                        )
-                        .toScene,
-                      histogramAndInsertFut.id,
-                      user
-                    ))
-                    .transact(xa)
-                }
-              }).attempt.start.unsafeToFuture
+              cogUtils.getGeoTiffInfo(uri) flatMap { geotiffInfo =>
+                (SceneDao
+                  .updateSceneGeoTiffInfo(
+                    geotiffInfo,
+                    histogramAndInsertFut.id
+                  )
+                  *> SceneDao.update(
+                    histogramAndInsertFut
+                      .copy(
+                        statusFields = histogramAndInsertFut.statusFields
+                          .copy(ingestStatus = IngestStatus.Ingested)
+                      )
+                      .toScene,
+                    histogramAndInsertFut.id,
+                    user
+                  ))
+                  .transact(xa)
+              }
+            }).attempt.start.unsafeToFuture
           } yield histogramAndInsertFut
 
           onSuccess(insertFut) { scene =>

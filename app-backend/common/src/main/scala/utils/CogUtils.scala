@@ -11,6 +11,7 @@ import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster.resample.ResampleMethod
 import geotrellis.vector._
+
 import scala.concurrent.ExecutionContext
 
 class CogUtils[F[_]: Sync](
