@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash
 
-import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import com.rasterfoundry.common.color._
+import com.rasterfoundry.common.{BacksplashGeoTiffInfo, BacksplashGeotiffReader}
 import com.rasterfoundry.database.SceneDao
 import com.rasterfoundry.database.util.{Cache => DBCache}
 import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}
@@ -102,7 +102,7 @@ final case class BacksplashGeotiff(
             }
           }
           reader <- child.span("getByteReader") use { _ =>
-            IO(getByteReader(uri))
+            IO(BacksplashGeotiffReader.getByteReader(uri))
           }
           gtInfo <- child.span("toGeotiffInfo") use { _ =>
             IO(info.toGeotiffInfo(reader))

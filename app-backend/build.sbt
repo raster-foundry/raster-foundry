@@ -322,7 +322,10 @@ lazy val common = project
       Dependencies.awsBatchSdk,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
+      Dependencies.awsUtilsSdkV2,
+      Dependencies.awsS3SdkV2,
       Dependencies.catsCore,
+      Dependencies.catsEffect,
       Dependencies.catsScalacheck,
       Dependencies.chronoscala,
       Dependencies.circeCore,
@@ -335,6 +338,7 @@ lazy val common = project
       Dependencies.geotrellisGdal,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
+      Dependencies.geotrellisS3,
       Dependencies.geotrellisStore,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisVector,
@@ -347,7 +351,9 @@ lazy val common = project
       Dependencies.scalaCheck,
       Dependencies.shapeless,
       Dependencies.spireMath,
-      Dependencies.typesafeConfig
+      Dependencies.typesafeConfig,
+      "org.apache.httpcomponents" % "httpclient" % "4.5.9",
+      "org.apache.httpcomponents" % "httpcore" % "4.4.11"
     ) ++ loggingDependencies
   })
 
@@ -563,9 +569,6 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
   .settings(
     fork in run := true,
     libraryDependencies ++= Seq(
-      Dependencies.awsS3,
-      Dependencies.awsUtilsSdkV2,
-      Dependencies.awsS3SdkV2,
       Dependencies.catsCore,
       Dependencies.catsEffect,
       Dependencies.catsFree,
@@ -578,7 +581,6 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.geotrellisLayer,
       Dependencies.geotrellisProj4,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisS3,
       Dependencies.geotrellisServer,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisVector,
@@ -594,9 +596,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.scalacacheCore,
       Dependencies.spatial4j,
       Dependencies.spireMath,
-      Dependencies.typesafeConfig,
-      "org.apache.httpcomponents" % "httpclient" % "4.5.9",
-      "org.apache.httpcomponents" % "httpcore" % "4.4.11"
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies,
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin(
