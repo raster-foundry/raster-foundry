@@ -31,8 +31,7 @@ trait AnnotationProjectTaskRoutes
     with QueryParametersCommon {
 
   val taskGridContext = ExecutionContext.fromExecutor(
-    Executors.newFixedThreadPool(
-      4,
+    Executors.newCachedThreadPool(
       new ThreadFactoryBuilder().setNameFormat("task-grid-%d").build()
     )
   )
