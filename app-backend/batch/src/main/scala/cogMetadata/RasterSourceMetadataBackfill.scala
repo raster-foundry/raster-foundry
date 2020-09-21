@@ -1,8 +1,11 @@
 package com.rasterfoundry.batch.cogMetadata
 
-import com.rasterfoundry.backsplash.BacksplashGeotiffReader
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.common.{BacksplashGeoTiffInfo, RollbarNotifier}
+import com.rasterfoundry.common.{
+  BacksplashGeoTiffInfo,
+  BacksplashGeotiffReader,
+  RollbarNotifier
+}
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{RasterSourceMetadataDao, SceneDao}
 import com.rasterfoundry.datamodel.RasterSourceMetadata

@@ -1,8 +1,7 @@
-package com.rasterfoundry.backsplash
-
-import com.rasterfoundry.common.BacksplashGeoTiffInfo
+package com.rasterfoundry.common
 
 import cats.data.{NonEmptyList => NEL}
+import com.amazonaws.services.s3.AmazonS3URI
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.reader.{
@@ -11,13 +10,68 @@ import geotrellis.raster.io.geotiff.reader.{
 }
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.raster.io.geotiff.util._
+import geotrellis.store.s3.util.S3RangeReader
 import geotrellis.util.ByteReader
+import geotrellis.util.{
+  ByteReader,
+  FileRangeReader,
+  HttpRangeReader,
+  StreamingByteReader
+}
+import org.apache.http.client.utils.URLEncodedUtils
+import software.amazon.awssdk.services.s3.S3Client
 
 import scala.collection.mutable.ListBuffer
 
+import java.net.{URI, URL}
 import java.nio.ByteOrder
+import java.nio.charset.Charset
+import java.nio.file.Paths
 
 object BacksplashGeotiffReader extends LazyLogging {
+
+  /** AWS' S3 client has an internal connection pool, in order to maximize throughput
+    * we try to reuse it and only instantiate one
+    *
+    */
+  private lazy val s3Client = S3Client.builder().build()
+
+  /** Replicates byte reader functionality in GeoTrellis that we don't get
+    * access to
+    *
+    * @param uri
+    * @return
+    */
+  def getByteReader(uri: String): StreamingByteReader = {
+
+    val javaURI = new URI(uri)
+    val noQueryParams =
+      URLEncodedUtils.parse(uri, Charset.forName("UTF-8")).isEmpty
+
+    val rr = javaURI.getScheme match {
+      case null =>
+        FileRangeReader(Paths.get(uri).toFile)
+
+      case "file" =>
+        FileRangeReader(Paths.get(javaURI).toFile)
+
+      case "http" | "https" if noQueryParams =>
+        HttpRangeReader(new URL(uri))
+
+      case "http" | "https" =>
+        new HttpRangeReader(new URL(uri), false)
+
+      case "s3" =>
+        val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
+        S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
+
+      case scheme =>
+        throw new IllegalArgumentException(
+          s"Unable to read scheme $scheme at $uri"
+        )
+    }
+    new StreamingByteReader(rr, 128000)
+  }
 
   import GeoTiffReader.geoTiffMultibandTile
 
@@ -152,9 +206,6 @@ object BacksplashGeotiffReader extends LazyLogging {
   def getGeotiffInfo(uri: String): BacksplashGeoTiffInfo = {
     val reader = getByteReader(uri)
     val geoTiffInfo = GeoTiffInfo.read(reader, true, true)
-    logger.debug(
-      s"Some Geotiff Info for $uri: COMPRESSION: ${geoTiffInfo.compression} SEGMENT LAYOUT: ${geoTiffInfo.segmentLayout}"
-    )
     val tiffTags = NEL.fromListUnsafe(getAllTiffTags(reader, true))
     BacksplashGeoTiffInfo.fromGeotiffInfo(geoTiffInfo, tiffTags)
   }

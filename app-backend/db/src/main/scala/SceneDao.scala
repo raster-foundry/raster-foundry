@@ -166,9 +166,11 @@ object SceneDao
   def updateSceneGeoTiffInfo(
       bsi: BacksplashGeoTiffInfo,
       id: UUID
-  ): ConnectionIO[Int] = {
-    fr"""UPDATE scenes SET backsplash_geotiff_info = ${bsi} WHERE id = ${id}""".update.run
-  }
+  ): ConnectionIO[Int] =
+    fr"""
+    UPDATE scenes
+    SET backsplash_geotiff_info = ${bsi}, ingest_status = ${IngestStatus.Ingested: IngestStatus}
+    WHERE id = ${id}""".update.run
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
   def insertMaybe(
