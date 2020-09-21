@@ -4,9 +4,6 @@
 
 ### Added
 
-- Creating a scene from a COG eagerly fetches GeoTiff information [#5473](https://github.com/raster-foundry/raster-foundry/pull/5473)
-- Send notifications at the conclusion of STAC exports [#5470](https://github.com/raster-foundry/raster-foundry/pull/5470)
-
 ### Changed
 
 ### Deprecated
@@ -16,6 +13,13 @@
 ### Fixed
 
 ### Security
+
+## [1.50.0](https://github.com/raster-foundry/raster-foundry/compare/1.49.0...1.50.0)
+
+### Added
+
+- Creating a scene from a COG eagerly fetches GeoTiff information [#5473](https://github.com/raster-foundry/raster-foundry/pull/5473)
+- Send notifications at the conclusion of STAC exports [#5470](https://github.com/raster-foundry/raster-foundry/pull/5470)
 
 ## [1.49.0](https://github.com/raster-foundry/raster-foundry/compare/1.48.0...1.49.0)
 
