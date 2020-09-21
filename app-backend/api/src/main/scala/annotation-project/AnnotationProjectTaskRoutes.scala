@@ -9,6 +9,7 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
+import cats.effect.Blocker
 import cats.effect.IO
 import cats.implicits._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
@@ -21,7 +22,6 @@ import scala.concurrent.ExecutionContext
 
 import java.util.UUID
 import java.util.concurrent.Executors
-import cats.effect.Blocker
 
 trait AnnotationProjectTaskRoutes
     extends CommonHandlers
