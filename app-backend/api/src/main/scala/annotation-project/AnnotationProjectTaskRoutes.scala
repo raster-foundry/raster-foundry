@@ -9,13 +9,19 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
+import cats.effect.Blocker
 import cats.effect.IO
+import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
+import scala.concurrent.ExecutionContext
+
 import java.util.UUID
+import java.util.concurrent.Executors
 
 trait AnnotationProjectTaskRoutes
     extends CommonHandlers
@@ -23,6 +29,15 @@ trait AnnotationProjectTaskRoutes
     with Authentication
     with PaginationDirectives
     with QueryParametersCommon {
+
+  val taskGridContext = ExecutionContext.fromExecutor(
+    Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder().setNameFormat("task-grid-%d").build()
+    )
+  )
+
+  val taskGridContextShift = IO.contextShift(taskGridContext)
+  val taskGridBlocker = Blocker.liftExecutionContext(taskGridContext)
 
   val xa: Transactor[IO]
 
@@ -143,22 +158,27 @@ trait AnnotationProjectTaskRoutes
       } {
         entity(as[Task.TaskGridFeatureCreate]) { tgf =>
           complete(
-            StatusCodes.Created,
-            TaskDao
-              .insertTasksByGrid(
-                Task
-                  .TaskPropertiesCreate(
-                    TaskStatus.Unlabeled,
-                    projectId,
-                    None,
-                    None,
-                    None,
-                    None
-                  ),
-                tgf,
-                user
-              )
-              .transact(xa)
+            StatusCodes.Accepted,
+            taskGridBlocker
+              .blockOn(
+                TaskDao
+                  .insertTasksByGrid(
+                    Task
+                      .TaskPropertiesCreate(
+                        TaskStatus.Unlabeled,
+                        projectId,
+                        None,
+                        None,
+                        None,
+                        None
+                      ),
+                    tgf,
+                    user
+                  )
+                  .transact(xa)
+                  .start(taskGridContextShift)
+              )(taskGridContextShift)
+              .void
               .unsafeToFuture
           )
         }

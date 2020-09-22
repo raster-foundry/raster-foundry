@@ -3502,11 +3502,11 @@ paths:
           schema:
             $ref: "#/definitions/TaskGridCreate"
       responses:
-        201:
-          description: "Task grid was successfully created"
+        202:
+          description: "Task grid creation in progress"
           schema:
-            type: integer
-            description: Number of tasks created
+            type: object
+            description: "An empty object corresponding to a successful request"
         400:
           description: "Task grid could not be created. The provided parameters were likely invalid"
           schema:

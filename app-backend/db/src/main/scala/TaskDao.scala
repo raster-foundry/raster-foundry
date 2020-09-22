@@ -274,6 +274,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       annotationProjectO <- AnnotationProjectDao.getById(
         taskProperties.annotationProjectId
       )
+      _ <- debug(
+        s"Got annotation project for ${taskProperties.annotationProjectId}"
+      )
       geomO <- (taskGridFeatureCreate.geometry, annotationProjectO) match {
         case (Some(g), _) => Option(g).pure[ConnectionIO]
         case (_, Some(annotationProject)) =>
@@ -315,6 +318,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       } getOrElse {
         0.pure[ConnectionIO]
       }
+      _ <- debug(s"Inserted $gridInsert tasks")
       _ <- annotationProjectO traverse { annotationProject =>
         AnnotationProjectDao.update(
           annotationProject.copy(taskSizeMeters = taskSizeO, aoi = geomO),

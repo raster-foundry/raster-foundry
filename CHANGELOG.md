@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Moved task grid creation into a background task [#5476](https://github.com/raster-foundry/raster-foundry/pull/5476)
+
 ### Deprecated
 
 ### Removed
