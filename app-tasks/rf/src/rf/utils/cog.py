@@ -21,22 +21,6 @@ DATA_BUCKET = os.getenv("DATA_BUCKET")
 s3client = boto3.client("s3")
 logger = logging.getLogger(__name__)
 
-def reproject_to_webmercator(file_path):
-    logger.info("Reprojecting %s", file_path)
-    output_dir, source_filename = os.path.split(file_path)
-    warped_tiff = os.path.join(
-        output_dir, "{}-warped.tif".format(source_filename.split(".")[0])
-    )
-    warped_command = [
-        "gdalwarp",
-        "-t_srs",
-        "epsg:3857",
-        file_path,
-        warped_tiff,
-    ]
-    logger.debug("Running warp command: %s", warped_command)
-    subprocess.check_call(warped_command)
-    return warped_tiff
 
 def georeference_file(file_path):
     logger.info("Georeferencing %s", file_path)
@@ -79,22 +63,22 @@ def add_overviews(tif_path):
     subprocess.check_call(overviews_command)
 
 
-def convert_to_cog(tif_with_overviews_path, local_dir):
-    logger.info("Converting %s to a cog", tif_with_overviews_path)
+def convert_to_cog(tif_path, local_dir):
+    logger.info("Converting %s to a cog", tif_path)
     out_path = os.path.join(local_dir, "cog.tif")
     cog_command = [
         "gdal_translate",
-        tif_with_overviews_path,
+        tif_path,
         "-co",
-        "TILED=YES",
+        "TILING_SCHEME=GoogleMapsCompatible",
         "-co",
         "COMPRESS=DEFLATE",
-        "-co",
-        "COPY_SRC_OVERVIEWS=YES",
         "-co",
         "BIGTIFF=IF_SAFER",
         "-co",
         "PREDICTOR=2",
+        "-of",
+        "COG",
         out_path,
     ]
     subprocess.check_call(cog_command)
