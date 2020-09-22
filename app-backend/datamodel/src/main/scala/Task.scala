@@ -12,6 +12,12 @@ import io.circe.refined._
 import java.sql.Timestamp
 import java.util.UUID
 
+@JsonCodec
+final case class Review(
+    vote: LabelVoteType,
+    description: Option[String]
+)
+
 case class Task(
     id: UUID,
     createdAt: Timestamp,
@@ -25,7 +31,7 @@ case class Task(
     annotationProjectId: UUID,
     taskType: TaskType,
     parentTaskId: Option[UUID],
-    reviews: Json
+    reviews: Map[UUID, Review]
 ) {
   def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
@@ -104,7 +110,7 @@ object Task {
       note: Option[NonEmptyString],
       taskType: TaskType,
       parentTaskId: Option[UUID],
-      reviews: Json
+      reviews: Map[UUID, Review]
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
@@ -136,7 +142,7 @@ object Task {
       annotationProjectId: UUID,
       taskType: TaskType,
       parentTaskId: Option[UUID],
-      reviews: Json,
+      reviews: Map[UUID, Review],
       campaignId: UUID
   ) {
     def toTask: Task = {
@@ -210,15 +216,15 @@ object Task {
       note: Option[NonEmptyString],
       taskType: TaskType,
       parentTaskId: Option[UUID],
-      reviews: Json,
+      reviews: Map[UUID, Review],
       campaignId: UUID
   )
 
   object TaskPropertiesWithCampaign {
     implicit val encTaskPropertiesWithCampaign
-      : Encoder[TaskPropertiesWithCampaign] = deriveEncoder
+        : Encoder[TaskPropertiesWithCampaign] = deriveEncoder
     implicit val decTaskPropertiesWithCamapgin
-      : Decoder[TaskPropertiesWithCampaign] = deriveDecoder
+        : Decoder[TaskPropertiesWithCampaign] = deriveDecoder
   }
 
   final case class TaskPropertiesCreate(
@@ -227,7 +233,7 @@ object Task {
       note: Option[NonEmptyString],
       taskType: Option[TaskType],
       parentTaskId: Option[UUID],
-      reviews: Option[Json]
+      reviews: Option[Map[UUID, Review]]
   )
 
   object TaskPropertiesCreate {
@@ -308,7 +314,7 @@ object Task {
           (
             tfc._type,
             tfc.features
-        )
+          )
       )
 
     implicit val decTaskFeatureCollection: Decoder[TaskFeatureCollection] =
@@ -325,12 +331,12 @@ object Task {
 
   object TaskFeatureCollectionCreate {
     implicit val decTaskFeatureCollectionCreate
-      : Decoder[TaskFeatureCollectionCreate] =
+        : Decoder[TaskFeatureCollectionCreate] =
       Decoder.forProduct2("type", "features")(
         TaskFeatureCollectionCreate.apply _
       )
     implicit val encTaskFeatureCollectionCreate
-      : Encoder[TaskFeatureCollectionCreate] =
+        : Encoder[TaskFeatureCollectionCreate] =
       Encoder.forProduct2("type", "features")(
         tfc => (tfc._type, tfc.features)
       )
@@ -342,10 +348,10 @@ object Task {
 
   object TaskGridCreateProperties {
     implicit val encTaskGridCreateProperties
-      : Encoder[TaskGridCreateProperties] =
+        : Encoder[TaskGridCreateProperties] =
       deriveEncoder
     implicit val decTaskGridCreateProperties
-      : Decoder[TaskGridCreateProperties] =
+        : Decoder[TaskGridCreateProperties] =
       deriveDecoder
   }
 

@@ -14,7 +14,6 @@ import doobie.postgres.implicits._
 import doobie.refined.implicits._
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.{Geometry, Projected}
-import io.circe.syntax._
 import shapeless._
 
 import scala.concurrent.duration._
@@ -227,12 +226,12 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       user: User
   ): Fragment = {
     val t = tfc.properties.taskType.getOrElse(TaskType.fromString("LABEL"))
-    val r = tfc.properties.reviews.getOrElse("{}".asJson)
+    val r = tfc.properties.reviews.getOrElse(Map[UUID, Review]())
     fr"""(
         ${UUID.randomUUID}, ${Timestamp.from(Instant.now)}, ${user.id}, ${Timestamp
       .from(Instant.now)},
         ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
-        ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r}::jsonb
+        ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r}
     )"""
   }
 
@@ -581,7 +580,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                 None,
                 TaskType.Label,
                 None,
-                "{}".asJson
+                Map[UUID, Review]()
                 // since this is a fake task feature that exists I think for the purpose of
                 // providing a geojson interface over the task status geom summary,
                 // it's fine to pretend that the note is always None
