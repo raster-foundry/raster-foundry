@@ -303,7 +303,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           ${taskProperties.annotationProjectId},
           ${TaskType.Label.toString()}::task_type,
           null,
-          '{}'::jsonb
+          '{}'::jsonb,
+          null
         FROM (
           SELECT (
             ST_Dump(
