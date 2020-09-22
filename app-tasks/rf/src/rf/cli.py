@@ -24,4 +24,3 @@ def run(verbose):
 
 run.add_command(export)
 run.add_command(process_upload)
-run.add_command(ingest_scene)
