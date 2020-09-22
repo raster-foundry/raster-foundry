@@ -6,7 +6,7 @@ import logging
 
 import click
 
-from .commands import export, ingest_scene, process_upload
+from .commands import export, process_upload
 
 logger = logging.getLogger("rf")
 
