@@ -37,7 +37,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     "annotation_project_id",
     "task_type",
     "parent_task_id",
-    "reviews"
+    "reviews",
+    "review_status"
   )
 
   type MaybeEmptyUnionedGeomExtent =
@@ -231,7 +232,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         ${UUID.randomUUID}, ${Timestamp.from(Instant.now)}, ${user.id}, ${Timestamp
       .from(Instant.now)},
         ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
-        ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r}
+        ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r},
+        ${tfc.properties.reviewStatus}
     )"""
   }
 
@@ -580,7 +582,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                 None,
                 TaskType.Label,
                 None,
-                Map[UUID, Review]()
+                Map[UUID, Review](),
+                None
                 // since this is a fake task feature that exists I think for the purpose of
                 // providing a geojson interface over the task status geom summary,
                 // it's fine to pretend that the note is always None
@@ -630,7 +633,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       fr"""SELECT
            uuid_generate_v4(), now(), ${user.id}, now(), ${user.id},
            'UNLABELED', null, null, geometry, ${toProject}, task_type,
-           null, reviews
+           null, '{}'::jsonb, null
            FROM """ ++ tableF ++ fr"""
            WHERE annotation_project_id = ${fromProject} AND parent_task_id IS NULL
       """).update.run
@@ -692,7 +695,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                   newNote,
                   Some(task.taskType),
                   task.parentTaskId,
-                  Some(task.reviews)
+                  Some(task.reviews),
+                  task.reviewStatus
                 ),
                 task.geometry
               )

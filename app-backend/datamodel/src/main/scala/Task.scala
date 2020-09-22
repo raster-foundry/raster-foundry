@@ -15,6 +15,7 @@ import java.util.UUID
 @JsonCodec
 final case class Review(
     vote: LabelVoteType,
+    userName: String,
     description: Option[String]
 )
 
@@ -31,7 +32,8 @@ case class Task(
     annotationProjectId: UUID,
     taskType: TaskType,
     parentTaskId: Option[UUID],
-    reviews: Map[UUID, Review]
+    reviews: Map[UUID, Review],
+    reviewStatus: Option[TaskReviewStatus]
 ) {
   def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
@@ -70,7 +72,8 @@ case class Task(
       statusNote,
       this.taskType,
       this.parentTaskId,
-      this.reviews
+      this.reviews,
+      this.reviewStatus
     )
   }
 
@@ -89,6 +92,7 @@ case class Task(
       this.taskType,
       this.parentTaskId,
       this.reviews,
+      this.reviewStatus,
       campaignId
     )
   }
@@ -110,7 +114,8 @@ object Task {
       note: Option[NonEmptyString],
       taskType: TaskType,
       parentTaskId: Option[UUID],
-      reviews: Map[UUID, Review]
+      reviews: Map[UUID, Review],
+      reviewStatus: Option[TaskReviewStatus]
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
@@ -143,6 +148,7 @@ object Task {
       taskType: TaskType,
       parentTaskId: Option[UUID],
       reviews: Map[UUID, Review],
+      reivewStatus: Option[TaskReviewStatus],
       campaignId: UUID
   ) {
     def toTask: Task = {
@@ -159,7 +165,8 @@ object Task {
         this.annotationProjectId,
         this.taskType,
         this.parentTaskId,
-        this.reviews
+        this.reviews,
+        this.reivewStatus
       )
     }
 
@@ -187,6 +194,7 @@ object Task {
         this.taskType,
         this.parentTaskId,
         this.reviews,
+        this.reivewStatus,
         this.campaignId
       )
     }
@@ -217,14 +225,15 @@ object Task {
       taskType: TaskType,
       parentTaskId: Option[UUID],
       reviews: Map[UUID, Review],
+      reviewStatus: Option[TaskReviewStatus] = None,
       campaignId: UUID
   )
 
   object TaskPropertiesWithCampaign {
     implicit val encTaskPropertiesWithCampaign
-      : Encoder[TaskPropertiesWithCampaign] = deriveEncoder
+        : Encoder[TaskPropertiesWithCampaign] = deriveEncoder
     implicit val decTaskPropertiesWithCamapgin
-      : Decoder[TaskPropertiesWithCampaign] = deriveDecoder
+        : Decoder[TaskPropertiesWithCampaign] = deriveDecoder
   }
 
   final case class TaskPropertiesCreate(
@@ -233,7 +242,8 @@ object Task {
       note: Option[NonEmptyString],
       taskType: Option[TaskType],
       parentTaskId: Option[UUID],
-      reviews: Option[Map[UUID, Review]]
+      reviews: Option[Map[UUID, Review]],
+      reviewStatus: Option[TaskReviewStatus] = None
   )
 
   object TaskPropertiesCreate {
@@ -314,7 +324,7 @@ object Task {
           (
             tfc._type,
             tfc.features
-        )
+          )
       )
 
     implicit val decTaskFeatureCollection: Decoder[TaskFeatureCollection] =
@@ -331,12 +341,12 @@ object Task {
 
   object TaskFeatureCollectionCreate {
     implicit val decTaskFeatureCollectionCreate
-      : Decoder[TaskFeatureCollectionCreate] =
+        : Decoder[TaskFeatureCollectionCreate] =
       Decoder.forProduct2("type", "features")(
         TaskFeatureCollectionCreate.apply _
       )
     implicit val encTaskFeatureCollectionCreate
-      : Encoder[TaskFeatureCollectionCreate] =
+        : Encoder[TaskFeatureCollectionCreate] =
       Encoder.forProduct2("type", "features")(
         tfc => (tfc._type, tfc.features)
       )
@@ -348,10 +358,10 @@ object Task {
 
   object TaskGridCreateProperties {
     implicit val encTaskGridCreateProperties
-      : Encoder[TaskGridCreateProperties] =
+        : Encoder[TaskGridCreateProperties] =
       deriveEncoder
     implicit val decTaskGridCreateProperties
-      : Decoder[TaskGridCreateProperties] =
+        : Decoder[TaskGridCreateProperties] =
       deriveDecoder
   }
 
