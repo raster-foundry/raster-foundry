@@ -1637,37 +1637,49 @@ class TaskDaoSpec
               pAfterCOneUpdate,
               pAfterCTwoUpdate,
               pAfterCThreeUpdate,
-              pAfterCTwoUpdateWPass
-            ) =
-              connIO.transact(xa).unsafeRunSync
+              pAfterCTwoUpdatePass
+            ) = connIO.transact(xa).unsafeRunSync
 
             assert(
               pAfterCInsert
-                .map(t => t.reviewStatus === TaskReviewStatus.ReviewPending)
+                .map(
+                  t => t.reviewStatus == Some(TaskReviewStatus.ReviewPending)
+                )
                 .toSet === Set(true),
               "Parent task review status is pending after inserting children tasks"
             )
             assert(
               pAfterCOneUpdate
-                .map(t => t.reviewStatus === TaskReviewStatus.ReviewPending)
+                .map(
+                  t => t.reviewStatus == Some(TaskReviewStatus.ReviewPending)
+                )
                 .toSet === Set(true),
               "Parent task review status is pending after 1 out of 3 children tasks has reviews"
             )
             assert(
               pAfterCTwoUpdate
-                .map(t => t.reviewStatus === TaskReviewStatus.ReviewPending)
+                .map(
+                  t => t.reviewStatus == Some(TaskReviewStatus.ReviewPending)
+                )
                 .toSet === Set(true),
               "Parent task review status is pending after 2 out of 3 children tasks has reviews"
             )
             assert(
               pAfterCThreeUpdate
-                .map(t => t.reviewStatus === TaskReviewStatus.ReviewNeedsAttention)
+                .map(
+                  t =>
+                    t.reviewStatus == Some(
+                      TaskReviewStatus.ReviewNeedsAttention
+                    )
+                )
                 .toSet === Set(true),
               "Parent task review status is needs attention after 3 out of 3 children tasks has reviews"
-            ) 
+            )
             assert(
-              pAfterCTwoUpdateWPass
-                .map(t => t.reviewStatus === TaskReviewStatus.ReviewValidated)
+              pAfterCTwoUpdatePass
+                .map(
+                  t => t.reviewStatus == Some(TaskReviewStatus.ReviewValidated)
+                )
                 .toSet === Set(true),
               "Parent task review status is validated after all 3 children tasks have Pass votes"
             )
