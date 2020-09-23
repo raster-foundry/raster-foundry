@@ -1505,4 +1505,175 @@ class TaskDaoSpec
       }
     }
   }
+
+  test("updating reviews of tasks should update review status of their parent") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            platform: Platform,
+            projectCreate: Project.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            annotationProjectCreate: AnnotationProject.Create
+        ) =>
+          {
+            val connIO =
+              for {
+                (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                  userCreate,
+                  orgCreate,
+                  platform,
+                  projectCreate
+                )
+                dbAnnotationProj <- AnnotationProjectDao
+                  .insert(
+                    annotationProjectCreate.copy(
+                      projectId = Some(dbProject.id)
+                    ),
+                    dbUser
+                  )
+                tasks <- TaskDao.insertTasks(
+                  fixupTaskFeaturesCollection(
+                    taskFeaturesCreate,
+                    dbAnnotationProj
+                  ),
+                  dbUser
+                )
+                parent = tasks.features.take(1)
+                childOneFC <- parent traverse { p =>
+                  TaskDao.insertTasks(
+                    createChildTaskCreateFC(
+                      p,
+                      TaskStatus.Labeled,
+                      Some(TaskType.Review)
+                    ),
+                    dbUser
+                  )
+                }
+                childTwoFC <- parent traverse { p =>
+                  TaskDao.insertTasks(
+                    createChildTaskCreateFC(
+                      p,
+                      TaskStatus.Labeled,
+                      Some(TaskType.Review)
+                    ),
+                    dbUser
+                  )
+                }
+                childThreeFC <- parent traverse { p =>
+                  TaskDao.insertTasks(
+                    createChildTaskCreateFC(
+                      p,
+                      TaskStatus.Labeled,
+                      Some(TaskType.Review)
+                    ),
+                    dbUser
+                  )
+                }
+                parentAfterChildrenInsert <- parent traverse { p =>
+                  TaskDao.unsafeGetTaskById(p.id)
+                }
+                _ <- childOneFC traverse { childFC =>
+                  childFC.features traverse { feature =>
+                    TaskDao.updateTask(
+                      feature.id,
+                      addReviewToTaskCreate(feature, LabelVoteType.Pass),
+                      dbUser
+                    )
+                  }
+                }
+                parentAfterChildOneUpdate <- parent traverse { p =>
+                  TaskDao.unsafeGetTaskById(p.id)
+                }
+                _ <- childTwoFC traverse { childFC =>
+                  childFC.features traverse { feature =>
+                    TaskDao.updateTask(
+                      feature.id,
+                      addReviewToTaskCreate(feature, LabelVoteType.Fail),
+                      dbUser
+                    )
+                  }
+                }
+                parentAfterChildTwoUpdate <- parent traverse { p =>
+                  TaskDao.unsafeGetTaskById(p.id)
+                }
+                _ <- childThreeFC traverse { childFC =>
+                  childFC.features traverse { feature =>
+                    TaskDao.updateTask(
+                      feature.id,
+                      addReviewToTaskCreate(feature, LabelVoteType.Pass),
+                      dbUser
+                    )
+                  }
+                }
+                parentAfterChildThreeUpdate <- parent traverse { p =>
+                  TaskDao.unsafeGetTaskById(p.id)
+                }
+                _ <- childTwoFC traverse { childFC =>
+                  childFC.features traverse { feature =>
+                    TaskDao.updateTask(
+                      feature.id,
+                      addReviewToTaskCreate(feature, LabelVoteType.Pass),
+                      dbUser
+                    )
+                  }
+                }
+                parentAfterChildTwoUpdatedWithPass <- parent traverse { p =>
+                  TaskDao.unsafeGetTaskById(p.id)
+                }
+              } yield {
+                (
+                  parentAfterChildrenInsert,
+                  parentAfterChildOneUpdate,
+                  parentAfterChildTwoUpdate,
+                  parentAfterChildThreeUpdate,
+                  parentAfterChildTwoUpdatedWithPass
+                )
+              }
+
+            val (
+              pAfterCInsert,
+              pAfterCOneUpdate,
+              pAfterCTwoUpdate,
+              pAfterCThreeUpdate,
+              pAfterCTwoUpdateWPass
+            ) =
+              connIO.transact(xa).unsafeRunSync
+
+            assert(
+              pAfterCInsert
+                .map(t => t.reviewStatus === TaskReviewStatus.ReviewPending)
+                .toSet === Set(true),
+              "Parent task review status is pending after inserting children tasks"
+            )
+            assert(
+              pAfterCOneUpdate
+                .map(t => t.reviewStatus === TaskReviewStatus.ReviewPending)
+                .toSet === Set(true),
+              "Parent task review status is pending after 1 out of 3 children tasks has reviews"
+            )
+            assert(
+              pAfterCTwoUpdate
+                .map(t => t.reviewStatus === TaskReviewStatus.ReviewPending)
+                .toSet === Set(true),
+              "Parent task review status is pending after 2 out of 3 children tasks has reviews"
+            )
+            assert(
+              pAfterCThreeUpdate
+                .map(t => t.reviewStatus === TaskReviewStatus.ReviewNeedsAttention)
+                .toSet === Set(true),
+              "Parent task review status is needs attention after 3 out of 3 children tasks has reviews"
+            ) 
+            assert(
+              pAfterCTwoUpdateWPass
+                .map(t => t.reviewStatus === TaskReviewStatus.ReviewValidated)
+                .toSet === Set(true),
+              "Parent task review status is validated after all 3 children tasks have Pass votes"
+            )
+            true
+          }
+      }
+    }
+  }
 }
