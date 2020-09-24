@@ -7,9 +7,6 @@ from planet import api
 from ..models import Upload, AnnotationProject
 from ..uploads.geotiff import GeoTiffS3SceneFactory
 from ..uploads.geotiff.io import update_annotation_project
-from ..uploads.landsat_historical import LandsatHistoricalSceneFactory
-from ..uploads.planet.factories import PlanetSceneFactory
-from ..uploads.modis.factories import MODISSceneFactory
 from ..utils.exception_reporting import wrap_rollbar
 from ..utils.io import get_session, notify_intercom, copy_to_debug
 
@@ -55,38 +52,10 @@ def process_upload(upload_id):
         if upload.uploadType.lower() in ["local", "s3"]:
             logger.info("Processing a geotiff upload")
             factory = GeoTiffS3SceneFactory(upload)
-        elif upload.uploadType.lower() == "planet":
-            logger.info("Processing a planet upload. This might take a while...")
-            logger.info("Retrieving Planet API Client")
-            client = api.ClientV1(upload.metadata.get("planetKey"))
-            factory = PlanetSceneFactory(
-                upload.files,
-                upload.datasource,
-                upload.id,
-                client,
-                upload.projectId,
-                upload.layerId,
-                upload.visibility,
-                [],
-                upload.owner,
-            )
-        elif upload.uploadType.lower() == "modis_usgs":
-            logger.info("Processing MODIS upload from USGS")
-            factory = MODISSceneFactory(
-                upload.files,
-                upload.datasource,
-                upload.id,
-                upload.projectId,
-                upload.layerId,
-                upload.visibility,
-                upload.owner,
-            )
-        elif upload.uploadType.lower() in ["landsat_historical"]:
-            logger.info("Processing historical Landsat data from USGS and GCS")
-            factory = LandsatHistoricalSceneFactory(upload)
         else:
             raise Exception(
-                "upload type ({}) didn't make any sense".format(upload.uploadType)
+                """upload type ({}) didn't make any sense.
+                Non-geotiff uploads were removed as of 1.51.0""".format(upload.uploadType)
             )
         scenes = factory.generate_scenes()
         logger.info(

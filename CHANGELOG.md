@@ -12,6 +12,9 @@
 
 ### Removed
 
+- Import processing for everything but user geotiffs [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
+- Cogification for Landsat 8 and Sentinel-2 imagery [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
+
 ### Fixed
 
 ### Security
