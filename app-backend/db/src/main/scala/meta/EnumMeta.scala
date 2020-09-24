@@ -120,4 +120,11 @@ trait EnumMeta {
       TaskType.fromString,
       _.repr
     )
+
+  implicit val taskReviewStatusMeta: Meta[TaskReviewStatus] =
+    pgEnumString(
+      "review_status",
+      TaskReviewStatus.fromString,
+      _.repr
+    )
 }

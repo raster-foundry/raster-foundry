@@ -13,6 +13,8 @@ import io.circe.syntax._
 
 import scala.reflect.runtime.universe.TypeTag
 
+import java.util.UUID
+
 object CirceJsonbMeta {
   def apply[Type: TypeTag: Encoder: Decoder] = {
     val get = Get[Json].temap[Type](_.as[Type].leftMap(_.message))
@@ -118,4 +120,7 @@ trait CirceJsonbMeta {
 
   implicit val campaignStatusMeta: Meta[Map[String, Int]] =
     CirceJsonbMeta[Map[String, Int]]
+
+  implicit val taskReviewsMeta: Meta[Map[UUID, Review]] =
+    CirceJsonbMeta[Map[UUID, Review]]
 }

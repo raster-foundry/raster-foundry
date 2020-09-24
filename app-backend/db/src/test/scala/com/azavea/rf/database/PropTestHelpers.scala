@@ -443,4 +443,46 @@ trait PropTestHelpers {
       owner = Some(user.id)
     )
 
+  def createChildTaskCreateFC(
+      parentTask: Task.TaskFeature,
+      childStatus: TaskStatus,
+      taskType: Option[TaskType],
+      reviews: Option[Map[UUID, Review]] = None
+  ): Task.TaskFeatureCollectionCreate = Task.TaskFeatureCollectionCreate(
+    _type = "FeatureCollection",
+    features = List(
+      Task.TaskFeatureCreate(
+        properties = Task.TaskPropertiesCreate(
+          status = childStatus,
+          annotationProjectId = parentTask.properties.annotationProjectId,
+          note = parentTask.properties.note,
+          taskType = taskType,
+          parentTaskId = Some(parentTask.id),
+          reviews = reviews
+        ),
+        geometry = parentTask.geometry
+      )
+    )
+  )
+
+  def setReviewToTaskCreate(
+      feature: Task.TaskFeature,
+      vote: LabelVoteType
+  ): Task.TaskFeatureCreate =
+    Task.TaskFeatureCreate(
+      properties = feature.properties.toCreate
+        .copy(
+          reviews = Some(
+            Map(
+              UUID.randomUUID -> Review(
+                vote = vote,
+                userName = UUID.randomUUID.toString,
+                description = None
+              )
+            )
+          )
+        ),
+      geometry = feature.geometry
+    )
+
 }

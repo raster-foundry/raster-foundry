@@ -12,6 +12,13 @@ import io.circe.refined._
 import java.sql.Timestamp
 import java.util.UUID
 
+@JsonCodec
+final case class Review(
+    vote: LabelVoteType,
+    userName: String,
+    description: Option[String]
+)
+
 case class Task(
     id: UUID,
     createdAt: Timestamp,
@@ -25,7 +32,8 @@ case class Task(
     annotationProjectId: UUID,
     taskType: TaskType,
     parentTaskId: Option[UUID],
-    reviews: Json
+    reviews: Map[UUID, Review],
+    reviewStatus: Option[TaskReviewStatus]
 ) {
   def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
@@ -64,7 +72,8 @@ case class Task(
       statusNote,
       this.taskType,
       this.parentTaskId,
-      this.reviews
+      this.reviews,
+      this.reviewStatus
     )
   }
 
@@ -83,6 +92,7 @@ case class Task(
       this.taskType,
       this.parentTaskId,
       this.reviews,
+      this.reviewStatus,
       campaignId
     )
   }
@@ -104,7 +114,8 @@ object Task {
       note: Option[NonEmptyString],
       taskType: TaskType,
       parentTaskId: Option[UUID],
-      reviews: Json
+      reviews: Map[UUID, Review],
+      reviewStatus: Option[TaskReviewStatus]
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
@@ -136,7 +147,8 @@ object Task {
       annotationProjectId: UUID,
       taskType: TaskType,
       parentTaskId: Option[UUID],
-      reviews: Json,
+      reviews: Map[UUID, Review],
+      reivewStatus: Option[TaskReviewStatus],
       campaignId: UUID
   ) {
     def toTask: Task = {
@@ -153,7 +165,8 @@ object Task {
         this.annotationProjectId,
         this.taskType,
         this.parentTaskId,
-        this.reviews
+        this.reviews,
+        this.reivewStatus
       )
     }
 
@@ -181,6 +194,7 @@ object Task {
         this.taskType,
         this.parentTaskId,
         this.reviews,
+        this.reivewStatus,
         this.campaignId
       )
     }
@@ -210,7 +224,8 @@ object Task {
       note: Option[NonEmptyString],
       taskType: TaskType,
       parentTaskId: Option[UUID],
-      reviews: Json,
+      reviews: Map[UUID, Review],
+      reviewStatus: Option[TaskReviewStatus] = None,
       campaignId: UUID
   )
 
@@ -227,7 +242,8 @@ object Task {
       note: Option[NonEmptyString],
       taskType: Option[TaskType],
       parentTaskId: Option[UUID],
-      reviews: Option[Json]
+      reviews: Option[Map[UUID, Review]],
+      reviewStatus: Option[TaskReviewStatus] = None
   )
 
   object TaskPropertiesCreate {
