@@ -465,7 +465,7 @@ trait PropTestHelpers {
     )
   )
 
-  def addReviewToTaskCreate(
+  def setReviewToTaskCreate(
       feature: Task.TaskFeature,
       vote: LabelVoteType
   ): Task.TaskFeatureCreate =

@@ -1511,26 +1511,16 @@ class TaskDaoSpec
       forAll {
         (
             userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projectCreate: Project.Create,
             taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
             annotationProjectCreate: AnnotationProject.Create
         ) =>
           {
             val connIO =
               for {
-                (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
-                  userCreate,
-                  orgCreate,
-                  platform,
-                  projectCreate
-                )
+                dbUser <- UserDao.create(userCreate)
                 dbAnnotationProj <- AnnotationProjectDao
                   .insert(
-                    annotationProjectCreate.copy(
-                      projectId = Some(dbProject.id)
-                    ),
+                    annotationProjectCreate,
                     dbUser
                   )
                 tasks <- TaskDao.insertTasks(
@@ -1540,7 +1530,7 @@ class TaskDaoSpec
                   ),
                   dbUser
                 )
-                parent = tasks.features.take(1)
+                parent = tasks.features.headOption
                 childOneFC <- parent traverse { p =>
                   TaskDao.insertTasks(
                     createChildTaskCreateFC(
@@ -1578,7 +1568,7 @@ class TaskDaoSpec
                   childFC.features traverse { feature =>
                     TaskDao.updateTask(
                       feature.id,
-                      addReviewToTaskCreate(feature, LabelVoteType.Pass),
+                      setReviewToTaskCreate(feature, LabelVoteType.Pass),
                       dbUser
                     )
                   }
@@ -1590,7 +1580,7 @@ class TaskDaoSpec
                   childFC.features traverse { feature =>
                     TaskDao.updateTask(
                       feature.id,
-                      addReviewToTaskCreate(feature, LabelVoteType.Fail),
+                      setReviewToTaskCreate(feature, LabelVoteType.Fail),
                       dbUser
                     )
                   }
@@ -1602,7 +1592,7 @@ class TaskDaoSpec
                   childFC.features traverse { feature =>
                     TaskDao.updateTask(
                       feature.id,
-                      addReviewToTaskCreate(feature, LabelVoteType.Pass),
+                      setReviewToTaskCreate(feature, LabelVoteType.Pass),
                       dbUser
                     )
                   }
@@ -1614,7 +1604,7 @@ class TaskDaoSpec
                   childFC.features traverse { feature =>
                     TaskDao.updateTask(
                       feature.id,
-                      addReviewToTaskCreate(feature, LabelVoteType.Pass),
+                      setReviewToTaskCreate(feature, LabelVoteType.Pass),
                       dbUser
                     )
                   }
@@ -1662,7 +1652,7 @@ class TaskDaoSpec
                   t => t.reviewStatus == Some(TaskReviewStatus.ReviewPending)
                 )
                 .toSet === Set(true),
-              "Parent task review status is pending after 2 out of 3 children tasks has reviews"
+              "Parent task review status is pending after 2 out of 3 children tasks have reviews"
             )
             assert(
               pAfterCThreeUpdate
@@ -1673,7 +1663,7 @@ class TaskDaoSpec
                     )
                 )
                 .toSet === Set(true),
-              "Parent task review status is needs attention after 3 out of 3 children tasks has reviews"
+              "Parent task review status is needs attention after 3 out of 3 children tasks have reviews with Fail vote"
             )
             assert(
               pAfterCTwoUpdatePass

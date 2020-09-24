@@ -96,12 +96,13 @@ FROM
   ) review_task_checks
 WHERE tasks.id = review_task_checks.id;
 
--- REVIEW_PENDING:
--- if any review task has '{}' as reviews
--- REVIEW_NEEDS_ATTENTION:
--- if there is one "FAIL" vote in a review
--- REVIEW_VALIDATED:
--- if the label task is validated, or if all review votes are "PASS"
+-- Pending review:
+-- if there is still any task with '{}' in the reviews field.
+-- Needs attention:
+-- if none of the review is '{}', and there is at least one "fail" vote
+-- Validated
+-- If none of the review is '{}', and there is no "fail" vote;
+-- or, the label task itself is validated
 CREATE OR REPLACE FUNCTION UPDATE_TASK_REVIEW_STATUS ()
   RETURNS TRIGGER
   AS $BODY$
