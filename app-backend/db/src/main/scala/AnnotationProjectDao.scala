@@ -366,7 +366,7 @@ object AnnotationProjectDao
                   LabelClassClasses.NamedLabelClasses(
                     classes.map(_.name).toNel.getOrElse(NonEmptyList.of(""))
                   )
-              )
+                )
             )
         },
         "Label Item",
@@ -497,8 +497,11 @@ object AnnotationProjectDao
     } yield annotationProjectCopy
   }
 
+  def listByCampaignQB(campaignId: UUID) =
+    query.filter(fr"campaign_id = $campaignId")
+
   def listByCampaign(campaignId: UUID): ConnectionIO[List[AnnotationProject]] =
-    query.filter(fr"campaign_id = $campaignId").list
+    listByCampaignQB(campaignId).list
 
   def assignUsersToProjectsByCampaign(
       campaignId: UUID,
@@ -523,7 +526,7 @@ object AnnotationProjectDao
                   Some(userId),
                   ActionType.Annotate
                 )
-            )
+              )
           )
         AnnotationProjectDao.addPermissionsMany(
           project.id,
