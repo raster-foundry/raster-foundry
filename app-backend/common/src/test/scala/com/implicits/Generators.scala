@@ -1047,9 +1047,6 @@ object Generators extends ArbitraryInstances {
   private def stacCampaignExportGen: Gen[StacExport.CampaignExport] =
     stacExportGenTup.mapN(StacExport.CampaignExport.apply)
 
-  private def stacExportCreateGen: Gen[StacExport.Create] =
-    Gen.oneOf(stacAnnotationProjectExportGen, stacCampaignExportGen)
-
   private def stacExportQueryParametersGen: Gen[StacExportQueryParameters] =
     Gen.const(StacExportQueryParameters())
 
@@ -1391,11 +1388,6 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbStacCampaignExport: Arbitrary[StacExport.CampaignExport] =
       Arbitrary { stacCampaignExportGen }
-
-    implicit def arbStacExportCreate: Arbitrary[StacExport.Create] =
-      Arbitrary {
-        stacExportCreateGen
-      }
 
     implicit def arbStacExportQueryParameters
         : Arbitrary[StacExportQueryParameters] =

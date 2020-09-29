@@ -17,7 +17,7 @@ class StacExportDaoSpec
     with DBTestConfig
     with PropTestHelpers {
 
-  test("inserting a Stac Export") {
+  test("inserting a Stac Export for an Annotation Project") {
     check {
       forAll(
         (
@@ -66,6 +66,67 @@ class StacExportDaoSpec
           assert(
             se.annotationProjectId
               .map(_ == seCreate.annotationProjectId)
+              .getOrElse(false),
+            "Sent and inserted StacExport annotation project ids should be the same"
+          )
+          true
+        }
+      )
+    }
+  }
+
+  test("inserting a Stac Export for a Campaign") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            stacExportCreate: StacExport.CampaignExport
+        ) => {
+          val createStacExportIO = for {
+            dbUser <- UserDao.create(userCreate)
+            dbCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                dbUser
+              )
+            fixedStacExportCreate = stacExportCreate.copy(
+              campaignId = dbCampaign.id
+            )
+            dbStacExport <- StacExportDao.create(
+              fixedStacExportCreate,
+              dbUser
+            )
+          } yield (dbUser, fixedStacExportCreate, dbStacExport)
+
+          val (user, fixedStacExportCreate, stacExport) =
+            createStacExportIO.transact(xa).unsafeRunSync
+
+          assert(
+            user.id == stacExport.owner,
+            "Inserted StacExport owner should be the same as user"
+          )
+          assert(
+            fixedStacExportCreate.name == stacExport.name,
+            "Sent and inserted StacExport name should be the same"
+          )
+          assert(
+            stacExport.exportLocation == None,
+            "Inserted StacExport export location should be empty"
+          )
+          assert(
+            stacExport.exportStatus == ExportStatus.NotExported,
+            "Inserted StacExport status should be NotExported"
+          )
+          assert(
+            stacExport.taskStatuses.toSet == stacExportCreate.taskStatuses
+              .map(_.toString)
+              .toSet,
+            "Sent and inserted StacExport taskStatuses should be the same"
+          )
+          assert(
+            stacExport.campaignId
+              .map(_ == fixedStacExportCreate.campaignId)
               .getOrElse(false),
             "Sent and inserted StacExport annotation project ids should be the same"
           )
