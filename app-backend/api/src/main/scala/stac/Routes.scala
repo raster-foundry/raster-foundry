@@ -88,7 +88,7 @@ trait StacRoutes
                     p.page,
                     p.pageSize,
                     p.results.map(signExportUrl(_))
-                  )
+                )
               )
               .transact(xa)
               .unsafeToFuture
