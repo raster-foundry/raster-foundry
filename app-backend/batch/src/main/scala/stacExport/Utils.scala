@@ -36,19 +36,21 @@ object Utils {
   def getStacCatalog(
       export: StacExport,
       stacVersion: String,
-      layerIds: List[UUID]
+      layerIds: List[UUID],
+      rootLink: Option[StacLink]
   ): StacCatalog = {
     val catalogId = export.id.toString
     val catalogDescription =
       s"Exported from Raster Foundry ${new Timestamp(new Date().getTime).toString}"
     val catalogOwnLinks = List(
       // s3://<prefix>/<catalogId>/catalog.json
-      StacLink(
-        "./catalog.json",
-        StacLinkType.StacRoot,
-        Some(`application/json`),
-        Some(s"Catalog $catalogId")
-      )
+      rootLink getOrElse
+        StacLink(
+          "./catalog.json",
+          StacLinkType.StacRoot,
+          Some(`application/json`),
+          Some(s"Catalog $catalogId")
+        )
     ) ++ layerIds.map { layerId =>
       StacLink(
         "./layer-collection/collection.json",
