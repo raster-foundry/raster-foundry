@@ -19,7 +19,7 @@ object StacExportDao extends Dao[StacExport] {
       SELECT
         id, created_at, created_by, modified_at, owner,
         name, license, export_location, export_status,
-        task_statuses, annotation_project_id
+        task_statuses, annotation_project_id, campaign_id
       FROM
     """ ++ tableF
 
@@ -50,11 +50,12 @@ object StacExportDao extends Dao[StacExport] {
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, owner,
       name, license, export_location, export_status,
-      task_statuses, annotation_project_id)
+      task_statuses, annotation_project_id, campaign_id)
     VALUES
       (${newExport.id}, ${newExport.createdAt}, ${newExport.createdBy}, ${newExport.modifiedAt},
       ${newExport.owner}, ${newExport.name}, ${newExport.license}, ${newExport.exportLocation},
-      ${newExport.exportStatus}, ${newExport.taskStatuses}, ${newExport.annotationProjectId})
+      ${newExport.exportStatus}, ${newExport.taskStatuses}, ${newExport.annotationProjectId},
+      ${newExport.campaignId})
     """).update.withUniqueGeneratedKeys[StacExport](
       "id",
       "created_at",
@@ -66,7 +67,8 @@ object StacExportDao extends Dao[StacExport] {
       "export_location",
       "export_status",
       "task_statuses",
-      "annotation_project_id"
+      "annotation_project_id",
+      "campaign_id"
     )
   }
 
@@ -81,9 +83,8 @@ object StacExportDao extends Dao[StacExport] {
       """).update.run
   }
 
-  def delete(id: UUID): ConnectionIO[Int] = {
-    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE id = ${id}").update.run
-  }
+  def delete(id: UUID): ConnectionIO[Int] =
+    query.filter(id).delete
 
   def isOwnerOrSuperUser(user: User, id: UUID): ConnectionIO[Boolean] =
     for {
@@ -108,4 +109,5 @@ object StacExportDao extends Dao[StacExport] {
         ActionType.View
       )
     } yield authProject.toBoolean
+
 }

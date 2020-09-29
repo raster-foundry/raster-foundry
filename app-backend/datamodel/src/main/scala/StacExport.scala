@@ -20,7 +20,8 @@ final case class StacExport(
     exportLocation: Option[String],
     exportStatus: ExportStatus,
     taskStatuses: List[String],
-    annotationProjectId: Option[UUID]
+    annotationProjectId: Option[UUID],
+    campaignId: Option[UUID]
 ) {
   def createStacCollection(
       stacVersion: String,
@@ -102,30 +103,62 @@ object StacExport {
     )
 
   @JsonCodec
-  final case class Create(
+  sealed abstract class Create {
+    def toStacExport(user: User): StacExport
+  }
+
+  @JsonCodec
+  final case class AnnotationProjectExport(
       name: String,
-      owner: Option[String],
       license: StacExportLicense,
       taskStatuses: List[TaskStatus],
       annotationProjectId: UUID
-  ) extends OwnerCheck {
+  ) extends Create {
     def toStacExport(user: User): StacExport = {
       val id = UUID.randomUUID()
       val now = new Timestamp(new Date().getTime)
-      val ownerId = checkOwner(user, this.owner)
 
       StacExport(
         id,
         now, // createdAt
         user.id, // createdBy
         now, // modifiedAt
-        ownerId, // owner
-        this.name,
+        user.id, // owner
+        name,
         license,
         None,
         ExportStatus.NotExported,
         this.taskStatuses.map(_.toString),
-        Some(annotationProjectId)
+        Some(annotationProjectId),
+        None
+      )
+    }
+  }
+
+  @JsonCodec
+  case class CampaignExport(
+      name: String,
+      license: StacExportLicense,
+      taskStatuses: List[TaskStatus],
+      campaignId: UUID
+  ) extends Create {
+    def toStacExport(user: User): StacExport = {
+      val id = UUID.randomUUID()
+      val now = new Timestamp(new Date().getTime)
+
+      StacExport(
+        id,
+        now, // createdAt
+        user.id, // createdBy
+        now, // modifiedAt
+        user.id, // owner
+        name,
+        license,
+        None,
+        ExportStatus.NotExported,
+        this.taskStatuses.map(_.toString),
+        None,
+        Some(campaignId)
       )
     }
   }

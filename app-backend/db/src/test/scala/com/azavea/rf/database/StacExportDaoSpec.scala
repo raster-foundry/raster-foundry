@@ -23,15 +23,14 @@ class StacExportDaoSpec
         (
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
-            stacExportCreate: StacExport.Create
+            stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
           val createStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao
               .insert(annotationProjectCreate, dbUser)
-            fixedStacExportCreate = fixupStacExportCreate(
+            fixedStacExportCreate = fixupAnnotationProjectExportCreate(
               stacExportCreate,
-              dbUser,
               dbProject
             )
             dbStacExport <- StacExportDao.create(
@@ -82,14 +81,13 @@ class StacExportDaoSpec
         (
             userCreate: User.Create,
             projectCreate: AnnotationProject.Create,
-            stacExportCreate: StacExport.Create
+            stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
           val selectStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
-            fixedStacExportCreate = fixupStacExportCreate(
+            fixedStacExportCreate = fixupAnnotationProjectExportCreate(
               stacExportCreate,
-              dbUser,
               dbProject
             )
             dbStacExport <- StacExportDao.create(
@@ -147,14 +145,13 @@ class StacExportDaoSpec
         (
             userCreate: User.Create,
             projectCreate: AnnotationProject.Create,
-            stacExportCreate: StacExport.Create
+            stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
           val updatetStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
-            fixedStacExportCreate = fixupStacExportCreate(
+            fixedStacExportCreate = fixupAnnotationProjectExportCreate(
               stacExportCreate,
-              dbUser,
               dbProject
             )
             dbStacExport <- StacExportDao.create(
@@ -222,14 +219,13 @@ class StacExportDaoSpec
         (
             userCreate: User.Create,
             projectCreate: AnnotationProject.Create,
-            stacExportCreate: StacExport.Create
+            stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
           val deletetStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
-            fixedStacExportCreate = fixupStacExportCreate(
+            fixedStacExportCreate = fixupAnnotationProjectExportCreate(
               stacExportCreate,
-              dbUser,
               dbProject
             )
             dbStacExport <- StacExportDao.create(fixedStacExportCreate, dbUser)
@@ -262,22 +258,20 @@ class StacExportDaoSpec
         (
             userCreate: User.Create,
             projectCreate: AnnotationProject.Create,
-            stacExportCreate1: StacExport.Create,
-            stacExportCreate2: StacExport.Create,
+            stacExportCreate1: StacExport.AnnotationProjectExport,
+            stacExportCreate2: StacExport.AnnotationProjectExport,
             page: PageRequest,
             queryParams: StacExportQueryParameters
         ) => {
           val updatetStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
-            fixedStacExportCreate1 = fixupStacExportCreate(
+            fixedStacExportCreate1 = fixupAnnotationProjectExportCreate(
               stacExportCreate1,
-              dbUser,
               dbProject
             )
-            fixedStacExportCreate2 = fixupStacExportCreate(
+            fixedStacExportCreate2 = fixupAnnotationProjectExportCreate(
               stacExportCreate2,
-              dbUser,
               dbProject
             )
             dbStacExport1 <- StacExportDao

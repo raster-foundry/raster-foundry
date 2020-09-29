@@ -433,14 +433,12 @@ trait PropTestHelpers {
       )
   }
 
-  def fixupStacExportCreate(
-      stacExportCreate: StacExport.Create,
-      user: User,
+  def fixupAnnotationProjectExportCreate(
+      annotationProjectExport: StacExport.AnnotationProjectExport,
       project: AnnotationProject.WithRelated
-  ): StacExport.Create =
-    stacExportCreate.copy(
-      annotationProjectId = project.id,
-      owner = Some(user.id)
+  ): StacExport.AnnotationProjectExport =
+    annotationProjectExport.copy(
+      annotationProjectId = project.id
     )
 
   def createChildTaskCreateFC(
