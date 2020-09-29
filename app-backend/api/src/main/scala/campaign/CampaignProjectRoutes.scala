@@ -8,7 +8,7 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.server._
 import cats.effect.IO
-import cats.syntax.apply._
+import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
@@ -50,6 +50,7 @@ trait CampaignProjectRoutes
               AnnotationProjectDao.query
                 .filter(annotationProjectQP.copy(campaignId = Some(campaignId)))
                 .page(page)
+                .flatMap(AnnotationProjectDao.toWithRelated)
                 .transact(xa)
                 .unsafeToFuture
             }
@@ -92,6 +93,11 @@ trait CampaignProjectRoutes
               .listByCampaignQB(campaignId)
               .filter(annotationProjectId)
               .selectOption
+              .flatMap({ projOption =>
+                projOption traverse { proj =>
+                  AnnotationProjectDao.getWithRelatedAndSummaryById(proj.id)
+                }
+              })
               .transact(xa)
               .unsafeToFuture
           }
