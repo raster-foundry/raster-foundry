@@ -497,8 +497,11 @@ object AnnotationProjectDao
     } yield annotationProjectCopy
   }
 
+  def listByCampaignQB(campaignId: UUID) =
+    query.filter(fr"campaign_id = $campaignId")
+
   def listByCampaign(campaignId: UUID): ConnectionIO[List[AnnotationProject]] =
-    query.filter(fr"campaign_id = $campaignId").list
+    listByCampaignQB(campaignId).list
 
   def assignUsersToProjectsByCampaign(
       campaignId: UUID,

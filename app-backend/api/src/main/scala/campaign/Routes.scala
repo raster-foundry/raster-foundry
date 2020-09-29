@@ -97,6 +97,10 @@ trait CampaignRoutes
               get {
                 listCampaignProjects(campaignId)
               }
+            } ~ pathPrefix(JavaUUID) { projectId =>
+              pathEndOrSingleSlash {
+                getCampaignProject(campaignId, projectId)
+              }
             }
           } ~ pathPrefix("actions") {
           pathEndOrSingleSlash {
