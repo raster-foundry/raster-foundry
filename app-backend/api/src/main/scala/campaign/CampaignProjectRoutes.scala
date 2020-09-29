@@ -2,8 +2,8 @@ package com.rasterfoundry.api.campaign
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.server._
