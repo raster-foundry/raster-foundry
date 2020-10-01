@@ -83,7 +83,7 @@ object Version {
   val spatial4j = "0.7"
   val spire = "0.16.0"
   val spireMath = "0.13.0"
-  val stac4s = "0.0.14"
+  val stac4s = "0.0.16"
   val sttp = "2.0.9"
   val sttpModel = "1.0.3"
   val sup = "0.7.0"

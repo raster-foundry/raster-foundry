@@ -2,6 +2,7 @@ package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.groundwork.{Config => GroundworkConfig}
+import com.rasterfoundry.batch.stacExport.v2.CampaignStacExport
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database._
@@ -188,7 +189,7 @@ final case class WriteStacCatalog(
   def runAnnotationProject(
       exportDefinition: StacExport,
       annotationProjectId: UUID,
-      rootLink: Option[StacLink] = None
+      tempDir: ScalaFile
   ): IO[Unit] =
     (for {
       layerInfoMap <- DatabaseIO
@@ -198,21 +199,18 @@ final case class WriteStacCatalog(
         )
         .transact(xa)
       currentPath = s"s3://$dataBucket/stac-exports"
-      exportPath = s"$currentPath/${exportDefinition.id}/${annotationProjectId}"
+      exportPath = s"$currentPath/${exportDefinition.id}"
       _ = logger.info(s"Writing export under prefix: $exportPath")
       layerIds = layerInfoMap.keys.toList
-      catalog = Utils.getStacCatalog(
+      catalog = Utils.getAnnotationProjectStacCatalog(
         exportDefinition,
         "1.0.0-beta.1",
-        layerIds,
-        rootLink
+        layerIds
       )
       catalogWithPath = ObjectWithAbsolute(
         s"$exportPath/catalog.json",
         catalog
       )
-
-      tempDir = ScalaFile.newTemporaryDirectory()
       _ <- StacFileIO.writeObjectToFilesystem(tempDir, catalogWithPath)
       _ <- layerInfoMap.toList traverse {
         case (layerId, sceneTaskAnnotation) =>
@@ -259,6 +257,8 @@ final case class WriteStacCatalog(
 
     (for {
       exportDefinition <- StacExportDao.unsafeGetById(exportId).transact(xa)
+      tempDir = ScalaFile.newTemporaryDirectory()
+      _ = tempDir.deleteOnExit()
       _ <- StacExportDao
         .update(
           exportDefinition.copy(exportStatus = ExportStatus.Exporting),
@@ -266,7 +266,10 @@ final case class WriteStacCatalog(
         )
         .transact(xa)
       _ <- exportDefinition.annotationProjectId traverse { pid =>
-        runAnnotationProject(exportDefinition, pid)
+        runAnnotationProject(exportDefinition, pid, tempDir)
+      }
+      _ <- exportDefinition.campaignId traverse { campaignId =>
+        new CampaignStacExport(campaignId, notifier, xa, exportDefinition).run()
       }
     } yield ()).attempt flatMap {
       case Right(_) =>

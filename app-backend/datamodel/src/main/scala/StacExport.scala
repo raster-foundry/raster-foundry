@@ -1,7 +1,8 @@
 package com.rasterfoundry.datamodel
 
+import cats.syntax.functor._
 import com.azavea.stac4s._
-import io.circe.JsonObject
+import io.circe.{Decoder, Encoder, Json, JsonObject}
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
 
@@ -102,10 +103,19 @@ object StacExport {
       export.annotationProjectId
     )
 
-  @JsonCodec
   sealed abstract class Create {
     def toStacExport(user: User): StacExport
   }
+
+  implicit val encCreate: Encoder[Create] = new Encoder[Create] {
+    def apply(x: Create): Json = x match {
+      case ap @ AnnotationProjectExport(_, _, _, _) => ap.asJson
+      case c @ CampaignExport(_, _, _, _)           => c.asJson
+    }
+  }
+
+  implicit val decCreate: Decoder[Create] =
+    Decoder[AnnotationProjectExport].widen or Decoder[CampaignExport].widen
 
   @JsonCodec
   final case class AnnotationProjectExport(
