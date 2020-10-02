@@ -1,14 +1,18 @@
 package com.rasterfoundry.batch.stacExport.v2
 
-import com.rasterfoundry.database.AnnotationLabelDao
-import com.rasterfoundry.database.AnnotationProjectDao
-import com.rasterfoundry.database.CampaignDao
-import com.rasterfoundry.database.TaskDao
-import com.rasterfoundry.datamodel.AnnotationProject
-import com.rasterfoundry.datamodel.StacExport
-import com.rasterfoundry.datamodel.UnionedGeomExtent
-import com.rasterfoundry.notification.intercom.IntercomNotifier
+import com.rasterfoundry.database.{
+  AnnotationLabelDao,
+  AnnotationProjectDao,
+  CampaignDao,
+  TaskDao
+}
+import com.rasterfoundry.datamodel.{
+  AnnotationProject,
+  StacExport,
+  UnionedGeomExtent
+}
 
+import better.files.File
 import cats.data.StateT
 import cats.effect.{Blocker, ContextShift, IO}
 import cats.syntax.apply._
@@ -18,21 +22,22 @@ import cats.syntax.traverse._
 import com.azavea.stac4s._
 import com.azavea.stac4s.extensions.label._
 import com.azavea.stac4s.syntax._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.Transactor
 import doobie.implicits._
-import geotrellis.vector.Extent
-import geotrellis.vector.MultiPolygon
-import geotrellis.vector.Projected
-import io.circe.Json
+import geotrellis.raster.geotiff.GeoTiffRasterSource
+import geotrellis.vector.{Extent, MultiPolygon, Projected}
+import io.circe.optics.JsonPath._
 import io.circe.syntax._
+import io.circe.{Encoder, Json}
 import io.estatico.newtype.macros.newtype
 import monocle.macros.GenLens
 
+import scala.concurrent.ExecutionContext
+
 import java.time.Instant
 import java.util.UUID
-import better.files.File
-import io.circe.Encoder
-import io.circe.optics.JsonPath._
+import java.util.concurrent.Executors
 
 object newtypes {
   @newtype case class AnnotationProjectId(value: UUID)
@@ -170,13 +175,31 @@ case class ExportData private (
         ) +:
           links.filter(_.rel != StacLinkType.Collection)
     )
+    def withAsset(stacItem: StacItem): IO[StacItem] =
+      stacItem.assets.get("data") traverse { asset =>
+        IO { GeoTiffRasterSource(asset.href) } map { rs =>
+          rs.tiff.write(
+            file.path.resolve(s"images/data/${stacItem.id}.tiff").toString
+          )
+        } map { _ =>
+          (optics.itemAssetLens.modify(
+            assets =>
+              assets ++ Map(
+                "data" -> optics.assetHrefLens
+                  .modify(_ => s"./data/${stacItem.id}.tiff")(asset)
+            )
+          ))(stacItem)
+        }
+      } map { _ getOrElse { stacItem } }
     (annotationProjectSceneItems.toList traverse {
       case (k, v) =>
-        encodableToFile(
-          (withCollection `compose` withParentLinks)(v.value),
-          file,
-          s"images/${k.value}.json"
-        )
+        withAsset(v.value) flatMap { item =>
+          encodableToFile(
+            (withCollection `compose` withParentLinks)(item),
+            file,
+            s"images/${k.value}.json"
+          )
+        }
     }).void
   }
 
@@ -326,13 +349,13 @@ case class ExportData private (
         assets =>
           assets ++ Map(
             "data" -> StacItemAsset(
-              s"./data/${labelItem.id}",
+              s"./data/${labelItem.id}.geojson",
               None,
               None,
               Set(StacAssetRole.Data),
               Some(`application/geo+json`)
             )
-          )
+        )
       )(labelItem)
     (annotationProjectLabelItems.toList traverse {
       case (k, v) =>
@@ -359,7 +382,12 @@ case class ExportData private (
 }
 
 object ExportData {
-  val fileBlocker: Blocker = ???
+  val fileIO = ExecutionContext.fromExecutor(
+    Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder().setNameFormat("export-file-io-%d").build()
+    )
+  )
+  val fileBlocker: Blocker = Blocker.liftExecutionContext(fileIO)
   def fromExportState(state: ExportState): Option[ExportData] = {
     state.remainingAnnotationProjects.toNel.fold(
       Option(
@@ -376,7 +404,6 @@ object ExportData {
 
 class CampaignStacExport(
     campaignId: UUID,
-    notifier: IntercomNotifier[IO],
     xa: Transactor[IO],
     exportDefinition: StacExport
 )(
@@ -504,7 +531,6 @@ class CampaignStacExport(
           Map(
             newtypes.AnnotationProjectId(annotationProject.id) -> makeLabelItem(
               extent,
-              annotationProject,
               sceneCreationTime map { _.toInstant },
               labelItemExtension
             )
@@ -544,20 +570,7 @@ class CampaignStacExport(
           latLngExtent.xmax,
           latLngExtent.ymax
         ),
-        List(
-          StacLink(
-            "./collection.json",
-            StacLinkType.Collection,
-            Some(`application/json`),
-            None
-          ),
-          StacLink(
-            "../catalog.json",
-            StacLinkType.StacRoot,
-            Some(`application/json`),
-            None
-          )
-        ),
+        Nil,
         Map(
           "data" -> StacItemAsset(
             url,
@@ -575,7 +588,6 @@ class CampaignStacExport(
 
   private def makeLabelItem(
       extent: UnionedGeomExtent,
-      annotationProject: AnnotationProject,
       datetime: Option[Instant],
       labelItemExtension: LabelItemExtension
   ): newtypes.LabelItem = {
@@ -596,23 +608,8 @@ class CampaignStacExport(
           latLngExtent.xmax,
           latLngExtent.ymax
         ),
-        List(
-          StacLink(
-            "./collection.json",
-            StacLinkType.Collection,
-            Some(`application/json`),
-            None
-          )
-        ),
-        Map(
-          "data" -> StacItemAsset(
-            s"./data/${itemId}.geojson",
-            Some(s"Label data for ${annotationProject.name}"),
-            None,
-            Set(StacAssetRole.Data),
-            Some(`application/geo+json`)
-          )
-        ),
+        Nil,
+        Map.empty,
         None,
         Map(
           "datetime" -> (datetime getOrElse Instant.now).asJson

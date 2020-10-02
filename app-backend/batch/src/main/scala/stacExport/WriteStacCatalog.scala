@@ -269,7 +269,12 @@ final case class WriteStacCatalog(
         runAnnotationProject(exportDefinition, pid, tempDir)
       }
       _ <- exportDefinition.campaignId traverse { campaignId =>
-        new CampaignStacExport(campaignId, notifier, xa, exportDefinition).run()
+        new CampaignStacExport(campaignId, xa, exportDefinition).run() *> {
+          val message = s"""
+            | Your export for Campaign $campaignId is complete!
+            | """.trim.stripMargin
+          notify(ExternalId(exportDefinition.owner), Message(message))
+        }
       }
     } yield ()).attempt flatMap {
       case Right(_) =>
