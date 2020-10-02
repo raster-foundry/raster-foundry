@@ -1,4 +1,4 @@
-FROM quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
+FROM quay.io/azavea/openjdk-gdal:3.1-jdk8-slim
 
 COPY rf/requirements.txt /tmp/
 RUN set -ex \
@@ -12,8 +12,6 @@ RUN set -ex \
     ' \
     && apt-get update \
     && apt-get install -y --no-install-recommends ${gdalDeps} wget \
-    && pip3 install --no-cache-dir \
-           numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
     && pip3 install --no-cache-dir -r /tmp/requirements.txt \
     && apt-get purge -y build-essential python-dev \
     && apt-get -y autoremove \

@@ -986,10 +986,8 @@ object Generators extends ArbitraryInstances {
         Gen.const(None),
         taskTypeGen map { Some(_) }
       )
-      reviews <- Gen.oneOf(
-        Gen.const(None),
-        Gen.const(().asJson) map { Some(_) }
-      )
+      reviews <- Gen.const(None)
+      reviewStatus <- Gen.const(None)
     } yield {
       Task.TaskPropertiesCreate(
         status,
@@ -997,7 +995,8 @@ object Generators extends ArbitraryInstances {
         note,
         taskType,
         None,
-        reviews
+        reviews,
+        reviewStatus
       )
     }
 

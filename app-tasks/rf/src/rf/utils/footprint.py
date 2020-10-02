@@ -2,7 +2,6 @@ import logging
 from multiprocessing import Pool
 from typing import List, Tuple
 
-import numpy as np
 from pyproj import Proj, transform
 import rasterio
 from rasterio.enums import Resampling
@@ -56,9 +55,9 @@ def complex_footprint(tif_path: str) -> MultiPolygon:
     src_proj = Proj(ds.crs)
     dst_proj = Proj({"init": "EPSG:4326"})
     if nodata is not None:
-        data_mask = (band != nodata).astype(np.uint8)
+        data_mask = (band != nodata).astype(rasterio.uint8)
     else:
-        data_mask = (band > 0).astype(np.uint8)
+        data_mask = (band > 0).astype(rasterio.uint8)
     polys = shapes(data_mask, transform=downsampled_transform)
     footprint = cascaded_union([shape(x[0]) for x in polys if x[1] == 1]).simplify(0.05)
     # if it has an __iter__ attribute, it's probably a multipolygon, so reproject all

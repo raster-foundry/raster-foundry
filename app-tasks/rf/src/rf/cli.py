@@ -6,7 +6,7 @@ import logging
 
 import click
 
-from .commands import export, ingest_scene, process_upload
+from .commands import export, process_upload
 
 logger = logging.getLogger("rf")
 
@@ -24,4 +24,3 @@ def run(verbose):
 
 run.add_command(export)
 run.add_command(process_upload)
-run.add_command(ingest_scene)

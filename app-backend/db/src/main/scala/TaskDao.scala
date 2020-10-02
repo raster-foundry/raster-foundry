@@ -14,7 +14,6 @@ import doobie.postgres.implicits._
 import doobie.refined.implicits._
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.{Geometry, Projected}
-import io.circe.syntax._
 import shapeless._
 
 import scala.concurrent.duration._
@@ -38,7 +37,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     "annotation_project_id",
     "task_type",
     "parent_task_id",
-    "reviews"
+    "reviews",
+    "review_status"
   )
 
   type MaybeEmptyUnionedGeomExtent =
@@ -227,12 +227,13 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       user: User
   ): Fragment = {
     val t = tfc.properties.taskType.getOrElse(TaskType.fromString("LABEL"))
-    val r = tfc.properties.reviews.getOrElse("{}".asJson)
+    val r = tfc.properties.reviews.getOrElse(Map[UUID, Review]())
     fr"""(
         ${UUID.randomUUID}, ${Timestamp.from(Instant.now)}, ${user.id}, ${Timestamp
       .from(Instant.now)},
         ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
-        ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r}::jsonb
+        ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r},
+        ${tfc.properties.reviewStatus}
     )"""
   }
 
@@ -274,6 +275,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       annotationProjectO <- AnnotationProjectDao.getById(
         taskProperties.annotationProjectId
       )
+      _ <- debug(
+        s"Got annotation project for ${taskProperties.annotationProjectId}"
+      )
       geomO <- (taskGridFeatureCreate.geometry, annotationProjectO) match {
         case (Some(g), _) => Option(g).pure[ConnectionIO]
         case (_, Some(annotationProject)) =>
@@ -299,7 +303,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           ${taskProperties.annotationProjectId},
           ${TaskType.Label.toString()}::task_type,
           null,
-          '{}'::jsonb
+          '{}'::jsonb,
+          null
         FROM (
           SELECT (
             ST_Dump(
@@ -315,6 +320,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       } getOrElse {
         0.pure[ConnectionIO]
       }
+      _ <- debug(s"Inserted $gridInsert tasks")
       _ <- annotationProjectO traverse { annotationProject =>
         AnnotationProjectDao.update(
           annotationProject.copy(taskSizeMeters = taskSizeO, aoi = geomO),
@@ -577,7 +583,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                 None,
                 TaskType.Label,
                 None,
-                "{}".asJson
+                Map[UUID, Review](),
+                None
                 // since this is a fake task feature that exists I think for the purpose of
                 // providing a geojson interface over the task status geom summary,
                 // it's fine to pretend that the note is always None
@@ -627,7 +634,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       fr"""SELECT
            uuid_generate_v4(), now(), ${user.id}, now(), ${user.id},
            'UNLABELED', null, null, geometry, ${toProject}, task_type,
-           null, reviews
+           null, '{}'::jsonb, null
            FROM """ ++ tableF ++ fr"""
            WHERE annotation_project_id = ${fromProject} AND parent_task_id IS NULL
       """).update.run
@@ -689,7 +696,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                   newNote,
                   Some(task.taskType),
                   task.parentTaskId,
-                  Some(task.reviews)
+                  Some(task.reviews),
+                  task.reviewStatus
                 ),
                 task.geometry
               )

@@ -33,7 +33,8 @@ object MVTLayerDao {
             geometry,
             ST_TileEnvelope(${z},${x},${y})
           ) AND
-          annotation_project_id = ${annotationProjectId}
+          annotation_project_id = ${annotationProjectId} AND
+          task_type = 'LABEL'::task_type
       )
     SELECT ST_AsMVT(mvtgeom.*) FROM mvtgeom;""".query[Array[Byte]]
 
