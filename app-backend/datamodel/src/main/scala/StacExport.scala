@@ -2,9 +2,9 @@ package com.rasterfoundry.datamodel
 
 import cats.syntax.functor._
 import com.azavea.stac4s._
-import io.circe.{Decoder, Encoder, Json, JsonObject}
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
+import io.circe.{Decoder, Encoder, Json, JsonObject}
 
 import java.sql.Timestamp
 import java.util.{Date, UUID}
