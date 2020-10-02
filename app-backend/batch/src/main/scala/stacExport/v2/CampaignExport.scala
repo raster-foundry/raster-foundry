@@ -186,27 +186,33 @@ case class ExportData private (
           URLDecoder.decode(asset.href, StandardCharsets.UTF_8.toString)
         println(s"Asset href: ${asset.href}")
         println(s"Decoded href: ${decodedHref}")
-        IO { GeoTiffRasterSource(decodedHref) } map { rs =>
-          println("writing ratser source tiff")
-          println(
-            s"resolve output tif path: ${file.path.resolve(s"images/data/${stacItem.id}.tiff").toString}"
-          )
-          println(
-            s"Path to write tiff to: ${file.path.resolve(s"images/data/${stacItem.id}.tiff").toString}"
-          )
-          rs.tiff.write(
-            file.path.resolve(s"images/data/${stacItem.id}.tiff").toString
-          )
-        } map { _ =>
-          (optics.itemAssetLens.modify(
-            assets =>
-              assets ++ Map(
-                "data" -> optics.assetHrefLens
-                  .modify(_ => s"./data/${stacItem.id}.tiff")(asset)
+        (IO { GeoTiffRasterSource(decodedHref) }).attempt flatMap {
+          case Right(rs) =>
+            println("writing ratser source tiff")
+            println(
+              s"resolve output tif path: ${file.path.resolve(s"images/data/${stacItem.id}.tiff").toString}"
             )
-          ))(stacItem)
+            println(
+              s"Path to write tiff to: ${file.path.resolve(s"images/data/${stacItem.id}.tiff").toString}"
+            )
+            IO {
+              rs.tiff.write(
+                file.path.resolve(s"images/data/${stacItem.id}.tiff").toString
+              )
+            } map { _ =>
+              (optics.itemAssetLens.modify(
+                assets =>
+                  assets ++ Map(
+                    "data" -> optics.assetHrefLens
+                      .modify(_ => s"./data/${stacItem.id}.tiff")(asset)
+                  )
+              ))(stacItem)
+            }
+          case Left(value) =>
+            println(s"Err: $value")
+            IO.pure(stacItem)
         }
-      } map { _ getOrElse { stacItem } }
+      } map { _ getOrElse stacItem }
     }
     (annotationProjectSceneItems.toList traverse {
       case (k, v) =>
@@ -373,7 +379,7 @@ case class ExportData private (
               Set(StacAssetRole.Data),
               Some(`application/geo+json`)
             )
-        )
+          )
       )(labelItem)
     (annotationProjectLabelItems.toList traverse {
       case (k, v) =>
