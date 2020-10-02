@@ -35,6 +35,8 @@ import monocle.macros.GenLens
 
 import scala.concurrent.ExecutionContext
 
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -117,7 +119,7 @@ case class ExportData private (
       value: T,
       file: File,
       relativePath: String
-  )(implicit cs: ContextShift[IO]): IO[Unit] =
+  )(implicit cs: ContextShift[IO]): IO[Unit] = {
     fs2.Stream
       .emit(value.asJson.spaces2)
       .covary[IO]
@@ -133,6 +135,7 @@ case class ExportData private (
       )
       .compile
       .drain
+  }
 
   private def writeCatalog(
       file: File
@@ -175,9 +178,22 @@ case class ExportData private (
         ) +:
           links.filter(_.rel != StacLinkType.Collection)
     )
-    def withAsset(stacItem: StacItem): IO[StacItem] =
+
+    def withAsset(stacItem: StacItem): IO[StacItem] = {
       stacItem.assets.get("data") traverse { asset =>
-        IO { GeoTiffRasterSource(asset.href) } map { rs =>
+        println(s"found the data asset")
+        val decodedHref =
+          URLDecoder.decode(asset.href, StandardCharsets.UTF_8.toString)
+        println(s"Asset href: ${asset.href}")
+        println(s"Decoded href: ${decodedHref}")
+        IO { GeoTiffRasterSource(decodedHref) } map { rs =>
+          println("writing ratser source tiff")
+          println(
+            s"resolve output tif path: ${file.path.resolve(s"images/data/${stacItem.id}.tiff").toString}"
+          )
+          println(
+            s"Path to write tiff to: ${file.path.resolve(s"images/data/${stacItem.id}.tiff").toString}"
+          )
           rs.tiff.write(
             file.path.resolve(s"images/data/${stacItem.id}.tiff").toString
           )
@@ -191,9 +207,11 @@ case class ExportData private (
           ))(stacItem)
         }
       } map { _ getOrElse { stacItem } }
+    }
     (annotationProjectSceneItems.toList traverse {
       case (k, v) =>
         withAsset(v.value) flatMap { item =>
+          println("updated asset")
           encodableToFile(
             (withCollection `compose` withParentLinks)(item),
             file,
@@ -369,7 +387,7 @@ case class ExportData private (
     }).void
   }
 
-  def toFileSystem(rootDir: File)(implicit cs: ContextShift[IO]): IO[Unit] =
+  def toFileSystem(rootDir: File)(implicit cs: ContextShift[IO]): IO[Unit] = {
     writeImageryCollection(rootDir) *> writeImageryItems(rootDir) *> writeLabelCollection(
       rootDir
     ) *> writeLabelAssets(
@@ -379,15 +397,17 @@ case class ExportData private (
     ) *> writeCatalog(
       rootDir
     )
+  }
 }
 
 object ExportData {
-  val fileIO = ExecutionContext.fromExecutor(
+  private val fileIO = ExecutionContext.fromExecutor(
     Executors.newCachedThreadPool(
       new ThreadFactoryBuilder().setNameFormat("export-file-io-%d").build()
     )
   )
   val fileBlocker: Blocker = Blocker.liftExecutionContext(fileIO)
+
   def fromExportState(state: ExportState): Option[ExportData] = {
     state.remainingAnnotationProjects.toNel.fold(
       Option(
@@ -413,7 +433,7 @@ class CampaignStacExport(
 
   val runExport = StateT { step }
 
-  def run(): IO[Unit] =
+  def run(): IO[Option[ExportData]] =
     for {
       campaign <- CampaignDao.getCampaignById(campaignId).transact(xa)
       childProjects <- campaign traverse { campaign =>
@@ -441,12 +461,9 @@ class CampaignStacExport(
       assembled <- initialStateO traverse { init =>
         runExport.runS(init)
       }
-    } yield
-      (
-        assembled flatMap { ExportData.fromExportState } map { coll =>
-          println(s"Build up some data: $coll")
-        } getOrElse { println(s"Well that went poorly") }
-      )
+    } yield {
+      assembled flatMap { ExportData.fromExportState }
+    }
 
   private val stacVersion = "1.0.0-beta2"
 

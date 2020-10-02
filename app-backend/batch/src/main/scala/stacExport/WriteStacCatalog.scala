@@ -189,7 +189,8 @@ final case class WriteStacCatalog(
   def runAnnotationProject(
       exportDefinition: StacExport,
       annotationProjectId: UUID,
-      tempDir: ScalaFile
+      tempDir: ScalaFile,
+      exportPath: String
   ): IO[Unit] =
     (for {
       layerInfoMap <- DatabaseIO
@@ -198,8 +199,6 @@ final case class WriteStacCatalog(
           exportDefinition.taskStatuses
         )
         .transact(xa)
-      currentPath = s"s3://$dataBucket/stac-exports"
-      exportPath = s"$currentPath/${exportDefinition.id}"
       _ = logger.info(s"Writing export under prefix: $exportPath")
       layerIds = layerInfoMap.keys.toList
       catalog = Utils.getAnnotationProjectStacCatalog(
@@ -223,20 +222,6 @@ final case class WriteStacCatalog(
             sceneTaskAnnotation
           )
       }
-      tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
-      _ <- IO { tempDir.zipTo(tempZipFile) }
-      _ <- StacFileIO.putToS3(
-        s"$exportPath/catalog.zip",
-        tempZipFile
-      )
-      _ <- {
-        val updatedExport =
-          exportDefinition.copy(
-            exportStatus = ExportStatus.Exported,
-            exportLocation = Some(exportPath)
-          )
-        StacExportDao.update(updatedExport, exportDefinition.id).transact(xa)
-      }
       _ <- AnnotationProjectDao
         .unsafeGetById(annotationProjectId)
         .transact(xa) flatMap { project =>
@@ -259,22 +244,49 @@ final case class WriteStacCatalog(
       exportDefinition <- StacExportDao.unsafeGetById(exportId).transact(xa)
       tempDir = ScalaFile.newTemporaryDirectory()
       _ = tempDir.deleteOnExit()
+      currentPath = s"s3://$dataBucket/stac-exports"
+      exportPath = s"$currentPath/${exportDefinition.id}"
       _ <- StacExportDao
         .update(
           exportDefinition.copy(exportStatus = ExportStatus.Exporting),
           exportDefinition.id
         )
         .transact(xa)
+
       _ <- exportDefinition.annotationProjectId traverse { pid =>
-        runAnnotationProject(exportDefinition, pid, tempDir)
+        runAnnotationProject(exportDefinition, pid, tempDir, exportPath)
       }
       _ <- exportDefinition.campaignId traverse { campaignId =>
-        new CampaignStacExport(campaignId, xa, exportDefinition).run() *> {
+        new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
+          case Some(exportData) =>
+            exportData.toFileSystem(tempDir)
+          case None =>
+            val message = s"""
+            | Your export for Campaign $campaignId has failed. This is probably not retryable
+            | 
+            | Please contact us for advice about what to do next.
+            |""".trim.stripMargin
+            notify(ExternalId(exportDefinition.owner), Message(message))
+        } flatMap { _ =>
           val message = s"""
             | Your export for Campaign $campaignId is complete!
             | """.trim.stripMargin
           notify(ExternalId(exportDefinition.owner), Message(message))
         }
+      }
+      tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
+      _ <- IO { tempDir.zipTo(tempZipFile) }
+      _ <- StacFileIO.putToS3(
+        s"$exportPath/catalog.zip",
+        tempZipFile
+      )
+      _ <- {
+        val updatedExport =
+          exportDefinition.copy(
+            exportStatus = ExportStatus.Exported,
+            exportLocation = Some(exportPath)
+          )
+        StacExportDao.update(updatedExport, exportDefinition.id).transact(xa)
       }
     } yield ()).attempt flatMap {
       case Right(_) =>
