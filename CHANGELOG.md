@@ -1,6 +1,19 @@
 # Change Log
-
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.51.0](https://github.com/raster-foundry/raster-foundry/compare/1.50.0...1.51.0)
 
 ### Added
 
@@ -13,16 +26,10 @@
 - Hand-rolled cogification commands have been replaced with `gdal_translate -of COG` [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
 - Annotation projects requested for campaigns use campaign authorization [#5481](https://github.com/raster-foundry/raster-foundry/pull/5481), [#5483](https://github.com/raster-foundry/raster-foundry/pull/5483)
 
-### Deprecated
-
 ### Removed
 
 - Import processing for everything but user geotiffs [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
 - Cogification for Landsat 8 and Sentinel-2 imagery [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
-
-### Fixed
-
-### Security
 
 ## [1.50.0](https://github.com/raster-foundry/raster-foundry/compare/1.49.0...1.50.0)
 
