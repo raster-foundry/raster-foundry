@@ -22,6 +22,7 @@ object Version {
   val bcrypt = "4.1"
   val caffeine = "2.3.5"
   val cats = "2.1.1"
+  val catsBatch = "2.2.0"
   val catsEffect = "2.1.2"
   val catsMeow = "0.4.0"
   val catsScalacheck = "0.2.0"
@@ -42,6 +43,7 @@ object Version {
   val fs2 = "2.3.0"
   val fs2Cron = "0.2.2"
   val geotrellis = "3.4.1"
+  val geotrellisBatch = "3.5.0"
   val geotrellisServer = "4.1.0"
   val guava = "20.0"
   val hadoop = "2.8.4"
@@ -65,9 +67,9 @@ object Version {
   val opentracingApi = "0.33.0"
   val postgis = "2.2.1"
   val postgres = "42.2.12"
-  val refined = "0.9.15"
+  val refined = "0.9.17"
   val rollbar = "1.4.0"
-  val scaffeine = "3.1.0"
+  val scaffeine = "4.0.1"
   val scala = "2.12.10"
   val scalaCheck = "1.14.1"
   val scalaCsv = "1.3.6"
@@ -122,6 +124,8 @@ object Dependencies {
   val catsKernel = "org.typelevel" %% "cats-kernel" % Version.cats
   val catsLaws = "org.typelevel" %% "cats-laws" % Version.cats % Test
   val catsMeow = "com.olegpy" %% "meow-mtl-core" % Version.catsMeow
+  val catsCoreBatch = "org.typelevel" %% "cats-core" % Version.catsBatch
+  val catsKernelBatch = "org.typelevel" %% "cats-kernel" % Version.catsBatch
   val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % Version.catsScalacheck % "test"
   val chronoscala = "jp.ne.opt" %% "chronoscala" % Version.chronoscala
   val circeCore = "io.circe" %% "circe-core" % Version.circe
@@ -151,6 +155,7 @@ object Dependencies {
   val ficus = "com.iheart" %% "ficus" % Version.ficus
   val flyway = "org.flywaydb" % "flyway-core" % Version.flyway
   val fs2 = "co.fs2" %% "fs2-core" % Version.fs2
+  val fs2io = "co.fs2" %% "fs2-io" % Version.fs2
   val fs2Cron = "eu.timepit" %% "fs2-cron-core" % Version.fs2Cron
   val geotrellisGdal = "org.locationtech.geotrellis" %% "geotrellis-gdal" % Version.geotrellis
   val geotrellisLayer = "org.locationtech.geotrellis" %% "geotrellis-layer" % Version.geotrellis
@@ -162,6 +167,9 @@ object Dependencies {
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
   val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
   val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"
+  val geotrellisProj4Batch = "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellisBatch
+  val geotrellisUtilBatch = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellisBatch
+  val geotrellisVectorBatch = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellisBatch
   val guava = "com.google.guava" % "guava" % Version.guava
   val hadoop = "org.apache.hadoop" % "hadoop-common" % Version.hadoop
   val hikariCP = "com.zaxxer" % "HikariCP" % Version.hikariCP
@@ -184,6 +192,7 @@ object Dependencies {
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
   val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % Version.monocle
+  val monocleMacro = "com.github.julien-truffaut" %% "monocle-macro" % Version.monocle
   val newtype = "io.estatico" %% "newtype" % Version.newtype
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val nimbusJoseJwt = "com.nimbusds" % "nimbus-jose-jwt" % Version.nimbusJoseJwt
