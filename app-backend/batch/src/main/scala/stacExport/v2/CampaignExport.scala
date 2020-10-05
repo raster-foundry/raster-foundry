@@ -39,6 +39,7 @@ import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.Executors
 
+@SuppressWarnings(Array("AsInstanceOf"))
 object newtypes {
   @newtype case class AnnotationProjectId(value: UUID)
   @newtype case class SceneItem(value: StacItem)
