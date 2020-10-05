@@ -5,6 +5,7 @@
 ### Added
 
 - Added `review_status` to tasks, added a DB trigger to update this field when children task reviews change [#5478](https://github.com/raster-foundry/raster-foundry/pull/5478)
+- Campaigns can be exported [#5482](https://github.com/raster-foundry/raster-foundry/pull/5482)
 
 ### Changed
 
