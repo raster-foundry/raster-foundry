@@ -179,7 +179,11 @@ case class ExportData private (
           Some(`application/json`),
           None
         ) +:
-          links.filter(_.rel != StacLinkType.Collection)
+          links.filter(
+          link =>
+            !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
+              .contains(link.rel)
+      )
     )
 
     def withAsset(stacItem: StacItem): IO[StacItem] = {
@@ -198,7 +202,7 @@ case class ExportData private (
                 assets ++ Map(
                   "data" -> optics.assetHrefLens
                     .modify(_ => s"./data/${stacItem.id}.tiff")(asset)
-                )
+              )
             ))(stacItem)
           }
         case None =>
@@ -206,12 +210,12 @@ case class ExportData private (
       }
     }
     (annotationProjectSceneItems.toList traverse {
-      case (k, v) =>
+      case (_, v) =>
         withAsset(v.value) flatMap { (item: StacItem) =>
           encodableToFile(
             (withCollection `compose` withParentLinks)(item),
             file,
-            s"images/${k.value}.json"
+            s"images/${item.id}.json"
           )
         }
     }).void
@@ -291,7 +295,13 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] =
     (labelAssets.toList traverse {
       case (k, v) =>
-        encodableToFile(v.value, file, s"labels/data/${k.value}.geojson")
+        annotationProjectLabelItems.get(k) traverse { labelItem =>
+          encodableToFile(
+            v.value,
+            file,
+            s"labels/data/${labelItem.value.id}.geojson"
+          )
+        }
     }).void
 
   private def writeLabelCollection(
@@ -356,7 +366,11 @@ case class ExportData private (
           Some(`application/json`),
           None
         ) +:
-          links.filter(_.rel != StacLinkType.Collection)
+          links.filter(
+          link =>
+            !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
+              .contains(link.rel)
+      )
     )
     def withAsset(labelItem: StacItem) =
       optics.itemAssetLens.modify(
@@ -369,16 +383,16 @@ case class ExportData private (
               Set(StacAssetRole.Data),
               Some(`application/geo+json`)
             )
-          )
+        )
       )(labelItem)
     (annotationProjectLabelItems.toList traverse {
-      case (k, v) =>
+      case (_, v) =>
         encodableToFile(
           (withParentLinks `compose` withCollection `compose` withAsset)(
             v.value
           ),
           file,
-          s"labels/${k.value}.json"
+          s"labels/${v.value.id}.json"
         )
     }).void
   }
@@ -506,16 +520,17 @@ class CampaignStacExport(
       sceneCreationTime = scene map { scene =>
         scene.filterFields.acquisitionDate getOrElse scene.createdAt
       }
-      sceneItemsAppend = (s3ImageLocation, footprint, sceneCreationTime).mapN {
+      sceneItemO = (s3ImageLocation, footprint, sceneCreationTime).mapN {
         case (url, footprint, timestamp) =>
-          Map(
-            newtypes.AnnotationProjectId(annotationProject.id) -> makeSceneItem(
-              url,
-              footprint,
-              timestamp.toInstant,
-              annotationProject
-            )
+          makeSceneItem(
+            url,
+            footprint,
+            timestamp.toInstant,
+            annotationProject
           )
+      }
+      sceneItemsAppend = sceneItemO map { (item: newtypes.SceneItem) =>
+        Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
       // make label asset
       featureGeoJSON <- AnnotationLabelDao
@@ -540,13 +555,14 @@ class CampaignStacExport(
       labelItemExtensionO <- AnnotationProjectDao
         .getAnnotationProjectStacInfo(annotationProject.id)
         .transact(xa)
-      labelItemsAppend = (taskExtent, labelItemExtensionO) mapN {
-        case (extent, labelItemExtension) =>
+      labelItemsAppend = (taskExtent, labelItemExtensionO, sceneItemO) mapN {
+        case (extent, labelItemExtension, sceneItem) =>
           Map(
             newtypes.AnnotationProjectId(annotationProject.id) -> makeLabelItem(
               extent,
               sceneCreationTime map { _.toInstant },
-              labelItemExtension
+              labelItemExtension,
+              sceneItem
             )
           )
       } getOrElse Map.empty
@@ -603,7 +619,8 @@ class CampaignStacExport(
   private def makeLabelItem(
       extent: UnionedGeomExtent,
       datetime: Option[Instant],
-      labelItemExtension: LabelItemExtension
+      labelItemExtension: LabelItemExtension,
+      sceneItem: newtypes.SceneItem
   ): newtypes.LabelItem = {
     val itemId = UUID.randomUUID
     val latLngExtent = Extent(
@@ -622,7 +639,14 @@ class CampaignStacExport(
           latLngExtent.xmax,
           latLngExtent.ymax
         ),
-        Nil,
+        List(
+          StacLink(
+            s"../images/${sceneItem.value.id}.json",
+            StacLinkType.Source,
+            Some(`application/json`),
+            None
+          )
+        ),
         Map.empty,
         None,
         Map(
