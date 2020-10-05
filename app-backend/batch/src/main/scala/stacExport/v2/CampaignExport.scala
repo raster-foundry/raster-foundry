@@ -35,8 +35,6 @@ import monocle.macros.GenLens
 
 import scala.concurrent.ExecutionContext
 
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -120,21 +118,26 @@ case class ExportData private (
       file: File,
       relativePath: String
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
-    fs2.Stream
-      .emit(value.asJson.spaces2)
-      .covary[IO]
-      .through(
-        fs2.text.utf8Encode[IO]
-      )
-      .through(
-        fs2.io.file
-          .writeAll[IO](
-            file.path.resolve(relativePath),
-            ExportData.fileBlocker
-          )
-      )
-      .compile
-      .drain
+    (IO { file.path.resolve(relativePath) } map {
+      (absPath: java.nio.file.Path) =>
+        val parent = absPath.getParent
+        File(parent).createIfNotExists(true, true)
+    }) *>
+      fs2.Stream
+        .emit(value.asJson.spaces2)
+        .covary[IO]
+        .through(
+          fs2.text.utf8Encode[IO]
+        )
+        .through(
+          fs2.io.file
+            .writeAll[IO](
+              file.path.resolve(relativePath),
+              ExportData.fileBlocker
+            )
+        )
+        .compile
+        .drain
   }
 
   private def writeCatalog(
@@ -180,44 +183,31 @@ case class ExportData private (
     )
 
     def withAsset(stacItem: StacItem): IO[StacItem] = {
-      stacItem.assets.get("data") traverse { asset =>
-        println(s"found the data asset")
-        val decodedHref =
-          URLDecoder.decode(asset.href, StandardCharsets.UTF_8.toString)
-        println(s"Asset href: ${asset.href}")
-        println(s"Decoded href: ${decodedHref}")
-        (IO { GeoTiffRasterSource(decodedHref) }).attempt flatMap {
-          case Right(rs) =>
-            println("writing ratser source tiff")
-            println(
-              s"resolve output tif path: ${file.path.resolve(s"images/data/${stacItem.id}.tiff").toString}"
-            )
-            println(
-              s"Path to write tiff to: ${file.path.resolve(s"images/data/${stacItem.id}.tiff").toString}"
-            )
-            IO {
-              rs.tiff.write(
-                file.path.resolve(s"images/data/${stacItem.id}.tiff").toString
-              )
-            } map { _ =>
-              (optics.itemAssetLens.modify(
-                assets =>
-                  assets ++ Map(
-                    "data" -> optics.assetHrefLens
-                      .modify(_ => s"./data/${stacItem.id}.tiff")(asset)
-                  )
-              ))(stacItem)
+      stacItem.assets.get("data") match {
+        case Some(asset) =>
+          IO { GeoTiffRasterSource(asset.href) } flatMap { rs =>
+            val outputPath =
+              file.path.resolve(s"images/data/${stacItem.id}.tiff")
+            IO { File(outputPath.getParent).createIfNotExists(true, true) } map {
+              _ =>
+                rs.tiff.write(outputPath.toString)
             }
-          case Left(value) =>
-            println(s"Err: $value")
-            IO.pure(stacItem)
-        }
-      } map { _ getOrElse stacItem }
+          } map { _ =>
+            (optics.itemAssetLens.modify(
+              assets =>
+                assets ++ Map(
+                  "data" -> optics.assetHrefLens
+                    .modify(_ => s"./data/${stacItem.id}.tiff")(asset)
+                )
+            ))(stacItem)
+          }
+        case None =>
+          IO.pure(stacItem)
+      }
     }
     (annotationProjectSceneItems.toList traverse {
       case (k, v) =>
-        withAsset(v.value) flatMap { item =>
-          println("updated asset")
+        withAsset(v.value) flatMap { (item: StacItem) =>
           encodableToFile(
             (withCollection `compose` withParentLinks)(item),
             file,
@@ -394,9 +384,10 @@ case class ExportData private (
   }
 
   def toFileSystem(rootDir: File)(implicit cs: ContextShift[IO]): IO[Unit] = {
-    writeImageryCollection(rootDir) *> writeImageryItems(rootDir) *> writeLabelCollection(
-      rootDir
-    ) *> writeLabelAssets(
+    writeImageryCollection(rootDir) *> writeImageryItems(rootDir) *>
+      writeLabelCollection(
+        rootDir
+      ) *> writeLabelAssets(
       rootDir
     ) *> writeLabelItems(
       rootDir
