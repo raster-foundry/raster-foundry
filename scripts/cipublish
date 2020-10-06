@@ -39,15 +39,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 run --rm --no-deps \
                 build "; api/assembly; backsplash-server/assembly"
 
-            echo "Generating typescript interface stubs from Scala datamodel"
-            docker-compose -f docker-compose.test.yml \
-                run --rm \
-                panrec
-            aws s3 cp --recursive \
-                "${DIR}/../stubs/" \
-                "s3://${RF_ARTIFACTS_BUCKET}/ts-stubs/${GIT_COMMIT}/"
-            rm -r "${DIR}/../stubs"
-
             # Build publishable sbt projects as SNAPSHOT artifacts and
             # publish to Sonatype OSSRH (Snapshot Repository).
             if [ "$(whoami)" == "jenkins" ]; then
