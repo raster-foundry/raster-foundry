@@ -6,7 +6,6 @@ import com.rasterfoundry.datamodel._
 import cats.implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -30,10 +29,12 @@ class ProjectLayerDatasourceDaoSpec
         ) =>
           {
             val datasourcesIO = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
-                                                                    org,
-                                                                    platform,
-                                                                    project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
               datasource <- fixupDatasource(dsCreate, dbUser)
               dbScenes <- (scenes map {
                 fixupSceneCreate(dbUser, datasource, _)
@@ -56,10 +57,12 @@ class ProjectLayerDatasourceDaoSpec
 
             assert(
               insertedDatasourceIds.toSet == listedDatasourceIds.toSet,
-              "Listed datasources should be the same as that of scenes in this layer")
+              "Listed datasources should be the same as that of scenes in this layer"
+            )
             assert(
               insertedDatasourceIds.toSet.size == listedDatasourceIds.length,
-              "Listed datasources length should be the same as deduplicated list of scene datasources")
+              "Listed datasources length should be the same as deduplicated list of scene datasources"
+            )
             true
           }
       }

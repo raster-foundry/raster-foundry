@@ -2,6 +2,7 @@ package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.groundwork.{Config => GroundworkConfig}
+import com.rasterfoundry.batch.stacExport.v2.CampaignStacExport
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database._
@@ -185,103 +186,109 @@ final case class WriteStacCatalog(
 
   }
 
-  def run(): IO[Unit] =
-    ({
-
-      logger.info(s"Exporting STAC export for record $exportId...")
-
-      logger.info(s"Getting STAC export data for record $exportId...")
-      val dbIO
-        : ConnectionIO[(StacExport, Option[(UUID, Map[UUID, ExportData])])] =
-        for {
-          exportDefinition <- StacExportDao.unsafeGetById(exportId)
-          _ <- StacExportDao.update(
-            exportDefinition.copy(exportStatus = ExportStatus.Exporting),
-            exportDefinition.id
-          )
-          layerSceneTaskAnnotation <- exportDefinition.annotationProjectId traverse {
-            pid =>
-              DatabaseIO.sceneTaskAnnotationforLayers(
-                pid,
-                exportDefinition.taskStatuses
-              ) map { (pid, _) }
-          }
-        } yield (exportDefinition, layerSceneTaskAnnotation)
-
-      logger.info(
-        s"Creating content bundle with layers, images, and labels for record $exportId..."
+  def runAnnotationProject(
+      exportDefinition: StacExport,
+      annotationProjectId: UUID,
+      tempDir: ScalaFile,
+      exportPath: String
+  ): IO[Unit] =
+    (for {
+      layerInfoMap <- DatabaseIO
+        .sceneTaskAnnotationforLayers(
+          annotationProjectId,
+          exportDefinition.taskStatuses
+        )
+        .transact(xa)
+      _ = logger.info(s"Writing export under prefix: $exportPath")
+      layerIds = layerInfoMap.keys.toList
+      catalog = Utils.getAnnotationProjectStacCatalog(
+        exportDefinition,
+        "1.0.0-beta.1",
+        layerIds
       )
-
-      dbIO.transact(xa) flatMap {
-        case (exportDef, Some((annotationProjectId, layerInfoMap))) =>
-          val currentPath = s"s3://$dataBucket/stac-exports"
-          val exportPath = s"$currentPath/${exportDef.id}"
-          logger.info(s"Writing export under prefix: $exportPath")
-          val layerIds = layerInfoMap.keys.toList
-          val catalog: StacCatalog =
-            Utils.getStacCatalog(exportDef, "1.0.0-beta.1", layerIds)
-          val catalogWithPath =
-            ObjectWithAbsolute(s"$exportPath/catalog.json", catalog)
-
-          val tempDir = ScalaFile.newTemporaryDirectory()
-          tempDir.deleteOnExit()
-
-          val layerIO = layerInfoMap.toList traverse {
-            case (layerId, sceneTaskAnnotation) =>
-              processLayerCollection(
-                exportDef,
-                exportPath,
-                catalog,
-                tempDir,
-                layerId,
-                sceneTaskAnnotation
-              )
-          }
-          for {
-            _ <- StacFileIO.writeObjectToFilesystem(tempDir, catalogWithPath)
-            _ <- layerIO
-            tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
-            _ <- IO { tempDir.zipTo(tempZipFile) }
-            _ <- StacFileIO.putToS3(
-              s"$exportPath/catalog.zip",
-              tempZipFile
-            )
-            _ <- {
-              val updatedExport =
-                exportDef.copy(
-                  exportStatus = ExportStatus.Exported,
-                  exportLocation = Some(exportPath)
-                )
-              StacExportDao.update(updatedExport, exportDef.id).transact(xa)
-            }
-            _ <- AnnotationProjectDao
-              .unsafeGetById(annotationProjectId)
-              .transact(xa) flatMap { project =>
-              val message = Message(s"""
+      catalogWithPath = ObjectWithAbsolute(
+        s"$exportPath/catalog.json",
+        catalog
+      )
+      _ <- StacFileIO.writeObjectToFilesystem(tempDir, catalogWithPath)
+      _ <- layerInfoMap.toList traverse {
+        case (layerId, sceneTaskAnnotation) =>
+          processLayerCollection(
+            exportDefinition,
+            exportPath,
+            catalog,
+            tempDir,
+            layerId,
+            sceneTaskAnnotation
+          )
+      }
+      _ <- AnnotationProjectDao
+        .unsafeGetById(annotationProjectId)
+        .transact(xa) flatMap { project =>
+        val message = Message(s"""
               | Your STAC export for project ${project.name} has completed!
               | You can see exports for your project at
               | ${GroundworkConfig.groundworkUrlBase}/app/projects/${annotationProjectId}/exports 
               """.trim.stripMargin)
-              notify(ExternalId(exportDef.owner), message)
-            }
-          } yield ()
-        case (exportDef, _) =>
-          val message = Message(
-            """
-        | Somehow you had an export without an associated annotation project.
-        | This shouldn't happen. Please reply to this message to let us know
-        | how you got here.
-        """.trim.stripMargin
-          )
-          notify(ExternalId(exportDef.owner), message) *>
-            IO {
-              val msg = "Export definition is missing an annotation project ID"
-              logger.error(msg)
-              throw new IllegalArgumentException(msg)
-            }
-
+        notify(ExternalId(exportDefinition.owner), message)
       }
-    }).attempt flatMap {
+    } yield ())
+
+  def run(): IO[Unit] = {
+
+    logger.info(s"Exporting STAC export for record $exportId...")
+
+    logger.info(s"Getting STAC export data for record $exportId...")
+
+    (for {
+      exportDefinition <- StacExportDao.unsafeGetById(exportId).transact(xa)
+      tempDir = ScalaFile.newTemporaryDirectory()
+      _ = tempDir.deleteOnExit()
+      currentPath = s"s3://$dataBucket/stac-exports"
+      exportPath = s"$currentPath/${exportDefinition.id}"
+      _ <- StacExportDao
+        .update(
+          exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+          exportDefinition.id
+        )
+        .transact(xa)
+
+      _ <- exportDefinition.annotationProjectId traverse { pid =>
+        runAnnotationProject(exportDefinition, pid, tempDir, exportPath)
+      }
+      _ <- exportDefinition.campaignId traverse { campaignId =>
+        new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
+          case Some(exportData) =>
+            exportData.toFileSystem(tempDir)
+          case None =>
+            val message = s"""
+            | Your export for Campaign $campaignId has failed. This is probably not retryable
+            | 
+            | Please contact us for advice about what to do next.
+            |""".trim.stripMargin
+            notify(ExternalId(exportDefinition.owner), Message(message))
+        } flatMap { _ =>
+          val message = s"""
+            | Your export for Campaign $campaignId is complete!
+            | """.trim.stripMargin
+          notify(ExternalId(exportDefinition.owner), Message(message))
+        }
+      }
+      tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
+      _ <- IO { tempDir.zipTo(tempZipFile) }
+      _ <- StacFileIO.putToS3(
+        s"$exportPath/catalog.zip",
+        tempZipFile
+      )
+      _ <- {
+        val updatedExport =
+          exportDefinition.copy(
+            exportStatus = ExportStatus.Exported,
+            exportLocation = Some(exportPath)
+          )
+        StacExportDao.update(updatedExport, exportDefinition.id).transact(xa)
+      }
+    } yield ()).attempt flatMap {
       case Right(_) =>
         IO.unit
 
@@ -294,17 +301,19 @@ final case class WriteStacCatalog(
           owner = exportDef map { _.owner }
           message = Message(
             s"""
-            | Something went wrong while processing your export ${exportId}.
-            | This is probably not retryable. Please contact us for advice
-            | about what to do next.
-            |""".trim.stripMargin
+                | Something went wrong while processing your export ${exportId}.
+                | This is probably not retryable. Please contact us for advice
+                | about what to do next.
+                |""".trim.stripMargin
           )
           _ <- owner traverse { userId =>
             notify(ExternalId(userId), message)
           }
+
         } yield ()
 
     }
+  }
 
 }
 

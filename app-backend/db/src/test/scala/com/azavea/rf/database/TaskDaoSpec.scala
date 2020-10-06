@@ -17,7 +17,6 @@ import eu.timepit.refined.types.string.NonEmptyString
 import monocle.Lens
 import monocle.macros.GenLens
 import org.scalacheck.Prop.forAll
-import org.scalatest._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers

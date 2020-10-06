@@ -1,9 +1,10 @@
 package com.rasterfoundry.datamodel
 
+import cats.syntax.functor._
 import com.azavea.stac4s._
-import io.circe.JsonObject
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
+import io.circe.{Decoder, Encoder, Json, JsonObject}
 
 import java.sql.Timestamp
 import java.util.{Date, UUID}
@@ -20,7 +21,8 @@ final case class StacExport(
     exportLocation: Option[String],
     exportStatus: ExportStatus,
     taskStatuses: List[String],
-    annotationProjectId: Option[UUID]
+    annotationProjectId: Option[UUID],
+    campaignId: Option[UUID]
 ) {
   def createStacCollection(
       stacVersion: String,
@@ -101,31 +103,72 @@ object StacExport {
       export.annotationProjectId
     )
 
+  sealed abstract class Create {
+    def toStacExport(user: User): StacExport
+  }
+
+  implicit val encCreate: Encoder[Create] = new Encoder[Create] {
+    def apply(x: Create): Json = x match {
+      case ap @ AnnotationProjectExport(_, _, _, _) => ap.asJson
+      case c @ CampaignExport(_, _, _, _)           => c.asJson
+    }
+  }
+
+  implicit val decCreate: Decoder[Create] =
+    Decoder[AnnotationProjectExport].widen or Decoder[CampaignExport].widen
+
   @JsonCodec
-  final case class Create(
+  final case class AnnotationProjectExport(
       name: String,
-      owner: Option[String],
       license: StacExportLicense,
       taskStatuses: List[TaskStatus],
       annotationProjectId: UUID
-  ) extends OwnerCheck {
+  ) extends Create {
     def toStacExport(user: User): StacExport = {
       val id = UUID.randomUUID()
       val now = new Timestamp(new Date().getTime)
-      val ownerId = checkOwner(user, this.owner)
 
       StacExport(
         id,
         now, // createdAt
         user.id, // createdBy
         now, // modifiedAt
-        ownerId, // owner
-        this.name,
+        user.id, // owner
+        name,
         license,
         None,
         ExportStatus.NotExported,
         this.taskStatuses.map(_.toString),
-        Some(annotationProjectId)
+        Some(annotationProjectId),
+        None
+      )
+    }
+  }
+
+  @JsonCodec
+  case class CampaignExport(
+      name: String,
+      license: StacExportLicense,
+      taskStatuses: List[TaskStatus],
+      campaignId: UUID
+  ) extends Create {
+    def toStacExport(user: User): StacExport = {
+      val id = UUID.randomUUID()
+      val now = new Timestamp(new Date().getTime)
+
+      StacExport(
+        id,
+        now, // createdAt
+        user.id, // createdBy
+        now, // modifiedAt
+        user.id, // owner
+        name,
+        license,
+        None,
+        ExportStatus.NotExported,
+        this.taskStatuses.map(_.toString),
+        None,
+        Some(campaignId)
       )
     }
   }

@@ -11,7 +11,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
 import cats.effect.Blocker
 import cats.effect.IO
-import cats.implicits._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._

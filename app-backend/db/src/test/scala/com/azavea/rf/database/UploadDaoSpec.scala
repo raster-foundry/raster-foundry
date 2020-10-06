@@ -5,7 +5,6 @@ import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID

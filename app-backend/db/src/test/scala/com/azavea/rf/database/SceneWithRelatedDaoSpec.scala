@@ -7,7 +7,7 @@ import com.rasterfoundry.datamodel._
 import cats.implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
+
 import org.scalatestplus.scalacheck.Checkers
 
 import java.sql.Timestamp
@@ -25,13 +25,15 @@ class SceneWithRelatedDaoSpec
   test("list authorized scenes") {
     check {
       forAll {
-        (user1: User.Create,
-         user2: User.Create,
-         pageRequest: PageRequest,
-         scenes1: List[Scene.Create],
-         scenes2: List[Scene.Create],
-         dsCreate1: Datasource.Create,
-         dsCreate2: Datasource.Create) =>
+        (
+            user1: User.Create,
+            user2: User.Create,
+            pageRequest: PageRequest,
+            scenes1: List[Scene.Create],
+            scenes2: List[Scene.Create],
+            dsCreate1: Datasource.Create,
+            dsCreate2: Datasource.Create
+        ) =>
           {
             val scenesIO = for {
               // quick and dirty fix for dev database. listedScenes being a paginated result makes things complicated otherwise
@@ -40,10 +42,12 @@ class SceneWithRelatedDaoSpec
               dbUser2 <- UserDao.create(user2)
               datasource1 <- DatasourceDao.create(
                 dsCreate1.toDatasource(dbUser1),
-                dbUser1)
+                dbUser1
+              )
               datasource2 <- DatasourceDao.create(
                 dsCreate2.toDatasource(dbUser2),
-                dbUser2)
+                dbUser2
+              )
               dbScenes1 <- (scenes1 map { (scene: Scene.Create) =>
                 fixupSceneCreate(dbUser1, datasource1, scene)
               }).traverse(
@@ -63,8 +67,10 @@ class SceneWithRelatedDaoSpec
                 pageRequest,
                 CombinedSceneQueryParams(
                   sceneParams =
-                    SceneQueryParameters(datasource = Seq(datasource1.id))),
-                dbUser1)
+                    SceneQueryParameters(datasource = Seq(datasource1.id))
+                ),
+                dbUser1
+              )
             } yield { (dbScenes1, listedScenes, listedScenesWithDS) }
 
             val (insertedScenes, listedScenes, listedWithDS) =
@@ -80,7 +86,8 @@ class SceneWithRelatedDaoSpec
             }
             assert(
               listedNamesSet.intersect(insertedNamesSet) == listedNamesSet,
-              "listed scenes should be a strict subset of inserted scenes by user 1")
+              "listed scenes should be a strict subset of inserted scenes by user 1"
+            )
             assert(
               scenes1.length == listedWithDS.count,
               "Listing with datasource should count the same number of scenes we started with"
@@ -102,17 +109,21 @@ class SceneWithRelatedDaoSpec
   test("get scenes to ingest") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         project: Project.Create,
-         scenes: List[Scene.Create]) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            project: Project.Create,
+            scenes: List[Scene.Create]
+        ) =>
           {
             val scenesInsertWithUserProjectIO = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
-                                                                    org,
-                                                                    platform,
-                                                                    project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
               datasource <- unsafeGetRandomDatasource
               scenesInsert <- (scenes map {
                 fixupSceneCreate(dbUser, datasource, _)
@@ -124,9 +135,11 @@ class SceneWithRelatedDaoSpec
             val scenesToIngestIO = for {
               scenesUserProject <- scenesInsertWithUserProjectIO
               (dbScenes, _, dbProject) = scenesUserProject
-              _ <- ProjectDao.addScenesToProject(dbScenes map { _.id },
-                                                 dbProject.id,
-                                                 dbProject.defaultLayerId)
+              _ <- ProjectDao.addScenesToProject(
+                dbScenes map { _.id },
+                dbProject.id,
+                dbProject.defaultLayerId
+              )
               retrievedScenes <- dbScenes traverse { scene =>
                 SceneDao.unsafeGetSceneById(scene.id)
               }
@@ -144,8 +157,10 @@ class SceneWithRelatedDaoSpec
             val ingestableIdsFromInserted = insertedScenes
               .filter((scene: Scene.WithRelated) => {
                 val staleModified =
-                  scene.modifiedAt.before(Timestamp.valueOf(
-                    LocalDate.now().atStartOfDay.plusDays(-1L)))
+                  scene.modifiedAt.before(
+                    Timestamp
+                      .valueOf(LocalDate.now().atStartOfDay.plusDays(-1L))
+                  )
                 val ingestStatus = scene.statusFields.ingestStatus
                 (staleModified, ingestStatus, scene.sceneType) match {
                   case (true, IngestStatus.Ingesting, _)  => true

@@ -5,7 +5,7 @@ import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
+
 import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -17,21 +17,20 @@ class StacExportDaoSpec
     with DBTestConfig
     with PropTestHelpers {
 
-  test("inserting a Stac Export") {
+  test("inserting a Stac Export for an Annotation Project") {
     check {
       forAll(
         (
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
-            stacExportCreate: StacExport.Create
+            stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
           val createStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao
               .insert(annotationProjectCreate, dbUser)
-            fixedStacExportCreate = fixupStacExportCreate(
+            fixedStacExportCreate = fixupAnnotationProjectExportCreate(
               stacExportCreate,
-              dbUser,
               dbProject
             )
             dbStacExport <- StacExportDao.create(
@@ -76,20 +75,80 @@ class StacExportDaoSpec
     }
   }
 
+  test("inserting a Stac Export for a Campaign") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            stacExportCreate: StacExport.CampaignExport
+        ) => {
+          val createStacExportIO = for {
+            dbUser <- UserDao.create(userCreate)
+            dbCampaign <- CampaignDao
+              .insertCampaign(
+                campaignCreate.copy(parentCampaignId = None),
+                dbUser
+              )
+            fixedStacExportCreate = stacExportCreate.copy(
+              campaignId = dbCampaign.id
+            )
+            dbStacExport <- StacExportDao.create(
+              fixedStacExportCreate,
+              dbUser
+            )
+          } yield (dbUser, fixedStacExportCreate, dbStacExport)
+
+          val (user, fixedStacExportCreate, stacExport) =
+            createStacExportIO.transact(xa).unsafeRunSync
+
+          assert(
+            user.id == stacExport.owner,
+            "Inserted StacExport owner should be the same as user"
+          )
+          assert(
+            fixedStacExportCreate.name == stacExport.name,
+            "Sent and inserted StacExport name should be the same"
+          )
+          assert(
+            stacExport.exportLocation == None,
+            "Inserted StacExport export location should be empty"
+          )
+          assert(
+            stacExport.exportStatus == ExportStatus.NotExported,
+            "Inserted StacExport status should be NotExported"
+          )
+          assert(
+            stacExport.taskStatuses.toSet == stacExportCreate.taskStatuses
+              .map(_.toString)
+              .toSet,
+            "Sent and inserted StacExport taskStatuses should be the same"
+          )
+          assert(
+            stacExport.campaignId
+              .map(_ == fixedStacExportCreate.campaignId)
+              .getOrElse(false),
+            "Sent and inserted StacExport annotation project ids should be the same"
+          )
+          true
+        }
+      )
+    }
+  }
+
   test("getting a Stac Export by id") {
     check {
       forAll(
         (
             userCreate: User.Create,
             projectCreate: AnnotationProject.Create,
-            stacExportCreate: StacExport.Create
+            stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
           val selectStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
-            fixedStacExportCreate = fixupStacExportCreate(
+            fixedStacExportCreate = fixupAnnotationProjectExportCreate(
               stacExportCreate,
-              dbUser,
               dbProject
             )
             dbStacExport <- StacExportDao.create(
@@ -147,14 +206,13 @@ class StacExportDaoSpec
         (
             userCreate: User.Create,
             projectCreate: AnnotationProject.Create,
-            stacExportCreate: StacExport.Create
+            stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
           val updatetStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
-            fixedStacExportCreate = fixupStacExportCreate(
+            fixedStacExportCreate = fixupAnnotationProjectExportCreate(
               stacExportCreate,
-              dbUser,
               dbProject
             )
             dbStacExport <- StacExportDao.create(
@@ -222,14 +280,13 @@ class StacExportDaoSpec
         (
             userCreate: User.Create,
             projectCreate: AnnotationProject.Create,
-            stacExportCreate: StacExport.Create
+            stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
           val deletetStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
-            fixedStacExportCreate = fixupStacExportCreate(
+            fixedStacExportCreate = fixupAnnotationProjectExportCreate(
               stacExportCreate,
-              dbUser,
               dbProject
             )
             dbStacExport <- StacExportDao.create(fixedStacExportCreate, dbUser)
@@ -262,22 +319,20 @@ class StacExportDaoSpec
         (
             userCreate: User.Create,
             projectCreate: AnnotationProject.Create,
-            stacExportCreate1: StacExport.Create,
-            stacExportCreate2: StacExport.Create,
+            stacExportCreate1: StacExport.AnnotationProjectExport,
+            stacExportCreate2: StacExport.AnnotationProjectExport,
             page: PageRequest,
             queryParams: StacExportQueryParameters
         ) => {
           val updatetStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
-            fixedStacExportCreate1 = fixupStacExportCreate(
+            fixedStacExportCreate1 = fixupAnnotationProjectExportCreate(
               stacExportCreate1,
-              dbUser,
               dbProject
             )
-            fixedStacExportCreate2 = fixupStacExportCreate(
+            fixedStacExportCreate2 = fixupAnnotationProjectExportCreate(
               stacExportCreate2,
-              dbUser,
               dbProject
             )
             dbStacExport1 <- StacExportDao

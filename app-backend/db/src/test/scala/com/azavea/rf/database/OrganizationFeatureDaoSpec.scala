@@ -1,7 +1,6 @@
 package com.rasterfoundry.database
 
 import doobie.implicits._
-import org.scalatest._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

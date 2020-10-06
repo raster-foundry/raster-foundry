@@ -7,7 +7,7 @@ import com.rasterfoundry.datamodel._
 import cats.implicits._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
+
 import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -33,10 +33,12 @@ class LayerScenesDaoSpec
         ) =>
           {
             val scenesInsertWithUserProjectIO = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
-                                                                    org,
-                                                                    platform,
-                                                                    project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
               datasource <- DatasourceDao.create(
                 dsCreate.toDatasource(dbUser),
                 dbUser
@@ -66,7 +68,8 @@ class LayerScenesDaoSpec
                       csq
                     ) map {
                       paginatedResponse: PaginatedResponse[
-                        Scene.ProjectScene] =>
+                        Scene.ProjectScene
+                      ] =>
                         (dbScenes, paginatedResponse.results)
                     }
                   }
@@ -103,10 +106,12 @@ class LayerScenesDaoSpec
         ) =>
           {
             val countsWithCountedIO = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
-                                                                    org,
-                                                                    platform,
-                                                                    project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
+                user,
+                org,
+                platform,
+                project
+              )
               dbDatasource <- fixupDatasource(dsCreate, dbUser)
               dbLayersWithSceneCounts <- layersWithScenes traverse {
                 case (projectLayerCreate, scenesList) =>
@@ -117,14 +122,16 @@ class LayerScenesDaoSpec
                         .toProjectLayer
                     )
                     dbScenes <- scenesList traverse { scene =>
-                      SceneDao.insert(fixupSceneCreate(dbUser,
-                                                       dbDatasource,
-                                                       scene),
-                                      dbUser)
+                      SceneDao.insert(
+                        fixupSceneCreate(dbUser, dbDatasource, scene),
+                        dbUser
+                      )
                     }
-                    _ <- ProjectDao.addScenesToProject(dbScenes map { _.id },
-                                                       dbProject.id,
-                                                       dbProjectLayer.id)
+                    _ <- ProjectDao.addScenesToProject(
+                      dbScenes map { _.id },
+                      dbProject.id,
+                      dbProjectLayer.id
+                    )
                   } yield { (dbProjectLayer.id, dbScenes.length) }
               }
               counted <- ProjectLayerScenesDao.countLayerScenes(dbProject.id)
@@ -144,7 +151,8 @@ class LayerScenesDaoSpec
 
             assert(
               expectation,
-              "Counts by layer id should equal the counts of scenes added to each layer")
+              "Counts by layer id should equal the counts of scenes added to each layer"
+            )
 
             true
           }

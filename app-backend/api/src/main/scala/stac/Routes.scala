@@ -100,12 +100,36 @@ trait StacRoutes
   def createStacExport: Route = authenticate { user =>
     authorizeScope(ScopedAction(Domain.StacExports, Action.Create, None), user) {
       entity(as[StacExport.Create]) { newStacExport =>
-        authorizeAsync {
-          StacExportDao
-            .hasProjectViewAccess(newStacExport.annotationProjectId, user)
-            .transact(xa)
-            .unsafeToFuture
-        } {
+        newStacExport match {
+          case StacExport
+                .AnnotationProjectExport(_, _, _, annotationProjectId) =>
+            authorizeAsync {
+              AnnotationProjectDao
+                .authorized(
+                  user,
+                  ObjectType.AnnotationProject,
+                  annotationProjectId,
+                  ActionType.View
+                )
+                .map(_.toBoolean)
+                .transact(xa)
+                .unsafeToFuture
+            }
+          case StacExport.CampaignExport(_, _, _, campaignId) =>
+            authorizeAsync {
+              CampaignDao
+                .authorized(
+                  user,
+                  ObjectType.Campaign,
+                  campaignId,
+                  ActionType.View
+                )
+                .map(_.toBoolean)
+                .transact(xa)
+                .unsafeToFuture
+            }
+        }
+        {
           onSuccess(
             StacExportDao
               .create(newStacExport, user)

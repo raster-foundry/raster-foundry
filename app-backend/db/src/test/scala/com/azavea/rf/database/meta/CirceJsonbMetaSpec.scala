@@ -6,7 +6,7 @@ import doobie._, doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import io.circe._
 import io.circe.syntax._
-import org.scalatest._
+
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 

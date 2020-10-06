@@ -1032,21 +1032,20 @@ object Generators extends ArbitraryInstances {
   private def taskStatusListGen: Gen[List[TaskStatus]] =
     Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
 
-  private def stacExportCreateGen: Gen[StacExport.Create] =
-    for {
-      name <- nonEmptyStringGen
-      owner <- Gen.const(None)
-      annotationProjectId <- uuidGen
-      taskStatuses <- taskStatusListGen
-    } yield {
-      StacExport.Create(
-        name,
-        owner,
-        StacExportLicense(Proprietary(), Some("http://example.com")),
-        taskStatuses,
-        annotationProjectId
-      )
-    }
+  private val stacExportGenTup =
+    (
+      nonEmptyStringGen,
+      Gen.const(StacExportLicense(Proprietary(), Some("http://example.com"))),
+      taskStatusListGen,
+      uuidGen
+    )
+
+  private def stacAnnotationProjectExportGen
+      : Gen[StacExport.AnnotationProjectExport] =
+    stacExportGenTup.mapN(StacExport.AnnotationProjectExport.apply)
+
+  private def stacCampaignExportGen: Gen[StacExport.CampaignExport] =
+    stacExportGenTup.mapN(StacExport.CampaignExport.apply)
 
   private def stacExportQueryParametersGen: Gen[StacExportQueryParameters] =
     Gen.const(StacExportQueryParameters())
@@ -1383,10 +1382,12 @@ object Generators extends ArbitraryInstances {
         taskPropertiesCreateGen
       }
 
-    implicit def arbStacExportCreate: Arbitrary[StacExport.Create] =
-      Arbitrary {
-        stacExportCreateGen
-      }
+    implicit def arbStacAnnotationExport
+        : Arbitrary[StacExport.AnnotationProjectExport] =
+      Arbitrary { stacAnnotationProjectExportGen }
+
+    implicit def arbStacCampaignExport: Arbitrary[StacExport.CampaignExport] =
+      Arbitrary { stacCampaignExportGen }
 
     implicit def arbStacExportQueryParameters
         : Arbitrary[StacExportQueryParameters] =
