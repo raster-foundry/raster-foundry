@@ -154,13 +154,6 @@ services:
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
 
-  lambda:
-    build:
-      context: app-lambda
-      dockerfile: Dockerfile.test
-    volumes:
-      - ./app-lambda/:/opt/raster-foundry/app-lambda/
-    working_dir: /opt/raster-foundry/app-lambda/
   shellcheck:
     image: koalaman/shellcheck:stable
     volumes:

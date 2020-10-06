@@ -1,9 +1,0 @@
-include README.rst
-include .editorconfig
-include requirements.txt
-
-recursive-include tests *
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
-
-recursive-include rflambda *.py

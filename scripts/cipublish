@@ -39,24 +39,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 run --rm --no-deps \
                 build "; api/assembly; backsplash-server/assembly"
 
-            echo "Building python lambda functions"
-            rm -rf "${DIR}/../app-lambda/opt/"*
-            docker-compose -f "${DIR}/../docker-compose.test.yml" \
-                run --rm --no-deps lambda \
-                pip install -t opt/ ./
-            docker-compose -f "${DIR}/../docker-compose.test.yml" \
-                run --rm --no-deps lambda \
-                cp -r "/opt/raster-foundry/app-lambda/rflambda/" "/opt/raster-foundry/app-lambda/opt/"
-            pushd "${DIR}/../app-lambda/opt/"
-            zip -9 -r ../package.zip ./*
-            popd
-
-            echo "Uploading python Lambda Function"
-            aws s3 cp \
-                "${DIR}/../app-lambda/package.zip" \
-                "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/package-${GIT_COMMIT}.zip"
-            rm "${DIR}/../app-lambda/package.zip"
-
             echo "Generating typescript interface stubs from Scala datamodel"
             docker-compose -f docker-compose.test.yml \
                 run --rm \
