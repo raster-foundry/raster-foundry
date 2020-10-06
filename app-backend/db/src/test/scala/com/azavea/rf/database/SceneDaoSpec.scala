@@ -5,7 +5,6 @@ import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -23,10 +22,12 @@ class SceneDaoSpec
   test("insert a scene") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         scene: Scene.Create) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            scene: Scene.Create
+        ) =>
           {
             val sceneInsertIO = for {
               (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
@@ -37,31 +38,40 @@ class SceneDaoSpec
             val (fixedUpSceneCreate, insertedScene) =
               sceneInsertIO.transact(xa).unsafeRunSync
 
-            assert(insertedScene.visibility == fixedUpSceneCreate.visibility,
-                   "Visibilities match")
+            assert(
+              insertedScene.visibility == fixedUpSceneCreate.visibility,
+              "Visibilities match"
+            )
             assert(insertedScene.tags == fixedUpSceneCreate.tags, "Tags match")
             assert(
               insertedScene.sceneMetadata == fixedUpSceneCreate.sceneMetadata,
-              "Scene metadatas match")
+              "Scene metadatas match"
+            )
             assert(insertedScene.name == fixedUpSceneCreate.name, "Names match")
             assert(
               insertedScene.tileFootprint == fixedUpSceneCreate.tileFootprint,
-              "Tile footprints match")
+              "Tile footprints match"
+            )
             assert(
               insertedScene.dataFootprint == fixedUpSceneCreate.dataFootprint,
-              "Data footprints match")
+              "Data footprints match"
+            )
             assert(
               insertedScene.metadataFiles == fixedUpSceneCreate.metadataFiles,
-              "Metadata files match")
+              "Metadata files match"
+            )
             assert(
               insertedScene.ingestLocation == fixedUpSceneCreate.ingestLocation,
-              "Ingest locations match")
+              "Ingest locations match"
+            )
             assert(
               insertedScene.filterFields == fixedUpSceneCreate.filterFields,
-              "Filter fields match")
+              "Filter fields match"
+            )
             assert(
               insertedScene.statusFields == fixedUpSceneCreate.statusFields,
-              "Status fields match")
+              "Status fields match"
+            )
             true
           }
       }
@@ -71,10 +81,12 @@ class SceneDaoSpec
   test("maybe insert a scene") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         scene: Scene.Create) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            scene: Scene.Create
+        ) =>
           {
             val sceneInsertIO = for {
               (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
@@ -88,31 +100,40 @@ class SceneDaoSpec
             // something else was wrong
             val insertedScene = insertedSceneO.get
 
-            assert(insertedScene.visibility == fixedUpSceneCreate.visibility,
-                   "Visibilities match")
+            assert(
+              insertedScene.visibility == fixedUpSceneCreate.visibility,
+              "Visibilities match"
+            )
             assert(insertedScene.tags == fixedUpSceneCreate.tags, "Tags match")
             assert(
               insertedScene.sceneMetadata == fixedUpSceneCreate.sceneMetadata,
-              "Scene metadatas match")
+              "Scene metadatas match"
+            )
             assert(insertedScene.name == fixedUpSceneCreate.name, "Names match")
             assert(
               insertedScene.tileFootprint == fixedUpSceneCreate.tileFootprint,
-              "Tile footprints match")
+              "Tile footprints match"
+            )
             assert(
               insertedScene.dataFootprint == fixedUpSceneCreate.dataFootprint,
-              "Data footprints match")
+              "Data footprints match"
+            )
             assert(
               insertedScene.metadataFiles == fixedUpSceneCreate.metadataFiles,
-              "Metadata files match")
+              "Metadata files match"
+            )
             assert(
               insertedScene.ingestLocation == fixedUpSceneCreate.ingestLocation,
-              "Ingest locations match")
+              "Ingest locations match"
+            )
             assert(
               insertedScene.filterFields == fixedUpSceneCreate.filterFields,
-              "Filter fields match")
+              "Filter fields match"
+            )
             assert(
               insertedScene.statusFields == fixedUpSceneCreate.statusFields,
-              "Status fields match")
+              "Status fields match"
+            )
             true
           }
       }
@@ -122,26 +143,33 @@ class SceneDaoSpec
   test("update a scene") {
     check {
       forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         platform: Platform,
-         insertScene: Scene.Create,
-         updateScene: Scene.Create) =>
+        (
+            user: User.Create,
+            org: Organization.Create,
+            platform: Platform,
+            insertScene: Scene.Create,
+            updateScene: Scene.Create
+        ) =>
           {
             val sceneUpdateIO = for {
               (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
               datasource <- unsafeGetRandomDatasource
-              fixedUpSceneCreate = fixupSceneCreate(dbUser,
-                                                    datasource,
-                                                    insertScene)
+              fixedUpSceneCreate = fixupSceneCreate(
+                dbUser,
+                datasource,
+                insertScene
+              )
               sceneInsert <- SceneDao.insert(fixedUpSceneCreate, dbUser)
               fixedUpUpdateScene = fixupSceneCreate(
                 dbUser,
                 datasource,
-                updateScene).toScene(dbUser).copy(id = sceneInsert.id)
-              affectedRows <- SceneDao.update(fixedUpUpdateScene,
-                                              sceneInsert.id,
-                                              dbUser)
+                updateScene
+              ).toScene(dbUser).copy(id = sceneInsert.id)
+              affectedRows <- SceneDao.update(
+                fixedUpUpdateScene,
+                sceneInsert.id,
+                dbUser
+              )
               endScene <- SceneDao.unsafeGetSceneById(sceneInsert.id)
             } yield (affectedRows, fixedUpUpdateScene, endScene)
 
@@ -149,26 +177,36 @@ class SceneDaoSpec
               sceneUpdateIO.transact(xa).unsafeRunSync
 
             assert(affectedRows == 1, "Number of affected rows is correct")
-            assert(updatedScene.visibility == fixedUpUpdateScene.visibility,
-                   "Visibilities match")
+            assert(
+              updatedScene.visibility == fixedUpUpdateScene.visibility,
+              "Visibilities match"
+            )
             assert(updatedScene.tags == fixedUpUpdateScene.tags, "Tags match")
             assert(
               updatedScene.sceneMetadata == fixedUpUpdateScene.sceneMetadata,
-              "Metadatas match")
+              "Metadatas match"
+            )
             assert(updatedScene.name == fixedUpUpdateScene.name, "Names match")
             assert(
               updatedScene.tileFootprint == fixedUpUpdateScene.tileFootprint,
-              "Tile footprints match")
+              "Tile footprints match"
+            )
             assert(
               updatedScene.dataFootprint == fixedUpUpdateScene.dataFootprint,
-              "Data footprints match")
+              "Data footprints match"
+            )
             assert(
               updatedScene.ingestLocation == fixedUpUpdateScene.ingestLocation,
-              "Ingest locations match")
-            assert(updatedScene.filterFields == fixedUpUpdateScene.filterFields,
-                   "Filter fields match")
-            assert(updatedScene.statusFields == fixedUpUpdateScene.statusFields,
-                   "Status fields match")
+              "Ingest locations match"
+            )
+            assert(
+              updatedScene.filterFields == fixedUpUpdateScene.filterFields,
+              "Filter fields match"
+            )
+            assert(
+              updatedScene.statusFields == fixedUpUpdateScene.statusFields,
+              "Status fields match"
+            )
             true
           }
       }

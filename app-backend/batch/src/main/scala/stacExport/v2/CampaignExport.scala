@@ -16,7 +16,6 @@ import better.files.File
 import cats.data.StateT
 import cats.effect.{Blocker, ContextShift, IO}
 import cats.syntax.apply._
-import cats.syntax.functor._
 import cats.syntax.list._
 import cats.syntax.traverse._
 import com.azavea.stac4s._

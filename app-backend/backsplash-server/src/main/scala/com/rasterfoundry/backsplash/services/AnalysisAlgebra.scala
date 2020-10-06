@@ -6,7 +6,6 @@ import com.rasterfoundry.datamodel.User
 
 import cats.data.Validated._
 import cats.effect._
-import cats.implicits._
 import doobie.Transactor
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff._

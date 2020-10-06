@@ -6,7 +6,6 @@ import com.rasterfoundry.datamodel.{Organization, Platform, Shape, User}
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
