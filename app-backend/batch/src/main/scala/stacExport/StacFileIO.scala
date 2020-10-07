@@ -11,14 +11,14 @@ import com.amazonaws.services.s3.model.{
   PutObjectRequest,
   PutObjectResult
 }
-import com.azavea.stac4s.{`image/cog`, StacAssetRole, StacItem}
+import com.azavea.stac4s.{`image/cog`, StacAssetRole, StacItem, StacItemAsset}
 import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
 
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
-import com.azavea.stac4s.StacItemAsset
+import java.time.Duration
 
 case class ObjectWithAbsolute[A](absolutePath: String, item: A)
 
@@ -79,21 +79,22 @@ object StacFileIO extends LazyLogging with Config {
       item: StacItem,
       assetLocation: String
   ): IO[StacItem] =
-    IO { s3Client.maybeSignUri(assetLocation) } map { signedUrl =>
-      val dataAssetFallback = StacItemAsset(
-        signedUrl,
-        None,
-        None,
-        Set(StacAssetRole.Data),
-        Some(`image/cog`)
-      )
-      val dataAssetO = item.assets.get("data") map { asset =>
-        asset.copy(href = signedUrl)
-      }
-      item.copy(
-        assets = item.assets ++ Map(
-          "data" -> (dataAssetO getOrElse dataAssetFallback)
+    IO { s3Client.maybeSignUri(assetLocation, duration = Duration.ofDays(7)) } map {
+      signedUrl =>
+        val dataAssetFallback = StacItemAsset(
+          signedUrl,
+          None,
+          None,
+          Set(StacAssetRole.Data),
+          Some(`image/cog`)
         )
-      )
+        val dataAssetO = item.assets.get("data") map { asset =>
+          asset.copy(href = signedUrl)
+        }
+        item.copy(
+          assets = item.assets ++ Map(
+            "data" -> (dataAssetO getOrElse dataAssetFallback)
+          )
+        )
     }
 }
