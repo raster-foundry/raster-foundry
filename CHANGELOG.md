@@ -31,6 +31,7 @@
 
 - Import processing for everything but user geotiffs [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
 - Cogification for Landsat 8 and Sentinel-2 imagery [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
+- Sentinel-2 and Landsat 8 SNS subscription Lambda functions [#5486](https://github.com/raster-foundry/raster-foundry/pull/5486)
 
 ## [1.50.0](https://github.com/raster-foundry/raster-foundry/compare/1.49.0...1.50.0)
 
