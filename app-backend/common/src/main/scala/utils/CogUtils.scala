@@ -34,7 +34,10 @@ class CogUtils[F[_]: Sync](
         ),
         3857
       )
-    })(Sync[F], contextShift)
+    })(Sync[F], contextShift) map { data =>
+      logger.debug(s"Got tiff extent for $uri")
+      data
+    }
 
   def histogramFromUri(
       uri: String,
@@ -56,7 +59,10 @@ class CogUtils[F[_]: Sync](
         .read(rasterSource.extent)
         .map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
 
-    })(Sync[F], contextShift)
+    })(Sync[F], contextShift) map { data =>
+      logger.debug(s"Got histogram for $uri")
+      data
+    }
 
   def getGeoTiffInfo(
       uri: String

@@ -192,7 +192,7 @@ trait SceneRoutes
                 insertedScene <- SceneDao
                   .insert(uningestedScene, user)
                   .transact(xa)
-                _ <- metadataIO(insertedScene.id)
+                _ <- metadataIO(insertedScene.id).start
               } yield insertedScene
 
             case (_, false) =>
