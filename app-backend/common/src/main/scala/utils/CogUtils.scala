@@ -7,7 +7,7 @@ import cats.syntax.functor._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4._
 import geotrellis.raster._
-import geotrellis.raster.gdal.GDALRasterSource
+import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster.resample.ResampleMethod
 import geotrellis.vector._
@@ -22,9 +22,10 @@ class CogUtils[F[_]: Sync](
   val blocker = Blocker.liftExecutionContext(executionContext)
 
   def getTiffExtent(
-      rasterSource: GDALRasterSource
+      uri: String
   ): F[Projected[MultiPolygon]] =
-    Sync[F].delay {
+    blocker.delay({
+      val rasterSource = GeoTiffRasterSource(uri)
       Projected(
         MultiPolygon(
           rasterSource.extent
@@ -33,27 +34,29 @@ class CogUtils[F[_]: Sync](
         ),
         3857
       )
-    }
+    })(Sync[F], contextShift)
 
   def histogramFromUri(
-      rasterSource: GDALRasterSource,
+      uri: String,
       buckets: Int = 80
   ): F[Option[Array[Histogram[Double]]]] =
-    Sync[F].delay {
+    blocker.delay({
+      val rasterSource = GeoTiffRasterSource(uri)
       val largestCellSize = rasterSource.resolutions
         .maxBy(_.resolution)
 
       val resampleTarget = TargetCellSize(largestCellSize)
+
       rasterSource
         .resample(
           resampleTarget,
           ResampleMethod.DEFAULT,
           OverviewStrategy.DEFAULT
         )
-        .read
+        .read(rasterSource.extent)
         .map(_.tile.bands.map(_.histogramDouble(buckets)).toArray)
 
-    }
+    })(Sync[F], contextShift)
 
   def getGeoTiffInfo(
       uri: String
