@@ -369,7 +369,7 @@ object AnnotationProjectDao
               )
             )
         },
-        "Label Item",
+        s"Labels for annotation project ${annotationProject.name}",
         LabelType.Vector,
         annotationProject.projectType match {
           case AnnotationProjectType.Classification =>
@@ -378,7 +378,7 @@ object AnnotationProjectDao
           case AnnotationProjectType.Segmentation =>
             List(LabelTask.Segmentation)
         },
-        List(), // methods
+        List(LabelMethod.Manual), // methods
         List() // overviews
       )
     } yield stacInfo).value
@@ -573,4 +573,16 @@ object AnnotationProjectDao
           addPermission(projectId, acr)
         }
     }
+
+  def getFirstScene(annotationProjectId: UUID): ConnectionIO[Option[Scene]] =
+    for {
+      annotationProject <- getById(annotationProjectId)
+      underlyingProjectO <- annotationProject flatMap { _.projectId } traverse {
+        projectId =>
+          ProjectDao.unsafeGetProjectById(projectId)
+      }
+      scenes <- underlyingProjectO traverse { project =>
+        ProjectLayerScenesDao.listLayerScenesRaw(project.defaultLayerId)
+      }
+    } yield { scenes flatMap { _.headOption } }
 }

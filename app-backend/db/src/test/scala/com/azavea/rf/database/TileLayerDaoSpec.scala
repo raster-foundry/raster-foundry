@@ -5,7 +5,6 @@ import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
 import org.scalatestplus.scalacheck.Checkers
 
 import java.util.UUID
@@ -37,10 +36,14 @@ class TileLayerDaoSpec
           val (insertedLayers, listedReal, listedBogus) =
             listIO.transact(xa).unsafeRunSync
 
-          assert(insertedLayers === listedReal,
-                 "Inserted layers and listed layers for project match")
-          assert(listedBogus === Nil,
-                 "List for a bogus project id returned nothing")
+          assert(
+            insertedLayers === listedReal,
+            "Inserted layers and listed layers for project match"
+          )
+          assert(
+            listedBogus === Nil,
+            "List for a bogus project id returned nothing"
+          )
 
           true
         }

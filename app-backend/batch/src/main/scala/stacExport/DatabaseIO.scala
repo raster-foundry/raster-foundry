@@ -1,13 +1,11 @@
 package com.rasterfoundry.batch.stacExport
 
-import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
 
 import cats.data._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 
 import java.util.UUID
 
@@ -20,9 +18,7 @@ object DatabaseIO {
   ): ConnectionIO[Map[UUID, ExportData]] = {
     val dbIO = for {
       annotationProject <- OptionT(
-        AnnotationProjectDao.query
-          .filter(fr"id = $annotationProjectId")
-          .selectOption
+        AnnotationProjectDao.getById(annotationProjectId)
       )
       project <- OptionT {
         annotationProject.projectId traverse { pid =>

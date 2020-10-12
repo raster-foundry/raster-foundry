@@ -33,7 +33,7 @@ object Utils {
     Some("Layer Collection")
   )
 
-  def getStacCatalog(
+  def getAnnotationProjectStacCatalog(
       export: StacExport,
       stacVersion: String,
       layerIds: List[UUID]

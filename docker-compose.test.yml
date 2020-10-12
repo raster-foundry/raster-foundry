@@ -154,29 +154,8 @@ services:
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
 
-  lambda:
-    build:
-      context: app-lambda
-      dockerfile: Dockerfile.test
-    volumes:
-      - ./app-lambda/:/opt/raster-foundry/app-lambda/
-    working_dir: /opt/raster-foundry/app-lambda/
   shellcheck:
     image: koalaman/shellcheck:stable
     volumes:
       - ./:/usr/local/src
     working_dir: /usr/local/src
-
-  panrec:
-    image: jisantuc/panrec:ba13f43
-    volumes:
-      - ./stubs:/opt/data/out
-      - ./app-backend:/opt/data/app-backend
-    entrypoint: "./panrec"
-    command:
-      - "-i"
-      - "scala"
-      - "-o"
-      - "ts-interface"
-      - "/opt/data/app-backend/datamodel/src/main/scala"
-      - "/opt/data/out"

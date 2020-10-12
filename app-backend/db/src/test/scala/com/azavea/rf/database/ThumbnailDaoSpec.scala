@@ -5,7 +5,7 @@ import com.rasterfoundry.datamodel._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
-import org.scalatest._
+
 import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -24,20 +24,26 @@ class ThumbnailDaoSpec
   test("insert a thumbnail") {
     check {
       forAll {
-        (org: Organization.Create,
-         user: User.Create,
-         platform: Platform,
-         scene: Scene.Create,
-         thumbnail: Thumbnail) =>
+        (
+            org: Organization.Create,
+            user: User.Create,
+            platform: Platform,
+            scene: Scene.Create,
+            thumbnail: Thumbnail
+        ) =>
           {
-            val thumbnailInsertIO = insertUserOrgPlatScene(user,
-                                                           org,
-                                                           platform,
-                                                           scene) flatMap {
-              case (_: Organization,
-                    _: User,
-                    _: Platform,
-                    dbScene: Scene.WithRelated) => {
+            val thumbnailInsertIO = insertUserOrgPlatScene(
+              user,
+              org,
+              platform,
+              scene
+            ) flatMap {
+              case (
+                  _: Organization,
+                  _: User,
+                  _: Platform,
+                  dbScene: Scene.WithRelated
+                  ) => {
                 ThumbnailDao.insert(fixupThumbnail(dbScene, thumbnail))
               }
             }
@@ -56,20 +62,26 @@ class ThumbnailDaoSpec
   test("insert many thumbnails") {
     check {
       forAll {
-        (org: Organization.Create,
-         user: User.Create,
-         platform: Platform,
-         scene: Scene.Create,
-         thumbnails: List[Thumbnail]) =>
+        (
+            org: Organization.Create,
+            user: User.Create,
+            platform: Platform,
+            scene: Scene.Create,
+            thumbnails: List[Thumbnail]
+        ) =>
           {
-            val thumbnailsInsertIO = insertUserOrgPlatScene(user,
-                                                            org,
-                                                            platform,
-                                                            scene) flatMap {
-              case (_: Organization,
-                    _: User,
-                    _: Platform,
-                    dbScene: Scene.WithRelated) => {
+            val thumbnailsInsertIO = insertUserOrgPlatScene(
+              user,
+              org,
+              platform,
+              scene
+            ) flatMap {
+              case (
+                  _: Organization,
+                  _: User,
+                  _: Platform,
+                  dbScene: Scene.WithRelated
+                  ) => {
                 ThumbnailDao.insertMany(thumbnails map {
                   fixupThumbnail(dbScene, _)
                 })
@@ -84,21 +96,27 @@ class ThumbnailDaoSpec
   test("update a thumbnail") {
     check {
       forAll {
-        (org: Organization.Create,
-         user: User.Create,
-         platform: Platform,
-         scene: Scene.Create,
-         insertThumbnail: Thumbnail,
-         updateThumbnail: Thumbnail) =>
+        (
+            org: Organization.Create,
+            user: User.Create,
+            platform: Platform,
+            scene: Scene.Create,
+            insertThumbnail: Thumbnail,
+            updateThumbnail: Thumbnail
+        ) =>
           {
-            val thumbnailInsertIO = insertUserOrgPlatScene(user,
-                                                           org,
-                                                           platform,
-                                                           scene) flatMap {
-              case (_: Organization,
-                    _: User,
-                    _: Platform,
-                    dbScene: Scene.WithRelated) => {
+            val thumbnailInsertIO = insertUserOrgPlatScene(
+              user,
+              org,
+              platform,
+              scene
+            ) flatMap {
+              case (
+                  _: Organization,
+                  _: User,
+                  _: Platform,
+                  dbScene: Scene.WithRelated
+                  ) => {
                 ThumbnailDao.insert(fixupThumbnail(dbScene, insertThumbnail))
               }
             }

@@ -13,11 +13,19 @@
 
 ### Security
 
+## [1.52.0](https://github.com/raster-foundry/raster-foundry/compare/1.51.0...1.52.0)
+
+### Changed
+
+- Moved footprint and histogram calculation on scene post into background process [#5487](https://github.com/raster-foundry/raster-foundry/pull/5487)
+- STAC exports include signed URLs to tiff assets instead of tiff assets [#5487](https://github.com/raster-foundry/raster-foundry/pull/5487)
+
 ## [1.51.0](https://github.com/raster-foundry/raster-foundry/compare/1.50.0...1.51.0)
 
 ### Added
 
 - Added `review_status` to tasks, added a DB trigger to update this field when children task reviews change [#5478](https://github.com/raster-foundry/raster-foundry/pull/5478)
+- Campaigns can be exported [#5482](https://github.com/raster-foundry/raster-foundry/pull/5482)
 
 ### Changed
 
@@ -30,6 +38,7 @@
 
 - Import processing for everything but user geotiffs [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
 - Cogification for Landsat 8 and Sentinel-2 imagery [#5477](https://github.com/raster-foundry/raster-foundry/pull/5477)
+- Sentinel-2 and Landsat 8 SNS subscription Lambda functions [#5486](https://github.com/raster-foundry/raster-foundry/pull/5486)
 
 ## [1.50.0](https://github.com/raster-foundry/raster-foundry/compare/1.49.0...1.50.0)
 

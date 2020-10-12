@@ -16,6 +16,7 @@ import doobie.implicits._
 import doobie.implicits.javasql._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
+import geotrellis.vector.MultiPolygon
 import geotrellis.vector.{Geometry, Polygon, Projected}
 import io.circe.syntax._
 import scalacache.CatsEffect.modes._
@@ -419,4 +420,22 @@ object SceneDao
       .filter(objectId)
       .selectOption
       .map(AuthResult.fromOption _)
+
+  def markIngested(sceneId: UUID): ConnectionIO[Unit] =
+    fr"update scenes set ingest_status = 'INGESTED' where id = $sceneId".update.run.void
+
+  def updateFootprints(
+      sceneId: UUID,
+      dataFootprint: Projected[MultiPolygon],
+      tileFootprint: Projected[MultiPolygon],
+      user: User
+  ) =
+    for {
+      scene <- unsafeGetSceneById(sceneId)
+      updated = scene.copy(
+        dataFootprint = scene.dataFootprint orElse Some(dataFootprint),
+        tileFootprint = scene.tileFootprint orElse Some(tileFootprint)
+      )
+      _ <- update(updated, sceneId, user)
+    } yield ()
 }
