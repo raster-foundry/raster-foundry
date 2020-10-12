@@ -1,5 +1,6 @@
 package com.rasterfoundry.batch.stacExport
 
+import com.rasterfoundry.datamodel.TaskStatus
 import com.rasterfoundry.database._
 
 import cats.data._
@@ -82,7 +83,8 @@ object DatabaseIO {
               tasks,
               tasksGeomExtent,
               annotations,
-              labelItemPropsThin
+              labelItemPropsThin,
+              taskStatuses map { TaskStatus.fromString }
             )
           )
         }

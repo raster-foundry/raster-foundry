@@ -11,5 +11,6 @@ case class ExportData(
     tasks: List[Task],
     taskGeomExtent: UnionedGeomExtent,
     annotations: Json,
-    labelItemExtension: LabelItemExtension
+    labelItemExtension: LabelItemExtension,
+    taskStatuses: List[TaskStatus]
 )
