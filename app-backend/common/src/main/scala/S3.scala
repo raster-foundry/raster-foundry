@@ -104,13 +104,14 @@ final case class S3(
 
   def maybeSignUri(
       uriString: String,
-      whitelist: List[String] = List()
+      whitelist: List[String] = List(),
+      duration: Duration = Duration.ofDays(1)
   ): String = {
     val whitelisted =
       whitelist.map(uriString.startsWith(_)).foldLeft(false)(_ || _)
     if (whitelisted) {
       val s3Uri = new AmazonS3URI(URLDecoder.decode(uriString, "utf-8"))
-      getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
+      getSignedUrl(s3Uri.getBucket, s3Uri.getKey, duration).toString
     } else uriString
   }
 

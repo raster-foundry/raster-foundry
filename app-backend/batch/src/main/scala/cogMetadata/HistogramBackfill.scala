@@ -13,7 +13,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.syntax._
@@ -44,7 +43,8 @@ object HistogramBackfill
 
   def getScenesToBackfill(
       implicit
-      xa: Transactor[IO]): IO[List[List[CogTuple]]] = {
+      xa: Transactor[IO]
+  ): IO[List[List[CogTuple]]] = {
     logger.info("Finding COG scenes without histograms in layer_attributes")
     fr"""select
            id, ingest_location
@@ -67,7 +67,8 @@ object HistogramBackfill
   @SuppressWarnings(Array("OptionGet"))
   def insertHistogramLayerAttribute(cogTuple: CogTuple)(
       implicit
-      xa: Transactor[IO]): IO[Option[LayerAttribute]] = {
+      xa: Transactor[IO]
+  ): IO[Option[LayerAttribute]] = {
     val histogram = getSceneHistogram(cogTuple._2.get)
     histogram flatMap { hist =>
       LayerAttributeDao
@@ -91,10 +92,9 @@ object HistogramBackfill
       ingestLocation: String
   ): IO[Option[Array[Histogram[Double]]]] = {
     logger.info(s"Fetching histogram for scene at $ingestLocation")
-    val rasterSource = GDALRasterSource(
+    cogUtils.histogramFromUri(
       URLDecoder.decode(ingestLocation, UTF_8.toString())
-    )
-    cogUtils.histogramFromUri(rasterSource) map {
+    ) map {
       case hist @ Some(_) => hist
       case None =>
         logger.info(s"Fetching histogram for scene at $ingestLocation failed")

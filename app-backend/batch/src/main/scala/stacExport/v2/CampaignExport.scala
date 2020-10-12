@@ -1,5 +1,6 @@
 package com.rasterfoundry.batch.stacExport.v2
 
+import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.{
   AnnotationLabelDao,
   AnnotationProjectDao,
@@ -24,7 +25,6 @@ import com.azavea.stac4s.syntax._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.Transactor
 import doobie.implicits._
-import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.vector.{Extent, MultiPolygon, Projected}
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
@@ -34,7 +34,7 @@ import monocle.macros.GenLens
 
 import scala.concurrent.ExecutionContext
 
-import java.time.Instant
+import java.time.{Duration, Instant}
 import java.util.UUID
 import java.util.concurrent.Executors
 
@@ -112,6 +112,7 @@ case class ExportData private (
 
   val labelCollectionId = s"labels-${UUID.randomUUID}"
   val sceneCollectionId = s"scenes-${UUID.randomUUID}"
+  val s3Client = S3()
 
   private def encodableToFile[T: Encoder](
       value: T,
@@ -189,19 +190,14 @@ case class ExportData private (
     def withAsset(stacItem: StacItem): IO[StacItem] = {
       stacItem.assets.get("data") match {
         case Some(asset) =>
-          IO { GeoTiffRasterSource(asset.href) } flatMap { rs =>
-            val outputPath =
-              file.path.resolve(s"images/data/${stacItem.id}.tiff")
-            IO { File(outputPath.getParent).createIfNotExists(true, true) } map {
-              _ =>
-                rs.tiff.write(outputPath.toString)
-            }
-          } map { _ =>
+          IO {
+            s3Client.maybeSignUri(asset.href, duration = Duration.ofDays(7))
+          } map { signedUrl =>
             (optics.itemAssetLens.modify(
               assets =>
                 assets ++ Map(
                   "data" -> optics.assetHrefLens
-                    .modify(_ => s"./data/${stacItem.id}.tiff")(asset)
+                    .modify(_ => signedUrl)(asset)
               )
             ))(stacItem)
           }

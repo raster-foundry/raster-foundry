@@ -153,8 +153,13 @@ final case class WriteStacCatalog(
       )
       localSceneItemResults <- sceneItems.parTraverse {
         case SceneItemWithAbsolute(item, ingestLocation) => {
-          StacFileIO.writeObjectToFilesystem(tempDir, item) <*
-            StacFileIO.getObject(tempDir, item, ingestLocation)
+          StacFileIO.signTiffAsset(item.item, ingestLocation) flatMap {
+            withSignedUrl =>
+              StacFileIO.writeObjectToFilesystem(
+                tempDir,
+                item.copy(item = withSignedUrl)
+              )
+          }
         }
       }
       localSceneCollectionResults <- StacFileIO.writeObjectToFilesystem(
