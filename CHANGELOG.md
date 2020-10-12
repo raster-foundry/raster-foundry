@@ -5,9 +5,6 @@
 
 ### Changed
 
-- Moved footprint and histogram calculation on scene post into background process [#5487](https://github.com/raster-foundry/raster-foundry/pull/5487)
-- STAC exports include signed URLs to tiff assets instead of tiff assets [#5487](https://github.com/raster-foundry/raster-foundry/pull/5487)
-
 ### Deprecated
 
 ### Removed
@@ -15,6 +12,13 @@
 ### Fixed
 
 ### Security
+
+## [1.52.0](https://github.com/raster-foundry/raster-foundry/compare/1.51.0...1.52.0)
+
+### Changed
+
+- Moved footprint and histogram calculation on scene post into background process [#5487](https://github.com/raster-foundry/raster-foundry/pull/5487)
+- STAC exports include signed URLs to tiff assets instead of tiff assets [#5487](https://github.com/raster-foundry/raster-foundry/pull/5487)
 
 ## [1.51.0](https://github.com/raster-foundry/raster-foundry/compare/1.50.0...1.51.0)
 
