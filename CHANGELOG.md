@@ -3,6 +3,8 @@
 
 ### Added
 
+- STAC label items now include the task statuses in a `groundwork:taskStatuses` property [#5490](https://github.com/raster-foundry/raster-foundry/pull/5490)
+
 ### Changed
 
 ### Deprecated
