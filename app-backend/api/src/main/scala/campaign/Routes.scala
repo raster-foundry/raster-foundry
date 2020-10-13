@@ -108,6 +108,12 @@ trait CampaignRoutes
               listCampaignUserActions(campaignId)
             }
           }
+        } ~ pathPrefix("tasks") {
+          pathEndOrSingleSlash {
+            get {
+              listCampaignTasks(campaignId)
+            }
+          }
         }
       }
   }
@@ -439,4 +445,41 @@ trait CampaignRoutes
         }
       }
   }
+
+  def listCampaignTasks(campaignId: UUID): Route =
+    authenticate { user =>
+      AuthorizeScope(ScopedAction(Domain.Campaigns, Action.Read, None), user) {
+        authorizeAuthResultAsync(
+          CampaignDao.authorzied(
+            user,
+            ObjectType.Campaign,
+            campaignId,
+            ActionType.View
+          )
+        ).transact(xa).unsafeToFuture
+      } {
+        (withPagination & taskQueryParameters) { (page, taskParams) =>
+          complete {
+            (
+              taskParams.format match {
+                // TODO: need to make a TaskDao method to list without an annotation project id and replcae methods below
+                case Some(format) if format.toUpperCase == "SUMMARY" =>
+                  TaskDao.listTaskGeomByStatus(
+                    user,
+                    projectId,
+                    taskParams.status
+                  )
+                case _ =>
+                  TaskDao
+                    .listTasks(
+                      taskParams,
+                      projectId,
+                      page
+                    )
+              }
+            ).transact(xa).unsafeToFuture
+          }
+        }
+      }
+    }
 }
