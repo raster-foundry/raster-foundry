@@ -1,7 +1,7 @@
 package com.rasterfoundry.batch.stacExport
 
-import com.rasterfoundry.datamodel.TaskStatus
 import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel.TaskStatus
 
 import cats.data._
 import cats.implicits._
