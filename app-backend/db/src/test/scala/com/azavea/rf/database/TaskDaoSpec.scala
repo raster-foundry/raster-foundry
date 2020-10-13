@@ -1677,4 +1677,102 @@ class TaskDaoSpec
       }
     }
   }
+
+  test("list tasks for a campaign") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            tasksTup1: (
+                Campaign.Create,
+                AnnotationProject.Create,
+                Task.TaskFeatureCollectionCreate
+            ),
+            tasksTup2: (
+                Campaign.Create,
+                AnnotationProject.Create,
+                Task.TaskFeatureCollectionCreate
+            )
+        ) =>
+          {
+            val (campaignCreate1, annotProjCreate1, tfc1) = tasksTup1
+            val (campaignCreate2, annotProjCreate2, tfc2) = tasksTup2
+            val listIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbCampaign1 <- CampaignDao.insertCampaign(
+                campaignCreate1.copy(parentCampaignId = None),
+                dbUser
+              )
+              dbAnnotationProject1 <- AnnotationProjectDao.insert(
+                annotProjCreate1.copy(campaignId = Some(dbCampaign1.id)),
+                dbUser
+              )
+              insertedTasks1 <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(tfc1, dbAnnotationProject1, None),
+                dbUser
+              )
+              dbCampaign2 <- CampaignDao.insertCampaign(
+                campaignCreate2.copy(parentCampaignId = None),
+                dbUser
+              )
+              dbAnnotationProject2 <- AnnotationProjectDao.insert(
+                annotProjCreate2.copy(campaignId = Some(dbCampaign2.id)),
+                dbUser
+              )
+              insertedTasks2 <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(tfc2, dbAnnotationProject2, None),
+                dbUser
+              )
+              listedTasks1 <- TaskDao.listCampaignTasks(
+                TaskQueryParameters(),
+                dbCampaign1.id,
+                PageRequest(0, 10, Map.empty)
+              )
+              listedTasks2 <- TaskDao.listCampaignTasks(
+                TaskQueryParameters(),
+                dbCampaign2.id,
+                PageRequest(0, 10, Map.empty)
+              )
+            } yield (insertedTasks1, insertedTasks2, listedTasks1, listedTasks2)
+
+            val (inserted1, inserted2, listed1, listed2) =
+              listIO.transact(xa).unsafeRunSync
+
+            assert(
+              inserted1.features
+                .map(_.id)
+                .toSet
+                .intersect(listed1.features.map(_.id).toSet) == listed1.features
+                .map(_.id)
+                .toSet,
+              "All tasks listed for campaign 1 were inserted into campaign 1"
+            )
+            assert(
+              inserted1.features
+                .map(_.id)
+                .toSet
+                .intersect(listed2.features.map(_.id).toSet) == Set.empty,
+              "No tasks inserted for campaign 1 were listed for campaign 2"
+            )
+            assert(
+              inserted2.features
+                .map(_.id)
+                .toSet
+                .intersect(listed2.features.map(_.id).toSet) == listed2.features
+                .map(_.id)
+                .toSet,
+              "All tasks listed for campaign 1 were inserted into campaign 2"
+            )
+            assert(
+              inserted2.features
+                .map(_.id)
+                .toSet
+                .intersect(listed1.features.map(_.id).toSet) == Set.empty,
+              "No tasks inserted for campaign 2 were listed for campaign 1"
+            )
+            true
+          }
+      }
+    }
+  }
 }

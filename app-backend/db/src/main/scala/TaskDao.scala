@@ -52,6 +52,13 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       "tasks left join task_actions on tasks.id = task_actions.task_id"
     )
 
+  val annotationProjectJoinTableF =
+    Fragment.const(
+      """tasks left join task_actions on tasks.id = task_actions.task_id join annotation_projects
+         join annotation_projects on tasks.annotation_project_id = annotation_projects.id
+        """
+    )
+
   val selectF: Fragment =
     fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ tableF
 
@@ -181,6 +188,59 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       .filter(queryParams)
       .filter(fr"annotation_project_id = $annotationProjectId")
       .filter(fr"parent_task_id IS NULL")
+
+  def taskForCampaignQB(
+      queryParams: TaskQueryParameters,
+      campaignId: UUID
+  ): Dao.QueryBuilder[Task] =
+    Dao
+      .QueryBuilder[Task](
+        listF,
+        annotationProjectJoinTableF,
+        Nil,
+        Some(fr"SELECT count(distinct id) FROM" ++ annotationProjectJoinTableF)
+      )
+      .filter(queryParams)
+      .filter(fr"campaign_id = $campaignId")
+
+  def listCampaignTasks(
+      queryParams: TaskQueryParameters,
+      campaignId: UUID,
+      pageRequest: PageRequest
+  ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] = {
+    val actionFiltered = queryParams.actionUser.nonEmpty ||
+      queryParams.actionType.nonEmpty ||
+      queryParams.actionStartTime.nonEmpty ||
+      queryParams.actionEndTime.nonEmpty ||
+      queryParams.actionMinCount.nonEmpty ||
+      queryParams.actionMaxCount.nonEmpty
+    for {
+      paginatedResponse <- actionFiltered match {
+        case true =>
+          tasksForAnnotationProjectQB(
+            queryParams,
+            campaignId
+          ).filter(fr"parent_task_id IS NULL")
+            .page(pageRequest)
+        case _ =>
+          tasksForAnnotationProjectQB(queryParams, campaignId)
+            .filter(fr"parent_task_id IS NULL")
+            .page(pageRequest)
+      }
+      withActions <- paginatedResponse.results.toList traverse { task =>
+        unsafeGetActionsForTask(task)
+      }
+    } yield {
+      PaginatedGeoJsonResponse(
+        paginatedResponse.count,
+        paginatedResponse.hasPrevious,
+        paginatedResponse.hasNext,
+        paginatedResponse.page,
+        paginatedResponse.pageSize,
+        withActions
+      )
+    }
+  }
 
   def listTasks(
       queryParams: TaskQueryParameters,
