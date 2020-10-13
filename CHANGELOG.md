@@ -11,6 +11,8 @@
 
 ### Fixed
 
+- Fixed a URL decoding bug that caused imagery to be unavailable after upload processing [#5492](https://github.com/raster-foundry/raster-foundry/pull/5492)
+
 ### Security
 
 ## [1.52.0](https://github.com/raster-foundry/raster-foundry/compare/1.51.0...1.52.0)
