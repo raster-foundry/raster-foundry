@@ -34,7 +34,7 @@ trait QueryParameterDeserializers {
     }
 
   implicit val deserializerAnnotationProjectType
-    : Unmarshaller[String, AnnotationProjectType] =
+      : Unmarshaller[String, AnnotationProjectType] =
     Unmarshaller.strict[String, AnnotationProjectType] { s =>
       AnnotationProjectType.fromString(s)
     }
@@ -187,7 +187,6 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionEndTime.as(deserializerTimestamp).?,
       'actionMinCount.as[Int].?,
       'actionMaxCount.as[Int].?,
-      'format.as[String].?,
       'taskType.as(deserializerTaskType).?
     ).as(TaskQueryParameters.apply _)
 
