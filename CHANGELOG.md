@@ -3,6 +3,8 @@
 
 ### Added
 
+- Tasks can be listed by campaign [#5494](https://github.com/raster-foundry/raster-foundry/pull/5494)
+
 ### Changed
 
 ### Deprecated
