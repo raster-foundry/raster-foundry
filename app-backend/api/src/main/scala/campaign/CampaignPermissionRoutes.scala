@@ -5,6 +5,7 @@ import com.rasterfoundry.api.user.Auth0Service
 import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
+
 import akka.http.scaladsl.server._
 import cats.data.OptionT
 import cats.effect.{ContextShift, IO}

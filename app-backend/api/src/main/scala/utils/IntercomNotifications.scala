@@ -1,17 +1,18 @@
 package com.rasterfoundry.api.utils
 
+import com.rasterfoundry.api.user.{Auth0Service, PasswordResetTicket}
+import com.rasterfoundry.database.notification.Notify
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.notification.email.Model.{HtmlBody, PlainBody}
+import com.rasterfoundry.notification.intercom.LiveIntercomNotifier
+import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
 
 import cats.effect.{Async, ContextShift, IO}
 import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
-import com.rasterfoundry.api.user.{Auth0Service, PasswordResetTicket}
-import com.rasterfoundry.notification.email.Model.{HtmlBody, PlainBody}
 
 import scala.concurrent.Future
+
 import java.{util => ju}
-import com.rasterfoundry.notification.intercom.LiveIntercomNotifier
-import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
-import com.rasterfoundry.database.notification.Notify
 
 trait IntercomNotifications extends Config {
   implicit val contextShift: ContextShift[IO]
