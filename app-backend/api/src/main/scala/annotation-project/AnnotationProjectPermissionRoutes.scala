@@ -15,11 +15,11 @@ import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.syntax._
+import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import scala.concurrent.Future
 
 import java.util.UUID
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 trait AnnotationProjectPermissionRoutes
     extends CommonHandlers
