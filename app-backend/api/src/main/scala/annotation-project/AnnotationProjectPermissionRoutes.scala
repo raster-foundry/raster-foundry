@@ -2,7 +2,7 @@ package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.user.Auth0Service
-import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
+import com.rasterfoundry.api.utils.IntercomNotifications
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
@@ -24,7 +24,6 @@ trait AnnotationProjectPermissionRoutes
     extends CommonHandlers
     with Directives
     with Authentication
-    with Config
     with IntercomNotifications {
 
   val xa: Transactor[IO]

@@ -112,19 +112,19 @@ trait CampaignRoutes
           pathEndOrSingleSlash {
             get {
               listCampaignTasks(campaignId)
-            } ~ pathPrefix("share") {
-              pathEndOrSingleSlash {
-                get {
-                  listCampaignShares(campaignId)
-                } ~ post {
-                  shareCampaign(campaignId)
-                }
-              } ~ pathPrefix(Segment) { deleteId =>
-                pathEndOrSingleSlash {
-                  delete {
-                    deleteCampaignShare(campaignId, deleteId)
-                  }
-                }
+            }
+          }
+        } ~ pathPrefix("share") {
+          pathEndOrSingleSlash {
+            get {
+              listCampaignShares(campaignId)
+            } ~ post {
+              shareCampaign(campaignId)
+            }
+          } ~ pathPrefix(Segment) { deleteId =>
+            pathEndOrSingleSlash {
+              delete {
+                deleteCampaignShare(campaignId, deleteId)
               }
             }
           }

@@ -2,7 +2,7 @@ package com.rasterfoundry.api.campaign
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.user.Auth0Service
-import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
+import com.rasterfoundry.api.utils.IntercomNotifications
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
@@ -24,7 +24,6 @@ trait CampaignPermissionRoutes
     extends CommonHandlers
     with Directives
     with Authentication
-    with Config
     with IntercomNotifications {
 
   implicit val contextShift: ContextShift[IO]
@@ -229,10 +228,10 @@ trait CampaignPermissionRoutes
       authorizeScope(ScopedAction(Domain.Campaigns, Action.Read, None), user) {
         if (user.id == deleteId) {
           authorizeAuthResultAsync {
-            AnnotationProjectDao
+            CampaignDao
               .authorized(
                 user,
-                ObjectType.AnnotationProject,
+                ObjectType.Campaign,
                 campaignId,
                 ActionType.View
               )
@@ -241,10 +240,10 @@ trait CampaignPermissionRoutes
           }
         } else {
           authorizeAuthResultAsync {
-            AnnotationProjectDao
+            CampaignDao
               .authorized(
                 user,
-                ObjectType.AnnotationProject,
+                ObjectType.Campaign,
                 campaignId,
                 ActionType.Edit
               )
