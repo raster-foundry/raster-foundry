@@ -2,7 +2,7 @@ package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.user.Auth0Service
-import com.rasterfoundry.api.utils.IntercomNotifications
+import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
@@ -19,16 +19,22 @@ import io.circe.syntax._
 import scala.concurrent.Future
 
 import java.util.UUID
+import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 trait AnnotationProjectPermissionRoutes
     extends CommonHandlers
     with Directives
     with Authentication
-    with IntercomNotifications {
+    with Config {
 
   val xa: Transactor[IO]
 
-  implicit val contextShift: ContextShift[IO]
+  implicit def contextShift: ContextShift[IO]
+
+  val notifierIOAnnotationProject = AsyncHttpClientCatsBackend[IO]() map {
+    backend =>
+      new IntercomNotifications(backend)
+  }
 
   def listPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeScope(
@@ -102,7 +108,14 @@ trait AnnotationProjectPermissionRoutes
                 // the isValidPermission check
                 UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                   sharedUser =>
-                    shareNotify(sharedUser, user, annotationProject, "project")
+                    notifierIOAnnotationProject flatMap { notifier =>
+                      notifier.shareNotify(
+                        sharedUser,
+                        user,
+                        annotationProject,
+                        "project"
+                      )
+                    }
                 }
               })
             })).unsafeToFuture
@@ -148,12 +161,14 @@ trait AnnotationProjectPermissionRoutes
                 acr.getUserId traverse { userId =>
                   UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                     sharedUser =>
-                      shareNotify(
-                        sharedUser,
-                        user,
-                        annotationProject,
-                        "project"
-                      )
+                      notifierIOAnnotationProject flatMap { notifier =>
+                        notifier.shareNotify(
+                          sharedUser,
+                          user,
+                          annotationProject,
+                          "project"
+                        )
+                      }
                   }
                 }
               }
@@ -326,15 +341,17 @@ trait AnnotationProjectPermissionRoutes
                           )
                         } yield user
                       }).transact(xa).unsafeToFuture
+                      notifier <- notifierIOAnnotationProject.unsafeToFuture
                       acrs = newUserOpt map { newUser =>
-                        getDefaultShare(newUser, userByEmail.actionType)
+                        notifier
+                          .getDefaultShare(newUser, userByEmail.actionType)
                       } getOrElse Nil
                       _ <- (newUserOpt, annotationProjectO).tupled traverse {
                         case (newUser, annotationProject) =>
                           // if silent param is not provided, we notify
                           val isSilent = userByEmail.silent.getOrElse(false)
                           if (!isSilent) {
-                            shareNotifyNewUser(
+                            notifier.shareNotifyNewUser(
                               managementToken,
                               user,
                               userByEmail.email,
@@ -358,38 +375,45 @@ trait AnnotationProjectPermissionRoutes
                     } yield dbAcrs
                   case existingUsers =>
                     existingUsers traverse { existingUser =>
-                      val acrs =
-                        getDefaultShare(existingUser, userByEmail.actionType)
-                      Auth0Service
-                        .addUserMetadata(
-                          existingUser.id,
-                          managementToken,
-                          Map("app_metadata" -> Map("annotateApp" -> true)).asJson
-                        ) *>
-                        (AnnotationProjectDao
-                          .handleSharedPermissions(
-                            projectId,
-                            existingUser.id,
-                            acrs,
-                            userByEmail.actionType
-                          )
-                          .transact(xa) <* (
-                          // if silent param is not provided, we notify
-                          userByEmail.silent match {
-                            case Some(false) | None =>
-                              AnnotationProjectDao
-                                .unsafeGetById(projectId)
-                                .transact(xa) flatMap { annotationProject =>
-                                shareNotify(
-                                  existingUser,
-                                  user,
-                                  annotationProject,
-                                  "project"
-                                )
+                      notifierIOAnnotationProject.unsafeToFuture flatMap {
+                        notifier =>
+                          val acrs =
+                            notifier.getDefaultShare(
+                              existingUser,
+                              userByEmail.actionType
+                            )
+                          Auth0Service
+                            .addUserMetadata(
+                              existingUser.id,
+                              managementToken,
+                              Map("app_metadata" -> Map("annotateApp" -> true)).asJson
+                            ) *>
+                            (AnnotationProjectDao
+                              .handleSharedPermissions(
+                                projectId,
+                                existingUser.id,
+                                acrs,
+                                userByEmail.actionType
+                              )
+                              .transact(xa) <* (
+                              // if silent param is not provided, we notify
+                              userByEmail.silent match {
+                                case Some(false) | None =>
+                                  AnnotationProjectDao
+                                    .unsafeGetById(projectId)
+                                    .transact(xa) flatMap { annotationProject =>
+                                    notifier.shareNotify(
+                                      existingUser,
+                                      user,
+                                      annotationProject,
+                                      "project"
+                                    )
+                                  }
+                                case _ => IO.pure(())
                               }
-                            case _ => IO.pure(())
-                          }
-                        )).unsafeToFuture
+                            )).unsafeToFuture
+                      }
+
                     } map { _.flatten }
                 }
               } yield permissions)

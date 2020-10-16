@@ -2,7 +2,7 @@ package com.rasterfoundry.api.campaign
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.user.Auth0Service
-import com.rasterfoundry.api.utils.IntercomNotifications
+import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
@@ -19,14 +19,19 @@ import io.circe.syntax._
 import scala.concurrent.Future
 
 import java.util.UUID
+import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 trait CampaignPermissionRoutes
     extends CommonHandlers
     with Directives
     with Authentication
-    with IntercomNotifications {
+    with Config {
 
-  implicit val contextShift: ContextShift[IO]
+  implicit def contextShift: ContextShift[IO]
+
+  val notifierIOCampaign = AsyncHttpClientCatsBackend[IO]() map { backend =>
+    new IntercomNotifications(backend)
+  }
 
   val xa: Transactor[IO]
 
@@ -101,12 +106,14 @@ trait CampaignPermissionRoutes
                   distinctUserIds traverse { userId =>
                     UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                       sharedUser =>
-                        shareNotify(
-                          sharedUser,
-                          user,
-                          campaign,
-                          "campaign"
-                        )
+                        notifierIOCampaign flatMap { notifier =>
+                          notifier.shareNotify(
+                            sharedUser,
+                            user,
+                            campaign,
+                            "campaign"
+                          )
+                        }
                     }
 
                   }
@@ -154,12 +161,14 @@ trait CampaignPermissionRoutes
                 acr.getUserId traverse { userId =>
                   UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                     sharedUser =>
-                      shareNotify(
-                        sharedUser,
-                        user,
-                        campaign,
-                        "campaign"
-                      )
+                      notifierIOCampaign flatMap { notifier =>
+                        notifier.shareNotify(
+                          sharedUser,
+                          user,
+                          campaign,
+                          "campaign"
+                        )
+                      }
                   }
                 }
               }
@@ -333,15 +342,19 @@ trait CampaignPermissionRoutes
                             )
                           } yield user
                         }).transact(xa).unsafeToFuture
+                        notifier <- notifierIOCampaign.unsafeToFuture
                         acrs = newUserOpt map { newUser =>
-                          getDefaultShare(newUser, userByEmail.actionType)
+                          notifier.getDefaultShare(
+                            newUser,
+                            userByEmail.actionType
+                          )
                         } getOrElse Nil
                         _ <- (newUserOpt, campaignO).tupled traverse {
                           case (newUser, campaign) =>
                             // if silent param is not provided, we notify
                             val isSilent = userByEmail.silent.getOrElse(false)
                             if (!isSilent) {
-                              shareNotifyNewUser(
+                              notifier.shareNotifyNewUser(
                                 managementToken,
                                 user,
                                 userByEmail.email,
@@ -365,38 +378,44 @@ trait CampaignPermissionRoutes
                       } yield dbAcrs
                     case existingUsers =>
                       existingUsers traverse { existingUser =>
-                        val acrs =
-                          getDefaultShare(existingUser, userByEmail.actionType)
-                        Auth0Service
-                          .addUserMetadata(
-                            existingUser.id,
-                            managementToken,
-                            Map("app_metadata" -> Map("annotateApp" -> true)).asJson
-                          ) *>
-                          (CampaignDao
-                            .handleSharedPermissions(
-                              campaignId,
-                              existingUser.id,
-                              acrs,
+                        notifierIOCampaign.unsafeToFuture flatMap { notifier =>
+                          val acrs =
+                            notifier.getDefaultShare(
+                              existingUser,
                               userByEmail.actionType
                             )
-                            .transact(xa) <* (
-                            // if silent param is not provided, we notify
-                            userByEmail.silent match {
-                              case Some(false) | None =>
-                                CampaignDao
-                                  .unsafeGetCampaignById(campaignId)
-                                  .transact(xa) flatMap { campaign =>
-                                  shareNotify(
-                                    existingUser,
-                                    user,
-                                    campaign,
-                                    "campaign"
-                                  )
-                                }
-                              case _ => IO.pure(())
-                            }
-                          )).unsafeToFuture
+                          Auth0Service
+                            .addUserMetadata(
+                              existingUser.id,
+                              managementToken,
+                              Map("app_metadata" -> Map("annotateApp" -> true)).asJson
+                            ) *>
+                            (CampaignDao
+                              .handleSharedPermissions(
+                                campaignId,
+                                existingUser.id,
+                                acrs,
+                                userByEmail.actionType
+                              )
+                              .transact(xa) <* (
+                              // if silent param is not provided, we notify
+                              userByEmail.silent match {
+                                case Some(false) | None =>
+                                  CampaignDao
+                                    .unsafeGetCampaignById(campaignId)
+                                    .transact(xa) flatMap { campaign =>
+                                    notifier.shareNotify(
+                                      existingUser,
+                                      user,
+                                      campaign,
+                                      "campaign"
+                                    )
+                                  }
+                                case _ => IO.pure(())
+                              }
+                            )).unsafeToFuture
+                        }
+
                       } map { _.flatten }
                   }
                 } yield permissions

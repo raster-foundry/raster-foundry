@@ -7,20 +7,25 @@ import com.rasterfoundry.notification.email.Model.{HtmlBody, PlainBody}
 import com.rasterfoundry.notification.intercom.LiveIntercomNotifier
 import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
 
-import cats.effect.{Async, ContextShift, IO}
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
+import cats.effect.{ContextShift, IO}
+import sttp.client.SttpBackend
+import sttp.client.asynchttpclient.WebSocketHandler
 
 import scala.concurrent.Future
 
 import java.{util => ju}
 
-trait IntercomNotifications extends Config {
-  implicit val contextShift: ContextShift[IO]
+class IntercomNotifications(
+    backend: SttpBackend[
+      IO,
+      Nothing,
+      WebSocketHandler
+    ]
+)(
+    implicit contextShift: ContextShift[IO]
+) extends Config {
 
-  private val intercomNotifierIO = for {
-    backend <- getBackend
-    notifier = new LiveIntercomNotifier[IO](backend)
-  } yield notifier
+  private val intercomNotifier = new LiveIntercomNotifier[IO](backend)
 
   def getDefaultShare(
       user: User,
@@ -67,32 +72,23 @@ trait IntercomNotifications extends Config {
       sharingUser.name
     }
 
-  val getBackend = for {
-    backendRef <- Async.memoize {
-      AsyncHttpClientCatsBackend[IO]()
-    }
-    backend <- backendRef
-  } yield backend
-
   def shareNotify[T <: { val id: ju.UUID }](
       sharedUser: User,
       sharingUser: User,
       value: T,
       valueType: String
   ): IO[Either[Throwable, Unit]] =
-    intercomNotifierIO flatMap { intercomNotifier =>
-      intercomNotifier
-        .notifyUser(
-          intercomToken,
-          intercomAdminId,
-          ExternalId(sharedUser.id),
-          Message(s"""
+    intercomNotifier
+      .notifyUser(
+        intercomToken,
+        intercomAdminId,
+        ExternalId(sharedUser.id),
+        Message(s"""
         | ${getSharer(sharingUser)} has shared a $valueType with you!
         | ${groundworkUrlBase}/app/${valueType}s/${value.id}/overview
         | """.trim.stripMargin)
-        )
-        .attempt
-    }
+      )
+      .attempt
 
   def shareNotifyNewUser[T <: { val name: String }](
       bearerToken: ManagementBearerToken,

@@ -42,7 +42,7 @@ trait SceneRoutes
 
   implicit val ec: ExecutionContext
 
-  implicit val contextShift: ContextShift[IO]
+  implicit def contextShift: ContextShift[IO]
 
   val rasterIOContext = ExecutionContext.fromExecutor(
     Executors.newFixedThreadPool(
