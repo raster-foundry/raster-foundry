@@ -753,6 +753,13 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
              status = ${TaskStatus.ValidationInProgress: TaskStatus})"""
         )
         .list
+      _ <- (stuckUnlockedTasks map { _.annotationProjectId }).toNel traverse {
+        projectIdsList =>
+          val projectIdsSet = projectIdsList.toNes
+          warn(
+            s"Annotation project IDs for stuck in progress but unlocked tasks: $projectIdsSet"
+          )
+      }
       _ <- (stuckLockedTasks ++ stuckUnlockedTasks) traverse { task =>
         regressTaskStatus(task.id, task.status) flatMap {
           case (newStatus, newNote) =>
