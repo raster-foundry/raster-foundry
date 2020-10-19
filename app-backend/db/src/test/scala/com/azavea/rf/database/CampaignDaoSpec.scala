@@ -241,7 +241,7 @@ class CampaignDaoSpec
                 child,
                 None,
                 copyResourceLink,
-                xa = xa
+                xa = xant
               )
             }
             insertedCampaignAfterCopy <- CampaignDao.unsafeGetCampaignById(
@@ -337,7 +337,7 @@ class CampaignDaoSpec
                 insertedCampaign.id,
                 user,
                 Some(clone.tags),
-                xa = xa
+                xa = xant
               )
             projectCopy <- AnnotationProjectDao.listByCampaign(campaignCopy.id)
           } yield {
@@ -514,7 +514,7 @@ class CampaignDaoSpec
                 parent
               )
             _ <- children traverse { child =>
-              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xa)
+              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xant)
             }
             cloneOwners <- CampaignDao.getCloneOwners(insertedCampaign.id)
           } yield cloneOwners
@@ -573,7 +573,7 @@ class CampaignDaoSpec
               insertedProject.id
             )
             campaignCopies <- children traverse { child =>
-              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xa)
+              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xant)
             }
             projectCopies <- (campaignCopies traverse { c =>
               AnnotationProjectDao.listByCampaign(c.id)
@@ -672,7 +672,7 @@ class CampaignDaoSpec
               insertedProject.id
             )
             campaignCopies <- children traverse { child =>
-              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xa)
+              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xant)
             }
             projectCopies <- (campaignCopies traverse { c =>
               AnnotationProjectDao.listByCampaign(c.id)
@@ -771,7 +771,7 @@ class CampaignDaoSpec
                 insertedProject.id
               )
               campaignCopies <- children traverse { child =>
-                CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xa)
+                CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xant)
               }
               projectCopies <- (campaignCopies traverse { c =>
                 AnnotationProjectDao.listByCampaign(c.id)
@@ -895,7 +895,7 @@ class CampaignDaoSpec
               dbChildCampaign <- CampaignDao.copyCampaign(
                 dbParentCampaign.id,
                 dbChildUser,
-                xa = xa
+                xa = xant
               )
               childProject <- AnnotationProjectDao.listByCampaign(
                 dbChildCampaign.id
@@ -978,7 +978,7 @@ class CampaignDaoSpec
                   UserDao.create(childUserCreate)
               }
               childCampaigns <- childUsers traverse { childUser =>
-                CampaignDao.copyCampaign(parentCampaign.id, childUser, xa = xa)
+                CampaignDao.copyCampaign(parentCampaign.id, childUser, xa = xant)
               }
               childProjects <- (childCampaigns traverse { childCampaign =>
                 AnnotationProjectDao.listByCampaign(childCampaign.id)
@@ -1000,7 +1000,7 @@ class CampaignDaoSpec
                   CampaignDao.copyCampaign(
                     parentCampaign.id,
                     childUser,
-                    xa = xa
+                    xa = xant
                   )
               }
               childProjectsSecondBatch <- (childCampaignsSecondBatch traverse {
