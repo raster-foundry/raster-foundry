@@ -710,17 +710,20 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       // task action stamp
       case TaskStatus.LabelingInProgress | TaskStatus.ValidationInProgress =>
         getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
-          val sorted = stamps
-            .sortBy(stamp => -stamp.timestamp.toInstant.getEpochSecond)
-          val previousStatus = sorted.headOption map { _.fromStatus } getOrElse {
-            TaskStatus.Unlabeled
+          stamps.maximumByOption(stamp => {
+            val instant = stamp.timestamp.toInstant
+            // in testing, the epoch second was insufficient for generated actions
+            // very close to each other in time
+            val result
+                : Double = instant.getEpochSecond + (instant.getNano / 1e9)
+            result
+          }) map { mostRecentStamp =>
+            val previousStatus = mostRecentStamp.fromStatus
+            val previousNote = mostRecentStamp.note
+            (previousStatus, previousNote)
+          } getOrElse {
+            (TaskStatus.Unlabeled, None)
           }
-          val previousNote = if (previousStatus == TaskStatus.Flagged) {
-            sorted.drop(1).headOption flatMap { _.note }
-          } else {
-            None
-          }
-          (previousStatus, previousNote)
         })
       // if it's flagged currently, then the note is in the most recent task action stamp
       case TaskStatus.Flagged =>
