@@ -8,7 +8,7 @@ import com.azavea.stac4s.Proprietary
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.testkit.Rectangle
-import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
+import geotrellis.vector.{io => _, _}
 import io.circe.syntax._
 import io.circe.testing.ArbitraryInstances
 import org.scalacheck.Arbitrary.arbitrary
@@ -234,16 +234,17 @@ object Generators extends ArbitraryInstances {
   // generate up to a 50km/side polygon with bounds in EPSG:3857 bounds
   private def polygonGen3857: Gen[Polygon] =
     for {
-      width <- Gen.choose(100, 50000)
-      height <- Gen.choose(100, 50000)
-      centerX <- Gen.choose(-2e7, 2e7)
-      centerY <- Gen.choose(-2e7, 2e7)
+      width <- Gen.choose(100, 200)
+      height <- Gen.choose(100, 200)
+      centerX <- Gen.choose(-500, 500)
+      centerY <- Gen.choose(-500, 500)
     } yield {
-      Rectangle()
+      (Rectangle()
         .withWidth(width)
         .withHeight(height)
         .setCenter(Point(centerX, centerY))
-        .build()
+        .build(): Geometry).extent
+
     }
 
   private def multiPolygonGen3857: Gen[MultiPolygon] =
