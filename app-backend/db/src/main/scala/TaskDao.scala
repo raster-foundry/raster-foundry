@@ -715,7 +715,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             // in testing, the epoch second was insufficient for generated actions
             // very close to each other in time
             val result
-                : Double = instant.getEpochSecond + (instant.getNano / 1e9)
+              : Double = instant.getEpochSecond + (instant.getNano / 1e9)
             result
           }) map { mostRecentStamp =>
             val previousStatus = mostRecentStamp.fromStatus
