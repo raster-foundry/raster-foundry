@@ -5,6 +5,7 @@ import com.rasterfoundry.database.types._
 import com.rasterfoundry.datamodel._
 
 import cats.data.OptionT
+import cats.effect._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -149,8 +150,9 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       id: UUID,
       user: User,
       tagsO: Option[List[String]] = None,
-      copyResourceLink: Boolean = false
-  ): ConnectionIO[Campaign] = {
+      copyResourceLink: Boolean = false,
+      xa: Transactor[IO]
+  )(implicit contextShift: ContextShift[IO]): ConnectionIO[Campaign] = {
     val tagCol = tagsO
       .map(
         tags =>
@@ -167,20 +169,24 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       fr"""FROM """ ++ tableF ++ fr"""
            WHERE id = ${id}
         """)
-    for {
+    val campaignCopyIO = for {
       campaignCopy <- insertQuery.update
         .withUniqueGeneratedKeys[Campaign](
           fieldNames: _*
         )
-      annotationProjects <- AnnotationProjectDao.listByCampaign(id)
-      _ <- annotationProjects traverse { project =>
-        AnnotationProjectDao.copyProject(
-          project.id,
-          user,
-          Some(campaignCopy.id)
-        )
+        .transact(xa)
+      annotationProjects <- AnnotationProjectDao.listByCampaign(id).transact(xa)
+      _ <- annotationProjects parTraverse { project =>
+        AnnotationProjectDao
+          .copyProject(
+            project.id,
+            user,
+            Some(campaignCopy.id)
+          )
+          .transact(xa)
       }
     } yield campaignCopy
+    Async[ConnectionIO].liftIO(campaignCopyIO)
   }
 
   def isActiveCampaign(id: UUID): ConnectionIO[Boolean] =

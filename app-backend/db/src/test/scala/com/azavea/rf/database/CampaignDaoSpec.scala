@@ -240,7 +240,8 @@ class CampaignDaoSpec
                 insertedCampaign.id,
                 child,
                 None,
-                copyResourceLink
+                copyResourceLink,
+                xa = xa
               )
             }
             insertedCampaignAfterCopy <- CampaignDao.unsafeGetCampaignById(
@@ -332,7 +333,12 @@ class CampaignDaoSpec
                 user
               )
             campaignCopy <- CampaignDao
-              .copyCampaign(insertedCampaign.id, user, Some(clone.tags))
+              .copyCampaign(
+                insertedCampaign.id,
+                user,
+                Some(clone.tags),
+                xa = xa
+              )
             projectCopy <- AnnotationProjectDao.listByCampaign(campaignCopy.id)
           } yield {
             (insertedCampaign, insertedProject, campaignCopy, projectCopy)
@@ -508,7 +514,7 @@ class CampaignDaoSpec
                 parent
               )
             _ <- children traverse { child =>
-              CampaignDao.copyCampaign(insertedCampaign.id, child)
+              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xa)
             }
             cloneOwners <- CampaignDao.getCloneOwners(insertedCampaign.id)
           } yield cloneOwners
@@ -567,7 +573,7 @@ class CampaignDaoSpec
               insertedProject.id
             )
             campaignCopies <- children traverse { child =>
-              CampaignDao.copyCampaign(insertedCampaign.id, child)
+              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xa)
             }
             projectCopies <- (campaignCopies traverse { c =>
               AnnotationProjectDao.listByCampaign(c.id)
@@ -666,7 +672,7 @@ class CampaignDaoSpec
               insertedProject.id
             )
             campaignCopies <- children traverse { child =>
-              CampaignDao.copyCampaign(insertedCampaign.id, child)
+              CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xa)
             }
             projectCopies <- (campaignCopies traverse { c =>
               AnnotationProjectDao.listByCampaign(c.id)
@@ -765,7 +771,7 @@ class CampaignDaoSpec
                 insertedProject.id
               )
               campaignCopies <- children traverse { child =>
-                CampaignDao.copyCampaign(insertedCampaign.id, child)
+                CampaignDao.copyCampaign(insertedCampaign.id, child, xa = xa)
               }
               projectCopies <- (campaignCopies traverse { c =>
                 AnnotationProjectDao.listByCampaign(c.id)
@@ -888,7 +894,8 @@ class CampaignDaoSpec
               dbChildUser <- UserDao.create(childUser)
               dbChildCampaign <- CampaignDao.copyCampaign(
                 dbParentCampaign.id,
-                dbChildUser
+                dbChildUser,
+                xa = xa
               )
               childProject <- AnnotationProjectDao.listByCampaign(
                 dbChildCampaign.id
@@ -971,7 +978,7 @@ class CampaignDaoSpec
                   UserDao.create(childUserCreate)
               }
               childCampaigns <- childUsers traverse { childUser =>
-                CampaignDao.copyCampaign(parentCampaign.id, childUser)
+                CampaignDao.copyCampaign(parentCampaign.id, childUser, xa = xa)
               }
               childProjects <- (childCampaigns traverse { childCampaign =>
                 AnnotationProjectDao.listByCampaign(childCampaign.id)
@@ -990,7 +997,11 @@ class CampaignDaoSpec
               }
               childCampaignsSecondBatch <- childUsersSecondBatch traverse {
                 childUser =>
-                  CampaignDao.copyCampaign(parentCampaign.id, childUser)
+                  CampaignDao.copyCampaign(
+                    parentCampaign.id,
+                    childUser,
+                    xa = xa
+                  )
               }
               childProjectsSecondBatch <- (childCampaignsSecondBatch traverse {
                 childCampaign =>
@@ -1130,9 +1141,15 @@ class CampaignDaoSpec
               campaignAfterPrjDelete <- CampaignDao.unsafeGetCampaignById(
                 insertedCampaign.id
               )
-            } yield (campaignAfterPrjInsert, campaignAfterPrjUpdate, campaignAfterPrjDelete)
+            } yield
+              (
+                campaignAfterPrjInsert,
+                campaignAfterPrjUpdate,
+                campaignAfterPrjDelete
+              )
 
-            val (afterInsert, afterUpdate, afterDelete) = updateCampaignProjectIO.transact(xa).unsafeRunSync()
+            val (afterInsert, afterUpdate, afterDelete) =
+              updateCampaignProjectIO.transact(xa).unsafeRunSync()
 
             assert(
               afterInsert.projectStatuses.get("WAITING") == Some(2),

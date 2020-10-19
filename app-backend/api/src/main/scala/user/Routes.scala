@@ -13,6 +13,7 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import cats.effect.ContextShift
 import cats.effect.IO
 import cats.implicits._
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
@@ -39,6 +40,7 @@ trait UserRoutes
     with Config {
 
   implicit val xa: Transactor[IO]
+  implicit val contextShift: ContextShift[IO]
 
   val userRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("me") {
@@ -313,7 +315,8 @@ trait UserRoutes
                           username
                         ),
                         userBulkCreate,
-                        user
+                        user,
+                        xa
                       )
                       .transact(xa)
                       .unsafeToFuture

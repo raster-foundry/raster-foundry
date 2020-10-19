@@ -6,6 +6,7 @@ import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.datamodel._
 
 import cats.data._
+import cats.effect._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -316,71 +317,84 @@ object UserDao extends Dao[User] with Sanitization {
   def createUserWithCampaign(
       userInfo: UserInfo,
       userBulkCreate: UserBulkCreate,
-      parentUser: User
-  ): ConnectionIO[UserWithCampaign] = {
+      parentUser: User,
+      xa: Transactor[IO]
+  )(implicit contextShift: ContextShift[IO]): ConnectionIO[UserWithCampaign] = {
     val userWithCampaignIO = for {
-      user <- UserDao.create(
-        User.Create(
-          userInfo.id,
-          email = userInfo.email,
-          name = userInfo.name,
-          scope = Scopes.GroundworkUser
+      user <- UserDao
+        .create(
+          User.Create(
+            userInfo.id,
+            email = userInfo.email,
+            name = userInfo.name,
+            scope = Scopes.GroundworkUser
+          )
         )
-      )
-      _ <- UserGroupRoleDao.createDefaultRoles(
-        user,
-        Some(userBulkCreate.platformId),
-        Some(userBulkCreate.organizationId)
-      )
-      copiedCampaignO <- userBulkCreate.campaignId traverse { campaignId =>
-        CampaignDao.copyCampaign(
-          campaignId,
+        .transact(xa)
+      _ <- UserGroupRoleDao
+        .createDefaultRoles(
           user,
-          None,
-          userBulkCreate.copyResourceLink
+          Some(userBulkCreate.platformId),
+          Some(userBulkCreate.organizationId)
         )
+        .transact(xa)
+      copiedCampaignO <- userBulkCreate.campaignId traverse { campaignId =>
+        CampaignDao
+          .copyCampaign(
+            campaignId,
+            user,
+            None,
+            userBulkCreate.copyResourceLink,
+            xa
+          )
+          .transact(xa)
       }
     } yield UserWithCampaign(user, copiedCampaignO)
 
-    userBulkCreate.grantAccessToParentCampaignOwner match {
+    val ioBulkCreate = userBulkCreate.grantAccessToParentCampaignOwner match {
       case false => userWithCampaignIO
       case true =>
         for {
           userAndCampaign <- userWithCampaignIO
-          projectsO <- userAndCampaign.campaignO traverse { campaign =>
-            AnnotationProjectDao.listByCampaign(campaign.id)
+          projectsO <- userAndCampaign.campaignO parTraverse { campaign =>
+            AnnotationProjectDao.listByCampaign(campaign.id).transact(xa)
           }
-          _ <- userAndCampaign.campaignO traverse { campaign =>
-            CampaignDao.addPermission(
-              campaign.id,
-              ObjectAccessControlRule(
-                SubjectType.User,
-                Some(parentUser.id),
-                ActionType.View
-              )
-            )
-          }
-          _ <- projectsO traverse { projects =>
-            projects traverse { project =>
-              AnnotationProjectDao.addPermissionsMany(
-                project.id,
-                List(
-                  ObjectAccessControlRule(
-                    SubjectType.User,
-                    Some(parentUser.id),
-                    ActionType.View
-                  ),
-                  ObjectAccessControlRule(
-                    SubjectType.User,
-                    Some(parentUser.id),
-                    ActionType.Annotate
-                  )
+          _ <- userAndCampaign.campaignO parTraverse { campaign =>
+            CampaignDao
+              .addPermission(
+                campaign.id,
+                ObjectAccessControlRule(
+                  SubjectType.User,
+                  Some(parentUser.id),
+                  ActionType.View
                 )
               )
+              .transact(xa)
+          }
+          _ <- projectsO parTraverse { projects =>
+            projects parTraverse { project =>
+              AnnotationProjectDao
+                .addPermissionsMany(
+                  project.id,
+                  List(
+                    ObjectAccessControlRule(
+                      SubjectType.User,
+                      Some(parentUser.id),
+                      ActionType.View
+                    ),
+                    ObjectAccessControlRule(
+                      SubjectType.User,
+                      Some(parentUser.id),
+                      ActionType.Annotate
+                    )
+                  )
+                )
+                .transact(xa)
             }
           }
         } yield userAndCampaign
     }
+    Async[ConnectionIO].liftIO(ioBulkCreate)
   }
 
 }
