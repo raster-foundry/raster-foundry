@@ -85,9 +85,9 @@ object Generators extends ArbitraryInstances {
   private def taskStatusGen: Gen[TaskStatus] =
     Gen.frequency(
       (1, TaskStatus.Unlabeled),
-      (1, TaskStatus.LabelingInProgress),
+      (6, TaskStatus.LabelingInProgress),
       (1, TaskStatus.Labeled),
-      (1, TaskStatus.ValidationInProgress),
+      (6, TaskStatus.ValidationInProgress),
       (1, TaskStatus.Validated),
       (6, TaskStatus.Flagged),
       (1, TaskStatus.Invalid)
@@ -974,7 +974,7 @@ object Generators extends ArbitraryInstances {
 
   private def taskPropertiesCreateGen: Gen[Task.TaskPropertiesCreate] =
     for {
-      status <- taskStatusGen
+      status <- Gen.const[TaskStatus](TaskStatus.Unlabeled)
       annotationProjectId <- uuidGen
       note <- if (status == TaskStatus.Flagged) {
         nonEmptyStringGen map { s =>
