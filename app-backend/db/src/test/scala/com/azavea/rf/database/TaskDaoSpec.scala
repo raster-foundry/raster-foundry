@@ -30,6 +30,7 @@ class TaskDaoSpec
     with DBTestConfig
     with LazyLogging
     with PropTestHelpers {
+
   test("listing some features") {
     check {
       forAll {
@@ -1310,102 +1311,109 @@ class TaskDaoSpec
   }
 
   test("task unlocking respects most recent status") {
-    check {
-      forAll {
-        (
-            userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            annotationProjectCreate: AnnotationProject.Create,
-            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
-            firstStatus: TaskStatus,
-            nextStatus: TaskStatus,
-            finalStatus: TaskStatus
-        ) =>
-          {
-            val maybeNote: TaskStatus => Option[NonEmptyString] = {
-              case TaskStatus.Flagged => Some(refineMV("something wrong"))
-              case _                  => None
+    check(
+      {
+        forAll {
+          (
+              userCreate: User.Create,
+              annotationProjectCreate: AnnotationProject.Create,
+              taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+              initialStatus: TaskStatus
+          ) =>
+            {
+              // randomly generating all three statuses created cases where the
+              // status was the same for all three arguments, which made expectations
+              // about what the final status should be _really hard_ to reason about,
+              // since only status updates with new statuses actually
+              // create task actions. This ensures that the three task statuses
+              // are always distinct, which makes forming expectations easier.
+              val nextStatus = loopStatus(initialStatus)
+              val finalStatus = loopStatus(nextStatus)
+              val maybeNote: TaskStatus => Option[NonEmptyString] = {
+                case TaskStatus.Flagged => Some(refineMV("something wrong"))
+                case _                  => None
+              }
+
+              val baseCreate = taskFeatureCollectionCreate.features.head
+              val noteLens
+                  : Lens[Task.TaskFeatureCreate, Option[NonEmptyString]] =
+                GenLens[Task.TaskFeatureCreate](_.properties.note)
+
+              val expiryIO = for {
+                dbUser <- UserDao.create(userCreate)
+                dbAnnotationProject <- AnnotationProjectDao.insert(
+                  annotationProjectCreate,
+                  dbUser
+                )
+                fixedUp = fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate,
+                  dbAnnotationProject,
+                  None
+                )
+                insertedTask <- TaskDao.insertTasks(
+                  fixedUp.copy(features = List(fixedUp.features.head)),
+                  dbUser
+                ) map { _.features.head }
+                fixedUp1 = noteLens.modify(_ => maybeNote(initialStatus))(
+                  fixupTaskFeatureCreate(
+                    baseCreate,
+                    dbAnnotationProject,
+                    Some(initialStatus)
+                  )
+                )
+                fixedUp2 = noteLens.modify(_ => maybeNote(nextStatus))(
+                  fixupTaskFeatureCreate(
+                    baseCreate,
+                    dbAnnotationProject,
+                    Some(nextStatus)
+                  )
+                )
+                fixedUp3 = noteLens.modify(_ => maybeNote(finalStatus))(
+                  fixupTaskFeatureCreate(
+                    baseCreate,
+                    dbAnnotationProject,
+                    Some(finalStatus)
+                  )
+                )
+                _ <- TaskDao.updateTask(
+                  insertedTask.id,
+                  fixedUp1,
+                  dbUser
+                )
+                _ <- TaskDao.updateTask(
+                  insertedTask.id,
+                  fixedUp2,
+                  dbUser
+                )
+                _ <- TaskDao.updateTask(
+                  insertedTask.id,
+                  fixedUp3,
+                  dbUser
+                )
+                _ <- TaskDao.expireStuckTasks(0 seconds)
+                retrieved <- TaskDao.unsafeGetTaskById(insertedTask.id)
+              } yield retrieved.status
+
+              val postExpirationStatus = expiryIO.transact(xa).unsafeRunSync
+
+              if (finalStatus == TaskStatus.ValidationInProgress || finalStatus == TaskStatus.LabelingInProgress) {
+                assert(
+                  postExpirationStatus === nextStatus,
+                  "In progress tasks should be reverted to their previous status"
+                )
+              } else {
+                assert(
+                  postExpirationStatus === finalStatus,
+                  "Tasks at rest should remain at rest"
+                )
+              }
+
+              true
             }
-
-            val baseCreate = taskFeatureCollectionCreate.features.head
-            val noteLens: Lens[Task.TaskFeatureCreate, Option[NonEmptyString]] =
-              GenLens[Task.TaskFeatureCreate](_.properties.note)
-
-            val expiryIO = for {
-              (dbUser, _, _) <- insertUserOrgPlatform(
-                userCreate,
-                orgCreate,
-                platform
-              )
-              dbAnnotationProject <- AnnotationProjectDao.insert(
-                annotationProjectCreate,
-                dbUser
-              )
-              fixedUp = fixupTaskFeaturesCollection(
-                taskFeatureCollectionCreate,
-                dbAnnotationProject,
-                None
-              )
-              insertedTask <- TaskDao.insertTasks(
-                fixedUp.copy(features = List(fixedUp.features.head)),
-                dbUser
-              ) map { _.features.head }
-              fixedUp1 = noteLens.modify(_ => maybeNote(firstStatus))(
-                fixupTaskFeatureCreate(
-                  baseCreate,
-                  dbAnnotationProject,
-                  Some(firstStatus)
-                )
-              )
-              fixedUp2 = noteLens.modify(_ => maybeNote(nextStatus))(
-                fixupTaskFeatureCreate(
-                  baseCreate,
-                  dbAnnotationProject,
-                  Some(nextStatus)
-                )
-              )
-              fixedUp3 = noteLens.modify(_ => maybeNote(finalStatus))(
-                fixupTaskFeatureCreate(
-                  baseCreate,
-                  dbAnnotationProject,
-                  Some(finalStatus)
-                )
-              )
-              _ <- TaskDao.updateTask(
-                insertedTask.id,
-                fixedUp1,
-                dbUser
-              )
-              _ <- TaskDao.updateTask(
-                insertedTask.id,
-                fixedUp2,
-                dbUser
-              )
-              _ <- TaskDao.updateTask(
-                insertedTask.id,
-                fixedUp3,
-                dbUser
-              )
-              _ <- TaskDao.expireStuckTasks(0 seconds)
-              retrieved <- TaskDao.unsafeGetTaskById(insertedTask.id)
-            } yield retrieved.status
-
-            val postExpirationStatus = expiryIO.transact(xa).unsafeRunSync
-
-            assert(
-              postExpirationStatus === finalStatus ||
-                (postExpirationStatus === nextStatus && Set[TaskStatus](
-                  TaskStatus.LabelingInProgress,
-                  TaskStatus.ValidationInProgress
-                ).contains(finalStatus)),
-              "If validation or labeling was in progress, status reverted to second-to-last"
-            )
-
-            true
-          }
-      }
-    }
+        }
+      },
+      minSuccessful(org.scalactic.anyvals.PosInt(25))
+    )
   }
 
   test("get a random task") {

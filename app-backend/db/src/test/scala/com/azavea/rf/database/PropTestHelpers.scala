@@ -483,4 +483,15 @@ trait PropTestHelpers {
       geometry = feature.geometry
     )
 
+  def loopStatus(
+      status: TaskStatus
+  ): TaskStatus = status match {
+    case TaskStatus.Unlabeled            => TaskStatus.LabelingInProgress
+    case TaskStatus.LabelingInProgress   => TaskStatus.Labeled
+    case TaskStatus.Labeled              => TaskStatus.ValidationInProgress
+    case TaskStatus.ValidationInProgress => TaskStatus.Validated
+    case TaskStatus.Validated            => TaskStatus.Flagged
+    case TaskStatus.Flagged              => TaskStatus.Invalid
+    case TaskStatus.Invalid              => TaskStatus.Unlabeled
+  }
 }
