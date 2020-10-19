@@ -3,6 +3,7 @@
 
 ### Added
 
+- STAC label items now include the task statuses in a `groundwork:taskStatuses` property [#5490](https://github.com/raster-foundry/raster-foundry/pull/5490)
 - Tasks can be listed by campaign [#5494](https://github.com/raster-foundry/raster-foundry/pull/5494)
 
 ### Changed

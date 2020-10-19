@@ -63,7 +63,7 @@ services:
     env_file: .env
     environment:
       - HIKARI_LOG_LEVEL=WARN
-      - RF_LOG_LEVEL=DEBUG
+      - RF_LOG_LEVEL=INFO
       - TILE_SERVER_LOCATION
       - COURSIER_CACHE=/root/.coursier
       - BACKSPLASH_ENABLE_MULTITIFF=false

@@ -143,7 +143,8 @@ object Utils {
         "label:tasks" -> sceneTaskAnnotation.labelItemExtension.tasks.asJson,
         "label:methods" -> sceneTaskAnnotation.labelItemExtension.methods.asJson,
         "label:overviews" -> sceneTaskAnnotation.labelItemExtension.overviews.asJson,
-        "datetime" -> dateTime.asJson
+        "datetime" -> dateTime.asJson,
+        "groundwork:taskStatuses" -> sceneTaskAnnotation.taskStatuses.asJson
       )
     )
     val labelDataRelLink = "./data.geojson"
