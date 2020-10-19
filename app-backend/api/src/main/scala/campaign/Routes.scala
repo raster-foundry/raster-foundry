@@ -108,6 +108,12 @@ trait CampaignRoutes
               listCampaignUserActions(campaignId)
             }
           }
+        } ~ pathPrefix("tasks") {
+          pathEndOrSingleSlash {
+            get {
+              listCampaignTasks(campaignId)
+            }
+          }
         }
       }
   }
@@ -439,4 +445,36 @@ trait CampaignRoutes
         }
       }
   }
+
+  def listCampaignTasks(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(ScopedAction(Domain.Campaigns, Action.Read, None), user) {
+        authorizeAuthResultAsync(
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        ) {
+          (withPagination & taskQueryParameters) { (page, taskParams) =>
+            complete {
+              (
+                TaskDao
+                  .listCampaignTasks(
+                    taskParams,
+                    campaignId,
+                    page
+                  )
+                )
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
+      }
+    }
 }

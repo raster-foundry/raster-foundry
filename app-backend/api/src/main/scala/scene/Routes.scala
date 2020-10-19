@@ -27,8 +27,6 @@ import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext
 
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import java.util.concurrent.Executors
 
@@ -145,11 +143,10 @@ trait SceneRoutes
         entity(as[Scene.Create]) { newScene =>
           val metadataIO = (sceneId: UUID) => {
             newScene.ingestLocation traverse { location =>
-              val decodedUri = URLDecoder.decode(location, UTF_8.toString)
               (
-                cogUtils.getGeoTiffInfo(decodedUri),
-                cogUtils.histogramFromUri(decodedUri),
-                cogUtils.getTiffExtent(decodedUri)
+                cogUtils.getGeoTiffInfo(location),
+                cogUtils.histogramFromUri(location),
+                cogUtils.getTiffExtent(location)
               ).tupled flatMap {
                 case (geotiffInfo, histogram, footprint) =>
                   ((LayerAttributeDao

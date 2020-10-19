@@ -221,3 +221,4 @@ Path,Domain:Action,Verb
 /api/campaigns/{campaignId}/clone-owners,campaigns:clone,get
 /api/campaigns/{campaignId}/random-review-task,campaigns:read,get
 /api/campaigns/{campaignId}/retrieve-child-labels,campaigns:clone,post
+/api/campaigns/{campaignId}/tasks,campaigns:read,get

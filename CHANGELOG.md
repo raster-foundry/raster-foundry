@@ -4,6 +4,7 @@
 ### Added
 
 - STAC label items now include the task statuses in a `groundwork:taskStatuses` property [#5490](https://github.com/raster-foundry/raster-foundry/pull/5490)
+- Tasks can be listed by campaign [#5494](https://github.com/raster-foundry/raster-foundry/pull/5494)
 
 ### Changed
 
@@ -14,6 +15,12 @@
 ### Fixed
 
 ### Security
+
+## [1.52.1](https://github.com/raster-foundry/raster-foundry/compare/1.52.0...1.52.1)
+
+### Fixed
+
+- Fixed a URL decoding bug that caused imagery to be unavailable after upload processing [#5492](https://github.com/raster-foundry/raster-foundry/pull/5492)
 
 ## [1.52.0](https://github.com/raster-foundry/raster-foundry/compare/1.51.0...1.52.0)
 

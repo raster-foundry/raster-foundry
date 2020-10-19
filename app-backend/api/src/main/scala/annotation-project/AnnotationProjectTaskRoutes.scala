@@ -60,22 +60,15 @@ trait AnnotationProjectTaskRoutes
           (withPagination & taskQueryParameters) { (page, taskParams) =>
             complete {
               (
-                taskParams.format match {
-                  case Some(format) if format.toUpperCase == "SUMMARY" =>
-                    TaskDao.listTaskGeomByStatus(
-                      user,
-                      projectId,
-                      taskParams.status
-                    )
-                  case _ =>
-                    TaskDao
-                      .listTasks(
-                        taskParams,
-                        projectId,
-                        page
-                      )
-                }
-              ).transact(xa).unsafeToFuture
+                TaskDao
+                  .listTasks(
+                    taskParams,
+                    projectId,
+                    page
+                  )
+                )
+                .transact(xa)
+                .unsafeToFuture
             }
           }
         }

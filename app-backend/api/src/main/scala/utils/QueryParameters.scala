@@ -187,7 +187,6 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionEndTime.as(deserializerTimestamp).?,
       'actionMinCount.as[Int].?,
       'actionMaxCount.as[Int].?,
-      'format.as[String].?,
       'taskType.as(deserializerTaskType).?
     ).as(TaskQueryParameters.apply _)
 
