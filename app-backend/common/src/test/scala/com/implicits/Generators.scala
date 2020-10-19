@@ -239,11 +239,14 @@ object Generators extends ArbitraryInstances {
       centerX <- Gen.choose(-500, 500)
       centerY <- Gen.choose(-500, 500)
     } yield {
-      (Rectangle()
-        .withWidth(width)
-        .withHeight(height)
-        .setCenter(Point(centerX, centerY))
-        .build(): Geometry).extent
+      (Extent
+        .toPolygon(
+          (Rectangle()
+            .withWidth(width)
+            .withHeight(height)
+            .setCenter(Point(centerX, centerY))
+            .build(): Geometry).extent
+        ))
 
     }
 
