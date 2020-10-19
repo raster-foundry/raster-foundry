@@ -1141,30 +1141,20 @@ class TaskDaoSpec
     }
   }
 
-  test("expire locks on stale tasks") {
+  test("expire locks on stale tasks with lock data") {
     check {
       forAll {
         (
             userCreate: User.Create,
-            orgCreate: Organization.Create,
-            platform: Platform,
-            projectCreate: Project.Create,
             annotationProjectCreate: AnnotationProject.Create,
             taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
         ) =>
           {
             val expiryIO = for {
-              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(
-                userCreate,
-                orgCreate,
-                platform,
-                projectCreate
-              )
+              dbUser <- UserDao.create(userCreate)
               dbAnnotationProj <- AnnotationProjectDao
                 .insert(
-                  annotationProjectCreate.copy(
-                    projectId = Some(dbProject.id)
-                  ),
+                  annotationProjectCreate,
                   dbUser
                 )
               insertedTasks <- TaskDao.insertTasks(
@@ -1236,6 +1226,81 @@ class TaskDaoSpec
                 }
               ),
               "Only tasks in progress had their statuses changed"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
+  test("revert status for tasks stuck in progress without lock data") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val expiryIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProj <- AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate,
+                  dbUser
+                )
+              insertedLabelingInProgressTasks <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.LabelingInProgress)
+                ),
+                dbUser
+              )
+              insertedValidationInProgressTasks <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.ValidationInProgress)
+                ),
+                dbUser
+              )
+              _ <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeatureCollectionCreate,
+                  dbAnnotationProj,
+                  Some(TaskStatus.Validated)
+                ),
+                dbUser
+              )
+              numberExpired <- TaskDao.expireStuckTasks(0 seconds)
+              listedTasks <- TaskDao.query
+                .filter(fr"annotation_project_id = ${dbAnnotationProj.id}")
+                .list
+              reExpired <- TaskDao.expireStuckTasks(0 seconds)
+            } yield
+              (
+                insertedValidationInProgressTasks.features.length + insertedLabelingInProgressTasks.features.length,
+                numberExpired,
+                listedTasks,
+                reExpired
+              )
+
+            val (inProgressUnlockedTasks, numberExpired, allTasks, reExpired) =
+              expiryIO.transact(xa).unsafeRunSync
+
+            assert(
+              inProgressUnlockedTasks == numberExpired,
+              "Number of expired tasks matches number of tasks with in progress statuses and no locks"
+            )
+            assert(
+              allTasks.length == inProgressUnlockedTasks + taskFeatureCollectionCreate.features.length,
+              "Not all tasks were expired -- there's a delta of the initial feature list length"
+            )
+            assert(
+              reExpired == 0,
+              "After initial expiration, there's nothing left to expire"
             )
 
             true

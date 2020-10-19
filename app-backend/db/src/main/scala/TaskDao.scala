@@ -740,12 +740,20 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     for {
       _ <- info("Expiring stuck tasks")
       defaultUser <- UserDao.unsafeGetUserById("default")
-      stuckTasks <- query
+      stuckLockedTasks <- query
         .filter(
           fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
         )
         .list
-      _ <- stuckTasks traverse { task =>
+      stuckUnlockedTasks <- query
+        .filter(
+          fr"""
+            locked_on IS NULL AND
+            (status = ${TaskStatus.LabelingInProgress: TaskStatus} OR
+             status = ${TaskStatus.ValidationInProgress: TaskStatus})"""
+        )
+        .list
+      _ <- (stuckLockedTasks ++ stuckUnlockedTasks) traverse { task =>
         regressTaskStatus(task.id, task.status) flatMap {
           case (newStatus, newNote) =>
             val update =
@@ -764,7 +772,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
         }
       }
-    } yield stuckTasks.length
+    } yield (stuckLockedTasks.length + stuckUnlockedTasks.length)
 
   def randomTask(
       queryParams: TaskQueryParameters,
