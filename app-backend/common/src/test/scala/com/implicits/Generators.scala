@@ -234,11 +234,14 @@ object Generators extends ArbitraryInstances {
       centerX <- Gen.choose(-2e7, 2e7)
       centerY <- Gen.choose(-2e7, 2e7)
     } yield {
-      Rectangle()
-        .withWidth(width)
-        .withHeight(height)
-        .setCenter(Point(centerX, centerY))
-        .build()
+      (Extent
+        .toPolygon(
+          (Rectangle()
+            .withWidth(width)
+            .withHeight(height)
+            .setCenter(Point(centerX, centerY))
+            .build(): Geometry).extent
+        ))
     }
 
   private def multiPolygonGen3857: Gen[MultiPolygon] =
