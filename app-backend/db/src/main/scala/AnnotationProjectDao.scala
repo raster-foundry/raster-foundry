@@ -260,7 +260,7 @@ object AnnotationProjectDao
       _ <- debug(s"Source project is: ${sourceProject map { _.id }}")
       projectScenes <- sourceProject map { _.defaultLayerId } traverse {
         projectLayerId =>
-          ProjectLayerScenesDao.listLayerScenesRaw(projectLayerId, None)
+          ProjectLayerScenesDao.listLayerScenesRaw(projectLayerId)
       }
       _ <- debug(s"Project scenes are: ${projectScenes map { _ map { _.id } }}")
       _ <- projectScenes traverse { scenes =>
@@ -366,7 +366,7 @@ object AnnotationProjectDao
                   LabelClassClasses.NamedLabelClasses(
                     classes.map(_.name).toNel.getOrElse(NonEmptyList.of(""))
                   )
-              )
+                )
             )
         },
         s"Labels for annotation project ${annotationProject.name}",
@@ -526,7 +526,7 @@ object AnnotationProjectDao
                   Some(userId),
                   ActionType.Annotate
                 )
-            )
+              )
           )
         AnnotationProjectDao.addPermissionsMany(
           project.id,

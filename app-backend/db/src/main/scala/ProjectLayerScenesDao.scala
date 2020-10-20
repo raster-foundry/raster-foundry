@@ -45,24 +45,11 @@ object ProjectLayerScenesDao extends Dao[Scene] {
   }
 
   def listLayerScenesRaw(
-      layerId: UUID,
-      splitOptionsO: Option[SplitOptions] = None
-  ): ConnectionIO[List[Scene]] = {
-    val sceneParams = splitOptionsO match {
-      case Some(splitOptions: SplitOptions) =>
-        CombinedSceneQueryParams(
-          sceneParams = SceneQueryParameters(
-            minAcquisitionDatetime = Some(splitOptions.rangeStart),
-            maxAcquisitionDatetime = Some(splitOptions.rangeEnd)
-          )
-        )
-      case _ => CombinedSceneQueryParams()
-    }
+      layerId: UUID
+  ): ConnectionIO[List[Scene]] =
     query
       .filter(fr"project_layer_id = ${layerId}")
-      .filter(sceneParams)
       .list
-  }
 
   def listLayerScenes(
       layerId: UUID,
@@ -103,7 +90,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
             pr.page,
             pr.pageSize,
             projectScenes
-        )
+          )
       )
     }
   }
