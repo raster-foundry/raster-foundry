@@ -3,9 +3,13 @@ package com.rasterfoundry.common
 import com.rasterfoundry.datamodel._
 
 import cats.data.{NonEmptyList => NEL}
-import cats.implicits._
+import cats.syntax.apply._
+import cats.syntax.functor._
 import com.azavea.stac4s.Proprietary
+import eu.timepit.refined._
+import eu.timepit.refined.api._
 import eu.timepit.refined.auto._
+import eu.timepit.refined.numeric._
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.testkit.Rectangle
 import geotrellis.vector.{io => _, _}
@@ -19,6 +23,7 @@ import java.net.URI
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.util.UUID
+import eu.timepit.refined.numeric.Interval
 
 object Generators extends ArbitraryInstances {
 
@@ -1114,6 +1119,35 @@ object Generators extends ArbitraryInstances {
       arbitrary[Boolean]
     ).mapN(Campaign.Clone.apply _)
 
+  private def pseudoUserNameTypeGen: Gen[PseudoUsernameType] =
+    Gen.oneOf[PseudoUsernameType](
+      PseudoUsernameType.GameOfThrones,
+      PseudoUsernameType.HarryPotter,
+      PseudoUsernameType.Hobbit,
+      PseudoUsernameType.LordOfTheRings,
+      PseudoUsernameType.Pokemon,
+      PseudoUsernameType.RickAndMorty,
+      PseudoUsernameType.StarTrek,
+      PseudoUsernameType.SuperHero,
+      PseudoUsernameType.MoonsOfJupiter,
+      PseudoUsernameType.AnimalAstronauts,
+      PseudoUsernameType.EarthNames
+    )
+
+  private def userBulkCreateParamsGen: Gen[UserBulkCreate] =
+    (
+      Gen.const[Int Refined Interval.Closed[W.`1`.T, W.`40`.T]](
+        5: Int Refined Interval.Closed[W.`1`.T, W.`40`.T]
+      ),
+      pseudoUserNameTypeGen,
+      Gen.const(UUID.randomUUID),
+      Gen.const(UUID.randomUUID),
+      Gen.const(None),
+      arbitrary[Boolean],
+      arbitrary[Boolean],
+      arbitrary[Boolean]
+    ).mapN(UserBulkCreate.apply)
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -1384,6 +1418,11 @@ object Generators extends ArbitraryInstances {
     implicit def arbCampaignClone: Arbitrary[Campaign.Clone] =
       Arbitrary {
         campaignCloneGen
+      }
+
+    implicit def arbUserBulkCreateParams: Arbitrary[UserBulkCreate] =
+      Arbitrary {
+        userBulkCreateParamsGen
       }
 
   }

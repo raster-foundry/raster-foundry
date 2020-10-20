@@ -3,6 +3,7 @@ package com.rasterfoundry.datamodel
 import cats.syntax.either._
 import eu.timepit.refined._
 import eu.timepit.refined.api._
+import eu.timepit.refined.auto._
 import eu.timepit.refined.numeric._
 import io.circe._
 import io.circe.generic.JsonCodec
@@ -297,7 +298,9 @@ case class UserBulkCreate(
 )
 
 object UserBulkCreate {
+
   implicit val decUserBulkCreate: Decoder[UserBulkCreate] = deriveDecoder
+  implicit val encUserBulkCreate: Encoder[UserBulkCreate] = deriveEncoder
 }
 
 case class UserInfo(
@@ -306,4 +309,4 @@ case class UserInfo(
     name: String
 )
 
-case class UserWithCampaign(user: User, campaignO: Option[Campaign])
+@JsonCodec case class UserWithCampaign(user: User, campaignO: Option[Campaign])
