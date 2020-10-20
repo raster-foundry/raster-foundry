@@ -50,7 +50,7 @@ trait ProjectRoutes
 
   val xa: Transactor[IO]
 
-  implicit val contextShift: ContextShift[IO]
+  implicit def contextShift: ContextShift[IO]
   val projectRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {

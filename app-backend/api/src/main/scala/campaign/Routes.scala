@@ -114,6 +114,20 @@ trait CampaignRoutes
               listCampaignTasks(campaignId)
             }
           }
+        } ~ pathPrefix("share") {
+          pathEndOrSingleSlash {
+            get {
+              listCampaignShares(campaignId)
+            } ~ post {
+              shareCampaign(campaignId)
+            }
+          } ~ pathPrefix(Segment) { deleteId =>
+            pathEndOrSingleSlash {
+              delete {
+                deleteCampaignShare(campaignId, deleteId)
+              }
+            }
+          }
         }
       }
   }
@@ -288,8 +302,12 @@ trait CampaignRoutes
                   copiedProjects <- AnnotationProjectDao.listByCampaign(
                     copiedCampaign.id
                   )
-                  originalCampaignO <- CampaignDao.getCampaignById(campaignId)
-                  originalCampaignOwnerO = originalCampaignO map { _.owner }
+                  originalCampaignO <- CampaignDao.getCampaignById(
+                    campaignId
+                  )
+                  originalCampaignOwnerO = originalCampaignO map {
+                    _.owner
+                  }
                   _ <- CampaignDao.addPermission(
                     copiedCampaign.id,
                     ObjectAccessControlRule(
@@ -419,8 +437,8 @@ trait CampaignRoutes
     }
   }
 
-  def retrieveChildCampaignLabels(campaignId: UUID): Route = authenticate {
-    user =>
+  def retrieveChildCampaignLabels(campaignId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Clone, None),
         user
@@ -444,11 +462,14 @@ trait CampaignRoutes
           } { complete(StatusCodes.NoContent) }
         }
       }
-  }
+    }
 
   def listCampaignTasks(campaignId: UUID): Route =
     authenticate { user =>
-      authorizeScope(ScopedAction(Domain.Campaigns, Action.Read, None), user) {
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Read, None),
+        user
+      ) {
         authorizeAuthResultAsync(
           CampaignDao
             .authorized(

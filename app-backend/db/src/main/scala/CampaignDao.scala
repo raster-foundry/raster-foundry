@@ -351,4 +351,91 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           )
       }
     } yield ()
+
+  def getSharedUsers(
+      campaignId: UUID
+  ): ConnectionIO[List[UserThinWithActionType]] =
+    for {
+      permissions <- getPermissions(campaignId)
+      userThins <- permissions traverse {
+        case ObjectAccessControlRule(
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Annotate
+            ) =>
+          UserDao
+            .getUserById(subjectId)
+            .map(
+              _.map(UserThinWithActionType.fromUser(_, ActionType.Annotate))
+            )
+        case ObjectAccessControlRule(
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Validate
+            ) =>
+          UserDao
+            .getUserById(subjectId)
+            .map(
+              _.map(UserThinWithActionType.fromUser(_, ActionType.Validate))
+            )
+        case _ =>
+          Option.empty[UserThinWithActionType].pure[ConnectionIO]
+      }
+    } yield userThins.flatten
+
+  def deleteSharedUser(campaignId: UUID, userId: String): ConnectionIO[Int] =
+    for {
+      permissions <- getPermissions(campaignId)
+      permissionsToKeep = permissions collect {
+        case p if p.subjectId != Some(userId) => p
+      }
+      numberDeleted <- permissionsToKeep match {
+        case Nil => deletePermissions(campaignId)
+        case ps if ps.toSet != permissions.toSet =>
+          replacePermissions(campaignId, ps) map { _ =>
+            permissions.size - ps.size
+          }
+        case _ =>
+          0.pure[ConnectionIO]
+      }
+    } yield numberDeleted
+
+  /*
+    If no action specified, we see it as just assigning Annotate action
+    If the action param is Annotate, the existing Validate action, if any, needs to be removed
+    If the action param is Validate, existing actions should stay untouched
+   */
+  def handleSharedPermissions(
+      campaignId: UUID,
+      userId: String,
+      acrs: List[ObjectAccessControlRule],
+      actionTypeOpt: Option[ActionType]
+  ): ConnectionIO[List[List[ObjectAccessControlRule]]] =
+    actionTypeOpt match {
+      case Some(ActionType.Annotate) | None =>
+        for {
+          permissions <- getPermissions(campaignId)
+          permissionsToKeep = permissions collect {
+            case p
+                if p.subjectId != Some(userId) && p.actionType != ActionType.Validate =>
+              p
+          }
+          _ <- permissionsToKeep match {
+            case Nil => deletePermissions(campaignId)
+            case ps if ps.toSet != permissions.toSet =>
+              replacePermissions(campaignId, ps) map { _ =>
+                permissions.size - ps.size
+              }
+            case _ =>
+              0.pure[ConnectionIO]
+          }
+          resultedPermissions <- acrs traverse { acr =>
+            addPermission(campaignId, acr)
+          }
+        } yield resultedPermissions
+      case _ =>
+        acrs traverse { acr =>
+          addPermission(campaignId, acr)
+        }
+    }
 }

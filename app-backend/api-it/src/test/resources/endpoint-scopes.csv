@@ -222,3 +222,6 @@ Path,Domain:Action,Verb
 /api/campaigns/{campaignId}/random-review-task,campaigns:read,get
 /api/campaigns/{campaignId}/retrieve-child-labels,campaigns:clone,post
 /api/campaigns/{campaignId}/tasks,campaigns:read,get
+/api/campaigns/{campaignId}/share,campaigns:share,post
+/api/campaigns/{campaignId}/share,campaigns:share,get
+/api/campaigns/{campaignId}/share/{userId},campaigns:read,delete

@@ -2,16 +2,13 @@ package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.user.Auth0Service
-import com.rasterfoundry.api.utils.{Config, ManagementBearerToken}
+import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
 import com.rasterfoundry.database._
-import com.rasterfoundry.database.notification.Notify
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.notification.intercom.Model._
-import com.rasterfoundry.notification.intercom._
 
 import akka.http.scaladsl.server._
 import cats.data.OptionT
-import cats.effect.{Async, ContextShift, IO}
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
@@ -32,118 +29,11 @@ trait AnnotationProjectPermissionRoutes
 
   val xa: Transactor[IO]
 
-  val getBackend = for {
-    backendRef <- Async.memoize {
-      AsyncHttpClientCatsBackend[IO]()
-    }
-    backend <- backendRef
-  } yield backend
+  implicit def contextShift: ContextShift[IO]
 
-  implicit val contextShift: ContextShift[IO]
-  private val intercomNotifierIO = for {
-    backend <- getBackend
-    notifier = new LiveIntercomNotifier[IO](backend)
-  } yield notifier
-
-  private def getSharer(sharingUser: User): String =
-    if (sharingUser.email != "") {
-      sharingUser.email
-    } else if (sharingUser.personalInfo.email != "") {
-      sharingUser.personalInfo.email
-    } else {
-      sharingUser.name
-    }
-
-  private def shareNotify(
-      sharedUser: User,
-      sharingUser: User,
-      annotationProjectId: UUID
-  ): IO[Either[Throwable, Unit]] =
-    intercomNotifierIO flatMap { intercomNotifier =>
-      intercomNotifier
-        .notifyUser(
-          intercomToken,
-          intercomAdminId,
-          ExternalId(sharedUser.id),
-          Message(s"""
-        | ${getSharer(sharingUser)} has shared a project with you!
-        | ${groundworkUrlBase}/app/projects/${annotationProjectId}/overview
-        | """.trim.stripMargin)
-        )
-        .attempt
-    }
-
-  private def shareNotifyNewUser(
-      bearerToken: ManagementBearerToken,
-      sharingUser: User,
-      newUserEmail: String,
-      newUserId: String,
-      sharingUserPlatform: Platform,
-      annotationProject: AnnotationProject
-  ): Future[Unit] = {
-    val subject =
-      s"""You've been invited to join the "${annotationProject.name}" project on GroundWork!"""
-    (for {
-      ticket <- IO.fromFuture {
-        IO {
-          Auth0Service.createPasswordChangeTicket(
-            bearerToken,
-            s"$groundworkUrlBase/app/login",
-            newUserId
-          )
-        }
-      }
-      (messageRich, messagePlain) = Notifications.getInvitationMessage(
-        getSharer(sharingUser),
-        annotationProject,
-        ticket
-      )
-      _ <- Notify
-        .sendEmail(
-          sharingUserPlatform.publicSettings,
-          sharingUserPlatform.privateSettings,
-          newUserEmail,
-          subject,
-          messageRich.underlying,
-          messagePlain.underlying
-        )
-    } yield ()).attempt.void.unsafeToFuture
-  }
-
-  def getDefaultShare(
-      user: User,
-      actionTypeOpt: Option[ActionType] = None
-  ): List[ObjectAccessControlRule] = {
-    val default = List(
-      ObjectAccessControlRule(
-        SubjectType.User,
-        Some(user.id),
-        ActionType.View
-      ),
-      ObjectAccessControlRule(
-        SubjectType.User,
-        Some(user.id),
-        ActionType.Export
-      )
-    )
-    val annotate = ObjectAccessControlRule(
-      SubjectType.User,
-      Some(user.id),
-      ActionType.Annotate
-    )
-    val validate = ObjectAccessControlRule(
-      SubjectType.User,
-      Some(user.id),
-      ActionType.Validate
-    )
-    actionTypeOpt match {
-      case Some(ActionType.Validate) =>
-        default :+ annotate :+ validate
-      case Some(ActionType.Annotate) | None =>
-        default :+ annotate
-      case _ =>
-        default
-    }
+  val notifierIOAnnotationProject = AsyncHttpClientCatsBackend[IO]() map {
+    backend =>
+      new IntercomNotifications(backend)
   }
 
   def listPermissions(projectId: UUID): Route = authenticate { user =>
@@ -208,13 +98,26 @@ trait AnnotationProjectPermissionRoutes
           complete {
             (AnnotationProjectDao
               .replacePermissions(projectId, acrList)
-              .transact(xa) <* (distinctUserIds traverse { userId =>
-              // it's safe to do this unsafely because we know the user exists from
-              // the isValidPermission check
-              UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
-                sharedUser =>
-                  shareNotify(sharedUser, user, projectId)
-              }
+              .transact(xa) <* (AnnotationProjectDao
+              .unsafeGetById(
+                projectId
+              )
+              .transact(xa) flatMap { annotationProject =>
+              (distinctUserIds traverse { userId =>
+                // it's safe to do this unsafely because we know the user exists from
+                // the isValidPermission check
+                UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
+                  sharedUser =>
+                    notifierIOAnnotationProject flatMap { notifier =>
+                      notifier.shareNotify(
+                        sharedUser,
+                        user,
+                        annotationProject,
+                        "project"
+                      )
+                    }
+                }
+              })
             })).unsafeToFuture
           }
         }
@@ -251,13 +154,25 @@ trait AnnotationProjectPermissionRoutes
           complete {
             (AnnotationProjectDao
               .addPermission(projectId, acr)
-              .transact(xa) <*
-              (acr.getUserId traverse { userId =>
-                UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
-                  sharedUser =>
-                    shareNotify(sharedUser, user, projectId)
+              .transact(xa) <* (
+              AnnotationProjectDao
+                .unsafeGetById(projectId)
+                .transact(xa) flatMap { annotationProject =>
+                acr.getUserId traverse { userId =>
+                  UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
+                    sharedUser =>
+                      notifierIOAnnotationProject flatMap { notifier =>
+                        notifier.shareNotify(
+                          sharedUser,
+                          user,
+                          annotationProject,
+                          "project"
+                        )
+                      }
+                  }
                 }
-              })).unsafeToFuture
+              }
+            )).unsafeToFuture
           }
         }
       }
@@ -426,21 +341,25 @@ trait AnnotationProjectPermissionRoutes
                           )
                         } yield user
                       }).transact(xa).unsafeToFuture
+                      notifier <- notifierIOAnnotationProject.unsafeToFuture
                       acrs = newUserOpt map { newUser =>
-                        getDefaultShare(newUser, userByEmail.actionType)
+                        notifier
+                          .getDefaultShare(newUser, userByEmail.actionType)
                       } getOrElse Nil
                       _ <- (newUserOpt, annotationProjectO).tupled traverse {
                         case (newUser, annotationProject) =>
                           // if silent param is not provided, we notify
                           val isSilent = userByEmail.silent.getOrElse(false)
                           if (!isSilent) {
-                            shareNotifyNewUser(
+                            notifier.shareNotifyNewUser(
                               managementToken,
                               user,
                               userByEmail.email,
                               newUser.id,
                               userPlatform,
-                              annotationProject
+                              annotationProject,
+                              "project",
+                              Notifications.getInvitationMessage
                             )
                           } else {
                             Future.unit
@@ -456,33 +375,45 @@ trait AnnotationProjectPermissionRoutes
                     } yield dbAcrs
                   case existingUsers =>
                     existingUsers traverse { existingUser =>
-                      val acrs =
-                        getDefaultShare(existingUser, userByEmail.actionType)
-                      Auth0Service
-                        .addUserMetadata(
-                          existingUser.id,
-                          managementToken,
-                          Map("app_metadata" -> Map("annotateApp" -> true)).asJson
-                        ) *>
-                        (AnnotationProjectDao
-                          .handleSharedPermissions(
-                            projectId,
-                            existingUser.id,
-                            acrs,
-                            userByEmail.actionType
-                          )
-                          .transact(xa) <* (
-                          // if silent param is not provided, we notify
-                          userByEmail.silent match {
-                            case Some(false) | None =>
-                              shareNotify(
-                                existingUser,
-                                user,
-                                projectId
+                      notifierIOAnnotationProject.unsafeToFuture flatMap {
+                        notifier =>
+                          val acrs =
+                            notifier.getDefaultShare(
+                              existingUser,
+                              userByEmail.actionType
+                            )
+                          Auth0Service
+                            .addUserMetadata(
+                              existingUser.id,
+                              managementToken,
+                              Map("app_metadata" -> Map("annotateApp" -> true)).asJson
+                            ) *>
+                            (AnnotationProjectDao
+                              .handleSharedPermissions(
+                                projectId,
+                                existingUser.id,
+                                acrs,
+                                userByEmail.actionType
                               )
-                            case _ => IO.pure(())
-                          }
-                        )).unsafeToFuture
+                              .transact(xa) <* (
+                              // if silent param is not provided, we notify
+                              userByEmail.silent match {
+                                case Some(false) | None =>
+                                  AnnotationProjectDao
+                                    .unsafeGetById(projectId)
+                                    .transact(xa) flatMap { annotationProject =>
+                                    notifier.shareNotify(
+                                      existingUser,
+                                      user,
+                                      annotationProject,
+                                      "project"
+                                    )
+                                  }
+                                case _ => IO.pure(())
+                              }
+                            )).unsafeToFuture
+                      }
+
                     } map { _.flatten }
                 }
               } yield permissions)
