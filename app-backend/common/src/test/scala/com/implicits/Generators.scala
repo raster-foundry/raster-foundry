@@ -229,20 +229,16 @@ object Generators extends ArbitraryInstances {
   // generate up to a 50km/side polygon with bounds in EPSG:3857 bounds
   private def polygonGen3857: Gen[Polygon] =
     for {
-      width <- Gen.choose(100, 200)
-      height <- Gen.choose(100, 200)
-      centerX <- Gen.choose(-500, 500)
-      centerY <- Gen.choose(-500, 500)
+      width <- Gen.choose(100, 50000)
+      height <- Gen.choose(100, 50000)
+      centerX <- Gen.choose(-2e7, 2e7)
+      centerY <- Gen.choose(-2e7, 2e7)
     } yield {
-      (Extent
-        .toPolygon(
-          (Rectangle()
-            .withWidth(width)
-            .withHeight(height)
-            .setCenter(Point(centerX, centerY))
-            .build(): Geometry).extent
-        ))
-
+      Rectangle()
+        .withWidth(width)
+        .withHeight(height)
+        .setCenter(Point(centerX, centerY))
+        .build()
     }
 
   private def multiPolygonGen3857: Gen[MultiPolygon] =
