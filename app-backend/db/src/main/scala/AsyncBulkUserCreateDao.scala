@@ -1,7 +1,6 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-
 import com.rasterfoundry.datamodel._
 
 import cats.syntax.traverse._
@@ -33,18 +32,20 @@ object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
   def insertAsyncBulkUserCreate(
       bulkCreate: UserBulkCreate,
       user: User
-  ): ConnectionIO[AsyncBulkUserCreate] =
+  ): ConnectionIO[AsyncBulkUserCreate] = {
     (Fragment.const(s"INSERT INTO $tableName") ++ fr"""
     (id, owner, input, status) VALUES (
       uuid_generate_v4(), ${user.id}, $bulkCreate, 'ACCEPTED'    
-    )""").update.withUniqueGeneratedKeys[AsyncBulkUserCreate](
-      "id",
-      "owner",
-      "input",
-      "status",
-      "errors",
-      "results"
-    )
+    )""").update
+      .withUniqueGeneratedKeys[AsyncBulkUserCreate](
+        "id",
+        "owner",
+        "input",
+        "status",
+        "errors",
+        "results"
+      )
+  }
 
   def succeed(
       id: UUID,
