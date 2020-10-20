@@ -90,7 +90,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
             pr.page,
             pr.pageSize,
             projectScenes
-          )
+        )
       )
     }
   }
