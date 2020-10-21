@@ -260,7 +260,7 @@ object AnnotationProjectDao
       _ <- debug(s"Source project is: ${sourceProject map { _.id }}")
       projectScenes <- sourceProject map { _.defaultLayerId } traverse {
         projectLayerId =>
-          ProjectLayerScenesDao.listLayerScenesRaw(projectLayerId, None)
+          ProjectLayerScenesDao.listLayerScenesRaw(projectLayerId)
       }
       _ <- debug(s"Project scenes are: ${projectScenes map { _ map { _.id } }}")
       _ <- projectScenes traverse { scenes =>

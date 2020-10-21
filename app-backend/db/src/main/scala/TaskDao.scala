@@ -710,17 +710,20 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       // task action stamp
       case TaskStatus.LabelingInProgress | TaskStatus.ValidationInProgress =>
         getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
-          val sorted = stamps
-            .sortBy(stamp => -stamp.timestamp.toInstant.getEpochSecond)
-          val previousStatus = sorted.headOption map { _.fromStatus } getOrElse {
-            TaskStatus.Unlabeled
+          stamps.maximumByOption(stamp => {
+            val instant = stamp.timestamp.toInstant
+            // in testing, the epoch second was insufficient for generated actions
+            // very close to each other in time
+            val result
+              : Double = instant.getEpochSecond + (instant.getNano / 1e9)
+            result
+          }) map { mostRecentStamp =>
+            val previousStatus = mostRecentStamp.fromStatus
+            val previousNote = mostRecentStamp.note
+            (previousStatus, previousNote)
+          } getOrElse {
+            (TaskStatus.Unlabeled, None)
           }
-          val previousNote = if (previousStatus == TaskStatus.Flagged) {
-            sorted.drop(1).headOption flatMap { _.note }
-          } else {
-            None
-          }
-          (previousStatus, previousNote)
         })
       // if it's flagged currently, then the note is in the most recent task action stamp
       case TaskStatus.Flagged =>
@@ -740,12 +743,27 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     for {
       _ <- info("Expiring stuck tasks")
       defaultUser <- UserDao.unsafeGetUserById("default")
-      stuckTasks <- query
+      stuckLockedTasks <- query
         .filter(
           fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
         )
         .list
-      _ <- stuckTasks traverse { task =>
+      stuckUnlockedTasks <- query
+        .filter(
+          fr"""
+            locked_on IS NULL AND
+            (status = ${TaskStatus.LabelingInProgress: TaskStatus} OR
+             status = ${TaskStatus.ValidationInProgress: TaskStatus})"""
+        )
+        .list
+      _ <- (stuckUnlockedTasks map { _.annotationProjectId }).toNel traverse {
+        projectIdsList =>
+          val projectIdsSet = projectIdsList.toNes
+          warn(
+            s"Annotation project IDs for stuck in progress but unlocked tasks: $projectIdsSet"
+          )
+      }
+      _ <- (stuckLockedTasks ++ stuckUnlockedTasks) traverse { task =>
         regressTaskStatus(task.id, task.status) flatMap {
           case (newStatus, newNote) =>
             val update =
@@ -764,7 +782,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
         }
       }
-    } yield stuckTasks.length
+    } yield (stuckLockedTasks.length + stuckUnlockedTasks.length)
 
   def randomTask(
       queryParams: TaskQueryParameters,

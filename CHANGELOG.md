@@ -15,6 +15,8 @@
 
 ### Fixed
 
+- Tasks that have `VALIDATION_IN_PROGRESS` or `LABELING_IN_PROGRESS` but no lock data are also expired automatically [#5496](https://github.com/raster-foundry/raster-foundry/pull/5496)
+
 ### Security
 
 ## [1.52.1](https://github.com/raster-foundry/raster-foundry/compare/1.52.0...1.52.1)
