@@ -17,7 +17,9 @@ import java.util.UUID
 
 sealed abstract class UserRole(val repr: String)
     extends Product
-    with Serializable
+    with Serializable {
+  override def toString: String = repr
+}
 case object UserRoleRole extends UserRole("USER")
 case object Viewer extends UserRole("VIEWER")
 case object Admin extends UserRole("ADMIN")
