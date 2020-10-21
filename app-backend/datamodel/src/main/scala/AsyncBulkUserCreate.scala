@@ -9,6 +9,6 @@ import java.util.UUID
     owner: String,
     input: UserBulkCreate,
     status: AsyncJobStatus,
-    errors: List[String],
+    errors: AsyncJobErrors,
     results: List[UserWithCampaign]
 )

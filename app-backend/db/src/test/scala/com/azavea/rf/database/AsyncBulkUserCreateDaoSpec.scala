@@ -95,7 +95,9 @@ class AsyncBulkUserCreateDaoSpec
             )
 
             assert(
-              failed.errors == List("oh no", "bad stuff", "so much wrong"),
+              failed.errors == AsyncJobErrors(
+                List("oh no", "bad stuff", "so much wrong")
+              ),
               "Errors should be transcribed faithfully"
             )
 

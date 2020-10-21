@@ -33,11 +33,12 @@ object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
       bulkCreate: UserBulkCreate,
       user: User
   ): ConnectionIO[AsyncBulkUserCreate] = {
-    (Fragment.const(s"INSERT INTO $tableName") ++ fr"""
+    val fragment = (fr"INSERT INTO" ++ tableF ++ fr"""
     (id, owner, input, status) VALUES (
-      uuid_generate_v4(), ${user.id}, $bulkCreate, 'ACCEPTED'    
-    )""").update
-      .withUniqueGeneratedKeys[AsyncBulkUserCreate](
+      uuid_generate_v4(), ${user.id}, $bulkCreate, 'ACCEPTED'
+    )""")
+    fragment.update.analysis flatMap { analysis =>
+      fragment.update.withUniqueGeneratedKeys[AsyncBulkUserCreate](
         "id",
         "owner",
         "input",
@@ -45,6 +46,7 @@ object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
         "errors",
         "results"
       )
+    }
   }
 
   def succeed(
