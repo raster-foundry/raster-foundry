@@ -10,7 +10,9 @@ import doobie.postgres.implicits._
 
 import java.util.UUID
 
-object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
+object AsyncBulkUserCreateDao
+    extends Dao[AsyncBulkUserCreate]
+    with ConnectionIOLogger {
   val tableName = "async_user_bulk_create"
 
   override val fieldNames = List(
@@ -22,7 +24,7 @@ object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
     "results"
   )
 
-  val selectF = fr"select" ++ selectFieldsF ++ fr"from $tableName"
+  val selectF = fr"select" ++ selectFieldsF ++ fr"from" ++ tableF
 
   def getAsyncBulkUserCreate(
       id: UUID
@@ -32,22 +34,18 @@ object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
   def insertAsyncBulkUserCreate(
       bulkCreate: UserBulkCreate,
       user: User
-  ): ConnectionIO[AsyncBulkUserCreate] = {
-    val fragment = (fr"INSERT INTO" ++ tableF ++ fr"""
+  ): ConnectionIO[AsyncBulkUserCreate] =
+    (fr"INSERT INTO" ++ tableF ++ fr"""
     (id, owner, input, status) VALUES (
       uuid_generate_v4(), ${user.id}, $bulkCreate, 'ACCEPTED'
-    )""")
-    fragment.update.analysis flatMap { analysis =>
-      fragment.update.withUniqueGeneratedKeys[AsyncBulkUserCreate](
-        "id",
-        "owner",
-        "input",
-        "status",
-        "errors",
-        "results"
-      )
-    }
-  }
+    )""").update.withUniqueGeneratedKeys[AsyncBulkUserCreate](
+      "id",
+      "owner",
+      "input",
+      "status",
+      "errors",
+      "results"
+    )
 
   def succeed(
       id: UUID,
@@ -56,7 +54,7 @@ object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
     for {
       jobO <- getAsyncBulkUserCreate(id)
       _ <- jobO traverse { job =>
-        (Fragment.const(s"update $tableName") ++ fr"""
+        (fr"update" ++ tableF ++ fr"""
           set status = 'SUCCEEDED', results = $results where id = ${job.id}
         """).update.run
       }
@@ -67,15 +65,17 @@ object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
 
   def fail(
       id: UUID,
-      errors: List[String]
+      errors: AsyncJobErrors
   ): ConnectionIO[Option[AsyncBulkUserCreate]] =
     for {
       jobO <- getAsyncBulkUserCreate(id)
+      _ <- info("Got the job")
       _ <- jobO traverse { job =>
-        (Fragment.const(s"update $tableName") ++ fr"""
+        (fr"update" ++ tableF ++ fr"""
           set status = 'FAILED', errors = $errors where id = ${job.id}
         """).update.run
       }
+      _ <- info("Updated the job")
       out <- jobO flatTraverse { job =>
         getAsyncBulkUserCreate(job.id)
       }

@@ -5,8 +5,12 @@ import io.circe.{Decoder, Encoder}
 case class AsyncJobErrors(value: List[String])
 
 object AsyncJobErrors {
-  implicit val decAsyncJobErrors: Decoder[AsyncJobErrors] = Decoder[List[String]] map { AsyncJobErrors.apply }
-  implicit val encAsyncJobErrors: Encoder[AsyncJobErrors] = Encoder[List[String]].contramap(_.value)
+  implicit val decAsyncJobErrors
+    : Decoder[AsyncJobErrors] = Decoder[List[String]] map {
+    AsyncJobErrors.apply
+  }
+  implicit val encAsyncJobErrors: Encoder[AsyncJobErrors] =
+    Encoder[List[String]].contramap(_.value)
 }
 
 sealed abstract class AsyncJobStatus(val repr: String) {

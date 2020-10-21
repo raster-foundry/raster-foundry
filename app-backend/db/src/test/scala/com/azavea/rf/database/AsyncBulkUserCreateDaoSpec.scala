@@ -83,7 +83,7 @@ class AsyncBulkUserCreateDaoSpec
                 .insertAsyncBulkUserCreate(fixedUp, dbUser)
               failed <- AsyncBulkUserCreateDao.fail(
                 insertedAsyncJob.id,
-                List("oh no", "bad stuff", "so much wrong")
+                AsyncJobErrors(List("oh no", "bad stuff", "so much wrong"))
               )
             } yield (failed)
 
@@ -135,7 +135,7 @@ class AsyncBulkUserCreateDaoSpec
                 insertedAsyncJob.id,
                 List(UserWithCampaign(extraUser, None))
               )
-            } yield (success, extraUser)
+            } yield (success, UserWithCampaign(extraUser, None))
 
             val (Some(succeeded), extraUser) = dbIO.transact(xa).unsafeRunSync
 
