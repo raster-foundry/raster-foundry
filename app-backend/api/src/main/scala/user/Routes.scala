@@ -8,14 +8,16 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
-import cats.effect.IO
+import akka.http.scaladsl.server._
+import cats.effect.{Blocker, ContextShift, IO}
 import cats.implicits._
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
@@ -23,8 +25,11 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext
 
 import java.net.URLDecoder
+import java.util.UUID
+import java.util.concurrent.Executors
 
 /**
   * Routes for users
@@ -39,6 +44,20 @@ trait UserRoutes
     with Config {
 
   implicit val xa: Transactor[IO]
+
+  implicit def contextShift: ContextShift[IO]
+
+  val bulkUserCreateContext = ExecutionContext.fromExecutor(
+    Executors.newFixedThreadPool(
+      4,
+      new ThreadFactoryBuilder().setNameFormat("bulk-user-create-%d").build()
+    )
+  )
+
+  val userBulkCreateContextShift = IO.contextShift(bulkUserCreateContext)
+
+  val userBulkCreateBlocker =
+    Blocker.liftExecutionContext(bulkUserCreateContext)
 
   val userRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("me") {
@@ -78,6 +97,12 @@ trait UserRoutes
       pathPrefix("bulk-create") {
         pathEndOrSingleSlash {
           post { createUserBulk }
+        } ~ pathPrefix(JavaUUID) { asyncCreateId =>
+          pathEndOrSingleSlash {
+            get {
+              getAsyncUserBulkCreateJob(asyncCreateId)
+            }
+          }
         }
       }
   }
@@ -293,14 +318,15 @@ trait UserRoutes
             userBulkCreate.peudoUserNameType
           )
 
-          val createdUsers = Auth0Service.bulkCreateUsers(names).map {
-            // At this point, if we have an error we throw because the server should return a 500
-            case Left(e)      => throw new Exception(e.error)
-            case Right(users) => users
-          }
+          val userCreateIO =
+            IO.fromFuture(IO(Auth0Service.bulkCreateUsers(names).map {
+              // At this point, if we have an error we throw because the server should return a 500
+              case Left(e)      => throw new Exception(e.error)
+              case Right(users) => users
+            }))
 
-          val uwcsFuture = for {
-            users <- createdUsers
+          val uwcsIO = for {
+            users <- userCreateIO
             userWithCampaigns <- users traverse { auth0User =>
               for {
                 userWithCampaign <- (auth0User.user_id, auth0User.username).tupled traverse {
@@ -316,38 +342,67 @@ trait UserRoutes
                         user
                       )
                       .transact(xa)
-                      .unsafeToFuture
                 }
               } yield userWithCampaign
             }
           } yield userWithCampaigns
 
-          userBulkCreate.grantAccessToChildrenCampaignOwner match {
-            case false =>
-              for {
-                uwcs <- uwcsFuture
-              } yield
-                uwcs traverse { uwc =>
-                  uwc.map(_.user.name)
-                }
-            case true =>
-              for {
-                uwcs <- uwcsFuture
-                usersO = uwcs traverse { uwc =>
-                  uwc.map(_.user)
-                }
-                _ <- (userBulkCreate.campaignId traverse { campaignId =>
-                  CampaignDao
-                    .grantCloneChildrenAccessById(campaignId, ActionType.View)
-                }).transact(xa).unsafeToFuture()
-              } yield
-                usersO map { users =>
-                  users map {
-                    _.name
-                  }
-                }
+          val bulkCreateIO =
+            userBulkCreate.grantAccessToChildrenCampaignOwner match {
+              case false =>
+                uwcsIO
+              case true =>
+                for {
+                  uwcs <- uwcsIO
+                  _ <- (userBulkCreate.campaignId traverse { campaignId =>
+                    CampaignDao
+                      .grantCloneChildrenAccessById(campaignId, ActionType.View)
+                  }).transact(xa)
+                } yield uwcs
 
-          }
+            }
+
+          (for {
+            asyncCreateJob <- AsyncBulkUserCreateDao
+              .insertAsyncBulkUserCreate(userBulkCreate, user)
+              .transact(xa)
+            _ <- userBulkCreateBlocker
+              .blockOn(bulkCreateIO)(userBulkCreateContextShift)
+              .attempt
+              .flatMap({
+                case Right(users) =>
+                  AsyncBulkUserCreateDao
+                    .succeed(asyncCreateJob.id, users.flatten)
+                    .transact(xa)
+                case Left(err) =>
+                  AsyncBulkUserCreateDao
+                    .fail(
+                      asyncCreateJob.id,
+                      AsyncJobErrors(List(err.getMessage))
+                    )
+                    .transact(xa)
+              })
+              .start
+          } yield asyncCreateJob).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def getAsyncUserBulkCreateJob(jobId: UUID): Route = authenticate { user =>
+    authorizeScope(ScopedAction(Domain.Users, Action.BulkCreate, None), user) {
+      authorizeAsync {
+        AsyncBulkUserCreateDao.query
+          .filter(user)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AsyncBulkUserCreateDao
+            .getAsyncBulkUserCreate(jobId)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
