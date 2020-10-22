@@ -6,6 +6,7 @@
 - STAC label items now include the task statuses in a `groundwork:taskStatuses` property [#5490](https://github.com/raster-foundry/raster-foundry/pull/5490)
 - Tasks can be listed by campaign [#5494](https://github.com/raster-foundry/raster-foundry/pull/5494)
 - Campaigns can be shared with only an email [#5495](https://github.com/raster-foundry/raster-foundry/pull/5495)
+- Campaign IDs can be used to filter STAC exports [#5498](https://github.com/raster-foundry/raster-foundry/pull/5498)
 
 ### Changed
 

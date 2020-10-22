@@ -204,7 +204,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         parameters(
           'exportStatus.as[String].?,
-          'annotationProjectId.as[UUID].?
+          'annotationProjectId.as[UUID].?,
+          'campaignId.as[UUID].?
         )
     ).as(StacExportQueryParameters.apply _)
 
