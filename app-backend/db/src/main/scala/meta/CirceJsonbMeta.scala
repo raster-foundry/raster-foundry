@@ -3,6 +3,7 @@ package com.rasterfoundry.database.meta
 import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.newtypes.AsyncJobErrors
 
 import cats.implicits._
 import doobie._

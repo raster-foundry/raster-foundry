@@ -2,6 +2,7 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.newtypes._
 
 import cats.syntax.traverse._
 import doobie._

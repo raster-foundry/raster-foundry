@@ -135,7 +135,7 @@ class AsyncBulkUserCreateDaoSpec
                 insertedAsyncJob.id,
                 List(UserWithCampaign(extraUser, None))
               )
-            } yield (success, UserWithCampaign(extraUser, None))
+            } yield (success, extraUser)
 
             val (Some(succeeded), extraUser) = dbIO.transact(xa).unsafeRunSync
 
@@ -145,7 +145,7 @@ class AsyncBulkUserCreateDaoSpec
             )
 
             assert(
-              succeeded.results == List(extraUser),
+              succeeded.results == List(extraUser.id),
               "Created users should be transcribed successfully"
             )
 

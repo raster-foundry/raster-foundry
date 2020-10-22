@@ -1,5 +1,7 @@
 package com.rasterfoundry.datamodel
 
+import com.rasterfoundry.datamodel.newtypes.{AsyncJobErrors, CreatedUserIds}
+
 import io.circe.generic.JsonCodec
 
 import java.util.UUID
@@ -10,5 +12,5 @@ import java.util.UUID
     input: UserBulkCreate,
     status: AsyncJobStatus,
     errors: AsyncJobErrors,
-    results: List[UserWithCampaign]
+    results: CreatedUserIds
 )
