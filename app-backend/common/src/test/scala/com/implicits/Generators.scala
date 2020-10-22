@@ -997,7 +997,15 @@ object Generators extends ArbitraryInstances {
   private def taskStatusListGen: Gen[List[TaskStatus]] =
     Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
 
-  private val stacExportGenTup =
+  private val stacAnnotationExportGenTup =
+    (
+      nonEmptyStringGen,
+      Gen.const(StacExportLicense(Proprietary(), Some("http://example.com"))),
+      taskStatusListGen,
+      uuidGen
+    )
+
+  private val stacCampaignExportGenTup =
     (
       nonEmptyStringGen,
       Gen.const(StacExportLicense(Proprietary(), Some("http://example.com"))),
@@ -1007,10 +1015,10 @@ object Generators extends ArbitraryInstances {
 
   private def stacAnnotationProjectExportGen
       : Gen[StacExport.AnnotationProjectExport] =
-    stacExportGenTup.mapN(StacExport.AnnotationProjectExport.apply)
+    stacAnnotationExportGenTup.mapN(StacExport.AnnotationProjectExport.apply)
 
   private def stacCampaignExportGen: Gen[StacExport.CampaignExport] =
-    stacExportGenTup.mapN(StacExport.CampaignExport.apply)
+    stacCampaignExportGenTup.mapN(StacExport.CampaignExport.apply)
 
   private def stacExportQueryParametersGen: Gen[StacExportQueryParameters] =
     Gen.const(StacExportQueryParameters())

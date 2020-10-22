@@ -441,6 +441,15 @@ trait PropTestHelpers {
       annotationProjectId = project.id
     )
 
+  def fixupCampaignExportCreate(
+      campaignExport: StacExport.CampaignExport,
+      campaign: Campaign
+  ): StacExport.CampaignExport = {
+    campaignExport.copy(
+      campaignId = campaign.id
+    )
+  }
+
   def createChildTaskCreateFC(
       parentTask: Task.TaskFeature,
       childStatus: TaskStatus,
