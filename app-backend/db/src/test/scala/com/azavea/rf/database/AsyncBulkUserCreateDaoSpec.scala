@@ -2,6 +2,7 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.newtypes._
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
@@ -83,7 +84,7 @@ class AsyncBulkUserCreateDaoSpec
                 .insertAsyncBulkUserCreate(fixedUp, dbUser)
               failed <- AsyncBulkUserCreateDao.fail(
                 insertedAsyncJob.id,
-                AsyncJobErrors(List("oh no", "bad stuff", "so much wrong"))
+                new AsyncJobErrors(List("oh no", "bad stuff", "so much wrong"))
               )
             } yield (failed)
 
@@ -95,9 +96,8 @@ class AsyncBulkUserCreateDaoSpec
             )
 
             assert(
-              failed.errors == AsyncJobErrors(
-                List("oh no", "bad stuff", "so much wrong")
-              ),
+              failed.errors.value ==
+                List("oh no", "bad stuff", "so much wrong"),
               "Errors should be transcribed faithfully"
             )
 
@@ -133,7 +133,7 @@ class AsyncBulkUserCreateDaoSpec
               extraUser <- UserDao.create(extraUserCreate)
               success <- AsyncBulkUserCreateDao.succeed(
                 insertedAsyncJob.id,
-                List(UserWithCampaign(extraUser, None))
+                new CreatedUserIds(List(extraUser.id))
               )
             } yield (success, extraUser)
 
@@ -145,7 +145,7 @@ class AsyncBulkUserCreateDaoSpec
             )
 
             assert(
-              succeeded.results == List(extraUser.id),
+              succeeded.results.value == List(extraUser.id),
               "Created users should be transcribed successfully"
             )
 

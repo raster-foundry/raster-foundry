@@ -11,6 +11,7 @@ import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.newtypes._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
@@ -372,13 +373,18 @@ trait UserRoutes
               .flatMap({
                 case Right(users) =>
                   AsyncBulkUserCreateDao
-                    .succeed(asyncCreateJob.id, users.flatten)
+                    .succeed(
+                      asyncCreateJob.id,
+                      new CreatedUserIds(users flatMap { userO =>
+                        userO map { _.user.id }
+                      })
+                    )
                     .transact(xa)
                 case Left(err) =>
                   AsyncBulkUserCreateDao
                     .fail(
                       asyncCreateJob.id,
-                      AsyncJobErrors(List(err.getMessage))
+                      new AsyncJobErrors(List(err.getMessage))
                     )
                     .transact(xa)
               })

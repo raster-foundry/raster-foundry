@@ -4,16 +4,14 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.newtypes._
 
-import cats.syntax.traverse._
+import cats.syntax.apply._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 
 import java.util.UUID
 
-object AsyncBulkUserCreateDao
-    extends Dao[AsyncBulkUserCreate]
-    with ConnectionIOLogger {
+object AsyncBulkUserCreateDao extends Dao[AsyncBulkUserCreate] {
   val tableName = "async_user_bulk_create"
 
   override val fieldNames = List(
@@ -40,47 +38,23 @@ object AsyncBulkUserCreateDao
     (id, owner, input, status) VALUES (
       uuid_generate_v4(), ${user.id}, $bulkCreate, 'ACCEPTED'
     )""").update.withUniqueGeneratedKeys[AsyncBulkUserCreate](
-      "id",
-      "owner",
-      "input",
-      "status",
-      "errors",
-      "results"
+      fieldNames: _*
     )
 
   def succeed(
       id: UUID,
-      results: List[UserWithCampaign]
+      results: CreatedUserIds
   ): ConnectionIO[Option[AsyncBulkUserCreate]] =
-    for {
-      jobO <- getAsyncBulkUserCreate(id)
-      _ <- jobO traverse { job =>
-        (fr"update" ++ tableF ++ fr"""
-          set status = 'SUCCEEDED', results = $results where id = ${job.id}
-        """).update.run
-      }
-      out <- jobO flatTraverse { job =>
-        getAsyncBulkUserCreate(job.id)
-      }
-    } yield out
+    (fr"update" ++ tableF ++ fr"""
+          set status = 'SUCCEEDED', results = $results where id = $id
+    """).update.run *> getAsyncBulkUserCreate(id)
 
   def fail(
       id: UUID,
       errors: AsyncJobErrors
   ): ConnectionIO[Option[AsyncBulkUserCreate]] =
-    for {
-      jobO <- getAsyncBulkUserCreate(id)
-      _ <- info("Got the job")
-      _ <- jobO traverse { job =>
-        (fr"update" ++ tableF ++ fr"""
-          set status = 'FAILED', errors = $errors where id = ${job.id}
-        """).update.run
-      }
-      _ <- info("Updated the job")
-      out <- jobO flatTraverse { job =>
-        getAsyncBulkUserCreate(job.id)
-      }
-
-    } yield out
+    (fr"update" ++ tableF ++ fr"""
+          set status = 'FAILED', errors = $errors where id = $id
+    """).update.run *> getAsyncBulkUserCreate(id)
 
 }
