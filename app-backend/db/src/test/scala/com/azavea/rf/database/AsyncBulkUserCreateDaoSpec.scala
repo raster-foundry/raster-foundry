@@ -124,6 +124,7 @@ class AsyncBulkUserCreateDaoSpec
                 organizationCreate,
                 platformCreate
               )
+              _ = println("created admin data")
               fixedUp = bulkCreate.copy(
                 platformId = dbPlatform.id,
                 organizationId = dbOrg.id

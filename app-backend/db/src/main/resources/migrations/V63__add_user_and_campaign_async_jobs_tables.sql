@@ -15,5 +15,5 @@ CREATE TABLE async_campaign_clone (
     input jsonb not null,
     status async_job_status not null,
     errors jsonb not null default '[]',
-    results jsonb not null default '[]'
+    results jsonb
 );

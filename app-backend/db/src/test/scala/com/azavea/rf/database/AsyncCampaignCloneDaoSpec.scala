@@ -86,7 +86,7 @@ class AsyncCampaignCloneDaoSpec
     }
   }
 
-  test("mark an async bulk user create job successful") {
+  test("mark an async campaign clone job successful") {
     check {
       forAll {
         (

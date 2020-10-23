@@ -1,7 +1,9 @@
 package com.rasterfoundry.datamodel
 
 import com.rasterfoundry.datamodel.newtypes._
+
 import io.circe.generic.JsonCodec
+
 import java.{util => ju}
 
 @JsonCodec final case class AsyncCampaignClone(
@@ -10,5 +12,5 @@ import java.{util => ju}
     input: Campaign.Clone,
     status: AsyncJobStatus,
     errors: AsyncJobErrors,
-    results: Campaign
+    results: Option[Campaign]
 )
