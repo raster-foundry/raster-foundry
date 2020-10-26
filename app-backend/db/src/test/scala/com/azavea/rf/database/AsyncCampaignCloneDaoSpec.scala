@@ -109,7 +109,7 @@ class AsyncCampaignCloneDaoSpec
               )
               succeeded <- AsyncCampaignCloneDao.succeed(
                 insertedAsyncJob.id,
-                pretendClonedCampaign
+                new CampaignResult(pretendClonedCampaign)
               )
             } yield (succeeded, pretendClonedCampaign)
 
@@ -122,7 +122,7 @@ class AsyncCampaignCloneDaoSpec
             )
 
             assert(
-              succeeded.results == campaignCopy,
+              (succeeded.results map { _.value }) == Some(campaignCopy),
               "Results should be transcribed faithfully"
             )
 

@@ -12,5 +12,5 @@ import java.{util => ju}
     input: Campaign.Clone,
     status: AsyncJobStatus,
     errors: AsyncJobErrors,
-    results: Option[Campaign]
+    results: Option[CampaignResult]
 )

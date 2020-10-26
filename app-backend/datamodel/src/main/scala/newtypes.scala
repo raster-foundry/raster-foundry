@@ -31,4 +31,11 @@ object newtypes {
     implicit val decAsyncJobErrors: Decoder[CreatedUserIds] =
       Decoder[List[String]].map(new CreatedUserIds(_))
   }
+
+  class CampaignResult(val value: Campaign) extends AnyVal
+
+  object CampaignResult {
+    implicit val encCampaignResult: Encoder[CampaignResult] = Encoder[Campaign].contramap(_.value)
+    implicit val decCampaignResult: Decoder[CampaignResult] = Decoder[Campaign].map(new CampaignResult(_))
+  }
 }

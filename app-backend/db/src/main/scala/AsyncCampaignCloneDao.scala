@@ -49,7 +49,7 @@ object AsyncCampaignCloneDao extends Dao[AsyncCampaignClone] {
 
   def succeed(
       id: UUID,
-      results: Campaign
+      results: CampaignResult
   ): ConnectionIO[Option[AsyncCampaignClone]] =
     (fr"update" ++ tableF ++ fr"""
           set status = 'SUCCEEDED', results = $results where id = $id

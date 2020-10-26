@@ -3,7 +3,7 @@ package com.rasterfoundry.database.meta
 import com.rasterfoundry.common.BacksplashGeoTiffInfo
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.newtypes.AsyncJobErrors
+import com.rasterfoundry.datamodel.newtypes.{AsyncJobErrors, CampaignResult}
 
 import cats.implicits._
 import doobie._
@@ -131,8 +131,8 @@ trait CirceJsonbMeta {
   implicit val asyncJobErrorsMeta: Meta[AsyncJobErrors] =
     CirceJsonbMeta[AsyncJobErrors]
 
-  implicit val campaignMeta: Meta[Campaign] =
-    CirceJsonbMeta[Campaign]
+  implicit val campaignResultMeta: Meta[CampaignResult] =
+    CirceJsonbMeta[CampaignResult]
 
   implicit val campaignCloneMeta: Meta[Campaign.Clone] =
     CirceJsonbMeta[Campaign.Clone]
