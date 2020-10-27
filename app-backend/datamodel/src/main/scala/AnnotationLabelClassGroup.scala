@@ -8,7 +8,8 @@ import java.util.UUID
 final case class AnnotationLabelClassGroup(
     id: UUID,
     name: String,
-    annotationProjectId: UUID,
+    annotationProjectId: Option[UUID],
+    campaignId: Option[UUID],
     index: Int
 ) {
   def withLabelClasses(
@@ -18,6 +19,7 @@ final case class AnnotationLabelClassGroup(
       id,
       name,
       annotationProjectId,
+      campaignId,
       index,
       classes
     )
@@ -43,7 +45,8 @@ object AnnotationLabelClassGroup {
   final case class WithLabelClasses(
       id: UUID,
       name: String,
-      annotationProjectId: UUID,
+      annotationProjectId: Option[UUID],
+      campaignId: Option[UUID],
       index: Int,
       labelClasses: List[AnnotationLabelClass]
   )

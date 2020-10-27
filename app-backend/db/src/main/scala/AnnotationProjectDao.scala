@@ -172,7 +172,8 @@ object AnnotationProjectDao
         case (classGroup, idx) =>
           AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
             classGroup,
-            annotationProject,
+            Some(annotationProject),
+            None,
             idx
           )
       }
@@ -479,7 +480,8 @@ object AnnotationProjectDao
                   )
                 }
               ),
-              annotationProjectCopy,
+              Some(annotationProjectCopy),
+              None,
               0,
               labelClasses
             )
