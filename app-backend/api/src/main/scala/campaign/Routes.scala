@@ -187,7 +187,7 @@ trait CampaignRoutes
         rejectEmptyResponse {
           complete {
             CampaignDao
-              .getCampaignById(campaignId)
+              .getCampaignWithRelatedById(campaignId)
               .transact(xa)
               .unsafeToFuture
           }

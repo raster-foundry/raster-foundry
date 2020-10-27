@@ -1,4 +1,5 @@
 # Change Log
+
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
@@ -9,6 +10,8 @@
 - Campaign IDs can be used to filter STAC exports [#5498](https://github.com/raster-foundry/raster-foundry/pull/5498)
 
 ### Changed
+
+- Campaigns are now optionally associated with `AnnotationLabelClassGroup`s and return associated groups from `/campaign` endpoints [#5500](https://github.com/raster-foundry/raster-foundry/pull/5500)
 
 ### Deprecated
 
