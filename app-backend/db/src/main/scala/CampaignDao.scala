@@ -157,6 +157,24 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
   def unsafeGetCampaignById(id: UUID): ConnectionIO[Campaign] =
     query.filter(id).select
 
+  def getCampaignWithRelatedById(
+      id: UUID
+  ): ConnectionIO[Option[Campaign.WithRelated]] =
+    for {
+      campaignO <- getCampaignById(id)
+      labelClassGroup <- AnnotationLabelClassGroupDao
+        .listByCampaignId(id)
+      labelClassGroupWithClass <- labelClassGroup traverse { group =>
+        AnnotationLabelClassDao
+          .listAnnotationLabelClassByGroupId(group.id)
+          .map(group.withLabelClasses(_))
+      }
+    } yield {
+      campaignO map { campaign =>
+        campaign.withRelated(labelClassGroupWithClass)
+      }
+    }
+
   def updateCampaign(campaign: Campaign, id: UUID): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
       name = ${campaign.name},
