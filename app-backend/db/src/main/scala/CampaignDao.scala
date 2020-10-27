@@ -82,7 +82,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       page: PageRequest,
       params: CampaignQueryParameters,
       user: User
-  ): ConnectionIO[PaginatedResponse[Campaign]] =
+  ): ConnectionIO[PaginatedResponse[Campaign.WithRelated]] =
     authQuery(
       user,
       ObjectType.Campaign,
@@ -91,6 +91,45 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       params.groupQueryParameters.groupId
     ).filter(params)
       .page(page)
+      .flatMap(toWithRelated)
+
+  def toWithRelated(
+    campaignsPage: PaginatedResponse[Campaign]
+  ): ConnectionIO[PaginatedResponse[Campaign.WithRelated]] =
+    campaignsPage.results.toList.toNel match {
+      case Some(campaigns) =>
+        campaigns traverse { campaign =>
+          for {
+            labelClassGroups <- AnnotationLabelClassGroupDao.listByCampaignId(
+              campaign.id
+            )
+            labelClassGroupsWithClasses <- labelClassGroups traverse {
+              labelClassGroup =>
+                AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(
+                  labelClassGroup.id
+                ) map { cls =>
+                  labelClassGroup.withLabelClasses(cls)
+                }
+            }
+          } yield {
+            campaign.withRelated(labelClassGroupsWithClasses)
+          }
+        } map { campaignWithRelated =>
+          PaginatedResponse[Campaign.WithRelated](
+            campaignsPage.count,
+            campaignsPage.hasPrevious,
+            campaignsPage.hasNext,
+            campaignsPage.page,
+            campaignsPage.pageSize,
+            campaignWithRelated.toList
+          )
+
+        }
+      case _ =>
+        campaignsPage
+          .copy(results = List.empty[Campaign.WithRelated])
+          .pure[ConnectionIO]
+    }
 
   def insertCampaign(
       campaignCreate: Campaign.Create,
