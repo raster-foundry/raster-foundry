@@ -22,7 +22,9 @@ final case class Campaign(
     childrenCount: Int,
     projectStatuses: Map[String, Int],
     isActive: Boolean,
-    resourceLink: Option[String] = None
+    resourceLink: Option[String] = None,
+    taskStatusSummary: Map[String, Int],
+    imageCount: Int = 0
 ) {
   def withRelated(
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses]
@@ -44,7 +46,9 @@ final case class Campaign(
       projectStatuses,
       isActive,
       resourceLink,
-      labelClassGroups
+      labelClassGroups,
+      taskStatusSummary,
+      imageCount
     )
   }
 }
@@ -98,6 +102,8 @@ object Campaign {
       isActive: Boolean,
       resourceLink: Option[String] = None,
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
+      taskStatusSummary: Map[String, Int],
+      imageCount: Int = 0
   )
 
   object WithRelated {
