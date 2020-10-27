@@ -94,7 +94,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       .flatMap(toWithRelated)
 
   def toWithRelated(
-    campaignsPage: PaginatedResponse[Campaign]
+      campaignsPage: PaginatedResponse[Campaign]
   ): ConnectionIO[PaginatedResponse[Campaign.WithRelated]] =
     campaignsPage.results.toList.toNel match {
       case Some(campaigns) =>

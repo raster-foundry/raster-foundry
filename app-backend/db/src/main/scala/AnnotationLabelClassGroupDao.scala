@@ -27,7 +27,8 @@ object AnnotationLabelClassGroupDao
     val index = groupCreate.index getOrElse indexFallback
     val groupIO = (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, name, annotation_project_id, campaign_id, idx) VALUES (
-        uuid_generate_v4(), ${groupCreate.name}, ${annotationProject.map(_.id)}, ${campaign.map(_.id)}, ${index}
+        uuid_generate_v4(), ${groupCreate.name}, ${annotationProject.map(_.id)}, ${campaign
+      .map(_.id)}, ${index}
       )""").update.withUniqueGeneratedKeys[AnnotationLabelClassGroup](
       "id",
       "name",
