@@ -12,6 +12,7 @@
 ### Changed
 
 - Campaigns are now optionally associated with `AnnotationLabelClassGroup`s and return associated groups from `/campaign` endpoints [#5500](https://github.com/raster-foundry/raster-foundry/pull/5500)
+- Campaigns now include image counts and task status summaries [#5501](https://github.com/raster-foundry/raster-foundry/pull/5501)
 
 ### Deprecated
 

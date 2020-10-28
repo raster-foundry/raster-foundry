@@ -34,10 +34,16 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "children_count",
     "project_statuses",
     "is_active",
-    "resource_link"
+    "resource_link",
+    "task_status_summary"
   )
 
-  def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
+  def selectF: Fragment =
+    fr"SELECT " ++ selectFieldsF ++ Fragment.const(
+      ", COALESCE(image_count, 0) as image_count"
+    ) ++
+      fr" FROM " ++ Fragment.const(
+      s"$tableName LEFT OUTER JOIN (select campaign_id, count(*) image_count FROM annotation_projects GROUP BY campaign_id) cnt ON id = campaign_id")
 
   def authQuery(
       user: User,
@@ -134,22 +140,24 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
   def insertCampaign(
       campaignCreate: Campaign.Create,
       user: User
-  ): ConnectionIO[Campaign] =
-    (fr"INSERT INTO" ++ tableF ++ fr"""(
+  ): ConnectionIO[Campaign] = {
+    for {
+      insertId <- (fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, owner, name, campaign_type, description,
       video_link, partner_name, partner_logo, parent_campaign_id,
       continent, tags, resource_link
     )""" ++
-      fr"""VALUES
+        fr"""VALUES
       (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
        ${campaignCreate.campaignType}, ${campaignCreate.description},
        ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
        ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId},
        ${campaignCreate.continent}, ${campaignCreate.tags}, ${campaignCreate.resourceLink}
        )
-    """).update.withUniqueGeneratedKeys[Campaign](
-      fieldNames: _*
-    )
+    """).update.withUniqueGeneratedKeys[UUID]("id")
+      campaign <- unsafeGetCampaignById(insertId)
+    } yield campaign
+  }
 
   def getCampaignById(id: UUID): ConnectionIO[Option[Campaign]] =
     query.filter(id).selectOption
@@ -220,15 +228,14 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, campaign_type, description, video_link,
-             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, project_statuses, true, ${resourceLinkF}""" ++
+             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, project_statuses, true, ${resourceLinkF}, task_status_summary""" ++
       fr"""FROM """ ++ tableF ++ fr"""
            WHERE id = ${id}
         """)
     for {
-      campaignCopy <- insertQuery.update
-        .withUniqueGeneratedKeys[Campaign](
-          fieldNames: _*
-        )
+      campaignCopyId <- insertQuery.update
+        .withUniqueGeneratedKeys[UUID]("id")
+      campaignCopy <- unsafeGetCampaignById(campaignCopyId)
       annotationProjects <- AnnotationProjectDao.listByCampaign(id)
       _ <- annotationProjects traverse { project =>
         AnnotationProjectDao.copyProject(
