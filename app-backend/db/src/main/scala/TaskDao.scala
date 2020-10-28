@@ -346,9 +346,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           AnnotationProjectDao.getFootprint(annotationProject.id)
         case _ => None.pure[ConnectionIO]
       }
-      taskSizeO = taskGridFeatureCreate.properties.sizeMeters orElse (annotationProjectO flatMap {
-        _.taskSizeMeters
-      })
+      taskSizeO =
+        taskGridFeatureCreate.properties.sizeMeters orElse (annotationProjectO flatMap {
+          _.taskSizeMeters
+        })
       gridInsert <- (geomO, taskSizeO).tupled.map { geomAndSize =>
         val (geom, size) = geomAndSize
         (insertF ++ fr"""
@@ -748,19 +749,21 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     for {
       _ <- info("Expiring stuck tasks")
       defaultUser <- UserDao.unsafeGetUserById("default")
-      stuckLockedTasks <- query
-        .filter(
-          fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
-        )
-        .list
-      stuckUnlockedTasks <- query
-        .filter(
-          fr"""
+      stuckLockedTasks <-
+        query
+          .filter(
+            fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
+          )
+          .list
+      stuckUnlockedTasks <-
+        query
+          .filter(
+            fr"""
             locked_on IS NULL AND
             (status = ${TaskStatus.LabelingInProgress: TaskStatus} OR
              status = ${TaskStatus.ValidationInProgress: TaskStatus})"""
-        )
-        .list
+          )
+          .list
       _ <- (stuckUnlockedTasks map { _.annotationProjectId }).toNel traverse {
         projectIdsList =>
           val projectIdsSet = projectIdsList.toNes
@@ -815,9 +818,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] = {
 
     for {
-      paginatedResponse <- query
-        .filter(fr"parent_task_id = $taskId")
-        .page(pageRequest)
+      paginatedResponse <-
+        query
+          .filter(fr"parent_task_id = $taskId")
+          .page(pageRequest)
 
       withActions <- paginatedResponse.results.toList traverse { task =>
         unsafeGetActionsForTask(task)
@@ -875,6 +879,12 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       newGeoms <- taskO traverse { _ =>
         splitGeomQuery.query[Projected[Geometry]].to[List]
       }
+      // assuming that geoms are coming back correctly, the flow is:
+      //
+      // - for each geom, create a new task with the existing task as a parent
+      // - reassociate *the overlapping portions* of all labels on the parent task
+      // - with the new task
+      // - invalidate the old task
       _ <- (newGeoms getOrElse Nil) traverse { geom =>
         println(geom).pure[ConnectionIO]
       }
