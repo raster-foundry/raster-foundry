@@ -1,1 +1,1 @@
-ALTER TYPE task_status ADD VALUE "SPLIT";
+ALTER TYPE task_status ADD VALUE 'SPLIT';
