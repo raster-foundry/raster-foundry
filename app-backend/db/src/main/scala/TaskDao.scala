@@ -838,9 +838,56 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     }
   }
 
+  private def reassociateLabelF(oldTaskId: UUID, newTaskId: UUID): Fragment =
+    fr"""
+  with
+    -- get the geoms with old ids
+    old_task as (
+      select * from tasks where id = $oldTaskId
+    ),
+    new_task as (
+      select * from tasks where id = $newTaskId
+    ),
+    -- create a view of old id + everything for a new task + old label class id
+    overlapping_labels as
+      (select uuid_generate_v4() as new_label_id,
+              annotation_labels.created_by created_by,
+              annotation_labels.annotation_project_id annotation_project_id,
+              $newTaskId as new_task_id,
+              st_intersection(annotation_labels.geometry, new_task.geometry) geom,
+              annotation_labels.description as description,
+              annotation_labels_annotation_label_classes.annotation_class_id annotation_class_id
+       from annotation_labels join tasks on annotation_labels.annotation_task_id = tasks.id
+       join annotation_labels_annotation_label_classes
+         on annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id,
+       new_task
+       where tasks.id = $oldTaskId
+      ),
+    -- insert into labels and label classes from the old view
+    label_insert as
+      (insert into annotation_labels (
+        id, created_at, created_by, annotation_project_id, annotation_task_id, geometry, description
+      ) (
+        SELECT new_label_id,
+               now(),
+               created_by,
+               annotation_project_id,
+               new_task_id,
+               geom,
+               description from overlapping_labels
+      ))
+    insert into annotation_labels_annotation_label_classes (
+      annotation_label_id,
+      annotation_class_id
+    ) (
+      SELECT new_label_id, annotation_class_id from overlapping_labels
+    )
+  """
+
   def splitTask(
-      taskId: UUID
-  ): ConnectionIO[Unit] = {
+      taskId: UUID,
+      user: User
+  ): ConnectionIO[Task.TaskFeatureCollection] = {
     val splitGeomQuery = fr"""
       with
         bounds as
@@ -871,23 +918,52 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           ) as geom from bounds, midpoints),
         task_cross as
           (select st_collect(ns_line.geom, ew_line.geom) geom from ns_line, ew_line)
-      select st_dump(st_split(geometry, task_cross.geom)) from tasks, task_cross where id = $taskId
+      select geom_dump.geom from (
+        select (st_dump(st_split(geometry, task_cross.geom))).geom from tasks, task_cross where id = $taskId
+      ) as geom_dump;
       """
 
-    for {
-      taskO <- getTaskById(taskId)
-      newGeoms <- taskO traverse { _ =>
-        splitGeomQuery.query[Projected[Geometry]].to[List]
-      }
-      // assuming that geoms are coming back correctly, the flow is:
-      //
-      // - for each geom, create a new task with the existing task as a parent
-      // - reassociate *the overlapping portions* of all labels on the parent task
-      // - with the new task
-      // - invalidate the old task
-      _ <- (newGeoms getOrElse Nil) traverse { geom =>
-        println(geom).pure[ConnectionIO]
-      }
-    } yield ()
+    getTaskById(taskId) flatMap {
+      case Some(task) =>
+        for {
+          newGeoms <- splitGeomQuery.query[Projected[Geometry]].to[List]
+          // for each geom, create a new task with the existing task as a parent
+          taskFeatures = newGeoms map { geom =>
+            val taskPropertiesCreate = task
+              .toProperties(Nil)
+              .toCreate
+              .copy(
+                parentTaskId = Some(taskId)
+              )
+            Task.TaskFeatureCreate(
+              taskPropertiesCreate,
+              geom
+            )
+          }
+          newTaskFeatureCollection <- insertTasks(
+            Task.TaskFeatureCollectionCreate(features = taskFeatures),
+            user
+          )
+          // - reassociate *the overlapping portions* of all labels on the parent task with the new task
+          () <- (newTaskFeatureCollection.features traverse { taskFeature =>
+              reassociateLabelF(taskId, taskFeature.id).update.run
+            }).void
+          taskFeature = task.toGeoJSONFeature(Nil)
+          createProperties = taskFeature.properties.toCreate.copy(
+            status = TaskStatus.Split
+          )
+          featureCreate = Task.TaskFeatureCreate(
+            createProperties,
+            taskFeature.geometry
+          )
+          // - update the old task to have a status of `SPLIT`
+          _ <- updateTask(
+            taskId,
+            featureCreate,
+            user
+          )
+        } yield newTaskFeatureCollection
+      case None => Task.TaskFeatureCollection(features = Nil).pure[ConnectionIO]
+    }
   }
 }
