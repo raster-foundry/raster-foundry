@@ -289,7 +289,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     val t = tfc.properties.taskType.getOrElse(TaskType.fromString("LABEL"))
     val r = tfc.properties.reviews.getOrElse(Map[UUID, Review]())
     fr"""(
-        ${UUID.randomUUID}, ${Timestamp.from(Instant.now)}, ${user.id}, ${Timestamp
+        ${UUID.randomUUID}, ${Timestamp.from(
+      Instant.now
+    )}, ${user.id}, ${Timestamp
       .from(Instant.now)},
         ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
         ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r},
@@ -597,7 +599,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       .filter(fr"annotation_project_id = $annotationProjectId")
       .filter(taskStatusF(taskStatuses))
       .select map {
-      case Some(geom) :: Some(xMin) :: Some(yMin) :: Some(xMax) :: Some(yMax) :: HNil =>
+      case Some(geom) :: Some(xMin) :: Some(yMin) :: Some(xMax) :: Some(
+            yMax
+          ) :: HNil =>
         Some(UnionedGeomExtent(geom, xMin, yMin, xMax, yMax))
       case _ =>
         None
@@ -658,21 +662,22 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   def countProjectTaskByStatus(
       projectId: UUID
-  ): ConnectionIO[Map[TaskStatus, Int]] = (fr"""
+  ): ConnectionIO[Map[TaskStatus, Int]] =
+    (fr"""
     SELECT status, COUNT(id)
     FROM tasks
     WHERE annotation_project_id = ${projectId}
     GROUP BY status;
     """).query[(TaskStatus, Int)].to[List].map { list =>
-    val statusMap = list.toMap
-    List(
-      TaskStatus.Unlabeled,
-      TaskStatus.LabelingInProgress,
-      TaskStatus.Labeled,
-      TaskStatus.ValidationInProgress,
-      TaskStatus.Validated
-    ).fproduct(status => statusMap.getOrElse(status, 0)).toMap
-  }
+      val statusMap = list.toMap
+      List(
+        TaskStatus.Unlabeled,
+        TaskStatus.LabelingInProgress,
+        TaskStatus.Labeled,
+        TaskStatus.ValidationInProgress,
+        TaskStatus.Validated
+      ).fproduct(status => statusMap.getOrElse(status, 0)).toMap
+    }
 
   def listTasksByStatus(
       annotationProjectId: UUID,
@@ -714,8 +719,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             val instant = stamp.timestamp.toInstant
             // in testing, the epoch second was insufficient for generated actions
             // very close to each other in time
-            val result
-              : Double = instant.getEpochSecond + (instant.getNano / 1e9)
+            val result: Double =
+              instant.getEpochSecond + (instant.getNano / 1e9)
             result
           }) map { mostRecentStamp =>
             val previousStatus = mostRecentStamp.fromStatus
@@ -793,7 +798,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       .filter(fr"parent_task_id IS NULL")
       .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
 
-    (selectF ++ Fragments.whereAndOpt(builder.filters: _*) ++ fr"ORDER BY RANDOM() LIMIT 1")
+    (selectF ++ Fragments.whereAndOpt(
+      builder.filters: _*
+    ) ++ fr"ORDER BY RANDOM() LIMIT 1")
       .query[Task]
       .to[List] flatMap { tasks =>
       tasks.toNel traverse { tasks =>
@@ -825,5 +832,52 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         withActions
       )
     }
+  }
+
+  def splitTask(
+      taskId: UUID
+  ): ConnectionIO[Unit] = {
+    val splitGeomQuery = fr"""
+      with
+        bounds as
+          (select st_xmin(geometry) xmin, st_xmax(geometry) xmax, st_ymin(geometry) ymin, st_ymax(geometry) ymax from tasks where id = $taskId),
+        midpoints as
+          (select bounds.xmin + (bounds.xmax - bounds.xmin) / 2 as xbar, bounds.ymin + (bounds.ymax - bounds.ymin) / 2 as ybar from bounds),
+        ns_line as
+          (select st_makeline(
+            st_setsrid(st_makepoint(
+              midpoints.xbar,
+              bounds.ymin
+            ), 3857),
+            st_setsrid(st_makepoint(
+              midpoints.xbar,
+              bounds.ymax
+            ), 3857)
+          ) as geom from bounds, midpoints),
+        ew_line as
+          (select st_makeline(
+            st_setsrid(st_makepoint(
+              bounds.xmin,
+              midpoints.ybar
+            ), 3857),
+            st_setsrid(st_makepoint(
+              bounds.xmax,
+              midpoints.ybar
+            ), 3857)
+          ) as geom from bounds, midpoints),
+        task_cross as
+          (select st_collect(ns_line.geom, ew_line.geom) geom from ns_line, ew_line)
+      select st_dump(st_split(geometry, task_cross.geom)) from tasks, task_cross where id = $taskId
+      """
+
+    for {
+      taskO <- getTaskById(taskId)
+      newGeoms <- taskO traverse { _ =>
+        splitGeomQuery.query[Projected[Geometry]].to[List]
+      }
+      _ <- (newGeoms getOrElse Nil) traverse { geom =>
+        println(geom).pure[ConnectionIO]
+      }
+    } yield ()
   }
 }
