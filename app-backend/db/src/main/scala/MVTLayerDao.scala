@@ -35,7 +35,7 @@ object MVTLayerDao {
           ) AND
           annotation_project_id = ${annotationProjectId} AND
           task_type = 'LABEL'::task_type AND
-          task_status <> 'SPLIT'
+          status <> 'SPLIT'
       )
     SELECT ST_AsMVT(mvtgeom.*) FROM mvtgeom;""".query[Array[Byte]]
 
@@ -65,7 +65,8 @@ object MVTLayerDao {
           annotation_label_classes.name,
           annotation_label_classes.color_hex_code
         FROM
-          (annotation_labels JOIN annotation_labels_annotation_label_classes on
+          (annotation_labels join (select id, status from tasks) tasks on annotation_labels.annotation_task_id = tasks.id
+           JOIN annotation_labels_annotation_label_classes on
            annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id) join_table_join
           JOIN annotation_label_classes on join_table_join.annotation_class_id = annotation_label_classes.id
         WHERE
@@ -74,6 +75,7 @@ object MVTLayerDao {
             ST_TileEnvelope(${z},${x},${y})
           )
           AND join_table_join.annotation_project_id = ${annotationProjectId}
+          AND status <> 'SPLIT'
       )
     SELECT ST_AsMVT(mvtgeom.*) FROM mvtgeom;""".query[Array[Byte]]
   }
