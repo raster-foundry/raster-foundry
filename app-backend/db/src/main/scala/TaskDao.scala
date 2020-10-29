@@ -934,7 +934,12 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               .toProperties(Nil)
               .toCreate
               .copy(
-                parentTaskId = Some(taskId)
+                parentTaskId = Some(taskId),
+                status = task.status match {
+                  case TaskStatus.ValidationInProgress => TaskStatus.Labeled
+                  case TaskStatus.LabelingInProgress   => TaskStatus.Unlabeled
+                  case s                               => s
+                }
               )
             Task.TaskFeatureCreate(
               taskPropertiesCreate,
