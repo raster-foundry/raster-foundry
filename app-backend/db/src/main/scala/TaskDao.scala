@@ -264,7 +264,6 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           query
             .filter(queryParams)
             .filter(fr"annotation_project_id = $annotationProjectId")
-            .filter(fr"parent_task_id IS NULL")
             .page(pageRequest)
       }
       withActions <- paginatedResponse.results.toList traverse { task =>
