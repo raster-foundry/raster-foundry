@@ -1587,18 +1587,10 @@ class TaskDaoSpec
                   tasks.features.head.properties.id,
                   PageRequest(0, 10, Map.empty)
                 )
-                parents <- TaskDao.listTasks(
-                  TaskQueryParameters(),
-                  dbAnnotationProj.id,
-                  PageRequest(0, 10, Map.empty)
-                )
-              } yield { (parents, children) }
+              } yield { children }
 
-            val (parents, children) = connIO.transact(xa).unsafeRunSync
-            assert(
-              parents.count == 1,
-              "Count of parents should be correct"
-            )
+            val children = connIO.transact(xa).unsafeRunSync
+
             assert(
               children.count == taskFeaturesCreate.features.length - 1,
               "Count of children should be correct"
