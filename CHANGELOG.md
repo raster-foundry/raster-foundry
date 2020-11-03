@@ -20,6 +20,7 @@ Changes from before we adopted the Keep a Changelog format (prior to 1.13.0) are
 
 ### Fixed
 - Tasks that have `VALIDATION_IN_PROGRESS` or `LABELING_IN_PROGRESS` but no lock data are also expired automatically [#5496](https://github.com/raster-foundry/raster-foundry/pull/5496)
+- Backsplash background processes for automatic task unlocks no longe rcompete with each other [#5503](https://github.com/raster-foundry/raster-foundry/pull/5503)
 
 ## [1.52.1]
 ### Fixed
