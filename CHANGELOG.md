@@ -126,6 +126,7 @@ Changes from before we adopted the Keep a Changelog format (prior to 1.13.0) are
 - Upgraded sbt-assembly to 0.15.0 and removed superfluous build.sbt files [#5434](https://github.com/raster-foundry/raster-foundry/pull/5434/files)
 
 ## [1.42.0]
+### Added
 - Add endpoint for listing users who own a clone of a specified campaign [#5424](https://github.com/raster-foundry/raster-foundry/pull/5424)
 - Enable sorting by `children_count` on `campaigns` table and `captured_at` on `annotation_projects` table [#5416](https://github.com/raster-foundry/raster-foundry/pull/5416)
 - Add description field to annotation label [#5420](https://github.com/raster-foundry/raster-foundry/pull/5420)
@@ -443,6 +444,7 @@ Changes from before we adopted the Keep a Changelog format (prior to 1.13.0) are
 - Fixed a bug causing all raster sources to share a cache location [\#5003](https://github.com/raster-foundry/raster-foundry/pull/5003)
 
 ## [1.21.1]
+### Fixed
 - Stopped returning internal server errors when requesting tiles outside a project boundary [\#4956](https://github.com/raster-foundry/raster-foundry/pull/4956)
 
 ## [1.21.0]
@@ -632,6 +634,7 @@ Changes from before we adopted the Keep a Changelog format (prior to 1.13.0) are
 - Upgrade webpack-dev-server to address vulnerability (https://nvd.nist.gov/vuln/detail/CVE-2018-14732) [\#4476](https://github.com/raster-foundry/raster-foundry/pull/4476)
 
 ## [1.16.4]
+### Security
 - Sanitized more user fields in search endpoint [\#4505](https://github.com/raster-foundry/raster-foundry/pull/4505) and in platform member list and organization search [\#4506](https://github.com/raster-foundry/raster-foundry/pull/4506)
 
 ## [1.16.3]
