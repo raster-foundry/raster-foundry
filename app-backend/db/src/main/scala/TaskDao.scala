@@ -746,6 +746,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
     for {
       _ <- info("Expiring stuck tasks")
+      _ <- fr"""select pg_advisory_lock(floor(EXTRACT(EPOCH FROM unlocked_time)) :: integer) from last_unlocked""".query.unique.void
       defaultUser <- UserDao.unsafeGetUserById("default")
       stuckLockedTasks <- query
         .filter(
@@ -786,6 +787,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
         }
       }
+      _ <- fr"""update last_unlocked set unlocked_time = ${Timestamp.from(
+        Instant.now
+      )}""".update.run
     } yield (stuckLockedTasks.length + stuckUnlockedTasks.length)
 
   def randomTask(
