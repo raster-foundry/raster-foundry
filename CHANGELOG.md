@@ -8,6 +8,7 @@
 - Tasks can be listed by campaign [#5494](https://github.com/raster-foundry/raster-foundry/pull/5494)
 - Campaigns can be shared with only an email [#5495](https://github.com/raster-foundry/raster-foundry/pull/5495)
 - Campaign IDs can be used to filter STAC exports [#5498](https://github.com/raster-foundry/raster-foundry/pull/5498)
+- API support for splitting tasks [#5502](https://github.com/raster-foundry/raster-foundry/pull/5502)
 
 ### Changed
 

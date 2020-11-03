@@ -40,8 +40,8 @@ trait AnnotationProjectTaskRoutes
 
   val xa: Transactor[IO]
 
-  def listAnnotationProjectTasks(projectId: UUID): Route = authenticate {
-    user =>
+  def listAnnotationProjectTasks(projectId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -73,224 +73,231 @@ trait AnnotationProjectTaskRoutes
           }
         }
       }
-  }
-
-  def createTasks(projectId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.CreateTasks, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        AnnotationProjectDao
-          .authorized(
-            user,
-            ObjectType.AnnotationProject,
-            projectId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[Task.TaskFeatureCollectionCreate]) { tfc =>
-          complete(
-            StatusCodes.Created,
-            TaskDao
-              .insertTasks(tfc, user)
-              .transact(xa)
-              .unsafeToFuture
-          )
-        }
-      }
     }
-  }
 
-  def deleteTasks(projectId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.DeleteTasks, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        AnnotationProjectDao
-          .authorized(
-            user,
-            ObjectType.AnnotationProject,
-            projectId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          TaskDao
-            .deleteProjectTasks(projectId)
-            .transact(xa)
-            .unsafeToFuture map { _ =>
-            HttpResponse(StatusCodes.NoContent)
-          }
-        }
-      }
-    }
-  }
-
-  def createTaskGrid(projectId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.CreateTaskGrid, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        AnnotationProjectDao
-          .authorized(
-            user,
-            ObjectType.AnnotationProject,
-            projectId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[Task.TaskGridFeatureCreate]) { tgf =>
-          complete(
-            StatusCodes.Accepted,
-            taskGridBlocker
-              .blockOn(
-                TaskDao
-                  .insertTasksByGrid(
-                    Task
-                      .TaskPropertiesCreate(
-                        TaskStatus.Unlabeled,
-                        projectId,
-                        None,
-                        None,
-                        None,
-                        None
-                      ),
-                    tgf,
-                    user
-                  )
-                  .transact(xa)
-                  .start(taskGridContextShift)
-              )(taskGridContextShift)
-              .void
-              .unsafeToFuture
-          )
-        }
-      }
-    }
-  }
-
-  def getTaskUserSummary(projectId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
-      user
-    ) {
-      {
+  def createTasks(projectId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateTasks, None),
+        user
+      ) {
         authorizeAuthResultAsync {
           AnnotationProjectDao
             .authorized(
               user,
               ObjectType.AnnotationProject,
               projectId,
-              ActionType.Annotate
+              ActionType.Edit
             )
             .transact(xa)
             .unsafeToFuture
         } {
-          (userTaskActivityParameters) { userTaskActivityParams =>
-            complete {
+          entity(as[Task.TaskFeatureCollectionCreate]) { tfc =>
+            complete(
+              StatusCodes.Created,
               TaskDao
-                .getTaskUserSummary(
-                  projectId,
-                  userTaskActivityParams
-                )
+                .insertTasks(tfc, user)
                 .transact(xa)
                 .unsafeToFuture
+            )
+          }
+        }
+      }
+    }
+
+  def deleteTasks(projectId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.DeleteTasks, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Edit
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            TaskDao
+              .deleteProjectTasks(projectId)
+              .transact(xa)
+              .unsafeToFuture map { _ =>
+              HttpResponse(StatusCodes.NoContent)
             }
           }
         }
       }
     }
-  }
 
-  def getTask(projectId: UUID, taskId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
-      user
-    ) {
-      {
+  def createTaskGrid(projectId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateTaskGrid, None),
+        user
+      ) {
         authorizeAuthResultAsync {
           AnnotationProjectDao
             .authorized(
               user,
               ObjectType.AnnotationProject,
               projectId,
-              ActionType.Annotate
+              ActionType.Edit
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[Task.TaskGridFeatureCreate]) { tgf =>
+            complete(
+              StatusCodes.Accepted,
+              taskGridBlocker
+                .blockOn(
+                  TaskDao
+                    .insertTasksByGrid(
+                      Task
+                        .TaskPropertiesCreate(
+                          TaskStatus.Unlabeled,
+                          projectId,
+                          None,
+                          None,
+                          None,
+                          None
+                        ),
+                      tgf,
+                      user
+                    )
+                    .transact(xa)
+                    .start(taskGridContextShift)
+                )(taskGridContextShift)
+                .void
+                .unsafeToFuture
+            )
+          }
+        }
+      }
+    }
+
+  def getTaskUserSummary(projectId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
+        {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Annotate
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            (userTaskActivityParameters) { userTaskActivityParams =>
+              complete {
+                TaskDao
+                  .getTaskUserSummary(
+                    projectId,
+                    userTaskActivityParams
+                  )
+                  .transact(xa)
+                  .unsafeToFuture
+              }
+            }
+          }
+        }
+      }
+    }
+
+  def getTask(projectId: UUID, taskId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
+        {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Annotate
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            complete {
+              TaskDao.getTaskWithActions(taskId).transact(xa).unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+
+  def updateTask(projectId: UUID, taskId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.UpdateTasks, None),
+        user
+      ) {
+        authorizeAsync {
+          (for {
+            auth1 <- AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Annotate
+              )
+            auth2 <- TaskDao.isLockingUserOrUnlocked(taskId, user)
+          } yield {
+            auth1.toBoolean && auth2
+          }).transact(xa).unsafeToFuture
+        } {
+          entity(as[Task.TaskFeatureCreate]) { tfc =>
+            complete {
+              TaskDao.updateTask(taskId, tfc, user).transact(xa) map {
+                case None =>
+                  HttpResponse(StatusCodes.NotFound)
+                case _ =>
+                  HttpResponse(StatusCodes.NoContent)
+              } unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+
+  def deleteTask(projectId: UUID, taskId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.DeleteTasks, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Edit
             )
             .transact(xa)
             .unsafeToFuture
         } {
           complete {
-            TaskDao.getTaskWithActions(taskId).transact(xa).unsafeToFuture
+            TaskDao.query.filter(taskId).delete.transact(xa).unsafeToFuture
           }
         }
       }
     }
-  }
-
-  def updateTask(projectId: UUID, taskId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.UpdateTasks, None),
-      user
-    ) {
-      authorizeAsync {
-        (for {
-          auth1 <- AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Annotate
-            )
-          auth2 <- TaskDao.isLockingUserOrUnlocked(taskId, user)
-        } yield {
-          auth1.toBoolean && auth2
-        }).transact(xa).unsafeToFuture
-      } {
-        entity(as[Task.TaskFeatureCreate]) { tfc =>
-          complete {
-            TaskDao.updateTask(taskId, tfc, user).transact(xa) map {
-              case None =>
-                HttpResponse(StatusCodes.NotFound)
-              case _ =>
-                HttpResponse(StatusCodes.NoContent)
-            } unsafeToFuture
-          }
-        }
-      }
-    }
-  }
-
-  def deleteTask(projectId: UUID, taskId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.DeleteTasks, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        AnnotationProjectDao
-          .authorized(
-            user,
-            ObjectType.AnnotationProject,
-            projectId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          TaskDao.query.filter(taskId).delete.transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
 
   def lockTask(projectId: UUID, taskId: UUID): Route =
     toggleLock(projectId, taskId, TaskDao.lockTask(taskId))
@@ -330,8 +337,8 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def listTaskLabels(projectId: UUID, taskId: UUID): Route = authenticate {
-    user =>
+  def listTaskLabels(projectId: UUID, taskId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -358,7 +365,7 @@ trait AnnotationProjectTaskRoutes
           }
         }
       }
-  }
+    }
 
   def addTaskLabels(projectId: UUID, taskId: UUID): Route =
     addLabels(
@@ -389,57 +396,58 @@ trait AnnotationProjectTaskRoutes
       taskId: UUID,
       actionType: ActionType,
       requiredStatuses: List[TaskStatus]
-  ): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
-      user
-    ) {
-      authorizeAsync {
-        (for {
-          auth1 <- AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              actionType
-            )
-          auth2 <- TaskDao.hasStatus(
-            taskId,
-            requiredStatuses
-          )
-        } yield {
-          auth1.toBoolean && auth2
-        }).transact(xa).unsafeToFuture
-      } {
-        entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
-          val annotationLabelWithClassesCreate = fc.features map {
-            _.toAnnotationLabelWithClassesCreate
-          }
-          onSuccess(
-            AnnotationLabelDao
-              .insertAnnotations(
+  ): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAsync {
+          (for {
+            auth1 <- AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
                 projectId,
-                taskId,
-                annotationLabelWithClassesCreate.toList,
-                user
+                actionType
               )
-              .transact(xa)
-              .unsafeToFuture
-              .map { annotations: List[AnnotationLabelWithClasses] =>
-                fromSeqToFeatureCollection[
-                  AnnotationLabelWithClasses,
-                  AnnotationLabelWithClasses.GeoJSON
-                ](
-                  annotations
+            auth2 <- TaskDao.hasStatus(
+              taskId,
+              requiredStatuses
+            )
+          } yield {
+            auth1.toBoolean && auth2
+          }).transact(xa).unsafeToFuture
+        } {
+          entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
+            val annotationLabelWithClassesCreate = fc.features map {
+              _.toAnnotationLabelWithClassesCreate
+            }
+            onSuccess(
+              AnnotationLabelDao
+                .insertAnnotations(
+                  projectId,
+                  taskId,
+                  annotationLabelWithClassesCreate.toList,
+                  user
                 )
-              }
-          ) { createdAnnotation =>
-            complete((StatusCodes.Created, createdAnnotation))
+                .transact(xa)
+                .unsafeToFuture
+                .map { annotations: List[AnnotationLabelWithClasses] =>
+                  fromSeqToFeatureCollection[
+                    AnnotationLabelWithClasses,
+                    AnnotationLabelWithClasses.GeoJSON
+                  ](
+                    annotations
+                  )
+                }
+            ) { createdAnnotation =>
+              complete((StatusCodes.Created, createdAnnotation))
+            }
           }
         }
       }
     }
-  }
 
   def deleteTaskLabels(projectId: UUID, task: UUID): Route =
     authenticate { user =>
@@ -468,12 +476,40 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def children(projectId: UUID, taskId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
-      user
-    ) {
-      {
+  def children(projectId: UUID, taskId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
+        {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Annotate
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            withPagination { page =>
+              complete {
+                TaskDao.children(taskId, page).transact(xa).unsafeToFuture
+              }
+            }
+          }
+        }
+      }
+    }
+
+  def splitTask(projectId: UUID, taskId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
         authorizeAuthResultAsync {
           AnnotationProjectDao
             .authorized(
@@ -485,13 +521,10 @@ trait AnnotationProjectTaskRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          withPagination { page =>
-            complete {
-              TaskDao.children(taskId, page).transact(xa).unsafeToFuture
-            }
+          complete {
+            TaskDao.splitTask(taskId, user).transact(xa).unsafeToFuture
           }
         }
       }
     }
-  }
 }

@@ -177,7 +177,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
 
   def taskQueryParameters =
     parameters(
-      'status.as[TaskStatus].?,
+      'status.as[TaskStatus].*,
       'locked.as[Boolean].?,
       'lockedBy.as[String].?,
       'bbox.as[String].*,

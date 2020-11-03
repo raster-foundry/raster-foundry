@@ -63,18 +63,19 @@ final case class SceneQueryParameters(
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
 
-  val pointGeom: Option[Projected[Point]] = try {
-    point.map { s =>
-      val Array(x, y) = s.split(",")
-      Projected(Point(x.toDouble, y.toDouble), 4326)
-        .reproject(LatLng, WebMercator)(3857)
+  val pointGeom: Option[Projected[Point]] =
+    try {
+      point.map { s =>
+        val Array(x, y) = s.split(",")
+        Projected(Point(x.toDouble, y.toDouble), 4326)
+          .reproject(LatLng, WebMercator)(3857)
+      }
+    } catch {
+      case e: Exception =>
+        throw new IllegalArgumentException(
+          "Both coordinate parameters of point (x, y) must be specified"
+        ).initCause(e)
     }
-  } catch {
-    case e: Exception =>
-      throw new IllegalArgumentException(
-        "Both coordinate parameters of point (x, y) must be specified"
-      ).initCause(e)
-  }
 }
 
 object SceneQueryParameters {
@@ -249,10 +250,10 @@ object OwnerQueryParameters {
 }
 
 /** Query parameters to filter by ownership type:
-  *- owned by the requesting user only: owned
-  *- shared to the requesting user due to group membership: inherited
-  *- shared to the requesting user directly, across platform, or due to group membership: shared
-  *- both the above: none, this is default
+  * - owned by the requesting user only: owned
+  * - shared to the requesting user due to group membership: inherited
+  * - shared to the requesting user directly, across platform, or due to group membership: shared
+  * - both the above: none, this is default
   */
 final case class OwnershipTypeQueryParameters(
     ownershipType: Option[String] = None
@@ -267,7 +268,7 @@ object OwnershipTypeQueryParameters {
     deriveDecoder[OwnershipTypeQueryParameters]
 }
 
-/** Query parameters to filter by group membership*/
+/** Query parameters to filter by group membership */
 final case class GroupQueryParameters(
     groupType: Option[GroupType] = None,
     groupId: Option[UUID] = None
@@ -628,7 +629,7 @@ final case class MetricQueryParameters(
 )
 
 final case class TaskQueryParameters(
-    status: Option[TaskStatus] = None,
+    status: Iterable[TaskStatus] = Nil,
     locked: Option[Boolean] = None,
     lockedBy: Option[String] = None,
     bbox: Iterable[String] = Seq.empty,
