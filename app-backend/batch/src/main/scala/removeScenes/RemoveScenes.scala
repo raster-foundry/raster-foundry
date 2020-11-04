@@ -35,9 +35,9 @@ class RemoveScenes(
     WHERE
       -- scene_id NULL means we didn't find a scene_id in the layers table
       scene_id IS NULL
-      AND acquisition_date >= ${startTs}
-      AND acquisition-date <= ${endTs}
-      AND datasource = $datasourceId
+      AND scenes.acquisition_date >= ${startTs}
+      AND scenes.acquisition_date <= ${endTs}
+      AND scenes.datasource = $datasourceId
     """.update.run.transact(xa)
 
 }
