@@ -10,6 +10,7 @@ import com.rasterfoundry.batch.groundwork.{
 import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.notification.NotifyIngestStatus
 import com.rasterfoundry.batch.projectLiberation.ProjectLiberation
+import com.rasterfoundry.batch.removescenes.RemoveScenes
 import com.rasterfoundry.batch.stacExport.WriteStacCatalog
 
 object Main {
@@ -24,7 +25,8 @@ object Main {
     ImportGeojsonFiles.name -> (ImportGeojsonFiles.main(_)),
     ProjectLiberation.name -> (ProjectLiberation.main(_)),
     CreateTaskGrid.name -> (CreateTaskGrid.main(_)),
-    NotifyIntercomProgram.name -> (NotifyIntercomProgram.main(_))
+    NotifyIntercomProgram.name -> (NotifyIntercomProgram.main(_)),
+    RemoveScenes.name -> (RemoveScenes.main(_))
   )
 
   def main(args: Array[String]): Unit = {
