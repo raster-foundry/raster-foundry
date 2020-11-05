@@ -5,20 +5,20 @@ class AnnotationProject(BaseModel):
     URL_PATH = "/api/annotation-projects/"
 
     def __init__(
-            self,
-            id,
-            name,
-            projectType,
-            taskSizePixels,
-            status,
-            createdAt=None,
-            createdBy=None,
-            taskSizeMeters=None,
-            aoi=None,
-            labelersTeamId=None,
-            validatorsTeamId=None,
-            projectId=None,
-            ):
+        self,
+        id,
+        name,
+        projectType,
+        taskSizePixels,
+        status,
+        createdAt=None,
+        createdBy=None,
+        taskSizeMeters=None,
+        aoi=None,
+        labelersTeamId=None,
+        validatorsTeamId=None,
+        projectId=None,
+    ):
         self.id = id
         self.name = name
         self.projectType = projectType
@@ -66,5 +66,5 @@ class AnnotationProject(BaseModel):
             aoi=d.get("aoi"),
             labelersTeamId=d.get("labelersTeamId"),
             validatorsTeamId=d.get("validatorsTeamId"),
-            projectId=d.get("projectId")
+            projectId=d.get("projectId"),
         )

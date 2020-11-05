@@ -39,7 +39,7 @@ class GeoTiffS3SceneFactory(object):
 
     def __init__(self, upload):
         """Args:
-            upload (Upload): instance of upload model to create scenes for
+        upload (Upload): instance of upload model to create scenes for
         """
         self._upload = upload
         self.isProjectUpload = upload.projectId is not None
