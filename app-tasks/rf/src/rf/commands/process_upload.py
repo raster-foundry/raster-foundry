@@ -55,7 +55,9 @@ def process_upload(upload_id):
         else:
             raise Exception(
                 """upload type ({}) didn't make any sense.
-                Non-geotiff uploads were removed as of 1.51.0""".format(upload.uploadType)
+                Non-geotiff uploads were removed as of 1.51.0""".format(
+                    upload.uploadType
+                )
             )
         scenes = factory.generate_scenes()
         logger.info(
@@ -75,8 +77,10 @@ def process_upload(upload_id):
                 upload.layerId,
             )
             scene_ids = [scene.id for scene in created_scenes]
-            batch_scene_to_layer_url = "{HOST}/api/projects/{PROJECT}/layers/{LAYER}/scenes".format(
-                HOST=HOST, PROJECT=upload.projectId, LAYER=upload.layerId
+            batch_scene_to_layer_url = (
+                "{HOST}/api/projects/{PROJECT}/layers/{LAYER}/scenes".format(
+                    HOST=HOST, PROJECT=upload.projectId, LAYER=upload.layerId
+                )
             )
             session = get_session()
             response = session.post(batch_scene_to_layer_url, json=scene_ids)
