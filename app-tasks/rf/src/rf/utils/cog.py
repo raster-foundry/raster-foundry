@@ -45,6 +45,8 @@ def georeference_file(file_path):
 
 def convert_to_cog(tif_path, local_dir):
     logger.info("Converting %s to a cog", tif_path)
+    with rasterio.open(tif_path) as src:
+        has_64_bit = rasterio.dtypes.float64 in src.dtypes
     out_path = os.path.join(local_dir, "cog.tif")
     cog_command = [
         "gdal_translate",
@@ -55,13 +57,10 @@ def convert_to_cog(tif_path, local_dir):
         "COMPRESS=DEFLATE",
         "-co",
         "BIGTIFF=IF_SAFER",
-        "-co",
-        "PREDICTOR=2",
+        *(["-co", "PREDICTOR=2"] if not has_64_bit else []),
         "-of",
         "COG",
         out_path,
     ]
     subprocess.check_call(cog_command)
     return out_path
-
-
