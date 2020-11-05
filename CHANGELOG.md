@@ -2,6 +2,11 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- STAC label items now include the task statuses in a `groundwork:taskStatuses` property [#5490](https://github.com/raster-foundry/raster-foundry/pull/5490)
+- Tasks can be listed by campaign [#5494](https://github.com/raster-foundry/raster-foundry/pull/5494)
+- Campaigns can be shared with only an email [#5495](https://github.com/raster-foundry/raster-foundry/pull/5495)
+- Campaign IDs can be used to filter STAC exports [#5498](https://github.com/raster-foundry/raster-foundry/pull/5498)
+- API support for splitting tasks [#5502](https://github.com/raster-foundry/raster-foundry/pull/5502)
 
 ### Changed
 
@@ -10,8 +15,16 @@
 ### Removed
 
 ### Fixed
+- Tasks that have `VALIDATION_IN_PROGRESS` or `LABELING_IN_PROGRESS` but no lock data are also expired automatically [#5496](https://github.com/raster-foundry/raster-foundry/pull/5496)
+- Backsplash background processes for automatic task unlocks no longe rcompete with each other [#5503](https://github.com/raster-foundry/raster-foundry/pull/5503)
 
 ### Security
+
+## [1.52.2](https://github.com/raster-foundry/raster-foundry/compare/1.52.1...1.52.2)
+
+### Fixed
+
+- Removed incompatible creation option from cogification command when the image has 64-bit data [#5506](https://github.com/raster-foundry/raster-foundry/pull/5506)
 
 ## [1.52.1](https://github.com/raster-foundry/raster-foundry/compare/1.52.0...1.52.1)
 
@@ -284,7 +297,7 @@
 - Added scopes to the API, database, and user creation to control access to resources and endpoints [#5270](https://github.com/raster-foundry/raster-foundry/pull/5270), [#5275](https://github.com/raster-foundry/raster-foundry/pull/5275), [#5278](https://github.com/raster-foundry/raster-foundry/pull/5278) [#5277](https://github.com/raster-foundry/raster-foundry/pull/5277), [#5292](https://github.com/raster-foundry/raster-foundry/pull/5292), [#5346](https://github.com/raster-foundry/raster-foundry/pull/5346)
 - Generate typescript interfaces in CI [#5271](https://github.com/raster-foundry/raster-foundry/pull/5271)
 - Added a migration to add annotation project id to tasks [#5296](https://github.com/raster-foundry/raster-foundry/pull/5296)
-- Added annotation project related data models, `Dao` methods, endpoints, and tests [#5301](https://github.com/raster-foundry/raster-foundry/pull/5301), [#5303](https://github.com/raster-foundry/raster-foundry/pull/5303), [#5308](https://github.com/raster-foundry/raster-foundry/pull/5308), [#5318](https://github.com/raster-foundry/raster-foundry/pull/5318)
+- Added annotation project related data models,   `Dao` methods, endpoints, and tests [#5301](https://github.com/raster-foundry/raster-foundry/pull/5301), [#5303](https://github.com/raster-foundry/raster-foundry/pull/5303), [#5308](https://github.com/raster-foundry/raster-foundry/pull/5308), [#5318](https://github.com/raster-foundry/raster-foundry/pull/5318)
 - Add /user/me/limits endpoint for listing how many projects, shared, and how much upload space a user is using [#5320](https://github.com/raster-foundry/raster-foundry/pull/5320)
 
 ### Changed
@@ -763,17 +776,14 @@
 - Support uploads to project layers on the API [#\4524](https://github.com/raster-foundry/raster-foundry/pull/4524)
 
 ### Changed
-
-- Reorganized project structure to simplify dependency graph (`tool` was mostly removed; `tool`s still-relevant pieces, `bridge`, and `datamodel` moved into the project `common`) [\#4564](https://github.com/raster-foundry/raster-foundry/pull/4564)
-- Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
-- Updated permission check logic for lab templates to make ownership filter work as expected [\#4462](https://github.com/raster-foundry/raster-foundry/pull/4462)
-- Unify S3 client interface usage [\#4441](https://github.com/raster-foundry/raster-foundry/pull/4441)
-- Moved common authentication logic to http4s-util subproject [\#4496](https://github.com/raster-foundry/raster-foundry/pull/4496)
-- Upgraded scala, javascript, and python rollbar clients [\#4502](https://github.com/raster-foundry/raster-foundry/pull/4502)
-- Added ability to download images as part of development environment setup [\#4509](https://github.com/raster-foundry/raster-foundry/pull/4509)
-- Allow users with edit permissions to edit the permissions of objects [\#4490](https://github.com/raster-foundry/raster-foundry/pull/4490)
-
-### Deprecated
+- Reorganized project structure to simplify dependency graph (`tool` was mostly removed;   `tool`s still-relevant pieces,   `bridge`, and `datamodel` moved into the project `common`) [#4564](https://github.com/raster-foundry/raster-foundry/pull/4564)
+- Only analyses owned by the current user are displayed in the analysis browsing UI [#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
+- Updated permission check logic for lab templates to make ownership filter work as expected [#4462](https://github.com/raster-foundry/raster-foundry/pull/4462)
+- Unify S3 client interface usage [#4441](https://github.com/raster-foundry/raster-foundry/pull/4441)
+- Moved common authentication logic to http4s-util subproject [#4496](https://github.com/raster-foundry/raster-foundry/pull/4496)
+- Upgraded scala, javascript, and python rollbar clients [#4502](https://github.com/raster-foundry/raster-foundry/pull/4502)
+- Added ability to download images as part of development environment setup [#4509](https://github.com/raster-foundry/raster-foundry/pull/4509)
+- Allow users with edit permissions to edit the permissions of objects [#4490](https://github.com/raster-foundry/raster-foundry/pull/4490)
 
 ### Removed
 

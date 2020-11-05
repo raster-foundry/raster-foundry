@@ -22,7 +22,7 @@ class BaseModel(object):
 
     @classmethod
     def from_id(cls, id):
-        """ Fetch a resource with the specified ID
+        """Fetch a resource with the specified ID
 
         Raises:
             requests.exceptions.HTTPError
