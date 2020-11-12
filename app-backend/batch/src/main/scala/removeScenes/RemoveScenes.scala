@@ -37,6 +37,7 @@ class RemoveScenes(
       AND scenes.acquisition_date >= ${startTs}
       AND scenes.acquisition_date <= ${endTs}
       AND scenes.datasource = $datasourceId
+    )
     """.update.run.transact(xa)
 }
 
