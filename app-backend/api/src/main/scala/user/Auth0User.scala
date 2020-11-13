@@ -99,8 +99,7 @@ object UserWithOAuth {
         u.visibility,
         u.dropboxCredential,
         u.planetCredential
-    )
-  )
+    ))
 }
 @JsonCodec
 final case class Auth0UserUpdate(
@@ -133,11 +132,12 @@ object Auth0Service extends Config with LazyLogging {
       .maximumSize(1)
       .buildAsyncFuture((_: Int) => getManagementBearerToken())
 
-  private def getBearerHeaders(bearerToken: ManagementBearerToken) = List(
-    Authorization(
-      GenericHttpCredentials(bearerToken.token_type, bearerToken.access_token)
+  private def getBearerHeaders(bearerToken: ManagementBearerToken) =
+    List(
+      Authorization(
+        GenericHttpCredentials(bearerToken.token_type, bearerToken.access_token)
+      )
     )
-  )
 
   private def responseAsAuth0User(response: HttpResponse): Future[Auth0User] = {
     response match {
@@ -233,7 +233,8 @@ object Auth0Service extends Config with LazyLogging {
       bearerToken: ManagementBearerToken
   ): Future[Auth0User] = {
     val auth0UserBearerHeader = getBearerHeaders(bearerToken)
-    Http()
+    logger.info("About to make patch request")
+    val request = Http()
       .singleRequest(
         HttpRequest(
           method = PATCH,
@@ -245,7 +246,12 @@ object Auth0Service extends Config with LazyLogging {
           )
         )
       )
-      .flatMap { responseAsAuth0User _ }
+    request
+      .flatMap { resp =>
+        resp.entity.discardBytes()
+        logger.info(s"Patch response was:\n$resp")
+        responseAsAuth0User(resp)
+      }
   }
 
   // don't need a read method because patch is idempotent
@@ -346,7 +352,10 @@ object Auth0Service extends Config with LazyLogging {
           )
         )
       )
-      .flatMap { responseAsAuth0User _ }
+      .flatMap { resp =>
+        logger.info(s"Post response from auth0 was:\n$resp")
+        responseAsAuth0User(resp)
+      }
   }
 
   @JsonCodec
@@ -437,8 +446,7 @@ object Auth0Service extends Config with LazyLogging {
             true,
             uid.bcrypt(10),
             Map("bulkCreateId" -> bulkCreateId.toString)
-        )
-      )
+        ))
       .asJson
       .noSpaces
     val tempFile = File.newTemporaryFile()
