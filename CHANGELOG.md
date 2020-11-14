@@ -18,8 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Tasks that have `VALIDATION_IN_PROGRESS` or `LABELING_IN_PROGRESS` but no lock data are also expired automatically [#5496](https://github.com/raster-foundry/raster-foundry/pull/5496)
 - Backsplash background processes for automatic task unlocks no longe rcompete with each other [#5503](https://github.com/raster-foundry/raster-foundry/pull/5503)
+- Simple shares don't always return 500 responses [#5510](https://github.com/raster-foundry/raster-foundry/pull/5510)
 
-## [1.52.2] - 2020-11-05
+## 1.52.2 - 2020-11-05
 ### Fixed
 - Removed incompatible creation option from cogification command when the image has 64-bit data [#5506](https://github.com/raster-foundry/raster-foundry/pull/5506)
 
@@ -809,7 +810,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 [Unreleased]: https://github.com/raster-foundry/raster-foundry/tree/develop
 [1.52.1]: https://github.com/raster-foundry/raster-foundry/compare/1.52.1...1.52.2
-[1.52.1]: https://github.com/raster-foundry/raster-foundry/compare/1.52.0...1.52.1
 [1.52.0]: https://github.com/raster-foundry/raster-foundry/compare/1.51.0...1.52.0
 [1.51.0]: https://github.com/raster-foundry/raster-foundry/compare/1.50.0...1.51.0
 [1.50.0]: https://github.com/raster-foundry/raster-foundry/compare/1.49.0...1.50.0
