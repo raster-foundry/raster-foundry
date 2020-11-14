@@ -2,12 +2,17 @@ package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.user.Auth0Service
-import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
+import com.rasterfoundry.api.utils.{
+  Config,
+  IntercomNotifications,
+  ManagementBearerToken
+}
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
-import cats.data.OptionT
+import cats.data.{OptionT, Validated, ValidatedNel}
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -29,6 +34,63 @@ trait AnnotationProjectPermissionRoutes
   implicit def contextShift: ContextShift[IO]
 
   def notifier: IO[IntercomNotifications]
+
+  private def shareWithExistingUsers(
+      users: List[User],
+      userByEmail: UserShareInfo,
+      managementToken: ManagementBearerToken,
+      projectId: UUID,
+      sharingUser: User
+  ): IO[ValidatedNel[String, List[ObjectAccessControlRule]]] =
+    users traverse { existingUser =>
+      (notifier flatMap { notifier =>
+        for {
+          auth0User <- IO.fromFuture {
+            IO {
+              Auth0Service
+                .addUserMetadata(
+                  existingUser.id,
+                  managementToken,
+                  Map(
+                    "app_metadata" -> Map("annotateApp" -> true)
+                  ).asJson
+                )
+            }
+          }
+          () <- IO { logger.debug(s"Got auth0 user: $auth0User") }
+          acrs = notifier.getDefaultShare(
+            existingUser,
+            userByEmail.actionType
+          )
+          dbAcrs <- AnnotationProjectDao
+            .handleSharedPermissions(
+              projectId,
+              existingUser.id,
+              acrs,
+              userByEmail.actionType
+            )
+            .transact(xa)
+          // if silent param is not provided, we notify
+          _ <- userByEmail.silent match {
+            case Some(false) | None =>
+              AnnotationProjectDao
+                .unsafeGetById(projectId)
+                .transact(xa) flatMap { annotationProject =>
+                notifier.shareNotify(
+                  existingUser,
+                  sharingUser,
+                  annotationProject,
+                  "project"
+                )
+              }
+            case _ => IO.pure(())
+          }
+        } yield dbAcrs
+      }).attempt map {
+        case Left(_)     => userByEmail.email.invalidNel
+        case Right(acrs) => acrs.validNel
+      }
+    } map { _.combineAll }
 
   def listPermissions(projectId: UUID): Route =
     authenticate { user =>
@@ -294,7 +356,7 @@ trait AnnotationProjectPermissionRoutes
               case _ => false
             })
           } {
-            complete {
+            onSuccess {
               Auth0Service.getManagementBearerToken flatMap { managementToken =>
                 (for {
                   // Everything has to be Futures here because of methods in akka-http / Auth0Service
@@ -377,61 +439,32 @@ trait AnnotationProjectPermissionRoutes
                         // this is not an existing user,
                         // there is no project specific ACR yet,
                         // so no need to remove Validate action if only want Annotate
-                        dbAcrs <- (acrs traverse { acr =>
+                        dbAcrs <- (acrs flatTraverse { acr =>
                           AnnotationProjectDao
                             .addPermission(projectId, acr)
                         }).transact(xa)
-                      } yield dbAcrs
+                      } yield dbAcrs.validNel
                     case existingUsers =>
-                      existingUsers traverse { existingUser =>
-                        notifier flatMap { notifier =>
-                          val acrs =
-                            notifier.getDefaultShare(
-                              existingUser,
-                              userByEmail.actionType
-                            )
-                          IO.fromFuture {
-                            IO {
-                              Auth0Service
-                                .addUserMetadata(
-                                  existingUser.id,
-                                  managementToken,
-                                  Map(
-                                    "app_metadata" -> Map("annotateApp" -> true)
-                                  ).asJson
-                                )
-                            }
-                          } *>
-                            (AnnotationProjectDao
-                              .handleSharedPermissions(
-                                projectId,
-                                existingUser.id,
-                                acrs,
-                                userByEmail.actionType
-                              )
-                              .transact(xa) <* (
-                              // if silent param is not provided, we notify
-                              userByEmail.silent match {
-                                case Some(false) | None =>
-                                  AnnotationProjectDao
-                                    .unsafeGetById(projectId)
-                                    .transact(xa) flatMap { annotationProject =>
-                                    notifier.shareNotify(
-                                      existingUser,
-                                      user,
-                                      annotationProject,
-                                      "project"
-                                    )
-                                  }
-                                case _ => IO.pure(())
-                              }
-                            ))
-                        }
-
-                      } map { _.flatten }
+                      shareWithExistingUsers(
+                        existingUsers,
+                        userByEmail,
+                        managementToken,
+                        projectId,
+                        user
+                      )
                   }
                 } yield permissions).unsafeToFuture
               }
+            } {
+              case Validated.Invalid(errs) =>
+                complete {
+                  (
+                    StatusCodes.BadRequest,
+                    Map("failedUsers" -> errs).asJson
+                  )
+                }
+              case Validated.Valid(acrs) =>
+                complete { acrs.asJson }
             }
           }
         }
