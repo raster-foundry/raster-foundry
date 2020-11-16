@@ -43,6 +43,7 @@ Path,Domain:Action,Verb
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:deleteAnnotation,delete
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/children,annotationProjects:readTasks,get
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/validate/,annotationProjects:createAnnotation,post
+/api/annotation-projects/{annotationProjectID}/tasks/{taskID}/split/,annotationProjects:readTasks,post
 /api/licenses/,licenses:read,get
 /api/licenses/{licenseID},licenses:read,get
 /api/map-tokens/,mapTokens:read,get
@@ -123,7 +124,6 @@ Path,Domain:Action,Verb
 /api/projects/{projectID}/layers/{layerID}/scenes,projects:read,get
 /api/projects/{projectID}/layers/{layerID}/scenes,projects:addScenes,post
 /api/projects/{projectID}/layers/{layerID}/scenes,projects:editScenes,delete
-/api/projects/{projectID}/layers/{layerID}/split,projects:create,post
 /api/projects/{projectID}/layers/stats,projects:read,get
 /api/projects/{projectID}/mosaic/,projects:read,get
 /api/projects/{projectID}/mosaic/{sceneID},projects:colorCorrect,get
@@ -221,3 +221,7 @@ Path,Domain:Action,Verb
 /api/campaigns/{campaignId}/clone-owners,campaigns:clone,get
 /api/campaigns/{campaignId}/random-review-task,campaigns:read,get
 /api/campaigns/{campaignId}/retrieve-child-labels,campaigns:clone,post
+/api/campaigns/{campaignId}/tasks,campaigns:read,get
+/api/campaigns/{campaignId}/share,campaigns:share,post
+/api/campaigns/{campaignId}/share,campaigns:share,get
+/api/campaigns/{campaignId}/share/{userId},campaigns:read,delete

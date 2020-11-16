@@ -108,6 +108,26 @@ trait CampaignRoutes
               listCampaignUserActions(campaignId)
             }
           }
+        } ~ pathPrefix("tasks") {
+          pathEndOrSingleSlash {
+            get {
+              listCampaignTasks(campaignId)
+            }
+          }
+        } ~ pathPrefix("share") {
+          pathEndOrSingleSlash {
+            get {
+              listCampaignShares(campaignId)
+            } ~ post {
+              shareCampaign(campaignId)
+            }
+          } ~ pathPrefix(Segment) { deleteId =>
+            pathEndOrSingleSlash {
+              delete {
+                deleteCampaignShare(campaignId, deleteId)
+              }
+            }
+          }
         }
       }
   }
@@ -167,7 +187,7 @@ trait CampaignRoutes
         rejectEmptyResponse {
           complete {
             CampaignDao
-              .getCampaignById(campaignId)
+              .getCampaignWithRelatedById(campaignId)
               .transact(xa)
               .unsafeToFuture
           }
@@ -282,8 +302,12 @@ trait CampaignRoutes
                   copiedProjects <- AnnotationProjectDao.listByCampaign(
                     copiedCampaign.id
                   )
-                  originalCampaignO <- CampaignDao.getCampaignById(campaignId)
-                  originalCampaignOwnerO = originalCampaignO map { _.owner }
+                  originalCampaignO <- CampaignDao.getCampaignById(
+                    campaignId
+                  )
+                  originalCampaignOwnerO = originalCampaignO map {
+                    _.owner
+                  }
                   _ <- CampaignDao.addPermission(
                     copiedCampaign.id,
                     ObjectAccessControlRule(
@@ -413,8 +437,8 @@ trait CampaignRoutes
     }
   }
 
-  def retrieveChildCampaignLabels(campaignId: UUID): Route = authenticate {
-    user =>
+  def retrieveChildCampaignLabels(campaignId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Clone, None),
         user
@@ -438,5 +462,40 @@ trait CampaignRoutes
           } { complete(StatusCodes.NoContent) }
         }
       }
-  }
+    }
+
+  def listCampaignTasks(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync(
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        ) {
+          (withPagination & taskQueryParameters) { (page, taskParams) =>
+            complete {
+              (
+                TaskDao
+                  .listCampaignTasks(
+                    taskParams,
+                    campaignId,
+                    page
+                  )
+                )
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
+      }
+    }
 }

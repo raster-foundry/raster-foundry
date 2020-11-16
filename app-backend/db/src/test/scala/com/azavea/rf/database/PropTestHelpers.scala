@@ -52,18 +52,19 @@ trait PropTestHelpers {
         false
       )
       (dbOrg, dbUser) = orgAndUser
-      _ <- if (doUserGroupRole)
-        UserGroupRoleDao.create(
-          UserGroupRole
-            .Create(
-              dbUser.id,
-              GroupType.Platform,
-              dbPlatform.id,
-              GroupRole.Member
-            )
-            .toUserGroupRole(dbUser, MembershipStatus.Approved)
-        )
-      else ().pure[ConnectionIO]
+      _ <-
+        if (doUserGroupRole)
+          UserGroupRoleDao.create(
+            UserGroupRole
+              .Create(
+                dbUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member
+              )
+              .toUserGroupRole(dbUser, MembershipStatus.Approved)
+          )
+        else ().pure[ConnectionIO]
     } yield { (dbUser, dbOrg, dbPlatform) }
 
   def insertUserOrgPlatProject(
@@ -113,18 +114,19 @@ trait PropTestHelpers {
     for {
       orgInsert <- OrganizationDao.createOrganization(org)
       userInsert <- UserDao.create(user)
-      _ <- if (doUserGroupRole)
-        UserGroupRoleDao.create(
-          UserGroupRole
-            .Create(
-              userInsert.id,
-              GroupType.Organization,
-              orgInsert.id,
-              GroupRole.Member
-            )
-            .toUserGroupRole(userInsert, MembershipStatus.Approved)
-        )
-      else ().pure[ConnectionIO]
+      _ <-
+        if (doUserGroupRole)
+          UserGroupRoleDao.create(
+            UserGroupRole
+              .Create(
+                userInsert.id,
+                GroupType.Organization,
+                orgInsert.id,
+                GroupRole.Member
+              )
+              .toUserGroupRole(userInsert, MembershipStatus.Approved)
+          )
+        else ().pure[ConnectionIO]
     } yield (orgInsert, userInsert)
   }
 
@@ -273,7 +275,12 @@ trait PropTestHelpers {
   }
 
   def fixUpProjMiscInsert(
-      userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform),
+      userTeamOrgPlat: (
+          User.Create,
+          Team.Create,
+          Organization.Create,
+          Platform
+      ),
       project: Project.Create
   ): ConnectionIO[(Project, (User, Team, Organization, Platform))] = {
     val (user, team, org, platform) = userTeamOrgPlat
@@ -301,9 +308,13 @@ trait PropTestHelpers {
       project: Option[Project],
       analysis: Option[ToolRun]
   ): MapToken.Create =
-    mapTokenCreate.copy(project = project map { _.id }, toolRun = analysis map {
-      _.id
-    }, owner = Some(user.id))
+    mapTokenCreate.copy(
+      project = project map { _.id },
+      toolRun = analysis map {
+        _.id
+      },
+      owner = Some(user.id)
+    )
 
   def fixupTaskFeaturesCollection(
       tfc: Task.TaskFeatureCollectionCreate,
@@ -386,52 +397,53 @@ trait PropTestHelpers {
       validateTeamId: UUID,
       labelsOption: Option[List[(UUID, String, UUID)]] = None,
       labelGroupsOption: Option[Map[UUID, String]] = None
-  ): ProjectExtras = (labelsOption, labelGroupsOption) match {
-    case (Some(labels), Some(labelGroups)) =>
-      val createdLabels = labels.map(label => {
-        ProjectExtrasAnnotateLabel(
-          label._2,
-          label._1,
-          "red",
-          label._3,
-          false
+  ): ProjectExtras =
+    (labelsOption, labelGroupsOption) match {
+      case (Some(labels), Some(labelGroups)) =>
+        val createdLabels = labels.map(label => {
+          ProjectExtrasAnnotateLabel(
+            label._2,
+            label._1,
+            "red",
+            label._3,
+            false
+          )
+        })
+        ProjectExtras(
+          ProjectExtrasAnnotate(
+            labelTeamId,
+            validateTeamId,
+            createdLabels,
+            "detection",
+            true,
+            None,
+            labelGroups
+          )
         )
-      })
-      ProjectExtras(
-        ProjectExtrasAnnotate(
-          labelTeamId,
-          validateTeamId,
-          createdLabels,
-          "detection",
-          true,
-          None,
-          labelGroups
+      case _ =>
+        val defaultLabelId = UUID.randomUUID()
+        val defaultLayerGroupId = UUID.randomUUID()
+        val defaultLabels = List(
+          ProjectExtrasAnnotateLabel(
+            "Test",
+            defaultLabelId,
+            "red",
+            defaultLayerGroupId,
+            false
+          )
         )
-      )
-    case _ =>
-      val defaultLabelId = UUID.randomUUID()
-      val defaultLayerGroupId = UUID.randomUUID()
-      val defaultLabels = List(
-        ProjectExtrasAnnotateLabel(
-          "Test",
-          defaultLabelId,
-          "red",
-          defaultLayerGroupId,
-          false
+        ProjectExtras(
+          ProjectExtrasAnnotate(
+            labelTeamId,
+            validateTeamId,
+            defaultLabels,
+            "detection",
+            true,
+            None,
+            Map(defaultLayerGroupId -> "Test Group")
+          )
         )
-      )
-      ProjectExtras(
-        ProjectExtrasAnnotate(
-          labelTeamId,
-          validateTeamId,
-          defaultLabels,
-          "detection",
-          true,
-          None,
-          Map(defaultLayerGroupId -> "Test Group")
-        )
-      )
-  }
+    }
 
   def fixupAnnotationProjectExportCreate(
       annotationProjectExport: StacExport.AnnotationProjectExport,
@@ -441,27 +453,37 @@ trait PropTestHelpers {
       annotationProjectId = project.id
     )
 
+  def fixupCampaignExportCreate(
+      campaignExport: StacExport.CampaignExport,
+      campaign: Campaign
+  ): StacExport.CampaignExport = {
+    campaignExport.copy(
+      campaignId = campaign.id
+    )
+  }
+
   def createChildTaskCreateFC(
       parentTask: Task.TaskFeature,
       childStatus: TaskStatus,
       taskType: Option[TaskType],
       reviews: Option[Map[UUID, Review]] = None
-  ): Task.TaskFeatureCollectionCreate = Task.TaskFeatureCollectionCreate(
-    _type = "FeatureCollection",
-    features = List(
-      Task.TaskFeatureCreate(
-        properties = Task.TaskPropertiesCreate(
-          status = childStatus,
-          annotationProjectId = parentTask.properties.annotationProjectId,
-          note = parentTask.properties.note,
-          taskType = taskType,
-          parentTaskId = Some(parentTask.id),
-          reviews = reviews
-        ),
-        geometry = parentTask.geometry
+  ): Task.TaskFeatureCollectionCreate =
+    Task.TaskFeatureCollectionCreate(
+      _type = "FeatureCollection",
+      features = List(
+        Task.TaskFeatureCreate(
+          properties = Task.TaskPropertiesCreate(
+            status = childStatus,
+            annotationProjectId = parentTask.properties.annotationProjectId,
+            note = parentTask.properties.note,
+            taskType = taskType,
+            parentTaskId = Some(parentTask.id),
+            reviews = reviews
+          ),
+          geometry = parentTask.geometry
+        )
       )
     )
-  )
 
   def setReviewToTaskCreate(
       feature: Task.TaskFeature,
@@ -483,4 +505,17 @@ trait PropTestHelpers {
       geometry = feature.geometry
     )
 
+  def loopStatus(
+      status: TaskStatus
+  ): TaskStatus =
+    status match {
+      case TaskStatus.Unlabeled            => TaskStatus.LabelingInProgress
+      case TaskStatus.LabelingInProgress   => TaskStatus.Labeled
+      case TaskStatus.Labeled              => TaskStatus.ValidationInProgress
+      case TaskStatus.ValidationInProgress => TaskStatus.Validated
+      case TaskStatus.Validated            => TaskStatus.Flagged
+      case TaskStatus.Flagged              => TaskStatus.Invalid
+      case TaskStatus.Invalid              => TaskStatus.Unlabeled
+      case TaskStatus.Split                => TaskStatus.Invalid
+    }
 }

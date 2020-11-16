@@ -52,6 +52,13 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       "tasks left join task_actions on tasks.id = task_actions.task_id"
     )
 
+  val annotationProjectJoinTableF =
+    Fragment.const(
+      """tasks left join task_actions on tasks.id = task_actions.task_id join annotation_projects
+         join annotation_projects on tasks.annotation_project_id = annotation_projects.id
+        """
+    )
+
   val selectF: Fragment =
     fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ tableF
 
@@ -182,6 +189,59 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       .filter(fr"annotation_project_id = $annotationProjectId")
       .filter(fr"parent_task_id IS NULL")
 
+  def taskForCampaignQB(
+      queryParams: TaskQueryParameters,
+      campaignId: UUID
+  ): Dao.QueryBuilder[Task] =
+    Dao
+      .QueryBuilder[Task](
+        listF,
+        annotationProjectJoinTableF,
+        Nil,
+        Some(fr"SELECT count(distinct id) FROM" ++ annotationProjectJoinTableF)
+      )
+      .filter(queryParams)
+      .filter(fr"campaign_id = $campaignId")
+
+  def listCampaignTasks(
+      queryParams: TaskQueryParameters,
+      campaignId: UUID,
+      pageRequest: PageRequest
+  ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] = {
+    val actionFiltered = queryParams.actionUser.nonEmpty ||
+      queryParams.actionType.nonEmpty ||
+      queryParams.actionStartTime.nonEmpty ||
+      queryParams.actionEndTime.nonEmpty ||
+      queryParams.actionMinCount.nonEmpty ||
+      queryParams.actionMaxCount.nonEmpty
+    for {
+      paginatedResponse <- actionFiltered match {
+        case true =>
+          tasksForAnnotationProjectQB(
+            queryParams,
+            campaignId
+          ).filter(fr"parent_task_id IS NULL")
+            .page(pageRequest)
+        case _ =>
+          tasksForAnnotationProjectQB(queryParams, campaignId)
+            .filter(fr"parent_task_id IS NULL")
+            .page(pageRequest)
+      }
+      withActions <- paginatedResponse.results.toList traverse { task =>
+        unsafeGetActionsForTask(task)
+      }
+    } yield {
+      PaginatedGeoJsonResponse(
+        paginatedResponse.count,
+        paginatedResponse.hasPrevious,
+        paginatedResponse.hasNext,
+        paginatedResponse.page,
+        paginatedResponse.pageSize,
+        withActions
+      )
+    }
+  }
+
   def listTasks(
       queryParams: TaskQueryParameters,
       annotationProjectId: UUID,
@@ -204,7 +264,6 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           query
             .filter(queryParams)
             .filter(fr"annotation_project_id = $annotationProjectId")
-            .filter(fr"parent_task_id IS NULL")
             .page(pageRequest)
       }
       withActions <- paginatedResponse.results.toList traverse { task =>
@@ -229,7 +288,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     val t = tfc.properties.taskType.getOrElse(TaskType.fromString("LABEL"))
     val r = tfc.properties.reviews.getOrElse(Map[UUID, Review]())
     fr"""(
-        ${UUID.randomUUID}, ${Timestamp.from(Instant.now)}, ${user.id}, ${Timestamp
+        ${UUID.randomUUID}, ${Timestamp.from(
+      Instant.now
+    )}, ${user.id}, ${Timestamp
       .from(Instant.now)},
         ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
         ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r},
@@ -537,7 +598,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       .filter(fr"annotation_project_id = $annotationProjectId")
       .filter(taskStatusF(taskStatuses))
       .select map {
-      case Some(geom) :: Some(xMin) :: Some(yMin) :: Some(xMax) :: Some(yMax) :: HNil =>
+      case Some(geom) :: Some(xMin) :: Some(yMin) :: Some(xMax) :: Some(
+            yMax
+          ) :: HNil =>
         Some(UnionedGeomExtent(geom, xMin, yMin, xMax, yMax))
       case _ =>
         None
@@ -598,21 +661,22 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   def countProjectTaskByStatus(
       projectId: UUID
-  ): ConnectionIO[Map[TaskStatus, Int]] = (fr"""
+  ): ConnectionIO[Map[TaskStatus, Int]] =
+    (fr"""
     SELECT status, COUNT(id)
     FROM tasks
     WHERE annotation_project_id = ${projectId}
     GROUP BY status;
     """).query[(TaskStatus, Int)].to[List].map { list =>
-    val statusMap = list.toMap
-    List(
-      TaskStatus.Unlabeled,
-      TaskStatus.LabelingInProgress,
-      TaskStatus.Labeled,
-      TaskStatus.ValidationInProgress,
-      TaskStatus.Validated
-    ).fproduct(status => statusMap.getOrElse(status, 0)).toMap
-  }
+      val statusMap = list.toMap
+      List(
+        TaskStatus.Unlabeled,
+        TaskStatus.LabelingInProgress,
+        TaskStatus.Labeled,
+        TaskStatus.ValidationInProgress,
+        TaskStatus.Validated
+      ).fproduct(status => statusMap.getOrElse(status, 0)).toMap
+    }
 
   def listTasksByStatus(
       annotationProjectId: UUID,
@@ -650,17 +714,20 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       // task action stamp
       case TaskStatus.LabelingInProgress | TaskStatus.ValidationInProgress =>
         getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
-          val sorted = stamps
-            .sortBy(stamp => -stamp.timestamp.toInstant.getEpochSecond)
-          val previousStatus = sorted.headOption map { _.fromStatus } getOrElse {
-            TaskStatus.Unlabeled
+          stamps.maximumByOption(stamp => {
+            val instant = stamp.timestamp.toInstant
+            // in testing, the epoch second was insufficient for generated actions
+            // very close to each other in time
+            val result: Double =
+              instant.getEpochSecond + (instant.getNano / 1e9)
+            result
+          }) map { mostRecentStamp =>
+            val previousStatus = mostRecentStamp.fromStatus
+            val previousNote = mostRecentStamp.note
+            (previousStatus, previousNote)
+          } getOrElse {
+            (TaskStatus.Unlabeled, None)
           }
-          val previousNote = if (previousStatus == TaskStatus.Flagged) {
-            sorted.drop(1).headOption flatMap { _.note }
-          } else {
-            None
-          }
-          (previousStatus, previousNote)
         })
       // if it's flagged currently, then the note is in the most recent task action stamp
       case TaskStatus.Flagged =>
@@ -679,13 +746,29 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
     for {
       _ <- info("Expiring stuck tasks")
+      _ <- fr"""select pg_advisory_lock(max(floor(EXTRACT(EPOCH FROM unlocked_time))) :: integer) from last_unlocked""".query.unique.void
       defaultUser <- UserDao.unsafeGetUserById("default")
-      stuckTasks <- query
+      stuckLockedTasks <- query
         .filter(
           fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
         )
         .list
-      _ <- stuckTasks traverse { task =>
+      stuckUnlockedTasks <- query
+        .filter(
+          fr"""
+            locked_on IS NULL AND
+            (status = ${TaskStatus.LabelingInProgress: TaskStatus} OR
+             status = ${TaskStatus.ValidationInProgress: TaskStatus})"""
+        )
+        .list
+      _ <- (stuckUnlockedTasks map { _.annotationProjectId }).toNel traverse {
+        projectIdsList =>
+          val projectIdsSet = projectIdsList.toNes
+          warn(
+            s"Annotation project IDs for stuck in progress but unlocked tasks: $projectIdsSet"
+          )
+      }
+      _ <- (stuckLockedTasks ++ stuckUnlockedTasks) traverse { task =>
         regressTaskStatus(task.id, task.status) flatMap {
           case (newStatus, newNote) =>
             val update =
@@ -704,7 +787,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
         }
       }
-    } yield stuckTasks.length
+      _ <- fr"""update last_unlocked set unlocked_time = ${Timestamp.from(
+        Instant.now
+      )}""".update.run
+    } yield (stuckLockedTasks.length + stuckUnlockedTasks.length)
 
   def randomTask(
       queryParams: TaskQueryParameters,
@@ -715,7 +801,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       .filter(fr"parent_task_id IS NULL")
       .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
 
-    (selectF ++ Fragments.whereAndOpt(builder.filters: _*) ++ fr"ORDER BY RANDOM() LIMIT 1")
+    (selectF ++ Fragments.whereAndOpt(
+      builder.filters: _*
+    ) ++ fr"ORDER BY RANDOM() LIMIT 1")
       .query[Task]
       .to[List] flatMap { tasks =>
       tasks.toNel traverse { tasks =>
@@ -746,6 +834,141 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         paginatedResponse.pageSize,
         withActions
       )
+    }
+  }
+
+  private def reassociateLabelF(oldTaskId: UUID, newTaskId: UUID): Fragment =
+    fr"""
+  with
+    -- get the geoms with old ids
+    old_task as (
+      select * from tasks where id = $oldTaskId
+    ),
+    new_task as (
+      select * from tasks where id = $newTaskId
+    ),
+    -- create a view of old id + everything for a new task + old label class id
+    overlapping_labels as
+      (select uuid_generate_v4() as new_label_id,
+              annotation_labels.created_by created_by,
+              annotation_labels.annotation_project_id annotation_project_id,
+              $newTaskId as new_task_id,
+              st_intersection(annotation_labels.geometry, new_task.geometry) geom,
+              annotation_labels.description as description,
+              annotation_labels_annotation_label_classes.annotation_class_id annotation_class_id
+       from annotation_labels join tasks on annotation_labels.annotation_task_id = tasks.id
+       join annotation_labels_annotation_label_classes
+         on annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id,
+       new_task
+       where tasks.id = $oldTaskId
+       and st_intersects(annotation_labels.geometry, new_task.geometry)
+      ),
+    -- insert into labels and label classes from the old view
+    label_insert as
+      (insert into annotation_labels (
+        id, created_at, created_by, annotation_project_id, annotation_task_id, geometry, description
+      ) (
+        SELECT new_label_id,
+               now(),
+               created_by,
+               annotation_project_id,
+               new_task_id,
+               geom,
+               description from overlapping_labels
+      ))
+    insert into annotation_labels_annotation_label_classes (
+      annotation_label_id,
+      annotation_class_id
+    ) (
+      SELECT new_label_id, annotation_class_id from overlapping_labels
+    )
+  """
+
+  def splitTask(
+      taskId: UUID,
+      user: User
+  ): ConnectionIO[Task.TaskFeatureCollection] = {
+    val splitGeomQuery = fr"""
+      with
+        bounds as
+          (select st_xmin(geometry) xmin, st_xmax(geometry) xmax, st_ymin(geometry) ymin, st_ymax(geometry) ymax from tasks where id = $taskId),
+        midpoints as
+          (select bounds.xmin + (bounds.xmax - bounds.xmin) / 2 as xbar, bounds.ymin + (bounds.ymax - bounds.ymin) / 2 as ybar from bounds),
+        ns_line as
+          (select st_makeline(
+            st_setsrid(st_makepoint(
+              midpoints.xbar,
+              bounds.ymin
+            ), 3857),
+            st_setsrid(st_makepoint(
+              midpoints.xbar,
+              bounds.ymax
+            ), 3857)
+          ) as geom from bounds, midpoints),
+        ew_line as
+          (select st_makeline(
+            st_setsrid(st_makepoint(
+              bounds.xmin,
+              midpoints.ybar
+            ), 3857),
+            st_setsrid(st_makepoint(
+              bounds.xmax,
+              midpoints.ybar
+            ), 3857)
+          ) as geom from bounds, midpoints),
+        task_cross as
+          (select st_collect(ns_line.geom, ew_line.geom) geom from ns_line, ew_line)
+      select geom_dump.geom from (
+        select (st_dump(st_split(geometry, task_cross.geom))).geom from tasks, task_cross where id = $taskId
+      ) as geom_dump;
+      """
+
+    getTaskById(taskId) flatMap {
+      case Some(task) =>
+        for {
+          newGeoms <- splitGeomQuery.query[Projected[Geometry]].to[List]
+          // for each geom, create a new task with the existing task as a parent
+          taskFeatures = newGeoms map { geom =>
+            val taskPropertiesCreate = task
+              .toProperties(Nil)
+              .toCreate
+              .copy(
+                parentTaskId = Some(taskId),
+                status = task.status match {
+                  case TaskStatus.ValidationInProgress => TaskStatus.Labeled
+                  case TaskStatus.LabelingInProgress   => TaskStatus.Unlabeled
+                  case s                               => s
+                }
+              )
+            Task.TaskFeatureCreate(
+              taskPropertiesCreate,
+              geom
+            )
+          }
+          newTaskFeatureCollection <- insertTasks(
+            Task.TaskFeatureCollectionCreate(features = taskFeatures),
+            user
+          )
+          // - reassociate *the overlapping portions* of all labels on the parent task with the new task
+          () <- (newTaskFeatureCollection.features traverse { taskFeature =>
+            reassociateLabelF(taskId, taskFeature.id).update.run
+          }).void
+          taskFeature = task.toGeoJSONFeature(Nil)
+          createProperties = taskFeature.properties.toCreate.copy(
+            status = TaskStatus.Split
+          )
+          featureCreate = Task.TaskFeatureCreate(
+            createProperties,
+            taskFeature.geometry
+          )
+          // - update the old task to have a status of `SPLIT`
+          _ <- updateTask(
+            taskId,
+            featureCreate,
+            user
+          )
+        } yield newTaskFeatureCollection
+      case None => Task.TaskFeatureCollection(features = Nil).pure[ConnectionIO]
     }
   }
 }

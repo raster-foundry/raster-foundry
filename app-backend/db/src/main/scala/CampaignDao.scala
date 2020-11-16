@@ -34,10 +34,16 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
     "children_count",
     "project_statuses",
     "is_active",
-    "resource_link"
+    "resource_link",
+    "task_status_summary"
   )
 
-  def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
+  def selectF: Fragment =
+    fr"SELECT " ++ selectFieldsF ++ Fragment.const(
+      ", COALESCE(image_count, 0) as image_count"
+    ) ++
+      fr" FROM " ++ Fragment.const(
+      s"$tableName LEFT OUTER JOIN (select campaign_id, count(*) image_count FROM annotation_projects GROUP BY campaign_id) cnt ON id = campaign_id")
 
   def authQuery(
       user: User,
@@ -82,7 +88,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       page: PageRequest,
       params: CampaignQueryParameters,
       user: User
-  ): ConnectionIO[PaginatedResponse[Campaign]] =
+  ): ConnectionIO[PaginatedResponse[Campaign.WithRelated]] =
     authQuery(
       user,
       ObjectType.Campaign,
@@ -91,32 +97,91 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       params.groupQueryParameters.groupId
     ).filter(params)
       .page(page)
+      .flatMap(toWithRelated)
+
+  def toWithRelated(
+      campaignsPage: PaginatedResponse[Campaign]
+  ): ConnectionIO[PaginatedResponse[Campaign.WithRelated]] =
+    campaignsPage.results.toList.toNel match {
+      case Some(campaigns) =>
+        campaigns traverse { campaign =>
+          for {
+            labelClassGroups <- AnnotationLabelClassGroupDao.listByCampaignId(
+              campaign.id
+            )
+            labelClassGroupsWithClasses <- labelClassGroups traverse {
+              labelClassGroup =>
+                AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(
+                  labelClassGroup.id
+                ) map { cls =>
+                  labelClassGroup.withLabelClasses(cls)
+                }
+            }
+          } yield {
+            campaign.withRelated(labelClassGroupsWithClasses)
+          }
+        } map { campaignWithRelated =>
+          PaginatedResponse[Campaign.WithRelated](
+            campaignsPage.count,
+            campaignsPage.hasPrevious,
+            campaignsPage.hasNext,
+            campaignsPage.page,
+            campaignsPage.pageSize,
+            campaignWithRelated.toList
+          )
+
+        }
+      case _ =>
+        campaignsPage
+          .copy(results = List.empty[Campaign.WithRelated])
+          .pure[ConnectionIO]
+    }
 
   def insertCampaign(
       campaignCreate: Campaign.Create,
       user: User
-  ): ConnectionIO[Campaign] =
-    (fr"INSERT INTO" ++ tableF ++ fr"""(
+  ): ConnectionIO[Campaign] = {
+    for {
+      insertId <- (fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, owner, name, campaign_type, description,
       video_link, partner_name, partner_logo, parent_campaign_id,
       continent, tags, resource_link
     )""" ++
-      fr"""VALUES
+        fr"""VALUES
       (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
        ${campaignCreate.campaignType}, ${campaignCreate.description},
        ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
        ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId},
        ${campaignCreate.continent}, ${campaignCreate.tags}, ${campaignCreate.resourceLink}
        )
-    """).update.withUniqueGeneratedKeys[Campaign](
-      fieldNames: _*
-    )
+    """).update.withUniqueGeneratedKeys[UUID]("id")
+      campaign <- unsafeGetCampaignById(insertId)
+    } yield campaign
+  }
 
   def getCampaignById(id: UUID): ConnectionIO[Option[Campaign]] =
     query.filter(id).selectOption
 
   def unsafeGetCampaignById(id: UUID): ConnectionIO[Campaign] =
     query.filter(id).select
+
+  def getCampaignWithRelatedById(
+      id: UUID
+  ): ConnectionIO[Option[Campaign.WithRelated]] =
+    for {
+      campaignO <- getCampaignById(id)
+      labelClassGroup <- AnnotationLabelClassGroupDao
+        .listByCampaignId(id)
+      labelClassGroupWithClass <- labelClassGroup traverse { group =>
+        AnnotationLabelClassDao
+          .listAnnotationLabelClassByGroupId(group.id)
+          .map(group.withLabelClasses(_))
+      }
+    } yield {
+      campaignO map { campaign =>
+        campaign.withRelated(labelClassGroupWithClass)
+      }
+    }
 
   def updateCampaign(campaign: Campaign, id: UUID): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
@@ -163,15 +228,14 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
            INSERT INTO""" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
       fr"""SELECT
              uuid_generate_v4(), now(), ${user.id}, name, campaign_type, description, video_link,
-             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, project_statuses, true, ${resourceLinkF}""" ++
+             partner_name, partner_logo, ${id}, continent, ${tagCol}, ${0}, project_statuses, true, ${resourceLinkF}, task_status_summary""" ++
       fr"""FROM """ ++ tableF ++ fr"""
            WHERE id = ${id}
         """)
     for {
-      campaignCopy <- insertQuery.update
-        .withUniqueGeneratedKeys[Campaign](
-          fieldNames: _*
-        )
+      campaignCopyId <- insertQuery.update
+        .withUniqueGeneratedKeys[UUID]("id")
+      campaignCopy <- unsafeGetCampaignById(campaignCopyId)
       annotationProjects <- AnnotationProjectDao.listByCampaign(id)
       _ <- annotationProjects traverse { project =>
         AnnotationProjectDao.copyProject(
@@ -351,4 +415,91 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           )
       }
     } yield ()
+
+  def getSharedUsers(
+      campaignId: UUID
+  ): ConnectionIO[List[UserThinWithActionType]] =
+    for {
+      permissions <- getPermissions(campaignId)
+      userThins <- permissions traverse {
+        case ObjectAccessControlRule(
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Annotate
+            ) =>
+          UserDao
+            .getUserById(subjectId)
+            .map(
+              _.map(UserThinWithActionType.fromUser(_, ActionType.Annotate))
+            )
+        case ObjectAccessControlRule(
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Validate
+            ) =>
+          UserDao
+            .getUserById(subjectId)
+            .map(
+              _.map(UserThinWithActionType.fromUser(_, ActionType.Validate))
+            )
+        case _ =>
+          Option.empty[UserThinWithActionType].pure[ConnectionIO]
+      }
+    } yield userThins.flatten
+
+  def deleteSharedUser(campaignId: UUID, userId: String): ConnectionIO[Int] =
+    for {
+      permissions <- getPermissions(campaignId)
+      permissionsToKeep = permissions collect {
+        case p if p.subjectId != Some(userId) => p
+      }
+      numberDeleted <- permissionsToKeep match {
+        case Nil => deletePermissions(campaignId)
+        case ps if ps.toSet != permissions.toSet =>
+          replacePermissions(campaignId, ps) map { _ =>
+            permissions.size - ps.size
+          }
+        case _ =>
+          0.pure[ConnectionIO]
+      }
+    } yield numberDeleted
+
+  /*
+    If no action specified, we see it as just assigning Annotate action
+    If the action param is Annotate, the existing Validate action, if any, needs to be removed
+    If the action param is Validate, existing actions should stay untouched
+   */
+  def handleSharedPermissions(
+      campaignId: UUID,
+      userId: String,
+      acrs: List[ObjectAccessControlRule],
+      actionTypeOpt: Option[ActionType]
+  ): ConnectionIO[List[List[ObjectAccessControlRule]]] =
+    actionTypeOpt match {
+      case Some(ActionType.Annotate) | None =>
+        for {
+          permissions <- getPermissions(campaignId)
+          permissionsToKeep = permissions collect {
+            case p
+                if p.subjectId != Some(userId) && p.actionType != ActionType.Validate =>
+              p
+          }
+          _ <- permissionsToKeep match {
+            case Nil => deletePermissions(campaignId)
+            case ps if ps.toSet != permissions.toSet =>
+              replacePermissions(campaignId, ps) map { _ =>
+                permissions.size - ps.size
+              }
+            case _ =>
+              0.pure[ConnectionIO]
+          }
+          resultedPermissions <- acrs traverse { acr =>
+            addPermission(campaignId, acr)
+          }
+        } yield resultedPermissions
+      case _ =>
+        acrs traverse { acr =>
+          addPermission(campaignId, acr)
+        }
+    }
 }

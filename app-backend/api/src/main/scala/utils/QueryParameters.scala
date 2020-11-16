@@ -177,7 +177,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
 
   def taskQueryParameters =
     parameters(
-      'status.as[TaskStatus].?,
+      'status.as[TaskStatus].*,
       'locked.as[Boolean].?,
       'lockedBy.as[String].?,
       'bbox.as[String].*,
@@ -187,7 +187,6 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'actionEndTime.as(deserializerTimestamp).?,
       'actionMinCount.as[Int].?,
       'actionMaxCount.as[Int].?,
-      'format.as[String].?,
       'taskType.as(deserializerTaskType).?
     ).as(TaskQueryParameters.apply _)
 
@@ -205,7 +204,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         parameters(
           'exportStatus.as[String].?,
-          'annotationProjectId.as[UUID].?
+          'annotationProjectId.as[UUID].?,
+          'campaignId.as[UUID].?
         )
     ).as(StacExportQueryParameters.apply _)
 

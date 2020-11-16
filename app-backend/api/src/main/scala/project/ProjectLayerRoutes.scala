@@ -60,7 +60,8 @@ trait ProjectLayerRoutes
             .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
             .transact(xa)
             .unsafeToFuture
-            .map(_.toBoolean)) | projectIsPublic(projectId)) {
+            .map(_.toBoolean)
+        ) | projectIsPublic(projectId)) {
           (withPagination) { (page) =>
             complete {
               ProjectLayerDao
@@ -138,29 +139,6 @@ trait ProjectLayerRoutes
         }
       }
   }
-
-  def splitProjectLayer(projectId: UUID, layerId: UUID): Route =
-    authenticate { user =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.Create, None), user) {
-        authorizeAsync {
-          ProjectDao
-            .authProjectLayerExist(projectId, layerId, user, ActionType.View)
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[SplitOptions]) { splitOptions =>
-            onSuccess(
-              ProjectLayerDao
-                .splitProjectLayer(projectId, layerId, splitOptions)
-                .transact(xa)
-                .unsafeToFuture
-            ) { splitLayers =>
-              complete(StatusCodes.Created, splitLayers)
-            }
-          }
-        }
-      }
-    }
 
   def getProjectLayerMosaicDefinition(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
@@ -241,8 +219,10 @@ trait ProjectLayerRoutes
       layerId: UUID
   ): Route =
     authenticate { user =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.ColorCorrect, None),
-                     user) {
+      authorizeScope(
+        ScopedAction(Domain.Projects, Action.ColorCorrect, None),
+        user
+      ) {
         authorizeAsync {
           ProjectDao
             .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)

@@ -50,7 +50,7 @@ trait ProjectRoutes
 
   val xa: Transactor[IO]
 
-  implicit val contextShift: ContextShift[IO]
+  implicit def contextShift: ContextShift[IO]
   val projectRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
@@ -99,13 +99,6 @@ trait ProjectRoutes
                       deleteProjectLayer(projectId, layerId)
                     }
                 } ~
-                  pathPrefix("split") {
-                    pathEndOrSingleSlash {
-                      post {
-                        splitProjectLayer(projectId, layerId)
-                      }
-                    }
-                  } ~
                   pathPrefix("color-mode") {
                     pathEndOrSingleSlash {
                       post {
@@ -500,7 +493,8 @@ trait ProjectRoutes
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
-          .map(_.toBoolean)) | projectIsPublic(projectId)) {
+          .map(_.toBoolean)
+      ) | projectIsPublic(projectId)) {
         complete {
           ProjectDao.getProjectById(projectId).transact(xa).unsafeToFuture
         }

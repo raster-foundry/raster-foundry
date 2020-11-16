@@ -15,16 +15,19 @@ object TaskStatus {
   case object Validated extends TaskStatus("VALIDATED")
   case object Flagged extends TaskStatus("FLAGGED")
   case object Invalid extends TaskStatus("INVALID")
+  case object Split extends TaskStatus("SPLIT")
 
-  def fromString(s: String): TaskStatus = s.toUpperCase match {
-    case "UNLABELED"              => Unlabeled
-    case "LABELING_IN_PROGRESS"   => LabelingInProgress
-    case "LABELED"                => Labeled
-    case "VALIDATION_IN_PROGRESS" => ValidationInProgress
-    case "VALIDATED"              => Validated
-    case "FLAGGED"                => Flagged
-    case "INVALID"                => Invalid
-  }
+  def fromString(s: String): TaskStatus =
+    s.toUpperCase match {
+      case "UNLABELED"              => Unlabeled
+      case "LABELING_IN_PROGRESS"   => LabelingInProgress
+      case "LABELED"                => Labeled
+      case "VALIDATION_IN_PROGRESS" => ValidationInProgress
+      case "VALIDATED"              => Validated
+      case "FLAGGED"                => Flagged
+      case "INVALID"                => Invalid
+      case "SPLIT"                  => Split
+    }
 
   implicit val taskStatusEncoder: Encoder[TaskStatus] =
     Encoder.encodeString.contramap[TaskStatus](_.toString)

@@ -14,6 +14,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
 
 import scala.util.Random
+import com.rasterfoundry.datamodel.Task.TaskFeatureCreate
 
 class CampaignDaoSpec
     extends AnyFunSuite
@@ -1130,9 +1131,15 @@ class CampaignDaoSpec
               campaignAfterPrjDelete <- CampaignDao.unsafeGetCampaignById(
                 insertedCampaign.id
               )
-            } yield (campaignAfterPrjInsert, campaignAfterPrjUpdate, campaignAfterPrjDelete)
+            } yield
+              (
+                campaignAfterPrjInsert,
+                campaignAfterPrjUpdate,
+                campaignAfterPrjDelete
+              )
 
-            val (afterInsert, afterUpdate, afterDelete) = updateCampaignProjectIO.transact(xa).unsafeRunSync()
+            val (afterInsert, afterUpdate, afterDelete) =
+              updateCampaignProjectIO.transact(xa).unsafeRunSync()
 
             assert(
               afterInsert.projectStatuses.get("WAITING") == Some(2),
@@ -1152,4 +1159,133 @@ class CampaignDaoSpec
       }
     }
   }
+
+  test("project task statuses should aggregate to campaign and image counts should be accurate") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create,
+            annotationProjectCreateOne: AnnotationProject.Create,
+            annotationProjectCreateTwo: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          {
+            val updateCampaignProjectIO = for {
+              user <- UserDao.create(userCreate)
+              insertedCampaign <- CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
+              insertedProjOne <- AnnotationProjectDao.insert(
+                annotationProjectCreateOne.copy(
+                  status = AnnotationProjectStatus.Waiting,
+                  campaignId = Some(insertedCampaign.id)
+                ),
+                user
+              )
+              insertedProjTwo <- AnnotationProjectDao.insert(
+                annotationProjectCreateTwo
+                  .copy(
+                    status = AnnotationProjectStatus.Waiting,
+                    campaignId = Some(insertedCampaign.id)
+                  ),
+                user
+              )
+              _ <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreate,
+                  insertedProjOne,
+                  Some(TaskStatus.Labeled)
+                ),
+                user
+              )
+              _ <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreate,
+                  insertedProjOne,
+                  Some(TaskStatus.Unlabeled)
+                ),
+                user
+              )
+              projTwoTasks <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreate,
+                  insertedProjTwo,
+                  Some(TaskStatus.Unlabeled)
+                ),
+                user
+              )
+              campaignAfterPrjInsert <- CampaignDao.unsafeGetCampaignById(
+                insertedCampaign.id
+              )
+              projOne <- AnnotationProjectDao.unsafeGetById(insertedProjOne.id)
+              projTwo <- AnnotationProjectDao.unsafeGetById(insertedProjTwo.id)
+              _ <- {
+                val task = projTwoTasks.features.head
+                val taskCreateProperties = task.properties.toCreate
+                val taskCreate = TaskFeatureCreate(taskCreateProperties, task.geometry).withStatus(TaskStatus.LabelingInProgress)
+                TaskDao.updateTask(task.id, taskCreate, user)
+              }
+              campaignAfterTaskUpdate <- CampaignDao.unsafeGetCampaignById(
+                insertedCampaign.id
+              )
+            } yield (projOne, projTwo, campaignAfterPrjInsert, campaignAfterTaskUpdate)
+
+            val (projectOne, projectTwo, campaignAfterTaskInsert, campaignAfterTaskUpdate) =
+              updateCampaignProjectIO.transact(xa).unsafeRunSync()
+
+            val campaignLabeled = campaignAfterTaskInsert.taskStatusSummary.getOrElse(TaskStatus.Labeled.toString, 0)
+            val campaignUnlabeled = campaignAfterTaskInsert.taskStatusSummary.getOrElse(TaskStatus.Unlabeled.toString, 0)
+
+            val projectLabeled = projectOne.taskStatusSummary.get.getOrElse(TaskStatus.Labeled.toString, 100)
+            val projectUnlabeled = {
+              projectOne.taskStatusSummary.get.getOrElse(TaskStatus.Unlabeled.toString, 100) +
+              projectTwo.taskStatusSummary.get.getOrElse(TaskStatus.Unlabeled.toString, 100)
+            }
+
+            val afterUpdateLabelingInProgress = campaignAfterTaskUpdate.taskStatusSummary.getOrElse(TaskStatus.LabelingInProgress.toString, 0)
+            val afterUpdateUnlabeled = campaignAfterTaskUpdate.taskStatusSummary.getOrElse(TaskStatus.Unlabeled.toString, 0)
+
+
+            assert(campaignUnlabeled == projectUnlabeled, "campaign task summary for unlabeled tasks should match project")
+            assert(campaignLabeled == projectLabeled, "campaign task summary for labeled tasks should match project")
+            assert(afterUpdateLabelingInProgress == 1, "update count should match number of flagged tasks")
+            assert(projectUnlabeled - 1 == afterUpdateUnlabeled, "counts in campaign should update when tasks are updated")
+            assert(campaignAfterTaskUpdate.imageCount == 2, "image count should be equal to number of annotation projects in campaign")
+            true
+          }
+      }
+    }
+  }
+
+  test("campaigns without images should still return from queries") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            campaignCreate: Campaign.Create
+        ) =>
+          {
+            val updateCampaignProjectIO = for {
+              user <- UserDao.create(userCreate)
+              _ <- CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
+              campaignPage <- CampaignDao.listCampaigns(PageRequest(0, 99, Map.empty), CampaignQueryParameters(), user)
+            } yield (campaignPage)
+
+            val campaignPage =
+              updateCampaignProjectIO.transact(xa).unsafeRunSync()
+
+            assert(campaignPage.results.length == 1, "campaigns without images should be returned from list")
+            true
+          }
+      }
+    }
+  }
+
 }

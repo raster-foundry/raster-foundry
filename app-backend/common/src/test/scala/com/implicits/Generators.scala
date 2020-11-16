@@ -8,7 +8,7 @@ import com.azavea.stac4s.Proprietary
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.vector.testkit.Rectangle
-import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
+import geotrellis.vector.{io => _, _}
 import io.circe.syntax._
 import io.circe.testing.ArbitraryInstances
 import org.scalacheck.Arbitrary.arbitrary
@@ -49,35 +49,33 @@ object Generators extends ArbitraryInstances {
   private def groupRoleGen: Gen[GroupRole] =
     Gen.oneOf(GroupRole.Admin, GroupRole.Member)
 
-  private def subjectTypeGen: Gen[SubjectType] = Gen.oneOf(
-    SubjectType.All,
-    SubjectType.Platform,
-    SubjectType.Organization,
-    SubjectType.Team,
-    SubjectType.User
-  )
+  private def subjectTypeGen: Gen[SubjectType] =
+    Gen.oneOf(
+      SubjectType.All,
+      SubjectType.Platform,
+      SubjectType.Organization,
+      SubjectType.Team,
+      SubjectType.User
+    )
 
-  private def actionTypeGen: Gen[ActionType] = Gen.oneOf(
-    ActionType.View,
-    ActionType.Edit,
-    ActionType.Deactivate,
-    ActionType.Delete,
-    ActionType.Annotate,
-    ActionType.Export,
-    ActionType.Download
-  )
+  private def actionTypeGen: Gen[ActionType] =
+    Gen.oneOf(
+      ActionType.View,
+      ActionType.Edit,
+      ActionType.Deactivate,
+      ActionType.Delete,
+      ActionType.Annotate,
+      ActionType.Export,
+      ActionType.Download
+    )
 
-  private def annotationQualityGen: Gen[AnnotationQuality] = Gen.oneOf(
-    AnnotationQuality.Yes,
-    AnnotationQuality.No,
-    AnnotationQuality.Miss,
-    AnnotationQuality.Unsure
-  )
-
-  private def splitPeriodGen: Gen[SplitPeriod] = Gen.oneOf(
-    SplitPeriod.Day,
-    SplitPeriod.Week
-  )
+  private def annotationQualityGen: Gen[AnnotationQuality] =
+    Gen.oneOf(
+      AnnotationQuality.Yes,
+      AnnotationQuality.No,
+      AnnotationQuality.Miss,
+      AnnotationQuality.Unsure
+    )
 
   private def visibilityGen: Gen[Visibility] =
     Gen.oneOf(Visibility.Public, Visibility.Organization, Visibility.Private)
@@ -85,12 +83,13 @@ object Generators extends ArbitraryInstances {
   private def taskStatusGen: Gen[TaskStatus] =
     Gen.frequency(
       (1, TaskStatus.Unlabeled),
-      (1, TaskStatus.LabelingInProgress),
+      (6, TaskStatus.LabelingInProgress),
       (1, TaskStatus.Labeled),
-      (1, TaskStatus.ValidationInProgress),
+      (6, TaskStatus.ValidationInProgress),
       (1, TaskStatus.Validated),
       (6, TaskStatus.Flagged),
-      (1, TaskStatus.Invalid)
+      (1, TaskStatus.Invalid),
+      (1, TaskStatus.Split)
     )
 
   private def taskTypeGen: Gen[TaskType] =
@@ -117,37 +116,41 @@ object Generators extends ArbitraryInstances {
   private def sceneTypeGen: Gen[SceneType] =
     Gen.oneOf(SceneType.Avro, SceneType.COG)
 
-  private def credentialGen: Gen[Credential] = possiblyEmptyStringGen flatMap {
-    Credential.fromString
-  }
+  private def credentialGen: Gen[Credential] =
+    possiblyEmptyStringGen flatMap {
+      Credential.fromString
+    }
 
   // This is fine not to test the max value --
   private def rawDataBytesGen: Gen[Long] = Gen.choose(0L, 100000L)
 
-  private def bandDataTypeGen: Gen[BandDataType] = Gen.oneOf(
-    BandDataType.Diverging,
-    BandDataType.Sequential,
-    BandDataType.Categorical
-  )
+  private def bandDataTypeGen: Gen[BandDataType] =
+    Gen.oneOf(
+      BandDataType.Diverging,
+      BandDataType.Sequential,
+      BandDataType.Categorical
+    )
 
   private def uuidGen: Gen[UUID] = Gen.delay(UUID.randomUUID)
 
-  private def jobStatusGen: Gen[JobStatus] = Gen.oneOf(
-    JobStatus.Uploading,
-    JobStatus.Success,
-    JobStatus.Failure,
-    JobStatus.PartialFailure,
-    JobStatus.Queued,
-    JobStatus.Processing
-  )
+  private def jobStatusGen: Gen[JobStatus] =
+    Gen.oneOf(
+      JobStatus.Uploading,
+      JobStatus.Success,
+      JobStatus.Failure,
+      JobStatus.PartialFailure,
+      JobStatus.Queued,
+      JobStatus.Processing
+    )
 
-  private def ingestStatusGen: Gen[IngestStatus] = Gen.oneOf(
-    IngestStatus.NotIngested,
-    IngestStatus.ToBeIngested,
-    IngestStatus.Ingesting,
-    IngestStatus.Ingested,
-    IngestStatus.Failed
-  )
+  private def ingestStatusGen: Gen[IngestStatus] =
+    Gen.oneOf(
+      IngestStatus.NotIngested,
+      IngestStatus.ToBeIngested,
+      IngestStatus.Ingesting,
+      IngestStatus.Ingested,
+      IngestStatus.Failed
+    )
 
   private def annotationProjectStatusGen: Gen[AnnotationProjectStatus] =
     Gen.oneOf(
@@ -160,25 +163,30 @@ object Generators extends ArbitraryInstances {
       AnnotationProjectStatus.ImageIngestionFailure
     )
 
-  private def tileLayerTypeGen: Gen[TileLayerType] = Gen.oneOf(
-    TileLayerType.MVT,
-    TileLayerType.TMS
-  )
+  private def tileLayerTypeGen: Gen[TileLayerType] =
+    Gen.oneOf(
+      TileLayerType.MVT,
+      TileLayerType.TMS
+    )
 
-  private def annotationProjectTypeGen: Gen[AnnotationProjectType] = Gen.oneOf(
-    AnnotationProjectType.Segmentation,
-    AnnotationProjectType.Classification,
-    AnnotationProjectType.Detection
-  )
+  private def annotationProjectTypeGen: Gen[AnnotationProjectType] =
+    Gen.oneOf(
+      AnnotationProjectType.Segmentation,
+      AnnotationProjectType.Classification,
+      AnnotationProjectType.Detection
+    )
 
   private def shapePropertiesGen: Gen[ShapeProperties] =
     for {
       timeField <- timestampIn2016Gen
       userField <- nonEmptyStringGen
       name <- nonEmptyStringGen
-      description <- Gen.oneOf(Gen.const(None), nonEmptyStringGen map {
-        Some(_)
-      })
+      description <- Gen.oneOf(
+        Gen.const(None),
+        nonEmptyStringGen map {
+          Some(_)
+        }
+      )
     } yield {
       ShapeProperties(
         timeField,
@@ -193,23 +201,25 @@ object Generators extends ArbitraryInstances {
   private def thumbnailSizeGen: Gen[ThumbnailSize] =
     Gen.oneOf(ThumbnailSize.Small, ThumbnailSize.Large, ThumbnailSize.Square)
 
-  private def uploadStatusGen: Gen[UploadStatus] = Gen.oneOf(
-    UploadStatus.Created,
-    UploadStatus.Uploading,
-    UploadStatus.Uploaded,
-    UploadStatus.Queued,
-    UploadStatus.Processing,
-    UploadStatus.Complete,
-    UploadStatus.Failed,
-    UploadStatus.Aborted
-  )
+  private def uploadStatusGen: Gen[UploadStatus] =
+    Gen.oneOf(
+      UploadStatus.Created,
+      UploadStatus.Uploading,
+      UploadStatus.Uploaded,
+      UploadStatus.Queued,
+      UploadStatus.Processing,
+      UploadStatus.Complete,
+      UploadStatus.Failed,
+      UploadStatus.Aborted
+    )
 
-  private def uploadTypeGen: Gen[UploadType] = Gen.oneOf(
-    UploadType.Dropbox,
-    UploadType.S3,
-    UploadType.Local,
-    UploadType.Planet
-  )
+  private def uploadTypeGen: Gen[UploadType] =
+    Gen.oneOf(
+      UploadType.Dropbox,
+      UploadType.S3,
+      UploadType.Local,
+      UploadType.Planet
+    )
 
   private def fileTypeGen: Gen[FileType] =
     Gen.oneOf(FileType.Geotiff, FileType.GeotiffWithMetadata)
@@ -239,11 +249,14 @@ object Generators extends ArbitraryInstances {
       centerX <- Gen.choose(-2e7, 2e7)
       centerY <- Gen.choose(-2e7, 2e7)
     } yield {
-      Rectangle()
-        .withWidth(width)
-        .withHeight(height)
-        .setCenter(Point(centerX, centerY))
-        .build()
+      (Extent
+        .toPolygon(
+          (Rectangle()
+            .withWidth(width)
+            .withHeight(height)
+            .setCenter(Point(centerX, centerY))
+            .build(): Geometry).extent
+        ))
     }
 
   private def multiPolygonGen3857: Gen[MultiPolygon] =
@@ -291,13 +304,13 @@ object Generators extends ArbitraryInstances {
       name <- nonEmptyStringGen
       visibility <- visibilityGen
       orgStatus <- orgStatusGen
-    } yield
-      Organization
-        .Create(name, UUID.randomUUID, Some(visibility), orgStatus)
+    } yield Organization
+      .Create(name, UUID.randomUUID, Some(visibility), orgStatus)
 
-  private def organizationGen: Gen[Organization] = organizationCreateGen map {
-    _.toOrganization(true)
-  }
+  private def organizationGen: Gen[Organization] =
+    organizationCreateGen map {
+      _.toOrganization(true)
+    }
 
   private def shapeCreateGen: Gen[Shape.Create] =
     for {
@@ -389,18 +402,17 @@ object Generators extends ArbitraryInstances {
       owner <- stringOptionGen
       resolutionMeters <- Gen.choose(0.25f, 1000f)
       metadataFiles <- stringListGen
-    } yield
-      Image.Create(
-        rawDataBytes,
-        visibility,
-        filename,
-        sourceUri,
-        scene,
-        imageMetadata,
-        owner,
-        resolutionMeters,
-        metadataFiles
-      )
+    } yield Image.Create(
+      rawDataBytes,
+      visibility,
+      filename,
+      sourceUri,
+      scene,
+      imageMetadata,
+      owner,
+      resolutionMeters,
+      metadataFiles
+    )
 
   private def imageBandedGen: Gen[Image.Banded] =
     for {
@@ -414,19 +426,18 @@ object Generators extends ArbitraryInstances {
       resolutionMeters <- Gen.choose(0.25f, 1000f)
       metadataFiles <- stringListGen
       bands <- Gen.listOf[Band.Create](bandCreateGen)
-    } yield
-      Image.Banded(
-        rawDataBytes,
-        visibility,
-        filename,
-        sourceUri,
-        owner,
-        scene,
-        imageMetadata,
-        resolutionMeters,
-        metadataFiles,
-        bands
-      )
+    } yield Image.Banded(
+      rawDataBytes,
+      visibility,
+      filename,
+      sourceUri,
+      owner,
+      scene,
+      imageMetadata,
+      resolutionMeters,
+      metadataFiles,
+      bands
+    )
   private def imageGen: Gen[Image] =
     for {
       imCreate <- imageCreateGen
@@ -473,18 +484,42 @@ object Generators extends ArbitraryInstances {
 
   private def sceneFilterFieldsGen: Gen[SceneFilterFields] =
     for {
-      cloudCover <- Gen.frequency((1, None), (10, Gen.choose(0.0f, 1.0f) map {
-        Some(_)
-      }))
-      acquisitionDate <- Gen.frequency((1, None), (10, timestampIn2016Gen map {
-        Some(_)
-      }))
-      sunAzimuth <- Gen.frequency((1, None), (10, Gen.choose(0f, 360f) map {
-        Some(_)
-      }))
-      sunElevation <- Gen.frequency((1, None), (10, Gen.choose(0f, 90f) map {
-        Some(_)
-      }))
+      cloudCover <- Gen.frequency(
+        (1, None),
+        (
+          10,
+          Gen.choose(0.0f, 1.0f) map {
+            Some(_)
+          }
+        )
+      )
+      acquisitionDate <- Gen.frequency(
+        (1, None),
+        (
+          10,
+          timestampIn2016Gen map {
+            Some(_)
+          }
+        )
+      )
+      sunAzimuth <- Gen.frequency(
+        (1, None),
+        (
+          10,
+          Gen.choose(0f, 360f) map {
+            Some(_)
+          }
+        )
+      )
+      sunElevation <- Gen.frequency(
+        (1, None),
+        (
+          10,
+          Gen.choose(0f, 90f) map {
+            Some(_)
+          }
+        )
+      )
     } yield {
       SceneFilterFields(cloudCover, acquisitionDate, sunAzimuth, sunElevation)
     }
@@ -757,10 +792,14 @@ object Generators extends ArbitraryInstances {
       subjectId <- uuidGen
       actionType <- actionTypeGen
     } yield {
-      ObjectAccessControlRule(subjectType, subjectType match {
-        case SubjectType.All => None
-        case _               => Some(subjectId.toString)
-      }, actionType)
+      ObjectAccessControlRule(
+        subjectType,
+        subjectType match {
+          case SubjectType.All => None
+          case _               => Some(subjectId.toString)
+        },
+        actionType
+      )
     }
 
   private def toolCreateGen: Gen[Tool.Create] =
@@ -818,27 +857,27 @@ object Generators extends ArbitraryInstances {
 
   private def exportOptionGen: Gen[ExportOptions] =
     for {
-      mask: Option[Projected[MultiPolygon]] <- projectedMultiPolygonGen3857 map {
-        Some(_)
-      }
+      mask: Option[Projected[MultiPolygon]] <-
+        projectedMultiPolygonGen3857 map {
+          Some(_)
+        }
       resolution <- arbitrary[Int]
       rasterSize <- arbitrary[Option[Int]]
       crop <- arbitrary[Boolean]
       raw <- arbitrary[Boolean]
       bands <- arbitrary[Option[Seq[Int]]]
       operation <- nonEmptyStringGen
-    } yield
-      ExportOptions(
-        mask,
-        resolution,
-        crop,
-        raw,
-        bands,
-        rasterSize,
-        Some(3857),
-        new URI(""),
-        operation
-      )
+    } yield ExportOptions(
+      mask,
+      resolution,
+      crop,
+      raw,
+      bands,
+      rasterSize,
+      Some(3857),
+      new URI(""),
+      operation
+    )
 
   private def exportCreateGen: Gen[Export.Create] =
     for {
@@ -891,43 +930,11 @@ object Generators extends ArbitraryInstances {
       )
     }
 
-  private def splitOptionsGen: Gen[SplitOptions] =
-    for {
-      name <- nonEmptyStringGen
-      colorGroupHex <- Gen.const(None)
-      t1 <- timestampIn2016Gen
-      t2 <- timestampIn2016Gen
-      period <- splitPeriodGen
-      onDatasource <- arbitrary[Option[Boolean]]
-      removeFromLayer <- arbitrary[Option[Boolean]]
-    } yield {
-      if (t1.before(t2)) {
-        SplitOptions(
-          name,
-          colorGroupHex,
-          t1,
-          t2,
-          period,
-          onDatasource,
-          removeFromLayer
-        )
-      } else {
-        SplitOptions(
-          name,
-          colorGroupHex,
-          t2,
-          t1,
-          period,
-          onDatasource,
-          removeFromLayer
-        )
-      }
-    }
-
-  private def metricEventGen: Gen[MetricEvent] = Gen.oneOf(
-    projectMosaicEventGen.widen,
-    analysisEventGen.widen
-  )
+  private def metricEventGen: Gen[MetricEvent] =
+    Gen.oneOf(
+      projectMosaicEventGen.widen,
+      analysisEventGen.widen
+    )
 
   private def projectMosaicEventGen: Gen[ProjectLayerMosaicEvent] =
     for {
@@ -935,15 +942,22 @@ object Generators extends ArbitraryInstances {
       projectLayerId <- uuidGen
       projectOwner <- nonEmptyStringGen
       referer <- nonEmptyStringGen
-    } yield
-      ProjectLayerMosaicEvent(projectId, projectLayerId, projectOwner, referer)
+    } yield ProjectLayerMosaicEvent(
+      projectId,
+      projectLayerId,
+      projectOwner,
+      referer
+    )
 
   private def analysisEventGen: Gen[AnalysisEvent] =
     for {
       (projectId, projectLayerId) <- Gen.oneOf(
-        (uuidGen map { Some(_) }, uuidGen map {
-          Some(_)
-        }).tupled,
+        (
+          uuidGen map { Some(_) },
+          uuidGen map {
+            Some(_)
+          }
+        ).tupled,
         Gen.const((None, None))
       )
       analysisId <- uuidGen
@@ -953,15 +967,14 @@ object Generators extends ArbitraryInstances {
       )
       analysisOwner <- nonEmptyStringGen
       referer <- nonEmptyStringGen
-    } yield
-      AnalysisEvent(
-        projectId,
-        projectLayerId,
-        analysisId,
-        nodeId,
-        analysisOwner,
-        referer
-      )
+    } yield AnalysisEvent(
+      projectId,
+      projectLayerId,
+      analysisId,
+      nodeId,
+      analysisOwner,
+      referer
+    )
 
   private def metricGen: Gen[Metric] =
     for {
@@ -973,15 +986,16 @@ object Generators extends ArbitraryInstances {
 
   private def taskPropertiesCreateGen: Gen[Task.TaskPropertiesCreate] =
     for {
-      status <- taskStatusGen
+      status <- Gen.const[TaskStatus](TaskStatus.Unlabeled)
       annotationProjectId <- uuidGen
-      note <- if (status == TaskStatus.Flagged) {
-        nonEmptyStringGen map { s =>
-          Some(NonEmptyString.unsafeFrom(s))
+      note <-
+        if (status == TaskStatus.Flagged) {
+          nonEmptyStringGen map { s =>
+            Some(NonEmptyString.unsafeFrom(s))
+          }
+        } else {
+          Gen.const(None)
         }
-      } else {
-        Gen.const(None)
-      }
       taskType <- Gen.oneOf(
         Gen.const(None),
         taskTypeGen map { Some(_) }
@@ -1032,7 +1046,15 @@ object Generators extends ArbitraryInstances {
   private def taskStatusListGen: Gen[List[TaskStatus]] =
     Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
 
-  private val stacExportGenTup =
+  private val stacAnnotationExportGenTup =
+    (
+      nonEmptyStringGen,
+      Gen.const(StacExportLicense(Proprietary(), Some("http://example.com"))),
+      taskStatusListGen,
+      uuidGen
+    )
+
+  private val stacCampaignExportGenTup =
     (
       nonEmptyStringGen,
       Gen.const(StacExportLicense(Proprietary(), Some("http://example.com"))),
@@ -1042,10 +1064,10 @@ object Generators extends ArbitraryInstances {
 
   private def stacAnnotationProjectExportGen
       : Gen[StacExport.AnnotationProjectExport] =
-    stacExportGenTup.mapN(StacExport.AnnotationProjectExport.apply)
+    stacAnnotationExportGenTup.mapN(StacExport.AnnotationProjectExport.apply)
 
   private def stacCampaignExportGen: Gen[StacExport.CampaignExport] =
-    stacExportGenTup.mapN(StacExport.CampaignExport.apply)
+    stacCampaignExportGenTup.mapN(StacExport.CampaignExport.apply)
 
   private def stacExportQueryParametersGen: Gen[StacExportQueryParameters] =
     Gen.const(StacExportQueryParameters())
@@ -1150,26 +1172,30 @@ object Generators extends ArbitraryInstances {
     ).mapN(Campaign.Clone.apply _)
 
   object Implicits {
-    implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
-      credentialGen
-    }
+    implicit def arbCredential: Arbitrary[Credential] =
+      Arbitrary {
+        credentialGen
+      }
 
-    implicit def arbPageRequest: Arbitrary[PageRequest] = Arbitrary {
-      pageRequestGen
-    }
+    implicit def arbPageRequest: Arbitrary[PageRequest] =
+      Arbitrary {
+        pageRequestGen
+      }
 
     implicit def arbCombinedSceneQueryParams
-        : Arbitrary[CombinedSceneQueryParams] = Arbitrary {
-      combinedSceneQueryParamsGen
-    }
+        : Arbitrary[CombinedSceneQueryParams] =
+      Arbitrary {
+        combinedSceneQueryParamsGen
+      }
 
     implicit def arbProjectsceneQueryParameters
         : Arbitrary[ProjectSceneQueryParameters] =
       Arbitrary { projectSceneQueryParametersGen }
 
-    implicit def arbAnnotationCreate: Arbitrary[Annotation.Create] = Arbitrary {
-      annotationCreateGen
-    }
+    implicit def arbAnnotationCreate: Arbitrary[Annotation.Create] =
+      Arbitrary {
+        annotationCreateGen
+      }
 
     implicit def arbListAnnotationCreate: Arbitrary[List[Annotation.Create]] =
       Arbitrary {
@@ -1179,20 +1205,23 @@ object Generators extends ArbitraryInstances {
     implicit def arbAnnotationGroupCreate: Arbitrary[AnnotationGroup.Create] =
       Arbitrary { annotationGroupCreateGen }
 
-    implicit def arbOrganization: Arbitrary[Organization] = Arbitrary {
-      organizationGen
-    }
+    implicit def arbOrganization: Arbitrary[Organization] =
+      Arbitrary {
+        organizationGen
+      }
 
-    implicit def arbExport: Arbitrary[Export.Create] = Arbitrary {
-      exportCreateGen
-    }
+    implicit def arbExport: Arbitrary[Export.Create] =
+      Arbitrary {
+        exportCreateGen
+      }
 
     implicit def arbOrganizationCreate: Arbitrary[Organization.Create] =
       Arbitrary { organizationCreateGen }
 
-    implicit def arbUserCreate: Arbitrary[User.Create] = Arbitrary {
-      userCreateGen
-    }
+    implicit def arbUserCreate: Arbitrary[User.Create] =
+      Arbitrary {
+        userCreateGen
+      }
 
     implicit def arbUser: Arbitrary[User] = Arbitrary { userGen }
 
@@ -1200,93 +1229,108 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbImage: Arbitrary[Image] = Arbitrary { imageGen }
 
-    implicit def arbImageCreate: Arbitrary[Image.Create] = Arbitrary {
-      imageCreateGen
-    }
+    implicit def arbImageCreate: Arbitrary[Image.Create] =
+      Arbitrary {
+        imageCreateGen
+      }
 
-    implicit def arbImageBanded: Arbitrary[Image.Banded] = Arbitrary {
-      imageBandedGen
-    }
+    implicit def arbImageBanded: Arbitrary[Image.Banded] =
+      Arbitrary {
+        imageBandedGen
+      }
 
-    implicit def arbProjectCreate: Arbitrary[Project.Create] = Arbitrary {
-      projectCreateGen
-    }
+    implicit def arbProjectCreate: Arbitrary[Project.Create] =
+      Arbitrary {
+        projectCreateGen
+      }
 
     implicit def arbProject: Arbitrary[Project] = Arbitrary { projectGen }
 
-    implicit def arbSceneCreate: Arbitrary[Scene.Create] = Arbitrary {
-      sceneCreateGen
-    }
+    implicit def arbSceneCreate: Arbitrary[Scene.Create] =
+      Arbitrary {
+        sceneCreateGen
+      }
 
-    implicit def arbShapeCreate: Arbitrary[Shape.Create] = Arbitrary {
-      shapeCreateGen
-    }
+    implicit def arbShapeCreate: Arbitrary[Shape.Create] =
+      Arbitrary {
+        shapeCreateGen
+      }
 
-    implicit def arbShapeGeoJSON: Arbitrary[Shape.GeoJSON] = Arbitrary {
-      shapeGeoJSONGen
-    }
+    implicit def arbShapeGeoJSON: Arbitrary[Shape.GeoJSON] =
+      Arbitrary {
+        shapeGeoJSONGen
+      }
 
-    implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary {
-      Gen.oneOf(
-        // 11 is one more than the size of the pageRequest that we'll generate, so this allows
-        // testing paging and counting correctly
-        Gen.listOfN(11, sceneCreateGen),
-        Gen.listOfN(7, sceneCreateGen),
-        Gen.listOfN(0, sceneCreateGen)
-      )
-    }
+    implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] =
+      Arbitrary {
+        Gen.oneOf(
+          // 11 is one more than the size of the pageRequest that we'll generate, so this allows
+          // testing paging and counting correctly
+          Gen.listOfN(11, sceneCreateGen),
+          Gen.listOfN(7, sceneCreateGen),
+          Gen.listOfN(0, sceneCreateGen)
+        )
+      }
 
     implicit def arbThumbnail: Arbitrary[Thumbnail] = Arbitrary { thumbnailGen }
 
-    implicit def arbDatasourceCreate: Arbitrary[Datasource.Create] = Arbitrary {
-      datasourceCreateGen
-    }
+    implicit def arbDatasourceCreate: Arbitrary[Datasource.Create] =
+      Arbitrary {
+        datasourceCreateGen
+      }
 
-    implicit def arbUploadCreate: Arbitrary[Upload.Create] = Arbitrary {
-      uploadCreateGen
-    }
+    implicit def arbUploadCreate: Arbitrary[Upload.Create] =
+      Arbitrary {
+        uploadCreateGen
+      }
 
     implicit def arbGeojsonUploadCreate: Arbitrary[GeojsonUpload.Create] =
       Arbitrary {
         geojsonUploadCreateGen
       }
 
-    implicit def arbLayerAttribute: Arbitrary[LayerAttribute] = Arbitrary {
-      layerAttributeGen
-    }
+    implicit def arbLayerAttribute: Arbitrary[LayerAttribute] =
+      Arbitrary {
+        layerAttributeGen
+      }
 
     implicit def arbListLayerAttribute: Arbitrary[List[LayerAttribute]] =
       Arbitrary {
         layerAttributesWithSameLayerNameGen
       }
 
-    implicit def arbTeamCreate: Arbitrary[Team.Create] = Arbitrary {
-      teamCreateGen
-    }
+    implicit def arbTeamCreate: Arbitrary[Team.Create] =
+      Arbitrary {
+        teamCreateGen
+      }
 
     implicit def arbTeam: Arbitrary[Team] = Arbitrary { teamGen }
 
     implicit def arbUserGroupRoleCreate: Arbitrary[UserGroupRole.Create] =
       Arbitrary { userGroupRoleCreateGen }
 
-    implicit def arbGroupRoleCreate: Arbitrary[GroupRole] = Arbitrary {
-      groupRoleGen
-    }
+    implicit def arbGroupRoleCreate: Arbitrary[GroupRole] =
+      Arbitrary {
+        groupRoleGen
+      }
 
     implicit def arbPlatform: Arbitrary[Platform] = Arbitrary { platformGen }
 
     implicit def arbUserOrgPlatform
-        : Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
-      userOrgPlatformGen
-    }
+        : Arbitrary[(User.Create, Organization.Create, Platform)] =
+      Arbitrary {
+        userOrgPlatformGen
+      }
 
-    implicit def arbUserJwtFields: Arbitrary[User.JwtFields] = Arbitrary {
-      userJwtFieldsGen
-    }
+    implicit def arbUserJwtFields: Arbitrary[User.JwtFields] =
+      Arbitrary {
+        userJwtFieldsGen
+      }
 
-    implicit def arbUserVisibility: Arbitrary[UserVisibility] = Arbitrary {
-      userVisibilityGen
-    }
+    implicit def arbUserVisibility: Arbitrary[UserVisibility] =
+      Arbitrary {
+        userVisibilityGen
+      }
 
     implicit def arbSearchQueryParameters: Arbitrary[SearchQueryParameters] =
       Arbitrary { searchQueryParametersGen }
@@ -1333,32 +1377,33 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbAnnotationQueryParameters
-        : Arbitrary[AnnotationQueryParameters] = Arbitrary {
-      annotationQueryParametersGen
-    }
+        : Arbitrary[AnnotationQueryParameters] =
+      Arbitrary {
+        annotationQueryParametersGen
+      }
 
-    implicit def arbSplitOptions: Arbitrary[SplitOptions] = Arbitrary {
-      splitOptionsGen
-    }
+    implicit def arbMetric: Arbitrary[Metric] =
+      Arbitrary {
+        metricGen
+      }
 
-    implicit def arbMetric: Arbitrary[Metric] = Arbitrary {
-      metricGen
-    }
+    implicit def arbNEL[T: Arbitrary]: Arbitrary[NEL[T]] =
+      Arbitrary {
+        for {
+          h <- arbitrary[T]
+          t <- arbitrary[List[T]]
+        } yield { NEL(h, t) }
+      }
 
-    implicit def arbNEL[T: Arbitrary]: Arbitrary[NEL[T]] = Arbitrary {
-      for {
-        h <- arbitrary[T]
-        t <- arbitrary[List[T]]
-      } yield { NEL(h, t) }
-    }
+    implicit def arbTaskStatus: Arbitrary[TaskStatus] =
+      Arbitrary {
+        taskStatusGen
+      }
 
-    implicit def arbTaskStatus: Arbitrary[TaskStatus] = Arbitrary {
-      taskStatusGen
-    }
-
-    implicit def arbTaskType: Arbitrary[TaskType] = Arbitrary {
-      taskTypeGen
-    }
+    implicit def arbTaskType: Arbitrary[TaskType] =
+      Arbitrary {
+        taskTypeGen
+      }
 
     implicit def arbTaskFeatureCreate: Arbitrary[Task.TaskFeatureCreate] =
       Arbitrary {
@@ -1412,9 +1457,10 @@ object Generators extends ArbitraryInstances {
         tileLayerCreateGen
       }
 
-    implicit def arbContinent: Arbitrary[Continent] = Arbitrary {
-      continentGen
-    }
+    implicit def arbContinent: Arbitrary[Continent] =
+      Arbitrary {
+        continentGen
+      }
 
     implicit def arbCampaignCreate: Arbitrary[Campaign.Create] =
       Arbitrary {
