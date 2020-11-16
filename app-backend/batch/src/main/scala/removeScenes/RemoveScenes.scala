@@ -29,17 +29,16 @@ class RemoveScenes(
 
   def removeScenes: IO[Int] =
     fr"""
-    DELETE FROM scenes
-    USING scenes AS scn
-    LEFT JOIN scenes_to_layers ON scn.id = scenes_to_layers.scene_id
+    DELETE FROM scenes WHERE id IN (
+    SELECT id FROM scenes LEFT JOIN scenes_to_layers ON scenes.id = scenes_to_layers.scene_id
     WHERE
       -- scene_id NULL means we didn't find a scene_id in the layers table
       scene_id IS NULL
       AND scenes.acquisition_date >= ${startTs}
       AND scenes.acquisition_date <= ${endTs}
       AND scenes.datasource = $datasourceId
+    )
     """.update.run.transact(xa)
-
 }
 
 object RemoveScenes extends Job {
