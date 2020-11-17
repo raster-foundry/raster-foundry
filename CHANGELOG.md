@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+- Simple shares don't always return 500 responses [#5510](https://github.com/raster-foundry/raster-foundry/pull/5510)
+
 ## [1.53.0] - 2020-11-16
 ### Added
 - STAC label items now include the task statuses in a `groundwork:taskStatuses` property [#5490](https://github.com/raster-foundry/raster-foundry/pull/5490)
@@ -811,7 +814,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 [Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.53.0...HEAD
 [1.53.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.52.2...v1.53.0
-[1.52.1]: https://github.com/raster-foundry/raster-foundry/compare/1.52.1...1.52.2
+[1.52.2]: https://github.com/raster-foundry/raster-foundry/compare/1.52.1...1.52.2
+[1.52.1]: https://github.com/raster-foundry/raster-foundry/compare/1.52.0...1.52.1
 [1.52.0]: https://github.com/raster-foundry/raster-foundry/compare/1.51.0...1.52.0
 [1.51.0]: https://github.com/raster-foundry/raster-foundry/compare/1.50.0...1.51.0
 [1.50.0]: https://github.com/raster-foundry/raster-foundry/compare/1.49.0...1.50.0

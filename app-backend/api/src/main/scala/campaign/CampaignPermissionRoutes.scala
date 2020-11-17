@@ -15,7 +15,6 @@ import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.syntax._
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import scala.concurrent.Future
 
@@ -29,40 +28,39 @@ trait CampaignPermissionRoutes
 
   implicit def contextShift: ContextShift[IO]
 
-  val notifierIOCampaign = AsyncHttpClientCatsBackend[IO]() map { backend =>
-    new IntercomNotifications(backend)
-  }
+  def notifier: IO[IntercomNotifications]
 
   val xa: Transactor[IO]
 
-  def listCampaignPermissions(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.ReadPermissions, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        CampaignDao
-          .authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
+  def listCampaignPermissions(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.ReadPermissions, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
           CampaignDao
-            .getPermissions(campaignId)
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.Edit
+            )
             .transact(xa)
             .unsafeToFuture
+        } {
+          complete {
+            CampaignDao
+              .getPermissions(campaignId)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
-  }
 
-  def replaceCampaignPermissions(campaignId: UUID): Route = authenticate {
-    user =>
+  def replaceCampaignPermissions(campaignId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Share, None),
         user
@@ -106,7 +104,7 @@ trait CampaignPermissionRoutes
                   distinctUserIds traverse { userId =>
                     UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                       sharedUser =>
-                        notifierIOCampaign flatMap { notifier =>
+                        notifier flatMap { notifier =>
                           notifier.shareNotify(
                             sharedUser,
                             user,
@@ -123,64 +121,65 @@ trait CampaignPermissionRoutes
           }
         }
       }
-  }
+    }
 
-  def addCampaignPermission(campaignId: UUID): Route = authenticate { user =>
-    val shareCount =
-      CampaignDao
-        .getShareCount(campaignId, user.id)
-        .transact(xa)
-        .unsafeToFuture
-    authorizeScopeLimit(
-      shareCount,
-      Domain.Campaigns,
-      Action.Share,
-      user
-    ) {
-      entity(as[ObjectAccessControlRule]) { acr =>
-        authorizeAsync {
-          (for {
-            auth1 <- CampaignDao.authorized(
-              user,
-              ObjectType.Campaign,
-              campaignId,
-              ActionType.Edit
-            )
-            auth2 <- CampaignDao.isValidPermission(acr, user)
-          } yield {
-            auth1.toBoolean && auth2
-          }).transact(xa).unsafeToFuture()
-        } {
-          complete {
-            (CampaignDao
-              .addPermission(campaignId, acr)
-              .transact(xa) <* (
-              CampaignDao
-                .unsafeGetCampaignById(campaignId)
-                .transact(xa) flatMap { campaign =>
-                acr.getUserId traverse { userId =>
-                  UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
-                    sharedUser =>
-                      notifierIOCampaign flatMap { notifier =>
-                        notifier.shareNotify(
-                          sharedUser,
-                          user,
-                          campaign,
-                          "campaign"
-                        )
-                      }
+  def addCampaignPermission(campaignId: UUID): Route =
+    authenticate { user =>
+      val shareCount =
+        CampaignDao
+          .getShareCount(campaignId, user.id)
+          .transact(xa)
+          .unsafeToFuture
+      authorizeScopeLimit(
+        shareCount,
+        Domain.Campaigns,
+        Action.Share,
+        user
+      ) {
+        entity(as[ObjectAccessControlRule]) { acr =>
+          authorizeAsync {
+            (for {
+              auth1 <- CampaignDao.authorized(
+                user,
+                ObjectType.Campaign,
+                campaignId,
+                ActionType.Edit
+              )
+              auth2 <- CampaignDao.isValidPermission(acr, user)
+            } yield {
+              auth1.toBoolean && auth2
+            }).transact(xa).unsafeToFuture()
+          } {
+            complete {
+              (CampaignDao
+                .addPermission(campaignId, acr)
+                .transact(xa) <* (
+                CampaignDao
+                  .unsafeGetCampaignById(campaignId)
+                  .transact(xa) flatMap { campaign =>
+                  acr.getUserId traverse { userId =>
+                    UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
+                      sharedUser =>
+                        notifier flatMap { notifier =>
+                          notifier.shareNotify(
+                            sharedUser,
+                            user,
+                            campaign,
+                            "campaign"
+                          )
+                        }
+                    }
                   }
                 }
-              }
-            )).unsafeToFuture
+              )).unsafeToFuture
+            }
           }
         }
       }
     }
-  }
 
-  def deleteCampaignPermissions(campaignId: UUID): Route = authenticate {
-    user =>
+  def deleteCampaignPermissions(campaignId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Share, None),
         user
@@ -204,33 +203,34 @@ trait CampaignPermissionRoutes
           }
         }
       }
-  }
+    }
 
-  def listCampaignShares(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.Share, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        CampaignDao
-          .authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
+  def listCampaignShares(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Share, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
           CampaignDao
-            .getSharedUsers(campaignId)
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.Edit
+            )
             .transact(xa)
             .unsafeToFuture
+        } {
+          complete {
+            CampaignDao
+              .getSharedUsers(campaignId)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
-  }
 
   def deleteCampaignShare(campaignId: UUID, deleteId: String): Route =
     authenticate { user =>
@@ -342,7 +342,7 @@ trait CampaignPermissionRoutes
                             )
                           } yield user
                         }).transact(xa).unsafeToFuture
-                        notifier <- notifierIOCampaign.unsafeToFuture
+                        notifier <- notifier.unsafeToFuture
                         acrs = newUserOpt map { newUser =>
                           notifier.getDefaultShare(
                             newUser,
@@ -378,7 +378,7 @@ trait CampaignPermissionRoutes
                       } yield dbAcrs
                     case existingUsers =>
                       existingUsers traverse { existingUser =>
-                        notifierIOCampaign.unsafeToFuture flatMap { notifier =>
+                        notifier.unsafeToFuture flatMap { notifier =>
                           val acrs =
                             notifier.getDefaultShare(
                               existingUser,
@@ -388,7 +388,9 @@ trait CampaignPermissionRoutes
                             .addUserMetadata(
                               existingUser.id,
                               managementToken,
-                              Map("app_metadata" -> Map("annotateApp" -> true)).asJson
+                              Map(
+                                "app_metadata" -> Map("annotateApp" -> true)
+                              ).asJson
                             ) *>
                             (CampaignDao
                               .handleSharedPermissions(
