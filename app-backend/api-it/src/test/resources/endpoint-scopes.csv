@@ -38,11 +38,11 @@ Path,Domain:Action,Verb
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/,annotationProjects:deleteTasks,delete
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/lock/,annotationProjects:createAnnotation,post
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/lock/,annotationProjects:createAnnotation,delete
-/api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:createAnnotation,post
+/api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:createAnnotation,put
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:read,get
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:deleteAnnotation,delete
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/children,annotationProjects:readTasks,get
-/api/annotation-projects/{annotationProjectID}/tasks/{taskID}/validate/,annotationProjects:createAnnotation,post
+/api/annotation-projects/{annotationProjectID}/tasks/{taskID}/validate/,annotationProjects:createAnnotation,put
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/split/,annotationProjects:readTasks,post
 /api/licenses/,licenses:read,get
 /api/licenses/{licenseID},licenses:read,get
