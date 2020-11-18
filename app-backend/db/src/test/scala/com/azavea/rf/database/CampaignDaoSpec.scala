@@ -32,11 +32,12 @@ class CampaignDaoSpec
         ) => {
           val insertIO = for {
             user <- UserDao.create(userCreate)
-            inserted <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                user
-              )
+            inserted <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
           } yield (inserted, user)
 
           val (insertedCampaign, insertedUser) =
@@ -76,17 +77,19 @@ class CampaignDaoSpec
 
           val listIO = for {
             user <- UserDao.create(userCreate)
-            insertedCampaigns <- campaignCreates
-              .take(pageSize) traverse { toInsert =>
+            insertedCampaigns <-
+              campaignCreates
+                .take(pageSize) traverse { toInsert =>
+                CampaignDao
+                  .insertCampaign(toInsert.copy(parentCampaignId = None), user)
+              }
+            listed <-
               CampaignDao
-                .insertCampaign(toInsert.copy(parentCampaignId = None), user)
-            }
-            listed <- CampaignDao
-              .listCampaigns(
-                pageRequest,
-                CampaignQueryParameters(),
-                user
-              )
+                .listCampaigns(
+                  pageRequest,
+                  CampaignQueryParameters(),
+                  user
+                )
           } yield (listed, insertedCampaigns)
 
           val (listedCampaigns, dbCampaigns) = listIO.transact(xa).unsafeRunSync
@@ -113,13 +116,15 @@ class CampaignDaoSpec
         ) => {
           val getIO = for {
             user <- UserDao.create(userCreate)
-            inserted <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                user
-              )
-            fetched <- CampaignDao
-              .getCampaignById(inserted.id)
+            inserted <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
+            fetched <-
+              CampaignDao
+                .getCampaignById(inserted.id)
           } yield (inserted, fetched)
 
           val (dbCampaign, Some(fetchedCampaign)) =
@@ -146,16 +151,18 @@ class CampaignDaoSpec
         ) => {
           val updateIO = for {
             user <- UserDao.create(userCreate)
-            inserted1 <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                user
-              )
-            inserted2 <- CampaignDao
-              .insertCampaign(
-                campaignCreateUpdate.copy(parentCampaignId = None),
-                user
-              )
+            inserted1 <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
+            inserted2 <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreateUpdate.copy(parentCampaignId = None),
+                  user
+                )
             _ <- CampaignDao.updateCampaign(inserted2, inserted1.id)
             fetched <- CampaignDao.getCampaignById(inserted1.id)
           } yield fetched
@@ -181,11 +188,12 @@ class CampaignDaoSpec
         ) => {
           val deleteIO = for {
             user <- UserDao.create(userCreate)
-            inserted <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                user
-              )
+            inserted <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
             deleted <- CampaignDao.deleteCampaign(inserted.id, user)
             fetched <- CampaignDao.getCampaignById(inserted.id)
           } yield { (deleted, fetched) }
@@ -218,19 +226,21 @@ class CampaignDaoSpec
             children <- userCreates traverse { u =>
               UserDao.create(u)
             }
-            insertedCampaign <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                parent
-              )
-            insertedProject <- AnnotationProjectDao
-              .insert(
-                annotationProjectCreate.copy(
-                  campaignId = Some(insertedCampaign.id),
-                  status = AnnotationProjectStatus.Waiting
-                ),
-                parent
-              )
+            insertedCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  parent
+                )
+            insertedProject <-
+              AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(
+                    campaignId = Some(insertedCampaign.id),
+                    status = AnnotationProjectStatus.Waiting
+                  ),
+                  parent
+                )
             _ <- AnnotationProjectDao.update(
               insertedProject.toProject
                 .copy(status = AnnotationProjectStatus.Ready),
@@ -248,8 +258,8 @@ class CampaignDaoSpec
               insertedCampaign.id
             )
             projectCopies <- (campaignCopies traverse { c =>
-              AnnotationProjectDao.listByCampaign(c.id)
-            }) map (_.flatten)
+                AnnotationProjectDao.listByCampaign(c.id)
+              }) map (_.flatten)
           } yield {
             (
               insertedCampaignAfterCopy,
@@ -320,20 +330,23 @@ class CampaignDaoSpec
         ) => {
           val copyIO = for {
             user <- UserDao.create(userCreate)
-            insertedCampaign <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                user
-              )
-            insertedProject <- AnnotationProjectDao
-              .insert(
-                annotationProjectCreate.copy(
-                  campaignId = Some(insertedCampaign.id)
-                ),
-                user
-              )
-            campaignCopy <- CampaignDao
-              .copyCampaign(insertedCampaign.id, user, Some(clone.tags))
+            insertedCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
+            insertedProject <-
+              AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(
+                    campaignId = Some(insertedCampaign.id)
+                  ),
+                  user
+                )
+            campaignCopy <-
+              CampaignDao
+                .copyCampaign(insertedCampaign.id, user, Some(clone.tags))
             projectCopy <- AnnotationProjectDao.listByCampaign(campaignCopy.id)
           } yield {
             (insertedCampaign, insertedProject, campaignCopy, projectCopy)
@@ -391,31 +404,34 @@ class CampaignDaoSpec
           val pageRequest = PageRequest(0, pageSize, Map.empty)
           val listIO = for {
             user <- UserDao.create(userCreate)
-            _ <- campaignCreates1
-              .take(pageSize) traverse { toInsert =>
+            _ <-
+              campaignCreates1
+                .take(pageSize) traverse { toInsert =>
+                CampaignDao
+                  .insertCampaign(
+                    toInsert.copy(parentCampaignId = None, continent = None),
+                    user
+                  )
+              }
+            insertedCampaigns2 <-
+              campaignCreates2
+                .take(pageSize) traverse { toInsert =>
+                CampaignDao
+                  .insertCampaign(
+                    toInsert.copy(
+                      parentCampaignId = None,
+                      continent = Some(continent)
+                    ),
+                    user
+                  )
+              }
+            listed <-
               CampaignDao
-                .insertCampaign(
-                  toInsert.copy(parentCampaignId = None, continent = None),
+                .listCampaigns(
+                  pageRequest,
+                  CampaignQueryParameters(continent = Some(continent)),
                   user
                 )
-            }
-            insertedCampaigns2 <- campaignCreates2
-              .take(pageSize) traverse { toInsert =>
-              CampaignDao
-                .insertCampaign(
-                  toInsert.copy(
-                    parentCampaignId = None,
-                    continent = Some(continent)
-                  ),
-                  user
-                )
-            }
-            listed <- CampaignDao
-              .listCampaigns(
-                pageRequest,
-                CampaignQueryParameters(continent = Some(continent)),
-                user
-              )
           } yield (listed, insertedCampaigns2)
 
           val (listedCampaigns, dbCampaigns) = listIO.transact(xa).unsafeRunSync
@@ -445,34 +461,37 @@ class CampaignDaoSpec
           val pageRequest = PageRequest(0, pageSize, Map.empty)
           val listIO = for {
             user <- UserDao.create(userCreate)
-            insertedCampaigns1 <- campaignCreates1
-              .take(pageSize) traverse { toInsert =>
-              CampaignDao
-                .insertCampaign(
-                  toInsert.copy(parentCampaignId = None),
-                  user
-                )
-            }
+            insertedCampaigns1 <-
+              campaignCreates1
+                .take(pageSize) traverse { toInsert =>
+                CampaignDao
+                  .insertCampaign(
+                    toInsert.copy(parentCampaignId = None),
+                    user
+                  )
+              }
             _ <- insertedCampaigns1 traverse { campaign =>
               CampaignDao
                 .updateCampaign(campaign.copy(isActive = false), campaign.id)
             }
-            insertedCampaigns2 <- campaignCreates2
-              .take(pageSize) traverse { toInsert =>
+            insertedCampaigns2 <-
+              campaignCreates2
+                .take(pageSize) traverse { toInsert =>
+                CampaignDao
+                  .insertCampaign(
+                    toInsert.copy(
+                      parentCampaignId = None
+                    ),
+                    user
+                  )
+              }
+            listed <-
               CampaignDao
-                .insertCampaign(
-                  toInsert.copy(
-                    parentCampaignId = None
-                  ),
+                .listCampaigns(
+                  pageRequest.copy(limit = pageSize * 2),
+                  CampaignQueryParameters(isActive = Some(true)),
                   user
                 )
-            }
-            listed <- CampaignDao
-              .listCampaigns(
-                pageRequest.copy(limit = pageSize * 2),
-                CampaignQueryParameters(isActive = Some(true)),
-                user
-              )
           } yield (listed, insertedCampaigns2)
 
           val (listedCampaigns, dbCampaigns) = listIO.transact(xa).unsafeRunSync
@@ -503,11 +522,12 @@ class CampaignDaoSpec
             children <- userCreates traverse { u =>
               UserDao.create(u)
             }
-            insertedCampaign <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                parent
-              )
+            insertedCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  parent
+                )
             _ <- children traverse { child =>
               CampaignDao.copyCampaign(insertedCampaign.id, child)
             }
@@ -549,19 +569,21 @@ class CampaignDaoSpec
             children <- userCreateBase :: userCreates traverse { u =>
               UserDao.create(u)
             }
-            insertedCampaign <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                parent
-              )
-            insertedProject <- AnnotationProjectDao
-              .insert(
-                annotationProjectCreate.copy(
-                  campaignId = Some(insertedCampaign.id),
-                  status = AnnotationProjectStatus.Waiting
-                ),
-                parent
-              )
+            insertedCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  parent
+                )
+            insertedProject <-
+              AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(
+                    campaignId = Some(insertedCampaign.id),
+                    status = AnnotationProjectStatus.Waiting
+                  ),
+                  parent
+                )
             _ <- AnnotationProjectDao.update(
               insertedProject.toProject
                 .copy(status = AnnotationProjectStatus.Ready),
@@ -571,8 +593,8 @@ class CampaignDaoSpec
               CampaignDao.copyCampaign(insertedCampaign.id, child)
             }
             projectCopies <- (campaignCopies traverse { c =>
-              AnnotationProjectDao.listByCampaign(c.id)
-            }) map (_.flatten)
+                AnnotationProjectDao.listByCampaign(c.id)
+              }) map (_.flatten)
             projectCopiesWithRelated <- projectCopies traverse { pc =>
               AnnotationProjectDao.getWithRelatedById(pc.id)
             } map (_.flatten)
@@ -613,8 +635,9 @@ class CampaignDaoSpec
                 parent
               )
             }
-            randomTask <- CampaignDao
-              .randomReviewTask(insertedCampaign.id, parent)
+            randomTask <-
+              CampaignDao
+                .randomReviewTask(insertedCampaign.id, parent)
           } yield randomTask
 
           val randomTask = copyIO.transact(xa).unsafeRunSync
@@ -648,19 +671,21 @@ class CampaignDaoSpec
               u =>
                 UserDao.create(u)
             }
-            insertedCampaign <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                parent
-              )
-            insertedProject <- AnnotationProjectDao
-              .insert(
-                annotationProjectCreate.copy(
-                  campaignId = Some(insertedCampaign.id),
-                  status = AnnotationProjectStatus.Waiting
-                ),
-                parent
-              )
+            insertedCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  parent
+                )
+            insertedProject <-
+              AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(
+                    campaignId = Some(insertedCampaign.id),
+                    status = AnnotationProjectStatus.Waiting
+                  ),
+                  parent
+                )
             _ <- AnnotationProjectDao.update(
               insertedProject.toProject
                 .copy(status = AnnotationProjectStatus.Ready),
@@ -670,8 +695,8 @@ class CampaignDaoSpec
               CampaignDao.copyCampaign(insertedCampaign.id, child)
             }
             projectCopies <- (campaignCopies traverse { c =>
-              AnnotationProjectDao.listByCampaign(c.id)
-            }) map (_.flatten)
+                AnnotationProjectDao.listByCampaign(c.id)
+              }) map (_.flatten)
             projectCopiesWithRelated <- projectCopies traverse { pc =>
               AnnotationProjectDao.getWithRelatedById(pc.id)
             } map (_.flatten)
@@ -711,8 +736,9 @@ class CampaignDaoSpec
                 parent
               )
             }
-            randomTask <- CampaignDao
-              .randomReviewTask(insertedCampaign.id, parent)
+            randomTask <-
+              CampaignDao
+                .randomReviewTask(insertedCampaign.id, parent)
           } yield (tasks, randomTask)
           val (tasks, randomTask) = copyIO.transact(xa).unsafeRunSync
 
@@ -735,7 +761,10 @@ class CampaignDaoSpec
             userCreates1: (User.Create, User.Create, User.Create),
             campaignCreate: Campaign.Create,
             annotationProjectCreate: AnnotationProject.Create,
-            taskFeatureCreates: (Task.TaskFeatureCreate, Task.TaskFeatureCreate),
+            taskFeatureCreates: (
+                Task.TaskFeatureCreate,
+                Task.TaskFeatureCreate
+            ),
             taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
         ) =>
           {
@@ -747,19 +776,21 @@ class CampaignDaoSpec
                 u =>
                   UserDao.create(u)
               }
-              insertedCampaign <- CampaignDao
-                .insertCampaign(
-                  campaignCreate.copy(parentCampaignId = None),
-                  parent
-                )
-              insertedProject <- AnnotationProjectDao
-                .insert(
-                  annotationProjectCreate.copy(
-                    campaignId = Some(insertedCampaign.id),
-                    status = AnnotationProjectStatus.Waiting
-                  ),
-                  parent
-                )
+              insertedCampaign <-
+                CampaignDao
+                  .insertCampaign(
+                    campaignCreate.copy(parentCampaignId = None),
+                    parent
+                  )
+              insertedProject <-
+                AnnotationProjectDao
+                  .insert(
+                    annotationProjectCreate.copy(
+                      campaignId = Some(insertedCampaign.id),
+                      status = AnnotationProjectStatus.Waiting
+                    ),
+                    parent
+                  )
               _ <- AnnotationProjectDao.update(
                 insertedProject.toProject
                   .copy(status = AnnotationProjectStatus.Ready),
@@ -769,8 +800,8 @@ class CampaignDaoSpec
                 CampaignDao.copyCampaign(insertedCampaign.id, child)
               }
               projectCopies <- (campaignCopies traverse { c =>
-                AnnotationProjectDao.listByCampaign(c.id)
-              }) map (_.flatten)
+                  AnnotationProjectDao.listByCampaign(c.id)
+                }) map (_.flatten)
               projectCopiesWithRelated <- projectCopies traverse { pc =>
                 AnnotationProjectDao.getWithRelatedById(pc.id)
               } map (_.flatten)
@@ -833,8 +864,9 @@ class CampaignDaoSpec
                   parent
                 )
               }
-              randomTask <- CampaignDao
-                .randomReviewTask(insertedCampaign.id, parent)
+              randomTask <-
+                CampaignDao
+                  .randomReviewTask(insertedCampaign.id, parent)
             } yield randomTask
 
             val randomTask = copyIO.transact(xa).unsafeRunSync
@@ -894,14 +926,16 @@ class CampaignDaoSpec
               childProject <- AnnotationProjectDao.listByCampaign(
                 dbChildCampaign.id
               ) map { _.head }
-              childProjectWithRelated <- AnnotationProjectDao
-                .getWithRelatedById(childProject.id) map { _.get }
+              childProjectWithRelated <-
+                AnnotationProjectDao
+                  .getWithRelatedById(childProject.id) map { _.get }
               childClasses = childProjectWithRelated.labelClassGroups flatMap {
                 _.labelClasses
               } map { _.id }
-              childTask <- TaskDao.query
-                .filter(fr"annotation_project_id = ${childProject.id}")
-                .select
+              childTask <-
+                TaskDao.query
+                  .filter(fr"annotation_project_id = ${childProject.id}")
+                  .select
               childInserted <- AnnotationLabelDao.insertAnnotations(
                 childProject.id,
                 childTask.id,
@@ -916,11 +950,12 @@ class CampaignDaoSpec
               _ <- CampaignDao.retrieveChildCampaignAnnotations(
                 dbParentCampaign.id
               )
-              labelCountOnParentProject <- AnnotationLabelDao.query
-                .filter(
-                  fr"annotation_project_id = ${dbParentAnnotationProject.id}"
-                )
-                .count
+              labelCountOnParentProject <-
+                AnnotationLabelDao.query
+                  .filter(
+                    fr"annotation_project_id = ${dbParentAnnotationProject.id}"
+                  )
+                  .count
             } yield (childInserted, labelCountOnParentProject)
 
             val (childInsertedLabels, parentLabelCount) =
@@ -954,11 +989,12 @@ class CampaignDaoSpec
             val authedIO = for {
               // create a parent user, parent campaign, and a project
               parentUser <- UserDao.create(parentUserCreate)
-              parentCampaign <- CampaignDao
-                .insertCampaign(
-                  parentCampaignCreate.copy(parentCampaignId = None),
-                  parentUser
-                )
+              parentCampaign <-
+                CampaignDao
+                  .insertCampaign(
+                    parentCampaignCreate.copy(parentCampaignId = None),
+                    parentUser
+                  )
               _ <- AnnotationProjectDao.insert(
                 parentAnnotationProjectCreate.copy(
                   campaignId = Some(parentCampaign.id)
@@ -975,8 +1011,8 @@ class CampaignDaoSpec
                 CampaignDao.copyCampaign(parentCampaign.id, childUser)
               }
               childProjects <- (childCampaigns traverse { childCampaign =>
-                AnnotationProjectDao.listByCampaign(childCampaign.id)
-              }) map { projects =>
+                  AnnotationProjectDao.listByCampaign(childCampaign.id)
+                }) map { projects =>
                 projects.flatten
               }
               _ <- CampaignDao.grantCloneChildrenAccessById(
@@ -985,20 +1021,20 @@ class CampaignDaoSpec
               )
               // create a second batch of users, clone the parent campaign for them
               // then grant access to the second batch of child campaign owners
-              childUsersSecondBatch <- childUserCreatedSecondBatch take 3 traverse {
-                childUserCreate =>
+              childUsersSecondBatch <-
+                childUserCreatedSecondBatch take 3 traverse { childUserCreate =>
                   UserDao.create(childUserCreate)
-              }
+                }
               childCampaignsSecondBatch <- childUsersSecondBatch traverse {
                 childUser =>
                   CampaignDao.copyCampaign(parentCampaign.id, childUser)
               }
-              childProjectsSecondBatch <- (childCampaignsSecondBatch traverse {
-                childCampaign =>
+              childProjectsSecondBatch <-
+                (childCampaignsSecondBatch traverse { childCampaign =>
                   AnnotationProjectDao.listByCampaign(childCampaign.id)
-              }) map { projects =>
-                projects.flatten
-              }
+                }) map { projects =>
+                  projects.flatten
+                }
               secondGrant <- CampaignDao.grantCloneChildrenAccessById(
                 parentCampaign.id,
                 ActionType.View
@@ -1030,8 +1066,8 @@ class CampaignDaoSpec
               // all child projects are concatenated
               // then check if all child users have access to all child projects
               allChildProjects = childProjects ++ childProjectsSecondBatch
-              canChildrenViewAndAnnotateEachOtherProjects <- allChildProjects traverse {
-                childProject =>
+              canChildrenViewAndAnnotateEachOtherProjects <-
+                allChildProjects traverse { childProject =>
                   allChildCampaignOwners traverse { childUser =>
                     val canViewIO = AnnotationProjectDao
                       .authorized(
@@ -1055,9 +1091,9 @@ class CampaignDaoSpec
                   } map { canAllChildrenAccessThisProject =>
                     canAllChildrenAccessThisProject.combineAll
                   }
-              } map { areAllProjectsAccessible =>
-                areAllProjectsAccessible.combineAll
-              }
+                } map { areAllProjectsAccessible =>
+                  areAllProjectsAccessible.combineAll
+                }
             } yield {
               (
                 secondGrant,
@@ -1091,11 +1127,12 @@ class CampaignDaoSpec
           {
             val updateCampaignProjectIO = for {
               user <- UserDao.create(userCreate)
-              insertedCampaign <- CampaignDao
-                .insertCampaign(
-                  campaignCreate.copy(parentCampaignId = None),
-                  user
-                )
+              insertedCampaign <-
+                CampaignDao
+                  .insertCampaign(
+                    campaignCreate.copy(parentCampaignId = None),
+                    user
+                  )
               insertedProjOne <- AnnotationProjectDao.insert(
                 annotationProjectCreateOne.copy(
                   status = AnnotationProjectStatus.Waiting,
@@ -1131,12 +1168,11 @@ class CampaignDaoSpec
               campaignAfterPrjDelete <- CampaignDao.unsafeGetCampaignById(
                 insertedCampaign.id
               )
-            } yield
-              (
-                campaignAfterPrjInsert,
-                campaignAfterPrjUpdate,
-                campaignAfterPrjDelete
-              )
+            } yield (
+              campaignAfterPrjInsert,
+              campaignAfterPrjUpdate,
+              campaignAfterPrjDelete
+            )
 
             val (afterInsert, afterUpdate, afterDelete) =
               updateCampaignProjectIO.transact(xa).unsafeRunSync()
@@ -1160,7 +1196,9 @@ class CampaignDaoSpec
     }
   }
 
-  test("project task statuses should aggregate to campaign and image counts should be accurate") {
+  test(
+    "project task statuses should aggregate to campaign and image counts should be accurate"
+  ) {
     check {
       forAll {
         (
@@ -1173,11 +1211,12 @@ class CampaignDaoSpec
           {
             val updateCampaignProjectIO = for {
               user <- UserDao.create(userCreate)
-              insertedCampaign <- CampaignDao
-                .insertCampaign(
-                  campaignCreate.copy(parentCampaignId = None),
-                  user
-                )
+              insertedCampaign <-
+                CampaignDao
+                  .insertCampaign(
+                    campaignCreate.copy(parentCampaignId = None),
+                    user
+                  )
               insertedProjOne <- AnnotationProjectDao.insert(
                 annotationProjectCreateOne.copy(
                   status = AnnotationProjectStatus.Waiting,
@@ -1225,35 +1264,71 @@ class CampaignDaoSpec
               _ <- {
                 val task = projTwoTasks.features.head
                 val taskCreateProperties = task.properties.toCreate
-                val taskCreate = TaskFeatureCreate(taskCreateProperties, task.geometry).withStatus(TaskStatus.LabelingInProgress)
+                val taskCreate =
+                  TaskFeatureCreate(taskCreateProperties, task.geometry)
+                    .withStatus(TaskStatus.LabelingInProgress)
                 TaskDao.updateTask(task.id, taskCreate, user)
               }
               campaignAfterTaskUpdate <- CampaignDao.unsafeGetCampaignById(
                 insertedCampaign.id
               )
-            } yield (projOne, projTwo, campaignAfterPrjInsert, campaignAfterTaskUpdate)
+            } yield (
+              projOne,
+              projTwo,
+              campaignAfterPrjInsert,
+              campaignAfterTaskUpdate
+            )
 
-            val (projectOne, projectTwo, campaignAfterTaskInsert, campaignAfterTaskUpdate) =
+            val (
+              projectOne,
+              projectTwo,
+              campaignAfterTaskInsert,
+              campaignAfterTaskUpdate
+            ) =
               updateCampaignProjectIO.transact(xa).unsafeRunSync()
 
-            val campaignLabeled = campaignAfterTaskInsert.taskStatusSummary.getOrElse(TaskStatus.Labeled.toString, 0)
-            val campaignUnlabeled = campaignAfterTaskInsert.taskStatusSummary.getOrElse(TaskStatus.Unlabeled.toString, 0)
+            val campaignLabeled = campaignAfterTaskInsert.taskStatusSummary
+              .getOrElse(TaskStatus.Labeled.toString, 0)
+            val campaignUnlabeled = campaignAfterTaskInsert.taskStatusSummary
+              .getOrElse(TaskStatus.Unlabeled.toString, 0)
 
-            val projectLabeled = projectOne.taskStatusSummary.get.getOrElse(TaskStatus.Labeled.toString, 100)
+            val projectLabeled = projectOne.taskStatusSummary.get
+              .getOrElse(TaskStatus.Labeled.toString, 100)
             val projectUnlabeled = {
-              projectOne.taskStatusSummary.get.getOrElse(TaskStatus.Unlabeled.toString, 100) +
-              projectTwo.taskStatusSummary.get.getOrElse(TaskStatus.Unlabeled.toString, 100)
+              projectOne.taskStatusSummary.get
+                .getOrElse(TaskStatus.Unlabeled.toString, 100) +
+                projectTwo.taskStatusSummary.get
+                  .getOrElse(TaskStatus.Unlabeled.toString, 100)
             }
 
-            val afterUpdateLabelingInProgress = campaignAfterTaskUpdate.taskStatusSummary.getOrElse(TaskStatus.LabelingInProgress.toString, 0)
-            val afterUpdateUnlabeled = campaignAfterTaskUpdate.taskStatusSummary.getOrElse(TaskStatus.Unlabeled.toString, 0)
+            val afterUpdateLabelingInProgress =
+              campaignAfterTaskUpdate.taskStatusSummary.getOrElse(
+                TaskStatus.LabelingInProgress.toString,
+                0
+              )
+            val afterUpdateUnlabeled = campaignAfterTaskUpdate.taskStatusSummary
+              .getOrElse(TaskStatus.Unlabeled.toString, 0)
 
-
-            assert(campaignUnlabeled == projectUnlabeled, "campaign task summary for unlabeled tasks should match project")
-            assert(campaignLabeled == projectLabeled, "campaign task summary for labeled tasks should match project")
-            assert(afterUpdateLabelingInProgress == 1, "update count should match number of flagged tasks")
-            assert(projectUnlabeled - 1 == afterUpdateUnlabeled, "counts in campaign should update when tasks are updated")
-            assert(campaignAfterTaskUpdate.imageCount == 2, "image count should be equal to number of annotation projects in campaign")
+            assert(
+              campaignUnlabeled == projectUnlabeled,
+              "campaign task summary for unlabeled tasks should match project"
+            )
+            assert(
+              campaignLabeled == projectLabeled,
+              "campaign task summary for labeled tasks should match project"
+            )
+            assert(
+              afterUpdateLabelingInProgress == 1,
+              "update count should match number of flagged tasks"
+            )
+            assert(
+              projectUnlabeled - 1 == afterUpdateUnlabeled,
+              "counts in campaign should update when tasks are updated"
+            )
+            assert(
+              campaignAfterTaskUpdate.imageCount == 2,
+              "image count should be equal to number of annotation projects in campaign"
+            )
             true
           }
       }
@@ -1270,21 +1345,86 @@ class CampaignDaoSpec
           {
             val updateCampaignProjectIO = for {
               user <- UserDao.create(userCreate)
-              _ <- CampaignDao
-                .insertCampaign(
-                  campaignCreate.copy(parentCampaignId = None),
-                  user
-                )
-              campaignPage <- CampaignDao.listCampaigns(PageRequest(0, 99, Map.empty), CampaignQueryParameters(), user)
+              _ <-
+                CampaignDao
+                  .insertCampaign(
+                    campaignCreate.copy(parentCampaignId = None),
+                    user
+                  )
+              campaignPage <- CampaignDao.listCampaigns(
+                PageRequest(0, 99, Map.empty),
+                CampaignQueryParameters(),
+                user
+              )
             } yield (campaignPage)
 
             val campaignPage =
               updateCampaignProjectIO.transact(xa).unsafeRunSync()
 
-            assert(campaignPage.results.length == 1, "campaigns without images should be returned from list")
+            assert(
+              campaignPage.results.length == 1,
+              "campaigns without images should be returned from list"
+            )
             true
           }
       }
+    }
+  }
+
+  test("list share counts for user") {
+    check {
+      forAll(
+        (
+            userSharingCreate: User.Create,
+            userSharedCreate: User.Create,
+            campaignSharedCreates: List[Campaign.Create],
+            campaignUnsharedCreates: List[Campaign.Create]
+        ) => {
+          val io = for {
+            userSharing <- UserDao.create(userSharingCreate)
+            userShared <- UserDao.create(userSharedCreate)
+            sharedCampaigns <- campaignSharedCreates traverse { toInsert =>
+              CampaignDao.insertCampaign(toInsert.copy(parentCampaignId = None), userSharing)
+            }
+            unsharedCampaigns <- campaignUnsharedCreates traverse { toInsert =>
+              CampaignDao.insertCampaign(toInsert.copy(parentCampaignId = None), userSharing)
+            }
+            _ <- sharedCampaigns traverse { campaign =>
+              CampaignDao.addPermission(
+                campaign.id,
+                ObjectAccessControlRule(
+                  SubjectType.User,
+                  Some(userShared.id),
+                  ActionType.View
+                )
+              )
+            }
+            shareCounts <- CampaignDao.getAllShareCounts(
+              userSharing.id
+            )
+          } yield (sharedCampaigns, unsharedCampaigns, shareCounts)
+
+          val (sharedCampaigns, unsharedCampaigns, shareCounts) =
+            io.transact(xa).unsafeRunSync
+          assert(
+            shareCounts.filter(sc => sc._2 > 0).size == sharedCampaigns.size,
+            "Shared campaigns are counted correctly"
+          )
+          assert(
+            shareCounts.filter(sc => sc._2 == 0).size == unsharedCampaigns.size,
+            "Unshared campaigns are counted correctly"
+          )
+          assert(
+            shareCounts.toList
+              .map(_._2)
+              .filter(_ == 1)
+              .size == sharedCampaigns.size,
+            "Shared campaigns have correct share count"
+          )
+
+          true
+        }
+      )
     }
   }
 

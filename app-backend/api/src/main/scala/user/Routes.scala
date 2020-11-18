@@ -239,6 +239,22 @@ trait UserRoutes
             user.scope.actions
           )
           .flatMap(_.limit.map(_.toFloat))
+        campaignCount <- CampaignDao.countUserCampaigns(user)
+        campaignLimit = Scopes
+          .resolveFor(
+            Domain.Campaigns,
+            Action.Create,
+            user.scope.actions
+          )
+          .flatMap(_.limit.map(_.toFloat))
+        campaignShares <- CampaignDao.getAllShareCounts(user.id)
+        campaignShareLimit = Scopes
+          .resolveFor(
+            Domain.Campaigns,
+            Action.Share,
+            user.scope.actions
+          )
+          .flatMap(_.limit.map(_.toFloat))
       } yield
         List(
           ScopeUsage(
@@ -254,8 +270,15 @@ trait UserRoutes
             None,
             uploadBytes,
             uploadLimit
+          ),
+          ScopeUsage(
+            Domain.Campaigns,
+            Action.Create,
+            None,
+            campaignCount,
+            campaignLimit
           )
-        ) ++ projectShares.toList.map {
+        ) ++ (projectShares.toList.map {
           case (id, count) =>
             ScopeUsage(
               Domain.AnnotationProjects,
@@ -264,7 +287,16 @@ trait UserRoutes
               count,
               projectShareLimit
             )
-        }
+        }) ++ (campaignShares.toList.map {
+          case (id, count) =>
+            ScopeUsage(
+              Domain.Campaigns,
+              Action.Share,
+              Some(id.toString),
+              count,
+              campaignShareLimit
+            )
+        })
       complete {
         io.transact(xa).unsafeToFuture
       }

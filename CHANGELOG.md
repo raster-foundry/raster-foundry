@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+- Added campaign to limits endpoint [#5511](https://github.com/raster-foundry/raster-foundry/pull/5511)
+
 ### Fixed
 - Simple shares don't always return 500 responses [#5510](https://github.com/raster-foundry/raster-foundry/pull/5510)
 
