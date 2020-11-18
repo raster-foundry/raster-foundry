@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [1.53.0] - 2020-11-16
 ### Added
+- Adding labels will now delete all prior labels first []
 - STAC label items now include the task statuses in a `groundwork:taskStatuses` property [#5490](https://github.com/raster-foundry/raster-foundry/pull/5490)
 - Tasks can be listed by campaign [#5494](https://github.com/raster-foundry/raster-foundry/pull/5494)
 - Campaigns can be shared with only an email [#5495](https://github.com/raster-foundry/raster-foundry/pull/5495)
