@@ -209,7 +209,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
 
   def countUserCampaigns(user: User): ConnectionIO[Long] =
     query.filter(user).count
-  
+
   def getAllShareCounts(userId: String): ConnectionIO[Map[UUID, Long]] =
     for {
       campaignIds <- (fr"select id from " ++ Fragment.const(

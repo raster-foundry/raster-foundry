@@ -287,7 +287,7 @@ trait UserRoutes
               count,
               projectShareLimit
             )
-        } ) ++ (campaignShares.toList.map {
+        }) ++ (campaignShares.toList.map {
           case (id, count) =>
             ScopeUsage(
               Domain.Campaigns,
