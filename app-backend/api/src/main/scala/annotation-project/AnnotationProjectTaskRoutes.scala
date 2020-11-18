@@ -426,7 +426,7 @@ trait AnnotationProjectTaskRoutes
             onSuccess(
               (for {
                 _ <- AnnotationLabelDao
-                  .deleteByProjectIdAndTaskId(projectId, task)
+                  .deleteByProjectIdAndTaskId(projectId, taskId)
                 insert <- AnnotationLabelDao
                   .insertAnnotations(
                     projectId,
