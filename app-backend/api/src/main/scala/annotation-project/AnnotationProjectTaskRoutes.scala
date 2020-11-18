@@ -424,14 +424,19 @@ trait AnnotationProjectTaskRoutes
               _.toAnnotationLabelWithClassesCreate
             }
             onSuccess(
-              AnnotationLabelDao
-                .insertAnnotations(
-                  projectId,
-                  taskId,
-                  annotationLabelWithClassesCreate.toList,
-                  user
-                )
-                .transact(xa)
+              (for {
+                _ <- AnnotationLabelDao
+                  .deleteByProjectIdAndTaskId(projectId, task)
+                insert <- AnnotationLabelDao
+                  .insertAnnotations(
+                    projectId,
+                    taskId,
+                    annotationLabelWithClassesCreate.toList,
+                    user
+                  )
+              } yield {
+                insert
+              }).transact(xa)
                 .unsafeToFuture
                 .map { annotations: List[AnnotationLabelWithClasses] =>
                   fromSeqToFeatureCollection[

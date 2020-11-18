@@ -3418,6 +3418,56 @@ paths:
           description: "Unexpected error"
           schema:
             $ref: "#/definitions/Error"
+  /projects/{projectID}/layers/{layerID}/tasks/{taskID}/labels:
+    put:
+      summary: "Update labels of a task from this project layer"
+      tags:
+        - Imagery
+      parameters:
+        - $ref: "#/parameters/projectID"
+        - $ref: "#/parameters/layerID"
+        - $ref: "#/parameters/taskID"
+        - name: taskUpdate
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/TaskFeatureUpdate"
+      responses:
+        204:
+          description: "No content, update successful"
+        403:
+          description: "Insufficient permissions for resource or resource does not exist"
+          schema:
+            $ref: "#/definitions/Error"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
+  /projects/{projectID}/layers/{layerID}/tasks/{taskID}/validate:
+    put:
+      summary: "Update labels of a task from this project layer"
+      tags:
+        - Imagery
+      parameters:
+        - $ref: "#/parameters/projectID"
+        - $ref: "#/parameters/layerID"
+        - $ref: "#/parameters/taskID"
+        - name: taskUpdate
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/TaskFeatureUpdate"
+      responses:
+        204:
+          description: "No content, update successful"
+        403:
+          description: "Insufficient permissions for resource or resource does not exist"
+          schema:
+            $ref: "#/definitions/Error"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
   /projects/{projectID}/layers/{layerID}/tasks/{taskID}/lock:
     post:
       summary: "Lock a task so that it cannot be updated or locked by another user"
