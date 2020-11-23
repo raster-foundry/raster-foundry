@@ -300,14 +300,13 @@ trait AnnotationProjectTaskRoutes
     }
 
   def lockTask(projectId: UUID, taskId: UUID): Route =
-    toggleLock(projectId, taskId, TaskDao.lockTask(taskId))
+    toggleLock(projectId, TaskDao.lockTask(taskId))
 
   def unlockTask(projectId: UUID, taskId: UUID): Route =
-    toggleLock(projectId, taskId, _ => TaskDao.unlockTask(taskId))
+    toggleLock(projectId, _ => TaskDao.unlockTask(taskId))
 
   private def toggleLock(
       projectId: UUID,
-      taskId: UUID,
       f: (User => ConnectionIO[Option[Task.TaskFeature]])
   ): Route =
     authenticate { user =>
@@ -316,18 +315,16 @@ trait AnnotationProjectTaskRoutes
         user
       ) {
         authorizeAsync {
-          (for {
-            auth1 <- AnnotationProjectDao
-              .authorized(
-                user,
-                ObjectType.AnnotationProject,
-                projectId,
-                ActionType.Annotate
-              )
-            auth2 <- TaskDao.isLockingUserOrUnlocked(taskId, user)
-          } yield {
-            auth1.toBoolean && auth2
-          }).transact(xa).unsafeToFuture
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .map(_.toBoolean)
+            .unsafeToFuture
         } {
           complete {
             f(user).transact(xa).unsafeToFuture
