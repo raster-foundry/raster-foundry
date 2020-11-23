@@ -18,6 +18,7 @@ class AnnotationProject(BaseModel):
         labelersTeamId=None,
         validatorsTeamId=None,
         projectId=None,
+        campaignId=None
     ):
         self.id = id
         self.name = name
@@ -31,6 +32,7 @@ class AnnotationProject(BaseModel):
         self.labelersTeamId = labelersTeamId
         self.validatorsTeamId = validatorsTeamId
         self.projectId = projectId
+        self.campaignId = campaignId
 
     def to_dict(self):
         return dict(
@@ -46,6 +48,7 @@ class AnnotationProject(BaseModel):
             validatorsTeamId=self.validatorsTeamId,
             projectId=self.projectId,
             status=self.status,
+            campaignId=self.campaignId
         )
 
     def update_status(self, status):
@@ -67,4 +70,5 @@ class AnnotationProject(BaseModel):
             labelersTeamId=d.get("labelersTeamId"),
             validatorsTeamId=d.get("validatorsTeamId"),
             projectId=d.get("projectId"),
+            campaignId=d.get("campaignId")
         )
