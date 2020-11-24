@@ -4,12 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
 ### Added
 - Added campaign to limits endpoint [#5511](https://github.com/raster-foundry/raster-foundry/pull/5511)
 
 ### Fixed
 - Simple shares don't always return 500 responses [#5510](https://github.com/raster-foundry/raster-foundry/pull/5510)
+- Upgraded GeoTrellis to remove seams for some zoom + extent + projection combinations [#5515](https://github.com/raster-foundry/raster-foundry/pull/5515)
 
 ## [1.53.0] - 2020-11-16
 ### Added
@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Tasks that have `VALIDATION_IN_PROGRESS` or `LABELING_IN_PROGRESS` but no lock data are also expired automatically [#5496](https://github.com/raster-foundry/raster-foundry/pull/5496)
 - Backsplash background processes for automatic task unlocks no longe rcompete with each other [#5503](https://github.com/raster-foundry/raster-foundry/pull/5503)
 
-## 1.52.2 - 2020-11-05
+## [1.52.2] - 2020-11-05
 ### Fixed
 - Removed incompatible creation option from cogification command when the image has 64-bit data [#5506](https://github.com/raster-foundry/raster-foundry/pull/5506)
 

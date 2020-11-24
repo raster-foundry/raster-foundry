@@ -72,6 +72,7 @@ object Campaign {
 
   object Create {
     implicit val decCreate: Decoder[Create] = deriveDecoder
+    implicit val encCreate: Encoder[Create] = deriveEncoder
   }
 
   final case class Clone(

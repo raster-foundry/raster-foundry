@@ -91,46 +91,48 @@ object AnnotationProject {
       campaignId: Option[UUID] = None,
       capturedAt: Option[Timestamp] = None
   ) {
-    def toProject = AnnotationProject(
-      id,
-      createdAt,
-      createdBy,
-      name,
-      projectType,
-      taskSizeMeters,
-      taskSizePixels,
-      aoi,
-      labelersTeamId,
-      validatorsTeamId,
-      projectId,
-      status,
-      taskStatusSummary,
-      campaignId,
-      capturedAt
-    )
+    def toProject =
+      AnnotationProject(
+        id,
+        createdAt,
+        createdBy,
+        name,
+        projectType,
+        taskSizeMeters,
+        taskSizePixels,
+        aoi,
+        labelersTeamId,
+        validatorsTeamId,
+        projectId,
+        status,
+        taskStatusSummary,
+        campaignId,
+        capturedAt
+      )
 
     def withSummary(
         labelClassSummary: List[AnnotationProject.LabelClassGroupSummary]
-    ) = AnnotationProject.WithRelatedAndLabelClassSummary(
-      id,
-      createdAt,
-      createdBy,
-      name,
-      projectType,
-      taskSizeMeters,
-      taskSizePixels,
-      aoi,
-      labelersTeamId,
-      validatorsTeamId,
-      projectId,
-      status,
-      tileLayers,
-      labelClassGroups,
-      taskStatusSummary,
-      labelClassSummary,
-      campaignId,
-      capturedAt
-    )
+    ) =
+      AnnotationProject.WithRelatedAndLabelClassSummary(
+        id,
+        createdAt,
+        createdBy,
+        name,
+        projectType,
+        taskSizeMeters,
+        taskSizePixels,
+        aoi,
+        labelersTeamId,
+        validatorsTeamId,
+        projectId,
+        status,
+        tileLayers,
+        labelClassGroups,
+        taskStatusSummary,
+        labelClassSummary,
+        campaignId,
+        capturedAt
+      )
   }
 
   object WithRelated {
@@ -179,7 +181,26 @@ object AnnotationProject {
       labelClassSummary: List[LabelClassGroupSummary],
       campaignId: Option[UUID] = None,
       capturedAt: Option[Timestamp] = None
-  )
+  ) {
+    def toProject =
+      AnnotationProject(
+        id,
+        createdAt,
+        createdBy,
+        name,
+        projectType,
+        taskSizeMeters,
+        taskSizePixels,
+        aoi,
+        labelersTeamId,
+        validatorsTeamId,
+        projectId,
+        status,
+        taskStatusSummary,
+        campaignId,
+        capturedAt
+      )
+  }
 
   object WithRelatedAndLabelClassSummary {
     implicit val encRelatedAndSummary
