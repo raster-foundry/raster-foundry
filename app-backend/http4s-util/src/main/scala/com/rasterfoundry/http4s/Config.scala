@@ -12,6 +12,11 @@ object Config {
 
   val environment = CommonConfig.awsbatch.environment
 
+  object xray {
+    private val xrayConfig = config.getConfig("awsxray")
+    val host = xrayConfig.getString("host")
+  }
+
   object cache {
     private val cacheConfig = config.getConfig("cache")
     val authenticationCacheEnable =
