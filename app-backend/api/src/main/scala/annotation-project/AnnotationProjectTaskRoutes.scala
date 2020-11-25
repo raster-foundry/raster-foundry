@@ -9,10 +9,11 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
-import cats.effect.Blocker
-import cats.effect.IO
+import cats.effect._
+import cats.implicits._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import doobie.ConnectionIO
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -367,7 +368,9 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def addTaskLabels(projectId: UUID, taskId: UUID): Route =
+  def addTaskLabels(projectId: UUID,
+                    taskId: UUID,
+                    deleteBeforeAdding: Boolean): Route =
     addLabels(
       projectId,
       taskId,
@@ -376,10 +379,13 @@ trait AnnotationProjectTaskRoutes
         TaskStatus.Unlabeled,
         TaskStatus.LabelingInProgress,
         TaskStatus.Labeled
-      )
+      ),
+      deleteBeforeAdding
     )
 
-  def validateTaskLabels(projectId: UUID, taskId: UUID): Route =
+  def validateTaskLabels(projectId: UUID,
+                         taskId: UUID,
+                         deleteBeforeAdding: Boolean): Route =
     addLabels(
       projectId,
       taskId,
@@ -388,14 +394,16 @@ trait AnnotationProjectTaskRoutes
         TaskStatus.Labeled,
         TaskStatus.ValidationInProgress,
         TaskStatus.Validated
-      )
+      ),
+      deleteBeforeAdding
     )
 
   private def addLabels(
       projectId: UUID,
       taskId: UUID,
       actionType: ActionType,
-      requiredStatuses: List[TaskStatus]
+      requiredStatuses: List[TaskStatus],
+      deleteBeforeAdding: Boolean
   ): Route =
     authenticate { user =>
       authorizeScope(
@@ -425,8 +433,10 @@ trait AnnotationProjectTaskRoutes
             }
             onSuccess(
               (for {
-                _ <- AnnotationLabelDao
-                  .deleteByProjectIdAndTaskId(projectId, taskId)
+                _ <- if (deleteBeforeAdding) {
+                  AnnotationLabelDao
+                    .deleteByProjectIdAndTaskId(projectId, taskId)
+                } else { 0.pure[ConnectionIO] }
                 insert <- AnnotationLabelDao
                   .insertAnnotations(
                     projectId,
