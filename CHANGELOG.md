@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `POST` to incrementally add labels with labeling and validating [#5518](https://github.com/raster-foundry/raster-foundry/pull/5518)
 
 ## [1.54.0] - 2020-11-25
 ### Added
