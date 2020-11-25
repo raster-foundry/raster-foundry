@@ -121,17 +121,15 @@ trait AnnotationProjectRoutes
                   pathEndOrSingleSlash {
                     get {
                       listTaskLabels(projectId, taskId)
-                    } ~
-                      post {
-                        addTaskLabels(projectId, taskId)
-                      } ~
-                      delete {
-                        deleteTaskLabels(projectId, taskId)
-                      }
+                    } ~ put {
+                      addTaskLabels(projectId, taskId)
+                    } ~ delete {
+                      deleteTaskLabels(projectId, taskId)
+                    }
                   }
                 } ~ pathPrefix("validate") {
                   pathEndOrSingleSlash {
-                    post {
+                    put {
                       validateTaskLabels(projectId, taskId)
                     }
                   }

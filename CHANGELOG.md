@@ -5,8 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.54.0] - 2020-11-25
+### Added
+- Added campaign to limits endpoint [#5511](https://github.com/raster-foundry/raster-foundry/pull/5511)
+
+### Fixed
+- Simple shares don't always return 500 responses [#5510](https://github.com/raster-foundry/raster-foundry/pull/5510)
+- Upgraded GeoTrellis to remove seams for some zoom + extent + projection combinations [#5515](https://github.com/raster-foundry/raster-foundry/pull/5515)
+
 ## [1.53.0] - 2020-11-16
 ### Added
+- Adding labels will now delete all prior labels first [#5512](https://github.com/raster-foundry/raster-foundry/pull/5512)
 - STAC label items now include the task statuses in a `groundwork:taskStatuses` property [#5490](https://github.com/raster-foundry/raster-foundry/pull/5490)
 - Tasks can be listed by campaign [#5494](https://github.com/raster-foundry/raster-foundry/pull/5494)
 - Campaigns can be shared with only an email [#5495](https://github.com/raster-foundry/raster-foundry/pull/5495)
@@ -21,7 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Tasks that have `VALIDATION_IN_PROGRESS` or `LABELING_IN_PROGRESS` but no lock data are also expired automatically [#5496](https://github.com/raster-foundry/raster-foundry/pull/5496)
 - Backsplash background processes for automatic task unlocks no longe rcompete with each other [#5503](https://github.com/raster-foundry/raster-foundry/pull/5503)
 
-## 1.52.2 - 2020-11-05
+## [1.52.2] - 2020-11-05
 ### Fixed
 - Removed incompatible creation option from cogification command when the image has 64-bit data [#5506](https://github.com/raster-foundry/raster-foundry/pull/5506)
 
@@ -809,9 +818,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.53.0...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.54.0...HEAD
+[1.54.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.53.0...v1.54.0
 [1.53.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.52.2...v1.53.0
-[1.52.1]: https://github.com/raster-foundry/raster-foundry/compare/1.52.1...1.52.2
+[1.52.2]: https://github.com/raster-foundry/raster-foundry/compare/1.52.1...1.52.2
+[1.52.1]: https://github.com/raster-foundry/raster-foundry/compare/1.52.0...1.52.1
 [1.52.0]: https://github.com/raster-foundry/raster-foundry/compare/1.51.0...1.52.0
 [1.51.0]: https://github.com/raster-foundry/raster-foundry/compare/1.50.0...1.51.0
 [1.50.0]: https://github.com/raster-foundry/raster-foundry/compare/1.49.0...1.50.0

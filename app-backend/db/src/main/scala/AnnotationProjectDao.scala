@@ -331,7 +331,9 @@ object AnnotationProjectDao
 
   def getAllShareCounts(userId: String): ConnectionIO[Map[UUID, Long]] =
     for {
-      projectIds <- (fr"select id from " ++ Fragment.const(tableName) ++ fr" where owner = $userId")
+      projectIds <- (fr"select id from " ++ Fragment.const(
+        tableName
+      ) ++ fr" where owner = $userId")
         .query[UUID]
         .to[List]
       projectShareCounts <- projectIds traverse { id =>
@@ -367,8 +369,7 @@ object AnnotationProjectDao
                   LabelClassClasses.NamedLabelClasses(
                     classes.map(_.name).toNel.getOrElse(NonEmptyList.of(""))
                   )
-              )
-            )
+              ))
         },
         s"Labels for annotation project ${annotationProject.name}",
         LabelType.Vector,
@@ -528,8 +529,7 @@ object AnnotationProjectDao
                   Some(userId),
                   ActionType.Annotate
                 )
-            )
-          )
+            ))
         AnnotationProjectDao.addPermissionsMany(
           project.id,
           rules
@@ -547,14 +547,16 @@ object AnnotationProjectDao
       userId: String,
       acrs: List[ObjectAccessControlRule],
       actionTypeOpt: Option[ActionType]
-  ): ConnectionIO[List[List[ObjectAccessControlRule]]] =
+  ): ConnectionIO[List[ObjectAccessControlRule]] =
     actionTypeOpt match {
       case Some(ActionType.Annotate) | None =>
         for {
           permissions <- getPermissions(projectId)
           permissionsToKeep = permissions collect {
             case p
-                if p.subjectId != Some(userId) && p.actionType != ActionType.Validate =>
+                if p.subjectId != Some(
+                  userId
+                ) && p.actionType != ActionType.Validate =>
               p
           }
           _ <- permissionsToKeep match {
@@ -566,12 +568,12 @@ object AnnotationProjectDao
             case _ =>
               0.pure[ConnectionIO]
           }
-          resultedPermissions <- acrs traverse { acr =>
+          resultedPermissions <- acrs flatTraverse { acr =>
             addPermission(projectId, acr)
           }
         } yield resultedPermissions
       case _ =>
-        acrs traverse { acr =>
+        acrs flatTraverse { acr =>
           addPermission(projectId, acr)
         }
     }
