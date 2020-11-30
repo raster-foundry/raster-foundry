@@ -49,31 +49,32 @@ object Domain {
   case object AnnotationProjects extends Domain("annotationProjects")
   case object Campaigns extends Domain("campaigns")
 
-  def fromStringTry(s: String): Try[Domain] = s match {
-    case "analyses"           => Success(Analyses)
-    case "annotationGroups"   => Success(AnnotationGroups)
-    case "annotationUploads"  => Success(AnnotationUploads)
-    case "datasources"        => Success(Datasources)
-    case "exports"            => Success(Exports)
-    case "featureFlags"       => Success(FeatureFlags)
-    case "licenses"           => Success(Licenses)
-    case "mapTokens"          => Success(MapTokens)
-    case "organizations"      => Success(Organizations)
-    case "platforms"          => Success(Platforms)
-    case "projects"           => Success(Projects)
-    case "scenes"             => Success(Scenes)
-    case "shapes"             => Success(Shapes)
-    case "stacExports"        => Success(StacExports)
-    case "teams"              => Success(Teams)
-    case "templates"          => Success(Templates)
-    case "thumbnails"         => Success(Thumbnails)
-    case "tokens"             => Success(Tokens)
-    case "uploads"            => Success(Uploads)
-    case "users"              => Success(Users)
-    case "annotationProjects" => Success(AnnotationProjects)
-    case "campaigns"          => Success(Campaigns)
-    case _                    => Failure(new Exception(s"Cannot parse Domain from string $s"))
-  }
+  def fromStringTry(s: String): Try[Domain] =
+    s match {
+      case "analyses"           => Success(Analyses)
+      case "annotationGroups"   => Success(AnnotationGroups)
+      case "annotationUploads"  => Success(AnnotationUploads)
+      case "datasources"        => Success(Datasources)
+      case "exports"            => Success(Exports)
+      case "featureFlags"       => Success(FeatureFlags)
+      case "licenses"           => Success(Licenses)
+      case "mapTokens"          => Success(MapTokens)
+      case "organizations"      => Success(Organizations)
+      case "platforms"          => Success(Platforms)
+      case "projects"           => Success(Projects)
+      case "scenes"             => Success(Scenes)
+      case "shapes"             => Success(Shapes)
+      case "stacExports"        => Success(StacExports)
+      case "teams"              => Success(Teams)
+      case "templates"          => Success(Templates)
+      case "thumbnails"         => Success(Thumbnails)
+      case "tokens"             => Success(Tokens)
+      case "uploads"            => Success(Uploads)
+      case "users"              => Success(Users)
+      case "annotationProjects" => Success(AnnotationProjects)
+      case "campaigns"          => Success(Campaigns)
+      case _                    => Failure(new Exception(s"Cannot parse Domain from string $s"))
+    }
 }
 
 sealed abstract class Action(repr: String) {
@@ -123,46 +124,47 @@ object Action {
   case object UpdateTasks extends Action("updateTasks")
   case object UpdateUserRole extends Action("updateUserRole")
 
-  def fromStringTry(s: String): Try[Action] = s match {
-    case "addScenes"            => Success(AddScenes)
-    case "addUser"              => Success(AddUser)
-    case "bulkCreate"           => Success(BulkCreate)
-    case "colorCorrect"         => Success(ColorCorrect)
-    case "clone"                => Success(Clone)
-    case "create"               => Success(Create)
-    case "createAnnotation"     => Success(CreateAnnotation)
-    case "createExport"         => Success(CreateExport)
-    case "createScopes"         => Success(CreateScopes)
-    case "createTaskGrid"       => Success(CreateTaskGrid)
-    case "createTasks"          => Success(CreateTasks)
-    case "delete"               => Success(Delete)
-    case "deleteAnnotation"     => Success(DeleteAnnotation)
-    case "deleteScopes"         => Success(DeleteScopes)
-    case "deleteTasks"          => Success(DeleteTasks)
-    case "download"             => Success(Download)
-    case "editScenes"           => Success(EditScenes)
-    case "listExports"          => Success(ListExports)
-    case "listUsers"            => Success(ListUsers)
-    case "read"                 => Success(Read)
-    case "readUsers"            => Success(ReadUsers)
-    case "readPermissions"      => Success(ReadPermissions)
-    case "readScopes"           => Success(ReadScopes)
-    case "readSelf"             => Success(ReadSelf)
-    case "readSentinelMetadata" => Success(ReadSentinelMetadata)
-    case "readTasks"            => Success(ReadTasks)
-    case "readThumbnail"        => Success(ReadThumbnail)
-    case "removeUser"           => Success(RemoveUser)
-    case "search"               => Success(Search)
-    case "share"                => Success(Share)
-    case "update"               => Success(Update)
-    case "updateAnnotation"     => Success(UpdateAnnotation)
-    case "updateDropbox"        => Success(UpdateDropbox)
-    case "updateScopes"         => Success(UpdateScopes)
-    case "updateSelf"           => Success(UpdateSelf)
-    case "updateTasks"          => Success(UpdateTasks)
-    case "updateUserRole"       => Success(UpdateUserRole)
-    case _                      => Failure(new Exception(s"Cannot parse Action from string $s"))
-  }
+  def fromStringTry(s: String): Try[Action] =
+    s match {
+      case "addScenes"            => Success(AddScenes)
+      case "addUser"              => Success(AddUser)
+      case "bulkCreate"           => Success(BulkCreate)
+      case "colorCorrect"         => Success(ColorCorrect)
+      case "clone"                => Success(Clone)
+      case "create"               => Success(Create)
+      case "createAnnotation"     => Success(CreateAnnotation)
+      case "createExport"         => Success(CreateExport)
+      case "createScopes"         => Success(CreateScopes)
+      case "createTaskGrid"       => Success(CreateTaskGrid)
+      case "createTasks"          => Success(CreateTasks)
+      case "delete"               => Success(Delete)
+      case "deleteAnnotation"     => Success(DeleteAnnotation)
+      case "deleteScopes"         => Success(DeleteScopes)
+      case "deleteTasks"          => Success(DeleteTasks)
+      case "download"             => Success(Download)
+      case "editScenes"           => Success(EditScenes)
+      case "listExports"          => Success(ListExports)
+      case "listUsers"            => Success(ListUsers)
+      case "read"                 => Success(Read)
+      case "readUsers"            => Success(ReadUsers)
+      case "readPermissions"      => Success(ReadPermissions)
+      case "readScopes"           => Success(ReadScopes)
+      case "readSelf"             => Success(ReadSelf)
+      case "readSentinelMetadata" => Success(ReadSentinelMetadata)
+      case "readTasks"            => Success(ReadTasks)
+      case "readThumbnail"        => Success(ReadThumbnail)
+      case "removeUser"           => Success(RemoveUser)
+      case "search"               => Success(Search)
+      case "share"                => Success(Share)
+      case "update"               => Success(Update)
+      case "updateAnnotation"     => Success(UpdateAnnotation)
+      case "updateDropbox"        => Success(UpdateDropbox)
+      case "updateScopes"         => Success(UpdateScopes)
+      case "updateSelf"           => Success(UpdateSelf)
+      case "updateTasks"          => Success(UpdateTasks)
+      case "updateUserRole"       => Success(UpdateUserRole)
+      case _                      => Failure(new Exception(s"Cannot parse Action from string $s"))
+    }
 }
 
 /** A ScopedAction is a combination of a domain, an action, and a limit.
@@ -262,47 +264,49 @@ object Scope {
   }
 
   implicit val encScope: Encoder[Scope] = new Encoder[Scope] {
-    def apply(thing: Scope): Json = thing match {
-      case Scopes.RasterFoundryOrganizationAdmin =>
-        Json.fromString("organizations:admin")
-      case Scopes.RasterFoundryUser =>
-        Json.fromString("platformUser")
-      case Scopes.GroundworkUser => Json.fromString("groundworkUser")
-      case Scopes.RasterFoundryPlatformAdmin =>
-        Json.fromString("platforms:admin")
-      case Scopes.RasterFoundryTeamsAdmin => Json.fromString("teams:admin")
-      case Scopes.AnnotateTasksScope      => Json.fromString("annotateTasks")
-      case SimpleScope(actions) =>
-        Json.fromString((actions map { action =>
-          action.repr
-        }).mkString(";"))
-      case ComplexScope(actions) =>
-        Json.fromString((actions map { action =>
-          action.repr
-        }).mkString(";"))
-    }
+    def apply(thing: Scope): Json =
+      thing match {
+        case Scopes.RasterFoundryOrganizationAdmin =>
+          Json.fromString("organizations:admin")
+        case Scopes.RasterFoundryUser =>
+          Json.fromString("platformUser")
+        case Scopes.GroundworkUser => Json.fromString("groundworkUser")
+        case Scopes.RasterFoundryPlatformAdmin =>
+          Json.fromString("platforms:admin")
+        case Scopes.RasterFoundryTeamsAdmin => Json.fromString("teams:admin")
+        case Scopes.AnnotateTasksScope      => Json.fromString("annotateTasks")
+        case SimpleScope(actions) =>
+          Json.fromString((actions map { action =>
+            action.repr
+          }).mkString(";"))
+        case ComplexScope(actions) =>
+          Json.fromString((actions map { action =>
+            action.repr
+          }).mkString(";"))
+      }
   }
 
   implicit val decScope: Decoder[Scope] = new Decoder[Scope] {
-    def apply(c: HCursor): Decoder.Result[Scope] = c.value.asString match {
-      case Some(s) =>
-        Scopes.cannedPolicyFromString(s).orElse {
-          s.split(";").toList match {
-            case List("") => Right(Monoid[Scope].empty)
-            case actions =>
-              Monoid[Either[Error, Scope]]
-                .combineAll(
-                  actions map { action =>
-                    (decode[ScopedAction](s""""$action"""") map { scopedAct =>
-                      new SimpleScope(Set(scopedAct))
-                    }).orElse(Scopes.cannedPolicyFromString(action))
-                  }
-                )
-                .leftMap(err => DecodingFailure(err.getMessage, Nil))
+    def apply(c: HCursor): Decoder.Result[Scope] =
+      c.value.asString match {
+        case Some(s) =>
+          Scopes.cannedPolicyFromString(s).orElse {
+            s.split(";").toList match {
+              case List("") => Right(Monoid[Scope].empty)
+              case actions =>
+                Monoid[Either[Error, Scope]]
+                  .combineAll(
+                    actions map { action =>
+                      (decode[ScopedAction](s""""$action"""") map { scopedAct =>
+                        new SimpleScope(Set(scopedAct))
+                      }).orElse(Scopes.cannedPolicyFromString(action))
+                    }
+                  )
+                  .leftMap(err => DecodingFailure(err.getMessage, Nil))
+            }
           }
-        }
-      case _ => Left(DecodingFailure("Scope", c.history))
-    }
+        case _ => Left(DecodingFailure("Scope", c.history))
+      }
   }
 }
 
@@ -330,18 +334,19 @@ object Scopes {
       }
     )
 
-  def cannedPolicyFromString(s: String): Either[Error, Scope] = s match {
-    case "organizations:admin" =>
-      Right(Scopes.RasterFoundryOrganizationAdmin)
-    case "platformUser"    => Right(Scopes.RasterFoundryUser)
-    case "groundworkUser"  => Right(Scopes.GroundworkUser)
-    case "platforms:admin" => Right(Scopes.RasterFoundryPlatformAdmin)
-    case "teams:admin"     => Right(Scopes.RasterFoundryTeamsAdmin)
-    case "annotateTasks"   => Right(Scopes.AnnotateTasksScope)
-    case _ =>
-      val message = s"$s is not a canned policy"
-      Left(ParsingFailure(message, new Exception(message)))
-  }
+  def cannedPolicyFromString(s: String): Either[Error, Scope] =
+    s match {
+      case "organizations:admin" =>
+        Right(Scopes.RasterFoundryOrganizationAdmin)
+      case "platformUser"    => Right(Scopes.RasterFoundryUser)
+      case "groundworkUser"  => Right(Scopes.GroundworkUser)
+      case "platforms:admin" => Right(Scopes.RasterFoundryPlatformAdmin)
+      case "teams:admin"     => Right(Scopes.RasterFoundryTeamsAdmin)
+      case "annotateTasks"   => Right(Scopes.AnnotateTasksScope)
+      case _ =>
+        val message = s"$s is not a canned policy"
+        Left(ParsingFailure(message, new Exception(message)))
+    }
 
   private def makeCRUDScopedActions(domain: Domain): Set[ScopedAction] =
     Set(
@@ -477,7 +482,9 @@ object Scopes {
 
   case object TeamsCRUD
       extends SimpleScope(
-        Set(ScopedAction(Domain.Teams, Action.ListUsers, None)) ++ makeCRUDScopedActions(
+        Set(
+          ScopedAction(Domain.Teams, Action.ListUsers, None)
+        ) ++ makeCRUDScopedActions(
           Domain.Teams
         )
       )
@@ -579,7 +586,7 @@ object Scopes {
           ScopedAction(
             Domain.AnnotationProjects,
             Action.Create,
-            Some(10.toLong)
+            None
           ),
           ScopedAction(Domain.AnnotationProjects, Action.Share, Some(5.toLong)),
           ScopedAction(Domain.Projects, Action.Create, None),
