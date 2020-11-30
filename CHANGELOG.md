@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Fixed
 - Tasks can be unlocked by users other than the user who locked them [#5514](https://github.com/raster-foundry/raster-foundry/pull/5514)
+- Made python Upload datamodel aware of campaign ID [#5513](https://github.com/raster-foundry/raster-foundry/pull/5513)
 
 ## [1.54.0] - 2020-11-25
 ### Added
