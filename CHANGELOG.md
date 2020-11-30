@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Tasks can be unlocked by users other than the user who locked them [#5514](https://github.com/raster-foundry/raster-foundry/pull/5514)
 
+### Changed
+- Groundwork users can create unlimited annotation projects, but only 10 campaigns [#5516](https://github.com/raster-foundry/raster-foundry/pull/5516)
+
 ## [1.54.0] - 2020-11-25
 ### Added
 - Added campaign to limits endpoint [#5511](https://github.com/raster-foundry/raster-foundry/pull/5511)
@@ -14,9 +17,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Simple shares don't always return 500 responses [#5510](https://github.com/raster-foundry/raster-foundry/pull/5510)
 - Upgraded GeoTrellis to remove seams for some zoom + extent + projection combinations [#5515](https://github.com/raster-foundry/raster-foundry/pull/5515)
-
-### Changed
-- Groundwork users can create unlimited annotation projects, but only 10 campaigns [#5516](https://github.com/raster-foundry/raster-foundry/pull/5516)
 
 ## [1.53.0] - 2020-11-16
 ### Added
