@@ -225,3 +225,8 @@ Path,Domain:Action,Verb
 /api/campaigns/{campaignId}/share,campaigns:share,post
 /api/campaigns/{campaignId}/share,campaigns:share,get
 /api/campaigns/{campaignId}/share/{userId},campaigns:read,delete
+/api/tasks/{taskId}/sessions,annotationProjects:readTasks,get
+/api/tasks/{taskId}/sessions,annotationProjects:createAnnotation,post
+/api/tasks/{taskId}/sessions/{sessionId},annotationProjects:readTasks,get
+/api/tasks/{taskId}/sessions/{sessionId}/keep-alive,annotationProjects:createAnnotation,put
+/api/tasks/{taskId}/sessions/{sessionId}/complete,annotationProjects:createAnnotation,put
