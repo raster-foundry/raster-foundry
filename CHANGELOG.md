@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `POST` to incrementally add labels with labeling and validating [#5518](https://github.com/raster-foundry/raster-foundry/pull/5518)
+
 ### Fixed
 - Tasks can be unlocked by users other than the user who locked them [#5514](https://github.com/raster-foundry/raster-foundry/pull/5514)
 - Made python Upload datamodel aware of campaign ID [#5513](https://github.com/raster-foundry/raster-foundry/pull/5513)
