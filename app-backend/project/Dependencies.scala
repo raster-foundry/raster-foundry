@@ -17,7 +17,7 @@ object Version {
   val awsLambdaCore = "1.11.763"
   val awsSdkVersion = "1.11.763"
   val awsSdkV2Version = "2.13.74"
-  val awsXrayRecorder = "2.3.0"
+  val awsXrayRecorder = "2.8.0"
   val betterFiles = "3.4.0"
   val bcrypt = "4.1"
   val caffeine = "2.3.5"
