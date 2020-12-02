@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - Groundwork users can create unlimited annotation projects, but only 10 campaigns [#5516](https://github.com/raster-foundry/raster-foundry/pull/5516)
+- Support X-Ray on Fargate [#5519](https://github.com/raster-foundry/raster-foundry/pull/5519)
 
 ## [1.54.0] - 2020-11-25
 ### Added
