@@ -28,8 +28,8 @@ node {
 
     env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
 
-    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME =~ /test\// || env.BRANCH_NAME =~ /hotfix\// || env.BRANCH_NAME == 'PR-5519') {
-        env.RF_DEPLOYMENT_BRANCH = 'feature/jrb/backsplash-fargate'
+    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME =~ /test\// || env.BRANCH_NAME =~ /hotfix\//) {
+        env.RF_DEPLOYMENT_BRANCH = 'develop'
         env.RF_DEPLOYMENT_ENVIRONMENT = "Staging"
 
       // Publish container images built and tested during `cibuild`
