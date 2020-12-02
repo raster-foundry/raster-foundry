@@ -518,4 +518,15 @@ trait PropTestHelpers {
       case TaskStatus.Invalid              => TaskStatus.Unlabeled
       case TaskStatus.Split                => TaskStatus.Invalid
     }
+
+  def customTaskSessionIO(
+      taskSessionCreate: TaskSession.Create,
+      user: User,
+      fromStatus: TaskStatus,
+      taskId: UUID
+  ) =
+    (fr"""
+      INSERT INTO task_sessions VALUES
+        (uuid_generate_v4(), now(), now() - INTERVAL '10 min', NULL, ${fromStatus}, NULL, ${taskSessionCreate.sessionType},
+        ${user.id}, ${taskId})""").update.withUniqueGeneratedKeys[UUID]("id")
 }

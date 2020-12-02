@@ -231,4 +231,44 @@ object TaskSessionDao extends Dao[TaskSession] {
         )
       )
       .exists
+
+  def getRandomTaskSession(
+      user: User,
+      annotationProjectParams: AnnotationProjectQueryParameters,
+      annotationProjectIdOpt: Option[UUID],
+      limit: Int,
+      taskParams: TaskQueryParameters
+  ): ConnectionIO[Option[TaskSession]] = {
+    val sessionCreate =
+      taskParams.status.toList.contains(TaskStatus.Unlabeled) match {
+        case true => TaskSession.Create(TaskSessionType.LabelSession)
+        case _    => TaskSession.Create(TaskSessionType.ValidateSession)
+      }
+    for {
+      annotationProjectIds <- AnnotationProjectDao
+        .authQuery(
+          user,
+          ObjectType.AnnotationProject,
+          None,
+          None,
+          None
+        )
+        .filter(annotationProjectParams)
+        .filter(annotationProjectIdOpt)
+        .list(limit) map { projects =>
+        projects map { _.id }
+      }
+      taskOpt <- annotationProjectIds.toNel flatTraverse { projectIds =>
+        TaskDao.randomTask(taskParams, projectIds, true)
+      }
+      sessionOpt <- taskOpt traverse { task =>
+        insertTaskSession(
+          sessionCreate,
+          user,
+          task.properties.status,
+          task.id
+        )
+      }
+    } yield sessionOpt
+  }
 }

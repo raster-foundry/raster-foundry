@@ -57,6 +57,15 @@ trait TaskRoutes
           }
         }
       }
+    } ~ pathPrefix("sessions") {
+      pathEndOrSingleSlash {
+        pathPrefix("random") {
+          pathEndOrSingleSlash {
+            get { randomTaskSession }
+          }
+        }
+      }
+
     }
   }
 
@@ -68,38 +77,28 @@ trait TaskRoutes
       ) {
         (withPagination & annotationProjectQueryParameters & taskQueryParameters & parameters(
           'annotationProjectId.as[UUID].?
-        )) { (page, annotationProjectParams, taskParams, annotationProjectId) =>
-          onComplete {
-            (for {
-              annotationProjects <- AnnotationProjectDao
-                .authQuery(
+        )) {
+          (page, annotationProjectParams, taskParams, annotationProjectIdOpt) =>
+            onComplete {
+              TaskDao
+                .getRandomTaskFromProjects(
                   user,
-                  ObjectType.AnnotationProject,
-                  None,
-                  None,
-                  None
+                  annotationProjectParams,
+                  annotationProjectIdOpt,
+                  page.limit,
+                  taskParams
                 )
-                .filter(annotationProjectParams)
-                .filter(annotationProjectId)
-                .list(page.limit) map { projects =>
-                projects map { _.id }
-              }
-              taskO <- annotationProjects.toNel traverse { projectIds =>
-                TaskDao
-                  .randomTask(taskParams, projectIds)
-              }
-            } yield {
-              taskO.flatten
-            }).transact(xa).unsafeToFuture
-          } {
-            case Success(Some(task)) =>
-              complete { task }
-            case Success(None) =>
-              complete { HttpResponse(StatusCodes.OK) }
-            case Failure(e) =>
-              logger.error(e.getMessage)
-              complete { HttpResponse(StatusCodes.BadRequest) }
-          }
+                .transact(xa)
+                .unsafeToFuture
+            } {
+              case Success(Some(task)) =>
+                complete { task }
+              case Success(None) =>
+                complete { HttpResponse(StatusCodes.OK) }
+              case Failure(e) =>
+                logger.error(e.getMessage)
+                complete { HttpResponse(StatusCodes.BadRequest) }
+            }
         }
       }
     }
@@ -324,6 +323,40 @@ trait TaskRoutes
               }
             }
           }
+        }
+      }
+    }
+
+  def randomTaskSession: Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
+        (withPagination & annotationProjectQueryParameters & taskQueryParameters & parameters(
+          'annotationProjectId.as[UUID].?
+        )) {
+          (page, annotationProjectParams, taskParams, annotationProjectIdOpt) =>
+            onComplete {
+              TaskSessionDao
+                .getRandomTaskSession(
+                  user,
+                  annotationProjectParams,
+                  annotationProjectIdOpt,
+                  page.limit,
+                  taskParams
+                )
+                .transact(xa)
+                .unsafeToFuture
+            } {
+              case Success(Some(session)) =>
+                complete { session }
+              case Success(None) =>
+                complete { HttpResponse(StatusCodes.OK) }
+              case Failure(e) =>
+                logger.error(e.getMessage)
+                complete { HttpResponse(StatusCodes.BadRequest) }
+            }
         }
       }
     }

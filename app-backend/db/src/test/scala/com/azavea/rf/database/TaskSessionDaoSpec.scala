@@ -2,17 +2,13 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database.Implicits._
 
 import cats.implicits._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
-
-import java.util.UUID
 
 class TaskSessionDaoSpec
     extends AnyFunSuite
@@ -20,17 +16,6 @@ class TaskSessionDaoSpec
     with Checkers
     with DBTestConfig
     with PropTestHelpers {
-  def customTaskSessionIO(
-      taskSessionCreate: TaskSession.Create,
-      user: User,
-      fromStatus: TaskStatus,
-      taskId: UUID
-  ) =
-    (fr"""
-      INSERT INTO task_sessions VALUES
-        (uuid_generate_v4(), now(), now() - INTERVAL '10 min', NULL, ${fromStatus}, NULL, ${taskSessionCreate.sessionType},
-        ${user.id}, ${taskId})""").update.withUniqueGeneratedKeys[UUID]("id")
-
   test("insert a task session") {
     check {
       forAll(
