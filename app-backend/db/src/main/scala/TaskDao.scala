@@ -1,5 +1,6 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.database.Config.statusReapingConfig
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.datamodel.Task.TaskPropertiesCreate
@@ -714,14 +715,16 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       // task action stamp
       case TaskStatus.LabelingInProgress | TaskStatus.ValidationInProgress =>
         getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
-          stamps.maximumByOption(stamp => {
-            val instant = stamp.timestamp.toInstant
-            // in testing, the epoch second was insufficient for generated actions
-            // very close to each other in time
-            val result: Double =
-              instant.getEpochSecond + (instant.getNano / 1e9)
-            result
-          }) map { mostRecentStamp =>
+          stamps
+            .filter(stamp => stamp.fromStatus != taskStatus)
+            .maximumByOption(stamp => {
+              val instant = stamp.timestamp.toInstant
+              // in testing, the epoch second was insufficient for generated actions
+              // very close to each other in time
+              val result: Double =
+                instant.getEpochSecond + (instant.getNano / 1e9)
+              result
+            }) map { mostRecentStamp =>
             val previousStatus = mostRecentStamp.fromStatus
             val previousNote = mostRecentStamp.note
             (previousStatus, previousNote)
@@ -729,6 +732,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             (TaskStatus.Unlabeled, None)
           }
         })
+
       // if it's flagged currently, then the note is in the most recent task action stamp
       case TaskStatus.Flagged =>
         getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
@@ -743,54 +747,66 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       case status => (status, Option.empty[NonEmptyString]).pure[ConnectionIO]
     }
 
-  def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] =
-    for {
-      _ <- info("Expiring stuck tasks")
-      _ <- fr"""select pg_advisory_lock(max(floor(EXTRACT(EPOCH FROM unlocked_time))) :: integer) from last_unlocked""".query.unique.void
-      defaultUser <- UserDao.unsafeGetUserById("default")
-      stuckLockedTasks <- query
-        .filter(
-          fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
-        )
-        .list
-      stuckUnlockedTasks <- query
-        .filter(
-          fr"""
+  def expireStuckTasks(taskExpiration: FiniteDuration): ConnectionIO[Int] = {
+    val lockAcquiredBoolean =
+      fr"select pg_try_advisory_xact_lock(${statusReapingConfig.advisoryLockConstant})"
+        .query[Boolean]
+        .unique
+
+    lockAcquiredBoolean.flatMap {
+      case false =>
+        for {
+          _ <- info("Skipping unlocking stuck tasks - could not acquire lock")
+        } yield 0
+      case true =>
+        for {
+          _ <- info("Expiring stuck tasks")
+          defaultUser <- UserDao.unsafeGetUserById("default")
+          stuckLockedTasks <- query
+            .filter(
+              fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
+            )
+            .list
+          stuckUnlockedTasks <- query
+            .filter(
+              fr"""
             locked_on IS NULL AND
             (status = ${TaskStatus.LabelingInProgress: TaskStatus} OR
              status = ${TaskStatus.ValidationInProgress: TaskStatus})"""
-        )
-        .list
-      _ <- (stuckUnlockedTasks map { _.annotationProjectId }).toNel traverse {
-        projectIdsList =>
-          val projectIdsSet = projectIdsList.toNes
-          warn(
-            s"Annotation project IDs for stuck in progress but unlocked tasks: $projectIdsSet"
-          )
-      }
-      _ <- (stuckLockedTasks ++ stuckUnlockedTasks) traverse { task =>
-        regressTaskStatus(task.id, task.status) flatMap {
-          case (newStatus, newNote) =>
-            val update =
-              Task.TaskFeatureCreate(
-                TaskPropertiesCreate(
-                  newStatus,
-                  task.annotationProjectId,
-                  newNote,
-                  Some(task.taskType),
-                  task.parentTaskId,
-                  Some(task.reviews),
-                  task.reviewStatus
-                ),
-                task.geometry
+            )
+            .list
+          _ <- (stuckUnlockedTasks map { _.annotationProjectId }).toNel traverse {
+            projectIdsList =>
+              val projectIdsSet = projectIdsList.toNes
+              warn(
+                s"Annotation project IDs for stuck in progress but unlocked tasks: $projectIdsSet"
               )
-            updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
-        }
-      }
-      _ <- fr"""update last_unlocked set unlocked_time = ${Timestamp.from(
-        Instant.now
-      )}""".update.run
-    } yield (stuckLockedTasks.length + stuckUnlockedTasks.length)
+          }
+          _ <- (stuckLockedTasks ++ stuckUnlockedTasks) traverse { task =>
+            regressTaskStatus(task.id, task.status) flatMap {
+              case (newStatus, newNote) =>
+                val update =
+                  Task.TaskFeatureCreate(
+                    TaskPropertiesCreate(
+                      newStatus,
+                      task.annotationProjectId,
+                      newNote,
+                      Some(task.taskType),
+                      task.parentTaskId,
+                      Some(task.reviews),
+                      task.reviewStatus
+                    ),
+                    task.geometry
+                  )
+                updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
+            }
+          }
+          _ <- fr"""update last_unlocked set unlocked_time = ${Timestamp.from(
+            Instant.now
+          )}""".update.run
+        } yield (stuckLockedTasks.length + stuckUnlockedTasks.length)
+    }
+  }
 
   def randomTask(
       queryParams: TaskQueryParameters,
