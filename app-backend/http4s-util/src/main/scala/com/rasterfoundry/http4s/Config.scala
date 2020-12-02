@@ -33,7 +33,8 @@ object Config {
 
   object ec2 {
     // Used to annotate traces in AWS XRay
-    val ec2Data = new EC2Plugin().getRuntimeContext.asScala.mapValues {
+    val ec2Plugin = new EC2Plugin()
+    val ec2Data = ec2Plugin.getRuntimeContext.asScala.mapValues {
       case value: String => value
       case _             => ""
     }

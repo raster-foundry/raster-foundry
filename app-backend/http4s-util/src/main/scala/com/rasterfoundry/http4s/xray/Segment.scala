@@ -12,8 +12,8 @@ final case class Segment[F[_]](name: String,
                                annotations: Map[String, String],
                                _type: Option[String],
                                http: Option[XrayHttp]) {
+  val ec2Config = if (Config.ec2.ec2Plugin.isEnabled) Map("ec2" -> Config.ec2.ec2Data) else Nil
   val aws: Map[String, collection.Map[String, String]] = Map(
-    "ec2" -> Config.ec2.ec2Data,
     "ecs" -> Config.ecs.ecsInstance
-  )
+  ) ++ ec2Config
 }
