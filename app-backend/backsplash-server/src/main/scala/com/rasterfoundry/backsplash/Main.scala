@@ -154,7 +154,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   private val statusExpirationDuration =
     statusReapingConfig.taskStatusExpirationSeconds.seconds
-  private val everyMinute = Cron.unsafeParse("0 * * ? * *")
+  private val everyMinute = Cron.unsafeParse("0 */5 * ? * *")
   val scheduled: fs2.Stream[IO, Either[Unit, Int]] = awakeEveryCron[IO](
     everyMinute
   ) *> (fs2.Stream
