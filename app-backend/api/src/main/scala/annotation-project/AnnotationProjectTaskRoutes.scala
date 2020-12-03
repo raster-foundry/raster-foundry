@@ -9,10 +9,11 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
-import cats.effect.Blocker
-import cats.effect.IO
+import cats.effect._
+import cats.implicits._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import doobie.ConnectionIO
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -300,14 +301,13 @@ trait AnnotationProjectTaskRoutes
     }
 
   def lockTask(projectId: UUID, taskId: UUID): Route =
-    toggleLock(projectId, taskId, TaskDao.lockTask(taskId))
+    toggleLock(projectId, TaskDao.lockTask(taskId))
 
   def unlockTask(projectId: UUID, taskId: UUID): Route =
-    toggleLock(projectId, taskId, _ => TaskDao.unlockTask(taskId))
+    toggleLock(projectId, _ => TaskDao.unlockTask(taskId))
 
   private def toggleLock(
       projectId: UUID,
-      taskId: UUID,
       f: (User => ConnectionIO[Option[Task.TaskFeature]])
   ): Route =
     authenticate { user =>
@@ -316,18 +316,16 @@ trait AnnotationProjectTaskRoutes
         user
       ) {
         authorizeAsync {
-          (for {
-            auth1 <- AnnotationProjectDao
-              .authorized(
-                user,
-                ObjectType.AnnotationProject,
-                projectId,
-                ActionType.Annotate
-              )
-            auth2 <- TaskDao.isLockingUserOrUnlocked(taskId, user)
-          } yield {
-            auth1.toBoolean && auth2
-          }).transact(xa).unsafeToFuture
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .map(_.toBoolean)
+            .unsafeToFuture
         } {
           complete {
             f(user).transact(xa).unsafeToFuture
@@ -367,7 +365,9 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def addTaskLabels(projectId: UUID, taskId: UUID): Route =
+  def addTaskLabels(projectId: UUID,
+                    taskId: UUID,
+                    deleteBeforeAdding: Boolean): Route =
     addLabels(
       projectId,
       taskId,
@@ -376,10 +376,13 @@ trait AnnotationProjectTaskRoutes
         TaskStatus.Unlabeled,
         TaskStatus.LabelingInProgress,
         TaskStatus.Labeled
-      )
+      ),
+      deleteBeforeAdding
     )
 
-  def validateTaskLabels(projectId: UUID, taskId: UUID): Route =
+  def validateTaskLabels(projectId: UUID,
+                         taskId: UUID,
+                         deleteBeforeAdding: Boolean): Route =
     addLabels(
       projectId,
       taskId,
@@ -388,14 +391,16 @@ trait AnnotationProjectTaskRoutes
         TaskStatus.Labeled,
         TaskStatus.ValidationInProgress,
         TaskStatus.Validated
-      )
+      ),
+      deleteBeforeAdding
     )
 
   private def addLabels(
       projectId: UUID,
       taskId: UUID,
       actionType: ActionType,
-      requiredStatuses: List[TaskStatus]
+      requiredStatuses: List[TaskStatus],
+      deleteBeforeAdding: Boolean
   ): Route =
     authenticate { user =>
       authorizeScope(
@@ -425,8 +430,10 @@ trait AnnotationProjectTaskRoutes
             }
             onSuccess(
               (for {
-                _ <- AnnotationLabelDao
-                  .deleteByProjectIdAndTaskId(projectId, taskId)
+                _ <- if (deleteBeforeAdding) {
+                  AnnotationLabelDao
+                    .deleteByProjectIdAndTaskId(projectId, taskId)
+                } else { 0.pure[ConnectionIO] }
                 insert <- AnnotationLabelDao
                   .insertAnnotations(
                     projectId,

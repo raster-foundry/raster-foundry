@@ -5,8 +5,8 @@ import cats.kernel.laws.discipline.MonoidTests
 import io.circe.parser._
 import io.circe.testing.{ArbitraryInstances, CodecTests}
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.scalacheck.Checkers
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 class ScopeSpec
@@ -80,34 +80,35 @@ class ScopeSpec
       } yield ScopedAction(domain, action, limit)
     }
 
-  def cannedPolicyGen: Gen[Scope] = Gen.oneOf(
-    Scopes.AnalysesCRUD,
-    Scopes.AnnotationGroupsCRUD,
-    Scopes.AnnotationUploadsCRUD,
-    Scopes.DatasourcesCRUD,
-    Scopes.ExportsCRUD,
-    Scopes.FeatureFlagsScope,
-    Scopes.LicensesScope,
-    Scopes.MapTokensCRUD,
-    Scopes.OrganizationAdmin,
-    Scopes.OrganizationsMember,
-    Scopes.PlatformDomainAdminScope,
-    Scopes.PlatformDomainMemberScope,
-    Scopes.ProjectAnnotateScope,
-    Scopes.ProjectsCRUD,
-    Scopes.ShapesCRUD,
-    Scopes.StacExportsCRUD,
-    Scopes.ScenesCRUD,
-    Scopes.TeamsCRUD,
-    Scopes.TemplatesCRUD,
-    Scopes.UploadsCRUD,
-    Scopes.UsersAdminScope,
-    Scopes.UserSelfScope,
-    Scopes.RasterFoundryPlatformAdmin,
-    Scopes.RasterFoundryUser,
-    Scopes.RasterFoundryTeamsAdmin,
-    Scopes.RasterFoundryOrganizationAdmin
-  )
+  def cannedPolicyGen: Gen[Scope] =
+    Gen.oneOf(
+      Scopes.AnalysesCRUD,
+      Scopes.AnnotationGroupsCRUD,
+      Scopes.AnnotationUploadsCRUD,
+      Scopes.DatasourcesCRUD,
+      Scopes.ExportsCRUD,
+      Scopes.FeatureFlagsScope,
+      Scopes.LicensesScope,
+      Scopes.MapTokensCRUD,
+      Scopes.OrganizationAdmin,
+      Scopes.OrganizationsMember,
+      Scopes.PlatformDomainAdminScope,
+      Scopes.PlatformDomainMemberScope,
+      Scopes.ProjectAnnotateScope,
+      Scopes.ProjectsCRUD,
+      Scopes.ShapesCRUD,
+      Scopes.StacExportsCRUD,
+      Scopes.ScenesCRUD,
+      Scopes.TeamsCRUD,
+      Scopes.TemplatesCRUD,
+      Scopes.UploadsCRUD,
+      Scopes.UsersAdminScope,
+      Scopes.UserSelfScope,
+      Scopes.RasterFoundryPlatformAdmin,
+      Scopes.RasterFoundryUser,
+      Scopes.RasterFoundryTeamsAdmin,
+      Scopes.RasterFoundryOrganizationAdmin
+    )
 
   // Not separating out into a separate object until we have more than
   // one of these. I don't think for the most part we depend on laws holding,
@@ -147,7 +148,11 @@ class ScopeSpec
     val action2 = ScopedAction(Domain.Projects, Action.Create, Some(10L))
     assert(
       Scopes
-        .resolveFor(Domain.Projects, Action.Create, Set(action1, action2)) == Some(
+        .resolveFor(
+          Domain.Projects,
+          Action.Create,
+          Set(action1, action2)
+        ) == Some(
         action1
       )
     )
@@ -158,7 +163,11 @@ class ScopeSpec
     val action2 = ScopedAction(Domain.Projects, Action.Create, Some(10L))
     assert(
       Scopes
-        .resolveFor(Domain.Projects, Action.Create, Set(action1, action2)) == Some(
+        .resolveFor(
+          Domain.Projects,
+          Action.Create,
+          Set(action1, action2)
+        ) == Some(
         action2
       )
     )
@@ -167,5 +176,29 @@ class ScopeSpec
   test("action resolution should not resolve missing actions") {
     val action = ScopedAction(Domain.Projects, Action.Create, Some(5L))
     assert(Scopes.resolveFor(Domain.Scenes, Action.Create, Set(action)).isEmpty)
+  }
+
+  test("Groundwork users can create 10 campaigns") {
+    assert(
+      Scopes
+        .resolveFor(
+          Domain.Campaigns,
+          Action.Create,
+          Scopes.GroundworkUser.actions
+        )
+        .flatMap(_.limit) == Some(10L)
+    )
+  }
+
+  test("Groundwork users can create unlimited annotation projects") {
+    assert(
+      Scopes
+        .resolveFor(
+          Domain.AnnotationProjects,
+          Action.Create,
+          Scopes.GroundworkUser.actions
+        )
+        .flatMap(_.limit) == None
+    )
   }
 }

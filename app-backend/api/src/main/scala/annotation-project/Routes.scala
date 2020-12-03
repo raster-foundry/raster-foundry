@@ -122,7 +122,9 @@ trait AnnotationProjectRoutes
                     get {
                       listTaskLabels(projectId, taskId)
                     } ~ put {
-                      addTaskLabels(projectId, taskId)
+                      addTaskLabels(projectId, taskId, true)
+                    } ~ post {
+                      addTaskLabels(projectId, taskId, false)
                     } ~ delete {
                       deleteTaskLabels(projectId, taskId)
                     }
@@ -130,7 +132,9 @@ trait AnnotationProjectRoutes
                 } ~ pathPrefix("validate") {
                   pathEndOrSingleSlash {
                     put {
-                      validateTaskLabels(projectId, taskId)
+                      validateTaskLabels(projectId, taskId, true)
+                    } ~ post {
+                      validateTaskLabels(projectId, taskId, false)
                     }
                   }
                 } ~ pathPrefix("children") {

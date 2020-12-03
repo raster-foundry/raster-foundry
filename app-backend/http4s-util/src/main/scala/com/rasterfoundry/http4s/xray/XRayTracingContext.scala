@@ -87,7 +87,7 @@ object XRayTracingContext {
               Segment[F](
                 operationName,
                 spanId,
-                tags.getOrElse("amazon_trace_id", new TraceID().toString),
+                tags.getOrElse("amazon_trace_id", TraceID.create().toString),
                 start,
                 None,
                 Some(true),

@@ -1,5 +1,7 @@
 package com.rasterfoundry.http4s.xray
 
+import com.rasterfoundry.http4s.Config
+
 import cats.effect.Sync
 import io.circe.Printer
 import io.circe.syntax._
@@ -13,7 +15,7 @@ object UdpClient {
     indent = ""
   )
 
-  val address = new InetSocketAddress("xray.service.internal", 2000)
+  val address = new InetSocketAddress(Config.xray.host, 2000)
   val socket = new DatagramSocket()
 
   def write[F[_]](segment: Segment[F])(implicit sf: Sync[F]): F[Unit] =

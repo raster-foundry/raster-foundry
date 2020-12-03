@@ -30,6 +30,8 @@ object Config {
     private val statusReapingConfig = config.getConfig("statusReaping")
     val taskStatusExpirationSeconds =
       statusReapingConfig.getInt("taskStatusExpirationSeconds")
+    val advisoryLockConstant =
+      statusReapingConfig.getInt("advisoryLockConstant")
   }
 
   object auth0Config {
