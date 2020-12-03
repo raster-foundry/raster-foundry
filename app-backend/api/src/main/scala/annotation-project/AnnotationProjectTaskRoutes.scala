@@ -539,4 +539,90 @@ trait AnnotationProjectTaskRoutes
         }
       }
     }
+
+  def listGroupLabelClasses(projectId: UUID, labelClassGroupId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Annotate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            AnnotationLabelClassDao
+              .listAnnotationLabelClassByGroupId(labelClassGroupId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def addLabelClassToGroup(projectId: UUID, labelClassGroupId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateTasks, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Edit
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[AnnotationLabelClass.Create]) { alc =>
+            complete(
+              StatusCodes.Created,
+              (for {
+                annotationLabelGroup <- AnnotationLabelClassGroupDao.query.filter(labelClassGroupId).select
+                insert <- AnnotationLabelClassDao.insertAnnotationLabelClass(alc, annotationLabelGroup, None)
+              } yield insert)
+                .transact(xa)
+                .unsafeToFuture
+            )
+          }
+        }
+      }
+    }
+
+  def softDeleteLabelClass(projectId: UUID, labelClassId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.DeleteAnnotation, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.Edit
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            AnnotationLabelClassDao
+              .deactivate(labelClassId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
 }

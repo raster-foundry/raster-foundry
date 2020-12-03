@@ -35,130 +35,137 @@ trait AnnotationProjectRoutes
         post {
           createAnnotationProject
         }
-    } ~
-      pathPrefix(JavaUUID) { projectId =>
+    } ~ pathPrefix(JavaUUID) { projectId =>
+      pathEndOrSingleSlash {
+        get {
+          getAnnotationProject(projectId)
+        } ~ put {
+          updateAnnotationProject(projectId)
+        } ~ delete {
+          deleteAnnotationProject(projectId)
+        }
+      } ~ pathPrefix("share") {
         pathEndOrSingleSlash {
-          get {
-            getAnnotationProject(projectId)
-          } ~
-            put {
-              updateAnnotationProject(projectId)
-            } ~
-            delete {
-              deleteAnnotationProject(projectId)
-            }
-        } ~
-          pathPrefix("share") {
-            pathEndOrSingleSlash {
-              post {
-                shareAnnotationProject(projectId)
-              } ~
-                get {
-                  listAnnotationProjectShares(projectId)
-                }
-            } ~ pathPrefix(Segment) { deleteId =>
-              pathEndOrSingleSlash {
-                delete {
-                  deleteAnnotationProjectShare(projectId, deleteId)
-                }
-              }
-            }
-          } ~
-          pathPrefix("permissions") {
-            pathEndOrSingleSlash {
-              get {
-                listPermissions(projectId)
-              } ~
-                put {
-                  replacePermissions(projectId)
-                } ~
-                post {
-                  addPermission(projectId)
-                } ~
-                delete {
-                  deletePermissions(projectId)
-                }
-            }
-          } ~
-          pathPrefix("tasks") {
-            pathEndOrSingleSlash {
-              get {
-                listAnnotationProjectTasks(projectId)
-              } ~ post {
-                createTasks(projectId)
-              } ~ delete {
-                deleteTasks(projectId)
-              }
-            } ~
-              pathPrefix("grid") {
-                post {
-                  createTaskGrid(projectId)
-                }
-              } ~
-              pathPrefix("user-stats") {
-                get {
-                  getTaskUserSummary(projectId)
-                }
-              } ~
-              pathPrefix(JavaUUID) { taskId =>
-                pathEndOrSingleSlash {
-                  get {
-                    getTask(projectId, taskId)
-                  } ~ put {
-                    updateTask(projectId, taskId)
-                  } ~ delete {
-                    deleteTask(projectId, taskId)
-                  }
-                } ~ pathPrefix("lock") {
-                  pathEndOrSingleSlash {
-                    post {
-                      lockTask(projectId, taskId)
-                    } ~ delete {
-                      unlockTask(projectId, taskId)
-                    }
-                  }
-                } ~ pathPrefix("labels") {
-                  pathEndOrSingleSlash {
-                    get {
-                      listTaskLabels(projectId, taskId)
-                    } ~ put {
-                      addTaskLabels(projectId, taskId, true)
-                    } ~ post {
-                      addTaskLabels(projectId, taskId, false)
-                    } ~ delete {
-                      deleteTaskLabels(projectId, taskId)
-                    }
-                  }
-                } ~ pathPrefix("validate") {
-                  pathEndOrSingleSlash {
-                    put {
-                      validateTaskLabels(projectId, taskId, true)
-                    } ~ post {
-                      validateTaskLabels(projectId, taskId, false)
-                    }
-                  }
-                } ~ pathPrefix("children") {
-                  pathEndOrSingleSlash {
-                    get {
-                      children(projectId, taskId)
-                    }
-                  }
-                } ~ pathPrefix("split") {
-                  pathEndOrSingleSlash {
-                    post {
-                      splitTask(projectId, taskId)
-                    }
-                  }
-                }
-              }
-          } ~ pathPrefix("actions") {
+          post {
+            shareAnnotationProject(projectId)
+          } ~ get {
+            listAnnotationProjectShares(projectId)
+          }
+        } ~ pathPrefix(Segment) { deleteId =>
           pathEndOrSingleSlash {
-            get {
-              listUserActions(projectId)
+            delete {
+              deleteAnnotationProjectShare(projectId, deleteId)
             }
           }
         }
+      } ~ pathPrefix("permissions") {
+        pathEndOrSingleSlash {
+          get {
+            listPermissions(projectId)
+          } ~ put {
+            replacePermissions(projectId)
+          } ~ post {
+            addPermission(projectId)
+          } ~ delete {
+            deletePermissions(projectId)
+          }
+        }
+      } ~ pathPrefix("label-class-group") {
+        pathPrefix(JavaUUID) { labelClassGroupId =>
+          pathEndOrSingleSlash {
+            get {
+              listGroupLabelClasses(projectId, labelClassGroupId)
+            }
+          } ~ pathPrefix("label-class") {
+            pathEndOrSingleSlash {
+              post {
+                addLabelClassToGroup(projectId, labelClassGroupId)
+              }
+            } ~ pathPrefix(JavaUUID) { labelClassId =>
+              pathEndOrSingleSlash {
+                delete {
+                  softDeleteLabelClass(projectId, labelClassId)
+                }
+              }
+            }
+          }
+        }
+      } ~ pathPrefix("tasks") {
+        pathEndOrSingleSlash {
+          get {
+            listAnnotationProjectTasks(projectId)
+          } ~ post {
+            createTasks(projectId)
+          } ~ delete {
+            deleteTasks(projectId)
+          }
+        } ~ pathPrefix("grid") {
+          post {
+            createTaskGrid(projectId)
+          }
+        } ~ pathPrefix("user-stats") {
+          get {
+            getTaskUserSummary(projectId)
+          }
+        } ~ pathPrefix(JavaUUID) { taskId =>
+          pathEndOrSingleSlash {
+            get {
+              getTask(projectId, taskId)
+            } ~ put {
+              updateTask(projectId, taskId)
+            } ~ delete {
+              deleteTask(projectId, taskId)
+            }
+          } ~ pathPrefix("lock") {
+            pathEndOrSingleSlash {
+              post {
+                lockTask(projectId, taskId)
+              } ~ delete {
+                unlockTask(projectId, taskId)
+              }
+            }
+          } ~ pathPrefix("labels") {
+            pathEndOrSingleSlash {
+              get {
+                listTaskLabels(projectId, taskId)
+              } ~ put {
+                addTaskLabels(projectId, taskId, true)
+              } ~ post {
+                addTaskLabels(projectId, taskId, false)
+              } ~ delete {
+                deleteTaskLabels(projectId, taskId)
+              }
+            }
+          } ~ pathPrefix("validate") {
+            pathEndOrSingleSlash {
+              put {
+                validateTaskLabels(projectId, taskId, true)
+              } ~ post {
+                validateTaskLabels(projectId, taskId, false)
+              }
+            }
+          } ~ pathPrefix("children") {
+            pathEndOrSingleSlash {
+              get {
+                children(projectId, taskId)
+              }
+            }
+          } ~ pathPrefix("split") {
+            pathEndOrSingleSlash {
+              post {
+                splitTask(projectId, taskId)
+              }
+            }
+          }
+        }
+      } ~ pathPrefix("actions") {
+        pathEndOrSingleSlash {
+          get {
+            listUserActions(projectId)
+          }
+        }
       }
+    }
   }
 
   def listAnnotationProjects: Route =

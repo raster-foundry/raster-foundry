@@ -22,7 +22,8 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
     "is_determinant",
     "idx",
     "geometry_type",
-    "description"
+    "description",
+    "is_active"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -37,7 +38,8 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
         fr"""VALUES (
         uuid_generate_v4(), ${classCreate.name}, ${annotationLabelGroup.id},
         ${classCreate.colorHexCode}, ${classCreate.default}, ${classCreate.determinant},
-        ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description}
+        ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description},
+        ${classCreate.isActive}
       )""").update.withUniqueGeneratedKeys[AnnotationLabelClass](fieldNames: _*)
       _ <- parent traverse { parentClass =>
         fr"INSERT INTO label_class_history VALUES (${parentClass.id}, ${newLabelClass.id})".update.run
@@ -48,4 +50,12 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       groupId: UUID
   ): ConnectionIO[List[AnnotationLabelClass]] =
     query.filter(fr"annotation_label_group_id = ${groupId}").list
+
+  def activate(classId: UUID): ConnectionIO[Int] = sql"""
+    update annotation_label_classes set is_active = TRUE where id = $classId
+  """.update.run
+
+  def deactivate(classId: UUID): ConnectionIO[Int] = sql"""
+    update annotation_label_classes set is_active = FALSE where id = $classId
+  """.update.run
 }
