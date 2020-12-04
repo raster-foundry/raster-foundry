@@ -40,6 +40,7 @@ object RequestRewriteMiddleware {
     } yield resp
   }
 
+  @SuppressWarnings(Array("RepeatedCaseBody"))
   def apply(
       service: HttpRoutes[IO],
       xa: Transactor[IO]
