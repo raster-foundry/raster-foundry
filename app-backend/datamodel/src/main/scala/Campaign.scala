@@ -83,6 +83,7 @@ object Campaign {
 
   object Clone {
     implicit val decClone: Decoder[Clone] = deriveDecoder
+    implicit val encClone: Encoder[Clone] = deriveEncoder
   }
 
   final case class WithRelated(

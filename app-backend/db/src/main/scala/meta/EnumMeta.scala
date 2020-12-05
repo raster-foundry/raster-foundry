@@ -127,4 +127,11 @@ trait EnumMeta {
       TaskReviewStatus.fromString,
       _.repr
     )
+
+  implicit val asyncJobStatusMeta: Meta[AsyncJobStatus] =
+    pgEnumStringOpt(
+      "async_job_status",
+      (s: String) => AsyncJobStatus.fromStringE(s).toOption,
+      _.repr
+    )
 }
