@@ -34,14 +34,16 @@ class AnnotationLabelClassDaoSpec
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao.insert(toInsert, user)
             labelClassGroup = inserted.labelClassGroups.head
-            listedReal <- AnnotationLabelClassDao
-              .listAnnotationLabelClassByGroupId(
-                labelClassGroup.id
-              )
-            listedBogus <- AnnotationLabelClassDao
-              .listAnnotationLabelClassByGroupId(
-                UUID.randomUUID
-              )
+            listedReal <-
+              AnnotationLabelClassDao
+                .listAnnotationLabelClassByGroupId(
+                  labelClassGroup.id
+                )
+            listedBogus <-
+              AnnotationLabelClassDao
+                .listAnnotationLabelClassByGroupId(
+                  UUID.randomUUID
+                )
           } yield { (listedReal, listedBogus) }
 
           val (listedReal, listedBogus) =
@@ -58,16 +60,16 @@ class AnnotationLabelClassDaoSpec
             .toSet
 
           val insertedLabelClassCreate = listedReal
-            .map(
-              alc =>
-                AnnotationLabelClass.Create(
-                  alc.name,
-                  alc.colorHexCode,
-                  alc.default,
-                  alc.determinant,
-                  alc.index,
-                  alc.geometryType,
-                  alc.description
+            .map(alc =>
+              AnnotationLabelClass.Create(
+                alc.name,
+                alc.colorHexCode,
+                alc.default,
+                alc.determinant,
+                alc.index,
+                alc.geometryType,
+                alc.description,
+                alc.isActive
               )
             )
             .toSet
