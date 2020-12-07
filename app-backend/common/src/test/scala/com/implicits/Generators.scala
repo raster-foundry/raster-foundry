@@ -1101,7 +1101,8 @@ object Generators extends ArbitraryInstances {
           LabelGeomType.PolygonLabel
         )
       ),
-      Gen.option(nonEmptyStringGen)
+      Gen.option(nonEmptyStringGen),
+      arbitrary[Boolean]
     ).mapN(AnnotationLabelClass.Create.apply _)
 
   private def labelClassGroupGen: Gen[AnnotationLabelClassGroup.Create] =
