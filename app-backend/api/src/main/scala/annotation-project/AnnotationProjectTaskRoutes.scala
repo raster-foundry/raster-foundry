@@ -588,8 +588,11 @@ trait AnnotationProjectTaskRoutes
             complete(
               StatusCodes.Created,
               (for {
-                annotationLabelGroup <- AnnotationLabelClassGroupDao.query.filter(labelClassGroupId).select
-                insert <- AnnotationLabelClassDao.insertAnnotationLabelClass(alc, annotationLabelGroup, None)
+                annotationLabelGroup <- AnnotationLabelClassGroupDao.query
+                  .filter(labelClassGroupId)
+                  .select
+                insert <- AnnotationLabelClassDao
+                  .insertAnnotationLabelClass(alc, annotationLabelGroup, None)
               } yield insert)
                 .transact(xa)
                 .unsafeToFuture
