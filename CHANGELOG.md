@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.56.0] - 2020-12-04
 ### Added
 - Added rewrite for tile requests prefixed with `/tiles/` [#5527](https://github.com/raster-foundry/raster-foundry/pull/5527)
+- Add TaskSession data model and basic endpoints [#5522](https://github.com/raster-foundry/raster-foundry/pull/5522)
 
 ## [1.55.0] - 2020-12-03
 ### Added
