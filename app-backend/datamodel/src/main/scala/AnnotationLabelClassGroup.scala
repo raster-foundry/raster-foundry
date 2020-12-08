@@ -10,7 +10,8 @@ final case class AnnotationLabelClassGroup(
     name: String,
     annotationProjectId: Option[UUID],
     campaignId: Option[UUID],
-    index: Int
+    index: Int,
+    isActive: Boolean = true
 ) {
   def withLabelClasses(
       classes: List[AnnotationLabelClass]
@@ -21,25 +22,27 @@ final case class AnnotationLabelClassGroup(
       annotationProjectId,
       campaignId,
       index,
+      isActive,
       classes
     )
 }
 
 object AnnotationLabelClassGroup {
   implicit val encAnnotationLabelClassGroup
-    : Encoder[AnnotationLabelClassGroup] = deriveEncoder
+      : Encoder[AnnotationLabelClassGroup] = deriveEncoder
   implicit val decAnnotationLabelClassGroup
-    : Decoder[AnnotationLabelClassGroup] = deriveDecoder
+      : Decoder[AnnotationLabelClassGroup] = deriveDecoder
 
   final case class Create(
       name: String,
       index: Option[Int],
-      classes: List[AnnotationLabelClass.Create]
+      classes: List[AnnotationLabelClass.Create],
+      isActive: Boolean = true
   )
 
   object Create {
     implicit val decAnnotationLabelClassGroupCreate
-      : Decoder[AnnotationLabelClassGroup.Create] = deriveDecoder
+        : Decoder[AnnotationLabelClassGroup.Create] = deriveDecoder
   }
 
   final case class WithLabelClasses(
@@ -48,8 +51,19 @@ object AnnotationLabelClassGroup {
       annotationProjectId: Option[UUID],
       campaignId: Option[UUID],
       index: Int,
+      isActive: Boolean = true,
       labelClasses: List[AnnotationLabelClass]
-  )
+  ) {
+    def toClassGroup =
+      AnnotationLabelClassGroup(
+        id,
+        name,
+        annotationProjectId,
+        campaignId,
+        index,
+        isActive
+      )
+  }
 
   object WithLabelClasses {
     implicit val encWithLabelClasses: Encoder[WithLabelClasses] = deriveEncoder

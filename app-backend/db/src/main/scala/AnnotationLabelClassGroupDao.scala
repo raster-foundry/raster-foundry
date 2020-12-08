@@ -15,7 +15,7 @@ object AnnotationLabelClassGroupDao
   val tableName = "annotation_label_class_groups"
 
   def selectF: Fragment =
-    fr"SELECT id, name, annotation_project_id, campaign_id, idx FROM" ++ tableF
+    fr"SELECT id, name, annotation_project_id, campaign_id, idx, is_active FROM" ++ tableF
 
   def insertAnnotationLabelClassGroup(
       groupCreate: AnnotationLabelClassGroup.Create,
@@ -26,15 +26,18 @@ object AnnotationLabelClassGroupDao
   ): ConnectionIO[AnnotationLabelClassGroup.WithLabelClasses] = {
     val index = groupCreate.index getOrElse indexFallback
     val groupIO = (fr"INSERT INTO" ++ tableF ++ fr"""
-      (id, name, annotation_project_id, campaign_id, idx) VALUES (
-        uuid_generate_v4(), ${groupCreate.name}, ${annotationProject.map(_.id)}, ${campaign
-      .map(_.id)}, ${index}
+      (id, name, annotation_project_id, campaign_id, idx, is_active) VALUES (
+        uuid_generate_v4(), ${groupCreate.name}, ${annotationProject.map(
+      _.id
+    )}, ${campaign
+      .map(_.id)}, ${index}, true
       )""").update.withUniqueGeneratedKeys[AnnotationLabelClassGroup](
       "id",
       "name",
       "annotation_project_id",
       "campaign_id",
-      "idx"
+      "idx",
+      "is_active"
     )
     for {
       labelClassGroup <- groupIO
@@ -74,6 +77,52 @@ object AnnotationLabelClassGroupDao
       Some(fr"campaign_id = ${campaignId}")
     )).query[AnnotationLabelClassGroup].to[List]
   }
+
+  def listByProjectIdWithClasses(
+      projectId: UUID
+  ): ConnectionIO[List[AnnotationLabelClassGroup.WithLabelClasses]] =
+    for {
+      groups <- listByProjectId(projectId)
+      groupsWithClasses <- groups traverse { group =>
+        AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(
+          group.id
+        ) map { classes => group.withLabelClasses(classes) }
+      }
+    } yield groupsWithClasses
+
+  def getGroupWithClassesById(
+      id: UUID
+  ): ConnectionIO[Option[AnnotationLabelClassGroup.WithLabelClasses]] = {
+    val groupIO = (selectF ++ Fragments.whereAndOpt(
+      Some(fr"id = ${id}")
+    )).query[AnnotationLabelClassGroup].option
+    for {
+      groupOpt <- groupIO
+      classes <- AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(id)
+    } yield groupOpt map { group => group.withLabelClasses(classes) }
+  }
+
+  def update(id: UUID, group: AnnotationLabelClassGroup): ConnectionIO[Int] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      name = ${group.name},
+      index = ${group.index}
+    WHERE
+      id = $id
+    """).update.run;
+
+  def activate(id: UUID): ConnectionIO[Int] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = true
+    WHERE
+      id = $id
+    """).update.run;
+
+  def deactivate(id: UUID): ConnectionIO[Int] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = false
+    WHERE
+      id = $id
+    """).update.run;
 
   def deleteByProjectId(
       projectId: UUID

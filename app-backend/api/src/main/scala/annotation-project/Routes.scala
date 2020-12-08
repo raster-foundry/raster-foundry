@@ -23,7 +23,8 @@ trait AnnotationProjectRoutes
     with PaginationDirectives
     with QueryParametersCommon
     with AnnotationProjectTaskRoutes
-    with AnnotationProjectPermissionRoutes {
+    with AnnotationProjectPermissionRoutes
+    with AnnotationProjectLabelClassGroupRoutes {
 
   val xa: Transactor[IO]
 
@@ -71,16 +72,35 @@ trait AnnotationProjectRoutes
           }
         }
       } ~ pathPrefix("label-class-group") {
-        pathPrefix(JavaUUID) { labelClassGroupId =>
+        pathEndOrSingleSlash {
+          get {
+            listLabelClassGroups(projectId)
+          } ~ post {
+            createLabelClassGroup(projectId)
+          }
+        } ~ pathPrefix(JavaUUID) { labelClassGroupId =>
           pathEndOrSingleSlash {
             get {
-              listGroupLabelClasses(projectId, labelClassGroupId)
+              getLabelClassGroup(projectId, labelClassGroupId)
+            } ~ put {
+              updateLabelClassGroup(projectId, labelClassGroupId)
+            }
+          } ~ pathPrefix("activate") {
+            post {
+              activateLabelClassGroup(projectId, labelClassGroupId)
+            }
+          } ~ pathPrefix("deactivate") {
+            delete {
+              deactivateLabelClassGroup(projectId, labelClassGroupId)
             }
           } ~ pathPrefix("label-class") {
             pathEndOrSingleSlash {
-              post {
-                addLabelClassToGroup(projectId, labelClassGroupId)
-              }
+              get {
+                listGroupLabelClasses(projectId, labelClassGroupId)
+              } ~
+                post {
+                  addLabelClassToGroup(projectId, labelClassGroupId)
+                }
             } ~ pathPrefix(JavaUUID) { labelClassId =>
               pathEndOrSingleSlash {
                 delete {

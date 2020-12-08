@@ -250,13 +250,14 @@ trait AnnotationProjectTaskRoutes
       ) {
         authorizeAsync {
           (for {
-            auth1 <- AnnotationProjectDao
-              .authorized(
-                user,
-                ObjectType.AnnotationProject,
-                projectId,
-                ActionType.Annotate
-              )
+            auth1 <-
+              AnnotationProjectDao
+                .authorized(
+                  user,
+                  ObjectType.AnnotationProject,
+                  projectId,
+                  ActionType.Annotate
+                )
             auth2 <- TaskDao.isLockingUserOrUnlocked(taskId, user)
           } yield {
             auth1.toBoolean && auth2
@@ -365,9 +366,11 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def addTaskLabels(projectId: UUID,
-                    taskId: UUID,
-                    deleteBeforeAdding: Boolean): Route =
+  def addTaskLabels(
+      projectId: UUID,
+      taskId: UUID,
+      deleteBeforeAdding: Boolean
+  ): Route =
     addLabels(
       projectId,
       taskId,
@@ -380,9 +383,11 @@ trait AnnotationProjectTaskRoutes
       deleteBeforeAdding
     )
 
-  def validateTaskLabels(projectId: UUID,
-                         taskId: UUID,
-                         deleteBeforeAdding: Boolean): Route =
+  def validateTaskLabels(
+      projectId: UUID,
+      taskId: UUID,
+      deleteBeforeAdding: Boolean
+  ): Route =
     addLabels(
       projectId,
       taskId,
@@ -409,13 +414,14 @@ trait AnnotationProjectTaskRoutes
       ) {
         authorizeAsync {
           (for {
-            auth1 <- AnnotationProjectDao
-              .authorized(
-                user,
-                ObjectType.AnnotationProject,
-                projectId,
-                actionType
-              )
+            auth1 <-
+              AnnotationProjectDao
+                .authorized(
+                  user,
+                  ObjectType.AnnotationProject,
+                  projectId,
+                  actionType
+                )
             auth2 <- TaskDao.hasStatus(
               taskId,
               requiredStatuses
@@ -430,17 +436,19 @@ trait AnnotationProjectTaskRoutes
             }
             onSuccess(
               (for {
-                _ <- if (deleteBeforeAdding) {
+                _ <-
+                  if (deleteBeforeAdding) {
+                    AnnotationLabelDao
+                      .deleteByProjectIdAndTaskId(projectId, taskId)
+                  } else { 0.pure[ConnectionIO] }
+                insert <-
                   AnnotationLabelDao
-                    .deleteByProjectIdAndTaskId(projectId, taskId)
-                } else { 0.pure[ConnectionIO] }
-                insert <- AnnotationLabelDao
-                  .insertAnnotations(
-                    projectId,
-                    taskId,
-                    annotationLabelWithClassesCreate.toList,
-                    user
-                  )
+                    .insertAnnotations(
+                      projectId,
+                      taskId,
+                      annotationLabelWithClassesCreate.toList,
+                      user
+                    )
               } yield {
                 insert
               }).transact(xa)
@@ -535,95 +543,6 @@ trait AnnotationProjectTaskRoutes
         } {
           complete {
             TaskDao.splitTask(taskId, user).transact(xa).unsafeToFuture
-          }
-        }
-      }
-    }
-
-  def listGroupLabelClasses(projectId: UUID, labelClassGroupId: UUID): Route =
-    authenticate { user =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationLabelClassDao
-              .listAnnotationLabelClassByGroupId(labelClassGroupId)
-              .transact(xa)
-              .unsafeToFuture
-          }
-        }
-      }
-    }
-
-  def addLabelClassToGroup(projectId: UUID, labelClassGroupId: UUID): Route =
-    authenticate { user =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.CreateTasks, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationLabelClass.Create]) { alc =>
-            complete(
-              StatusCodes.Created,
-              (for {
-                annotationLabelGroup <- AnnotationLabelClassGroupDao.query
-                  .filter(labelClassGroupId)
-                  .select
-                insert <- AnnotationLabelClassDao
-                  .insertAnnotationLabelClass(alc, annotationLabelGroup, None)
-              } yield insert)
-                .transact(xa)
-                .unsafeToFuture
-            )
-          }
-        }
-      }
-    }
-
-  def softDeleteLabelClass(projectId: UUID, labelClassId: UUID): Route =
-    authenticate { user =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.DeleteAnnotation, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationLabelClassDao
-              .deactivate(labelClassId)
-              .transact(xa)
-              .unsafeToFuture
           }
         }
       }
