@@ -34,8 +34,9 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       parent: Option[AnnotationLabelClass]
   ): ConnectionIO[AnnotationLabelClass] =
     for {
-      newLabelClass <- (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
-        fr"""VALUES (
+      newLabelClass <-
+        (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+          fr"""VALUES (
         uuid_generate_v4(), ${classCreate.name}, ${annotationLabelGroup.id},
         ${classCreate.colorHexCode}, ${classCreate.default}, ${classCreate.determinant},
         ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description},
@@ -46,16 +47,38 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       }
     } yield newLabelClass
 
+  def getById(id: UUID): ConnectionIO[Option[AnnotationLabelClass]] =
+    query.filter(id).selectOption
+
   def listAnnotationLabelClassByGroupId(
       groupId: UUID
   ): ConnectionIO[List[AnnotationLabelClass]] =
     query.filter(fr"annotation_label_group_id = ${groupId}").list
 
-  def activate(classId: UUID): ConnectionIO[Int] = sql"""
-    update annotation_label_classes set is_active = TRUE where id = $classId
-  """.update.run
+  def update(id: UUID, labelClass: AnnotationLabelClass): ConnectionIO[Int] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      name = ${labelClass.name},
+      color_hex_code = ${labelClass.colorHexCode},
+      default = ${labelClass.default},
+      determinant = ${labelClass.determinant},
+      idx = ${labelClass.index},
+      geometry_type = ${labelClass.geometryType},
+      description = ${labelClass.description}
+    WHERE
+      id = $id
+    """).update.run;
 
-  def deactivate(classId: UUID): ConnectionIO[Int] = sql"""
-    update annotation_label_classes set is_active = FALSE where id = $classId
-  """.update.run
+  def activate(id: UUID): ConnectionIO[Int] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = true
+    WHERE
+      id = $id
+    """).update.run;
+
+  def deactivate(id: UUID): ConnectionIO[Int] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = false
+    WHERE
+      id = $id
+    """).update.run;
 }

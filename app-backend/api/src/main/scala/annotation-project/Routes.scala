@@ -24,7 +24,8 @@ trait AnnotationProjectRoutes
     with QueryParametersCommon
     with AnnotationProjectTaskRoutes
     with AnnotationProjectPermissionRoutes
-    with AnnotationProjectLabelClassGroupRoutes {
+    with LabelClassGroupRoutes
+    with LabelClassRoutes {
 
   val xa: Transactor[IO]
 
@@ -103,8 +104,18 @@ trait AnnotationProjectRoutes
                 }
             } ~ pathPrefix(JavaUUID) { labelClassId =>
               pathEndOrSingleSlash {
+                get {
+                  getLabelClass(projectId, labelClassId)
+                } ~ put {
+                  updateLabelClass(projectId, labelClassId)
+                }
+              } ~ pathPrefix("activate") {
+                post {
+                  activateLabelClass(projectId, labelClassId)
+                }
+              } ~ pathPrefix("deactivate") {
                 delete {
-                  softDeleteLabelClass(projectId, labelClassId)
+                  deactivateLabelClass(projectId, labelClassId)
                 }
               }
             }

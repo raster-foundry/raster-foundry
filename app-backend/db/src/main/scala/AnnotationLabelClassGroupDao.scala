@@ -105,7 +105,7 @@ object AnnotationLabelClassGroupDao
   def update(id: UUID, group: AnnotationLabelClassGroup): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
       name = ${group.name},
-      index = ${group.index}
+      idx = ${group.index}
     WHERE
       id = $id
     """).update.run;

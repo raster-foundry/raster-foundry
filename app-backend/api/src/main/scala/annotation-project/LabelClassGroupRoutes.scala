@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
 
 import java.util.UUID
 
-trait AnnotationProjectLabelClassGroupRoutes
+trait LabelClassGroupRoutes
     extends CommonHandlers
     with Directives
     with Authentication
@@ -31,7 +31,7 @@ trait AnnotationProjectLabelClassGroupRoutes
   def listLabelClassGroups(projectId: UUID): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
       ) {
         authorizeAuthResultAsync {
@@ -110,7 +110,7 @@ trait AnnotationProjectLabelClassGroupRoutes
   def getLabelClassGroup(projectId: UUID, classGroupId: UUID): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
       ) {
         {
@@ -223,102 +223,6 @@ trait AnnotationProjectLabelClassGroupRoutes
           complete {
             AnnotationLabelClassGroupDao
               .deactivate(labelClassGroupId)
-              .transact(xa)
-              .unsafeToFuture
-          }
-        }
-
-      }
-    }
-
-  def listGroupLabelClasses(projectId: UUID, labelClassGroupId: UUID): Route =
-    authenticate { user =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationLabelClassDao
-              .listAnnotationLabelClassByGroupId(labelClassGroupId)
-              .transact(xa)
-              .unsafeToFuture
-          }
-        }
-      }
-    }
-
-  def addLabelClassToGroup(projectId: UUID, groupId: UUID): Route =
-    authenticate { user =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationLabelClass.Create]) { labelClassCreate =>
-            complete(
-              StatusCodes.Created,
-              (for {
-                annotationLabelGroupOpt <-
-                  AnnotationLabelClassGroupDao.getGroupWithClassesById(groupId)
-                insert <- annotationLabelGroupOpt traverse { groupWithClass =>
-                  AnnotationLabelClassDao
-                    .insertAnnotationLabelClass(
-                      labelClassCreate,
-                      groupWithClass.toClassGroup,
-                      None
-                    )
-                }
-
-              } yield insert)
-                .transact(xa)
-                .unsafeToFuture
-            )
-          }
-        }
-      }
-    }
-
-  def softDeleteLabelClass(projectId: UUID, labelClassId: UUID): Route =
-    authenticate { user =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.DeleteAnnotation, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationLabelClassDao
-              .deactivate(labelClassId)
               .transact(xa)
               .unsafeToFuture
           }
