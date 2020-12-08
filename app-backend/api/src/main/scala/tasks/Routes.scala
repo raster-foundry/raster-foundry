@@ -57,15 +57,10 @@ trait TaskRoutes
           }
         }
       }
-    } ~ pathPrefix("sessions") {
+    } ~ pathPrefix("random-session") {
       pathEndOrSingleSlash {
-        pathPrefix("random") {
-          pathEndOrSingleSlash {
-            get { randomTaskSession }
-          }
-        }
+        get { randomTaskSession }
       }
-
     }
   }
 
@@ -126,8 +121,8 @@ trait TaskRoutes
           entity(as[TaskSession.Create]) { taskSessionCreate =>
             onComplete {
               (for {
-                hasActiveSession <- TaskSessionDao.hasActiveSessionByTaskId(
-                  taskId)
+                hasActiveSession <-
+                  TaskSessionDao.hasActiveSessionByTaskId(taskId)
                 hasValidStatus <- TaskSessionDao.isSessionTypeMatchTaskStatus(
                   taskId,
                   taskSessionCreate.sessionType
@@ -352,7 +347,9 @@ trait TaskRoutes
               case Success(Some(session)) =>
                 complete { session }
               case Success(None) =>
-                complete { HttpResponse(StatusCodes.OK) }
+                complete {
+                  StatusCodes.BadRequest -> "No matching task to create a session for"
+                }
               case Failure(e) =>
                 logger.error(e.getMessage)
                 complete { HttpResponse(StatusCodes.BadRequest) }
