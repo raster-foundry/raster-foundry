@@ -3,7 +3,6 @@ package com.rasterfoundry.api.annotationProject
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database._
-
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model._
@@ -77,8 +76,8 @@ trait LabelClassGroupRoutes
           entity(as[AnnotationLabelClassGroup.Create]) { classGroupCreate =>
             onComplete {
               (for {
-                groups <-
-                  AnnotationLabelClassGroupDao.listByProjectId(projectId)
+                groups <- AnnotationLabelClassGroupDao.listByProjectId(
+                  projectId)
                 projectOpt <- AnnotationProjectDao.getById(projectId)
                 created <- projectOpt traverse { project =>
                   AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(

@@ -2,7 +2,6 @@ package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.database._
-
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model._
@@ -73,8 +72,8 @@ trait LabelClassRoutes
             complete(
               StatusCodes.Created,
               (for {
-                annotationLabelGroupOpt <-
-                  AnnotationLabelClassGroupDao.getGroupWithClassesById(groupId)
+                annotationLabelGroupOpt <- AnnotationLabelClassGroupDao
+                  .getGroupWithClassesById(groupId)
                 insert <- annotationLabelGroupOpt traverse { groupWithClass =>
                   AnnotationLabelClassDao
                     .insertAnnotationLabelClass(
@@ -158,34 +157,7 @@ trait LabelClassRoutes
       }
     }
 
-  def softDeleteLabelClass(projectId: UUID, labelClassId: UUID): Route =
-    authenticate { user =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationLabelClassDao
-              .deactivate(labelClassId)
-              .transact(xa)
-              .unsafeToFuture
-          }
-        }
-      }
-    }
-
-  def activateLabelClassGroup(projectId: UUID, labelClassId: UUID): Route =
+  def activateLabelClass(projectId: UUID, labelClassId: UUID): Route =
     authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
@@ -213,7 +185,7 @@ trait LabelClassRoutes
       }
     }
 
-  def deactivateLabelClassGroup(
+  def deactivateLabelClass(
       projectId: UUID,
       labelClassId: UUID
   ): Route =

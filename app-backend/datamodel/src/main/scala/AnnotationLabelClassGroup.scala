@@ -29,9 +29,9 @@ final case class AnnotationLabelClassGroup(
 
 object AnnotationLabelClassGroup {
   implicit val encAnnotationLabelClassGroup
-      : Encoder[AnnotationLabelClassGroup] = deriveEncoder
+    : Encoder[AnnotationLabelClassGroup] = deriveEncoder
   implicit val decAnnotationLabelClassGroup
-      : Decoder[AnnotationLabelClassGroup] = deriveDecoder
+    : Decoder[AnnotationLabelClassGroup] = deriveDecoder
 
   final case class Create(
       name: String,
@@ -42,7 +42,7 @@ object AnnotationLabelClassGroup {
 
   object Create {
     implicit val decAnnotationLabelClassGroupCreate
-        : Decoder[AnnotationLabelClassGroup.Create] = deriveDecoder
+      : Decoder[AnnotationLabelClassGroup.Create] = deriveDecoder
   }
 
   final case class WithLabelClasses(

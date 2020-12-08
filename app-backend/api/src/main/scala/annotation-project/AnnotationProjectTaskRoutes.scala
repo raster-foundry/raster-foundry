@@ -250,14 +250,13 @@ trait AnnotationProjectTaskRoutes
       ) {
         authorizeAsync {
           (for {
-            auth1 <-
-              AnnotationProjectDao
-                .authorized(
-                  user,
-                  ObjectType.AnnotationProject,
-                  projectId,
-                  ActionType.Annotate
-                )
+            auth1 <- AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Annotate
+              )
             auth2 <- TaskDao.isLockingUserOrUnlocked(taskId, user)
           } yield {
             auth1.toBoolean && auth2
@@ -414,14 +413,13 @@ trait AnnotationProjectTaskRoutes
       ) {
         authorizeAsync {
           (for {
-            auth1 <-
-              AnnotationProjectDao
-                .authorized(
-                  user,
-                  ObjectType.AnnotationProject,
-                  projectId,
-                  actionType
-                )
+            auth1 <- AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                actionType
+              )
             auth2 <- TaskDao.hasStatus(
               taskId,
               requiredStatuses
@@ -436,19 +434,17 @@ trait AnnotationProjectTaskRoutes
             }
             onSuccess(
               (for {
-                _ <-
-                  if (deleteBeforeAdding) {
-                    AnnotationLabelDao
-                      .deleteByProjectIdAndTaskId(projectId, taskId)
-                  } else { 0.pure[ConnectionIO] }
-                insert <-
+                _ <- if (deleteBeforeAdding) {
                   AnnotationLabelDao
-                    .insertAnnotations(
-                      projectId,
-                      taskId,
-                      annotationLabelWithClassesCreate.toList,
-                      user
-                    )
+                    .deleteByProjectIdAndTaskId(projectId, taskId)
+                } else { 0.pure[ConnectionIO] }
+                insert <- AnnotationLabelDao
+                  .insertAnnotations(
+                    projectId,
+                    taskId,
+                    annotationLabelWithClassesCreate.toList,
+                    user
+                  )
               } yield {
                 insert
               }).transact(xa)

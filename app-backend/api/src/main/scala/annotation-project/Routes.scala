@@ -72,7 +72,7 @@ trait AnnotationProjectRoutes
             deletePermissions(projectId)
           }
         }
-      } ~ pathPrefix("label-class-group") {
+      } ~ pathPrefix("label-class-groups") {
         pathEndOrSingleSlash {
           get {
             listLabelClassGroups(projectId)
@@ -94,7 +94,7 @@ trait AnnotationProjectRoutes
             delete {
               deactivateLabelClassGroup(projectId, labelClassGroupId)
             }
-          } ~ pathPrefix("label-class") {
+          } ~ pathPrefix("label-classes") {
             pathEndOrSingleSlash {
               get {
                 listGroupLabelClasses(projectId, labelClassGroupId)
