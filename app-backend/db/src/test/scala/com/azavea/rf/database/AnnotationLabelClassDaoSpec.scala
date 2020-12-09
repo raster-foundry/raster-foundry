@@ -249,10 +249,10 @@ class AnnotationLabelClassDaoSpec
           assert(
             (labelClassDeactivatedOpt, labelClassActivatedOpt).tupled match {
               case Some((deactivated, activated)) =>
-                deactivated.isActive == false && activated.isActive == true
+                !deactivated.isActive && activated.isActive
               case _ => true
             },
-            "Updating a label class updates fields other than group ID and isActive status"
+            "Label class activation and deactivation work"
           )
           true
         }

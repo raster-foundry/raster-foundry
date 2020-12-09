@@ -1506,5 +1506,6 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbLabelClassCreate: Arbitrary[AnnotationLabelClass.Create] = Arbitrary { labelClassCreateGen }
 
+    implicit  def arbLabelClassGroup: Arbitrary[AnnotationLabelClassGroup.Create] = Arbitrary{ labelClassGroupGen }
   }
 }
