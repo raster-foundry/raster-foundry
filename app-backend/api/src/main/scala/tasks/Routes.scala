@@ -59,7 +59,7 @@ trait TaskRoutes
       }
     } ~ pathPrefix("random-session") {
       pathEndOrSingleSlash {
-        get { randomTaskSession }
+        post { randomTaskSession }
       }
     }
   }
@@ -121,8 +121,8 @@ trait TaskRoutes
           entity(as[TaskSession.Create]) { taskSessionCreate =>
             onComplete {
               (for {
-                hasActiveSession <- TaskSessionDao.hasActiveSessionByTaskId(
-                  taskId)
+                hasActiveSession <-
+                  TaskSessionDao.hasActiveSessionByTaskId(taskId)
                 hasValidStatus <- TaskSessionDao.isSessionTypeMatchTaskStatus(
                   taskId,
                   taskSessionCreate.sessionType

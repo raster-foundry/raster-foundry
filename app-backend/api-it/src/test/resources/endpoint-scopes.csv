@@ -230,4 +230,4 @@ Path,Domain:Action,Verb
 /api/tasks/{taskId}/sessions/{sessionId},annotationProjects:readTasks,get
 /api/tasks/{taskId}/sessions/{sessionId}/keep-alive,annotationProjects:createAnnotation,put
 /api/tasks/{taskId}/sessions/{sessionId}/complete,annotationProjects:createAnnotation,put
-/api/tasks/random-session,annotationProjects:readTasks,get
+/api/tasks/random-session,annotationProjects:readTasks,post
