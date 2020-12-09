@@ -1,6 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Config.statusReapingConfig
+import com.rasterfoundry.database.Config.taskSessionTtlConfig
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.GeoJsonCodec.PaginatedGeoJsonResponse
 import com.rasterfoundry.datamodel.Task.TaskPropertiesCreate
@@ -59,6 +60,12 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
          join annotation_projects on tasks.annotation_project_id = annotation_projects.id
         """
     )
+
+  val joinTaskSessionF =
+    fr"tasks left join task_sessions on tasks.id = task_sessions.task_id"
+
+  val selectWithSessionF: Fragment =
+    fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ joinTaskSessionF
 
   val selectF: Fragment =
     fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ tableF
@@ -810,22 +817,53 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   def randomTask(
       queryParams: TaskQueryParameters,
-      annotationProjectIds: NonEmptyList[UUID]
+      annotationProjectIds: NonEmptyList[UUID],
+      checkActiveSession: Boolean = false
   ): ConnectionIO[Option[Task.TaskFeature]] = {
-    val builder = query
-      .filter(queryParams)
-      .filter(fr"parent_task_id IS NULL")
-      .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
+    val tasksIO = checkActiveSession match {
+      case true =>
+        // join tasks with task sessions
+        // find tasks with no session
+        // or:
+        // - when task session expired: completed_at is null and last_tick_at is more than 5 min ago
+        val builder = Dao
+          .QueryBuilder[Task](
+            selectWithSessionF,
+            tableF,
+            Nil
+          )
+          .filter(queryParams)
+          .filter(fr"parent_task_id IS NULL")
+          .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
+          .filter(Fragment.const(s"""(
+            (
+              completed_at is NULL
+              AND last_tick_at + INTERVAL '${taskSessionTtlConfig.taskSessionTtlSeconds} seconds' <= now()
+            ) OR task_sessions.id is null
+            )"""))
+        (selectWithSessionF ++ Fragments.whereAndOpt(
+          builder.filters: _*
+        ) ++ fr"ORDER BY RANDOM() LIMIT 1")
+          .query[Task]
+          .to[List]
+      case false =>
+        val builder = query
+          .filter(queryParams)
+          .filter(fr"parent_task_id IS NULL")
+          .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
+        (selectF ++ Fragments.whereAndOpt(
+          builder.filters: _*
+        ) ++ fr"ORDER BY RANDOM() LIMIT 1")
+          .query[Task]
+          .to[List]
+    }
 
-    (selectF ++ Fragments.whereAndOpt(
-      builder.filters: _*
-    ) ++ fr"ORDER BY RANDOM() LIMIT 1")
-      .query[Task]
-      .to[List] flatMap { tasks =>
-      tasks.toNel traverse { tasks =>
-        getTaskWithActions(tasks.head.id)
+    for {
+      tasks <- tasksIO
+      taskWithAction <- tasks.toNel flatTraverse { tasksNel =>
+        getTaskWithActions(tasksNel.head.id)
       }
-    } map { _.flatten }
+    } yield taskWithAction
   }
 
   def children(
@@ -987,4 +1025,30 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       case None => Task.TaskFeatureCollection(features = Nil).pure[ConnectionIO]
     }
   }
+
+  def getRandomTaskFromProjects(
+      user: User,
+      annotationProjectParams: AnnotationProjectQueryParameters,
+      annotationProjectIdOpt: Option[UUID],
+      limit: Int,
+      taskParams: TaskQueryParameters
+  ): ConnectionIO[Option[Task.TaskFeature]] =
+    for {
+      annotationProjectIds <- AnnotationProjectDao
+        .authQuery(
+          user,
+          ObjectType.AnnotationProject,
+          None,
+          None,
+          None
+        )
+        .filter(annotationProjectParams)
+        .filter(annotationProjectIdOpt)
+        .list(limit) map { projects =>
+        projects map { _.id }
+      }
+      taskOpt <- annotationProjectIds.toNel flatTraverse { projectIds =>
+        randomTask(taskParams, projectIds)
+      }
+    } yield taskOpt
 }

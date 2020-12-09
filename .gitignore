@@ -128,3 +128,5 @@ app-lambda/opt/*
 # Typescript stubs from panrec
 stubs/
 *.semanticdb
+
+.prettierignore
