@@ -1504,5 +1504,7 @@ object Generators extends ArbitraryInstances {
         taskSessionCompleteGen
       }
 
+    implicit def arbLabelClassCreate: Arbitrary[AnnotationLabelClass.Create] = Arbitrary { labelClassCreateGen }
+
   }
 }

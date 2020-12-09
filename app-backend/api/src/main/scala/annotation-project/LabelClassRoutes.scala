@@ -13,8 +13,6 @@ import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
-import scala.util.{Failure, Success}
-
 import java.util.UUID
 
 trait LabelClassRoutes
@@ -72,8 +70,9 @@ trait LabelClassRoutes
             complete(
               StatusCodes.Created,
               (for {
-                annotationLabelGroupOpt <- AnnotationLabelClassGroupDao
-                  .getGroupWithClassesById(groupId)
+                annotationLabelGroupOpt <-
+                  AnnotationLabelClassGroupDao
+                    .getGroupWithClassesById(groupId)
                 insert <- annotationLabelGroupOpt traverse { groupWithClass =>
                   AnnotationLabelClassDao
                     .insertAnnotationLabelClass(

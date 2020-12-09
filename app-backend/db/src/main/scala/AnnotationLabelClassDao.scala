@@ -34,8 +34,9 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       parent: Option[AnnotationLabelClass]
   ): ConnectionIO[AnnotationLabelClass] =
     for {
-      newLabelClass <- (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
-        fr"""VALUES (
+      newLabelClass <-
+        (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+          fr"""VALUES (
         uuid_generate_v4(), ${classCreate.name}, ${annotationLabelGroup.id},
         ${classCreate.colorHexCode}, ${classCreate.default}, ${classCreate.determinant},
         ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description},
@@ -58,8 +59,8 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
     (fr"UPDATE " ++ tableF ++ fr"""SET
       name = ${labelClass.name},
       color_hex_code = ${labelClass.colorHexCode},
-      default = ${labelClass.default},
-      determinant = ${labelClass.determinant},
+      is_default = ${labelClass.default},
+      is_determinant = ${labelClass.determinant},
       idx = ${labelClass.index},
       geometry_type = ${labelClass.geometryType},
       description = ${labelClass.description}
