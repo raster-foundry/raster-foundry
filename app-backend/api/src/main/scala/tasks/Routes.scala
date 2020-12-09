@@ -57,7 +57,7 @@ trait TaskRoutes
           }
         }
       }
-    } ~ pathPrefix("random-session") {
+    } ~ pathPrefix("session") {
       pathEndOrSingleSlash {
         post { randomTaskSession }
       }
