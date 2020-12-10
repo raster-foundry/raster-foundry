@@ -76,8 +76,8 @@ trait LabelClassGroupRoutes
           entity(as[AnnotationLabelClassGroup.Create]) { classGroupCreate =>
             onComplete {
               (for {
-                groups <- AnnotationLabelClassGroupDao.listByProjectId(
-                  projectId)
+                groups <-
+                  AnnotationLabelClassGroupDao.listByProjectId(projectId)
                 projectOpt <- AnnotationProjectDao.getById(projectId)
                 created <- projectOpt traverse { project =>
                   AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
@@ -95,7 +95,7 @@ trait LabelClassGroupRoutes
                 complete { groupsWithClasses }
               case Success(None) =>
                 complete {
-                  StatusCodes.BadRequest -> "Annotation project does not exist"
+                  StatusCodes.NotFound -> "Annotation project does not exist"
                 }
               case Failure(e) =>
                 logger.error(e.getMessage)
@@ -219,7 +219,7 @@ trait LabelClassGroupRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
+          completeSingleOrNotFound {
             AnnotationLabelClassGroupDao
               .deactivate(labelClassGroupId)
               .transact(xa)

@@ -14,8 +14,16 @@ object AnnotationLabelClassGroupDao
     with ConnectionIOLogger {
   val tableName = "annotation_label_class_groups"
 
-  def selectF: Fragment =
-    fr"SELECT id, name, annotation_project_id, campaign_id, idx, is_active FROM" ++ tableF
+  override val fieldNames = List(
+    "id",
+    "name",
+    "annotation_project_id",
+    "campaign_id",
+    "idx",
+    "is_active"
+  )
+
+  def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
 
   def insertAnnotationLabelClassGroup(
       groupCreate: AnnotationLabelClassGroup.Create,
@@ -31,14 +39,8 @@ object AnnotationLabelClassGroupDao
       _.id
     )}, ${campaign
       .map(_.id)}, ${index}, true
-      )""").update.withUniqueGeneratedKeys[AnnotationLabelClassGroup](
-      "id",
-      "name",
-      "annotation_project_id",
-      "campaign_id",
-      "idx",
-      "is_active"
-    )
+      )""").update
+      .withUniqueGeneratedKeys[AnnotationLabelClassGroup](fieldNames: _*)
     for {
       labelClassGroup <- groupIO
       labelClasses <- parentAnnotationLabelClasses.toNel map { parentClasses =>
@@ -101,10 +103,9 @@ object AnnotationLabelClassGroupDao
     for {
       groupOpt <- groupIO
       classes <- AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(id)
-    } yield
-      groupOpt map { group =>
-        group.withLabelClasses(classes)
-      }
+    } yield groupOpt map { group =>
+      group.withLabelClasses(classes)
+    }
   }
 
   def update(id: UUID, group: AnnotationLabelClassGroup): ConnectionIO[Int] =
@@ -115,12 +116,13 @@ object AnnotationLabelClassGroupDao
       id = $id
     """).update.run;
 
-  def activate(id: UUID): ConnectionIO[Int] =
+  def activate(id: UUID): ConnectionIO[AnnotationLabelClassGroup] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
       is_active = true
     WHERE
       id = $id
-    """).update.run;
+    """).update
+      .withUniqueGeneratedKeys[AnnotationLabelClassGroup](fieldNames: _*);
 
   def deactivate(id: UUID): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET

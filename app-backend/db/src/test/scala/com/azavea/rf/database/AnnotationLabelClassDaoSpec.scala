@@ -4,6 +4,7 @@ import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
 import cats.implicits._
+import doobie._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest.funsuite.AnyFunSuite
@@ -108,33 +109,37 @@ class AnnotationLabelClassDaoSpec
           val toInsert = annotationProjectCreate.copy(
             labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
           )
-          val getIO = for {
+          val getIO: ConnectionIO[Option[AnnotationLabelClass]] = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao.insert(toInsert, user)
-            labelClassOpt =
-              inserted.labelClassGroups.head.labelClasses.headOption
+            labelClassOpt = inserted.labelClassGroups.headOption flatMap {
+              group =>
+                group.labelClasses.headOption
+            }
             dbLabelClass <- labelClassOpt flatTraverse { labelClass =>
               AnnotationLabelClassDao.getById(labelClass.id)
             }
           } yield dbLabelClass
 
-          val dbLabelClass = getIO.transact(xa).unsafeRunSync
+          val dbLabelClass: Option[AnnotationLabelClass] =
+            getIO.transact(xa).unsafeRunSync
 
-          val insertedLabelClassCreate = dbLabelClass
-            .map(alc =>
-              AnnotationLabelClass.Create(
-                alc.name,
-                alc.colorHexCode,
-                alc.default,
-                alc.determinant,
-                alc.index,
-                alc.geometryType,
-                alc.description,
-                alc.isActive
+          val insertedLabelClassCreate: Option[AnnotationLabelClass.Create] =
+            dbLabelClass
+              .map(alc =>
+                AnnotationLabelClass.Create(
+                  alc.name,
+                  alc.colorHexCode,
+                  alc.default,
+                  alc.determinant,
+                  alc.index,
+                  alc.geometryType,
+                  alc.description,
+                  alc.isActive
+                )
               )
-            )
 
-          val labelClassCreate =
+          val labelClassCreate: Set[Option[AnnotationLabelClass.Create]] =
             (annotationProjectCreate.labelClassGroups flatMap { group =>
               group.classes.map(cls => Option(cls))
             }).toSet
@@ -156,7 +161,8 @@ class AnnotationLabelClassDaoSpec
         (
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
-            annotationLabelClassCreate: AnnotationLabelClass.Create
+            annotationLabelClassCreate: AnnotationLabelClass.Create,
+            labelClassGroupCreate: AnnotationLabelClassGroup.Create
         ) => {
           val toInsert = annotationProjectCreate.copy(
             labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
@@ -176,34 +182,51 @@ class AnnotationLabelClassDaoSpec
           val updateIO = for {
             user <- UserDao.create(userCreate)
             inserted <- AnnotationProjectDao.insert(toInsert, user)
-            dbLabelClassOpt =
-              inserted.labelClassGroups.head.labelClasses.headOption
+            dbLabelClassOpt = inserted.labelClassGroups.headOption flatMap {
+              group =>
+                group.labelClasses.headOption
+            }
+            groups <- AnnotationLabelClassGroupDao.listByProjectId(inserted.id)
+            newGroup <-
+              AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
+                labelClassGroupCreate,
+                Some(inserted.toProject),
+                None,
+                groups.size
+              )
             _ <- dbLabelClassOpt traverse { labelClass =>
-              AnnotationLabelClassDao.update(labelClass.id, labelClassToUpdate)
+              AnnotationLabelClassDao.update(
+                labelClass.id,
+                labelClassToUpdate.copy(annotationLabelClassGroupId =
+                  newGroup.id
+                )
+              )
             }
             dbLabelClassUpdatedOpt <- dbLabelClassOpt flatTraverse {
               labelClass => AnnotationLabelClassDao.getById(labelClass.id)
             }
-          } yield { (dbLabelClassOpt, dbLabelClassUpdatedOpt) }
+          } yield { (newGroup, dbLabelClassOpt, dbLabelClassUpdatedOpt) }
 
-          val (labelClassOpt, labelClassUpdatedOpt) =
+          val (newLabelGroup, labelClassOpt, labelClassUpdatedOpt) =
             updateIO.transact(xa).unsafeRunSync
 
           assert(
             (labelClassOpt, labelClassUpdatedOpt).tupled match {
               case Some((labelClass, labelClassUpdated)) =>
-                labelClass.annotationLabelClassGroupId == labelClassUpdated.annotationLabelClassGroupId &&
-                  labelClassUpdated.isActive == labelClass.isActive &&
+                labelClassUpdated.isActive == labelClass.isActive &&
                   labelClassUpdated.colorHexCode == labelClassToUpdate.colorHexCode &&
                   labelClassUpdated.default == labelClassToUpdate.default &&
                   labelClassUpdated.description == labelClassToUpdate.description &&
                   labelClassUpdated.determinant == labelClassToUpdate.determinant &&
                   labelClassUpdated.geometryType == labelClassToUpdate.geometryType &&
                   labelClassUpdated.index == labelClassToUpdate.index &&
-                  labelClassUpdated.name == labelClassToUpdate.name
-              case _ => true
+                  labelClassUpdated.name == labelClassToUpdate.name &&
+                  labelClassUpdated.annotationLabelClassGroupId == newLabelGroup.id
+              case None if annotationProjectCreate.labelClassGroups.size == 0 =>
+                true
+              case _ => false
             },
-            "Updating a label class updates fields other than group ID and isActive status"
+            "Updating a label class updates fields other than group ID, isActive and label group ID"
           )
           true
         }
@@ -227,8 +250,9 @@ class AnnotationLabelClassDaoSpec
               ),
               user
             )
-            dbLabelClassOpt =
-              inserted.labelClassGroups.head.labelClasses.headOption
+            dbLabelClassOpt = inserted.labelClassGroups.headOption flatMap {
+              _.labelClasses.headOption
+            }
             _ <- dbLabelClassOpt traverse { labelClass =>
               AnnotationLabelClassDao.deactivate(labelClass.id)
             }
@@ -250,7 +274,9 @@ class AnnotationLabelClassDaoSpec
             (labelClassDeactivatedOpt, labelClassActivatedOpt).tupled match {
               case Some((deactivated, activated)) =>
                 !deactivated.isActive && activated.isActive
-              case _ => true
+              case None if annotationProjectCreate.labelClassGroups.size == 0 =>
+                true
+              case _ => false
             },
             "Label class activation and deactivation work"
           )

@@ -34,8 +34,9 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       parent: Option[AnnotationLabelClass]
   ): ConnectionIO[AnnotationLabelClass] =
     for {
-      newLabelClass <- (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
-        fr"""VALUES (
+      newLabelClass <-
+        (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+          fr"""VALUES (
         uuid_generate_v4(), ${classCreate.name}, ${annotationLabelGroup.id},
         ${classCreate.colorHexCode}, ${classCreate.default}, ${classCreate.determinant},
         ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description},
@@ -62,17 +63,18 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       is_determinant = ${labelClass.determinant},
       idx = ${labelClass.index},
       geometry_type = ${labelClass.geometryType},
-      description = ${labelClass.description}
+      description = ${labelClass.description},
+      annotation_label_group_id = ${labelClass.annotationLabelClassGroupId}
     WHERE
       id = $id
     """).update.run;
 
-  def activate(id: UUID): ConnectionIO[Int] =
+  def activate(id: UUID): ConnectionIO[AnnotationLabelClass] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
       is_active = true
     WHERE
       id = $id
-    """).update.run;
+    """).update.withUniqueGeneratedKeys[AnnotationLabelClass](fieldNames: _*);
 
   def deactivate(id: UUID): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET

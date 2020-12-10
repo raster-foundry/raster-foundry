@@ -142,7 +142,9 @@ class AnnotationLabelClassGroupDaoSpec
                   group.campaignId == groupUpdated.campaignId &&
                   groupUpdated.index == groupToUpdate.index &&
                   groupUpdated.name == groupToUpdate.name
-              case _ => true
+              case None if annotationProjectCreate.labelClassGroups.size == 0 =>
+                true
+              case _ => false
             },
             "Only name and index fields can be updated for label class group"
           )
@@ -172,11 +174,8 @@ class AnnotationLabelClassGroupDaoSpec
             groupDeactivatedOpt <- classGroupOpt flatTraverse { group =>
               AnnotationLabelClassGroupDao.getGroupWithClassesById(group.id)
             }
-            _ <- classGroupOpt traverse { group =>
+            groupActivatedOpt <- classGroupOpt traverse { group =>
               AnnotationLabelClassGroupDao.activate(group.id)
-            }
-            groupActivatedOpt <- classGroupOpt flatTraverse { group =>
-              AnnotationLabelClassGroupDao.getGroupWithClassesById(group.id)
             }
           } yield { (groupDeactivatedOpt, groupActivatedOpt) }
 
@@ -187,7 +186,9 @@ class AnnotationLabelClassGroupDaoSpec
             (deactivatedOpt, activatedOpt).tupled match {
               case Some((deactivated, activated)) =>
                 !deactivated.isActive && activated.isActive
-              case _ => true
+              case None if annotationProjectCreate.labelClassGroups.size == 0 =>
+                true
+              case _ => false
             },
             "Label class group activation and deactivation work"
           )
