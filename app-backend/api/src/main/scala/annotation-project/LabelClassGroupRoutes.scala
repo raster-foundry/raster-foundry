@@ -76,8 +76,8 @@ trait LabelClassGroupRoutes
           entity(as[AnnotationLabelClassGroup.Create]) { classGroupCreate =>
             onComplete {
               (for {
-                groups <-
-                  AnnotationLabelClassGroupDao.listByProjectId(projectId)
+                groups <- AnnotationLabelClassGroupDao.listByProjectId(
+                  projectId)
                 projectOpt <- AnnotationProjectDao.getById(projectId)
                 created <- projectOpt traverse { project =>
                   AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(

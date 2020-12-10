@@ -103,9 +103,10 @@ object AnnotationLabelClassGroupDao
     for {
       groupOpt <- groupIO
       classes <- AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(id)
-    } yield groupOpt map { group =>
-      group.withLabelClasses(classes)
-    }
+    } yield
+      groupOpt map { group =>
+        group.withLabelClasses(classes)
+      }
   }
 
   def update(id: UUID, group: AnnotationLabelClassGroup): ConnectionIO[Int] =
