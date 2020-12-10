@@ -219,11 +219,13 @@ trait LabelClassGroupRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          completeSingleOrNotFound {
-            AnnotationLabelClassGroupDao
+          onSuccess(
+             AnnotationLabelClassGroupDao
               .deactivate(labelClassGroupId)
               .transact(xa)
               .unsafeToFuture
+          ) {
+            completeSingleOrNotFound
           }
         }
       }

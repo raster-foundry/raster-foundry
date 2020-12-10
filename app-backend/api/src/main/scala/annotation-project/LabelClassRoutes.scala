@@ -70,8 +70,9 @@ trait LabelClassRoutes
             complete(
               StatusCodes.Created,
               (for {
-                annotationLabelGroupOpt <- AnnotationLabelClassGroupDao
-                  .getGroupWithClassesById(groupId)
+                annotationLabelGroupOpt <-
+                  AnnotationLabelClassGroupDao
+                    .getGroupWithClassesById(groupId)
                 insert <- annotationLabelGroupOpt traverse { groupWithClass =>
                   AnnotationLabelClassDao
                     .insertAnnotationLabelClass(
@@ -203,11 +204,13 @@ trait LabelClassRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          completeSingleOrNotFound {
+          onSuccess(
             AnnotationLabelClassDao
               .deactivate(labelClassId)
               .transact(xa)
               .unsafeToFuture
+          ) {
+            completeSingleOrNotFound
           }
         }
       }
