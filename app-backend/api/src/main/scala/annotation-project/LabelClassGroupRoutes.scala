@@ -220,7 +220,7 @@ trait LabelClassGroupRoutes
             .unsafeToFuture
         } {
           onSuccess(
-             AnnotationLabelClassGroupDao
+            AnnotationLabelClassGroupDao
               .deactivate(labelClassGroupId)
               .transact(xa)
               .unsafeToFuture

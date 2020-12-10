@@ -70,9 +70,8 @@ trait LabelClassRoutes
             complete(
               StatusCodes.Created,
               (for {
-                annotationLabelGroupOpt <-
-                  AnnotationLabelClassGroupDao
-                    .getGroupWithClassesById(groupId)
+                annotationLabelGroupOpt <- AnnotationLabelClassGroupDao
+                  .getGroupWithClassesById(groupId)
                 insert <- annotationLabelGroupOpt traverse { groupWithClass =>
                   AnnotationLabelClassDao
                     .insertAnnotationLabelClass(
