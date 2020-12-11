@@ -22,7 +22,8 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
     "is_determinant",
     "idx",
     "geometry_type",
-    "description"
+    "description",
+    "is_active"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -37,15 +38,47 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
         fr"""VALUES (
         uuid_generate_v4(), ${classCreate.name}, ${annotationLabelGroup.id},
         ${classCreate.colorHexCode}, ${classCreate.default}, ${classCreate.determinant},
-        ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description}
+        ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description},
+        ${classCreate.isActive}
       )""").update.withUniqueGeneratedKeys[AnnotationLabelClass](fieldNames: _*)
       _ <- parent traverse { parentClass =>
         fr"INSERT INTO label_class_history VALUES (${parentClass.id}, ${newLabelClass.id})".update.run
       }
     } yield newLabelClass
 
+  def getById(id: UUID): ConnectionIO[Option[AnnotationLabelClass]] =
+    query.filter(id).selectOption
+
   def listAnnotationLabelClassByGroupId(
       groupId: UUID
   ): ConnectionIO[List[AnnotationLabelClass]] =
     query.filter(fr"annotation_label_group_id = ${groupId}").list
+
+  def update(id: UUID, labelClass: AnnotationLabelClass): ConnectionIO[Int] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      name = ${labelClass.name},
+      color_hex_code = ${labelClass.colorHexCode},
+      is_default = ${labelClass.default},
+      is_determinant = ${labelClass.determinant},
+      idx = ${labelClass.index},
+      geometry_type = ${labelClass.geometryType},
+      description = ${labelClass.description},
+      annotation_label_group_id = ${labelClass.annotationLabelClassGroupId}
+    WHERE
+      id = $id
+    """).update.run;
+
+  def activate(id: UUID): ConnectionIO[AnnotationLabelClass] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = true
+    WHERE
+      id = $id
+    """).update.withUniqueGeneratedKeys[AnnotationLabelClass](fieldNames: _*);
+
+  def deactivate(id: UUID): ConnectionIO[Int] =
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = false
+    WHERE
+      id = $id
+    """).update.run;
 }

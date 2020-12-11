@@ -129,4 +129,5 @@ app-lambda/opt/*
 stubs/
 *.semanticdb
 
+# prettier formatting rules
 .prettierignore
