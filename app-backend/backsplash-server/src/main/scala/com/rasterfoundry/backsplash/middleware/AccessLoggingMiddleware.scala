@@ -18,7 +18,7 @@ class AccessLoggingMiddleware[F[_]: Sync](
     else {
       Kleisli { (request: Request[F]) =>
         val requestStart = Instant.now
-        val headerSet: Set[CaseInsensitiveString] =
+        val headerWhitelist: Set[CaseInsensitiveString] =
           Set(
             CaseInsensitiveString("user-agent"),
             CaseInsensitiveString("accept-encoding"),
@@ -29,7 +29,7 @@ class AccessLoggingMiddleware[F[_]: Sync](
         val headers =
           Map(
             request.headers.toList.filter(header =>
-              headerSet.contains(header.name)
+              headerWhitelist.contains(header.name)
             ) map { header =>
               header.name.toString.toLowerCase -> header.value.asJson
             }: _*
