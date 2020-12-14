@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.middleware.AccessLoggingMiddleware
 import com.rasterfoundry.common.{Config => CommonConfig}
 import com.rasterfoundry.database.Config.statusReapingConfig
 import com.rasterfoundry.database.TaskDao
@@ -33,7 +34,6 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 import java.util.concurrent.{Executors, TimeUnit}
-import com.rasterfoundry.backsplash.middleware.AccessLoggingMiddleware
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
