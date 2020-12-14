@@ -47,7 +47,6 @@ node {
           // Retag images with release tag and push to ECR
           [
             "raster-foundry-nginx-api",
-            "raster-foundry-nginx-backsplash",
             "raster-foundry-api-server",
             "raster-foundry-backsplash",
             "raster-foundry-batch",

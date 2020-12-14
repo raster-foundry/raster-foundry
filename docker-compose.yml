@@ -34,23 +34,6 @@ services:
       - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
       - ./nginx/etc/nginx/conf.d/api.conf:/etc/nginx/conf.d/default.conf
 
-  nginx-backsplash:
-    image: raster-foundry-nginx-backsplash
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.backsplash
-    ports:
-      - "8081:443"
-    extra_hosts:
-      - "api-server:127.0.0.1"
-    links:
-      - backsplash
-    volumes:
-      - ./nginx/srv/dist/:/srv/dist/
-      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
-      - ./nginx/etc/nginx/conf.d/backsplash.conf:/etc/nginx/conf.d/default.conf
-
   api-server:
     # If changing container, make sure to update app-backend/api/Dockerfile as well
     image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
