@@ -14,7 +14,7 @@ object Config {
   object server {
     private val serverConfig = config.getConfig("server")
     val timeoutSeconds = serverConfig.getInt("timeoutSeconds")
-    val requestLimit = serverConfig.getInt("requestLimit")
+    val doAccessLogging = serverConfig.getBoolean("doAccessLogging")
   }
 
   object cache {
@@ -23,11 +23,6 @@ object Config {
       cacheConfig.getBoolean("authorizationCacheEnable")
     val authenticationCacheEnable =
       cacheConfig.getBoolean("authenticationCacheEnable")
-  }
-
-  object metrics {
-    private val metricsConfig = config.getConfig("metrics")
-    val enableMetrics = metricsConfig.getBoolean("enableMetrics")
   }
 
   object healthcheck {

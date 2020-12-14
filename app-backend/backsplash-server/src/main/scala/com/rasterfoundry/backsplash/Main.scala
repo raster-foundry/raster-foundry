@@ -33,6 +33,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 import java.util.concurrent.{Executors, TimeUnit}
+import com.rasterfoundry.backsplash.middleware.AccessLoggingMiddleware
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
@@ -60,6 +61,9 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val rollbarReporter: RollbarReporter[IO] =
     new RollbarReporter()
 
+  def withAccessLogging(svc: HttpRoutes[IO]) =
+    new AccessLoggingMiddleware(svc).withLogging(Config.server.doAccessLogging)
+
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
       svc,
@@ -74,7 +78,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
 
   def baseMiddleware(svc: HttpRoutes[IO]) =
-    RequestRewriteMiddleware(withCORS(withTimeout(svc)), xa)
+    RequestRewriteMiddleware(withCORS(withTimeout(withAccessLogging(svc))), xa)
 
   def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
     Timeout(
