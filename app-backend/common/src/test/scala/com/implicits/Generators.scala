@@ -1101,16 +1101,14 @@ object Generators extends ArbitraryInstances {
           LabelGeomType.PolygonLabel
         )
       ),
-      Gen.option(nonEmptyStringGen),
-      arbitrary[Boolean]
+      Gen.option(nonEmptyStringGen)
     ).mapN(AnnotationLabelClass.Create.apply _)
 
   private def labelClassGroupGen: Gen[AnnotationLabelClassGroup.Create] =
     (
       nonEmptyStringGen,
       Gen.option(Gen.choose(0, 1000)),
-      Gen.listOfN(1, labelClassCreateGen),
-      arbitrary[Boolean]
+      Gen.listOfN(1, labelClassCreateGen)
     ).mapN(AnnotationLabelClassGroup.Create.apply _)
 
   private def annotationProjectCreateGen: Gen[AnnotationProject.Create] =
@@ -1504,8 +1502,11 @@ object Generators extends ArbitraryInstances {
         taskSessionCompleteGen
       }
 
-    implicit def arbLabelClassCreate: Arbitrary[AnnotationLabelClass.Create] = Arbitrary { labelClassCreateGen }
+    implicit def arbLabelClassCreate: Arbitrary[AnnotationLabelClass.Create] =
+      Arbitrary { labelClassCreateGen }
 
-    implicit  def arbLabelClassGroup: Arbitrary[AnnotationLabelClassGroup.Create] = Arbitrary{ labelClassGroupGen }
+    implicit def arbLabelClassGroup
+        : Arbitrary[AnnotationLabelClassGroup.Create] =
+      Arbitrary { labelClassGroupGen }
   }
 }

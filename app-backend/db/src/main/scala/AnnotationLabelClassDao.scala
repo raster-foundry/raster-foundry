@@ -34,12 +34,13 @@ object AnnotationLabelClassDao extends Dao[AnnotationLabelClass] {
       parent: Option[AnnotationLabelClass]
   ): ConnectionIO[AnnotationLabelClass] =
     for {
-      newLabelClass <- (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
-        fr"""VALUES (
+      newLabelClass <-
+        (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+          fr"""VALUES (
         uuid_generate_v4(), ${classCreate.name}, ${annotationLabelGroup.id},
         ${classCreate.colorHexCode}, ${classCreate.default}, ${classCreate.determinant},
         ${classCreate.index}, ${classCreate.geometryType}, ${classCreate.description},
-        ${classCreate.isActive}
+        true
       )""").update.withUniqueGeneratedKeys[AnnotationLabelClass](fieldNames: _*)
       _ <- parent traverse { parentClass =>
         fr"INSERT INTO label_class_history VALUES (${parentClass.id}, ${newLabelClass.id})".update.run

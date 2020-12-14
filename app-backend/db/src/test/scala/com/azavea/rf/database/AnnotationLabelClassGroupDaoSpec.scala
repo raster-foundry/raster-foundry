@@ -115,8 +115,7 @@ class AnnotationLabelClassGroupDaoSpec
             name = labelClassGroupCreate.name,
             annotationProjectId = None,
             campaignId = None,
-            index = labelClassGroupCreate.index.getOrElse(0),
-            isActive = labelClassGroupCreate.isActive
+            index = labelClassGroupCreate.index.getOrElse(0)
           )
           val updateIO = for {
             user <- UserDao.create(userCreate)

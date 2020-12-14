@@ -70,8 +70,7 @@ class AnnotationLabelClassDaoSpec
                 alc.determinant,
                 alc.index,
                 alc.geometryType,
-                alc.description,
-                alc.isActive
+                alc.description
               )
             )
             .toSet
@@ -134,8 +133,7 @@ class AnnotationLabelClassDaoSpec
                   alc.determinant,
                   alc.index,
                   alc.geometryType,
-                  alc.description,
-                  alc.isActive
+                  alc.description
                 )
               )
 
@@ -176,8 +174,7 @@ class AnnotationLabelClassDaoSpec
             determinant = annotationLabelClassCreate.determinant,
             index = annotationLabelClassCreate.index,
             geometryType = annotationLabelClassCreate.geometryType,
-            description = annotationLabelClassCreate.description,
-            isActive = annotationLabelClassCreate.isActive
+            description = annotationLabelClassCreate.description
           )
           val updateIO = for {
             user <- UserDao.create(userCreate)
