@@ -31,8 +31,7 @@ object AnnotationLabelClass {
       determinant: Option[Boolean],
       index: Int,
       geometryType: Option[LabelGeomType] = None,
-      description: Option[String] = None,
-      isActive: Boolean = true
+      description: Option[String] = None
   )
 
   object Create {
