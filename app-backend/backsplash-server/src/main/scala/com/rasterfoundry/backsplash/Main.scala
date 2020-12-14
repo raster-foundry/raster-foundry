@@ -112,7 +112,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       xa
     )
 
-  val metricMiddleware = new MetricMiddleware(xa)
   implicit val tracingContext: TracingContextBuilder[IO] =
     if (CommonConfig.awsbatch.environment.toUpperCase == "DEVELOPMENT") {
       JaegerTracer.tracingContextBuilder
@@ -121,22 +120,18 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     }
 
   val mosaicService: HttpRoutes[IO] = authenticators.tokensAuthMiddleware(
-    metricMiddleware.middleware(
-      new MosaicService(
-        SceneToLayerDao(),
-        projectLayerMosaicImplicits,
-        analysisManager,
-        xa,
-        rasterIO
-      ).routes
-    )
+    new MosaicService(
+      SceneToLayerDao(),
+      projectLayerMosaicImplicits,
+      analysisManager,
+      xa,
+      rasterIO
+    ).routes
   )
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      metricMiddleware.middleware(
-        new AnalysisService(analysisManager).routes
-      )
+      new AnalysisService(analysisManager).routes
     )
 
   val sceneMosaicService: HttpRoutes[IO] =
