@@ -11,8 +11,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added additional fields to the labels MVT endpoint [#5530](https://github.com/raster-foundry/raster-foundry/pull/5530)
 - Backsplash server does its own access logging [#5531](https://github.com/raster-foundry/raster-foundry/pull/5531)
 
-### Added
-
 ## [1.56.0] - 2020-12-04
 ### Added
 - Added rewrite for tile requests prefixed with `/tiles/` [#5527](https://github.com/raster-foundry/raster-foundry/pull/5527)
