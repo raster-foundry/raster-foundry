@@ -62,6 +62,8 @@ object MVTLayerDao {
             join_table_join.geometry,
             ST_TileEnvelope(${z},${x},${y})
           ) AS geom,
+          join_table_join.annotation_task_id,
+          annotation_label_classes.id as label_class_id,
           annotation_label_classes.name,
           annotation_label_classes.color_hex_code
         FROM

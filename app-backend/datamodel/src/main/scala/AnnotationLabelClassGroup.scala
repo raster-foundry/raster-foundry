@@ -36,8 +36,7 @@ object AnnotationLabelClassGroup {
   final case class Create(
       name: String,
       index: Option[Int],
-      classes: List[AnnotationLabelClass.Create],
-      isActive: Boolean = true
+      classes: List[AnnotationLabelClass.Create]
   )
 
   object Create {
