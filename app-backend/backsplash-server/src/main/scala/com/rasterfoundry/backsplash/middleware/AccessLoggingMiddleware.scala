@@ -4,8 +4,8 @@ import cats.data.Kleisli
 import cats.effect.Sync
 import com.typesafe.scalalogging.Logger
 import io.circe.syntax._
-import org.http4s.{HttpRoutes, Request}
 import org.http4s.util.CaseInsensitiveString
+import org.http4s.{HttpRoutes, Request}
 
 import java.time.Instant
 
@@ -29,8 +29,7 @@ class AccessLoggingMiddleware[F[_]: Sync](
         val headers =
           Map(
             request.headers.toList.filter(header =>
-              headerWhitelist.contains(header.name)
-            ) map { header =>
+              headerWhitelist.contains(header.name)) map { header =>
               header.name.toString.toLowerCase -> header.value.asJson
             }: _*
           )
