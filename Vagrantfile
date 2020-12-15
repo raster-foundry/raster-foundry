@@ -27,8 +27,6 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
   # nginx-api
   config.vm.network :forwarded_port, guest: 9100, host: Integer(ENV.fetch("RF_PORT_9100", 9100))
-  # nginx backsplash tileserver
-  config.vm.network :forwarded_port, guest: 8081, host: Integer(ENV.fetch("RF_PORT_8081", 8081))
   # spark master
   config.vm.network :forwarded_port, guest: 8888, host: Integer(ENV.fetch("RF_PORT_8888", 8888))
   # spark worker
