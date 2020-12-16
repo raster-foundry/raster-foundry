@@ -15,7 +15,7 @@ then
     then
         usage
     else
-        TILE_SERVER_LOCATION="http://localhost:8080" \
+        TILE_SERVER_LOCATION="http://localhost:8081" \
                             docker-compose \
                             up backsplash api-server nginx-api memcached
     fi

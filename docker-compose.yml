@@ -161,7 +161,7 @@ services:
       - DB_SCENE_SEARCH_BUFFER_PERCENTAGE=0.1
       - DB_TASK_STATUS_EXPIRATION_SECONDS=3600
     ports:
-      - "8080:8080"
+      - "8081:8080"
       - "9030:9030"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
