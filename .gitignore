@@ -128,3 +128,6 @@ app-lambda/opt/*
 # Typescript stubs from panrec
 stubs/
 *.semanticdb
+
+# prettier formatting rules
+.prettierignore

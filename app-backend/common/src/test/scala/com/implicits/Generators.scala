@@ -1171,6 +1171,27 @@ object Generators extends ArbitraryInstances {
       arbitrary[Boolean]
     ).mapN(Campaign.Clone.apply _)
 
+  private def taskSessionCreateGen: Gen[TaskSession.Create] =
+    for {
+      taskSessionType <- Gen.oneOf(
+        TaskSessionType.LabelSession,
+        TaskSessionType.ValidateSession
+      )
+    } yield TaskSession.Create(
+      taskSessionType
+    )
+
+  private def taskSessionCompleteGen: Gen[TaskSession.Complete] =
+    for {
+      toStatus <- taskStatusGen
+      note <- nonEmptyStringGen map { s =>
+        Some(NonEmptyString.unsafeFrom(s))
+      }
+    } yield TaskSession.Complete(
+      toStatus,
+      note
+    )
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] =
       Arbitrary {
@@ -1471,5 +1492,21 @@ object Generators extends ArbitraryInstances {
         campaignCloneGen
       }
 
+    implicit def arbTaskSessionCreate: Arbitrary[TaskSession.Create] =
+      Arbitrary {
+        taskSessionCreateGen
+      }
+
+    implicit def arbTaskSessionComplete: Arbitrary[TaskSession.Complete] =
+      Arbitrary {
+        taskSessionCompleteGen
+      }
+
+    implicit def arbLabelClassCreate: Arbitrary[AnnotationLabelClass.Create] =
+      Arbitrary { labelClassCreateGen }
+
+    implicit def arbLabelClassGroup
+        : Arbitrary[AnnotationLabelClassGroup.Create] =
+      Arbitrary { labelClassGroupGen }
   }
 }

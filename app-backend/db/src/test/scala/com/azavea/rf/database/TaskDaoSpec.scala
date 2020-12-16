@@ -1940,4 +1940,120 @@ class TaskDaoSpec
       }
     }
   }
+
+  test("get no random task when there is one corresponding session already") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
+        ) =>
+          {
+            val tfcFirstTaskOnly = taskFeaturesCreate.copy(
+              features = taskFeaturesCreate.features.take(1)
+            )
+            val randomTaskIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProject <- AnnotationProjectDao.insert(
+                annotationProjectCreate,
+                dbUser
+              )
+              Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  tfcFirstTaskOnly,
+                  dbAnnotationProject
+                ),
+                dbUser
+              )
+              firstTask = features.headOption
+              _ <- firstTask traverse { task =>
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    dbUser,
+                    task.properties.status,
+                    task.id
+                  )
+              }
+              randomTask <- TaskDao.randomTask(
+                TaskQueryParameters(
+                  status = Some(TaskStatus.Unlabeled)
+                ),
+                NonEmptyList.one(dbAnnotationProject.id),
+                true
+              )
+            } yield randomTask
+
+            val task = randomTaskIO.transact(xa).unsafeRunSync
+
+            assert(
+              task.isEmpty,
+              "No task available because there is a session in progress"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
+  test("get random task when session expired") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
+        ) =>
+          {
+            val tfcFirstTaskOnly = taskFeaturesCreate.copy(
+              features = taskFeaturesCreate.features.take(1)
+            )
+            val randomTaskIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProject <- AnnotationProjectDao.insert(
+                annotationProjectCreate,
+                dbUser
+              )
+              Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  tfcFirstTaskOnly,
+                  dbAnnotationProject
+                ),
+                dbUser
+              )
+              firstTask = features.headOption
+              _ <- firstTask traverse { task =>
+                customTaskSessionIO(
+                  taskSessionCreate,
+                  dbUser,
+                  task.properties.status,
+                  task.id
+                )
+              }
+              randomTask <- TaskDao.randomTask(
+                TaskQueryParameters(
+                  status = Some(TaskStatus.Unlabeled)
+                ),
+                NonEmptyList.one(dbAnnotationProject.id),
+                true
+              )
+            } yield (randomTask, firstTask)
+
+            val (randTaskOpt, firstTaskOpt) =
+              randomTaskIO.transact(xa).unsafeRunSync
+
+            assert(
+              randTaskOpt == firstTaskOpt,
+              "One task availabel because the session expired"
+            )
+
+            true
+          }
+      }
+    }
+  }
 }

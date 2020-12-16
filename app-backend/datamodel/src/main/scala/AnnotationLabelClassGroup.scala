@@ -10,7 +10,8 @@ final case class AnnotationLabelClassGroup(
     name: String,
     annotationProjectId: Option[UUID],
     campaignId: Option[UUID],
-    index: Int
+    index: Int,
+    isActive: Boolean = true
 ) {
   def withLabelClasses(
       classes: List[AnnotationLabelClass]
@@ -21,6 +22,7 @@ final case class AnnotationLabelClassGroup(
       annotationProjectId,
       campaignId,
       index,
+      isActive,
       classes
     )
 }
@@ -48,8 +50,19 @@ object AnnotationLabelClassGroup {
       annotationProjectId: Option[UUID],
       campaignId: Option[UUID],
       index: Int,
+      isActive: Boolean = true,
       labelClasses: List[AnnotationLabelClass]
-  )
+  ) {
+    def toClassGroup =
+      AnnotationLabelClassGroup(
+        id,
+        name,
+        annotationProjectId,
+        campaignId,
+        index,
+        isActive
+      )
+  }
 
   object WithLabelClasses {
     implicit val encWithLabelClasses: Encoder[WithLabelClasses] = deriveEncoder

@@ -365,9 +365,11 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
-  def addTaskLabels(projectId: UUID,
-                    taskId: UUID,
-                    deleteBeforeAdding: Boolean): Route =
+  def addTaskLabels(
+      projectId: UUID,
+      taskId: UUID,
+      deleteBeforeAdding: Boolean
+  ): Route =
     addLabels(
       projectId,
       taskId,
@@ -380,9 +382,11 @@ trait AnnotationProjectTaskRoutes
       deleteBeforeAdding
     )
 
-  def validateTaskLabels(projectId: UUID,
-                         taskId: UUID,
-                         deleteBeforeAdding: Boolean): Route =
+  def validateTaskLabels(
+      projectId: UUID,
+      taskId: UUID,
+      deleteBeforeAdding: Boolean
+  ): Route =
     addLabels(
       projectId,
       taskId,

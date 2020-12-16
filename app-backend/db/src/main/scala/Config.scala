@@ -42,4 +42,10 @@ object Config {
       UUID.fromString(auth0Config.getString("defaultOrganizationId"))
     val systemUser = auth0Config.getString("systemUser")
   }
+
+  object taskSessionTtlConfig {
+    private val taskSessionTtlConfig = config.getConfig("taskSessionTtl")
+    val taskSessionTtlSeconds =
+      taskSessionTtlConfig.getInt("taskSessionTtlSeconds")
+  }
 }

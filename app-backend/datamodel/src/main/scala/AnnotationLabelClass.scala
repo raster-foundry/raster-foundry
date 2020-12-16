@@ -14,7 +14,8 @@ final case class AnnotationLabelClass(
     determinant: Option[Boolean],
     index: Int,
     geometryType: Option[LabelGeomType] = None,
-    description: Option[String] = None
+    description: Option[String] = None,
+    isActive: Boolean = true
 )
 
 object AnnotationLabelClass {

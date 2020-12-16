@@ -127,4 +127,7 @@ trait EnumMeta {
       TaskReviewStatus.fromString,
       _.repr
     )
+
+  implicit val taskSessionTypeMeta: Meta[TaskSessionType] =
+    pgEnumString("task_session_type", TaskSessionType.fromString, _.repr)
 }
