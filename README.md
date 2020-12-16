@@ -134,9 +134,8 @@ The Vagrant configuration maps the following host ports to services running in t
 | ------------------------- | ------------------------------- | -------------------- |
 | Application Frontend      | [`9091`](http://localhost:9091) | `RF_PORT_9091`       |
 | Nginx (api)               | [`9100`](http://localhost:9100) | `RF_PORT_9100`       |
-| Nginx (tiler)             | [`9101`](http://localhost:8081) | `RF_PORT_8081`       |
 | Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
-| Tile Server (http4s)      | [`9900`](http://localhost:8080) | `RF_PORT_8080`       |
+| Tile Server (http4s)      | [`8081`](http://localhost:8081) | `RF_PORT_8081`       |
 | Application Server (JMX)  | `9010`                          | `RF_PORT_9010`       |
 | Tile Server (JMX)         | `9030`                          | `RF_PORT_9030`       |
 
