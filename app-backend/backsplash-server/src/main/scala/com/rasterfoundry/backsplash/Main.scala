@@ -62,7 +62,9 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     new RollbarReporter()
 
   def withAccessLogging(svc: HttpRoutes[IO]) =
-    new AccessLoggingMiddleware(svc).withLogging(Config.server.doAccessLogging)
+    new AccessLoggingMiddleware(svc, logger).withLogging(
+      Config.server.doAccessLogging
+    )
 
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
