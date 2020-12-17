@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Backsplash server does its own access logging [#5531](https://github.com/raster-foundry/raster-foundry/pull/5531)
+
 ### Removed
 - Remove Nginx configuration and containers for Backsplash [#5532](https://github.com/raster-foundry/raster-foundry/pull/5532)
 
@@ -13,7 +16,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Support fetching random task session [#5525](https://github.com/raster-foundry/raster-foundry/pull/5525)
 - Added CRUD endpoints for annotation project label class groups and label classses [#5526](https://github.com/raster-foundry/raster-foundry/pull/5526)
 - Added additional fields to the labels MVT endpoint [#5530](https://github.com/raster-foundry/raster-foundry/pull/5530)
-- Backsplash server does its own access logging [#5531](https://github.com/raster-foundry/raster-foundry/pull/5531)
 
 ## [1.56.0] - 2020-12-04
 ### Added
