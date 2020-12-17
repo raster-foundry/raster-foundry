@@ -29,8 +29,7 @@ class AccessLoggingMiddleware[F[_]: Sync](
         val headers =
           Map(
             request.headers.toList.filter(header =>
-              headerWhitelist.contains(header.name)
-            ) map { header =>
+              headerWhitelist.contains(header.name)) map { header =>
               header.name.toString.toLowerCase -> header.value.asJson
             }: _*
           )
