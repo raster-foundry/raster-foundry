@@ -29,7 +29,8 @@ class AccessLoggingMiddleware[F[_]: Sync](
         val headers =
           Map(
             request.headers.toList.filter(header =>
-              headerWhitelist.contains(header.name)) map { header =>
+              headerWhitelist.contains(header.name)
+            ) map { header =>
               header.name.toString.toLowerCase -> header.value.asJson
             }: _*
           )
@@ -37,7 +38,9 @@ class AccessLoggingMiddleware[F[_]: Sync](
           Map(
             "method" -> request.method.toString.asJson,
             "uri" -> s"${request.uri}".asJson,
-            "httpVersion" -> s"${request.httpVersion}".asJson
+            "httpVersion" -> s"${request.httpVersion}".asJson,
+            "requesterIp" -> (request.remote map { _.toString }).asJson,
+            "forwardedFor" -> (request.from map { _.toString }).asJson
           ) ++ headers
         service.run(request) map { resp =>
           val requestEnd = Instant.now
