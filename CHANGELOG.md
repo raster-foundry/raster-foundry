@@ -11,9 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Add TaskSession data model and basic endpoints [#5522](https://github.com/raster-foundry/raster-foundry/pull/5522)
 - Support fetching random task session [#5525](https://github.com/raster-foundry/raster-foundry/pull/5525)
-- Added TaskSession data model and basic endpoints [#5522](https://github.com/raster-foundry/raster-foundry/pull/5522)
 - Added CRUD endpoints for annotation project label class groups and label classses [#5526](https://github.com/raster-foundry/raster-foundry/pull/5526)
 - Added additional fields to the labels MVT endpoint [#5530](https://github.com/raster-foundry/raster-foundry/pull/5530)
+- Backsplash server does its own access logging [#5531](https://github.com/raster-foundry/raster-foundry/pull/5531)
 
 ## [1.56.0] - 2020-12-04
 ### Added
