@@ -1,17 +1,15 @@
 package com.rasterfoundry.api.annotationProject
 
 import com.rasterfoundry.akkautil._
+import com.rasterfoundry.api.CommonLabelClassRoutes
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
 import cats.effect._
-import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
-import doobie.util.transactor.Transactor
 
 import java.util.UUID
 
@@ -21,6 +19,8 @@ trait LabelClassRoutes
     with Authentication {
 
   val xa: Transactor[IO]
+
+  val commonLabelClassRoutes = new CommonLabelClassRoutes(xa, ec)
 
   def listGroupLabelClasses(projectId: UUID, labelClassGroupId: UUID): Route =
     authenticate { user =>
@@ -39,12 +39,7 @@ trait LabelClassRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
-            AnnotationLabelClassDao
-              .listAnnotationLabelClassByGroupId(labelClassGroupId)
-              .transact(xa)
-              .unsafeToFuture
-          }
+          commonLabelClassRoutes.listLabelClasses(labelClassGroupId)
         }
       }
     }
@@ -67,24 +62,7 @@ trait LabelClassRoutes
             .unsafeToFuture
         } {
           entity(as[AnnotationLabelClass.Create]) { labelClassCreate =>
-            complete(
-              StatusCodes.Created,
-              (for {
-                annotationLabelGroupOpt <- AnnotationLabelClassGroupDao
-                  .getGroupWithClassesById(groupId)
-                insert <- annotationLabelGroupOpt traverse { groupWithClass =>
-                  AnnotationLabelClassDao
-                    .insertAnnotationLabelClass(
-                      labelClassCreate,
-                      groupWithClass.toClassGroup,
-                      None
-                    )
-                }
-
-              } yield insert)
-                .transact(xa)
-                .unsafeToFuture
-            )
+            commonLabelClassRoutes.addLabelClass(labelClassCreate, groupId)
           }
         }
       }
@@ -108,12 +86,9 @@ trait LabelClassRoutes
               .transact(xa)
               .unsafeToFuture
           } {
-            complete {
-              AnnotationLabelClassDao
-                .getById(labelClassId)
-                .transact(xa)
-                .unsafeToFuture
-            }
+            commonLabelClassRoutes.getLabelClass(
+              labelClassId
+            )
           }
         }
       }
@@ -138,17 +113,10 @@ trait LabelClassRoutes
               .unsafeToFuture
           } {
             entity(as[AnnotationLabelClass]) { updatedClass =>
-              onSuccess(
-                AnnotationLabelClassDao
-                  .update(
-                    labelClassId,
-                    updatedClass
-                  )
-                  .transact(xa)
-                  .unsafeToFuture
-              ) {
-                completeSingleOrNotFound
-              }
+              commonLabelClassRoutes.updateLabelClass(
+                updatedClass,
+                labelClassId
+              )
             }
           }
         }
@@ -172,12 +140,7 @@ trait LabelClassRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
-            AnnotationLabelClassDao
-              .activate(labelClassId)
-              .transact(xa)
-              .unsafeToFuture
-          }
+          commonLabelClassRoutes.activeLabelClass(labelClassId)
         }
 
       }
@@ -203,14 +166,7 @@ trait LabelClassRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          onSuccess(
-            AnnotationLabelClassDao
-              .deactivate(labelClassId)
-              .transact(xa)
-              .unsafeToFuture
-          ) {
-            completeSingleOrNotFound
-          }
+          commonLabelClassRoutes.deactivateLabelClass(labelClassId)
         }
       }
     }
