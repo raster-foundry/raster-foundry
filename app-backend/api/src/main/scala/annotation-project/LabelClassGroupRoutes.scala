@@ -17,6 +17,7 @@ import doobie.util.transactor.Transactor
 import scala.util.{Failure, Success}
 
 import java.util.UUID
+import com.rasterfoundry.api.CommonLabelClassGroupRoutes
 
 trait LabelClassGroupRoutes
     extends CommonHandlers
@@ -26,6 +27,8 @@ trait LabelClassGroupRoutes
     with QueryParametersCommon {
 
   val xa: Transactor[IO]
+
+  val commonLabelClassGroupRoutes = new CommonLabelClassGroupRoutes(xa, ec)
 
   def listLabelClassGroups(projectId: UUID): Route =
     authenticate { user =>
@@ -76,8 +79,8 @@ trait LabelClassGroupRoutes
           entity(as[AnnotationLabelClassGroup.Create]) { classGroupCreate =>
             onComplete {
               (for {
-                groups <- AnnotationLabelClassGroupDao.listByProjectId(
-                  projectId)
+                groups <-
+                  AnnotationLabelClassGroupDao.listByProjectId(projectId)
                 projectOpt <- AnnotationProjectDao.getById(projectId)
                 created <- projectOpt traverse { project =>
                   AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
@@ -124,18 +127,13 @@ trait LabelClassGroupRoutes
               .transact(xa)
               .unsafeToFuture
           } {
-            complete {
-              AnnotationLabelClassGroupDao
-                .getGroupWithClassesById(classGroupId)
-                .transact(xa)
-                .unsafeToFuture
-            }
+            commonLabelClassGroupRoutes.getLabelClassGroup(classGroupId)
           }
         }
       }
     }
 
-  def updateLabelClassGroup(projectId: UUID, labelClassGroupId: UUID): Route =
+  def updateLabelClassGroup(projectId: UUID, classGroupId: UUID): Route =
     authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
@@ -154,24 +152,17 @@ trait LabelClassGroupRoutes
               .unsafeToFuture
           } {
             entity(as[AnnotationLabelClassGroup]) { updatedClassGroup =>
-              onSuccess(
-                AnnotationLabelClassGroupDao
-                  .update(
-                    labelClassGroupId,
-                    updatedClassGroup
-                  )
-                  .transact(xa)
-                  .unsafeToFuture
-              ) {
-                completeSingleOrNotFound
-              }
+              commonLabelClassGroupRoutes.updateLabelClassGroup(
+                updatedClassGroup,
+                classGroupId
+              )
             }
           }
         }
       }
     }
 
-  def activateLabelClassGroup(projectId: UUID, labelClassGroupId: UUID): Route =
+  def activateLabelClassGroup(projectId: UUID, classGroupId: UUID): Route =
     authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
@@ -188,12 +179,7 @@ trait LabelClassGroupRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
-            AnnotationLabelClassGroupDao
-              .activate(labelClassGroupId)
-              .transact(xa)
-              .unsafeToFuture
-          }
+          commonLabelClassGroupRoutes.activateLabelClassGroup(classGroupId)
         }
 
       }
@@ -201,7 +187,7 @@ trait LabelClassGroupRoutes
 
   def deactivateLabelClassGroup(
       projectId: UUID,
-      labelClassGroupId: UUID
+      classGroupId: UUID
   ): Route =
     authenticate { user =>
       authorizeScope(
@@ -219,14 +205,7 @@ trait LabelClassGroupRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          onSuccess(
-            AnnotationLabelClassGroupDao
-              .deactivate(labelClassGroupId)
-              .transact(xa)
-              .unsafeToFuture
-          ) {
-            completeSingleOrNotFound
-          }
+          commonLabelClassGroupRoutes.deactivateLabelClassGroup(classGroupId)
         }
       }
     }
