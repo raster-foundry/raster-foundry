@@ -13,16 +13,19 @@ import doobie.implicits._
 
 import java.util.UUID
 
-trait LabelClassRoutes
+trait AnnotationProjectLabelClassRoutes
     extends CommonHandlers
     with Directives
     with Authentication {
 
   val xa: Transactor[IO]
 
-  val commonLabelClassRoutes = new CommonLabelClassRoutes(xa, ec)
+  def commonLabelClassRoutes: CommonLabelClassRoutes
 
-  def listGroupLabelClasses(projectId: UUID, labelClassGroupId: UUID): Route =
+  def listAnnotationProjectGroupLabelClasses(
+      projectId: UUID,
+      labelClassGroupId: UUID
+  ): Route =
     authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
@@ -44,7 +47,10 @@ trait LabelClassRoutes
       }
     }
 
-  def addLabelClassToGroup(projectId: UUID, groupId: UUID): Route =
+  def addAnnotationProjectLabelClassToGroup(
+      projectId: UUID,
+      groupId: UUID
+  ): Route =
     authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
@@ -68,7 +74,10 @@ trait LabelClassRoutes
       }
     }
 
-  def getLabelClass(projectId: UUID, labelClassId: UUID): Route =
+  def getAnnotationProjectLabelClass(
+      projectId: UUID,
+      labelClassId: UUID
+  ): Route =
     authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
@@ -94,7 +103,10 @@ trait LabelClassRoutes
       }
     }
 
-  def updateLabelClass(projectId: UUID, labelClassId: UUID): Route =
+  def updateAnnotationProjectLabelClass(
+      projectId: UUID,
+      labelClassId: UUID
+  ): Route =
     authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
@@ -123,7 +135,10 @@ trait LabelClassRoutes
       }
     }
 
-  def activateLabelClass(projectId: UUID, labelClassId: UUID): Route =
+  def activateAnnotationProjectLabelClass(
+      projectId: UUID,
+      labelClassId: UUID
+  ): Route =
     authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
@@ -146,7 +161,7 @@ trait LabelClassRoutes
       }
     }
 
-  def deactivateLabelClass(
+  def deactivateAnnotationProjectLabelClass(
       projectId: UUID,
       labelClassId: UUID
   ): Route =

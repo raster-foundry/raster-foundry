@@ -43,6 +43,9 @@ object Main extends App with Config with Router {
   val xa = RFTransactor.buildTransactor()
   implicit val ec = ExecutionContext.Implicits.global
 
+  val commonLabelClassGroupRoutes = new CommonLabelClassGroupRoutes(xa, ec)
+  val commonLabelClassRoutes = new CommonLabelClassRoutes(xa, ec)
+
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
   logger.info(s"Server Started (${canSelect})")
 
