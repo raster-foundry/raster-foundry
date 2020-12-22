@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Added
 - Backsplash server does its own access logging [#5531](https://github.com/raster-foundry/raster-foundry/pull/5531)
+- Added label class and label class group endpoints for campaigns [#5534](https://github.com/raster-foundry/raster-foundry/pull/5534)
 
 ### Removed
 - Remove Nginx configuration and containers for Backsplash [#5532](https://github.com/raster-foundry/raster-foundry/pull/5532)

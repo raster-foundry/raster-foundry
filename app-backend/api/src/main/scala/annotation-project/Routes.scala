@@ -24,8 +24,8 @@ trait AnnotationProjectRoutes
     with QueryParametersCommon
     with AnnotationProjectTaskRoutes
     with AnnotationProjectPermissionRoutes
-    with LabelClassGroupRoutes
-    with LabelClassRoutes {
+    with AnnotationProjectLabelClassGroupRoutes
+    with AnnotationProjectLabelClassRoutes {
 
   val xa: Transactor[IO]
 
@@ -75,47 +75,62 @@ trait AnnotationProjectRoutes
       } ~ pathPrefix("label-class-groups") {
         pathEndOrSingleSlash {
           get {
-            listLabelClassGroups(projectId)
+            listAnnotationProjectLabelClassGroups(projectId)
           } ~ post {
-            createLabelClassGroup(projectId)
+            createAnnotationProjectLabelClassGroup(projectId)
           }
         } ~ pathPrefix(JavaUUID) { labelClassGroupId =>
           pathEndOrSingleSlash {
             get {
-              getLabelClassGroup(projectId, labelClassGroupId)
+              getAnnotationProjectLabelClassGroup(projectId, labelClassGroupId)
             } ~ put {
-              updateLabelClassGroup(projectId, labelClassGroupId)
+              updateAnnotationProjectLabelClassGroup(
+                projectId,
+                labelClassGroupId
+              )
             }
           } ~ pathPrefix("activate") {
             post {
-              activateLabelClassGroup(projectId, labelClassGroupId)
+              activateAnnotationProjectLabelClassGroup(
+                projectId,
+                labelClassGroupId
+              )
             }
           } ~ pathPrefix("deactivate") {
             delete {
-              deactivateLabelClassGroup(projectId, labelClassGroupId)
+              deactivateAnnotationProjectLabelClassGroup(
+                projectId,
+                labelClassGroupId
+              )
             }
           } ~ pathPrefix("label-classes") {
             pathEndOrSingleSlash {
               get {
-                listGroupLabelClasses(projectId, labelClassGroupId)
+                listAnnotationProjectGroupLabelClasses(
+                  projectId,
+                  labelClassGroupId
+                )
               } ~
                 post {
-                  addLabelClassToGroup(projectId, labelClassGroupId)
+                  addAnnotationProjectLabelClassToGroup(
+                    projectId,
+                    labelClassGroupId
+                  )
                 }
             } ~ pathPrefix(JavaUUID) { labelClassId =>
               pathEndOrSingleSlash {
                 get {
-                  getLabelClass(projectId, labelClassId)
+                  getAnnotationProjectLabelClass(projectId, labelClassId)
                 } ~ put {
-                  updateLabelClass(projectId, labelClassId)
+                  updateAnnotationProjectLabelClass(projectId, labelClassId)
                 }
               } ~ pathPrefix("activate") {
                 post {
-                  activateLabelClass(projectId, labelClassId)
+                  activateAnnotationProjectLabelClass(projectId, labelClassId)
                 }
               } ~ pathPrefix("deactivate") {
                 delete {
-                  deactivateLabelClass(projectId, labelClassId)
+                  deactivateAnnotationProjectLabelClass(projectId, labelClassId)
                 }
               }
             }
