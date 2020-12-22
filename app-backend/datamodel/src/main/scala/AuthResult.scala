@@ -1,8 +1,8 @@
 package com.rasterfoundry.datamodel
 
-import cats.{Applicative, Functor}
 import cats.syntax.applicative._
 import cats.syntax.functor._
+import cats.{Applicative, Functor}
 
 sealed trait AuthResult[T] {
   def toBoolean: Boolean
