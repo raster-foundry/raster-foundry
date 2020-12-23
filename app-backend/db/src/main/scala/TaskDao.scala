@@ -1050,13 +1050,26 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         }
       campaignAuthedProjects <- annotationProjectParams.campaignId traverse {
         campaignId =>
-          AnnotationProjectDao
-            .listByCampaignQB(campaignId)
-            .filter(annotationProjectParams)
-            .filter(annotationProjectIdOpt)
-            .list(limit) map { projects =>
-            projects map { _.id }
-          }
+          for {
+            campaignAuthResult <- CampaignDao.authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.Annotate
+            )
+            ids <- campaignAuthResult match {
+              case AuthSuccess(_) =>
+                AnnotationProjectDao
+                  .listByCampaignQB(campaignId)
+                  .filter(annotationProjectParams)
+                  .filter(annotationProjectIdOpt)
+                  .list(limit) map { projects =>
+                  projects map { _.id }
+                }
+              case AuthFailure() => List.empty[UUID].pure[ConnectionIO]
+            }
+          } yield ids
+
       } map { _ getOrElse Nil }
       idAuthedProjects <- annotationProjectIdOpt flatTraverse { projectId =>
         AnnotationProjectDao.getProjectById(projectId) flatMap {
