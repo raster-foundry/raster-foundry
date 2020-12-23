@@ -1034,21 +1034,51 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       taskParams: TaskQueryParameters
   ): ConnectionIO[Option[Task.TaskFeature]] =
     for {
-      annotationProjectIds <- AnnotationProjectDao
-        .authQuery(
-          user,
-          ObjectType.AnnotationProject,
-          None,
-          None,
-          None
-        )
-        .filter(annotationProjectParams)
-        .filter(annotationProjectIdOpt)
-        .list(limit) map { projects =>
-        projects map { _.id }
-      }
-      taskOpt <- annotationProjectIds.toNel flatTraverse { projectIds =>
-        randomTask(taskParams, projectIds)
-      }
+      annotationProjectIds <-
+        AnnotationProjectDao
+          .authQuery(
+            user,
+            ObjectType.AnnotationProject,
+            None,
+            None,
+            None
+          )
+          .filter(annotationProjectParams)
+          .filter(annotationProjectIdOpt)
+          .list(limit) map { projects =>
+          projects map { _.id }
+        }
+      campaignAuthedProjects <- annotationProjectParams.campaignId traverse {
+        campaignId =>
+          AnnotationProjectDao
+            .listByCampaignQB(campaignId)
+            .filter(annotationProjectParams)
+            .filter(annotationProjectIdOpt)
+            .list(limit) map { projects =>
+            projects map { _.id }
+          }
+      } map { _ getOrElse Nil }
+      idAuthedProjects <- annotationProjectIdOpt flatTraverse { projectId =>
+        AnnotationProjectDao.getProjectById(projectId) flatMap {
+          case Some(ap) =>
+            ap.campaignId traverse { campaignId =>
+              CampaignDao.authorized(
+                user,
+                ObjectType.Campaign,
+                campaignId,
+                ActionType.Annotate
+              ) map {
+                case AuthSuccess(_) => List(ap.id)
+                case AuthFailure()  => Nil
+              }
+            }
+          case None => Option(List.empty[UUID]).pure[ConnectionIO]
+        }
+      } map { _ getOrElse Nil }
+      taskOpt <-
+        (annotationProjectIds ++ campaignAuthedProjects ++ idAuthedProjects).distinct.toNel flatTraverse {
+          projectIds =>
+            randomTask(taskParams, projectIds)
+        }
     } yield taskOpt
 }
