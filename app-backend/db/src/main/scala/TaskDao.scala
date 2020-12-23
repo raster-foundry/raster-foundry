@@ -1034,20 +1034,19 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       taskParams: TaskQueryParameters
   ): ConnectionIO[Option[Task.TaskFeature]] =
     for {
-      annotationProjectIds <-
-        AnnotationProjectDao
-          .authQuery(
-            user,
-            ObjectType.AnnotationProject,
-            None,
-            None,
-            None
-          )
-          .filter(annotationProjectParams)
-          .filter(annotationProjectIdOpt)
-          .list(limit) map { projects =>
-          projects map { _.id }
-        }
+      annotationProjectIds <- AnnotationProjectDao
+        .authQuery(
+          user,
+          ObjectType.AnnotationProject,
+          None,
+          None,
+          None
+        )
+        .filter(annotationProjectParams)
+        .filter(annotationProjectIdOpt)
+        .list(limit) map { projects =>
+        projects map { _.id }
+      }
       campaignAuthedProjects <- annotationProjectParams.campaignId traverse {
         campaignId =>
           for {
@@ -1088,10 +1087,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           case None => Option(List.empty[UUID]).pure[ConnectionIO]
         }
       } map { _ getOrElse Nil }
-      taskOpt <-
-        (annotationProjectIds ++ campaignAuthedProjects ++ idAuthedProjects).distinct.toNel flatTraverse {
-          projectIds =>
-            randomTask(taskParams, projectIds)
-        }
+      taskOpt <- (annotationProjectIds ++ campaignAuthedProjects ++ idAuthedProjects).distinct.toNel flatTraverse {
+        projectIds =>
+          randomTask(taskParams, projectIds)
+      }
     } yield taskOpt
 }
