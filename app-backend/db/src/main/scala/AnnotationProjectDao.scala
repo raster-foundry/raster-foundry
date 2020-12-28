@@ -73,17 +73,54 @@ object AnnotationProjectDao
         )
     }
 
+  private def projectAuthorized(
+      user: User,
+      objectType: ObjectType,
+      projectId: UUID,
+      actionType: ActionType
+  ) =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(projectId)
+      .selectOption
+      .map(AuthResult.fromOption _)
+
+  private def campaignAuthorized(
+      user: User,
+      projectId: UUID,
+      actionType: ActionType
+  ): ConnectionIO[AuthResult[AnnotationProject]] =
+    getById(projectId) flatMap {
+      case Some(project) =>
+        project.campaignId traverse { campaignId =>
+          CampaignDao.authorized(
+            user,
+            ObjectType.Campaign,
+            campaignId,
+            actionType
+          )
+        } map {
+          case Some(result) =>
+            result map { _ =>
+              project
+            }
+          case None => AuthFailure()
+        }
+      case _ => AuthResult.failed[ConnectionIO, AnnotationProject]
+    }
+
   def authorized(
       user: User,
       objectType: ObjectType,
       objectId: UUID,
       actionType: ActionType
   ): ConnectionIO[AuthResult[AnnotationProject]] =
-    this.query
-      .filter(authorizedF(user, objectType, actionType))
-      .filter(objectId)
-      .selectOption
-      .map(AuthResult.fromOption _)
+    (
+      projectAuthorized(user, objectType, objectId, actionType),
+      campaignAuthorized(user, objectId, actionType)
+    ).mapN(
+      AuthResult.combine
+    )
 
   def getProjectById(
       annotationProjectId: UUID
