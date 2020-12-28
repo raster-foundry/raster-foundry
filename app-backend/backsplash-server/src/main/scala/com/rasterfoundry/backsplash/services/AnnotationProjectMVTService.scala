@@ -21,9 +21,10 @@ import org.http4s.dsl.Http4sDsl
 import java.util.UUID
 
 class AnnotationProjectMVTService(xa: Transactor[IO])(
-    implicit contextShift: ContextShift[IO],
-    builder: TracingContextBuilder[IO]
-) extends Http4sDsl[IO]
+    implicit
+    contextShift: ContextShift[IO],
+    builder: TracingContextBuilder[IO])
+    extends Http4sDsl[IO]
     with LazyLogging {
 
   val authorizers = new Authorizers(xa)
@@ -36,7 +37,8 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
   ): Map[String, String] =
     Map(
       "annotationProjectId" -> annotationProjectId.toString,
-      "zxy" -> s"$z/$x/$y"
+      "zxy" -> s"$z/$x/$y",
+      "project-tms-triple" -> s"$annotationProjectId-$z-$x-$y"
     )
 
   private def getTile(
@@ -74,7 +76,9 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
 
   val routes =
     TracedHTTPRoutes[IO] {
-      case GET -> Root / UUIDVar(annotationProjectId) / "labels" / IntVar(z) / IntVar(
+      case GET -> Root / UUIDVar(annotationProjectId) / "labels" / IntVar(
+            z
+          ) / IntVar(
             x
           ) / IntVar(y) as user using context =>
         getTile(
@@ -88,7 +92,9 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           context
         )
 
-      case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(z) / IntVar(
+      case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(
+            z
+          ) / IntVar(
             x
           ) / IntVar(y) as user using context =>
         getTile(
