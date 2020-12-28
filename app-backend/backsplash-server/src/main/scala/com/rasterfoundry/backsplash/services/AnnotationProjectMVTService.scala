@@ -20,10 +20,11 @@ import org.http4s.dsl.Http4sDsl
 
 import java.util.UUID
 
-class AnnotationProjectMVTService(xa: Transactor[IO])(implicit
+class AnnotationProjectMVTService(xa: Transactor[IO])(
+    implicit
     contextShift: ContextShift[IO],
-    builder: TracingContextBuilder[IO]
-) extends Http4sDsl[IO]
+    builder: TracingContextBuilder[IO])
+    extends Http4sDsl[IO]
     with LazyLogging {
 
   val authorizers = new Authorizers(xa)
