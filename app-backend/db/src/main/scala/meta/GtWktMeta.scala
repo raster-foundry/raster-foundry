@@ -18,9 +18,9 @@ trait GtWktMeta {
 
   // Constructor for geometry types via WKT reading/writing
   @SuppressWarnings(Array("AsInstanceOf"))
-  private def geometryType[A >: Null <: Geometry: TypeTag](
-      implicit
-      A: ClassTag[A]): Meta[Projected[A]] =
+  private def geometryType[A >: Null <: Geometry: TypeTag](implicit
+      A: ClassTag[A]
+  ): Meta[Projected[A]] =
     PGgeometryType.timap[Projected[A]](pgGeom => {
       val split = PGgeometry.splitSRID(pgGeom.getValue)
       val srid = split(0).splitAt(5)._2.toInt
@@ -58,16 +58,12 @@ trait GtWktMeta {
   implicit val ComposedGeomType: Meta[Projected[GeometryCollection]] =
     geometryType[GeometryCollection]
 
-  // because projected geoms and ProjectedExtents use different indications
-  // of projection info, we have to pretend that the mapping is perfect.
-  // fortunately, we know that everything in the database is stored in a sensible
-  // projection that definitely has an SRID, so this Should be Fine :tm:
-  // (we also _shouldn't_ need the extent => poly conversion)
-  @SuppressWarnings(Array("OptionGet"))
-  implicit val extentMeta: Meta[ProjectedExtent] =
-    geometryType[Polygon].imap(projGeom =>
-      ProjectedExtent(projGeom.geom.extent, CRS.fromEpsgCode(projGeom.srid)))(
-      projExtent =>
-        Projected(projExtent.extent.toPolygon, projExtent.crs.epsgCode.get))
+  // we don't need to put ProjectedExtents in the db, only read them
+  // out (used in the MVTLayerDao only right now)
+  implicit val extentGet: Get[ProjectedExtent] = {
+    Get[Projected[Polygon]].map(projGeom =>
+      ProjectedExtent(projGeom.geom.extent, CRS.fromEpsgCode(projGeom.srid))
+    )
+  }
 
 }
