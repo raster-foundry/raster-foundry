@@ -103,6 +103,11 @@ object MVTLayerDao {
       """.query[LabelTileGeometry]
   }
 
+  /** We know the `foldMap` will produce an inhabited stream, since
+    * that's what the Monoid instance is for, so it's safe to compile it
+    * to a list and take the head.
+    */
+  @SuppressWarnings(Array("TraversableHead"))
   def getAnnotationProjectLabels(
       annotationProjectId: UUID,
       z: Int,
