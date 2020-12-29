@@ -119,16 +119,7 @@ object MVTLayerDao {
       .foldMap({ labelTileGeom =>
         labelTileGeom.geom.geom match {
           case g: MultiPolygon =>
-            StrictLayer(
-              name = "default",
-              tileWidth = 256,
-              version = 2,
-              tileExtent = labelTileGeom.envelope.extent,
-              points = Nil,
-              multiPoints = Nil,
-              lines = Nil,
-              multiLines = Nil,
-              polygons = Nil,
+            Monoid[StrictLayer].empty.copy(
               multiPolygons = List(
                 MVTFeature(
                   None,
@@ -138,23 +129,14 @@ object MVTLayerDao {
               )
             )
           case g: Polygon =>
-            StrictLayer(
-              name = "default",
-              tileWidth = 256,
-              version = 2,
-              tileExtent = labelTileGeom.envelope.extent,
-              points = Nil,
-              multiPoints = Nil,
-              lines = Nil,
-              multiLines = Nil,
+            Monoid[StrictLayer].empty.copy(
               polygons = List(
                 MVTFeature(
                   None,
                   g,
                   labelTileGeom.vtValues
                 )
-              ),
-              multiPolygons = Nil
+              )
             )
           case _ => Monoid[StrictLayer].empty
         }
