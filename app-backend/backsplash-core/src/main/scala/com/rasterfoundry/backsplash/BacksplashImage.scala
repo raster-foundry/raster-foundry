@@ -2,8 +2,8 @@ package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.common.color._
 import com.rasterfoundry.common.{BacksplashGeoTiffInfo, BacksplashGeotiffReader}
-import com.rasterfoundry.database.SceneDao
 import com.rasterfoundry.database.util.{Cache => DBCache}
+import com.rasterfoundry.database.{tiling, SceneDao}
 import com.rasterfoundry.datamodel.{SceneMetadataFields, SingleBandOptions}
 
 import cats.effect.IO
@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.layer.Implicits._
-import geotrellis.layer.{SpatialKey, ZoomedLayoutScheme}
+import geotrellis.layer.SpatialKey
 import geotrellis.proj4.WebMercator
 import geotrellis.raster.gdal.GDALRasterSource
 import geotrellis.raster.geotiff.{GeoTiffPath, GeoTiffRasterSource}
@@ -222,7 +222,7 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
 
   val enableGDAL = Config.RasterSource.enableGDAL
 
-  /** Read ZXY tile with tracing **/
+  /** Read ZXY tile with tracing * */
   def read(
       z: Int,
       x: Int,
@@ -230,7 +230,7 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
       context: TracingContext[F]
   ): F[Option[MultibandTile]]
 
-  /** Read tile with tracing **/
+  /** Read tile with tracing * */
   def read(
       extent: Extent,
       cs: CellSize,
@@ -247,10 +247,7 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
 }
 
 object BacksplashImage {
-  val tmsLevels = {
-    val scheme = ZoomedLayoutScheme(WebMercator, 256)
-    for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
-  }.toArray
+  val tmsLevels = tiling.tmsLevels
 
   def getWebMercatorPixelArea(zoom: Int): Double = {
     val level = tmsLevels(zoom)

@@ -1,8 +1,15 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.database.Implicits._
+
+import cats.Monoid
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
+import geotrellis.vector.MultiPolygon
+import geotrellis.vector.Polygon
+import geotrellis.vector.{Geometry, Projected, ProjectedExtent}
+import geotrellis.vectortile._
 
 import java.util.UUID
 
@@ -13,6 +20,24 @@ import java.util.UUID
   * Or fieldnames? Or table name?
   */
 object MVTLayerDao {
+
+  final case class LabelTileGeometry(
+      geom: Projected[Geometry],
+      envelope: ProjectedExtent,
+      taskId: UUID,
+      labelClassId: UUID,
+      className: String,
+      colorHexCode: String
+  ) {
+    def vtValues: Map[String, Value] =
+      Map(
+        "annotation_task_id" -> VString(taskId.toString),
+        "label_class_id" -> VString(labelClassId.toString),
+        "name" -> VString(className),
+        "color_hex_code" -> VString(colorHexCode)
+      )
+  }
+
   private[database] def getAnnotationProjectTasksQ(
       annotationProjectId: UUID,
       z: Int,
@@ -44,8 +69,8 @@ object MVTLayerDao {
       z: Int,
       x: Int,
       y: Int
-  ): ConnectionIO[Option[Array[Byte]]] =
-    getAnnotationProjectTasksQ(annotationProjectId, z, x, y).option
+  ): ConnectionIO[Array[Byte]] =
+    getAnnotationProjectTasksQ(annotationProjectId, z, x, y).unique
 
   //-- AND tasks.annotation_project_id = ${annotationProjectId}
   // JOIN tasks on annotations.task_id = tasks.id
@@ -54,32 +79,28 @@ object MVTLayerDao {
       z: Int,
       x: Int,
       y: Int
-  ): Query0[Array[Byte]] = {
-    fr"""WITH mvtgeom AS
-      (
+  ): Query0[LabelTileGeometry] = {
+    fr"""
         SELECT
-          ST_AsMVTGeom(
-            join_table_join.geometry,
-            ST_TileEnvelope(${z},${x},${y})
-          ) AS geom,
-          join_table_join.annotation_task_id,
+          annotation_labels.geometry,
+          ST_TileEnvelope(${z}, ${x}, ${y}) as envelope,
+          annotation_labels.annotation_task_id,
           annotation_label_classes.id as label_class_id,
           annotation_label_classes.name,
           annotation_label_classes.color_hex_code
         FROM
-          (annotation_labels join (select id, status from tasks) tasks on annotation_labels.annotation_task_id = tasks.id
+          (annotation_labels join tasks on annotation_labels.annotation_task_id = tasks.id
            JOIN annotation_labels_annotation_label_classes on
-           annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id) join_table_join
-          JOIN annotation_label_classes on join_table_join.annotation_class_id = annotation_label_classes.id
+           annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id)
+          JOIN annotation_label_classes on annotation_labels_annotation_label_classes.annotation_class_id = annotation_label_classes.id
         WHERE
           ST_Intersects(
-            join_table_join.geometry,
-            ST_TileEnvelope(${z},${x},${y})
+            annotation_labels.geometry,
+            ST_TileEnvelope(${z}, ${x}, ${y})
           )
-          AND join_table_join.annotation_project_id = ${annotationProjectId}
-          AND status <> 'SPLIT'
-      )
-    SELECT ST_AsMVT(mvtgeom.*) FROM mvtgeom;""".query[Array[Byte]]
+          AND annotation_labels.annotation_project_id = ${annotationProjectId}
+          AND tasks.status <> 'SPLIT'
+      """.query[LabelTileGeometry]
   }
 
   def getAnnotationProjectLabels(
@@ -87,7 +108,98 @@ object MVTLayerDao {
       z: Int,
       x: Int,
       y: Int
-  ): ConnectionIO[Option[Array[Byte]]] =
-    getAnnotationProjectLabelsQ(annotationProjectId, z, x, y).option
+  ): ConnectionIO[Array[Byte]] = {
+    implicit val monoidStrictLayer = getMonoidStrictLayer(z, x, y)
+    getAnnotationProjectLabelsQ(annotationProjectId, z, x, y).stream
+      .foldMap({ labelTileGeom =>
+        labelTileGeom.geom.geom match {
+          case g: MultiPolygon =>
+            StrictLayer(
+              name = "default",
+              tileWidth = 256,
+              version = 2,
+              tileExtent = labelTileGeom.envelope.extent,
+              points = Nil,
+              multiPoints = Nil,
+              lines = Nil,
+              multiLines = Nil,
+              polygons = Nil,
+              multiPolygons = List(
+                MVTFeature(
+                  None,
+                  g,
+                  labelTileGeom.vtValues
+                )
+              )
+            )
+          case g: Polygon =>
+            StrictLayer(
+              name = "default",
+              tileWidth = 256,
+              version = 2,
+              tileExtent = labelTileGeom.envelope.extent,
+              points = Nil,
+              multiPoints = Nil,
+              lines = Nil,
+              multiLines = Nil,
+              polygons = List(
+                MVTFeature(
+                  None,
+                  g,
+                  labelTileGeom.vtValues
+                )
+              ),
+              multiPolygons = Nil
+            )
+          case _ => Monoid[StrictLayer].empty
+        }
+      })
+      .compile
+      .toList map { layers =>
+      val first = layers.head
+      VectorTile(Map("default" -> first), first.tileExtent).toBytes
+    }
+  }
+
+  // this is not a lawful monoid, because it doesn't satisfy left and right identity
+  // laws. _however_, for our purposes, the only layers in the universe
+  // are those of the correct size that are named default for MVT spec version 2.
+  // it's possible that in the future we'll want to start naming layers, but until
+  // then this monoid is lawful for the universe of StrictLayers that Raster Foundry
+  // can produce
+  private def getMonoidStrictLayer(
+      z: Int,
+      x: Int,
+      y: Int
+  ): Monoid[StrictLayer] =
+    new Monoid[StrictLayer] {
+      def combine(x: StrictLayer, y: StrictLayer): StrictLayer =
+        StrictLayer(
+          x.name,
+          x.tileWidth,
+          x.version,
+          x.tileExtent.combine(y.tileExtent),
+          x.points ++ y.points,
+          x.multiPoints ++ y.multiPoints,
+          x.lines ++ y.lines,
+          x.multiLines ++ y.multiLines,
+          x.polygons ++ y.polygons,
+          x.multiPolygons ++ y.multiPolygons
+        )
+
+      def empty: StrictLayer =
+        StrictLayer(
+          "default",
+          256,
+          2,
+          tiling.tmsLevels(z).mapTransform.keyToExtent(x, y),
+          Nil,
+          Nil,
+          Nil,
+          Nil,
+          Nil,
+          Nil
+        )
+    }
 
 }
