@@ -18,9 +18,9 @@ trait GtWktMeta {
 
   // Constructor for geometry types via WKT reading/writing
   @SuppressWarnings(Array("AsInstanceOf"))
-  private def geometryType[A >: Null <: Geometry: TypeTag](implicit
-      A: ClassTag[A]
-  ): Meta[Projected[A]] =
+  private def geometryType[A >: Null <: Geometry: TypeTag](
+      implicit
+      A: ClassTag[A]): Meta[Projected[A]] =
     PGgeometryType.timap[Projected[A]](pgGeom => {
       val split = PGgeometry.splitSRID(pgGeom.getValue)
       val srid = split(0).splitAt(5)._2.toInt
@@ -62,8 +62,7 @@ trait GtWktMeta {
   // out (used in the MVTLayerDao only right now)
   implicit val extentGet: Get[ProjectedExtent] = {
     Get[Projected[Polygon]].map(projGeom =>
-      ProjectedExtent(projGeom.geom.extent, CRS.fromEpsgCode(projGeom.srid))
-    )
+      ProjectedExtent(projGeom.geom.extent, CRS.fromEpsgCode(projGeom.srid)))
   }
 
 }
