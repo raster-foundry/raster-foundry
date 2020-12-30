@@ -138,7 +138,7 @@ object AnnotationLabelWithClasses {
       properties: AnnotationLabelWithClassesPropertiesCreate
   ) {
     def toAnnotationLabelWithClassesCreate
-        : AnnotationLabelWithClasses.Create = {
+      : AnnotationLabelWithClasses.Create = {
       AnnotationLabelWithClasses.Create(
         geometry,
         properties.annotationLabelClasses,
@@ -150,8 +150,7 @@ object AnnotationLabelWithClasses {
   object GeoJSON {
     implicit val annoLabelWithClassesGeojonEncoder: Encoder[GeoJSON] =
       Encoder.forProduct4("id", "geometry", "properties", "type")(geojson =>
-        (geojson.id, geojson.geometry, geojson.properties, geojson._type)
-      )
+        (geojson.id, geojson.geometry, geojson.properties, geojson._type))
   }
 
   /**
@@ -190,21 +189,21 @@ object AnnotationLabelWithClasses {
 
   object StacGeoJSON {
     implicit val stacGeoJsonEncoder: Encoder[StacGeoJSON] =
-      Encoder.forProduct3("geometry", "type", "properties")(geojson =>
-        (
-          geojson.geometry,
-          geojson._type,
+      Encoder.forProduct3("geometry", "type", "properties")(
+        geojson =>
           (
-            Map(
-              "id" -> geojson.id.asJson,
-              "createdAt" -> geojson.properties.createdAt.asJson,
-              "createdBy" -> geojson.properties.createdBy.asJson,
-              "annotationProjectId" -> geojson.properties.annotationProjectId.asJson,
-              "annotationTaskId" -> geojson.properties.annotationTaskId.asJson
-            ) ++ geojson.classMap.map(e => (e._1 -> e._2.asJson))
-          )
-        )
-      )
+            geojson.geometry,
+            geojson._type,
+            (
+              Map(
+                "id" -> geojson.id.asJson,
+                "createdAt" -> geojson.properties.createdAt.asJson,
+                "createdBy" -> geojson.properties.createdBy.asJson,
+                "annotationProjectId" -> geojson.properties.annotationProjectId.asJson,
+                "annotationTaskId" -> geojson.properties.annotationTaskId.asJson
+              ) ++ geojson.classMap.map(e => (e._1 -> e._2.asJson))
+            )
+        ))
   }
 }
 
