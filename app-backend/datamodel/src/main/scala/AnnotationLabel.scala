@@ -15,7 +15,7 @@ final case class AnnotationLabel(
     id: UUID,
     createdAt: Timestamp,
     createdBy: String,
-    geometry: Option[Projected[Geometry]],
+    geometry: Projected[Geometry],
     annotationProjectId: UUID,
     annotationTaskId: UUID,
     description: Option[String] = None
@@ -46,24 +46,25 @@ final case class AnnotationLabelWithClasses(
     id: UUID,
     createdAt: Timestamp,
     createdBy: String,
-    geometry: Option[Projected[Geometry]],
+    geometry: Projected[Geometry],
     annotationProjectId: UUID,
     annotationTaskId: UUID,
     description: Option[String] = None,
     annotationLabelClasses: List[UUID]
 ) extends GeoJSONSerializable[AnnotationLabelWithClasses.GeoJSON] {
-  def toGeoJSONFeature = AnnotationLabelWithClasses.GeoJSON(
-    this.id,
-    this.geometry,
-    AnnotationLabelWithClassesProperties(
-      this.createdAt,
-      this.createdBy,
-      this.annotationProjectId,
-      this.annotationTaskId,
-      this.annotationLabelClasses,
-      this.description
+  def toGeoJSONFeature =
+    AnnotationLabelWithClasses.GeoJSON(
+      this.id,
+      Some(this.geometry),
+      AnnotationLabelWithClassesProperties(
+        this.createdAt,
+        this.createdBy,
+        this.annotationProjectId,
+        this.annotationTaskId,
+        this.annotationLabelClasses,
+        this.description
+      )
     )
-  )
 
   def toStacGeoJSONFeature(
       classToGroup: Map[UUID, String],
@@ -81,7 +82,7 @@ final case class AnnotationLabelWithClasses(
         .toMap
     AnnotationLabelWithClasses.StacGeoJSON(
       this.id,
-      this.geometry,
+      Some(this.geometry),
       AnnotationLabelProperties(
         this.createdAt,
         this.createdBy,
@@ -101,7 +102,7 @@ object AnnotationLabelWithClasses {
     })
 
   final case class Create(
-      geometry: Option[Projected[Geometry]],
+      geometry: Projected[Geometry],
       annotationLabelClasses: List[UUID],
       description: Option[String] = None
   ) {
@@ -133,11 +134,11 @@ object AnnotationLabelWithClasses {
   ) extends GeoJSONFeature
   @JsonCodec
   final case class GeoJSONFeatureCreate(
-      geometry: Option[Projected[Geometry]],
+      geometry: Projected[Geometry],
       properties: AnnotationLabelWithClassesPropertiesCreate
   ) {
     def toAnnotationLabelWithClassesCreate
-      : AnnotationLabelWithClasses.Create = {
+        : AnnotationLabelWithClasses.Create = {
       AnnotationLabelWithClasses.Create(
         geometry,
         properties.annotationLabelClasses,
@@ -148,9 +149,8 @@ object AnnotationLabelWithClasses {
 
   object GeoJSON {
     implicit val annoLabelWithClassesGeojonEncoder: Encoder[GeoJSON] =
-      Encoder.forProduct4("id", "geometry", "properties", "type")(
-        geojson =>
-          (geojson.id, geojson.geometry, geojson.properties, geojson._type)
+      Encoder.forProduct4("id", "geometry", "properties", "type")(geojson =>
+        (geojson.id, geojson.geometry, geojson.properties, geojson._type)
       )
   }
 
@@ -190,20 +190,19 @@ object AnnotationLabelWithClasses {
 
   object StacGeoJSON {
     implicit val stacGeoJsonEncoder: Encoder[StacGeoJSON] =
-      Encoder.forProduct3("geometry", "type", "properties")(
-        geojson =>
+      Encoder.forProduct3("geometry", "type", "properties")(geojson =>
+        (
+          geojson.geometry,
+          geojson._type,
           (
-            geojson.geometry,
-            geojson._type,
-            (
-              Map(
-                "id" -> geojson.id.asJson,
-                "createdAt" -> geojson.properties.createdAt.asJson,
-                "createdBy" -> geojson.properties.createdBy.asJson,
-                "annotationProjectId" -> geojson.properties.annotationProjectId.asJson,
-                "annotationTaskId" -> geojson.properties.annotationTaskId.asJson
-              ) ++ geojson.classMap.map(e => (e._1 -> e._2.asJson))
-            )
+            Map(
+              "id" -> geojson.id.asJson,
+              "createdAt" -> geojson.properties.createdAt.asJson,
+              "createdBy" -> geojson.properties.createdBy.asJson,
+              "annotationProjectId" -> geojson.properties.annotationProjectId.asJson,
+              "annotationTaskId" -> geojson.properties.annotationTaskId.asJson
+            ) ++ geojson.classMap.map(e => (e._1 -> e._2.asJson))
+          )
         )
       )
   }
