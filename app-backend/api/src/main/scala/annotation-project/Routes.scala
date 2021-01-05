@@ -398,8 +398,7 @@ trait AnnotationProjectRoutes
                 } yield {
                   println(s"Campaign actions: ${campaignActions}")
                   (projectActions ++ campaignActions)
-                }).transact(xa)
-                  .unsafeToFuture
+                }).transact(xa).unsafeToFuture
               }
           }
         }
