@@ -160,18 +160,18 @@ object MVTLayerDao {
       y: Int
   ): Monoid[StrictLayer] =
     new Monoid[StrictLayer] {
-      def combine(x: StrictLayer, y: StrictLayer): StrictLayer =
+      def combine(left: StrictLayer, right: StrictLayer): StrictLayer =
         StrictLayer(
-          x.name,
-          x.tileWidth,
-          x.version,
-          x.tileExtent.combine(y.tileExtent),
-          x.points ++ y.points,
-          x.multiPoints ++ y.multiPoints,
-          x.lines ++ y.lines,
-          x.multiLines ++ y.multiLines,
-          x.polygons ++ y.polygons,
-          x.multiPolygons ++ y.multiPolygons
+          left.name,
+          left.tileWidth,
+          left.version,
+          left.tileExtent.combine(right.tileExtent),
+          left.points ++ right.points,
+          left.multiPoints ++ right.multiPoints,
+          left.lines ++ right.lines,
+          left.multiLines ++ right.multiLines,
+          left.polygons ++ right.polygons,
+          left.multiPolygons ++ right.multiPolygons
         )
 
       def empty: StrictLayer =
