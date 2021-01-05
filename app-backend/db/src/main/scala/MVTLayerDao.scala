@@ -89,9 +89,9 @@ object MVTLayerDao {
           annotation_label_classes.name,
           annotation_label_classes.color_hex_code
         FROM
-          (annotation_labels join tasks on annotation_labels.annotation_task_id = tasks.id
+          annotation_labels join tasks on annotation_labels.annotation_task_id = tasks.id
            JOIN annotation_labels_annotation_label_classes on
-           annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id)
+           annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id
           JOIN annotation_label_classes on annotation_labels_annotation_label_classes.annotation_class_id = annotation_label_classes.id
         WHERE
           ST_Intersects(
