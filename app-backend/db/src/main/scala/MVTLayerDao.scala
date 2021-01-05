@@ -72,8 +72,6 @@ object MVTLayerDao {
   ): ConnectionIO[Array[Byte]] =
     getAnnotationProjectTasksQ(annotationProjectId, z, x, y).unique
 
-  //-- AND tasks.annotation_project_id = ${annotationProjectId}
-  // JOIN tasks on annotations.task_id = tasks.id
   private[database] def getAnnotationProjectLabelsQ(
       annotationProjectId: UUID,
       z: Int,
