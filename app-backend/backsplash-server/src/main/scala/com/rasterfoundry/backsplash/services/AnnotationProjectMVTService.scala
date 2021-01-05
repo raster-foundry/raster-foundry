@@ -5,9 +5,7 @@ import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
 
-import cats.data.OptionT
 import cats.effect._
-import cats.implicits._
 import com.colisweb.tracing.core.TracingContext
 import com.colisweb.tracing.core.TracingContextBuilder
 import com.typesafe.scalalogging.LazyLogging
@@ -42,7 +40,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
     )
 
   private def getTile(
-      f: (UUID, Int, Int, Int) => ConnectionIO[Option[Array[Byte]]],
+      f: (UUID, Int, Int, Int) => ConnectionIO[Array[Byte]],
       operationLabel: String,
       user: User,
       annotationProjectId: UUID,
@@ -57,21 +55,17 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
         annotationProjectId,
         tracingContext
       )
-      respO <- tracingContext.span(
+      byteArray <- tracingContext.span(
         operationLabel,
         getTags(annotationProjectId, z, x, y)
       ) use { _ =>
         f(annotationProjectId, z, x, y)
           .transact(xa)
       }
-      resp <- OptionT {
-        respO traverse { byteArray =>
-          Ok(
-            byteArray,
-            Header("content-type", "application/vnd.mapbox-vector-tile")
-          )
-        }
-      } getOrElseF NotFound()
+      resp <- Ok(
+        byteArray,
+        Header("content-type", "application/vnd.mapbox-vector-tile")
+      )
     } yield resp
 
   val routes =

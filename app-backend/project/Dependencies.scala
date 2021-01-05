@@ -93,27 +93,36 @@ object Version {
 
 object Dependencies {
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Version.akka
-  val akkaCirceJson = "de.heikoseeberger" %% "akka-http-circe" % Version.akkaCirceJson
+  val akkaCirceJson =
+    "de.heikoseeberger" %% "akka-http-circe" % Version.akkaCirceJson
   val akkaHttp = "com.typesafe.akka" %% "akka-http" % Version.akkaHttp
   val akkaHttpCore = "com.typesafe.akka" %% "akka-http-core" % Version.akkaHttp
   val akkaHttpCors = "ch.megard" %% "akka-http-cors" % Version.akkaHttpCors
-  val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akkaSlf4j % Runtime
+  val akkaSlf4j =
+    "com.typesafe.akka" %% "akka-slf4j" % Version.akkaSlf4j % Runtime
   val akkaStream = "com.typesafe.akka" %% "akka-stream" % Version.akka
-  val akkatestkit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
+  val akkatestkit =
+    "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
   val apacheAvro = "org.apache.avro" % "avro" % Version.apacheAvro
-  val apacheCommonsEmail = "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
-  val asyncHttpClient = "org.asynchttpclient" % "async-http-client" % Version.asyncHttpClient
+  val apacheCommonsEmail =
+    "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
+  val asyncHttpClient =
+    "org.asynchttpclient" % "async-http-client" % Version.asyncHttpClient
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsCoreSdk = "com.amazonaws" % "aws-java-sdk-core" % Version.awsCoreSdk
-  val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % Version.awsLambdaCore
+  val awsLambdaCore =
+    "com.amazonaws" % "aws-lambda-java-core" % Version.awsLambdaCore
   val awsS3 = "com.amazonaws" % "aws-java-sdk-s3" % Version.awsSdkVersion
   val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsSdkVersion
-  val awsXrayRecorder = "com.amazonaws" % "aws-xray-recorder-sdk-core" % Version.awsXrayRecorder
+  val awsXrayRecorder =
+    "com.amazonaws" % "aws-xray-recorder-sdk-core" % Version.awsXrayRecorder
   val awsXraySdk = "com.amazonaws" % "aws-java-sdk-xray" % Version.awsSdkVersion
   val awsS3SdkV2 = "software.amazon.awssdk" % "s3" % Version.awsSdkV2Version
-  val awsUtilsSdkV2 = "software.amazon.awssdk" % "utils" % Version.awsSdkV2Version
-  val betterFiles = "com.github.pathikrit" %% "better-files" % Version.betterFiles
+  val awsUtilsSdkV2 =
+    "software.amazon.awssdk" % "utils" % Version.awsSdkV2Version
+  val betterFiles =
+    "com.github.pathikrit" %% "better-files" % Version.betterFiles
   val bcrypt = "com.github.t3hnar" %% "scala-bcrypt" % Version.bcrypt
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % Version.caffeine
   val catsCore = "org.typelevel" %% "cats-core" % Version.cats
@@ -122,7 +131,8 @@ object Dependencies {
   val catsKernel = "org.typelevel" %% "cats-kernel" % Version.cats
   val catsLaws = "org.typelevel" %% "cats-laws" % Version.cats % Test
   val catsMeow = "com.olegpy" %% "meow-mtl-core" % Version.catsMeow
-  val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % Version.catsScalacheck % "test"
+  val catsScalacheck =
+    "io.chrisdavenport" %% "cats-scalacheck" % Version.catsScalacheck % "test"
   val chronoscala = "jp.ne.opt" %% "chronoscala" % Version.chronoscala
   val circeCore = "io.circe" %% "circe-core" % Version.circe
   val circeGeneric = "io.circe" %% "circe-generic" % Version.circe
@@ -138,31 +148,47 @@ object Dependencies {
   val commonsIO = "commons-io" % "commons-io" % Version.commonsIO
   val cron4s = "com.github.alonsodomin.cron4s" %% "cron4s-core" % Version.cron4s
   val decline = "com.monovore" %% "decline" % Version.decline
-  val disciplineScalatest = "org.typelevel" %% "discipline-scalatest" % Version.disciplineScalatest % "test"
+  val disciplineScalatest =
+    "org.typelevel" %% "discipline-scalatest" % Version.disciplineScalatest % "test"
   val doobieCore = "org.tpolecat" %% "doobie-core" % Version.doobie
   val doobieFree = "org.tpolecat" %% "doobie-free" % Version.doobie
   val doobieHikari = "org.tpolecat" %% "doobie-hikari" % Version.doobie
   val doobiePostgres = "org.tpolecat" %% "doobie-postgres" % Version.doobie
-  val doobiePostgresCirce = "org.tpolecat" %% "doobie-postgres-circe" % Version.doobie
+  val doobiePostgresCirce =
+    "org.tpolecat" %% "doobie-postgres-circe" % Version.doobie
   val doobieRefined = "org.tpolecat" %% "doobie-refined" % Version.doobie
-  val doobieScalatest = "org.tpolecat" %% "doobie-scalatest" % Version.doobie % "test"
+  val doobieScalatest =
+    "org.tpolecat" %% "doobie-scalatest" % Version.doobie % "test"
   val dropbox = "com.dropbox.core" % "dropbox-core-sdk" % Version.dropbox
-  val elasticacheClient = "com.amazonaws" % "elasticache-java-cluster-client" % Version.elasticacheClient
+  val elasticacheClient =
+    "com.amazonaws" % "elasticache-java-cluster-client" % Version.elasticacheClient
   val ficus = "com.iheart" %% "ficus" % Version.ficus
   val flyway = "org.flywaydb" % "flyway-core" % Version.flyway
   val fs2 = "co.fs2" %% "fs2-core" % Version.fs2
   val fs2io = "co.fs2" %% "fs2-io" % Version.fs2
   val fs2Cron = "eu.timepit" %% "fs2-cron-core" % Version.fs2Cron
-  val geotrellisGdal = "org.locationtech.geotrellis" %% "geotrellis-gdal" % Version.geotrellis
-  val geotrellisLayer = "org.locationtech.geotrellis" %% "geotrellis-layer" % Version.geotrellis
-  val geotrellisProj4 = "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellis
-  val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
-  val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
-  val geotrellisServer = "com.azavea.geotrellis" %% "geotrellis-server-core" % Version.geotrellisServer
-  val geotrellisStore = "org.locationtech.geotrellis" %% "geotrellis-store" % Version.geotrellis
-  val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
-  val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
-  val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"
+  val geotrellisGdal =
+    "org.locationtech.geotrellis" %% "geotrellis-gdal" % Version.geotrellis
+  val geotrellisLayer =
+    "org.locationtech.geotrellis" %% "geotrellis-layer" % Version.geotrellis
+  val geotrellisProj4 =
+    "org.locationtech.geotrellis" %% "geotrellis-proj4" % Version.geotrellis
+  val geotrellisRaster =
+    "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
+  val geotrellisS3 =
+    "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
+  val geotrellisServer =
+    "com.azavea.geotrellis" %% "geotrellis-server-core" % Version.geotrellisServer
+  val geotrellisStore =
+    "org.locationtech.geotrellis" %% "geotrellis-store" % Version.geotrellis
+  val geotrellisUtil =
+    "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
+  val geotrellisVector =
+    "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
+  val geotrellisVectorTestkit =
+    "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"
+  val geotrellisVectorTile =
+    "org.locationtech.geotrellis" %% "geotrellis-vectortile" % Version.geotrellis
   val guava = "com.google.guava" % "guava" % Version.guava
   val hadoop = "org.apache.hadoop" % "hadoop-common" % Version.hadoop
   val hikariCP = "com.zaxxer" % "HikariCP" % Version.hikariCP
@@ -184,31 +210,46 @@ object Dependencies {
   val log4jOverslf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % Version.maml
-  val monocleCore = "com.github.julien-truffaut" %% "monocle-core" % Version.monocle
-  val monocleMacro = "com.github.julien-truffaut" %% "monocle-macro" % Version.monocle
+  val monocleCore =
+    "com.github.julien-truffaut" %% "monocle-core" % Version.monocle
+  val monocleMacro =
+    "com.github.julien-truffaut" %% "monocle-macro" % Version.monocle
   val newtype = "io.estatico" %% "newtype" % Version.newtype
-  val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
+  val nimbusJose =
+    "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val nimbusJoseJwt = "com.nimbusds" % "nimbus-jose-jwt" % Version.nimbusJoseJwt
-  val opentracingApi = "io.opentracing" % "opentracing-api" % Version.opentracingApi
-  val opentracingCore = "com.colisweb" %% "scala-opentracing-core" % Version.opentracingVersion
-  val opentracingContext = "com.colisweb" %% "scala-opentracing-context" % Version.opentracingVersion
-  val opentracingClient = "com.colisweb" %% "scala-opentracing-http4s-client-blaze" % Version.opentracingVersion
+  val opentracingApi =
+    "io.opentracing" % "opentracing-api" % Version.opentracingApi
+  val opentracingCore =
+    "com.colisweb" %% "scala-opentracing-core" % Version.opentracingVersion
+  val opentracingContext =
+    "com.colisweb" %% "scala-opentracing-context" % Version.opentracingVersion
+  val opentracingClient =
+    "com.colisweb" %% "scala-opentracing-http4s-client-blaze" % Version.opentracingVersion
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis
   val postgres = "org.postgresql" % "postgresql" % Version.postgres
   val refined = "eu.timepit" %% "refined" % Version.refined
   val rollbar = "com.rollbar" % "rollbar-java" % Version.rollbar
   val scaffeine = "com.github.blemale" %% "scaffeine" % Version.scaffeine
-  val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck % "test"
-  val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Version.scalaLogging
-  val scalacacheCaffeine = "com.github.cb372" %% "scalacache-caffeine" % Version.scalacache
-  val scalacacheCats = "com.github.cb372" %% "scalacache-cats-effect" % Version.scalacache
-  val scalacacheCirce = "com.github.cb372" %% "scalacache-circe" % Version.scalacache
-  val scalacacheCore = "com.github.cb372" %% "scalacache-core" % Version.scalacache
-  val scalacacheMemcached = "com.github.cb372" %% "scalacache-memcached" % Version.scalacache intransitive ()
+  val scalaCheck =
+    "org.scalacheck" %% "scalacheck" % Version.scalaCheck % "test"
+  val scalaLogging =
+    "com.typesafe.scala-logging" %% "scala-logging" % Version.scalaLogging
+  val scalacacheCaffeine =
+    "com.github.cb372" %% "scalacache-caffeine" % Version.scalacache
+  val scalacacheCats =
+    "com.github.cb372" %% "scalacache-cats-effect" % Version.scalacache
+  val scalacacheCirce =
+    "com.github.cb372" %% "scalacache-circe" % Version.scalacache
+  val scalacacheCore =
+    "com.github.cb372" %% "scalacache-core" % Version.scalacache
+  val scalacacheMemcached =
+    "com.github.cb372" %% "scalacache-memcached" % Version.scalacache intransitive ()
   val scalaCsv = "com.github.tototoshi" %% "scala-csv" % Version.scalaCsv
   val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
-  val scalatestplusScalaCheck = "org.scalatestplus" %% "scalacheck-1-14" % Version.scalatestPlus % "test"
+  val scalatestplusScalaCheck =
+    "org.scalatestplus" %% "scalacheck-1-14" % Version.scalatestPlus % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
   val slf4j = "org.slf4j" % "slf4j-api" % Version.slf4j
@@ -218,13 +259,17 @@ object Dependencies {
   val spireMath = "org.spire-math" %% "spire" % Version.spireMath
   val stac4s = "com.azavea.stac4s" %% "core" % Version.stac4s
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
-  val sttpAkka = "com.softwaremill.sttp.client" %% "akka-http-backend" % Version.sttp
-  val sttpAsyncBackend = "com.softwaremill.sttp.client" %% "async-http-client-backend" % Version.sttp
-  val sttpCatsBackend = "com.softwaremill.sttp.client" %% "async-http-client-backend-cats" % Version.sttp
+  val sttpAkka =
+    "com.softwaremill.sttp.client" %% "akka-http-backend" % Version.sttp
+  val sttpAsyncBackend =
+    "com.softwaremill.sttp.client" %% "async-http-client-backend" % Version.sttp
+  val sttpCatsBackend =
+    "com.softwaremill.sttp.client" %% "async-http-client-backend-cats" % Version.sttp
   val sttpCirce = "com.softwaremill.sttp.client" %% "circe" % Version.sttp
   val sttpCore = "com.softwaremill.sttp.client" %% "core" % Version.sttp
   val sttpJson = "com.softwaremill.sttp.client" %% "json-common" % Version.sttp
-  val sttpOkHttpBackend = "com.softwaremill.sttp.client" %% "okhttp-backend" % Version.sttp
+  val sttpOkHttpBackend =
+    "com.softwaremill.sttp.client" %% "okhttp-backend" % Version.sttp
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
   val typesafeConfig = "com.typesafe" % "config" % Version.typesafeConfig
   val vault = "io.chrisdavenport" %% "vault" % Version.vault

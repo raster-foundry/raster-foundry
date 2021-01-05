@@ -1132,9 +1132,7 @@ object Generators extends ArbitraryInstances {
   private def annotationLabelWithClassesCreateGen
       : Gen[AnnotationLabelWithClasses.Create] =
     (
-      projectedMultiPolygonGen3857 map { (geom: Projected[MultiPolygon]) =>
-        Option(geom)
-      },
+      projectedMultiPolygonGen3857,
       Gen.const(Nil),
       Gen.option(nonEmptyStringGen)
     ).mapN(AnnotationLabelWithClasses.Create.apply _)

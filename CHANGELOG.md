@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - Annotation projects can always be authorized from their parent campaign [#5536](ttps://github.com/raster-foundry/raster-foundry/pull/5536)
+- Render label MVTs in the tile server instead of in the database [#5538](https://github.com/raster-foundry/raster-foundry/pull/5538)
 
 ## [1.57.0] - 2020-12-16
 ### Added
