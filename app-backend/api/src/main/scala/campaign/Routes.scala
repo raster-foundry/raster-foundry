@@ -519,24 +519,21 @@ trait CampaignRoutes
                         )
                       }
                   }
-                  _ <- randomTaskOpt traverse { randomTask =>
-                    acrsOpt traverse { acrs =>
-                      CampaignDao.addPermissionsMany(
-                        randomTask.properties.campaignId,
-                        acrs.toList,
-                        false
-                      )
-                    }
-                  }
-                  _ <- randomTaskOpt traverse { randomTask =>
-                    acrsOpt traverse { acrs =>
-                      AnnotationProjectDao.addPermissionsMany(
-                        randomTask.properties.id,
-                        acrs.toList,
-                        false
-                      )
-                    }
-                  }
+                  _ <- (randomTaskOpt, acrsOpt).tupled traverse {
+                    case (randomTask, acrs) =>
+                      (
+                        CampaignDao.addPermissionsMany(
+                          randomTask.properties.campaignId,
+                          acrs.toList,
+                          false
+                        ),
+                        AnnotationProjectDao.addPermissionsMany(
+                          randomTask.properties.annotationProjectId,
+                          acrs.toList,
+                          false
+                        )
+                      ).tupled
+                  } void
                 } yield randomTaskOpt
               ).transact(xa).unsafeToFuture
             }
