@@ -730,3 +730,16 @@ object CampaignQueryParameters {
   implicit def decCampaignQueryParameters: Decoder[CampaignQueryParameters] =
     deriveDecoder[CampaignQueryParameters]
 }
+
+final case class CampaignRandomTaskQueryParameters(
+    requestAction: Iterable[ActionType] = Seq.empty[ActionType]
+)
+
+object CampaignRandomTaskQueryParameters {
+  implicit def encCampaignRandomTaskQueryParameters
+    : Encoder[CampaignRandomTaskQueryParameters] =
+    deriveEncoder[CampaignRandomTaskQueryParameters]
+  implicit def decCampaignRandomTaskQueryParameters
+    : Decoder[CampaignRandomTaskQueryParameters] =
+    deriveDecoder[CampaignRandomTaskQueryParameters]
+}

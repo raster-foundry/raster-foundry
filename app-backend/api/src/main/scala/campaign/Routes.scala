@@ -501,14 +501,42 @@ trait CampaignRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
-            CampaignDao
-              .randomReviewTask(
-                campaignId,
-                user
-              )
-              .transact(xa)
-              .unsafeToFuture
+          (campaignRandomTaskQueryParameters) { randomTaskQp =>
+            complete {
+              (
+                for {
+                  randomTaskOpt <- CampaignDao.randomReviewTask(
+                    campaignId,
+                    user
+                  )
+                  acrsOpt = randomTaskQp.requestAction.toList.toNel map {
+                    actions =>
+                      actions map { action =>
+                        ObjectAccessControlRule(
+                          SubjectType.User,
+                          Some(user.id),
+                          action
+                        )
+                      }
+                  }
+                  _ <- (randomTaskOpt, acrsOpt).tupled traverse {
+                    case (randomTask, acrs) =>
+                      (
+                        CampaignDao.addPermissionsMany(
+                          randomTask.properties.campaignId,
+                          acrs.toList,
+                          false
+                        ),
+                        AnnotationProjectDao.addPermissionsMany(
+                          randomTask.properties.annotationProjectId,
+                          acrs.toList,
+                          false
+                        )
+                      ).tupled
+                  } void
+                } yield randomTaskOpt
+              ).transact(xa).unsafeToFuture
+            }
           }
         }
 
