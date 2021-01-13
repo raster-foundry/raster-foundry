@@ -79,7 +79,7 @@ object MVTLayerDao {
           AND join_table_join.annotation_project_id = ${annotationProjectId}
           AND status <> 'SPLIT'
       )
-    SELECT ST_AsMVT(mvtgeom.*) FROM mvtgeom;""".query[Array[Byte]]
+    SELECT ST_AsMVT(mvtgeom.*, 'default', 256) FROM mvtgeom;""".query[Array[Byte]]
   }
 
   def getAnnotationProjectLabels(
