@@ -23,7 +23,9 @@ trait CampaignRoutes
     with PaginationDirectives
     with QueryParametersCommon
     with CampaignProjectRoutes
-    with CampaignPermissionRoutes {
+    with CampaignPermissionRoutes
+    with CampaignLabelClassGroupRoutes
+    with CampaignLabelClassRoutes {
 
   val xa: Transactor[IO]
 
@@ -91,7 +93,74 @@ trait CampaignRoutes
                   deleteCampaignPermissions(campaignId)
                 }
             }
-          } ~
+          } ~ pathPrefix("label-class-groups") {
+          pathEndOrSingleSlash {
+            get {
+              listCampaignLabelClassGroups(campaignId)
+            } ~ post {
+              createCampaignLabelClassGroup(campaignId)
+            }
+          } ~ pathPrefix(JavaUUID) { labelClassGroupId =>
+            pathEndOrSingleSlash {
+              get {
+                getCampaignLabelClassGroup(
+                  campaignId,
+                  labelClassGroupId
+                )
+              } ~ put {
+                updateCampaignLabelClassGroup(
+                  campaignId,
+                  labelClassGroupId
+                )
+              }
+            } ~ pathPrefix("activate") {
+              post {
+                activateCampaignLabelClassGroup(
+                  campaignId,
+                  labelClassGroupId
+                )
+              }
+            } ~ pathPrefix("deactivate") {
+              delete {
+                deactivateCampaignLabelClassGroup(
+                  campaignId,
+                  labelClassGroupId
+                )
+              }
+            } ~ pathPrefix("label-classes") {
+              pathEndOrSingleSlash {
+                get {
+                  listCampaignGroupLabelClasses(
+                    campaignId,
+                    labelClassGroupId
+                  )
+                } ~
+                  post {
+                    addCampaignLabelClassToGroup(
+                      campaignId,
+                      labelClassGroupId
+                    )
+                  }
+              } ~ pathPrefix(JavaUUID) { labelClassId =>
+                pathEndOrSingleSlash {
+                  get {
+                    getCampaignLabelClass(campaignId, labelClassId)
+                  } ~ put {
+                    updateCampaignLabelClass(campaignId, labelClassId)
+                  }
+                } ~ pathPrefix("activate") {
+                  post {
+                    activateCampaignLabelClass(campaignId, labelClassId)
+                  }
+                } ~ pathPrefix("deactivate") {
+                  delete {
+                    deactivateCampaignLabelClass(campaignId, labelClassId)
+                  }
+                }
+              }
+            }
+          }
+        } ~
           pathPrefix("projects") {
             pathEndOrSingleSlash {
               get {
@@ -132,93 +201,127 @@ trait CampaignRoutes
       }
   }
 
-  def listCampaigns: Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.Read, None),
-      user
-    ) {
-      (withPagination & campaignQueryParameters) { (page, campaignQP) =>
-        complete {
-          CampaignDao
-            .listCampaigns(page, campaignQP, user)
-            .transact(xa)
-            .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def createCampaign: Route = authenticate { user =>
-    authorizeScopeLimit(
-      CampaignDao.countUserCampaigns(user).transact(xa).unsafeToFuture,
-      Domain.Campaigns,
-      Action.Create,
-      user
-    ) {
-      entity(as[Campaign.Create]) { newCampaign =>
-        onSuccess(
-          CampaignDao
-            .insertCampaign(newCampaign, user)
-            .transact(xa)
-            .unsafeToFuture
-        ) { campaign =>
-          complete((StatusCodes.Created, campaign))
-        }
-      }
-    }
-  }
-
-  def getCampaign(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.Read, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        CampaignDao
-          .authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.View
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
+  def listCampaigns: Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Read, None),
+        user
+      ) {
+        (withPagination & campaignQueryParameters) { (page, campaignQP) =>
           complete {
             CampaignDao
-              .getCampaignWithRelatedById(campaignId)
+              .listCampaigns(page, campaignQP, user)
               .transact(xa)
               .unsafeToFuture
           }
         }
       }
     }
-  }
 
-  def updateCampaign(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.Update, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        CampaignDao
-          .authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[Campaign]) { updatedCampaign =>
+  def createCampaign: Route =
+    authenticate { user =>
+      authorizeScopeLimit(
+        CampaignDao.countUserCampaigns(user).transact(xa).unsafeToFuture,
+        Domain.Campaigns,
+        Action.Create,
+        user
+      ) {
+        entity(as[Campaign.Create]) { newCampaign =>
           onSuccess(
             CampaignDao
-              .updateCampaign(
-                updatedCampaign,
-                campaignId
-              )
+              .insertCampaign(newCampaign, user)
+              .transact(xa)
+              .unsafeToFuture
+          ) { campaign =>
+            complete((StatusCodes.Created, campaign))
+          }
+        }
+      }
+    }
+
+  def getCampaign(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete {
+              CampaignDao
+                .getCampaignWithRelatedById(campaignId)
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+
+  def updateCampaign(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Update, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.Edit
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[Campaign]) { updatedCampaign =>
+            onSuccess(
+              CampaignDao
+                .updateCampaign(
+                  updatedCampaign,
+                  campaignId
+                )
+                .transact(xa)
+                .unsafeToFuture
+            ) {
+              completeSingleOrNotFound
+            }
+          }
+        }
+      }
+    }
+
+  def deleteCampaign(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Delete, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.Delete
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          onSuccess(
+            CampaignDao
+              .deleteCampaign(campaignId, user)
               .transact(xa)
               .unsafeToFuture
           ) {
@@ -227,215 +330,218 @@ trait CampaignRoutes
         }
       }
     }
-  }
 
-  def deleteCampaign(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.Delete, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        CampaignDao
-          .authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.Delete
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        onSuccess(
-          CampaignDao
-            .deleteCampaign(campaignId, user)
+  def cloneCampaign(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Clone, None),
+        user
+      ) {
+        authorizeAsync {
+          (
+            CampaignDao
+              .authorized(
+                user,
+                ObjectType.Campaign,
+                campaignId,
+                ActionType.View
+              ) map {
+              _.toBoolean
+            },
+            CampaignDao.isActiveCampaign(campaignId)
+          ).tupled
+            .map({ authTup =>
+              authTup._1 && authTup._2
+            })
             .transact(xa)
             .unsafeToFuture
-        ) {
-          completeSingleOrNotFound
+        } {
+          entity(as[Campaign.Clone]) { campaignClone =>
+            onSuccess(
+              (campaignClone.grantAccessToParentCampaignOwner match {
+                case false =>
+                  CampaignDao.copyCampaign(
+                    campaignId,
+                    user,
+                    Some(campaignClone.tags),
+                    campaignClone.copyResourceLink
+                  )
+                case true =>
+                  for {
+                    copiedCampaign <- CampaignDao.copyCampaign(
+                      campaignId,
+                      user,
+                      Some(campaignClone.tags),
+                      campaignClone.copyResourceLink
+                    )
+                    copiedProjects <- AnnotationProjectDao.listByCampaign(
+                      copiedCampaign.id
+                    )
+                    originalCampaignO <- CampaignDao.getCampaignById(
+                      campaignId
+                    )
+                    originalCampaignOwnerO = originalCampaignO map {
+                      _.owner
+                    }
+                    _ <- CampaignDao.addPermission(
+                      copiedCampaign.id,
+                      ObjectAccessControlRule(
+                        SubjectType.User,
+                        originalCampaignOwnerO,
+                        ActionType.View
+                      )
+                    )
+                    _ <- copiedProjects traverse { project =>
+                      AnnotationProjectDao.addPermissionsMany(
+                        project.id,
+                        List(
+                          ObjectAccessControlRule(
+                            SubjectType.User,
+                            originalCampaignOwnerO,
+                            ActionType.View
+                          ),
+                          ObjectAccessControlRule(
+                            SubjectType.User,
+                            originalCampaignOwnerO,
+                            ActionType.Annotate
+                          )
+                        )
+                      )
+                    }
+                  } yield copiedCampaign
+              }).transact(xa).unsafeToFuture
+            ) { campaign =>
+              complete((StatusCodes.Created, campaign))
+            }
+          }
         }
       }
     }
-  }
 
-  def cloneCampaign(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.Clone, None),
-      user
-    ) {
-      authorizeAsync {
-        (
+  def listCampaignUserActions(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.ReadPermissions, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
           CampaignDao
             .authorized(
               user,
               ObjectType.Campaign,
               campaignId,
               ActionType.View
-            ) map {
-            _.toBoolean
-          },
-          CampaignDao.isActiveCampaign(campaignId)
-        ).tupled
-          .map({ authTup =>
-            authTup._1 && authTup._2
-          })
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[Campaign.Clone]) { campaignClone =>
-          onSuccess(
-            (campaignClone.grantAccessToParentCampaignOwner match {
-              case false =>
-                CampaignDao.copyCampaign(
-                  campaignId,
-                  user,
-                  Some(campaignClone.tags),
-                  campaignClone.copyResourceLink
-                )
-              case true =>
-                for {
-                  copiedCampaign <- CampaignDao.copyCampaign(
-                    campaignId,
-                    user,
-                    Some(campaignClone.tags),
-                    campaignClone.copyResourceLink
-                  )
-                  copiedProjects <- AnnotationProjectDao.listByCampaign(
-                    copiedCampaign.id
-                  )
-                  originalCampaignO <- CampaignDao.getCampaignById(
-                    campaignId
-                  )
-                  originalCampaignOwnerO = originalCampaignO map {
-                    _.owner
-                  }
-                  _ <- CampaignDao.addPermission(
-                    copiedCampaign.id,
-                    ObjectAccessControlRule(
-                      SubjectType.User,
-                      originalCampaignOwnerO,
-                      ActionType.View
-                    )
-                  )
-                  _ <- copiedProjects traverse { project =>
-                    AnnotationProjectDao.addPermissionsMany(
-                      project.id,
-                      List(
-                        ObjectAccessControlRule(
-                          SubjectType.User,
-                          originalCampaignOwnerO,
-                          ActionType.View
-                        ),
-                        ObjectAccessControlRule(
-                          SubjectType.User,
-                          originalCampaignOwnerO,
-                          ActionType.Annotate
-                        )
-                      )
-                    )
-                  }
-                } yield copiedCampaign
-            }).transact(xa).unsafeToFuture
-          ) { campaign =>
-            complete((StatusCodes.Created, campaign))
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          user.isSuperuser match {
+            case true => complete(List("*"))
+            case false =>
+              onSuccess(
+                CampaignDao
+                  .getCampaignById(campaignId)
+                  .transact(xa)
+                  .unsafeToFuture
+              ) { campaignO =>
+                complete {
+                  (campaignO traverse { campaign =>
+                    campaign.owner == user.id match {
+                      case true => List("*").pure[ConnectionIO]
+                      case false =>
+                        CampaignDao
+                          .listUserActions(user, campaignId)
+                    }
+                  } map { _.getOrElse(List[String]()) })
+                    .transact(xa)
+                    .unsafeToFuture()
+                }
+              }
           }
         }
       }
     }
-  }
 
-  def listCampaignUserActions(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.ReadPermissions, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        CampaignDao
-          .authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.View
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        user.isSuperuser match {
-          case true => complete(List("*"))
-          case false =>
-            onSuccess(
-              CampaignDao
-                .getCampaignById(campaignId)
-                .transact(xa)
-                .unsafeToFuture
-            ) { campaignO =>
-              complete {
-                (campaignO traverse { campaign =>
-                  campaign.owner == user.id match {
-                    case true => List("*").pure[ConnectionIO]
-                    case false =>
-                      CampaignDao
-                        .listUserActions(user, campaignId)
-                  }
-                } map { _.getOrElse(List[String]()) })
-                  .transact(xa)
-                  .unsafeToFuture()
-              }
-            }
-        }
-      }
-    }
-  }
-
-  def listCampaignCloneOwners(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.Clone, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        CampaignDao
-          .authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
+  def listCampaignCloneOwners(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Clone, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
           CampaignDao
-            .getCloneOwners(campaignId)
-            .transact(xa)
-            .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def getReviewTask(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.Campaigns, Action.Read, None),
-      user
-    ) {
-      authorizeAsync {
-        CampaignDao
-          .isActiveCampaign(campaignId)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          CampaignDao
-            .randomReviewTask(
+            .authorized(
+              user,
+              ObjectType.Campaign,
               campaignId,
-              user
+              ActionType.Edit
             )
             .transact(xa)
             .unsafeToFuture
+        } {
+          complete {
+            CampaignDao
+              .getCloneOwners(campaignId)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
-
     }
-  }
+
+  def getReviewTask(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Read, None),
+        user
+      ) {
+        authorizeAsync {
+          CampaignDao
+            .isActiveCampaign(campaignId)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          (campaignRandomTaskQueryParameters) { randomTaskQp =>
+            complete {
+              (
+                for {
+                  randomTaskOpt <- CampaignDao.randomReviewTask(
+                    campaignId,
+                    user
+                  )
+                  acrsOpt = randomTaskQp.requestAction.toList.toNel map {
+                    actions =>
+                      actions map { action =>
+                        ObjectAccessControlRule(
+                          SubjectType.User,
+                          Some(user.id),
+                          action
+                        )
+                      }
+                  }
+                  _ <- (randomTaskOpt, acrsOpt).tupled traverse {
+                    case (randomTask, acrs) =>
+                      (
+                        CampaignDao.addPermissionsMany(
+                          randomTask.properties.campaignId,
+                          acrs.toList,
+                          false
+                        ),
+                        AnnotationProjectDao.addPermissionsMany(
+                          randomTask.properties.annotationProjectId,
+                          acrs.toList,
+                          false
+                        )
+                      ).tupled
+                  } void
+                } yield randomTaskOpt
+              ).transact(xa).unsafeToFuture
+            }
+          }
+        }
+
+      }
+    }
 
   def retrieveChildCampaignLabels(campaignId: UUID): Route =
     authenticate { user =>

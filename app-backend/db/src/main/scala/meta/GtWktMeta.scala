@@ -3,6 +3,7 @@ package com.rasterfoundry.database.meta
 import doobie._
 import doobie.postgres.pgisimplicits._
 import doobie.util.invariant.InvalidObjectMapping
+import geotrellis.proj4.CRS
 import geotrellis.vector._
 import geotrellis.vector.io.wkt.WKT
 import org.postgis.PGgeometry
@@ -18,7 +19,8 @@ trait GtWktMeta {
   // Constructor for geometry types via WKT reading/writing
   @SuppressWarnings(Array("AsInstanceOf"))
   private def geometryType[A >: Null <: Geometry: TypeTag](
-      implicit A: ClassTag[A]): Meta[Projected[A]] =
+      implicit
+      A: ClassTag[A]): Meta[Projected[A]] =
     PGgeometryType.timap[Projected[A]](pgGeom => {
       val split = PGgeometry.splitSRID(pgGeom.getValue)
       val srid = split(0).splitAt(5)._2.toInt
@@ -26,8 +28,10 @@ trait GtWktMeta {
       try Projected[A](A.runtimeClass.cast(geom).asInstanceOf[A], srid)
       catch {
         case _: ClassCastException =>
-          throw InvalidObjectMapping(A.runtimeClass,
-                                     pgGeom.getGeometry.getClass)
+          throw InvalidObjectMapping(
+            A.runtimeClass,
+            pgGeom.getGeometry.getClass
+          )
       }
     })(geom => {
       val wkt = s"SRID=${geom.srid};" + WKT.write(geom)
@@ -53,5 +57,12 @@ trait GtWktMeta {
     geometryType[Point]
   implicit val ComposedGeomType: Meta[Projected[GeometryCollection]] =
     geometryType[GeometryCollection]
+
+  // we don't need to put ProjectedExtents in the db, only read them
+  // out (used in the MVTLayerDao only right now)
+  implicit val extentGet: Get[ProjectedExtent] = {
+    Get[Projected[Polygon]].map(projGeom =>
+      ProjectedExtent(projGeom.geom.extent, CRS.fromEpsgCode(projGeom.srid)))
+  }
 
 }

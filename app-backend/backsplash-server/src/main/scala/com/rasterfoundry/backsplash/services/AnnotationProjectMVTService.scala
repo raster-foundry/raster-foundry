@@ -5,9 +5,7 @@ import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
 
-import cats.data.OptionT
 import cats.effect._
-import cats.implicits._
 import com.colisweb.tracing.core.TracingContext
 import com.colisweb.tracing.core.TracingContextBuilder
 import com.typesafe.scalalogging.LazyLogging
@@ -21,9 +19,10 @@ import org.http4s.dsl.Http4sDsl
 import java.util.UUID
 
 class AnnotationProjectMVTService(xa: Transactor[IO])(
-    implicit contextShift: ContextShift[IO],
-    builder: TracingContextBuilder[IO]
-) extends Http4sDsl[IO]
+    implicit
+    contextShift: ContextShift[IO],
+    builder: TracingContextBuilder[IO])
+    extends Http4sDsl[IO]
     with LazyLogging {
 
   val authorizers = new Authorizers(xa)
@@ -36,11 +35,12 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
   ): Map[String, String] =
     Map(
       "annotationProjectId" -> annotationProjectId.toString,
-      "zxy" -> s"$z/$x/$y"
+      "zxy" -> s"$z/$x/$y",
+      "project-tms-triple" -> s"$annotationProjectId-$z-$x-$y"
     )
 
   private def getTile(
-      f: (UUID, Int, Int, Int) => ConnectionIO[Option[Array[Byte]]],
+      f: (UUID, Int, Int, Int) => ConnectionIO[Array[Byte]],
       operationLabel: String,
       user: User,
       annotationProjectId: UUID,
@@ -55,26 +55,24 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
         annotationProjectId,
         tracingContext
       )
-      respO <- tracingContext.span(
+      byteArray <- tracingContext.span(
         operationLabel,
         getTags(annotationProjectId, z, x, y)
       ) use { _ =>
         f(annotationProjectId, z, x, y)
           .transact(xa)
       }
-      resp <- OptionT {
-        respO traverse { byteArray =>
-          Ok(
-            byteArray,
-            Header("content-type", "application/vnd.mapbox-vector-tile")
-          )
-        }
-      } getOrElseF NotFound()
+      resp <- Ok(
+        byteArray,
+        Header("content-type", "application/vnd.mapbox-vector-tile")
+      )
     } yield resp
 
   val routes =
     TracedHTTPRoutes[IO] {
-      case GET -> Root / UUIDVar(annotationProjectId) / "labels" / IntVar(z) / IntVar(
+      case GET -> Root / UUIDVar(annotationProjectId) / "labels" / IntVar(
+            z
+          ) / IntVar(
             x
           ) / IntVar(y) as user using context =>
         getTile(
@@ -88,7 +86,9 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           context
         )
 
-      case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(z) / IntVar(
+      case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(
+            z
+          ) / IntVar(
             x
           ) / IntVar(y) as user using context =>
         getTile(

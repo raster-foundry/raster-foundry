@@ -262,9 +262,8 @@ object Task {
 
   object TaskFeature {
     implicit val encTaskFeature: Encoder[TaskFeature] =
-      Encoder.forProduct4("id", "type", "properties", "geometry")(
-        tf => (tf.id, tf._type, tf.properties, tf.geometry)
-      )
+      Encoder.forProduct4("id", "type", "properties", "geometry")(tf =>
+        (tf.id, tf._type, tf.properties, tf.geometry))
     implicit val decTaskFeature: Decoder[TaskFeature] =
       Decoder.forProduct4("id", "properties", "geometry", "type")(
         TaskFeature.apply _
@@ -280,9 +279,8 @@ object Task {
 
   object TaskFeatureWithCampaign {
     implicit val encTaskFeature: Encoder[TaskFeatureWithCampaign] =
-      Encoder.forProduct4("id", "type", "properties", "geometry")(
-        tf => (tf.id, tf._type, tf.properties, tf.geometry)
-      )
+      Encoder.forProduct4("id", "type", "properties", "geometry")(tf =>
+        (tf.id, tf._type, tf.properties, tf.geometry))
     implicit val decTaskFeature: Decoder[TaskFeatureWithCampaign] =
       Decoder.forProduct4("id", "properties", "geometry", "type")(
         TaskFeatureWithCampaign.apply _
@@ -304,9 +302,8 @@ object Task {
         TaskFeatureCreate.apply _
       )
     implicit val encTaskFeatureCreate: Encoder[TaskFeatureCreate] =
-      Encoder.forProduct3("properties", "geometry", "type")(
-        tfc => (tfc.properties, tfc.geometry, tfc._type)
-      )
+      Encoder.forProduct3("properties", "geometry", "type")(tfc =>
+        (tfc.properties, tfc.geometry, tfc._type))
   }
 
   case class TaskFeatureCollection(
@@ -324,8 +321,7 @@ object Task {
           (
             tfc._type,
             tfc.features
-        )
-      )
+        ))
 
     implicit val decTaskFeatureCollection: Decoder[TaskFeatureCollection] =
       Decoder.forProduct2(
@@ -347,9 +343,7 @@ object Task {
       )
     implicit val encTaskFeatureCollectionCreate
       : Encoder[TaskFeatureCollectionCreate] =
-      Encoder.forProduct2("type", "features")(
-        tfc => (tfc._type, tfc.features)
-      )
+      Encoder.forProduct2("type", "features")(tfc => (tfc._type, tfc.features))
   }
 
   final case class TaskGridCreateProperties(
@@ -377,9 +371,8 @@ object Task {
         TaskGridFeatureCreate.apply _
       )
     implicit val encTaskGridFeatureCreate: Encoder[TaskGridFeatureCreate] =
-      Encoder.forProduct3("properties", "geometry", "type")(
-        tfc => (tfc.properties, tfc.geometry, tfc._type)
-      )
+      Encoder.forProduct3("properties", "geometry", "type")(tfc =>
+        (tfc.properties, tfc.geometry, tfc._type))
   }
 }
 

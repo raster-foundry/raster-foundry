@@ -1047,8 +1047,49 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         .list(limit) map { projects =>
         projects map { _.id }
       }
-      taskOpt <- annotationProjectIds.toNel flatTraverse { projectIds =>
-        randomTask(taskParams, projectIds)
+      campaignAuthedProjects <- annotationProjectParams.campaignId traverse {
+        campaignId =>
+          for {
+            campaignAuthResult <- CampaignDao.authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.Annotate
+            )
+            ids <- campaignAuthResult match {
+              case AuthSuccess(_) =>
+                AnnotationProjectDao
+                  .listByCampaignQB(campaignId)
+                  .filter(annotationProjectParams)
+                  .filter(annotationProjectIdOpt)
+                  .list(limit) map { projects =>
+                  projects map { _.id }
+                }
+              case AuthFailure() => List.empty[UUID].pure[ConnectionIO]
+            }
+          } yield ids
+
+      } map { _ getOrElse Nil }
+      idAuthedProjects <- annotationProjectIdOpt flatTraverse { projectId =>
+        AnnotationProjectDao.getProjectById(projectId) flatMap {
+          case Some(ap) =>
+            ap.campaignId traverse { campaignId =>
+              CampaignDao.authorized(
+                user,
+                ObjectType.Campaign,
+                campaignId,
+                ActionType.Annotate
+              ) map {
+                case AuthSuccess(_) => List(ap.id)
+                case AuthFailure()  => Nil
+              }
+            }
+          case None => Option(List.empty[UUID]).pure[ConnectionIO]
+        }
+      } map { _ getOrElse Nil }
+      taskOpt <- (annotationProjectIds ++ campaignAuthedProjects ++ idAuthedProjects).distinct.toNel flatTraverse {
+        projectIds =>
+          randomTask(taskParams, projectIds)
       }
     } yield taskOpt
 }

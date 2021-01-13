@@ -21,12 +21,6 @@ services:
       context: ./nginx
       dockerfile: Dockerfile.api
 
-  nginx-backsplash:
-    image: raster-foundry-nginx-backsplash:${GIT_COMMIT:-latest}
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.backsplash
-
   app-frontend:
     image: node:10
     working_dir: /opt/raster-foundry/app-frontend/

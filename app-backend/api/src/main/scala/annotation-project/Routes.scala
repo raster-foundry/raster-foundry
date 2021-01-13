@@ -24,8 +24,8 @@ trait AnnotationProjectRoutes
     with QueryParametersCommon
     with AnnotationProjectTaskRoutes
     with AnnotationProjectPermissionRoutes
-    with LabelClassGroupRoutes
-    with LabelClassRoutes {
+    with AnnotationProjectLabelClassGroupRoutes
+    with AnnotationProjectLabelClassRoutes {
 
   val xa: Transactor[IO]
 
@@ -75,47 +75,62 @@ trait AnnotationProjectRoutes
       } ~ pathPrefix("label-class-groups") {
         pathEndOrSingleSlash {
           get {
-            listLabelClassGroups(projectId)
+            listAnnotationProjectLabelClassGroups(projectId)
           } ~ post {
-            createLabelClassGroup(projectId)
+            createAnnotationProjectLabelClassGroup(projectId)
           }
         } ~ pathPrefix(JavaUUID) { labelClassGroupId =>
           pathEndOrSingleSlash {
             get {
-              getLabelClassGroup(projectId, labelClassGroupId)
+              getAnnotationProjectLabelClassGroup(projectId, labelClassGroupId)
             } ~ put {
-              updateLabelClassGroup(projectId, labelClassGroupId)
+              updateAnnotationProjectLabelClassGroup(
+                projectId,
+                labelClassGroupId
+              )
             }
           } ~ pathPrefix("activate") {
             post {
-              activateLabelClassGroup(projectId, labelClassGroupId)
+              activateAnnotationProjectLabelClassGroup(
+                projectId,
+                labelClassGroupId
+              )
             }
           } ~ pathPrefix("deactivate") {
             delete {
-              deactivateLabelClassGroup(projectId, labelClassGroupId)
+              deactivateAnnotationProjectLabelClassGroup(
+                projectId,
+                labelClassGroupId
+              )
             }
           } ~ pathPrefix("label-classes") {
             pathEndOrSingleSlash {
               get {
-                listGroupLabelClasses(projectId, labelClassGroupId)
+                listAnnotationProjectGroupLabelClasses(
+                  projectId,
+                  labelClassGroupId
+                )
               } ~
                 post {
-                  addLabelClassToGroup(projectId, labelClassGroupId)
+                  addAnnotationProjectLabelClassToGroup(
+                    projectId,
+                    labelClassGroupId
+                  )
                 }
             } ~ pathPrefix(JavaUUID) { labelClassId =>
               pathEndOrSingleSlash {
                 get {
-                  getLabelClass(projectId, labelClassId)
+                  getAnnotationProjectLabelClass(projectId, labelClassId)
                 } ~ put {
-                  updateLabelClass(projectId, labelClassId)
+                  updateAnnotationProjectLabelClass(projectId, labelClassId)
                 }
               } ~ pathPrefix("activate") {
                 post {
-                  activateLabelClass(projectId, labelClassId)
+                  activateAnnotationProjectLabelClass(projectId, labelClassId)
                 }
               } ~ pathPrefix("deactivate") {
                 delete {
-                  deactivateLabelClass(projectId, labelClassId)
+                  deactivateAnnotationProjectLabelClass(projectId, labelClassId)
                 }
               }
             }
@@ -353,24 +368,37 @@ trait AnnotationProjectRoutes
           user.isSuperuser match {
             case true => complete(List("*"))
             case false =>
-              onSuccess(
-                AnnotationProjectDao
-                  .getById(projectId)
-                  .transact(xa)
-                  .unsafeToFuture
-              ) { projectO =>
-                complete {
-                  (projectO map { project =>
-                    project.createdBy == user.id match {
-                      case true => List("*").pure[ConnectionIO]
-                      case false =>
-                        AnnotationProjectDao
-                          .listUserActions(user, projectId)
+              complete {
+                (for {
+                  projectO <- AnnotationProjectDao
+                    .getById(projectId)
+                  projectActions <- projectO traverse { project =>
+                    if (project.createdBy == user.id) {
+                      Set("*").pure[ConnectionIO]
+                    } else {
+                      AnnotationProjectDao
+                        .listUserActions(user, project.id) map { _.toSet }
                     }
-                  } getOrElse { List[String]().pure[ConnectionIO] })
-                    .transact(xa)
-                    .unsafeToFuture()
-                }
+                  } map { _ getOrElse Set.empty }
+                  campaignActions <- projectO flatTraverse { project =>
+                    project.campaignId traverse { campaignId =>
+                      // definitely safe at this point because it's from the project's FK
+                      CampaignDao.unsafeGetCampaignById(campaignId) flatMap {
+                        campaign =>
+                          if (campaign.owner == user.id) {
+                            Set("*").pure[ConnectionIO]
+                          } else {
+                            CampaignDao.listUserActions(user, campaignId) map {
+                              _.toSet
+                            }
+                          }
+                      }
+                    }
+                  } map { _ getOrElse Set.empty }
+                } yield {
+                  println(s"Campaign actions: ${campaignActions}")
+                  (projectActions ++ campaignActions)
+                }).transact(xa).unsafeToFuture
               }
           }
         }

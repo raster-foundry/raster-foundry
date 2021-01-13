@@ -94,6 +94,20 @@ object AnnotationLabelClassGroupDao
       }
     } yield groupsWithClasses
 
+  def listByCampaignIdWithClasses(
+      campaignId: UUID
+  ): ConnectionIO[List[AnnotationLabelClassGroup.WithLabelClasses]] =
+    for {
+      groups <- listByCampaignId(campaignId)
+      groupsWithClasses <- groups traverse { group =>
+        AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(
+          group.id
+        ) map { classes =>
+          group.withLabelClasses(classes)
+        }
+      }
+    } yield groupsWithClasses
+
   def getGroupWithClassesById(
       id: UUID
   ): ConnectionIO[Option[AnnotationLabelClassGroup.WithLabelClasses]] = {

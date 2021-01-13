@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.middleware.AccessLoggingMiddleware
 import com.rasterfoundry.common.{Config => CommonConfig}
 import com.rasterfoundry.database.Config.statusReapingConfig
 import com.rasterfoundry.database.TaskDao
@@ -60,6 +61,11 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val rollbarReporter: RollbarReporter[IO] =
     new RollbarReporter()
 
+  def withAccessLogging(svc: HttpRoutes[IO]) =
+    new AccessLoggingMiddleware(svc, logger).withLogging(
+      Config.server.doAccessLogging
+    )
+
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
       svc,
@@ -74,7 +80,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
 
   def baseMiddleware(svc: HttpRoutes[IO]) =
-    RequestRewriteMiddleware(withCORS(withTimeout(svc)), xa)
+    RequestRewriteMiddleware(withCORS(withTimeout(withAccessLogging(svc))), xa)
 
   def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
     Timeout(
@@ -112,7 +118,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       xa
     )
 
-  val metricMiddleware = new MetricMiddleware(xa)
   implicit val tracingContext: TracingContextBuilder[IO] =
     if (CommonConfig.awsbatch.environment.toUpperCase == "DEVELOPMENT") {
       JaegerTracer.tracingContextBuilder
@@ -121,22 +126,18 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     }
 
   val mosaicService: HttpRoutes[IO] = authenticators.tokensAuthMiddleware(
-    metricMiddleware.middleware(
-      new MosaicService(
-        SceneToLayerDao(),
-        projectLayerMosaicImplicits,
-        analysisManager,
-        xa,
-        rasterIO
-      ).routes
-    )
+    new MosaicService(
+      SceneToLayerDao(),
+      projectLayerMosaicImplicits,
+      analysisManager,
+      xa,
+      rasterIO
+    ).routes
   )
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      metricMiddleware.middleware(
-        new AnalysisService(analysisManager).routes
-      )
+      new AnalysisService(analysisManager).routes
     )
 
   val sceneMosaicService: HttpRoutes[IO] =

@@ -1,6 +1,7 @@
-package com.rasterfoundry.api.annotationProject
+package com.rasterfoundry.api.campaign
 
 import com.rasterfoundry.akkautil._
+import com.rasterfoundry.api.CommonLabelClassGroupRoutes
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
@@ -18,7 +19,7 @@ import scala.util.{Failure, Success}
 
 import java.util.UUID
 
-trait LabelClassGroupRoutes
+trait CampaignLabelClassGroupRoutes
     extends CommonHandlers
     with Directives
     with Authentication
@@ -27,18 +28,20 @@ trait LabelClassGroupRoutes
 
   val xa: Transactor[IO]
 
-  def listLabelClassGroups(projectId: UUID): Route =
+  def commonLabelClassGroupRoutes: CommonLabelClassGroupRoutes
+
+  def listCampaignLabelClassGroups(campaignId: UUID): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+        ScopedAction(Domain.Campaigns, Action.Read, None),
         user
       ) {
         authorizeAuthResultAsync {
-          AnnotationProjectDao
+          CampaignDao
             .authorized(
               user,
-              ObjectType.AnnotationProject,
-              projectId,
+              ObjectType.Campaign,
+              campaignId,
               ActionType.Annotate
             )
             .transact(xa)
@@ -47,7 +50,7 @@ trait LabelClassGroupRoutes
           complete {
             (
               AnnotationLabelClassGroupDao
-                .listByProjectIdWithClasses(projectId)
+                .listByCampaignIdWithClasses(campaignId)
               )
               .transact(xa)
               .unsafeToFuture
@@ -56,18 +59,18 @@ trait LabelClassGroupRoutes
       }
     }
 
-  def createLabelClassGroup(projectId: UUID): Route =
+  def createCampaignLabelClassGroup(campaignId: UUID): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+        ScopedAction(Domain.Campaigns, Action.Update, None),
         user
       ) {
         authorizeAuthResultAsync {
-          AnnotationProjectDao
+          CampaignDao
             .authorized(
               user,
-              ObjectType.AnnotationProject,
-              projectId,
+              ObjectType.Campaign,
+              campaignId,
               ActionType.Edit
             )
             .transact(xa)
@@ -76,14 +79,14 @@ trait LabelClassGroupRoutes
           entity(as[AnnotationLabelClassGroup.Create]) { classGroupCreate =>
             onComplete {
               (for {
-                groups <- AnnotationLabelClassGroupDao.listByProjectId(
-                  projectId)
-                projectOpt <- AnnotationProjectDao.getById(projectId)
-                created <- projectOpt traverse { project =>
+                groups <- AnnotationLabelClassGroupDao.listByCampaignId(
+                  campaignId)
+                campaignOpt <- CampaignDao.getCampaignById(campaignId)
+                created <- campaignOpt traverse { campaign =>
                   AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
                     classGroupCreate,
-                    Some(project),
                     None,
+                    Some(campaign),
                     groups.size // new class group should be appended to the end
                   )
                 }
@@ -95,7 +98,7 @@ trait LabelClassGroupRoutes
                 complete { groupsWithClasses }
               case Success(None) =>
                 complete {
-                  StatusCodes.NotFound -> "Annotation project does not exist"
+                  StatusCodes.NotFound -> "Campaign does not exist"
                 }
               case Failure(e) =>
                 logger.error(e.getMessage)
@@ -106,127 +109,109 @@ trait LabelClassGroupRoutes
       }
     }
 
-  def getLabelClassGroup(projectId: UUID, classGroupId: UUID): Route =
+  def getCampaignLabelClassGroup(campaignId: UUID, classGroupId: UUID): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+        ScopedAction(Domain.Campaigns, Action.Read, None),
         user
       ) {
         {
           authorizeAuthResultAsync {
-            AnnotationProjectDao
+            CampaignDao
               .authorized(
                 user,
-                ObjectType.AnnotationProject,
-                projectId,
+                ObjectType.Campaign,
+                campaignId,
                 ActionType.Annotate
               )
               .transact(xa)
               .unsafeToFuture
           } {
-            complete {
-              AnnotationLabelClassGroupDao
-                .getGroupWithClassesById(classGroupId)
-                .transact(xa)
-                .unsafeToFuture
-            }
+            commonLabelClassGroupRoutes.getLabelClassGroup(classGroupId)
           }
         }
       }
     }
 
-  def updateLabelClassGroup(projectId: UUID, labelClassGroupId: UUID): Route =
+  def updateCampaignLabelClassGroup(
+      campaignId: UUID,
+      classGroupId: UUID
+  ): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+        ScopedAction(Domain.Campaigns, Action.Update, None),
         user
       ) {
         {
           authorizeAuthResultAsync {
-            AnnotationProjectDao
+            CampaignDao
               .authorized(
                 user,
-                ObjectType.AnnotationProject,
-                projectId,
+                ObjectType.Campaign,
+                campaignId,
                 ActionType.Edit
               )
               .transact(xa)
               .unsafeToFuture
           } {
             entity(as[AnnotationLabelClassGroup]) { updatedClassGroup =>
-              onSuccess(
-                AnnotationLabelClassGroupDao
-                  .update(
-                    labelClassGroupId,
-                    updatedClassGroup
-                  )
-                  .transact(xa)
-                  .unsafeToFuture
-              ) {
-                completeSingleOrNotFound
-              }
+              commonLabelClassGroupRoutes.updateLabelClassGroup(
+                updatedClassGroup,
+                classGroupId
+              )
             }
           }
         }
       }
     }
 
-  def activateLabelClassGroup(projectId: UUID, labelClassGroupId: UUID): Route =
+  def activateCampaignLabelClassGroup(
+      campaignId: UUID,
+      classGroupId: UUID
+  ): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+        ScopedAction(Domain.Campaigns, Action.Update, None),
         user
       ) {
         authorizeAuthResultAsync {
-          AnnotationProjectDao
+          CampaignDao
             .authorized(
               user,
-              ObjectType.AnnotationProject,
-              projectId,
+              ObjectType.Campaign,
+              campaignId,
               ActionType.Edit
             )
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
-            AnnotationLabelClassGroupDao
-              .activate(labelClassGroupId)
-              .transact(xa)
-              .unsafeToFuture
-          }
+          commonLabelClassGroupRoutes.activateLabelClassGroup(classGroupId)
         }
 
       }
     }
 
-  def deactivateLabelClassGroup(
-      projectId: UUID,
-      labelClassGroupId: UUID
+  def deactivateCampaignLabelClassGroup(
+      campaignId: UUID,
+      classGroupId: UUID
   ): Route =
     authenticate { user =>
       authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+        ScopedAction(Domain.Campaigns, Action.Update, None),
         user
       ) {
         authorizeAuthResultAsync {
-          AnnotationProjectDao
+          CampaignDao
             .authorized(
               user,
-              ObjectType.AnnotationProject,
-              projectId,
+              ObjectType.Campaign,
+              campaignId,
               ActionType.Edit
             )
             .transact(xa)
             .unsafeToFuture
         } {
-          onSuccess(
-            AnnotationLabelClassGroupDao
-              .deactivate(labelClassGroupId)
-              .transact(xa)
-              .unsafeToFuture
-          ) {
-            completeSingleOrNotFound
-          }
+          commonLabelClassGroupRoutes.deactivateLabelClassGroup(classGroupId)
         }
       }
     }

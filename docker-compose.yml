@@ -34,23 +34,6 @@ services:
       - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
       - ./nginx/etc/nginx/conf.d/api.conf:/etc/nginx/conf.d/default.conf
 
-  nginx-backsplash:
-    image: raster-foundry-nginx-backsplash
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.backsplash
-    ports:
-      - "8081:443"
-    extra_hosts:
-      - "api-server:127.0.0.1"
-    links:
-      - backsplash
-    volumes:
-      - ./nginx/srv/dist/:/srv/dist/
-      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
-      - ./nginx/etc/nginx/conf.d/backsplash.conf:/etc/nginx/conf.d/default.conf
-
   api-server:
     # If changing container, make sure to update app-backend/api/Dockerfile as well
     image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
@@ -171,14 +154,13 @@ services:
       - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
       - BACKSPLASH_ENABLE_GDAL=false
       - BACKSPLASH_CORE_STREAM_CONCURRENCY=16
-      - BACKSPLASH_ENABLE_REQUEST_METRICS=false
-      - BACKSPLASH_SERVER_REQUEST_LIMIT=0
       - BACKSPLASH_ENABLE_MULTITIFF=false
+      - BACKSPLASH_SERVER_ACCESS_LOGGING=true
       - AWS_REQUEST_PAYER=requester
       - DB_SCENE_SEARCH_BUFFER_PERCENTAGE=0.1
       - DB_TASK_STATUS_EXPIRATION_SECONDS=3600
     ports:
-      - "8080:8080"
+      - "8081:8080"
       - "9030:9030"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/

@@ -5,11 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.58.0] - 2021-01-13
+### Added
+- Backsplash server does its own access logging [#5531](https://github.com/raster-foundry/raster-foundry/pull/5531)
+- Include annotation project id + TMS triple in traces for MVT requests [#5533](https://github.com/raster-foundry/raster-foundry/pull/5533)
+- Added label class and label class group endpoints for campaigns [#5534](https://github.com/raster-foundry/raster-foundry/pull/5534)
+- Added a QP for granting requester accesses to project and campaign in the campaign random task GET endpoint [#5539](https://github.com/raster-foundry/raster-foundry/pull/5539)
+
+### Removed
+- Remove Nginx configuration and containers for Backsplash [#5532](https://github.com/raster-foundry/raster-foundry/pull/5532)
+
+### Changed
+- Annotation projects can always be authorized from their parent campaign [#5536](ttps://github.com/raster-foundry/raster-foundry/pull/5536), [#5537](https://github.com/raster-foundry/raster-foundry/pull/5537)
+- Render label MVTs in the tile server instead of in the database [#5538](https://github.com/raster-foundry/raster-foundry/pull/5538)
+
 ## [1.57.0] - 2020-12-16
 ### Added
 - Add TaskSession data model and basic endpoints [#5522](https://github.com/raster-foundry/raster-foundry/pull/5522)
 - Support fetching random task session [#5525](https://github.com/raster-foundry/raster-foundry/pull/5525)
-- Added TaskSession data model and basic endpoints [#5522](https://github.com/raster-foundry/raster-foundry/pull/5522)
 - Added CRUD endpoints for annotation project label class groups and label classses [#5526](https://github.com/raster-foundry/raster-foundry/pull/5526)
 - Added additional fields to the labels MVT endpoint [#5530](https://github.com/raster-foundry/raster-foundry/pull/5530)
 
@@ -843,7 +856,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.57.0...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.58.0...HEAD
+[1.58.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.57.0...v1.58.0
 [1.57.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.56.0...v1.57.0
 [1.56.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.55.0...v1.56.0
 [1.55.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.54.0...v1.55.0

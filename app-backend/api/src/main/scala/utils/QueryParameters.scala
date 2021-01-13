@@ -49,6 +49,11 @@ trait QueryParameterDeserializers {
       TaskType.fromString(s)
     }
 
+  implicit val deserializerActionType: Unmarshaller[String, ActionType] =
+    Unmarshaller.strict[String, ActionType] { s =>
+      ActionType.fromString(s)
+    }
+
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
@@ -242,4 +247,9 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
           'isActive.as[Boolean].?
         )
     ).as(CampaignQueryParameters.apply _)
+
+  def campaignRandomTaskQueryParameters =
+    parameters(
+      'requestAction.as(deserializerActionType).*
+    ).as(CampaignRandomTaskQueryParameters.apply _)
 }
