@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Added an endpoint for campaign label class group summary [#5541](https://github.com/raster-foundry/raster-foundry/pull/5541)
 
+### Fixed
+- STAC exports for annotation projects without RF projects are no longer catalogs without children [#5540](https://github.com/raster-foundry/raster-foundry/pull/5540)
+
 ## [1.58.0] - 2021-01-13
 ### Added
 - Backsplash server does its own access logging [#5531](https://github.com/raster-foundry/raster-foundry/pull/5531)
