@@ -3,7 +3,6 @@ package com.rasterfoundry.batch.stacExport
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel.TaskStatus
 
-import cats.data._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -16,41 +15,41 @@ object DatabaseIO {
   def sceneTaskAnnotationforLayers(
       annotationProjectId: UUID,
       taskStatuses: List[String]
-  ): ConnectionIO[Map[UUID, ExportData]] = {
-    val dbIO = for {
-      annotationProject <- OptionT(
-        AnnotationProjectDao.getById(annotationProjectId)
-      )
-      project <- OptionT {
-        annotationProject.projectId traverse { pid =>
-          ProjectDao.getProjectById(pid)
-        } map { _.flatten }
+  ): ConnectionIO[Option[ExportData]] =
+    for {
+      annotationProject <- AnnotationProjectDao.getById(annotationProjectId)
+      project <- annotationProject flatMap { _.projectId } flatTraverse { pid =>
+        ProjectDao.getProjectById(pid)
       }
-      info <- OptionT {
-        // AnnotationProjects use the default layer of an RF project
-        createLayerInfoMap(
+      info <- project.fold(
+        getExportData(annotationProjectId, None, taskStatuses)
+      )({ proj =>
+        getExportData(
           annotationProjectId,
-          project.defaultLayerId,
+          Some(proj.defaultLayerId),
           taskStatuses
         )
-      }
-    } yield (project.defaultLayerId, info)
-    dbIO.value.map { _.toMap }
-  }
+      })
+    } yield info
 
-  protected def createLayerInfoMap(
+  protected def getExportData(
       annotationProjectId: UUID,
-      defaultLayerId: UUID,
+      defaultLayerId: Option[UUID],
       taskStatuses: List[String]
   ): ConnectionIO[Option[ExportData]] = {
     for {
-      scenes <- ProjectLayerScenesDao.listLayerScenesRaw(defaultLayerId)
+      tileLayers <- TileLayerDao.listByProjectId(annotationProjectId)
+      scenes <- defaultLayerId traverse { layerId =>
+        ProjectLayerScenesDao.listLayerScenesRaw(layerId)
+      }
       // We're using the unioned extent of scenes because the STAC catalog contains
       // both scenes and annotations.
       // TODO: Restrict the StacItem bounding boxes for labels
-      scenesGeomExtentOption <- ProjectLayerScenesDao.getUnionedGeomExtent(
-        defaultLayerId
-      )
+      scenesGeomExtentOption <- defaultLayerId flatTraverse { layerId =>
+        ProjectLayerScenesDao.getUnionedGeomExtent(
+          layerId
+        )
+      }
       tasks <- TaskDao.listTasksByStatus(annotationProjectId, taskStatuses)
       tasksGeomExtentOption <- TaskDao.createUnionedGeomExtent(
         annotationProjectId,
@@ -67,24 +66,24 @@ object DatabaseIO {
       (
         annotationsOption,
         labelItemPropsThinOption,
-        tasksGeomExtentOption,
-        scenesGeomExtentOption
+        tasksGeomExtentOption
       ) match {
         case (
             Some(annotations),
             Some(labelItemPropsThin),
-            Some(tasksGeomExtent),
-            Some(scenesGeomExtent)
+            Some(tasksGeomExtent)
             ) => {
           Some(
             ExportData(
-              scenes,
-              scenesGeomExtent,
+              scenes getOrElse Nil,
+              scenesGeomExtentOption,
               tasks,
               tasksGeomExtent,
               annotations,
               labelItemPropsThin,
-              taskStatuses map { TaskStatus.fromString }
+              taskStatuses map { TaskStatus.fromString },
+              defaultLayerId,
+              tileLayers
             )
           )
         }

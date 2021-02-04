@@ -29,10 +29,8 @@ import java.util.UUID
 final case class WriteStacCatalog(
     exportId: UUID,
     notifier: IntercomNotifier[IO]
-)(
-    implicit val xa: Transactor[IO],
-    cs: ContextShift[IO]
-) extends Config
+)(implicit val xa: Transactor[IO], cs: ContextShift[IO])
+    extends Config
     with RollbarNotifier {
 
   private def notify(userId: ExternalId, message: Message): IO[Unit] =
@@ -48,10 +46,10 @@ final case class WriteStacCatalog(
       exportPath: String,
       catalog: StacCatalog,
       tempDir: ScalaFile,
-      layerId: UUID,
+      annotationProjectId: UUID,
       sceneTaskAnnotation: ExportData
   ): IO[List[ScalaFile]] = {
-    logger.info(s"Processing Layer Collection: $layerId")
+    logger.info(s"Processing Layer Collection: $annotationProjectId")
     val layerCollectionPrefix = s"$exportPath/layer-collection"
     val labelRootURI = new URI(layerCollectionPrefix)
     val layerCollectionAbsolutePath =
@@ -59,7 +57,7 @@ final case class WriteStacCatalog(
     val layerCollection = Utils.getLayerStacCollection(
       exportDef,
       catalog,
-      layerId,
+      annotationProjectId,
       sceneTaskAnnotation
     )
 
@@ -73,17 +71,32 @@ final case class WriteStacCatalog(
       sceneTaskAnnotation.annotations
     )
 
-    val sceneItems = sceneTaskAnnotation.scenes flatMap { scene =>
-      (
-        Utils.getSceneItem(
-          catalog,
-          layerCollectionPrefix,
-          imageCollection,
-          scene
-        ),
-        scene.ingestLocation
-      ).mapN(SceneItemWithAbsolute.apply _)
+    val sceneItems: List[ImageryItem] = sceneTaskAnnotation.scenes match {
+      case Nil =>
+        List(
+          TileLayersItemWithAbsolute(
+            Utils.getTileLayersItem(
+              catalog,
+              layerCollectionPrefix,
+              imageCollection,
+              sceneTaskAnnotation.tileLayers,
+              sceneTaskAnnotation.taskGeomExtent
+            )
+          )
+        )
+      case scenes =>
+        scenes flatMap { scene =>
+          (
+            Utils.getSceneItem(
+              catalog,
+              layerCollectionPrefix,
+              imageCollection,
+              scene
+            ),
+            scene.ingestLocation
+          ).mapN(SceneItemWithAbsolute.apply _)
 
+        }
     }
 
     val absoluteLayerCollection =
@@ -108,9 +121,9 @@ final case class WriteStacCatalog(
       )
 
     val updatedSceneLinks = imageCollection.links ++ sceneItems.map {
-      case SceneItemWithAbsolute(itemWithAbsolute, _) =>
+      imageryItem =>
         StacLink(
-          s"./${itemWithAbsolute.item.id}.json",
+          s"./${imageryItem.item.item.id}.json",
           StacLinkType.Item,
           Some(`application/json`),
           None
@@ -152,7 +165,7 @@ final case class WriteStacCatalog(
         labelCollectionWithPath
       )
       localSceneItemResults <- sceneItems.parTraverse {
-        case SceneItemWithAbsolute(item, ingestLocation) => {
+        case SceneItemWithAbsolute(item, ingestLocation) =>
           StacFileIO.signTiffAsset(item.item, ingestLocation) flatMap {
             withSignedUrl =>
               StacFileIO.writeObjectToFilesystem(
@@ -160,7 +173,11 @@ final case class WriteStacCatalog(
                 item.copy(item = withSignedUrl)
               )
           }
-        }
+        case TileLayersItemWithAbsolute(item) =>
+          StacFileIO.writeObjectToFilesystem(
+            tempDir,
+            item
+          )
       }
       localSceneCollectionResults <- StacFileIO.writeObjectToFilesystem(
         tempDir,
@@ -205,27 +222,25 @@ final case class WriteStacCatalog(
         )
         .transact(xa)
       _ = logger.info(s"Writing export under prefix: $exportPath")
-      layerIds = layerInfoMap.keys.toList
       catalog = Utils.getAnnotationProjectStacCatalog(
         exportDefinition,
         "1.0.0-beta.1",
-        layerIds
+        annotationProjectId
       )
       catalogWithPath = ObjectWithAbsolute(
         s"$exportPath/catalog.json",
         catalog
       )
       _ <- StacFileIO.writeObjectToFilesystem(tempDir, catalogWithPath)
-      _ <- layerInfoMap.toList traverse {
-        case (layerId, sceneTaskAnnotation) =>
-          processLayerCollection(
-            exportDefinition,
-            exportPath,
-            catalog,
-            tempDir,
-            layerId,
-            sceneTaskAnnotation
-          )
+      _ <- layerInfoMap traverse { exportData =>
+        processLayerCollection(
+          exportDefinition,
+          exportPath,
+          catalog,
+          tempDir,
+          annotationProjectId,
+          exportData
+        )
       }
       _ <- AnnotationProjectDao
         .unsafeGetById(annotationProjectId)
@@ -300,7 +315,8 @@ final case class WriteStacCatalog(
       case Left(_: IllegalArgumentException) =>
         IO.unit
 
-      case Left(_) =>
+      case Left(err) =>
+        logger.error(s"Error occurred in processing:\n$err", err)
         for {
           exportDef <- StacExportDao.getById(exportId).transact(xa)
           owner = exportDef map { _.owner }
