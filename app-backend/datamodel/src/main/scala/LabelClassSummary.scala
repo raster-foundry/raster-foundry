@@ -2,6 +2,7 @@ package com.rasterfoundry.datamodel
 
 import io.circe._
 import io.circe.generic.semiauto._
+
 import java.util.UUID
 
 final case class LabelClassSummary(
