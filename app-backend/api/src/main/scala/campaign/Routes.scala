@@ -50,6 +50,13 @@ trait CampaignRoutes
               deleteCampaign(campaignId)
             }
         } ~
+          pathPrefix("label-class-summary") {
+            pathEndOrSingleSlash {
+              get {
+                getCampaignLabelClassSummary(campaignId)
+              }
+            }
+          } ~
           pathPrefix("clone") {
             pathEndOrSingleSlash {
               post {
@@ -597,6 +604,35 @@ trait CampaignRoutes
                     page
                   )
                 )
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+
+  def getCampaignLabelClassSummary(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete {
+              CampaignDao
+                .getLabelClassSummary(campaignId)
                 .transact(xa)
                 .unsafeToFuture
             }
