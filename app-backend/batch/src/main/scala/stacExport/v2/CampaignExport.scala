@@ -8,6 +8,7 @@ import com.rasterfoundry.database.{
   TaskDao,
   TileLayerDao
 }
+import com.rasterfoundry.datamodel.TileLayerType.{MVT, TMS}
 import com.rasterfoundry.datamodel.{
   AnnotationProject,
   Scene,
@@ -15,7 +16,6 @@ import com.rasterfoundry.datamodel.{
   TileLayer,
   UnionedGeomExtent
 }
-import com.rasterfoundry.datamodel.TileLayerType.{MVT, TMS}
 
 import better.files.File
 import cats.data.StateT
@@ -171,23 +171,22 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val withCollection =
       optics.itemCollectionLens.modify(_ => Some(imageryCollectionId))
-    val withParentLinks = optics.itemLinksLens.modify(links =>
-      StacLink(
-        "./collection.json",
-        StacLinkType.Collection,
-        Some(`application/json`),
-        None
-      ) +: StacLink(
-        "../catalog.json",
-        StacLinkType.StacRoot,
-        Some(`application/json`),
-        None
-      ) +:
-        links.filter(link =>
+    val withParentLinks = optics.itemLinksLens.modify(
+      links =>
+        StacLink(
+          "./collection.json",
+          StacLinkType.Collection,
+          Some(`application/json`),
+          None
+        ) +: StacLink(
+          "../catalog.json",
+          StacLinkType.StacRoot,
+          Some(`application/json`),
+          None
+        ) +:
+          links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
-            .contains(link.rel)
-        )
-    )
+            .contains(link.rel)))
 
     def withAsset(stacItem: StacItem): IO[StacItem] = {
       stacItem.assets.get("data") match {
@@ -195,13 +194,12 @@ case class ExportData private (
           IO {
             s3Client.maybeSignUri(asset.href, duration = Duration.ofDays(7))
           } map { signedUrl =>
-            (optics.itemAssetLens.modify(assets =>
-              assets ++ Map(
-                "data" -> optics.assetHrefLens
-                  .modify(_ => signedUrl)(asset)
-              )
-            )
-            )(stacItem)
+            (optics.itemAssetLens.modify(
+              assets =>
+                assets ++ Map(
+                  "data" -> optics.assetHrefLens
+                    .modify(_ => signedUrl)(asset)
+              )))(stacItem)
           }
         case None =>
           IO.pure(stacItem)
@@ -351,35 +349,34 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val withCollection =
       optics.itemCollectionLens.modify(_ => Some(labelCollectionId))
-    val withParentLinks = optics.itemLinksLens.modify(links =>
-      StacLink(
-        "./collection.json",
-        StacLinkType.Collection,
-        Some(`application/json`),
-        None
-      ) +: StacLink(
-        "../catalog.json",
-        StacLinkType.StacRoot,
-        Some(`application/json`),
-        None
-      ) +:
-        links.filter(link =>
+    val withParentLinks = optics.itemLinksLens.modify(
+      links =>
+        StacLink(
+          "./collection.json",
+          StacLinkType.Collection,
+          Some(`application/json`),
+          None
+        ) +: StacLink(
+          "../catalog.json",
+          StacLinkType.StacRoot,
+          Some(`application/json`),
+          None
+        ) +:
+          links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
-            .contains(link.rel)
-        )
-    )
+            .contains(link.rel)))
     def withAsset(labelItem: StacItem) =
-      optics.itemAssetLens.modify(assets =>
-        assets ++ Map(
-          "data" -> StacItemAsset(
-            s"./data/${labelItem.id}.geojson",
-            None,
-            None,
-            Set(StacAssetRole.Data),
-            Some(`application/geo+json`)
-          )
-        )
-      )(labelItem)
+      optics.itemAssetLens.modify(
+        assets =>
+          assets ++ Map(
+            "data" -> StacItemAsset(
+              s"./data/${labelItem.id}.geojson",
+              None,
+              None,
+              Set(StacAssetRole.Data),
+              Some(`application/geo+json`)
+            )
+        ))(labelItem)
     (annotationProjectLabelItems.toList traverse {
       case (_, v) =>
         encodableToFile(
@@ -433,9 +430,8 @@ class CampaignStacExport(
     xa: Transactor[IO],
     exportDefinition: StacExport
 )(implicit
-    val
-    cs: ContextShift[IO]
-) {
+  val
+  cs: ContextShift[IO]) {
 
   val runExport = StateT { step }
 
@@ -524,12 +520,12 @@ class CampaignStacExport(
       taskStatuses: List[String]
   ): IO[Option[newtypes.SceneItem]] =
     for {
-      tileLayers <-
-        TileLayerDao.listByProjectId(annotationProject.id).transact(xa)
-      extentO <-
-        TaskDao
-          .createUnionedGeomExtent(annotationProject.id, taskStatuses)
-          .transact(xa)
+      tileLayers <- TileLayerDao
+        .listByProjectId(annotationProject.id)
+        .transact(xa)
+      extentO <- TaskDao
+        .createUnionedGeomExtent(annotationProject.id, taskStatuses)
+        .transact(xa)
       item = extentO map { unionedGeom =>
         makeTileLayersItem(
           tileLayers,
@@ -546,10 +542,9 @@ class CampaignStacExport(
     for {
       // make the catalog for this annotation project
       // make the scene item for this annotation project with an s3 asset
-      scene <-
-        AnnotationProjectDao
-          .getFirstScene(annotationProject.id)
-          .transact(xa)
+      scene <- AnnotationProjectDao
+        .getFirstScene(annotationProject.id)
+        .transact(xa)
       imageryItemO <- scene.fold(
         imageryItemFromTileLayers(
           annotationProject,
@@ -562,13 +557,12 @@ class CampaignStacExport(
         Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
       // make label asset
-      featureGeoJSON <-
-        AnnotationLabelDao
-          .getAnnotationJsonByTaskStatus(
-            annotationProject.id,
-            inputState.exportDefinition.taskStatuses
-          )
-          .transact(xa)
+      featureGeoJSON <- AnnotationLabelDao
+        .getAnnotationJsonByTaskStatus(
+          annotationProject.id,
+          inputState.exportDefinition.taskStatuses
+        )
+        .transact(xa)
       labelAssetAppend = featureGeoJSON map { geojson =>
         Map(
           newtypes.AnnotationProjectId(annotationProject.id) -> newtypes
@@ -576,17 +570,15 @@ class CampaignStacExport(
         )
       } getOrElse Map.empty
       // make the label item
-      taskExtent <-
-        TaskDao
-          .createUnionedGeomExtent(
-            annotationProject.id,
-            inputState.exportDefinition.taskStatuses
-          )
-          .transact(xa)
-      labelItemExtensionO <-
-        AnnotationProjectDao
-          .getAnnotationProjectStacInfo(annotationProject.id)
-          .transact(xa)
+      taskExtent <- TaskDao
+        .createUnionedGeomExtent(
+          annotationProject.id,
+          inputState.exportDefinition.taskStatuses
+        )
+        .transact(xa)
+      labelItemExtensionO <- AnnotationProjectDao
+        .getAnnotationProjectStacInfo(annotationProject.id)
+        .transact(xa)
       labelItemsAppend = (taskExtent, labelItemExtensionO, imageryItemO) mapN {
         case (extent, labelItemExtension, imageryItem) =>
           Map(
