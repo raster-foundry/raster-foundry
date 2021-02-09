@@ -68,9 +68,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     )
     val labelClassFragments: List[Fragment] =
       annotationLabelsWithClasses flatMap { label =>
-        label.annotationLabelClasses.map(
-          labelClassId => fr"(${label.id}, ${labelClassId})"
-        )
+        label.annotationLabelClasses.map(labelClassId =>
+          fr"(${label.id}, ${labelClassId})")
       }
     for {
       insertedAnnotationIds <- annotationFragments.toNel traverse { fragments =>
@@ -97,10 +96,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     query.filter(fr"annotation_project_id = ${projectId}").list
   }
 
-  def countByProjectAndGroup(
-      projectId: UUID,
+  def countByProjectsAndGroup(
+      projectIds: List[UUID],
       annotationLabelClassGroupId: UUID
-  ): ConnectionIO[List[AnnotationProject.LabelClassSummary]] = {
+  ): ConnectionIO[List[LabelClassSummary]] = {
+    val projectIdsF = projectIds map { projectId =>
+      fr"$projectId"
+    }
     val fragment = (fr"""
   SELECT
     alalc.annotation_class_id AS label_class_id,
@@ -115,14 +117,14 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       ON alcls.id = alalc.annotation_class_id
   )
   WHERE
-    al.annotation_project_id = ${projectId}
+    al.annotation_project_id in (""" ++ projectIdsF.intercalate(fr",") ++ fr""")
   AND
     alcls.annotation_label_group_id = ${annotationLabelClassGroupId}
   GROUP BY
     alalc.annotation_class_id,
     alcls.name
   """)
-    fragment.query[AnnotationProject.LabelClassSummary].to[List]
+    fragment.query[LabelClassSummary].to[List]
   }
 
   def listWithClassesByProjectIdAndTaskId(
@@ -150,7 +152,9 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       annotationProjectId: UUID,
       taskStatuses: List[String]
   ): ConnectionIO[Option[Json]] = {
-    val taskJoinF = fr"JOIN tasks on " ++ Fragment.const(tableName) ++ fr".annotation_task_id = tasks.id"
+    val taskJoinF = fr"JOIN tasks on " ++ Fragment.const(
+      tableName
+    ) ++ fr".annotation_task_id = tasks.id"
     val taskFilterF = fr"tasks.annotation_project_id = ${annotationProjectId}"
     val labelFilterF =
       fr"annotation_labels.annotation_project_id = ${annotationProjectId}"
@@ -189,10 +193,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       )
     } yield
       StacGeoJSONFeatureCollection(
-        annotations.map(
-          anno =>
-            anno.toStacGeoJSONFeature(classIdToGroupName, classIdToLabelName)
-        )
+        annotations.map(anno =>
+          anno.toStacGeoJSONFeature(classIdToGroupName, classIdToLabelName))
       ).asJson
     fcIo.value
   }

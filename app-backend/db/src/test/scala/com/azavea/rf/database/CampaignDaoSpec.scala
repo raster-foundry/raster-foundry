@@ -1384,10 +1384,16 @@ class CampaignDaoSpec
             userSharing <- UserDao.create(userSharingCreate)
             userShared <- UserDao.create(userSharedCreate)
             sharedCampaigns <- campaignSharedCreates traverse { toInsert =>
-              CampaignDao.insertCampaign(toInsert.copy(parentCampaignId = None), userSharing)
+              CampaignDao.insertCampaign(
+                toInsert.copy(parentCampaignId = None),
+                userSharing
+              )
             }
             unsharedCampaigns <- campaignUnsharedCreates traverse { toInsert =>
-              CampaignDao.insertCampaign(toInsert.copy(parentCampaignId = None), userSharing)
+              CampaignDao.insertCampaign(
+                toInsert.copy(parentCampaignId = None),
+                userSharing
+              )
             }
             _ <- sharedCampaigns traverse { campaign =>
               CampaignDao.addPermission(
@@ -1421,6 +1427,88 @@ class CampaignDaoSpec
               .size == sharedCampaigns.size,
             "Shared campaigns have correct share count"
           )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("get label class summary for a campaign") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            campaignCreate: Campaign.Create,
+            annotationCreates: List[AnnotationLabelWithClasses.Create],
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            classGroupCreate: AnnotationLabelClassGroup.Create
+        ) => {
+          val summaryIO = for {
+            user <- UserDao.create(userCreate)
+            insertedCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
+            annotationProject <- AnnotationProjectDao.insert(
+              annotationProjectCreate.copy(
+                status = AnnotationProjectStatus.Ready,
+                campaignId = Some(insertedCampaign.id),
+                labelClassGroups = List()
+              ),
+              user
+            )
+            fixedUpTasks = fixupTaskFeaturesCollection(
+              taskFeatureCollectionCreate,
+              annotationProject,
+              None
+            )
+            task <- TaskDao.insertTasks(
+              fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+              user
+            ) map { _.features.head }
+            existingGroups <-
+              AnnotationLabelClassGroupDao.listByCampaignId(insertedCampaign.id)
+            createdGroup <-
+              AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
+                classGroupCreate,
+                None,
+                Some(insertedCampaign),
+                existingGroups.size
+              )
+            classIds = createdGroup.labelClasses.map { _.id }
+            withClasses = annotationCreates map { create =>
+              addClasses(create, classIds)
+            }
+            _ <- AnnotationLabelDao.insertAnnotations(
+              annotationProject.id,
+              task.id,
+              withClasses,
+              user
+            )
+            summary <- CampaignDao.getLabelClassSummary(insertedCampaign.id)
+          } yield { (classIds, summary) }
+
+          val (classIds, summary) = summaryIO.transact(xa).unsafeRunSync
+
+          classIds foreach { classId =>
+            val labelSummaryO =
+              summary.head.labelClassSummaries.find(_.labelClassId == classId)
+            val expectation = if (annotationCreates.isEmpty) {
+              None
+            } else {
+              Some(annotationCreates.size)
+            }
+            assert(
+              (labelSummaryO map { (summ: LabelClassSummary) =>
+                summ.count
+              }) == expectation,
+              "All the annotations with the real class were counted"
+            )
+          }
 
           true
         }

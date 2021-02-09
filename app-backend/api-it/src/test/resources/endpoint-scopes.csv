@@ -223,6 +223,7 @@ Path,Domain:Action,Verb
 /api/campaigns/{campaignId},campaigns:read,get
 /api/campaigns/{campaignId},campaigns:update,put
 /api/campaigns/{campaignId},campaigns:delete,delete
+/api/campaigns/{campaignId}/label-class-summary,campaigns:read,get
 /api/campaigns/{campaignId}/actions,campaigns:readPermissions,get
 /api/campaigns/{campaignId}/projects,annotationProjects:read,get
 /api/campaigns/{campaignId}/permissions,campaigns:readPermissions,get

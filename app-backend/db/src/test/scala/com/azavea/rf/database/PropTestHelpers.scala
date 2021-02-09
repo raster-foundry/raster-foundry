@@ -529,4 +529,10 @@ trait PropTestHelpers {
       INSERT INTO task_sessions VALUES
         (uuid_generate_v4(), now(), now() - INTERVAL '10 min', NULL, ${fromStatus}, NULL, ${taskSessionCreate.sessionType},
         ${user.id}, ${taskId})""").update.withUniqueGeneratedKeys[UUID]("id")
+
+  def addClasses(
+      label: AnnotationLabelWithClasses.Create,
+      classes: List[UUID]
+  ): AnnotationLabelWithClasses.Create =
+    label.copy(annotationLabelClasses = classes.take(1))
 }
