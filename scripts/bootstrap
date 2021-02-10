@@ -25,6 +25,9 @@ Bootstrap development environment.
 
 function build_containers() {
     echo "Building containers / pulling postgres and memcached"
+    
+    ensure_dirs
+    
     pushd "${DIR}"
 
     docker-compose \
@@ -50,6 +53,12 @@ function override_build_repos() {
     echo "Overriding repository configuration for ${1}"
     echo "-Dsbt.override.build.repos=true" >> app-backend/.sbtopts
     echo "-Dsbt.repository.config=project/${1}/repositories" >> app-backend/.sbtopts
+}
+
+function ensure_dirs() {
+    # Ensure that a directory exists to house AWS profiles.
+    mkdir -p "${HOME}/.aws"
+    mkdir -p "nginx/srv/dist/"
 }
 
 function generate_sbtopts() {
