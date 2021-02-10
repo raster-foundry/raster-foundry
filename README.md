@@ -56,7 +56,6 @@ Almost all interaction with consoles and servers can be managed via calls to a s
 ```bash
 export RF_AWS_PROFILE=raster-foundry
 export RF_SETTINGS_BUCKET=rasterfoundry-development-config-us-east-1
-export RF_ARTIFACTS_BUCKET=rasterfoundry-global-artifacts-us-east-1
 ```
 
 After exporting your environment settings, you are ready to get started:
