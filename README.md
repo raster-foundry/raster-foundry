@@ -2,18 +2,21 @@
 
 ## Getting Started
 
-A virtual machine is used to encapsulate Docker dependencies. `docker-compose` is used within the VM to manage running the application and developing against it.
-
 ### Requirements
 
-- Vagrant 1.8+
-- VirtualBox 5.0+
-- Ansible 1.8+ (on host)
 - AWS CLI 1.10+
 - AWS Account (to store artifacts, secrets)
-- [Auth0 Account](https://auth0.com/) (user management)
+- [jabba](https://github.com/shyiko/jabba) for managing Java versions
+- [nvm](https://github.com/nvm-sh/nvm) for managing Node versions
 - [Rollbar Account](https://rollbar.com/) (error reporting -- optional)
-- [Scalafmt](https://scalameta.org/scalafmt/docs/installation.html) (formatting scala code -- optional, but builds CI will fail if you introduce formatting that's not compliant with its results) 
+
+*tl;dr*:
+
+- `export AWS_PROFILE=raster-foundry`
+- `export RF_SETTINGS_BUCKET=...`
+- `./scripts/bootstrap`
+- `./scripts/update`
+- `./scripts/server`
 
 #### Setting Up AWS Account
 
@@ -43,7 +46,13 @@ The last thing to set up with Auth0 are the allowed callback URLs and logout URL
 
 ### Development
 
-Vagrant is used to manage VirtualBox provisioning and configuration. Raster Foundry follows the approach outlined [here](https://githubengineering.com/scripts-to-rule-them-all/) ("Scripts to Rule Them All") to have as consistent a development experience as possible. Almost all interaction with consoles and servers can be managed via calls to a script located in `./scripts`. Default values for the S3 config and data buckets in addition to AWS profile will be used if they are not set with an environment variable. Before running vagrant, these should be injected into your shell environment:
+Raster Foundry follows the approach outlined [here](https://githubengineering.com/scripts-to-rule-them-all/) ("Scripts to Rule Them All") to have a  mostly consistent development experience. We deviate in a few specific ways:
+
+- We don't pin / require a specific Java version. The application will eventually run in a jdk8 container, and for reproduction it's helpful to have `jabba` to be able to describe issues that occur on some Java versions but not others, but largely this does not make a difference at this point.
+- We expect the user to install `nvm` and `jabba` on their host, instead of running everything in containers. Users _can_ choose to run everything in containers, but that's not how the development environment is organized by default.
+
+Almost all interaction with consoles and servers can be managed via calls to a script located in `./scripts`. Default values for the S3 config and data buckets in addition to AWS profile will be used if they are not set with an environment variable. Before running `scripts/bootstrap`, these should be injected into your shell environment:
+
 ```bash
 export RF_AWS_PROFILE=raster-foundry
 export RF_SETTINGS_BUCKET=rasterfoundry-development-config-us-east-1
@@ -53,45 +62,32 @@ export RF_ARTIFACTS_BUCKET=rasterfoundry-global-artifacts-us-east-1
 After exporting your environment settings, you are ready to get started:
 
 ```bash
-$ ./scripts/setup
-$ vagrant ssh
+$ ./scripts/bootstrap
+$ ./scripts/update
 $ ./scripts/server
 ```
 
-Use `./scripts/setup` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
+The servers should come up successfully.
 
-The guest machine shares folders with the host using `rsync`. In order to sync files from the host to the guest, run `vagrant rsync-auto` in another tab. If you have generated files in the guest that you'd like to copy back into the host machine, run `scripts/rsync-back` from the host.
-
-Once the machine is provisioned you can start services or development by ssh-ing into the machine (`vagrant ssh`) and using the helper scripts in the `/opt/raster-foundry/scripts` directory.
-
-If you do not have a development database to seed your database with, you will need to initialize the database with `mg init` inside an `sbt` console `./scripts/console api-server ./sbt`
-
-Development workflow varies by developer, but a typical development experience might include the following:
-
- - Create a new feature branch
- - Start up the vagrant machine with `./scripts/setup`
- - Sync watched files by running `vagrant rsync-auto` in another tab.
- - Get an `sbt` console open using `./scripts/console api-server ./sbt`
- - Make changes to Scala code
- - Try compiling (`~compile`) or running the service to inspect it (`~api/run`)
- - Extract files generated in the VM with `./scripts/rsync-back`
+Then, kill your servers. To get the database loaded with sample data, you can run `./scripts/load-development-data --download`.
+This will fetch a database dump from S3 and some development images. You can use these data for consistent testing instructions
+with other developers. This script will also apply any outstanding migrations not present in the dev database.
 
 ### Migrations
 
-Database migrations are managed using [scala-forklift](https://github.com/lastland/scala-forklift). The `scala-forklift` [example project](https://github.com/lastland/scala-forklift/tree/develop/example) provides a good overview and walkthrough of how the various components fit together, and how to manage migrations.
+Database migrations are managed using [flyway](flyway). You can run `flyway` commands with `scripts/migrate`. Some commands you
+can run are:
 
-To initialize migrations on a database for the first time, run `mg init` within an `sbt console`. This creates a `__migrations__` table in the database to track which migrations have been applied. After the database has been initialized, all unapplied migrations may be applied by running `mg update` and then `mg apply`. Please note: the `mg migrate` command should be avoided because it invokes the code generation feature of forklift. This feature is not used in the `raster-foundry` project.
+- `scripts/migrate migrate`: apply outtanding migrations
+- `scripts/migrate repair`: reconcile the checksums of applied migrations in the database with what's present on disk
+
+There is no command to revert migrations.
 
 The workflow for creating a new migration is:
 
- - Open an `sbt` console using `./scripts/console api-server ./sbt`
- - Run `mg new s` for a `SQL` migration
-   - The migration file is output to `migrations/src_migrations/main/scala/{VERSION_NUM}.scala`
- - Edit this file to perform the desired migration logic
- - Run `mg update` followed by `mg apply`
-   - This executes the migration
-   - Press `ENTER` once the migration command has completed
- - `mg update` will create a symlink with an absolute path to the migration. This path won't work in all environments, so you should run `./scripts/fix-migration migration_number` from the vm to update the symlink to a relative path.
+ - Write a migration in `db/src/main/resources/Vxx__migration_name.sql`
+ - `./scripts/migrate migrate`
+ - Verify the schema changes in PostgreSQL with `./scripts/psql`
 
 #### Frontend Development
 
@@ -146,7 +142,6 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | Script Name             | Purpose                                                      |
 | ----------------------- | ------------------------------------------------------------ |
 | `bootstrap`             | Pulls/builds necessary containers                            |
-| `setup`                 | Provision development VM                                     |
 | `update`                | Runs migrations, installs dependencies, etc.                 |
 | `server`                | Starts a development server                                  |
 | `console`               | Gives access to a running container via `docker-compose run` |
