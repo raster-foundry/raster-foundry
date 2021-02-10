@@ -138,6 +138,7 @@ services:
     environment:
       - RF_LOG_LEVEL=INFO
       - COURSIER_CACHE=/root/.coursier
+      - SCOPE_IT_API_HOST=http://api.service.rasterfoundry.internal/api
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./data/:/opt/data/
