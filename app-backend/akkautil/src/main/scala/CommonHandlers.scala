@@ -81,7 +81,7 @@ trait CommonHandlers extends RouteDirectives {
         complete {
           Map("simResult" -> userActions.contains(scopedAction)).asJson
         }
-      case nope =>
+      case _ =>
         fallback
     })
 
