@@ -9,7 +9,11 @@ import akka.http.scaladsl.server._
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
+import com.guizmaii.scalajwt.{
+  ConfigurableJwtValidator,
+  JwtToken,
+  UnknownException
+}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
@@ -165,7 +169,14 @@ trait Authentication extends Directives with LazyLogging {
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
     result match {
-      case Left(_) =>
+      case Left(err) =>
+        logger.error("Token authentication failed", err)
+        err match {
+          case UnknownException(e) =>
+            logger.error(s"Underlying error was unknown", e)
+          case e =>
+            logger.error(s"Caused by", e)
+        }
         reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
       case Right((_, jwtClaims)) => {
         val userId = jwtClaims.getStringClaim("sub")
