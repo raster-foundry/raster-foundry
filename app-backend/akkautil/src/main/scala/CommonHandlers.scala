@@ -82,7 +82,6 @@ trait CommonHandlers extends RouteDirectives {
           Map("simResult" -> userActions.contains(scopedAction)).asJson
         }
       case nope =>
-        println(s"Result of header parse: $nope")
         fallback
     })
 

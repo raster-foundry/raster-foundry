@@ -370,8 +370,9 @@ trait AnnotationProjectRoutes
             case false =>
               complete {
                 (for {
-                  projectO <- AnnotationProjectDao
-                    .getById(projectId)
+                  projectO <-
+                    AnnotationProjectDao
+                      .getById(projectId)
                   projectActions <- projectO traverse { project =>
                     if (project.createdBy == user.id) {
                       Set("*").pure[ConnectionIO]
@@ -396,7 +397,6 @@ trait AnnotationProjectRoutes
                     }
                   } map { _ getOrElse Set.empty }
                 } yield {
-                  println(s"Campaign actions: ${campaignActions}")
                   (projectActions ++ campaignActions)
                 }).transact(xa).unsafeToFuture
               }
