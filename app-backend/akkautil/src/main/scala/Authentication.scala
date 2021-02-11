@@ -17,11 +17,14 @@ import com.guizmaii.scalajwt.{
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jwt.proc.BadJWTException
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import eu.timepit.refined.auto._
+import eu.timepit.refined.types.numeric.NonNegInt
 import io.circe.Json
 import org.postgresql.util.PSQLException
 import scalacache._
@@ -35,7 +38,6 @@ import scala.util.Try
 
 import java.net.URL
 import java.util.UUID
-import com.nimbusds.jwt.proc.BadJWTException
 
 object AuthCache {
   implicit val tokenCache: Cache[EitherJWT[(JwtToken, JWTClaimsSet)]] =
@@ -107,6 +109,18 @@ trait Authentication extends Directives with LazyLogging {
       authenticateWithToken(token)
     }
   }
+
+  private def retryVerifyJWT(
+      tokenString: String,
+      triesRemaining: NonNegInt
+  ): AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)] =
+    (verifyJWT(tokenString), triesRemaining.value) match {
+      case (result, 0)       => result
+      case (r @ Right(_), _) => r
+      case (Left(UnknownException(_)), n) =>
+        retryVerifyJWT(tokenString, NonNegInt.unsafeFrom(n - 1))
+      case (l @ Left(_), _) => l
+    }
 
   def verifyJWT(
       tokenString: String
@@ -189,7 +203,7 @@ trait Authentication extends Directives with LazyLogging {
       memoize[Id, AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)]](
         Some(60 seconds)
       )(
-        verifyJWT(tokenString)
+        retryVerifyJWT(tokenString, 10)
       )
 
     result match {
