@@ -100,7 +100,7 @@ class ScopeSpec extends AnyFunSpec {
     out
   }
 
-  val authTokenE: Either[String, TokenResponse] = {
+  lazy val authTokenE: Either[String, TokenResponse] = {
     val tokenRoute = makeRoute("/api/tokens/")
     val response =
       basicRequest
