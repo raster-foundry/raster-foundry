@@ -161,13 +161,17 @@ class ScopeSpec extends AnyFunSpec {
       addMethod(baseRequest, requestUri, row.verb).send()
     // for some reason I'm not allowed to bail on the Id wrapper in the previous step, though I'd really
     // prefer to. this is a bit janky but I'm not sure what to do about it.
-    val resultBody: Either[String, SimResponse] = response.body.leftMap(
-      err =>
-        s"body deserialization failed: $err, code: ${response.code} body: ${response.body}"
+    val resultBody: Either[String, SimResponse] = response.body.leftMap(err =>
+      s"body deserialization failed: $err, code: ${response.code} body: ${response.body}"
     )
     assert(
       resultBody == Right(SimResponse(expectation)),
-      s"Authorization expectation failed: received $resultBody, expected $expectation"
+      s"""
+        | Authorization expectation failed.
+        | Received $resultBody
+        | Expected $expectation
+        | From url: $requestUri
+        | """.trim.stripMargin
     )
   }
 
