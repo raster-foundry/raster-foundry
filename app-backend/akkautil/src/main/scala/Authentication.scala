@@ -39,16 +39,6 @@ import scala.util.Try
 import java.net.URL
 import java.util.UUID
 
-object AuthCache {
-  implicit val tokenCache: Cache[EitherJWT[(JwtToken, JWTClaimsSet)]] =
-    CaffeineCache[EitherJWT[(JwtToken, JWTClaimsSet)]]
-
-  type EitherJWT[A] = Either[BadJWTException, A]
-
-  implicit val cacheEnabled = Flags(true, true)
-
-}
-
 trait Authentication extends Directives with LazyLogging {
 
   implicit def xa: Transactor[IO]
@@ -58,11 +48,19 @@ trait Authentication extends Directives with LazyLogging {
   private val groundworkConfigAuth = configAuth.getConfig("groundwork")
   private val groundworkSampleProjectAuth =
     groundworkConfigAuth.getString("sampleProject")
+  private val authCacheEnabled = auth0Config.getBoolean("enableCache")
 
   private val jwksURL = auth0Config.getString("jwksURL")
   private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(
     new URL(jwksURL)
   )
+
+  implicit val tokenCache: Cache[EitherJWT[(JwtToken, JWTClaimsSet)]] =
+    CaffeineCache[EitherJWT[(JwtToken, JWTClaimsSet)]]
+
+  type EitherJWT[A] = Either[BadJWTException, A]
+
+  implicit val cacheEnabled = Flags(authCacheEnabled, authCacheEnabled)
 
   // Default user returned when no credentials are provided
   lazy val anonymousUser: Future[Option[User]] =
@@ -113,7 +111,7 @@ trait Authentication extends Directives with LazyLogging {
   private def retryVerifyJWT(
       tokenString: String,
       triesRemaining: NonNegInt
-  ): AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)] =
+  ): EitherJWT[(JwtToken, JWTClaimsSet)] =
     (verifyJWT(tokenString), triesRemaining.value) match {
       case (result, 0)       => result
       case (r @ Right(_), _) => r
@@ -124,7 +122,7 @@ trait Authentication extends Directives with LazyLogging {
 
   def verifyJWT(
       tokenString: String
-  ): AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)] = {
+  ): EitherJWT[(JwtToken, JWTClaimsSet)] = {
     val token: JwtToken = JwtToken(content = tokenString)
 
     ConfigurableJwtValidator(jwkSet).validate(token)
@@ -197,10 +195,8 @@ trait Authentication extends Directives with LazyLogging {
   @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
   def authenticateWithToken(tokenString: String): Directive1[User] = {
 
-    import AuthCache._
-
-    val result: AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)] =
-      memoize[Id, AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)]](
+    val result: EitherJWT[(JwtToken, JWTClaimsSet)] =
+      memoize[Id, EitherJWT[(JwtToken, JWTClaimsSet)]](
         Some(60 seconds)
       )(
         retryVerifyJWT(tokenString, 10)
