@@ -370,9 +370,8 @@ trait AnnotationProjectRoutes
             case false =>
               complete {
                 (for {
-                  projectO <-
-                    AnnotationProjectDao
-                      .getById(projectId)
+                  projectO <- AnnotationProjectDao
+                    .getById(projectId)
                   projectActions <- projectO traverse { project =>
                     if (project.createdBy == user.id) {
                       Set("*").pure[ConnectionIO]

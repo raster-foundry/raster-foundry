@@ -141,13 +141,13 @@ trait Authentication extends Directives with LazyLogging {
       (Option(claims.getStringClaim(field)), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
-      }
+    }
 
     val compareDelegatedToEmail = (field: String) =>
       (delegatedProfile.map(_.getAsString(field)), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
-      }
+    }
 
     compareToEmail("name")
       .orElse(compareToEmail("nickname"))
@@ -179,7 +179,7 @@ trait Authentication extends Directives with LazyLogging {
       str match {
         case s if !s.trim.isEmpty => Some(s)
         case _                    => None
-      }
+    }
 
     val defaultFromClaims = (field: String, str: String) =>
       optionEmpty(field)
@@ -252,8 +252,8 @@ trait Authentication extends Directives with LazyLogging {
               }
             }
           }
-          platformRole =
-            roles.find(role => role.groupType == GroupType.Platform)
+          platformRole = roles.find(role =>
+            role.groupType == GroupType.Platform)
           plat <- OptionT {
             platformRole match {
               case Some(role) =>
