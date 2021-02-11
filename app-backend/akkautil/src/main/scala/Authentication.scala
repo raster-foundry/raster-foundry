@@ -9,7 +9,11 @@ import akka.http.scaladsl.server._
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
+import com.guizmaii.scalajwt.{
+  ConfigurableJwtValidator,
+  JwtToken,
+  UnknownException
+}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
@@ -19,10 +23,17 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
+import eu.timepit.refined.auto._
+import eu.timepit.refined.types.numeric.NonNegInt
 import io.circe.Json
 import org.postgresql.util.PSQLException
+import scalacache._
+import scalacache.caffeine.CaffeineCache
+import scalacache.memoization._
+import scalacache.modes.sync._
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.Try
 
 import java.net.URL
@@ -37,11 +48,19 @@ trait Authentication extends Directives with LazyLogging {
   private val groundworkConfigAuth = configAuth.getConfig("groundwork")
   private val groundworkSampleProjectAuth =
     groundworkConfigAuth.getString("sampleProject")
+  private val authCacheEnabled = auth0Config.getBoolean("enableCache")
 
   private val jwksURL = auth0Config.getString("jwksURL")
   private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(
     new URL(jwksURL)
   )
+
+  implicit val tokenCache: Cache[EitherJWT[(JwtToken, JWTClaimsSet)]] =
+    CaffeineCache[EitherJWT[(JwtToken, JWTClaimsSet)]]
+
+  type EitherJWT[A] = Either[BadJWTException, A]
+
+  implicit val cacheEnabled = Flags(authCacheEnabled, authCacheEnabled)
 
   // Default user returned when no credentials are provided
   lazy val anonymousUser: Future[Option[User]] =
@@ -87,9 +106,21 @@ trait Authentication extends Directives with LazyLogging {
     }
   }
 
+  private def retryVerifyJWT(
+      tokenString: String,
+      triesRemaining: NonNegInt
+  ): EitherJWT[(JwtToken, JWTClaimsSet)] =
+    (verifyJWT(tokenString), triesRemaining.value) match {
+      case (result, 0)       => result
+      case (r @ Right(_), _) => r
+      case (Left(UnknownException(_)), n) =>
+        retryVerifyJWT(tokenString, NonNegInt.unsafeFrom(n - 1))
+      case (l @ Left(_), _) => l
+    }
+
   def verifyJWT(
       tokenString: String
-  ): Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
+  ): EitherJWT[(JwtToken, JWTClaimsSet)] = {
     val token: JwtToken = JwtToken(content = tokenString)
 
     ConfigurableJwtValidator(jwkSet).validate(token)
@@ -161,9 +192,23 @@ trait Authentication extends Directives with LazyLogging {
 
   @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
   def authenticateWithToken(tokenString: String): Directive1[User] = {
-    val result = verifyJWT(tokenString)
+
+    val result: EitherJWT[(JwtToken, JWTClaimsSet)] =
+      memoize[Id, EitherJWT[(JwtToken, JWTClaimsSet)]](
+        Some(60 seconds)
+      )(
+        retryVerifyJWT(tokenString, 10)
+      )
+
     result match {
-      case Left(_) =>
+      case Left(err) =>
+        logger.error("Token authentication failed", err)
+        err match {
+          case UnknownException(e) =>
+            logger.error(s"Underlying error was unknown", e)
+          case e =>
+            logger.error(s"Caused by", e)
+        }
         reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
       case Right((_, jwtClaims)) => {
         val userId = jwtClaims.getStringClaim("sub")
@@ -201,9 +246,8 @@ trait Authentication extends Directives with LazyLogging {
               }
             }
           }
-          platformRole = roles.find(
-            role => role.groupType == GroupType.Platform
-          )
+          platformRole = roles.find(role =>
+            role.groupType == GroupType.Platform)
           plat <- OptionT {
             platformRole match {
               case Some(role) =>
@@ -316,7 +360,9 @@ trait Authentication extends Directives with LazyLogging {
       .booleanValue()
 
     val userScope: Scope =
-      Option(jwtClaims.getStringClaim("https://app.rasterfoundry.com;scopes")) match {
+      Option(
+        jwtClaims.getStringClaim("https://app.rasterfoundry.com;scopes")
+      ) match {
         case Some(scopeString) =>
           Json.fromString(scopeString).as[Scope] match {
             case Left(_)      => Scopes.NoAccess

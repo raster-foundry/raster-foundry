@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - STAC exports for annotation projects without RF projects are no longer catalogs without children [#5540](https://github.com/raster-foundry/raster-foundry/pull/5540)
+- Added retry and caching to a flaky integration test [#5545](https://github.com/raster-foundry/raster-foundry/pull/5545)
 
 ## [1.58.0] - 2021-01-13
 ### Added
