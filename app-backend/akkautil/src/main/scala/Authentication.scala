@@ -72,8 +72,10 @@ trait Authentication extends Directives with LazyLogging {
   def authenticate: Directive1[User] = {
     extractTokenHeader.flatMap {
       case Some(token) =>
+        println(s"Authenticating token: $token")
         authenticateWithToken(token.split(" ").last)
       case None =>
+        println("Didn't get a token to authenticate with")
         reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
   }
