@@ -100,7 +100,7 @@ class ScopeSpec extends AnyFunSpec {
     out
   }
 
-  lazy val authTokenE: Either[String, TokenResponse] = {
+  val authTokenE: Either[String, TokenResponse] = {
     val tokenRoute = makeRoute("/api/tokens/")
     val response =
       basicRequest
@@ -110,7 +110,6 @@ class ScopeSpec extends AnyFunSpec {
         .send()
     response.body match {
       case Right(tokenResp) =>
-        println("getting a token")
         Right(tokenResp)
       case _ => {
         Left("could not get token")
@@ -123,7 +122,6 @@ class ScopeSpec extends AnyFunSpec {
       scope: Scope,
       expectSuccess: Boolean
   ): RequestT[Empty, Either[String, String], Nothing] = {
-    println(s"Token for requests: ${tokenResp.id_token}")
     val root =
       basicRequest.header("X-PolicySim", "true").auth.bearer(tokenResp.id_token)
     val scopeStringNoQuotes = scope.asJson.noSpaces.replace("\"", "")
@@ -147,12 +145,13 @@ class ScopeSpec extends AnyFunSpec {
       case Delete => request.delete(path)
     }).response(asJson[SimResponse])
 
-  def routes(rows: List[Either[String, UnparsedRow]]) = Table(
-    ("Path", "Domain:Action", "Verb"),
-    (rows collect {
-      case Right(row) => row.tupled
-    }): _*
-  )
+  def routes(rows: List[Either[String, UnparsedRow]]) =
+    Table(
+      ("Path", "Domain:Action", "Verb"),
+      (rows collect {
+        case Right(row) => row.tupled
+      }): _*
+    )
 
   def getSimResult(
       baseRequest: RequestT[Empty, Either[String, String], Nothing],
@@ -170,6 +169,7 @@ class ScopeSpec extends AnyFunSpec {
     assert(
       resultBody == Right(SimResponse(expectation)),
       s"""
+        |
         | Authorization expectation failed.
         | Received $resultBody
         | Expected $expectation

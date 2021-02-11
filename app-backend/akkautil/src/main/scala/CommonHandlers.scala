@@ -43,25 +43,29 @@ trait CommonHandlers extends RouteDirectives {
   ): RequestContext => Future[RouteResult] =
     FutureDirectives.completeOrRecoverWith(magnet)(failWith)
 
-  def completeSingleOrNotFound(count: Int): StandardRoute = count match {
-    case 1 => complete(StatusCodes.NoContent)
-    case 0 => complete(StatusCodes.NotFound)
-    case _ =>
-      throw new IllegalStateException(s"Result expected to be 1, was $count")
-  }
+  def completeSingleOrNotFound(count: Int): StandardRoute =
+    count match {
+      case 1 => complete(StatusCodes.NoContent)
+      case 0 => complete(StatusCodes.NotFound)
+      case _ =>
+        throw new IllegalStateException(s"Result expected to be 1, was $count")
+    }
 
-  def completeSomeOrNotFound(count: Int): StandardRoute = count match {
-    case 0          => complete(StatusCodes.NotFound)
-    case x if x > 0 => complete(StatusCodes.NoContent)
-    case _ =>
-      throw new IllegalStateException(
-        s"Result expected to be 0 or positive, was $count"
-      )
-  }
+  def completeSomeOrNotFound(count: Int): StandardRoute =
+    count match {
+      case 0          => complete(StatusCodes.NotFound)
+      case x if x > 0 => complete(StatusCodes.NoContent)
+      case _ =>
+        throw new IllegalStateException(
+          s"Result expected to be 0 or positive, was $count"
+        )
+    }
 
-  def maybeSim(scopedAction: ScopedAction,
-               user: User,
-               fallback: => Directive0): Directive0 =
+  def maybeSim(
+      scopedAction: ScopedAction,
+      user: User,
+      fallback: => Directive0
+  ): Directive0 =
     (optionalHeaderValueByName(simulationHeaderName) &
       optionalHeaderValueByName(includeScopesHeaderName) &
       optionalHeaderValueByName(excludeScopesHeaderName)).tflatMap({
@@ -77,19 +81,25 @@ trait CommonHandlers extends RouteDirectives {
         complete {
           Map("simResult" -> userActions.contains(scopedAction)).asJson
         }
-      case _ =>
+      case nope =>
+        println(s"Result of header parse: $nope")
         fallback
     })
 
   def authorizeScope(scopedAction: ScopedAction, user: User): Directive0 =
-    maybeSim(scopedAction,
-             user,
-             SecurityDirectives.authorize(
-               !Scopes
-                 .resolveFor(scopedAction.domain,
-                             scopedAction.action,
-                             user.scope.actions)
-                 .isEmpty))
+    maybeSim(
+      scopedAction,
+      user,
+      SecurityDirectives.authorize(
+        !Scopes
+          .resolveFor(
+            scopedAction.domain,
+            scopedAction.action,
+            user.scope.actions
+          )
+          .isEmpty
+      )
+    )
 
   def authorizeScopeLimitDirective(
       usedLimitFuture: Future[Long],
@@ -121,7 +131,8 @@ trait CommonHandlers extends RouteDirectives {
     maybeSim(
       ScopedAction(domain, action, None),
       user,
-      authorizeScopeLimitDirective(usedLimitFuture, domain, action, user))
+      authorizeScopeLimitDirective(usedLimitFuture, domain, action, user)
+    )
 
   def authorizeAuthResultAsync[T](
       authFut: Future[AuthResult[T]]
@@ -129,10 +140,11 @@ trait CommonHandlers extends RouteDirectives {
     SecurityDirectives.authorizeAsync { authFut map { _.toBoolean } }
   }
 
-  def circeDecodingError = ExceptionHandler {
-    case df: DecodingFailure =>
-      complete {
-        (StatusCodes.BadRequest, DecodingFailure.showDecodingFailure.show(df))
-      }
-  }
+  def circeDecodingError =
+    ExceptionHandler {
+      case df: DecodingFailure =>
+        complete {
+          (StatusCodes.BadRequest, DecodingFailure.showDecodingFailure.show(df))
+        }
+    }
 }
