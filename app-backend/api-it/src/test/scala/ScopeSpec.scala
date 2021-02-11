@@ -121,6 +121,7 @@ class ScopeSpec extends AnyFunSpec {
       scope: Scope,
       expectSuccess: Boolean
   ): RequestT[Empty, Either[String, String], Nothing] = {
+    println(s"Token for requests: ${tokenResp.id_token}")
     val root =
       basicRequest.header("X-PolicySim", "true").auth.bearer(tokenResp.id_token)
     val scopeStringNoQuotes = scope.asJson.noSpaces.replace("\"", "")
