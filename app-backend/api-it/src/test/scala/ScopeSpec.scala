@@ -109,7 +109,9 @@ class ScopeSpec extends AnyFunSpec {
         .response(asJson[TokenResponse])
         .send()
     response.body match {
-      case Right(tokenResp) => Right(tokenResp)
+      case Right(tokenResp) =>
+        println("getting a token")
+        Right(tokenResp)
       case _ => {
         Left("could not get token")
       }
