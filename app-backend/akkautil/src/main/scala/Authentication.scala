@@ -17,7 +17,6 @@ import com.guizmaii.scalajwt.{
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.proc.BadJWTException
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
@@ -25,12 +24,28 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.Json
 import org.postgresql.util.PSQLException
+import scalacache._
+import scalacache.caffeine.CaffeineCache
+import scalacache.memoization._
+import scalacache.modes.sync._
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.Try
 
 import java.net.URL
 import java.util.UUID
+import com.nimbusds.jwt.proc.BadJWTException
+
+object AuthCache {
+  implicit val tokenCache: Cache[EitherJWT[(JwtToken, JWTClaimsSet)]] =
+    CaffeineCache[EitherJWT[(JwtToken, JWTClaimsSet)]]
+
+  type EitherJWT[A] = Either[BadJWTException, A]
+
+  implicit val cacheEnabled = Flags(true, true)
+
+}
 
 trait Authentication extends Directives with LazyLogging {
 
@@ -95,7 +110,7 @@ trait Authentication extends Directives with LazyLogging {
 
   def verifyJWT(
       tokenString: String
-  ): Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
+  ): AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)] = {
     val token: JwtToken = JwtToken(content = tokenString)
 
     ConfigurableJwtValidator(jwkSet).validate(token)
@@ -112,13 +127,13 @@ trait Authentication extends Directives with LazyLogging {
       (Option(claims.getStringClaim(field)), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
-    }
+      }
 
     val compareDelegatedToEmail = (field: String) =>
       (delegatedProfile.map(_.getAsString(field)), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
-    }
+      }
 
     compareToEmail("name")
       .orElse(compareToEmail("nickname"))
@@ -150,7 +165,7 @@ trait Authentication extends Directives with LazyLogging {
       str match {
         case s if !s.trim.isEmpty => Some(s)
         case _                    => None
-    }
+      }
 
     val defaultFromClaims = (field: String, str: String) =>
       optionEmpty(field)
@@ -167,7 +182,16 @@ trait Authentication extends Directives with LazyLogging {
 
   @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
   def authenticateWithToken(tokenString: String): Directive1[User] = {
-    val result = verifyJWT(tokenString)
+
+    import AuthCache._
+
+    val result: AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)] =
+      memoize[Id, AuthCache.EitherJWT[(JwtToken, JWTClaimsSet)]](
+        Some(60 seconds)
+      )(
+        verifyJWT(tokenString)
+      )
+
     result match {
       case Left(err) =>
         logger.error("Token authentication failed", err)
@@ -214,9 +238,8 @@ trait Authentication extends Directives with LazyLogging {
               }
             }
           }
-          platformRole = roles.find(
-            role => role.groupType == GroupType.Platform
-          )
+          platformRole =
+            roles.find(role => role.groupType == GroupType.Platform)
           plat <- OptionT {
             platformRole match {
               case Some(role) =>
@@ -329,7 +352,9 @@ trait Authentication extends Directives with LazyLogging {
       .booleanValue()
 
     val userScope: Scope =
-      Option(jwtClaims.getStringClaim("https://app.rasterfoundry.com;scopes")) match {
+      Option(
+        jwtClaims.getStringClaim("https://app.rasterfoundry.com;scopes")
+      ) match {
         case Some(scopeString) =>
           Json.fromString(scopeString).as[Scope] match {
             case Left(_)      => Scopes.NoAccess
