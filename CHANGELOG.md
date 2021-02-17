@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.59.0] - 2021-02-17
 ### Added
 - Added an endpoint for campaign label class group summary [#5541](https://github.com/raster-foundry/raster-foundry/pull/5541)
 
@@ -862,7 +864,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.58.0...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.59.0...HEAD
+[1.59.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.58.0...v1.59.0
 [1.58.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.57.0...v1.58.0
 [1.57.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.56.0...v1.57.0
 [1.56.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.55.0...v1.56.0
