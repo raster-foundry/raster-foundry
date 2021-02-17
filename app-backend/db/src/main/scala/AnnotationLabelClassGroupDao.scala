@@ -117,16 +117,16 @@ object AnnotationLabelClassGroupDao
     for {
       groupOpt <- groupIO
       classes <- AnnotationLabelClassDao.listAnnotationLabelClassByGroupId(id)
-    } yield
-      groupOpt map { group =>
-        group.withLabelClasses(classes)
-      }
+    } yield groupOpt map { group =>
+      group.withLabelClasses(classes)
+    }
   }
 
   def update(id: UUID, group: AnnotationLabelClassGroup): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
       name = ${group.name},
-      idx = ${group.index}
+      idx = ${group.index},
+      campaign_id = ${group.campaignId}
     WHERE
       id = $id
     """).update.run;
