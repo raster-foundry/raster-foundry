@@ -22,10 +22,18 @@ import java.time.Duration
 
 case class ObjectWithAbsolute[A](absolutePath: String, item: A)
 
+sealed abstract class ImageryItem {
+  val item: ObjectWithAbsolute[StacItem]
+}
+
 case class SceneItemWithAbsolute(
     item: ObjectWithAbsolute[StacItem],
     ingestLocation: String
-)
+) extends ImageryItem
+
+case class TileLayersItemWithAbsolute(
+    item: ObjectWithAbsolute[StacItem]
+) extends ImageryItem
 
 object StacFileIO extends LazyLogging with Config {
 
@@ -79,22 +87,23 @@ object StacFileIO extends LazyLogging with Config {
       item: StacItem,
       assetLocation: String
   ): IO[StacItem] =
-    IO { s3Client.maybeSignUri(assetLocation, duration = Duration.ofDays(7)) } map {
-      signedUrl =>
-        val dataAssetFallback = StacItemAsset(
-          signedUrl,
-          None,
-          None,
-          Set(StacAssetRole.Data),
-          Some(`image/cog`)
+    IO {
+      s3Client.maybeSignUri(assetLocation, duration = Duration.ofDays(7))
+    } map { signedUrl =>
+      val dataAssetFallback = StacItemAsset(
+        signedUrl,
+        None,
+        None,
+        Set(StacAssetRole.Data),
+        Some(`image/cog`)
+      )
+      val dataAssetO = item.assets.get("data") map { asset =>
+        asset.copy(href = signedUrl)
+      }
+      item.copy(
+        assets = item.assets ++ Map(
+          "data" -> (dataAssetO getOrElse dataAssetFallback)
         )
-        val dataAssetO = item.assets.get("data") map { asset =>
-          asset.copy(href = signedUrl)
-        }
-        item.copy(
-          assets = item.assets ++ Map(
-            "data" -> (dataAssetO getOrElse dataAssetFallback)
-          )
-        )
+      )
     }
 }

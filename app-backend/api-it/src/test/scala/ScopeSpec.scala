@@ -109,7 +109,8 @@ class ScopeSpec extends AnyFunSpec {
         .response(asJson[TokenResponse])
         .send()
     response.body match {
-      case Right(tokenResp) => Right(tokenResp)
+      case Right(tokenResp) =>
+        Right(tokenResp)
       case _ => {
         Left("could not get token")
       }
@@ -144,12 +145,13 @@ class ScopeSpec extends AnyFunSpec {
       case Delete => request.delete(path)
     }).response(asJson[SimResponse])
 
-  def routes(rows: List[Either[String, UnparsedRow]]) = Table(
-    ("Path", "Domain:Action", "Verb"),
-    (rows collect {
-      case Right(row) => row.tupled
-    }): _*
-  )
+  def routes(rows: List[Either[String, UnparsedRow]]) =
+    Table(
+      ("Path", "Domain:Action", "Verb"),
+      (rows collect {
+        case Right(row) => row.tupled
+      }): _*
+    )
 
   def getSimResult(
       baseRequest: RequestT[Empty, Either[String, String], Nothing],
@@ -161,13 +163,18 @@ class ScopeSpec extends AnyFunSpec {
       addMethod(baseRequest, requestUri, row.verb).send()
     // for some reason I'm not allowed to bail on the Id wrapper in the previous step, though I'd really
     // prefer to. this is a bit janky but I'm not sure what to do about it.
-    val resultBody: Either[String, SimResponse] = response.body.leftMap(
-      err =>
-        s"body deserialization failed: $err, code: ${response.code} body: ${response.body}"
+    val resultBody: Either[String, SimResponse] = response.body.leftMap(err =>
+      s"body deserialization failed: $err, code: ${response.code} body: ${response.body}"
     )
     assert(
       resultBody == Right(SimResponse(expectation)),
-      s"Authorization expectation failed: received $resultBody, expected $expectation"
+      s"""
+        |
+        | Authorization expectation failed.
+        | Received $resultBody
+        | Expected $expectation
+        | From url: $requestUri
+        | """.trim.stripMargin
     )
   }
 

@@ -249,14 +249,15 @@ object AnnotationProjectDao
       withRelatedO <- getWithRelatedById(id)
       labelClassGroups <- AnnotationLabelClassGroupDao.listByProjectId(id)
       labelClassSummaries <- labelClassGroups traverse { labelClassGroup =>
-        AnnotationLabelDao.countByProjectAndGroup(id, labelClassGroup.id).map {
-          summary =>
-            AnnotationProject.LabelClassGroupSummary(
+        AnnotationLabelDao
+          .countByProjectsAndGroup(List(id), labelClassGroup.id)
+          .map { summary =>
+            LabelClassGroupSummary(
               labelClassGroup.id,
               labelClassGroup.name,
               summary
             )
-        }
+          }
       }
     } yield {
       withRelatedO map { withRelated =>

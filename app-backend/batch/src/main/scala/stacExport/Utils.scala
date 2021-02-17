@@ -1,5 +1,6 @@
 package com.rasterfoundry.batch.stacExport
 
+import com.rasterfoundry.datamodel.TileLayerType._
 import com.rasterfoundry.datamodel._
 
 import cats.implicits._
@@ -12,6 +13,7 @@ import io.circe.syntax._
 
 import java.net.URI
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.{Date, UUID}
 
 // TODO: Layers are no longer relevant to AnnotationProjects.
@@ -36,7 +38,7 @@ object Utils {
   def getAnnotationProjectStacCatalog(
       export: StacExport,
       stacVersion: String,
-      layerIds: List[UUID]
+      annotationProjectId: UUID
   ): StacCatalog = {
     val catalogId = export.id.toString
     val catalogDescription =
@@ -48,15 +50,14 @@ object Utils {
         StacLinkType.StacRoot,
         Some(`application/json`),
         Some(s"Catalog $catalogId")
-      )
-    ) ++ layerIds.map { layerId =>
+      ),
       StacLink(
         "./layer-collection/collection.json",
         StacLinkType.Child,
         Some(`application/json`),
-        Some(s"Layer Collection $layerId")
+        Some(s"Layer Collection $annotationProjectId")
       )
-    }
+    )
     // below should be scope-specific
     // since exports implement "label" extension on STAC Item level
     // this field should be an empty list on catalog
@@ -173,6 +174,77 @@ object Utils {
     )
 
     ObjectWithAbsolute(labelItemSelfAbsPath, labelItem)
+  }
+
+  def getTileLayersItem(
+      catalog: StacCatalog,
+      layerCollectionAbsolutePath: String,
+      imageCollection: StacCollection,
+      tileLayers: List[TileLayer],
+      taskExtent: UnionedGeomExtent
+  ): ObjectWithAbsolute[StacItem] = {
+    val links = List(
+      StacLink(
+        "./collection.json",
+        StacLinkType.Parent,
+        Some(`application/json`),
+        Some("Images Collection")
+      ),
+      StacLink(
+        "./collection.json",
+        StacLinkType.Collection,
+        Some(`application/json`),
+        Some("Images Collection")
+      ),
+      relativeCatalogRoot
+    )
+
+    val bbox = TwoDimBbox(
+      taskExtent.xMin,
+      taskExtent.yMin,
+      taskExtent.xMax,
+      taskExtent.yMax
+    )
+
+    val properties = JsonObject.fromMap(
+      Map("datetime" -> Instant.now.asJson)
+    )
+
+    val assets = Map(tileLayers map { layer =>
+      layer.name -> StacItemAsset(
+        layer.url,
+        Some(layer.name),
+        Some(s"${layer.layerType} tiles"),
+        Set(StacAssetRole.Data),
+        layer.layerType match {
+          case MVT =>
+            Some(VendorMediaType("application/vnd.mapbox-vector-tile"))
+          case TMS => Some(`image/png`)
+        }
+      )
+    }: _*)
+
+    val itemId = UUID.randomUUID
+
+    val tileLayerItemAbsPath =
+      s"$layerCollectionAbsolutePath/images/${itemId.toString}.json"
+
+    ObjectWithAbsolute(
+      tileLayerItemAbsPath,
+      StacItem(
+        itemId.toString,
+        catalog.stacVersion,
+        List(),
+        "Feature",
+        taskExtent.geometry.geom,
+        bbox,
+        links,
+        assets,
+        Some(imageCollection.id),
+        properties
+      )
+    )
+
   }
 
   def getSceneItem(
@@ -312,7 +384,7 @@ object Utils {
   def getLayerStacCollection(
       exportDefinition: StacExport,
       catalog: StacCatalog,
-      layerId: UUID,
+      annotationProjectId: UUID,
       sceneTaskAnnotation: ExportData
   ): StacCollection = {
 
@@ -332,8 +404,10 @@ object Utils {
       )
     )
 
+    val geomExt =
+      sceneTaskAnnotation.scenesGeomExtent getOrElse sceneTaskAnnotation.taskGeomExtent
+
     val layerSceneSpatialExtent = {
-      val geomExt = sceneTaskAnnotation.scenesGeomExtent
       TwoDimBbox(geomExt.xMin, geomExt.yMin, geomExt.xMax, geomExt.yMax)
     }
 
@@ -341,9 +415,18 @@ object Utils {
       sceneTaskAnnotation.scenes map { scene =>
         scene.filterFields.acquisitionDate.getOrElse(scene.createdAt)
       }
+
+    val (minAcqTime, maxAcqTime) = layerSceneAqcTime.headOption.fold(
+      (Option.empty[Instant], Instant.now)
+    )({ _ =>
+      (
+        Some(layerSceneAqcTime.minBy(_.getTime).toInstant),
+        layerSceneAqcTime.maxBy(_.getTime).toInstant
+      )
+    })
     val layerSceneTemporalExtent: TemporalExtent = TemporalExtent(
-      layerSceneAqcTime.minBy(_.getTime).toInstant,
-      layerSceneAqcTime.maxBy(_.getTime).toInstant
+      minAcqTime,
+      maxAcqTime
     )
 
     val layerExtent = StacExtent(
@@ -354,7 +437,7 @@ object Utils {
     exportDefinition.createStacCollection(
       catalog.stacVersion,
       List(),
-      layerId.toString,
+      s"Layers for project $annotationProjectId",
       Some("Layers"),
       "Project Layer Collection",
       List[String](),

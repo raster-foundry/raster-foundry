@@ -24,41 +24,44 @@ trait CampaignProjectRoutes
     with QueryParametersCommon {
   val xa: Transactor[IO]
 
-  def listCampaignProjects(campaignId: UUID): Route = authenticate { user =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationProjects, Action.Read, None),
-      user
-    ) {
-      authorizeAsync {
-        (
-          CampaignDao
-            .isActiveCampaign(campaignId),
-          CampaignDao.authorized(
-            user,
-            ObjectType.Campaign,
-            campaignId,
-            ActionType.View
-          )
-        ).tupled.transact(xa).unsafeToFuture map {
-          case (true, AuthSuccess(_)) => true
-          case _                      => false
+  def listCampaignProjects(campaignId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+        user
+      ) {
+        authorizeAsync {
+          (
+            CampaignDao
+              .isActiveCampaign(campaignId),
+            CampaignDao.authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.View
+            )
+          ).tupled.transact(xa).unsafeToFuture map {
+            case (true, AuthSuccess(_)) => true
+            case _                      => false
+          }
+        } {
+          (withPagination & annotationProjectQueryParameters) {
+            (page, annotationProjectQP) =>
+              complete {
+                AnnotationProjectDao.query
+                  .filter(
+                    annotationProjectQP.copy(campaignId = Some(campaignId))
+                  )
+                  .page(page)
+                  .flatMap(AnnotationProjectDao.toWithRelated)
+                  .transact(xa)
+                  .unsafeToFuture
+              }
+          }
         }
-      } {
-        (withPagination & annotationProjectQueryParameters) {
-          (page, annotationProjectQP) =>
-            complete {
-              AnnotationProjectDao.query
-                .filter(annotationProjectQP.copy(campaignId = Some(campaignId)))
-                .page(page)
-                .flatMap(AnnotationProjectDao.toWithRelated)
-                .transact(xa)
-                .unsafeToFuture
-            }
-        }
-      }
 
+      }
     }
-  }
 
   def getCampaignProject(campaignId: UUID, annotationProjectId: UUID): Route =
     authenticate { user =>

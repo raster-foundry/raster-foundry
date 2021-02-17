@@ -18,12 +18,6 @@ class AnnotationLabelDaoSpec
     with DBTestConfig
     with PropTestHelpers {
 
-  def addClasses(
-      label: AnnotationLabelWithClasses.Create,
-      classes: List[UUID]
-  ): AnnotationLabelWithClasses.Create =
-    label.copy(annotationLabelClasses = classes.take(1))
-
   test("insert annotations") {
     check {
       forAll(
@@ -40,8 +34,9 @@ class AnnotationLabelDaoSpec
 
           val insertIO = for {
             user <- UserDao.create(userCreate)
-            annotationProject <- AnnotationProjectDao
-              .insert(toInsert, user)
+            annotationProject <-
+              AnnotationProjectDao
+                .insert(toInsert, user)
             classIds = annotationProject.labelClassGroups flatMap {
               _.labelClasses
             } map { _.id }
@@ -91,8 +86,9 @@ class AnnotationLabelDaoSpec
 
           val listIO = for {
             user <- UserDao.create(userCreate)
-            annotationProject <- AnnotationProjectDao
-              .insert(toInsert, user)
+            annotationProject <-
+              AnnotationProjectDao
+                .insert(toInsert, user)
             fixedUpTasks = fixupTaskFeaturesCollection(
               taskFeatureCollectionCreate,
               annotationProject,
@@ -145,8 +141,9 @@ class AnnotationLabelDaoSpec
 
           val listIO = for {
             user <- UserDao.create(userCreate)
-            annotationProject <- AnnotationProjectDao
-              .insert(toInsert, user)
+            annotationProject <-
+              AnnotationProjectDao
+                .insert(toInsert, user)
             fixedUpTasks = fixupTaskFeaturesCollection(
               taskFeatureCollectionCreate,
               annotationProject,
@@ -168,11 +165,12 @@ class AnnotationLabelDaoSpec
               withClasses,
               user
             )
-            listedByTask <- AnnotationLabelDao
-              .listWithClassesByProjectIdAndTaskId(
-                annotationProject.id,
-                task.id
-              )
+            listedByTask <-
+              AnnotationLabelDao
+                .listWithClassesByProjectIdAndTaskId(
+                  annotationProject.id,
+                  task.id
+                )
           } yield listedByTask
 
           val listedByTask = listIO.transact(xa).unsafeRunSync
@@ -199,8 +197,9 @@ class AnnotationLabelDaoSpec
         ) => {
           val summaryIO = for {
             user <- UserDao.create(userCreate)
-            annotationProject <- AnnotationProjectDao
-              .insert(annotationProjectCreate, user)
+            annotationProject <-
+              AnnotationProjectDao
+                .insert(annotationProjectCreate, user)
             fixedUpTasks = fixupTaskFeaturesCollection(
               taskFeatureCollectionCreate,
               annotationProject,
@@ -210,9 +209,10 @@ class AnnotationLabelDaoSpec
               fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
               user
             ) map { _.features.head }
-            classIds = annotationProject.labelClassGroups.head.labelClasses map {
-              _.id
-            }
+            classIds =
+              annotationProject.labelClassGroups.head.labelClasses map {
+                _.id
+              }
             withClasses = annotationCreates map { create =>
               addClasses(create, classIds)
             }
@@ -222,12 +222,12 @@ class AnnotationLabelDaoSpec
               withClasses,
               user
             )
-            summaryReal <- AnnotationLabelDao.countByProjectAndGroup(
-              annotationProject.id,
+            summaryReal <- AnnotationLabelDao.countByProjectsAndGroup(
+              List(annotationProject.id),
               annotationProject.labelClassGroups.head.id
             )
-            summaryBogus <- AnnotationLabelDao.countByProjectAndGroup(
-              annotationProject.id,
+            summaryBogus <- AnnotationLabelDao.countByProjectsAndGroup(
+              List(annotationProject.id),
               UUID.randomUUID
             )
           } yield { (classIds, summaryReal, summaryBogus) }
@@ -235,21 +235,20 @@ class AnnotationLabelDaoSpec
           val (classIds, summaryReal, summaryBogus) =
             summaryIO.transact(xa).unsafeRunSync
 
-          classIds map {
-            classId =>
-              val labelSummaryO = summaryReal.find(_.labelClassId == classId)
-              val expectation = if (annotationCreates.isEmpty) {
-                None
-              } else {
-                Some(annotationCreates.size)
-              }
-              assert(
-                (labelSummaryO map {
-                  (summ: AnnotationProject.LabelClassSummary) =>
-                    summ.count
-                }) == expectation,
-                "All the annotations with the real class were counted"
-              )
+          classIds map { classId =>
+            val labelSummaryO = summaryReal.find(_.labelClassId == classId)
+            val expectation = if (annotationCreates.isEmpty) {
+              None
+            } else {
+              Some(annotationCreates.size)
+            }
+            assert(
+              (labelSummaryO map {
+                (summ: LabelClassSummary) =>
+                  summ.count
+              }) == expectation,
+              "All the annotations with the real class were counted"
+            )
           }
 
           assert(
@@ -274,8 +273,9 @@ class AnnotationLabelDaoSpec
         ) => {
           val listIO = for {
             user <- UserDao.create(userCreate)
-            annotationProject <- AnnotationProjectDao
-              .insert(annotationProjectCreate, user)
+            annotationProject <-
+              AnnotationProjectDao
+                .insert(annotationProjectCreate, user)
             fixedUpTasks = fixupTaskFeaturesCollection(
               taskFeatureCollectionCreate,
               annotationProject,
@@ -297,13 +297,15 @@ class AnnotationLabelDaoSpec
               withClasses,
               user
             )
-            _ <- AnnotationLabelDao
-              .deleteByProjectIdAndTaskId(annotationProject.id, task.id)
-            listedByTask <- AnnotationLabelDao
-              .listWithClassesByProjectIdAndTaskId(
-                annotationProject.id,
-                task.id
-              )
+            _ <-
+              AnnotationLabelDao
+                .deleteByProjectIdAndTaskId(annotationProject.id, task.id)
+            listedByTask <-
+              AnnotationLabelDao
+                .listWithClassesByProjectIdAndTaskId(
+                  annotationProject.id,
+                  task.id
+                )
           } yield listedByTask
 
           val listed = listIO.transact(xa).unsafeRunSync
@@ -330,8 +332,9 @@ class AnnotationLabelDaoSpec
         ) => {
           val listIO = for {
             user <- UserDao.create(userCreate)
-            annotationProject <- AnnotationProjectDao
-              .insert(annotationProjectCreate, user)
+            annotationProject <-
+              AnnotationProjectDao
+                .insert(annotationProjectCreate, user)
             fixedUpTasks = fixupTaskFeaturesCollection(
               taskFeatureCollectionCreate,
               annotationProject,
@@ -341,9 +344,10 @@ class AnnotationLabelDaoSpec
               fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
               user
             ) map { _.features.head }
-            classIds = annotationProject.labelClassGroups.head.labelClasses map {
-              _.id
-            }
+            classIds =
+              annotationProject.labelClassGroups.head.labelClasses map {
+                _.id
+              }
             withClasses = annotationCreates map { create =>
               addClasses(create, classIds)
             }
@@ -361,26 +365,24 @@ class AnnotationLabelDaoSpec
 
           val annotationsO = listIO.transact(xa).unsafeRunSync
           annotationsO
-            .flatMap(
-              annotations => {
-                val annotationsJson = annotations.asObject.get
-                assert(
-                  annotationsJson.keys.toSet.contains("features"),
-                  "stac annotation has features property"
-                )
-                val feats =
-                  annotationsJson.toMap
-                    .get("features")
-                    .map(_.asArray)
-                    .flatten
-                    .get
-                assert(
-                  feats.size == annotationCreates.size,
-                  "all inserted features are in export"
-                )
-                feats.headOption.map(_.asObject)
-              }
-            )
+            .flatMap(annotations => {
+              val annotationsJson = annotations.asObject.get
+              assert(
+                annotationsJson.keys.toSet.contains("features"),
+                "stac annotation has features property"
+              )
+              val feats =
+                annotationsJson.toMap
+                  .get("features")
+                  .map(_.asArray)
+                  .flatten
+                  .get
+              assert(
+                feats.size == annotationCreates.size,
+                "all inserted features are in export"
+              )
+              feats.headOption.map(_.asObject)
+            })
             .flatten
             .map(feature => {
               val requiredLabelFields =
@@ -422,7 +424,8 @@ class AnnotationLabelDaoSpec
                       .get(groupName)
                       .map(_.asString)
                       .flatten
-                      .get),
+                      .get
+                  ),
                 "stac label value for group name exists"
               )
             })
