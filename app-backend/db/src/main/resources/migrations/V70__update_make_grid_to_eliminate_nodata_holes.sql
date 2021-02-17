@@ -18,7 +18,7 @@ DECLARE
   newSector public.geometry;
   i INTEGER;
   SRID INTEGER;
-  source_srid INTEGER;we
+  source_srid INTEGER;
 BEGIN
   source_srid := ST_SRID(bound_polygon);
   bound_polygon := ST_MakePolygon(ST_ExteriorRing(ST_Transform(bound_polygon, 4326)));
