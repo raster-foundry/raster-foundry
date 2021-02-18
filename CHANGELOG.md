@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Removed holes from union of scene footprints before task grid construction [#5549](https://github.com/raster-foundry/raster-foundry/pull/5549)
 
 ## [1.59.0] - 2021-02-17
 ### Added
