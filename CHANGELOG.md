@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Use campaign URL in intercom message when applicable [#5547](https://github.com/raster-foundry/raster-foundry/pull/5547)
 
+### Fixed
+- Removed holes from union of scene footprints before task grid construction [#5549](https://github.com/raster-foundry/raster-foundry/pull/5549)
+
+
 ## [1.59.0] - 2021-02-17
 ### Added
 - Added an endpoint for campaign label class group summary [#5541](https://github.com/raster-foundry/raster-foundry/pull/5541)

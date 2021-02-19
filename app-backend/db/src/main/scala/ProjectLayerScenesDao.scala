@@ -151,7 +151,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
   ): ConnectionIO[Option[Projected[Geometry]]] =
     (fr"""
     SELECT
-      ST_Transform(ST_Union(s.data_footprint), 4326) AS geometry
+      ST_MakePolygon(ST_ExteriorRing(ST_Transform(ST_Union(s.data_footprint), 4326))) AS geometry
     FROM scenes s
     JOIN scenes_to_layers stl
     ON s.id = stl.scene_id
