@@ -83,16 +83,16 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       }
     } yield page
     paginatedScenes.flatMap { (pr: PaginatedResponse[Scene]) =>
-      scenesToProjectScenes(pr.results.toList, layerId).map(projectScenes =>
-        PaginatedResponse[Scene.ProjectScene](
-          pr.count,
-          pr.hasPrevious,
-          pr.hasNext,
-          pr.page,
-          pr.pageSize,
-          projectScenes
-        )
-      )
+      scenesToProjectScenes(pr.results.toList, layerId).map(
+        projectScenes =>
+          PaginatedResponse[Scene.ProjectScene](
+            pr.count,
+            pr.hasPrevious,
+            pr.hasNext,
+            pr.page,
+            pr.pageSize,
+            projectScenes
+        ))
     }
   }
 
