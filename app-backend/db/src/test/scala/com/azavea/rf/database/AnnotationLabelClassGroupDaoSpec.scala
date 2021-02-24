@@ -125,7 +125,10 @@ class AnnotationLabelClassGroupDaoSpec
               AnnotationProjectDao
                 .insert(annotationProjectCreate, user)
             classGroupOpt = insertedProject.labelClassGroups.headOption
-            insertedCampaign <- CampaignDao.insertCampaign(campaignCreate, user)
+            insertedCampaign <- CampaignDao.insertCampaign(
+              campaignCreate.copy(parentCampaignId = None),
+              user
+            )
             updateGroup = groupToUpdate(insertedCampaign)
             _ <- classGroupOpt traverse { group =>
               AnnotationLabelClassGroupDao.update(
@@ -146,7 +149,7 @@ class AnnotationLabelClassGroupDaoSpec
               case Some((group, groupUpdated)) =>
                 group.annotationProjectId == groupUpdated.annotationProjectId &&
                   group.isActive == groupUpdated.isActive &&
-                  group.campaignId == updateGroup.campaignId &&
+                  groupUpdated.campaignId == updateGroup.campaignId &&
                   groupUpdated.index == updateGroup.index &&
                   groupUpdated.name == updateGroup.name
               case None if annotationProjectCreate.labelClassGroups.size == 0 =>
