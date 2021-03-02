@@ -6,13 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Changed
 - Label class groups can have campaign IDs edited [#5548](https://github.com/raster-foundry/raster-foundry/pull/5548)
+- Update annotation project GET endpoint to read from the right source of label class summary [#5551](https://github.com/raster-foundry/raster-foundry/pull/5551)
+
+### Added
+- Add migration to cascade delete label class group on campaign deletion [#5552](https://github.com/raster-foundry/raster-foundry/pull/5552)
 
 ## [1.60.1] - 2021-02-23
 ### Fixed
 - Remove interior rings from data-footprint before generating task grid [#5550](https://github.com/raster-foundry/raster-foundry/pull/5550)
-
-### Changed
-- Update annotation project GET endpoint to read from the right source of label class summary[#5551](https://github.com/raster-foundry/raster-foundry/pull/5551)
 
 ## [1.60.0] - 2021-02-19
 ### Changed
