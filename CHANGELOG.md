@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Changed
 - Label class groups can have campaign IDs edited [#5548](https://github.com/raster-foundry/raster-foundry/pull/5548)
+- Update boto3 file upload method to support uploading large COG after processing [#5553](https://github.com/raster-foundry/raster-foundry/pull/5553)
 - Update annotation project GET endpoint to read from the right source of label class summary [#5551](https://github.com/raster-foundry/raster-foundry/pull/5551)
 
 ### Added
