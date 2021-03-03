@@ -14,10 +14,8 @@ object ColorCorrect extends LazyLogging {
     def colorCorrect(
         tile: MultibandTile,
         hist: Seq[Histogram[Double]],
-        noDataValue: Option[Double],
-        disableAutoCorrect: Option[Boolean]
+        noDataValue: Option[Double]
     ): MultibandTile = {
-      if (disableAutoCorrect getOrElse false) return tile
       val indexedHist = hist.toIndexedSeq
       val rgbHist = Seq(redBand, greenBand, blueBand) map { indexedHist(_) }
       val bands = tile.bands.zip(rgbHist).map {

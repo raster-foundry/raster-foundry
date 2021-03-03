@@ -41,8 +41,7 @@ class SceneService[HistStore](
 
   private def sceneToBacksplashGeotiff(
       scene: Scene,
-      bandOverride: Option[BandOverride],
-      disableAutoCorrect: Option[Boolean]
+      bandOverride: Option[BandOverride]
   ): IO[BacksplashImage[IO]] = {
     val randomProjectId = UUID.randomUUID
     val ingestLocIO: IO[String] = IO {
@@ -84,7 +83,6 @@ class SceneService[HistStore](
           None, // not adding the mask here, since out of functional scope for md to image
           footprint,
           scene.metadataFields,
-          disableAutoCorrect,
           xa
         )
     }
@@ -129,10 +127,10 @@ class SceneService[HistStore](
           }
           bands <- bandsFiber.join
           eval = LayerTms.identity(
-            sceneToBacksplashGeotiff(scene,
-                                     bandOverride orElse bands,
-                                     Some(true))
-              .map(a => (tracingContext, List(a)))
+            sceneToBacksplashGeotiff(
+              scene,
+              bandOverride orElse bands
+            ).map(a => (tracingContext, List(a)))
           )
           resp <- eval(z, x, y) flatMap {
             case Valid(tile) =>
@@ -143,7 +141,9 @@ class SceneService[HistStore](
         } yield resp
 
       case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
-            :? ThumbnailQueryParamDecoder(thumbnailSize) as user using tracingContext =>
+            :? ThumbnailQueryParamDecoder(
+              thumbnailSize
+            ) as user using tracingContext =>
         for {
           sceneFiber <- authorizers.authScene(user, sceneId).start
           bandsFiber <- getDefaultSceneBands(sceneId)
@@ -152,7 +152,7 @@ class SceneService[HistStore](
           }
           bands <- bandsFiber.join
           eval = LayerExtent.identity(
-            sceneToBacksplashGeotiff(scene, bands, Some(true))
+            sceneToBacksplashGeotiff(scene, bands)
               .map(a => (tracingContext, List(a)))
           )(paintedMosaicExtentReification, cs)
           extent <- IO.pure {
