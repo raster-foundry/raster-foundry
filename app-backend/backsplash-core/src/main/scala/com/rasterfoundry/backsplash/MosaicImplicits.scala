@@ -90,8 +90,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         .map(nel =>
           nel.collect({
             case (Some(mbtile), Some(sbo), nd) => (mbtile, sbo, nd)
-          })
-        )
+          }))
     }
     for {
       imagesNel <- ioMBTwithSBO map { _.toNel } flatMap {
@@ -99,8 +98,8 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         case None      => IO.raiseError(NoScenesException)
       }
       firstIm = mosaic.head
-      histograms <-
-        tracingContext.span("renderMosaicSingleBand.histogram") use { context =>
+      histograms <- tracingContext.span("renderMosaicSingleBand.histogram") use {
+        context =>
           firstIm.singleBandOptions map { _.band } map { bd =>
             histStore.projectLayerHistogram(
               firstIm.projectLayerId,
@@ -114,7 +113,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               )
             )
           }
-        }
+      }
     } yield {
       val combinedHistogram = histograms.reduce(_ merge _)
       val (_, firstSbos, firstNd) = imagesNel.head
@@ -131,12 +130,12 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         case someTiles =>
           val outTile = someTiles.foldLeft(
             MultibandTile(invisiTile)
-          )((baseTile: MultibandTile, triple2: MBTTriple) =>
-            interpretAsFallback(baseTile, firstNd) merge interpretAsFallback(
-              triple2._1,
-              firstNd
-            )
-          )
+          )(
+            (baseTile: MultibandTile, triple2: MBTTriple) =>
+              interpretAsFallback(baseTile, firstNd) merge interpretAsFallback(
+                triple2._1,
+                firstNd
+            ))
           Raster(
             ColorRampMosaic.colorTile(
               outTile,
@@ -194,26 +193,27 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   }
                 }.start
                 (im, hists) <- (imFiber, histsFiber).tupled.join
-                resultTile <-
-                  childContext
-                    .span("renderMosaicMultiband.colorCorrect") use { _ =>
+                resultTile <- childContext
+                  .span("renderMosaicMultiband.colorCorrect") use {
+                  _ =>
                     IO {
-                      im map { mbTile =>
-                        val noDataValue = getNoDataValue(mbTile.cellType)
-                        logger.debug(
-                          s"NODATA Value: $noDataValue with CellType: ${mbTile.cellType}"
-                        )
-                        relevant.corrections.colorCorrect(
-                          mbTile,
-                          hists,
-                          relevant.metadata.noDataValue orElse noDataValue orElse Some(
-                            0
-                          ),
-                          relevant.disableAutoCorrect
-                        )
+                      im map {
+                        mbTile =>
+                          val noDataValue = getNoDataValue(mbTile.cellType)
+                          logger.debug(
+                            s"NODATA Value: $noDataValue with CellType: ${mbTile.cellType}"
+                          )
+                          relevant.corrections.colorCorrect(
+                            mbTile,
+                            hists,
+                            relevant.metadata.noDataValue orElse noDataValue orElse Some(
+                              0
+                            ),
+                            relevant.disableAutoCorrect
+                          )
                       }
                     }
-                  }
+                }
               } yield {
                 resultTile
               }
@@ -238,9 +238,10 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
   val rawMosaicTmsReification: TmsReification[BacksplashMosaic] =
     new TmsReification[BacksplashMosaic] {
 
-      def tmsReification(self: BacksplashMosaic, buffer: Int)(implicit
-          contextShift: ContextShift[IO]
-      ): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+      def tmsReification(self: BacksplashMosaic, buffer: Int)(
+          implicit
+          contextShift: ContextShift[IO])
+        : (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) => {
           val extent =
             BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
@@ -277,9 +278,10 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
   val paintedMosaicTmsReification: TmsReification[BacksplashMosaic] =
     new TmsReification[BacksplashMosaic] {
 
-      def tmsReification(self: BacksplashMosaic, buffer: Int)(implicit
-          contextShift: ContextShift[IO]
-      ): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+      def tmsReification(self: BacksplashMosaic, buffer: Int)(
+          implicit
+          contextShift: ContextShift[IO])
+        : (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) => {
           val imagesIO: IO[(TracingContext[IO], List[BacksplashImage[IO]])] =
             self
@@ -358,8 +360,8 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       def extentReification(
           self: BacksplashMosaic
       )(implicit
-          contextShift: ContextShift[IO]
-      ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+        contextShift: ContextShift[IO])
+        : (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
         (extent: Extent, cs: CellSize) => {
           for {
             bands <- {
@@ -371,123 +373,73 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   }
               }
             }
-            mosaic <-
-              if (bands.length == 3) {
-                val bsm = self.map {
-                  case (tracingContext, bsiList) => {
-                      tracingContext.span(
-                        "paintedMosaicExtentReification"
-                      ) use { childContext =>
-                        bsiList parTraverse { relevant =>
-                          val tags =
-                            Map(
-                              "imageId" -> relevant.imageId.toString,
-                              "projectId" -> relevant.projectId.toString
+            mosaic <- if (bands.length == 3) {
+              val bsm = self.map {
+                case (tracingContext, bsiList) => {
+                  tracingContext.span(
+                    "paintedMosaicExtentReification"
+                  ) use { childContext =>
+                    bsiList parTraverse { relevant =>
+                      val tags =
+                        Map(
+                          "imageId" -> relevant.imageId.toString,
+                          "projectId" -> relevant.projectId.toString
+                        )
+                      for {
+                        imFiber <- relevant
+                          .read(extent, cs, childContext)
+                          .start
+                        histsFiber <- childContext.span(
+                          "layerHistogram",
+                          tags
+                        ) use { context =>
+                          histStore
+                            .layerHistogram(
+                              relevant.imageId,
+                              relevant.subsetBands,
+                              context
                             )
-                          for {
-                            imFiber <-
-                              relevant
-                                .read(extent, cs, childContext)
-                                .start
-                            histsFiber <- childContext.span(
-                              "layerHistogram",
-                              tags
-                            ) use { context =>
-                              histStore
-                                .layerHistogram(
-                                  relevant.imageId,
-                                  relevant.subsetBands,
-                                  context
-                                )
-                                .start
-                            }
-                            im <- imFiber.join
-                            hists <- histsFiber.join
-                            renderedTile <- childContext.span(
-                              "colorCorrect",
-                              tags
-                            ) use { _ =>
-                              IO.pure {
-                                im map { mbTile =>
-                                  logger.debug(
-                                    s"N bands in resulting tile: ${mbTile.bands.length}"
-                                  )
-                                  relevant.corrections.colorCorrect(
-                                    mbTile,
-                                    hists,
-                                    None,
-                                    relevant.disableAutoCorrect
-                                  )
-                                }
-                              }
-                            }
-                          } yield {
-                            renderedTile match {
-                              case Some(mbTile) =>
-                                Some(
-                                  Raster(
-                                    mbTile.interpretAs(
-                                      invisiCellType
-                                    ),
-                                    extent
-                                  )
-                                )
-                              case _ => None
+                            .start
+                        }
+                        im <- imFiber.join
+                        hists <- histsFiber.join
+                        renderedTile <- childContext.span(
+                          "colorCorrect",
+                          tags
+                        ) use { _ =>
+                          IO.pure {
+                            im map { mbTile =>
+                              logger.debug(
+                                s"N bands in resulting tile: ${mbTile.bands.length}"
+                              )
+                              relevant.corrections.colorCorrect(
+                                mbTile,
+                                hists,
+                                None,
+                                relevant.disableAutoCorrect
+                              )
                             }
                           }
                         }
-                      }
-                    }.map(_.flatten.reduceOption(_ merge _))
-                      .map({
-                        case Some(r) => r
-                        case _ =>
-                          Raster(
-                            MultibandTile(
-                              invisiTile,
-                              invisiTile,
-                              invisiTile
-                            ),
-                            extent
-                          )
-                      })
-                }
-                bsm.flatten
-              } else {
-                logger.debug("Creating single band extent")
-                for {
-                  histograms <- BacksplashMosaic.getStoreHistogram(
-                    self,
-                    histStore
-                  )
-                  (tracingContext, imageList) <- self
-                  corrected <- tracingContext.span(
-                    "singleBandPaintedExtentReification"
-                  ) use { childContext =>
-                    imageList.parTraverse { bsi =>
-                      bsi.singleBandOptions match {
-                        case Some(opts) =>
-                          bsi.read(extent, cs, childContext) map {
-                            case Some(mbt) =>
-                              ColorRampMosaic.colorTile(mbt, histograms, opts)
-                            case _ =>
-                              MultibandTile(
-                                invisiTile,
-                                invisiTile,
-                                invisiTile
+                      } yield {
+                        renderedTile match {
+                          case Some(mbTile) =>
+                            Some(
+                              Raster(
+                                mbTile.interpretAs(
+                                  invisiCellType
+                                ),
+                                extent
                               )
-                          }
-                        case _ =>
-                          IO.raiseError(
-                            SingleBandOptionsException(
-                              "Must specify single band options when requesting single band visualization."
                             )
-                          )
+                          case _ => None
+                        }
                       }
                     }
                   }
-                } yield {
-                  corrected.reduceOption(_ merge _) match {
-                    case Some(r) => Raster(r, extent)
+                }.map(_.flatten.reduceOption(_ merge _))
+                  .map({
+                    case Some(r) => r
                     case _ =>
                       Raster(
                         MultibandTile(
@@ -497,9 +449,57 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                         ),
                         extent
                       )
+                  })
+              }
+              bsm.flatten
+            } else {
+              logger.debug("Creating single band extent")
+              for {
+                histograms <- BacksplashMosaic.getStoreHistogram(
+                  self,
+                  histStore
+                )
+                (tracingContext, imageList) <- self
+                corrected <- tracingContext.span(
+                  "singleBandPaintedExtentReification"
+                ) use { childContext =>
+                  imageList.parTraverse { bsi =>
+                    bsi.singleBandOptions match {
+                      case Some(opts) =>
+                        bsi.read(extent, cs, childContext) map {
+                          case Some(mbt) =>
+                            ColorRampMosaic.colorTile(mbt, histograms, opts)
+                          case _ =>
+                            MultibandTile(
+                              invisiTile,
+                              invisiTile,
+                              invisiTile
+                            )
+                        }
+                      case _ =>
+                        IO.raiseError(
+                          SingleBandOptionsException(
+                            "Must specify single band options when requesting single band visualization."
+                          )
+                        )
+                    }
                   }
                 }
+              } yield {
+                corrected.reduceOption(_ merge _) match {
+                  case Some(r) => Raster(r, extent)
+                  case _ =>
+                    Raster(
+                      MultibandTile(
+                        invisiTile,
+                        invisiTile,
+                        invisiTile
+                      ),
+                      extent
+                    )
+                }
               }
+            }
           } yield ProjectedRaster(mosaic, WebMercator)
         }
     }
@@ -510,8 +510,8 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       def extentReification(
           self: BacksplashMosaic
       )(implicit
-          contextShift: ContextShift[IO]
-      ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+        contextShift: ContextShift[IO])
+        : (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
         (extent: Extent, cs: CellSize) => {
           val mosaic = self.map {
             case (tracingContext, listBsi) =>
