@@ -53,8 +53,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     TracedHTTPRoutes[IO] {
       case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
             layerId
-          ) / IntVar(z) / IntVar(x) / IntVar(y) :? DisableAutoCorrectionQueryParamDecoder(
-            disableAutoCorrect) :? BandOverrideQueryParamDecoder(
+          ) / IntVar(z) / IntVar(x) / IntVar(
+            y
+          ) :? BandOverrideQueryParamDecoder(
             bandOverride
           ) as user using tracingContext =>
         val polygonBbox: Projected[Polygon] =
@@ -75,7 +76,6 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                       Some(polygonBbox),
                       bandOverride,
                       None,
-                      disableAutoCorrect,
                       childContext
                     )
                   LayerTms(
@@ -90,7 +90,6 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                       Some(polygonBbox),
                       bandOverride,
                       None,
-                      disableAutoCorrect,
                       childContext
                     )
                   )
@@ -122,7 +121,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
 
       case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
             layerId
-          ) / "histogram" :? BandOverrideQueryParamDecoder(overrides) as user using tracingContext =>
+          ) / "histogram" :? BandOverrideQueryParamDecoder(
+            overrides
+          ) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -132,12 +133,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
         )
         for {
           authFiber <- authorizers.authProject(user, projectId).start
-          mosaic = layers.read(layerId,
-                               None,
-                               overrides,
-                               None,
-                               None,
-                               tracingContext)
+          mosaic = layers.read(layerId, None, overrides, None, tracingContext)
           histFiber <- LayerHistogram.identity(mosaic, 4000).start
           _ <- authFiber.join.handleErrorWith { error =>
             histFiber.cancel *> IO.raiseError(error)
@@ -152,10 +148,14 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           }
         } yield resp
 
-      case tracedReq @ POST -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
+      case tracedReq @ POST -> Root / UUIDWrapper(
+            projectId
+          ) / "layers" / UUIDWrapper(
             layerId
           ) / "histogram"
-            :? BandOverrideQueryParamDecoder(overrides) as user using tracingContext =>
+            :? BandOverrideQueryParamDecoder(
+              overrides
+            ) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -173,11 +173,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             case Right(uuids) =>
               for {
                 authFiber <- authorizers.authProject(user, projectId).start
-                mosaic = layers.read(layerId,
-                                     None,
-                                     overrides,
-                                     uuids.toNel,
-                                     None)
+                mosaic = layers.read(layerId, None, overrides, uuids.toNel)
                 histFiber <- LayerHistogram.identity(mosaic, 4000).start
                 _ <- authFiber.join.handleErrorWith { error =>
                   histFiber.cancel *> IO.raiseError(error)
@@ -199,13 +195,16 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           }
         }
 
-      case tracedReq @ GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
+      case tracedReq @ GET -> Root / UUIDWrapper(
+            projectId
+          ) / "layers" / UUIDWrapper(
             layerId
           ) / "export"
             :? ExtentQueryParamMatcher(extent)
-            :? DisableAutoCorrectionQueryParamDecoder(disableAutoCorrect)
             :? ZoomQueryParamMatcher(zoom)
-            :? BandOverrideQueryParamDecoder(bandOverride) as user using tracingContext =>
+            :? BandOverrideQueryParamDecoder(
+              bandOverride
+            ) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -224,8 +223,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 layerId,
                 Some(Projected(projectedExtent, 3857)),
                 bandOverride,
-                None,
-                disableAutoCorrect
+                None
               )
             )(rawMosaicExtentReification, cs)
           case _ =>
@@ -234,8 +232,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 layerId,
                 Some(Projected(projectedExtent, 3857)),
                 bandOverride,
-                None,
-                disableAutoCorrect
+                None
               )
             )(paintedMosaicExtentReification, cs)
         }
@@ -251,7 +248,11 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 .get(CaseInsensitiveString("Accept")) match {
                 case Some(Header(_, "image/tiff")) =>
                   Ok(
-                    MultibandGeoTiff(tile, projectedExtent, WebMercator).toByteArray,
+                    MultibandGeoTiff(
+                      tile,
+                      projectedExtent,
+                      WebMercator
+                    ).toByteArray,
                     tiffType
                   )
                 case _ =>
@@ -286,7 +287,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
 
       case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
             analysisId
-          ) / "histogram" :? NodeQueryParamMatcher(node) as user using tracingContext =>
+          ) / "histogram" :? NodeQueryParamMatcher(
+            node
+          ) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -308,7 +311,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
 
       case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
             analysisId
-          ) / "statistics" :? NodeQueryParamMatcher(node) as user using tracingContext =>
+          ) / "statistics" :? NodeQueryParamMatcher(
+            node
+          ) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -328,7 +333,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           resp <- respFiber.join
         } yield resp
 
-      case tracedReq @ GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
+      case tracedReq @ GET -> Root / UUIDWrapper(
+            projectId
+          ) / "analyses" / UUIDWrapper(
             analysisId
           ) / "raw"
             :? ExtentQueryParamMatcher(extent)
@@ -348,12 +355,14 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             .authProjectAnalysis(user, projectId, analysisId)
             .start
           respFiber <- analysisManager
-            .export(tracedReq.authedRequest,
-                    user,
-                    analysisId,
-                    node,
-                    extent,
-                    zoom)
+            .export(
+              tracedReq.authedRequest,
+              user,
+              analysisId,
+              node,
+              extent,
+              zoom
+            )
             .start
           _ <- authFiber.join.handleErrorWith { error =>
             respFiber.cancel *> IO.raiseError(error)

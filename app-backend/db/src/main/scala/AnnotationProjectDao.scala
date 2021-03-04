@@ -247,17 +247,24 @@ object AnnotationProjectDao
   ): ConnectionIO[Option[AnnotationProject.WithRelatedAndLabelClassSummary]] =
     for {
       withRelatedO <- getWithRelatedById(id)
-      labelClassGroups <- AnnotationLabelClassGroupDao.listByProjectId(id)
-      labelClassSummaries <- labelClassGroups traverse { labelClassGroup =>
-        AnnotationLabelDao
-          .countByProjectsAndGroup(List(id), labelClassGroup.id)
-          .map { summary =>
-            LabelClassGroupSummary(
-              labelClassGroup.id,
-              labelClassGroup.name,
-              summary
-            )
-          }
+      groupsO <- withRelatedO traverse { withRelated =>
+        withRelated.campaignId match {
+          case Some(campaignId) =>
+            AnnotationLabelClassGroupDao.listByCampaignId(campaignId)
+          case None => AnnotationLabelClassGroupDao.listByProjectId(id)
+        }
+      }
+      labelClassSummaries <- groupsO.getOrElse(List.empty) traverse {
+        labelClassGroup =>
+          AnnotationLabelDao
+            .countByProjectsAndGroup(List(id), labelClassGroup.id)
+            .map { summary =>
+              LabelClassGroupSummary(
+                labelClassGroup.id,
+                labelClassGroup.name,
+                summary
+              )
+            }
       }
     } yield {
       withRelatedO map { withRelated =>

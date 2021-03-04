@@ -22,7 +22,6 @@ import java.util.UUID
       window: Option[Projected[Polygon]],
       bandOverride: Option[BandOverride],
       imageSubset: Option[NEL[UUID]],
-      disableAutoCorrect: Option[Boolean],
       tracingContext: TracingContext[IO] = NoOpTracingContext[IO]("no-op-read")
   ): BacksplashMosaic
 

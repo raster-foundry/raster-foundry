@@ -108,44 +108,55 @@ class AnnotationLabelClassGroupDaoSpec
         (
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
+            campaignCreate: Campaign.Create,
             labelClassGroupCreate: AnnotationLabelClassGroup.Create
         ) => {
-          val groupToUpdate = AnnotationLabelClassGroup(
-            id = UUID.randomUUID,
-            name = labelClassGroupCreate.name,
-            annotationProjectId = None,
-            campaignId = None,
-            index = labelClassGroupCreate.index.getOrElse(0)
-          )
+          val groupToUpdate = (campaign: Campaign) =>
+            AnnotationLabelClassGroup(
+              id = UUID.randomUUID,
+              name = labelClassGroupCreate.name,
+              annotationProjectId = None,
+              campaignId = Some(campaign.id),
+              index = labelClassGroupCreate.index.getOrElse(0)
+            )
           val updateIO = for {
             user <- UserDao.create(userCreate)
-            inserted <-
+            insertedProject <-
               AnnotationProjectDao
                 .insert(annotationProjectCreate, user)
-            classGroupOpt = inserted.labelClassGroups.headOption
+            classGroupOpt = insertedProject.labelClassGroups.headOption
+            insertedCampaign <- CampaignDao.insertCampaign(
+              campaignCreate.copy(parentCampaignId = None),
+              user
+            )
+            updateGroup = groupToUpdate(insertedCampaign)
             _ <- classGroupOpt traverse { group =>
-              AnnotationLabelClassGroupDao.update(group.id, groupToUpdate)
+              AnnotationLabelClassGroupDao.update(
+                group.id,
+                updateGroup
+              )
             }
             classGroupUpdatedOpt <- classGroupOpt flatTraverse { group =>
               AnnotationLabelClassGroupDao.getGroupWithClassesById(group.id)
             }
-          } yield { (classGroupOpt, classGroupUpdatedOpt) }
+          } yield { (classGroupOpt, updateGroup, classGroupUpdatedOpt) }
 
-          val (groupOpt, groupUpdatedOpt) = updateIO.transact(xa).unsafeRunSync
+          val (groupOpt, updateGroup, groupUpdatedOpt) =
+            updateIO.transact(xa).unsafeRunSync
 
           assert(
             (groupOpt, groupUpdatedOpt).tupled match {
               case Some((group, groupUpdated)) =>
                 group.annotationProjectId == groupUpdated.annotationProjectId &&
                   group.isActive == groupUpdated.isActive &&
-                  group.campaignId == groupUpdated.campaignId &&
-                  groupUpdated.index == groupToUpdate.index &&
-                  groupUpdated.name == groupToUpdate.name
+                  groupUpdated.campaignId == updateGroup.campaignId &&
+                  groupUpdated.index == updateGroup.index &&
+                  groupUpdated.name == updateGroup.name
               case None if annotationProjectCreate.labelClassGroups.size == 0 =>
                 true
               case _ => false
             },
-            "Only name and index fields can be updated for label class group"
+            "Only name, index, and campaign id fields can be updated for label class group"
           )
 
           true

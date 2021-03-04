@@ -29,7 +29,8 @@ object Parameters {
       * See Path.scala in http4s
       */
     def unapply(
-        params: Map[String, Seq[String]]): Some[Option[BandOverride]] = {
+        params: Map[String, Seq[String]]
+    ): Some[Option[BandOverride]] = {
       Some {
         (
           params.get("redBand") flatMap { _.headOption } map {
@@ -79,8 +80,6 @@ object Parameters {
       extends OptionalQueryParamDecoderMatcher[String]("tag")
   object VoidCacheQueryParamMatcher
       extends QueryParamDecoderMatcher[Boolean]("voidCache")
-  object DisableAutoCorrectionQueryParamDecoder
-      extends OptionalQueryParamDecoderMatcher[Boolean]("disableAutoCorrect")
   object ZoomQueryParamMatcher extends QueryParamDecoderMatcher[Int]("zoom")
   object BrightnessFloorQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[Int]("floor")
