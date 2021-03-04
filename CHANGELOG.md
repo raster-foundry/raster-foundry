@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.61.0] - 2021-03-04
 ### Changed
 - Label class groups can have campaign IDs edited [#5548](https://github.com/raster-foundry/raster-foundry/pull/5548)
 - Update boto3 file upload method to support uploading large COG after processing [#5553](https://github.com/raster-foundry/raster-foundry/pull/5553)
@@ -883,7 +885,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.60.1...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.0...HEAD
+[1.61.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.60.1...v1.61.0
 [1.60.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.60.0...v1.60.1
 [1.60.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.59.0...v1.60.0
 [1.59.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.58.0...v1.59.0
