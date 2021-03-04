@@ -24,8 +24,9 @@ import geotrellis.vector.{Polygon, Projected}
 import java.util.UUID
 
 class RenderableStoreImplicits(xa: Transactor[IO])(
-    implicit contextShift: ContextShift[IO]
-) extends ToRenderableStoreOps
+    implicit
+    contextShift: ContextShift[IO])
+    extends ToRenderableStoreOps
     with LazyLogging {
 
   implicit val sceneCache = Cache.caffeineSceneCache
@@ -35,7 +36,6 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
   private def mosaicDefinitionToImage(
       mosaicDefinition: MosaicDefinition,
       bandOverride: Option[BandOverride],
-      disableAutoCorrect: Option[Boolean],
       projId: UUID
   ): BacksplashImage[IO] = {
     val singleBandOptions =
@@ -90,7 +90,6 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
       mosaicDefinition.mask,
       footprint,
       mosaicDefinition.sceneMetadataFields,
-      disableAutoCorrect,
       xa
     )
   }
@@ -103,7 +102,6 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           window: Option[Projected[Polygon]],
           bandOverride: Option[BandOverride],
           imageSubset: Option[NEL[UUID]],
-          disableAutoCorrect: Option[Boolean],
           tracingContext: TracingContext[IO]
       ): BacksplashMosaic = {
         val tags = Map("sceneId" -> projId.toString)
@@ -140,7 +138,6 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
                     None, // not adding the mask here, since out of functional scope for md to image
                     footprint,
                     scene.metadataFields,
-                    disableAutoCorrect,
                     xa
                   )
                 )
@@ -160,7 +157,6 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           window: Option[Projected[Polygon]],
           bandOverride: Option[BandOverride],
           imageSubset: Option[NEL[UUID]],
-          disableAutoCorrect: Option[Boolean],
           tracingContext: TracingContext[IO]
       ): BacksplashMosaic = {
         val tags = Map("projectId" -> projId.toString)
@@ -169,24 +165,31 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
             mosaicDefinitions <- child.span("getMosaicDefinitions", tags) use {
               _ =>
                 SceneToLayerDao
-                  .getMosaicDefinition(projId, window, bandOverride map {
-                    _.redBand
-                  }, bandOverride map {
-                    _.greenBand
-                  }, bandOverride map {
-                    _.blueBand
-                  }, imageSubset map {
-                    _.toList
-                  } getOrElse List.empty)
+                  .getMosaicDefinition(
+                    projId,
+                    window,
+                    bandOverride map {
+                      _.redBand
+                    },
+                    bandOverride map {
+                      _.greenBand
+                    },
+                    bandOverride map {
+                      _.blueBand
+                    },
+                    imageSubset map {
+                      _.toList
+                    } getOrElse List.empty
+                  )
                   .transact(xa)
             }
           } yield {
-            (tracingContext, mosaicDefinitions map { md =>
-              mosaicDefinitionToImage(md,
-                                      bandOverride,
-                                      disableAutoCorrect,
-                                      projId)
-            })
+            (
+              tracingContext,
+              mosaicDefinitions map { md =>
+                mosaicDefinitionToImage(md, bandOverride, projId)
+              }
+            )
           }
         }
       }
