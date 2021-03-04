@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   title: Raster Foundry
   description: An application to find, view, and analyze geospatial data at any scale
-  version: "1.60.1"
+  version: "1.61.0"
 
 host: app.rasterfoundry.com
 
