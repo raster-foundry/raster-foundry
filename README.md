@@ -68,7 +68,7 @@ $ ./scripts/server
 
 The servers should come up successfully.
 
-Then, kill your servers. To get the database loaded with sample data, you can run `./scripts/load-development-data --download`.
+Then, kill your servers. To get the database loaded with sample data, you can run `./scripts/load_development_data --download`.
 This will fetch a database dump from S3 and some development images. You can use these data for consistent testing instructions
 with other developers. This script will also apply any outstanding migrations not present in the dev database.
 
