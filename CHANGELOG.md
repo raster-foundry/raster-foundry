@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+- Updated setup instructions and scripts [#5544](https://github.com/raster-foundry/raster-foundry/pull/5544)
+
 ## [1.61.0] - 2021-03-04
 ### Changed
 - Label class groups can have campaign IDs edited [#5548](https://github.com/raster-foundry/raster-foundry/pull/5548)
