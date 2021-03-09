@@ -294,6 +294,9 @@ object Task {
   ) {
     def withStatus(status: TaskStatus): TaskFeatureCreate =
       this.copy(properties = this.properties.copy(status = status))
+
+    def withTaskType(taskType: TaskType): TaskFeatureCreate =
+      this.copy(properties = this.properties.copy(taskType = Some(taskType)))
   }
 
   object TaskFeatureCreate {
