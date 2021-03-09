@@ -704,7 +704,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
            'UNLABELED', null, null, geometry, ${toProject}, task_type,
            null, '{}'::jsonb, null
            FROM """ ++ tableF ++ fr"""
-           WHERE annotation_project_id = ${fromProject} AND parent_task_id IS NULL
+           WHERE annotation_project_id = ${fromProject}
       """).update.run
   }
 
@@ -847,7 +847,6 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       case false =>
         val builder = query
           .filter(queryParams)
-          .filter(fr"parent_task_id IS NULL")
           .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
         (selectF ++ Fragments.whereAndOpt(
           builder.filters: _*
