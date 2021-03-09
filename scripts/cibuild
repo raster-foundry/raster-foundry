@@ -60,7 +60,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                   build batch
 
         echo "Running tests"
-        # GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
+        GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
         echo "All tests pass!"
     fi
 fi
