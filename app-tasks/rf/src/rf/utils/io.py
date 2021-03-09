@@ -208,7 +208,7 @@ def upload_tifs(tifs, user_id, scene_id, bucket_name=None):
 
         s3_uris.append("s3://{}/{}".format(bucket, quote(key)))
         with open(tif, "rb") as inf:
-            s3_client.put_object(Bucket=bucket, Body=inf, Key=key)
+            s3_client.upload_fileobj(Fileobj=inf, Bucket=bucket, Key=key)
     return s3_uris
 
 

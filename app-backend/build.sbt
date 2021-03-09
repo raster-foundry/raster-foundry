@@ -560,6 +560,10 @@ lazy val akkautil = project
       Dependencies.nimbusJose,
       Dependencies.nimbusJoseJwt,
       Dependencies.postgres,
+      Dependencies.refined,
+      Dependencies.scalacacheCore,
+      Dependencies.scalacacheCaffeine,
+      Dependencies.shapeless,
       Dependencies.typesafeConfig
     )
   })

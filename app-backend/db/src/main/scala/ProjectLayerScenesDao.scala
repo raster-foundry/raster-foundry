@@ -39,7 +39,9 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       | (scenes_to_layers JOIN project_layers ON scenes_to_layers.project_layer_id = project_layers.id) s2lpl
       | JOIN projects ON s2lpl.project_id = projects.id
       """.trim.stripMargin
-    ) ++ Fragments.whereAnd(fr"project_id = ${projectId}") ++ fr"GROUP BY project_layer_id")
+    ) ++ Fragments.whereAnd(
+      fr"project_id = ${projectId}"
+    ) ++ fr"GROUP BY project_layer_id")
       .query[(UUID, Int)]
       .to[List]
   }
@@ -90,8 +92,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
             pr.page,
             pr.pageSize,
             projectScenes
-        )
-      )
+        ))
     }
   }
 
@@ -110,9 +111,12 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       val datasources = SceneWithRelatedDao.getScenesDatasources(scenes map {
         _.datasource
       })
-      val sceneToLayers = SceneWithRelatedDao.getScenesToLayers(scenes map {
-        _.id
-      }, layerId)
+      val sceneToLayers = SceneWithRelatedDao.getScenesToLayers(
+        scenes map {
+          _.id
+        },
+        layerId
+      )
       (thumbnails, datasources, sceneToLayers).tupled
     }
 
@@ -150,11 +154,13 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       layerId: UUID
   ): ConnectionIO[Option[Projected[Geometry]]] =
     (fr"""
-    SELECT
-      ST_Transform(ST_Union(s.data_footprint), 4326) AS geometry
-    FROM scenes s
-    JOIN scenes_to_layers stl
-    ON s.id = stl.scene_id
-    WHERE stl.project_layer_id = ${layerId}
+    SELECT ST_Union(ST_MakePolygon(ST_ExteriorRing(A.geom)))
+    FROM (
+      SELECT (st_dump(st_transform(data_footprint, 4326))).geom
+      FROM scenes s
+      JOIN scenes_to_layers stl
+      ON s.id = stl.scene_id
+      WHERE stl.project_layer_id = ${layerId}
+    ) A
   """).query[Option[Projected[Geometry]]].unique
 }

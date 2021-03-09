@@ -99,9 +99,12 @@ class CreateTaskGrid(
           Config.intercomToken,
           Config.intercomAdminId,
           ExternalId(annotationProject.createdBy),
-          Message(
-            s"""Your project "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/projects/${annotationProject.id}/overview"""
-          )
+          Message(annotationProject.campaignId match {
+            case Some(campaignId) =>
+              s"""Your image "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/campaign/${campaignId}/overview?s=${annotationProject.id}"""
+            case _ =>
+              s"""Your project "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/projects/${annotationProject.id}/overview"""
+          })
         )
       case None =>
         (for {
@@ -117,8 +120,10 @@ class CreateTaskGrid(
           ownerO <- projectO traverse { project =>
             UserDao.unsafeGetUserById(project.createdBy)
           }
-          _ <- (ownerO, projectO map { _.name }).tupled traverse {
-            case (user, projectName) =>
+          _ <- (ownerO, projectO).tupled traverse {
+            case (user, project) =>
+              val entity =
+                if (project.campaignId.isEmpty) "project" else "image"
               LiftIO[ConnectionIO].liftIO {
                 notifier.notifyUser(
                   Config.intercomToken,
@@ -126,7 +131,7 @@ class CreateTaskGrid(
                   ExternalId(user.id),
                   Message(
                     s"""
-                  | Your project "${projectName}" failed to process. If you'd like help
+                  | Your ${entity} "${project.name}" failed to process. If you'd like help
                   | troubleshooting, please reach out to us here or at
                   | groundwork@azavea.com."
                   """.trim.stripMargin
@@ -149,21 +154,23 @@ object CreateTaskGrid extends Job {
     backend <- backendRef
   } yield backend
 
-  def runJob(args: List[String]): IO[Unit] = args match {
-    case annotationProjectId +: taskSizeMeters +: Nil =>
-      val xa = RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
-      for {
-        backend <- getBackend
-        _ <- new CreateTaskGrid(
-          UUID.fromString(annotationProjectId),
-          taskSizeMeters.toDouble,
-          new LiveIntercomNotifier[IO](backend),
-          xa
-        ).run()
-      } yield ()
-    case _ =>
-      IO.raiseError(
-        new Exception("Must provide exactly one annotation project id")
-      )
-  }
+  def runJob(args: List[String]): IO[Unit] =
+    args match {
+      case annotationProjectId +: taskSizeMeters +: Nil =>
+        val xa =
+          RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
+        for {
+          backend <- getBackend
+          _ <- new CreateTaskGrid(
+            UUID.fromString(annotationProjectId),
+            taskSizeMeters.toDouble,
+            new LiveIntercomNotifier[IO](backend),
+            xa
+          ).run()
+        } yield ()
+      case _ =>
+        IO.raiseError(
+          new Exception("Must provide exactly one annotation project id")
+        )
+    }
 }

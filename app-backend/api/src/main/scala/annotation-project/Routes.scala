@@ -396,7 +396,6 @@ trait AnnotationProjectRoutes
                     }
                   } map { _ getOrElse Set.empty }
                 } yield {
-                  println(s"Campaign actions: ${campaignActions}")
                   (projectActions ++ campaignActions)
                 }).transact(xa).unsafeToFuture
               }
