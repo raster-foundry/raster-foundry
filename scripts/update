@@ -21,8 +21,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         echo "Building Scala assembly JARs"
-        sbt \
-            ";api/assembly;backsplash-server/assembly;batch/assembly;backsplash-export/assembly"
+        pushd "app-backend"
+            sbt \
+                ";api/assembly;backsplash-server/assembly;batch/assembly;backsplash-export/assembly"
+        popd
 
         echo "Running application database migrations"
         ./scripts/migrate migrate
