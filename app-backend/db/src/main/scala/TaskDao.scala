@@ -195,7 +195,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       )
       .filter(queryParams)
       .filter(fr"annotation_project_id = $annotationProjectId")
-      .filter(fr"parent_task_id IS NULL")
+      .filter(fr"task_type = 'LABEL' :: task_type")
 
   def taskForCampaignQB(
       queryParams: TaskQueryParameters,
