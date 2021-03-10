@@ -36,6 +36,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
   private def mosaicDefinitionToImage(
       mosaicDefinition: MosaicDefinition,
       bandOverride: Option[BandOverride],
+      disableColorCorrect: Boolean,
       projId: UUID
   ): BacksplashImage[IO] = {
     val singleBandOptions =
@@ -90,6 +91,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
       mosaicDefinition.mask,
       footprint,
       mosaicDefinition.sceneMetadataFields,
+      disableColorCorrect,
       xa
     )
   }
@@ -102,6 +104,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           window: Option[Projected[Polygon]],
           bandOverride: Option[BandOverride],
           imageSubset: Option[NEL[UUID]],
+          disableColorCorrectt: Boolean,
           tracingContext: TracingContext[IO]
       ): BacksplashMosaic = {
         val tags = Map("sceneId" -> projId.toString)
@@ -138,6 +141,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
                     None, // not adding the mask here, since out of functional scope for md to image
                     footprint,
                     scene.metadataFields,
+                    disableColorCorrectt,
                     xa
                   )
                 )
@@ -157,6 +161,7 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           window: Option[Projected[Polygon]],
           bandOverride: Option[BandOverride],
           imageSubset: Option[NEL[UUID]],
+          disableColorCorrect: Boolean,
           tracingContext: TracingContext[IO]
       ): BacksplashMosaic = {
         val tags = Map("projectId" -> projId.toString)
@@ -187,7 +192,12 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
             (
               tracingContext,
               mosaicDefinitions map { md =>
-                mosaicDefinitionToImage(md, bandOverride, projId)
+                mosaicDefinitionToImage(
+                  md,
+                  bandOverride,
+                  disableColorCorrect,
+                  projId
+                )
               }
             )
           }

@@ -41,7 +41,8 @@ class SceneService[HistStore](
 
   private def sceneToBacksplashGeotiff(
       scene: Scene,
-      bandOverride: Option[BandOverride]
+      bandOverride: Option[BandOverride],
+      disableColorCorrect: Boolean
   ): IO[BacksplashImage[IO]] = {
     val randomProjectId = UUID.randomUUID
     val ingestLocIO: IO[String] = IO {
@@ -83,6 +84,7 @@ class SceneService[HistStore](
           None, // not adding the mask here, since out of functional scope for md to image
           footprint,
           scene.metadataFields,
+          disableColorCorrect,
           xa
         )
     }
@@ -118,6 +120,8 @@ class SceneService[HistStore](
             y
           ) :? BandOverrideQueryParamDecoder(
             bandOverride
+          ) :? DisableAutoCorrectionQueryParamDecoder(
+            disableColorCorrect
           ) as user using tracingContext =>
         for {
           sceneFiber <- authorizers.authScene(user, sceneId).start
@@ -129,7 +133,8 @@ class SceneService[HistStore](
           eval = LayerTms.identity(
             sceneToBacksplashGeotiff(
               scene,
-              bandOverride orElse bands
+              bandOverride orElse bands,
+              disableColorCorrect getOrElse false
             ).map(a => (tracingContext, List(a)))
           )
           resp <- eval(z, x, y) flatMap {
@@ -152,7 +157,7 @@ class SceneService[HistStore](
           }
           bands <- bandsFiber.join
           eval = LayerExtent.identity(
-            sceneToBacksplashGeotiff(scene, bands)
+            sceneToBacksplashGeotiff(scene, bands, true)
               .map(a => (tracingContext, List(a)))
           )(paintedMosaicExtentReification, cs)
           extent <- IO.pure {

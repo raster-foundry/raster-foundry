@@ -52,6 +52,7 @@ final case class BacksplashGeotiff(
     mask: Option[MultiPolygon],
     footprint: MultiPolygon,
     metadata: SceneMetadataFields,
+    disableColorCorrect: Boolean,
     xa: Transactor[IO]
 ) extends LazyLogging
     with BacksplashImage[IO] {
@@ -227,6 +228,8 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
       y: Int,
       context: TracingContext[F]
   ): F[Option[MultibandTile]]
+
+  val disableColorCorrect: Boolean
 
   /** Read tile with tracing * */
   def read(

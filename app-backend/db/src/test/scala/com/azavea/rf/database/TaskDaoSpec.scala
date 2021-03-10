@@ -465,6 +465,7 @@ class TaskDaoSpec
                         taskFeatureCreate,
                         dbAnnotationProj
                       ).withStatus(TaskStatus.Unlabeled)
+                        .withTaskType(TaskType.Label)
                     )
                   ),
                   dbUser
