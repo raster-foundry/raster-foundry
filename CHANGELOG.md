@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.61.1] - 2021-03-10
+### Fixed
+- Restored ability to disable color correction, since simplified color correction darkened some client imagery [#5556](https://github.com/raster-foundry/raster-foundry/pull/5556)
+- Allowed tasks with parents not to be automatically filtered out of task queries [#5556](https://github.com/raster-foundry/raster-foundry/pull/5556)
+
+### Changed
+- Updated setup instructions and scripts [#5544](https://github.com/raster-foundry/raster-foundry/pull/5544)
+
 ## [1.61.0] - 2021-03-04
 ### Changed
 - Label class groups can have campaign IDs edited [#5548](https://github.com/raster-foundry/raster-foundry/pull/5548)
@@ -885,7 +893,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.0...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.1...HEAD
+[1.61.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.0...v1.61.1
 [1.61.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.60.1...v1.61.0
 [1.60.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.60.0...v1.60.1
 [1.60.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.59.0...v1.60.0

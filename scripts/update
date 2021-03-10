@@ -20,15 +20,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        echo "Updating Scala dependencies"
-        docker-compose \
-            run --rm --no-deps sbt \
-            update
-
         echo "Building Scala assembly JARs"
-        docker-compose \
-            run --rm --no-deps sbt \
-            ";api/assembly;backsplash-server/assembly"
+        pushd "app-backend"
+            sbt \
+                ";api/assembly;backsplash-server/assembly;batch/assembly;backsplash-export/assembly"
+        popd
 
         echo "Running application database migrations"
         ./scripts/migrate migrate

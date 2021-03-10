@@ -18,11 +18,13 @@ import doobie.implicits._
 class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
     mosaicImplicits: MosaicImplicits[HistStore],
     layerStore: LayerStore,
-    xa: Transactor[IO]) {
+    xa: Transactor[IO]
+) {
   import mosaicImplicits._
 
-  def asMaml(ast: MapAlgebraAST)
-    : (Expression, Option[NodeMetadata], Map[String, BacksplashMosaic]) = {
+  def asMaml(
+      ast: MapAlgebraAST
+  ): (Expression, Option[NodeMetadata], Map[String, BacksplashMosaic]) = {
 
     def evalParams(ast: MapAlgebraAST): Map[String, BacksplashMosaic] = {
       val args = ast.args.map(evalParams)
@@ -31,20 +33,28 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
         case MapAlgebraAST.ProjectRaster(_, projId, band, _, _) => {
           val bandActual = band.getOrElse(
             throw SingleBandOptionsException(
-              "Band must be provided to evaluate AST"))
+              "Band must be provided to evaluate AST"
+            )
+          )
           val mosaic =
             ProjectDao.unsafeGetProjectById(projId).transact(xa) flatMap {
               project =>
-                layerStore.read(project.defaultLayerId,
-                                None,
-                                None,
-                                None,
-                                NoOpTracingContext[IO]("no-op-read"))
+                layerStore.read(
+                  project.defaultLayerId,
+                  None,
+                  None,
+                  None,
+                  true,
+                  NoOpTracingContext[IO]("no-op-read")
+                )
             } map {
               case (tracingContext, bsiList) =>
-                (tracingContext, bsiList.map { backsplashImage =>
-                  backsplashImage.selectBands(List(bandActual))
-                })
+                (
+                  tracingContext,
+                  bsiList.map { backsplashImage =>
+                    backsplashImage.selectBands(List(bandActual))
+                  }
+                )
             }
           Map[String, BacksplashMosaic](
             s"${projId.toString}_${bandActual}" -> mosaic
@@ -54,20 +64,27 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
         case MapAlgebraAST.LayerRaster(_, layerId, band, _, _) => {
           val bandActual = band.getOrElse(
             throw SingleBandOptionsException(
-              "Band must be provided to evaluate AST")
+              "Band must be provided to evaluate AST"
+            )
           )
           Map[String, BacksplashMosaic](
             s"${layerId.toString}_${bandActual}" -> (
               layerStore
-                .read(layerId,
-                      None,
-                      None,
-                      None,
-                      NoOpTracingContext[IO]("no-op-read")) map {
+                .read(
+                  layerId,
+                  None,
+                  None,
+                  None,
+                  true,
+                  NoOpTracingContext[IO]("no-op-read")
+                ) map {
                 case (tracingContext, bsiList) =>
-                  (tracingContext, bsiList map { backsplashIm =>
-                    backsplashIm.selectBands(List(bandActual))
-                  })
+                  (
+                    tracingContext,
+                    bsiList map { backsplashIm =>
+                      backsplashIm.selectBands(List(bandActual))
+                    }
+                  )
               }
             )
           )

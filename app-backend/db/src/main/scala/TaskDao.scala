@@ -195,7 +195,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       )
       .filter(queryParams)
       .filter(fr"annotation_project_id = $annotationProjectId")
-      .filter(fr"parent_task_id IS NULL")
+      .filter(fr"task_type = 'LABEL' :: task_type")
 
   def taskForCampaignQB(
       queryParams: TaskQueryParameters,
@@ -225,14 +225,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     for {
       paginatedResponse <- actionFiltered match {
         case true =>
-          tasksForAnnotationProjectQB(
-            queryParams,
-            campaignId
-          ).filter(fr"parent_task_id IS NULL")
+          tasksForAnnotationProjectQB(queryParams, campaignId)
             .page(pageRequest)
         case _ =>
           tasksForAnnotationProjectQB(queryParams, campaignId)
-            .filter(fr"parent_task_id IS NULL")
             .page(pageRequest)
       }
       withActions <- paginatedResponse.results.toList traverse { task =>
@@ -833,7 +829,6 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
             Nil
           )
           .filter(queryParams)
-          .filter(fr"parent_task_id IS NULL")
           .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
           .filter(Fragment.const(s"""(
             (
@@ -849,7 +844,6 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       case false =>
         val builder = query
           .filter(queryParams)
-          .filter(fr"parent_task_id IS NULL")
           .filter(Fragments.in(fr"annotation_project_id", annotationProjectIds))
         (selectF ++ Fragments.whereAndOpt(
           builder.filters: _*

@@ -57,6 +57,8 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             y
           ) :? BandOverrideQueryParamDecoder(
             bandOverride
+          ) :? DisableAutoCorrectionQueryParamDecoder(
+            disableColorCorrect
           ) as user using tracingContext =>
         val polygonBbox: Projected[Polygon] =
           TileUtils.getTileBounds(z, x, y)
@@ -76,6 +78,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                       Some(polygonBbox),
                       bandOverride,
                       None,
+                      disableColorCorrect getOrElse false,
                       childContext
                     )
                   LayerTms(
@@ -90,6 +93,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                       Some(polygonBbox),
                       bandOverride,
                       None,
+                      disableColorCorrect getOrElse false,
                       childContext
                     )
                   )
@@ -133,7 +137,12 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
         )
         for {
           authFiber <- authorizers.authProject(user, projectId).start
-          mosaic = layers.read(layerId, None, overrides, None, tracingContext)
+          mosaic = layers.read(layerId,
+                               None,
+                               overrides,
+                               None,
+                               false,
+                               tracingContext)
           histFiber <- LayerHistogram.identity(mosaic, 4000).start
           _ <- authFiber.join.handleErrorWith { error =>
             histFiber.cancel *> IO.raiseError(error)
@@ -173,7 +182,11 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             case Right(uuids) =>
               for {
                 authFiber <- authorizers.authProject(user, projectId).start
-                mosaic = layers.read(layerId, None, overrides, uuids.toNel)
+                mosaic = layers.read(layerId,
+                                     None,
+                                     overrides,
+                                     uuids.toNel,
+                                     false)
                 histFiber <- LayerHistogram.identity(mosaic, 4000).start
                 _ <- authFiber.join.handleErrorWith { error =>
                   histFiber.cancel *> IO.raiseError(error)
@@ -204,7 +217,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             :? ZoomQueryParamMatcher(zoom)
             :? BandOverrideQueryParamDecoder(
               bandOverride
-            ) as user using tracingContext =>
+            ) :? DisableAutoCorrectionQueryParamDecoder(
+            disableColorCorrect
+          ) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -223,7 +238,8 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 layerId,
                 Some(Projected(projectedExtent, 3857)),
                 bandOverride,
-                None
+                None,
+                true
               )
             )(rawMosaicExtentReification, cs)
           case _ =>
@@ -232,7 +248,8 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                 layerId,
                 Some(Projected(projectedExtent, 3857)),
                 bandOverride,
-                None
+                None,
+                disableColorCorrect getOrElse false
               )
             )(paintedMosaicExtentReification, cs)
         }
