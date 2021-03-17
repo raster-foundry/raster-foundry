@@ -14,6 +14,7 @@
 
 - `export AWS_PROFILE=raster-foundry`
 - `export RF_SETTINGS_BUCKET=...`
+- `jabba use` -- if you don't have that version available, also `jabba install` the version from `.jabbarc`
 - `./scripts/bootstrap`
 - `./scripts/update`
 - `./scripts/server`
