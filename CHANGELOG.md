@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - Updated setup instructions and scripts [#5544](https://github.com/raster-foundry/raster-foundry/pull/5544)
+- Skip cogification on uploads if the tiff is already a cog [#557](https://github.com/raster-foundry/raster-foundry/pull/5557)
 
 ## [1.61.0] - 2021-03-04
 ### Changed
