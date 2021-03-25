@@ -1,7 +1,7 @@
 boto3==1.7.71
 pytest==2.9.2
 pytest-runner==2.9
-rasterio==1.1.6
+rasterio==1.1.7
 pyproj==2.4.2
 ipython==5.1.0
 pyjwt==1.4.2
@@ -12,3 +12,4 @@ click==6.7
 dropbox==9.0.0
 requests==2.21.0
 shapely==1.7.1
+rio-cogeo==2.1.3

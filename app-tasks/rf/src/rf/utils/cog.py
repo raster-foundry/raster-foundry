@@ -4,6 +4,7 @@ from rf.utils.io import s3_bucket_and_key_from_url
 
 import boto3
 import rasterio
+from rio_cogeo.cogeo import cog_validate
 
 import logging
 from multiprocessing import cpu_count, Pool
@@ -44,6 +45,11 @@ def georeference_file(file_path):
 
 
 def convert_to_cog(tif_path, local_dir):
+    is_valid_cog, _, _ = cog_validate(tif_path)
+    if is_valid_cog is True:
+        logger.info("Skipping conversion of %s to a cog", tif_path)
+        return tif_path
+
     logger.info("Converting %s to a cog", tif_path)
     with rasterio.open(tif_path) as src:
         has_64_bit = rasterio.dtypes.float64 in src.dtypes
