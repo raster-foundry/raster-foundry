@@ -142,14 +142,15 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       campaignCreate: Campaign.Create,
       user: User
   ): ConnectionIO[Campaign] = {
+    val ownerId = campaignCreate.checkOwner(user, campaignCreate.owner)
     for {
       insertId <- (fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, owner, name, campaign_type, description,
       video_link, partner_name, partner_logo, parent_campaign_id,
       continent, tags, resource_link
     )""" ++
-        fr"""VALUES
-      (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
+          fr"""VALUES
+      (uuid_generate_v4(), now(), ${ownerId}, ${campaignCreate.name},
        ${campaignCreate.campaignType}, ${campaignCreate.description},
        ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
        ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId},
@@ -171,8 +172,9 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
   ): ConnectionIO[Option[Campaign.WithRelated]] =
     for {
       campaignO <- getCampaignById(id)
-      labelClassGroup <- AnnotationLabelClassGroupDao
-        .listByCampaignId(id)
+      labelClassGroup <-
+        AnnotationLabelClassGroupDao
+          .listByCampaignId(id)
       labelClassGroupWithClass <- labelClassGroup traverse { group =>
         AnnotationLabelClassDao
           .listAnnotationLabelClassByGroupId(group.id)
@@ -213,11 +215,12 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
 
   def getAllShareCounts(userId: String): ConnectionIO[Map[UUID, Long]] =
     for {
-      campaignIds <- (fr"select id from " ++ Fragment.const(
-        tableName
-      ) ++ fr" where owner = $userId")
-        .query[UUID]
-        .to[List]
+      campaignIds <-
+        (fr"select id from " ++ Fragment.const(
+          tableName
+        ) ++ fr" where owner = $userId")
+          .query[UUID]
+          .to[List]
       campaignShareCounts <- campaignIds traverse { id =>
         getShareCount(id, userId).map((id -> _))
       }
@@ -230,10 +233,10 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       copyResourceLink: Boolean = false
   ): ConnectionIO[Campaign] = {
     val tagCol = tagsO
-      .map(
-        tags =>
-          Fragment
-            .const(s"ARRAY[${tags.map(t => s"'${t}'").mkString(",")}]::text[]"))
+      .map(tags =>
+        Fragment
+          .const(s"ARRAY[${tags.map(t => s"'${t}'").mkString(",")}]::text[]")
+      )
       .getOrElse(Fragment.const("tags"))
     val resourceLinkF = if (copyResourceLink) fr"resource_link" else fr"null"
     val insertQuery = (fr"""
@@ -245,8 +248,9 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
            WHERE id = ${id}
         """)
     for {
-      campaignCopyId <- insertQuery.update
-        .withUniqueGeneratedKeys[UUID]("id")
+      campaignCopyId <-
+        insertQuery.update
+          .withUniqueGeneratedKeys[UUID]("id")
       campaignCopy <- unsafeGetCampaignById(campaignCopyId)
       annotationProjects <- AnnotationProjectDao.listByCampaign(id)
       _ <- annotationProjects traverse { project =>
@@ -435,9 +439,9 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       permissions <- getPermissions(campaignId)
       userThins <- permissions traverse {
         case ObjectAccessControlRule(
-            SubjectType.User,
-            Some(subjectId),
-            ActionType.Annotate
+              SubjectType.User,
+              Some(subjectId),
+              ActionType.Annotate
             ) =>
           UserDao
             .getUserById(subjectId)
@@ -445,9 +449,9 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
               _.map(UserThinWithActionType.fromUser(_, ActionType.Annotate))
             )
         case ObjectAccessControlRule(
-            SubjectType.User,
-            Some(subjectId),
-            ActionType.Validate
+              SubjectType.User,
+              Some(subjectId),
+              ActionType.Validate
             ) =>
           UserDao
             .getUserById(subjectId)
@@ -521,11 +525,12 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       campaignId: UUID
   ): ConnectionIO[List[LabelClassGroupSummary]] =
     for {
-      labelClassGroups <- AnnotationLabelClassGroupDao.listByCampaignId(
-        campaignId)
-      projects <- AnnotationProjectDao.query
-        .filter(fr"campaign_id = $campaignId")
-        .list
+      labelClassGroups <-
+        AnnotationLabelClassGroupDao.listByCampaignId(campaignId)
+      projects <-
+        AnnotationProjectDao.query
+          .filter(fr"campaign_id = $campaignId")
+          .list
       projectIds = projects.map(_.id)
       labelClassSummaries <- labelClassGroups traverse { labelClassGroup =>
         AnnotationLabelDao

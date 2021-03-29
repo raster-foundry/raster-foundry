@@ -1159,7 +1159,8 @@ object Generators extends ArbitraryInstances {
       Gen.option(uuidGen),
       Gen.option(continentGen),
       stringListGen,
-      Gen.option(nonEmptyStringGen)
+      Gen.option(nonEmptyStringGen),
+      Gen.const(Option.empty[String])
     ).mapN(Campaign.Create.apply _)
 
   private def campaignCloneGen: Gen[Campaign.Clone] =
