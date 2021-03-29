@@ -299,18 +299,21 @@ trait CampaignPermissionRoutes
               Auth0Service.getManagementBearerToken flatMap { managementToken =>
                 for {
                   // Everything has to be Futures here because of methods in akka-http / Auth0Service
-                  users <- UserDao
-                    .findUsersByEmail(userByEmail.email)
-                    .transact(xa)
-                    .unsafeToFuture
-                  userPlatform <- UserDao
-                    .unsafeGetUserPlatform(user.id)
-                    .transact(xa)
-                    .unsafeToFuture
-                  campaignO <- CampaignDao
-                    .getCampaignById(campaignId)
-                    .transact(xa)
-                    .unsafeToFuture
+                  users <-
+                    UserDao
+                      .findUsersByEmail(userByEmail.email)
+                      .transact(xa)
+                      .unsafeToFuture
+                  userPlatform <-
+                    UserDao
+                      .unsafeGetUserPlatform(user.id)
+                      .transact(xa)
+                      .unsafeToFuture
+                  campaignO <-
+                    CampaignDao
+                      .getCampaignById(campaignId)
+                      .transact(xa)
+                      .unsafeToFuture
                   permissions <- users match {
                     case Nil =>
                       for {
@@ -327,21 +330,21 @@ trait CampaignPermissionRoutes
                             )
                         }
                         newUserOpt <- (auth0User.user_id traverse { userId =>
-                          for {
-                            user <- UserDao.create(
-                              User.Create(
-                                userId,
-                                email = userByEmail.email,
-                                scope = Scopes.GroundworkUser
+                            for {
+                              user <- UserDao.create(
+                                User.Create(
+                                  userId,
+                                  email = userByEmail.email,
+                                  scope = Scopes.GroundworkUser
+                                )
                               )
-                            )
-                            _ <- UserGroupRoleDao.createDefaultRoles(user)
-                            _ <- AnnotationProjectDao.copyProject(
-                              UUID.fromString(groundworkSampleProject),
-                              user
-                            )
-                          } yield user
-                        }).transact(xa).unsafeToFuture
+                              _ <- UserGroupRoleDao.createDefaultRoles(user)
+                              _ <- AnnotationProjectDao.copyProject(
+                                UUID.fromString(groundworkSampleProject),
+                                user
+                              )
+                            } yield user
+                          }).transact(xa).unsafeToFuture
                         notifier <- notifier.unsafeToFuture
                         acrs = newUserOpt map { newUser =>
                           notifier.getDefaultShare(
@@ -372,9 +375,9 @@ trait CampaignPermissionRoutes
                         // there is no project specific ACR yet,
                         // so no need to remove Validate action if only want Annotate
                         dbAcrs <- (acrs traverse { acr =>
-                          CampaignDao
-                            .addPermission(campaignId, acr)
-                        }).transact(xa).unsafeToFuture
+                            CampaignDao
+                              .addPermission(campaignId, acr)
+                          }).transact(xa).unsafeToFuture
                       } yield dbAcrs
                     case existingUsers =>
                       existingUsers traverse { existingUser =>

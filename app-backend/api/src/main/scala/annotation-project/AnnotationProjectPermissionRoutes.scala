@@ -62,14 +62,15 @@ trait AnnotationProjectPermissionRoutes
             existingUser,
             userByEmail.actionType
           )
-          dbAcrs <- AnnotationProjectDao
-            .handleSharedPermissions(
-              projectId,
-              existingUser.id,
-              acrs,
-              userByEmail.actionType
-            )
-            .transact(xa)
+          dbAcrs <-
+            AnnotationProjectDao
+              .handleSharedPermissions(
+                projectId,
+                existingUser.id,
+                acrs,
+                userByEmail.actionType
+              )
+              .transact(xa)
           // if silent param is not provided, we notify
           _ <- userByEmail.silent match {
             case Some(false) | None =>
@@ -80,7 +81,7 @@ trait AnnotationProjectPermissionRoutes
                   existingUser,
                   sharingUser,
                   annotationProject,
-                  "project"
+                  "projects"
                 )
               }
             case _ => IO.pure(())
@@ -171,7 +172,7 @@ trait AnnotationProjectPermissionRoutes
                           sharedUser,
                           user,
                           annotationProject,
-                          "project"
+                          "projects"
                         )
                       }
                   }
@@ -225,7 +226,7 @@ trait AnnotationProjectPermissionRoutes
                             sharedUser,
                             user,
                             annotationProject,
-                            "project"
+                            "projects"
                           )
                         }
                     }
@@ -360,15 +361,18 @@ trait AnnotationProjectPermissionRoutes
               Auth0Service.getManagementBearerToken flatMap { managementToken =>
                 (for {
                   // Everything has to be Futures here because of methods in akka-http / Auth0Service
-                  users <- UserDao
-                    .findUsersByEmail(userByEmail.email)
-                    .transact(xa)
-                  userPlatform <- UserDao
-                    .unsafeGetUserPlatform(user.id)
-                    .transact(xa)
-                  annotationProjectO <- AnnotationProjectDao
-                    .getById(projectId)
-                    .transact(xa)
+                  users <-
+                    UserDao
+                      .findUsersByEmail(userByEmail.email)
+                      .transact(xa)
+                  userPlatform <-
+                    UserDao
+                      .unsafeGetUserPlatform(user.id)
+                      .transact(xa)
+                  annotationProjectO <-
+                    AnnotationProjectDao
+                      .getById(projectId)
+                      .transact(xa)
                   permissions <- users match {
                     case Nil =>
                       for {
@@ -393,21 +397,21 @@ trait AnnotationProjectPermissionRoutes
                           }
                         }
                         newUserOpt <- (auth0User.user_id traverse { userId =>
-                          for {
-                            user <- UserDao.create(
-                              User.Create(
-                                userId,
-                                email = userByEmail.email,
-                                scope = Scopes.GroundworkUser
+                            for {
+                              user <- UserDao.create(
+                                User.Create(
+                                  userId,
+                                  email = userByEmail.email,
+                                  scope = Scopes.GroundworkUser
+                                )
                               )
-                            )
-                            _ <- UserGroupRoleDao.createDefaultRoles(user)
-                            _ <- AnnotationProjectDao.copyProject(
-                              UUID.fromString(groundworkSampleProject),
-                              user
-                            )
-                          } yield user
-                        }).transact(xa)
+                              _ <- UserGroupRoleDao.createDefaultRoles(user)
+                              _ <- AnnotationProjectDao.copyProject(
+                                UUID.fromString(groundworkSampleProject),
+                                user
+                              )
+                            } yield user
+                          }).transact(xa)
                         notifier <- notifier
                         acrs = newUserOpt map { newUser =>
                           notifier
@@ -427,7 +431,7 @@ trait AnnotationProjectPermissionRoutes
                                     newUser.id,
                                     userPlatform,
                                     annotationProject,
-                                    "project",
+                                    "projects",
                                     Notifications.getInvitationMessage
                                   )
                                 }
@@ -440,9 +444,9 @@ trait AnnotationProjectPermissionRoutes
                         // there is no project specific ACR yet,
                         // so no need to remove Validate action if only want Annotate
                         dbAcrs <- (acrs flatTraverse { acr =>
-                          AnnotationProjectDao
-                            .addPermission(projectId, acr)
-                        }).transact(xa)
+                            AnnotationProjectDao
+                              .addPermission(projectId, acr)
+                          }).transact(xa)
                       } yield dbAcrs.validNel
                     case existingUsers =>
                       shareWithExistingUsers(

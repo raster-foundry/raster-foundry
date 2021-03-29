@@ -21,8 +21,8 @@ class IntercomNotifications(
       Nothing,
       WebSocketHandler
     ]
-)(
-    implicit contextShift: ContextShift[IO]
+)(implicit
+    contextShift: ContextShift[IO]
 ) extends Config {
 
   private val intercomNotifier = new LiveIntercomNotifier[IO](backend)
@@ -77,18 +77,24 @@ class IntercomNotifications(
       sharingUser: User,
       value: T,
       valueType: String
-  ): IO[Either[Throwable, Unit]] =
+  ): IO[Either[Throwable, Unit]] = {
+    val singularized = if (valueType.lastOption == Some('s')) {
+      valueType.dropRight(1)
+    } else {
+      valueType
+    }
     intercomNotifier
       .notifyUser(
         intercomToken,
         intercomAdminId,
         ExternalId(sharedUser.id),
         Message(s"""
-        | ${getSharer(sharingUser)} has shared a $valueType with you!
-        | ${groundworkUrlBase}/app/${valueType}s/${value.id}/overview
+        | ${getSharer(sharingUser)} has shared a ${singularized} with you!
+        | ${groundworkUrlBase}/app/${valueType}/${value.id}/overview
         | """.trim.stripMargin)
       )
       .attempt
+  }
 
   def shareNotifyNewUser[T <: { val name: String }](
       bearerToken: ManagementBearerToken,
@@ -117,15 +123,16 @@ class IntercomNotifications(
         value,
         ticket
       )
-      _ <- Notify
-        .sendEmail(
-          sharingUserPlatform.publicSettings,
-          sharingUserPlatform.privateSettings,
-          newUserEmail,
-          subject,
-          messageRich.underlying,
-          messagePlain.underlying
-        )
+      _ <-
+        Notify
+          .sendEmail(
+            sharingUserPlatform.publicSettings,
+            sharingUserPlatform.privateSettings,
+            newUserEmail,
+            subject,
+            messageRich.underlying,
+            messagePlain.underlying
+          )
     } yield ()).attempt.void.unsafeToFuture
   }
 
