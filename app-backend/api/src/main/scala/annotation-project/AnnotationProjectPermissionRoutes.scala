@@ -80,7 +80,7 @@ trait AnnotationProjectPermissionRoutes
                   existingUser,
                   sharingUser,
                   annotationProject,
-                  "project"
+                  "projects"
                 )
               }
             case _ => IO.pure(())
@@ -171,7 +171,7 @@ trait AnnotationProjectPermissionRoutes
                           sharedUser,
                           user,
                           annotationProject,
-                          "project"
+                          "projects"
                         )
                       }
                   }
@@ -225,7 +225,7 @@ trait AnnotationProjectPermissionRoutes
                             sharedUser,
                             user,
                             annotationProject,
-                            "project"
+                            "projects"
                           )
                         }
                     }
@@ -427,7 +427,7 @@ trait AnnotationProjectPermissionRoutes
                                     newUser.id,
                                     userPlatform,
                                     annotationProject,
-                                    "project",
+                                    "projects",
                                     Notifications.getInvitationMessage
                                   )
                                 }

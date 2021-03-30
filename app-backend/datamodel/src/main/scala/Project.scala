@@ -42,9 +42,8 @@ final case class Project(
 object Project extends GeoJsonSupport {
 
   implicit val thinUserEncoder: Encoder[User] =
-    Encoder.forProduct3("id", "name", "profileImageUri")(
-      user => (user.id, user.name, user.profileImageUri)
-    )
+    Encoder.forProduct3("id", "name", "profileImageUri")(user =>
+      (user.id, user.name, user.profileImageUri))
   implicit val thinUserDecoder: Decoder[User.Create] =
     Decoder.forProduct3("id", "name", "profileImageUri")(
       (id: String, name: String, profileImageUri: String) =>
@@ -140,8 +139,7 @@ object Project extends GeoJsonSupport {
             .map(_.getOrElse(false)),
           c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
           c.downField("extras").as[Option[Json]]
-        ).mapN(Create.apply)
-    )
+        ).mapN(Create.apply))
 
     val decWithUserObject: Decoder[Create] = Decoder.instance(
       c =>
@@ -165,8 +163,7 @@ object Project extends GeoJsonSupport {
             .map(_.getOrElse(false)),
           c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
           c.downField("extras").as[Option[Json]]
-        ).mapN(Create.apply)
-    )
+        ).mapN(Create.apply))
 
     implicit val dec: Decoder[Create] = decWithUserString or decWithUserObject
 
