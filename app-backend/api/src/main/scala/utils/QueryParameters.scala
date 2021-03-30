@@ -231,7 +231,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         annotationProjectFilterParameters &
         parameters(
           'campaignId.as[UUID].?,
-          'capturedAt.as(deserializerTimestamp).?
+          'capturedAt.as(deserializerTimestamp).?,
+          'isActive.as[Boolean].?
         )
     ).as(AnnotationProjectQueryParameters.apply _)
 
