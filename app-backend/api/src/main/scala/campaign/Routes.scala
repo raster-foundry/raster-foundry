@@ -2,20 +2,20 @@ package com.rasterfoundry.api.campaign
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.effect._
 import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 
 import scala.concurrent.ExecutionContext
 

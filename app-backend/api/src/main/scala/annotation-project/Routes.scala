@@ -9,11 +9,11 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
 import cats.effect._
 import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 
 import scala.concurrent.ExecutionContext
 
@@ -402,9 +402,8 @@ trait AnnotationProjectRoutes
             case false =>
               complete {
                 (for {
-                  projectO <-
-                    AnnotationProjectDao
-                      .getById(projectId)
+                  projectO <- AnnotationProjectDao
+                    .getById(projectId)
                   projectActions <- projectO traverse { project =>
                     if (project.createdBy == user.id) {
                       Set("*").pure[ConnectionIO]
