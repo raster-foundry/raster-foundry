@@ -108,10 +108,9 @@ class CreateTaskGrid(
         )
       case None =>
         (for {
-          projectO <-
-            AnnotationProjectDao.query
-              .filter(annotationProjectId)
-              .selectOption
+          projectO <- AnnotationProjectDao.query
+            .filter(annotationProjectId)
+            .selectOption
           _ <- projectO traverse { project =>
             AnnotationProjectDao.update(
               project.copy(status = AnnotationProjectStatus.TaskGridFailure),

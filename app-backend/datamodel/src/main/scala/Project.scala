@@ -43,8 +43,7 @@ object Project extends GeoJsonSupport {
 
   implicit val thinUserEncoder: Encoder[User] =
     Encoder.forProduct3("id", "name", "profileImageUri")(user =>
-      (user.id, user.name, user.profileImageUri)
-    )
+      (user.id, user.name, user.profileImageUri))
   implicit val thinUserDecoder: Decoder[User.Create] =
     Decoder.forProduct3("id", "name", "profileImageUri")(
       (id: String, name: String, profileImageUri: String) =>
@@ -120,51 +119,51 @@ object Project extends GeoJsonSupport {
   object Create {
 
     /** Custon Circe decoder for [[Create]], to handle default values. */
-    val decWithUserString: Decoder[Create] = Decoder.instance(c =>
-      (
-        c.downField("name").as[String],
-        c.downField("description").as[String],
-        c.downField("visibility").as[Visibility],
-        c.downField("tileVisibility").as[Visibility],
-        c.downField("isAOIProject")
-          .as[Option[Boolean]]
-          .map(_.getOrElse(false)),
-        c.downField("aoiCadenceMillis")
-          .as[Option[Long]]
-          .map(_.getOrElse(DEFAULT_CADENCE)),
-        c.downField("owner").as[Option[String]],
-        c.downField("tags").as[List[String]],
-        c.downField("isSingleBand")
-          .as[Option[Boolean]]
-          .map(_.getOrElse(false)),
-        c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
-        c.downField("extras").as[Option[Json]]
-      ).mapN(Create.apply)
-    )
+    val decWithUserString: Decoder[Create] = Decoder.instance(
+      c =>
+        (
+          c.downField("name").as[String],
+          c.downField("description").as[String],
+          c.downField("visibility").as[Visibility],
+          c.downField("tileVisibility").as[Visibility],
+          c.downField("isAOIProject")
+            .as[Option[Boolean]]
+            .map(_.getOrElse(false)),
+          c.downField("aoiCadenceMillis")
+            .as[Option[Long]]
+            .map(_.getOrElse(DEFAULT_CADENCE)),
+          c.downField("owner").as[Option[String]],
+          c.downField("tags").as[List[String]],
+          c.downField("isSingleBand")
+            .as[Option[Boolean]]
+            .map(_.getOrElse(false)),
+          c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
+          c.downField("extras").as[Option[Json]]
+        ).mapN(Create.apply))
 
-    val decWithUserObject: Decoder[Create] = Decoder.instance(c =>
-      (
-        c.downField("name").as[String],
-        c.downField("description").as[String],
-        c.downField("visibility").as[Visibility],
-        c.downField("tileVisibility").as[Visibility],
-        c.downField("isAOIProject")
-          .as[Option[Boolean]]
-          .map(_.getOrElse(false)),
-        c.downField("aoiCadenceMillis")
-          .as[Option[Long]]
-          .map(_.getOrElse(DEFAULT_CADENCE)),
-        c.downField("owner").as[User.Create] map { usr: User.Create =>
-          Some(usr.id)
-        },
-        c.downField("tags").as[List[String]],
-        c.downField("isSingleBand")
-          .as[Option[Boolean]]
-          .map(_.getOrElse(false)),
-        c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
-        c.downField("extras").as[Option[Json]]
-      ).mapN(Create.apply)
-    )
+    val decWithUserObject: Decoder[Create] = Decoder.instance(
+      c =>
+        (
+          c.downField("name").as[String],
+          c.downField("description").as[String],
+          c.downField("visibility").as[Visibility],
+          c.downField("tileVisibility").as[Visibility],
+          c.downField("isAOIProject")
+            .as[Option[Boolean]]
+            .map(_.getOrElse(false)),
+          c.downField("aoiCadenceMillis")
+            .as[Option[Long]]
+            .map(_.getOrElse(DEFAULT_CADENCE)),
+          c.downField("owner").as[User.Create] map { usr: User.Create =>
+            Some(usr.id)
+          },
+          c.downField("tags").as[List[String]],
+          c.downField("isSingleBand")
+            .as[Option[Boolean]]
+            .map(_.getOrElse(false)),
+          c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
+          c.downField("extras").as[Option[Json]]
+        ).mapN(Create.apply))
 
     implicit val dec: Decoder[Create] = decWithUserString or decWithUserObject
 

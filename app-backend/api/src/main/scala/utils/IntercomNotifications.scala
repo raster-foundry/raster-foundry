@@ -22,8 +22,8 @@ class IntercomNotifications(
       WebSocketHandler
     ]
 )(implicit
-    contextShift: ContextShift[IO]
-) extends Config {
+  contextShift: ContextShift[IO])
+    extends Config {
 
   private val intercomNotifier = new LiveIntercomNotifier[IO](backend)
 
@@ -123,16 +123,15 @@ class IntercomNotifications(
         value,
         ticket
       )
-      _ <-
-        Notify
-          .sendEmail(
-            sharingUserPlatform.publicSettings,
-            sharingUserPlatform.privateSettings,
-            newUserEmail,
-            subject,
-            messageRich.underlying,
-            messagePlain.underlying
-          )
+      _ <- Notify
+        .sendEmail(
+          sharingUserPlatform.publicSettings,
+          sharingUserPlatform.privateSettings,
+          newUserEmail,
+          subject,
+          messageRich.underlying,
+          messagePlain.underlying
+        )
     } yield ()).attempt.void.unsafeToFuture
   }
 
