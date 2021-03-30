@@ -3,18 +3,24 @@ package com.rasterfoundry.api.campaign
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database._
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
-import cats.effect.IO
+import cats.effect._
 import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
+import com.google.common.util.concurrent.ThreadFactoryBuilder
+
+import scala.concurrent.ExecutionContext
 
 import java.util.UUID
+import java.util.concurrent.Executors
 
 trait CampaignRoutes
     extends CommonHandlers
@@ -28,6 +34,15 @@ trait CampaignRoutes
     with CampaignLabelClassRoutes {
 
   val xa: Transactor[IO]
+
+  val campaignDeleteContext = ExecutionContext.fromExecutor(
+    Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder().setNameFormat("campaign-delete-%d").build()
+    )
+  )
+  val campaignDeleteContextShift = IO.contextShift(campaignDeleteContext)
+  val campaignDeleteBlocker =
+    Blocker.liftExecutionContext(campaignDeleteContext)
 
   val campaignRoutes: Route = {
     pathEndOrSingleSlash {
@@ -326,14 +341,41 @@ trait CampaignRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          onSuccess(
-            CampaignDao
-              .deleteCampaign(campaignId, user)
-              .transact(xa)
-              .unsafeToFuture
-          ) {
-            completeSingleOrNotFound
-          }
+          val updateFieldIO = for {
+            campaignOpt <- CampaignDao.getCampaignById(campaignId)
+            _ <- campaignOpt traverse { campaign =>
+              CampaignDao.updateCampaign(
+                campaign.copy(isActive = false),
+                campaign.id
+              )
+            }
+            projectsOpt <- campaignOpt traverse { campaign =>
+              AnnotationProjectDao.query
+                .filter(fr"campaign_id = ${campaign.id}")
+                .list
+            }
+            updated <- projectsOpt traverse { projects =>
+              projects traverse { project =>
+                AnnotationProjectDao
+                  .update(project.copy(isActive = false), project.id)
+              }
+            }
+          } yield updated
+
+          val deleteIO = for {
+            _ <- updateFieldIO.transact(xa)
+            deleted <- campaignDeleteBlocker.blockOn(
+              CampaignDao
+                .deleteCampaign(campaignId, user)
+                .transact(xa)
+                .start(campaignDeleteContextShift)
+            )(campaignDeleteContextShift)
+          } yield deleted
+
+          complete(
+            StatusCodes.Accepted,
+            deleteIO.void.unsafeToFuture
+          )
         }
       }
     }
