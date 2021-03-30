@@ -142,6 +142,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       campaignCreate: Campaign.Create,
       user: User
   ): ConnectionIO[Campaign] = {
+    val ownerId = campaignCreate.checkOwner(user, campaignCreate.owner)
     for {
       insertId <- (fr"INSERT INTO" ++ tableF ++ fr"""(
       id, created_at, owner, name, campaign_type, description,
@@ -149,7 +150,7 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       continent, tags, resource_link
     )""" ++
         fr"""VALUES
-      (uuid_generate_v4(), now(), ${user.id}, ${campaignCreate.name},
+      (uuid_generate_v4(), now(), ${ownerId}, ${campaignCreate.name},
        ${campaignCreate.campaignType}, ${campaignCreate.description},
        ${campaignCreate.videoLink}, ${campaignCreate.partnerName},
        ${campaignCreate.partnerLogo}, ${campaignCreate.parentCampaignId},

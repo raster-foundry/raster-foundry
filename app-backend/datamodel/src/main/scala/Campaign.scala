@@ -67,8 +67,9 @@ object Campaign {
       parentCampaignId: Option[UUID] = None,
       continent: Option[Continent] = None,
       tags: List[String] = List.empty,
-      resourceLink: Option[String] = None
-  )
+      resourceLink: Option[String] = None,
+      owner: Option[String]
+  ) extends OwnerCheck
 
   object Create {
     implicit val decCreate: Decoder[Create] = deriveDecoder
