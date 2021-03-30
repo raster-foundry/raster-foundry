@@ -45,7 +45,7 @@ def georeference_file(file_path):
 
 
 def convert_to_cog(tif_path, local_dir):
-    is_valid_cog, _, _ = cog_validate(tif_path)
+    is_valid_cog, _, _ = cog_validate(tif_path, strict=True)
     if is_valid_cog is True:
         logger.info("Skipping conversion of %s to a cog", tif_path)
         return tif_path
