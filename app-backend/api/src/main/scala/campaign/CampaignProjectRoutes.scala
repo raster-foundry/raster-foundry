@@ -48,12 +48,12 @@ trait CampaignProjectRoutes
           (withPagination & annotationProjectQueryParameters) {
             (page, annotationProjectQP) =>
               complete {
-                AnnotationProjectDao.query
-                  .filter(
-                    annotationProjectQP.copy(campaignId = Some(campaignId))
+                AnnotationProjectDao
+                  .paginatedProjectsByCampaignId(
+                    campaignId,
+                    page,
+                    annotationProjectQP
                   )
-                  .page(page)
-                  .flatMap(AnnotationProjectDao.toWithRelated)
                   .transact(xa)
                   .unsafeToFuture
               }
