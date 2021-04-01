@@ -53,7 +53,7 @@ def complex_footprint(tif_path: str) -> MultiPolygon:
     nodata = ds.nodata
     downsampled_transform = ds.transform * ds.transform.scale(DOWNSAMPLE_FACTOR)
     src_proj = Proj(ds.crs)
-    dst_proj = Proj({"init": "EPSG:4326"})
+    dst_proj = Proj("EPSG:4326")
     if nodata is not None:
         data_mask = (band != nodata).astype(rasterio.uint8)
     else:
