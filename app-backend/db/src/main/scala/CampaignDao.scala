@@ -527,17 +527,20 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       projects <- AnnotationProjectDao.query
         .filter(fr"campaign_id = $campaignId")
         .list
-      projectIds = projects.map(_.id)
-      labelClassSummaries <- labelClassGroups traverse { labelClassGroup =>
-        AnnotationLabelDao
-          .countByProjectsAndGroup(projectIds, labelClassGroup.id)
-          .map { summary =>
-            LabelClassGroupSummary(
-              labelClassGroup.id,
-              labelClassGroup.name,
-              summary
-            )
+      labelClassSummaries <- projects.map(_.id).toNel match {
+        case Some(projectIds) =>
+          labelClassGroups traverse { labelClassGroup =>
+            AnnotationLabelDao
+              .countByProjectsAndGroup(projectIds.toList, labelClassGroup.id)
+              .map { summary =>
+                LabelClassGroupSummary(
+                  labelClassGroup.id,
+                  labelClassGroup.name,
+                  summary
+                )
+              }
           }
+        case _ => List.empty[LabelClassGroupSummary].pure[ConnectionIO]
       }
     } yield labelClassSummaries
 }
