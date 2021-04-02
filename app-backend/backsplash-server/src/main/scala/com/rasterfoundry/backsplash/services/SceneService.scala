@@ -156,9 +156,9 @@ class SceneService[HistStore](
         } yield resp
 
       case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
-          :? ThumbnailQueryParamDecoder(
-            thumbnailSize
-          ) :? ColorCorrectLowerQuantile(
+            :? ThumbnailQueryParamDecoder(
+              thumbnailSize
+            ) :? ColorCorrectLowerQuantile(
             lowerQuantile
           ) :? ColorCorrectUpperQuantile(
             upperQuantile
@@ -177,8 +177,7 @@ class SceneService[HistStore](
               true,
               lowerQuantile,
               upperQuantile
-            )
-              .map(a => (tracingContext, List(a)))
+            ).map(a => (tracingContext, List(a)))
           )(paintedMosaicExtentReification, cs)
           extent <- IO.pure {
             (scene.dataFootprint orElse scene.tileFootprint) map {

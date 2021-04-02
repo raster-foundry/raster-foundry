@@ -23,9 +23,10 @@ import geotrellis.vector.{Polygon, Projected}
 
 import java.util.UUID
 
-class RenderableStoreImplicits(xa: Transactor[IO])(implicit
-    contextShift: ContextShift[IO]
-) extends ToRenderableStoreOps
+class RenderableStoreImplicits(xa: Transactor[IO])(
+    implicit
+    contextShift: ContextShift[IO])
+    extends ToRenderableStoreOps
     with LazyLogging {
 
   implicit val sceneCache = Cache.caffeineSceneCache
