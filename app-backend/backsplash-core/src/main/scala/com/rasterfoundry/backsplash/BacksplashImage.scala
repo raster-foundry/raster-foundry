@@ -53,6 +53,8 @@ final case class BacksplashGeotiff(
     footprint: MultiPolygon,
     metadata: SceneMetadataFields,
     disableColorCorrect: Boolean,
+    lowerQuantile: Option[Int],
+    upperQuantile: Option[Int],
     xa: Transactor[IO]
 ) extends LazyLogging
     with BacksplashImage[IO] {
@@ -90,9 +92,10 @@ final case class BacksplashGeotiff(
               case _ => {
                 for {
                   sourceInfo <- IO(BacksplashGeotiffReader.getGeotiffInfo(uri))
-                  _ <- SceneDao
-                    .updateSceneGeoTiffInfo(sourceInfo, imageId)
-                    .transact(xa)
+                  _ <-
+                    SceneDao
+                      .updateSceneGeoTiffInfo(sourceInfo, imageId)
+                      .transact(xa)
                   _ <- put[IO, BacksplashGeoTiffInfo](s"SceneInfo:$imageId")(
                     sourceInfo,
                     Some(30 minutes)
@@ -150,9 +153,8 @@ final case class BacksplashGeotiff(
                 .tileToLayout(layoutDefinition)
                 .read(SpatialKey(x, y), subsetBands)
             ).map(_.map { tile =>
-                tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
-              })
-              .attempt
+              tile.mapBands((_: Int, t: Tile) => t.toArrayTile)
+            }).attempt
           }
         } yield {
           tile match {
@@ -230,6 +232,10 @@ sealed trait BacksplashImage[F[_]] extends LazyLogging {
   ): F[Option[MultibandTile]]
 
   val disableColorCorrect: Boolean
+
+  val lowerQuantile: Option[Int]
+
+  val upperQuantile: Option[Int]
 
   /** Read tile with tracing * */
   def read(

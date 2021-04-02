@@ -5,6 +5,9 @@ import geotrellis.raster.{MultibandTile}
 import io.circe.generic.JsonCodec
 
 object ColorCorrect extends LazyLogging {
+  val DefaultLowerBound = 1
+  val DefaultUpperBound = 97
+
   @JsonCodec
   final case class Params(
       redBand: Int,
@@ -14,15 +17,19 @@ object ColorCorrect extends LazyLogging {
     def colorCorrect(
         tile: MultibandTile,
         hist: Seq[Histogram[Double]],
-        noDataValue: Option[Double]
+        noDataValue: Option[Double],
+        lowerQuantile: Option[Int],
+        upperQuantile: Option[Int]
     ): MultibandTile = {
       val indexedHist = hist.toIndexedSeq
       val rgbHist = Seq(redBand, greenBand, blueBand) map { indexedHist(_) }
       val bands = tile.bands.zip(rgbHist).map {
         case (rgbTile, histogram) =>
           val breaks = histogram.quantileBreaks(100)
-          val oldMin = breaks(0).toInt
-          val oldMax = breaks(99).toInt
+          val oldMin =
+            breaks(lowerQuantile.getOrElse(DefaultLowerBound)).toInt
+          val oldMax =
+            breaks(upperQuantile.getOrElse(DefaultUpperBound)).toInt
           rgbTile
             .withNoData(noDataValue)
             .mapIfSet { cell =>

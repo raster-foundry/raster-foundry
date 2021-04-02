@@ -23,6 +23,8 @@ import java.util.UUID
       bandOverride: Option[BandOverride],
       imageSubset: Option[NEL[UUID]],
       disableColorCorrect: Boolean,
+      lowerQuantile: Option[Int],
+      upperQuantile: Option[Int],
       tracingContext: TracingContext[IO] = NoOpTracingContext[IO]("no-op-read")
   ): BacksplashMosaic
 
