@@ -701,7 +701,8 @@ final case class AnnotationProjectQueryParameters(
     projectFilterParams: AnnotationProjectFilterQueryParameters =
       AnnotationProjectFilterQueryParameters(),
     campaignId: Option[UUID] = None,
-    capturedAt: Option[Timestamp] = None
+    capturedAt: Option[Timestamp] = None,
+    isActive: Option[Boolean] = None
 )
 
 object AnnotationProjectQueryParameters {
