@@ -107,7 +107,7 @@ object AnnotationProject {
           campaignId,
           capturedAt,
           isActive getOrElse true
-        )
+      )
     )
 
   final case class Create(
@@ -257,7 +257,7 @@ object AnnotationProject {
             campaignId,
             capturedAt,
             isActive getOrElse true
-          )
+        )
       )
   }
 
@@ -305,7 +305,7 @@ object AnnotationProject {
 
   object WithRelatedAndLabelClassSummary {
     implicit val encRelatedAndSummary
-        : Encoder[WithRelatedAndLabelClassSummary] =
+      : Encoder[WithRelatedAndLabelClassSummary] =
       deriveEncoder
   }
 }
