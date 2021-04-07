@@ -5,8 +5,12 @@ import geotrellis.raster.{MultibandTile}
 import io.circe.generic.JsonCodec
 
 object ColorCorrect extends LazyLogging {
-  val DefaultLowerBound = 1
-  val DefaultUpperBound = 97
+  // by default, choose 2nd and 98th percentile histogram clips.
+  // The bins in the GeoTrellis histogram implementation are 0-indexed,
+  // so 2nd and 98th is 1 and 97.
+  // These defaults were chosen because they look nice
+  val defaultLowerBound = 1
+  val defaultUpperBound = 97
 
   @JsonCodec
   final case class Params(
