@@ -211,7 +211,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                               hists,
                               relevant.metadata.noDataValue orElse noDataValue orElse Some(
                                 0
-                              )
+                              ),
+                              relevant.lowerQuantile,
+                              relevant.upperQuantile
                             )
                           }
                       }
@@ -421,7 +423,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                                 relevant.corrections.colorCorrect(
                                   mbTile,
                                   hists,
-                                  None
+                                  None,
+                                  relevant.lowerQuantile,
+                                  relevant.upperQuantile
                                 )
                               }
                             }

@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Update default color space clipping and expose QPs for tuning [#5561](https://github.com/raster-foundry/raster-foundry/pull/5561)
+
 ### Fixed
 - Fix campaign label class summary endpoint [#5560](https://github.com/raster-foundry/raster-foundry/pull/5560)
 - Changed projection initialization so as not to flip xy and move Miami to Guyana [#5563](https://github.com/raster-foundry/raster-foundry/pull/5563)

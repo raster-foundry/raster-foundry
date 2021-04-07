@@ -85,6 +85,10 @@ object Parameters {
   object ZoomQueryParamMatcher extends QueryParamDecoderMatcher[Int]("zoom")
   object BrightnessFloorQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[Int]("floor")
+  object ColorCorrectLowerQuantile
+      extends OptionalQueryParamDecoderMatcher[Int]("lowerQuantile")
+  object ColorCorrectUpperQuantile
+      extends OptionalQueryParamDecoderMatcher[Int]("upperQuantile")
 
   /** Path Parameters */
   object UUIDWrapper {
