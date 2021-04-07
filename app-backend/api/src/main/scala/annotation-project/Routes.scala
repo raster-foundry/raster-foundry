@@ -7,14 +7,18 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
-import cats.effect.IO
+import cats.effect._
 import cats.implicits._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
+import scala.concurrent.ExecutionContext
+
 import java.util.UUID
+import java.util.concurrent.Executors
 
 trait AnnotationProjectRoutes
     extends CommonHandlers
@@ -26,6 +30,18 @@ trait AnnotationProjectRoutes
     with AnnotationProjectPermissionRoutes
     with AnnotationProjectLabelClassGroupRoutes
     with AnnotationProjectLabelClassRoutes {
+
+  val annotationProjectDeleteContext = ExecutionContext.fromExecutor(
+    Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder()
+        .setNameFormat("annotation-project-delete-%d")
+        .build()
+    )
+  )
+  val annotationProjectDeleteContextShift =
+    IO.contextShift(annotationProjectDeleteContext)
+  val annotationProjectDeleteBlocker =
+    Blocker.liftExecutionContext(annotationProjectDeleteContext)
 
   val xa: Transactor[IO]
 
@@ -336,14 +352,30 @@ trait AnnotationProjectRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          onSuccess(
-            AnnotationProjectDao
-              .deleteById(projectId, user)
-              .transact(xa)
-              .unsafeToFuture
-          ) {
-            completeSingleOrNotFound
-          }
+          val updateFieldIO = for {
+            projectOpt <- AnnotationProjectDao.getProjectById(projectId)
+            updated <- projectOpt traverse { project =>
+              AnnotationProjectDao.update(
+                project.copy(isActive = false),
+                project.id
+              )
+            }
+          } yield updated
+
+          val deleteIO = for {
+            _ <- updateFieldIO.transact(xa)
+            deleted <- annotationProjectDeleteBlocker.blockOn(
+              AnnotationProjectDao
+                .deleteById(projectId, user)
+                .transact(xa)
+                .start(annotationProjectDeleteContextShift)
+            )(annotationProjectDeleteContextShift)
+          } yield deleted
+
+          complete(
+            StatusCodes.Accepted,
+            deleteIO.void.unsafeToFuture
+          )
         }
       }
     }

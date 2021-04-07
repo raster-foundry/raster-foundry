@@ -11,6 +11,7 @@ class AnnotationProject(BaseModel):
         projectType,
         taskSizePixels,
         status,
+        isActive,
         createdAt=None,
         createdBy=None,
         taskSizeMeters=None,
@@ -25,6 +26,7 @@ class AnnotationProject(BaseModel):
         self.projectType = projectType
         self.taskSizePixels = taskSizePixels
         self.status = status
+        self.isActive = isActive
         self.createdAt = createdAt
         self.createdBy = createdBy
         self.taskSizeMeters = taskSizeMeters
@@ -48,7 +50,8 @@ class AnnotationProject(BaseModel):
             validatorsTeamId=self.validatorsTeamId,
             projectId=self.projectId,
             status=self.status,
-            campaignId=self.campaignId
+            campaignId=self.campaignId,
+            isActive=self.isActive
         )
 
     def update_status(self, status):
@@ -63,6 +66,7 @@ class AnnotationProject(BaseModel):
             d.get("projectType"),
             d.get("taskSizePixels"),
             d.get("status"),
+            d.get("isActive"),
             createdAt=d.get("createdAt"),
             createdBy=d.get("createdBy"),
             taskSizeMeters=d.get("taskSizeMeters"),
