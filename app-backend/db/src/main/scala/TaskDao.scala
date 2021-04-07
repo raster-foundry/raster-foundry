@@ -1038,6 +1038,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         )
         .filter(annotationProjectParams)
         .filter(annotationProjectIdOpt)
+        .filter(fr"is_active = true")
         .list(limit) map { projects =>
         projects map { _.id }
       }
@@ -1056,6 +1057,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                   .listByCampaignQB(campaignId)
                   .filter(annotationProjectParams)
                   .filter(annotationProjectIdOpt)
+                  .filter(fr"is_active = true")
                   .list(limit) map { projects =>
                   projects map { _.id }
                 }
@@ -1066,7 +1068,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       } map { _ getOrElse Nil }
       idAuthedProjects <- annotationProjectIdOpt flatTraverse { projectId =>
         AnnotationProjectDao.getProjectById(projectId) flatMap {
-          case Some(ap) =>
+          case Some(ap) if ap.isActive == true =>
             ap.campaignId traverse { campaignId =>
               CampaignDao.authorized(
                 user,
@@ -1078,7 +1080,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                 case AuthFailure()  => Nil
               }
             }
-          case None => Option(List.empty[UUID]).pure[ConnectionIO]
+          case _ => Option(List.empty[UUID]).pure[ConnectionIO]
         }
       } map { _ getOrElse Nil }
       taskOpt <- (annotationProjectIds ++ campaignAuthedProjects ++ idAuthedProjects).distinct.toNel flatTraverse {

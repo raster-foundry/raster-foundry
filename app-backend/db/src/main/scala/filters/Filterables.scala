@@ -129,10 +129,8 @@ trait Filterables extends RFMeta with LazyLogging {
             }),
             annotParams.bboxPolygon match {
               case Some(bboxPolygons) =>
-                val fragments = bboxPolygons.map(
-                  bbox =>
-                    fr"(_ST_Intersects(geometry, ${bbox}) AND geometry && ${bbox})"
-                )
+                val fragments = bboxPolygons.map(bbox =>
+                  fr"(_ST_Intersects(geometry, ${bbox}) AND geometry && ${bbox})")
                 Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
               case _ => None
             }
@@ -193,10 +191,8 @@ trait Filterables extends RFMeta with LazyLogging {
             }),
             (sceneParams.bboxPolygon, sceneParams.shape) match {
               case (Some(bboxPolygons), _) =>
-                val fragments = bboxPolygons.map(
-                  bbox =>
-                    fr"(_ST_Intersects(data_footprint, ${bbox}) AND tile_footprint && ${bbox})"
-                )
+                val fragments = bboxPolygons.map(bbox =>
+                  fr"(_ST_Intersects(data_footprint, ${bbox}) AND tile_footprint && ${bbox})")
                 Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
               case _ => None
             }
@@ -256,22 +252,23 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit def maybeTFilter[T](
-      implicit filterable: Filterable[Any, T]
-  ): Filterable[Any, Option[T]] = Filterable[Any, Option[T]] {
-    case None        => List.empty[Option[Fragment]]
-    case Some(thing) => filterable.toFilters(thing)
-  }
+      implicit
+      filterable: Filterable[Any, T]): Filterable[Any, Option[T]] =
+    Filterable[Any, Option[T]] {
+      case None        => List.empty[Option[Fragment]]
+      case Some(thing) => filterable.toFilters(thing)
+    }
 
   implicit def listTFilter[T](
-      implicit filterable: Filterable[Any, T]
-  ): Filterable[Any, List[T]] = Filterable[Any, List[T]] {
-    someFilterables: List[T] =>
+      implicit
+      filterable: Filterable[Any, T]): Filterable[Any, List[T]] =
+    Filterable[Any, List[T]] { someFilterables: List[T] =>
       {
         someFilterables
           .map(filterable.toFilters)
           .foldLeft(List.empty[Option[Fragment]])(_ ++ _)
       }
-  }
+    }
 
   implicit val datasourceQueryparamsFilter
     : Filterable[Any, DatasourceQueryParameters] =
@@ -437,16 +434,17 @@ trait Filterables extends RFMeta with LazyLogging {
     : Filterable[Any, AnnotationProjectQueryParameters] =
     Filterable[Any, AnnotationProjectQueryParameters] {
       params: AnnotationProjectQueryParameters =>
-        val taskStatusF = params.projectFilterParams.taskStatusesInclude.toList.toNel map {
-          statusList =>
-            val statusFilterF = statusList map { status =>
-              Some(
-                fr"(annotation_projects.task_status_summary ->> ${status.toString}) > '0'"
-              )
-            }
-            Fragment.const("(") ++ Fragments
-              .orOpt(statusFilterF.toList: _*) ++ Fragment.const(")")
-        }
+        val taskStatusF =
+          params.projectFilterParams.taskStatusesInclude.toList.toNel map {
+            statusList =>
+              val statusFilterF = statusList map { status =>
+                Some(
+                  fr"(annotation_projects.task_status_summary ->> ${status.toString}) > '0'"
+                )
+              }
+              Fragment.const("(") ++ Fragments
+                .orOpt(statusFilterF.toList: _*) ++ Fragment.const(")")
+          }
         Filters.ownerQP(params.ownerParams, fr"annotation_projects.owner") ++
           Filters.searchQP(
             params.searchParams,
@@ -461,6 +459,9 @@ trait Filterables extends RFMeta with LazyLogging {
             }),
             params.campaignId.map({ campaignId =>
               fr"annotation_projects.campaign_id = $campaignId"
+            }),
+            params.isActive.map({ isActive =>
+              fr"is_active = $isActive"
             }),
             taskStatusF
           )

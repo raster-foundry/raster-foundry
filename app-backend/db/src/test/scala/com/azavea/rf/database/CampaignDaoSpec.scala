@@ -1516,4 +1516,59 @@ class CampaignDaoSpec
     }
   }
 
+  test("campaigns are listed based on is_active qp") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            campaignCreateOne: Campaign.Create,
+            campaignCreateTwo: Campaign.Create
+        ) =>
+          {
+            val listIO = for {
+              user <- UserDao.create(userCreate)
+              _ <-
+                CampaignDao
+                  .insertCampaign(
+                    campaignCreateOne.copy(parentCampaignId = None),
+                    user
+                  )
+              dbCampaignTwo <-
+                CampaignDao
+                  .insertCampaign(
+                    campaignCreateTwo.copy(parentCampaignId = None),
+                    user
+                  )
+              _ <- CampaignDao.updateCampaign(
+                dbCampaignTwo.copy(isActive = false),
+                dbCampaignTwo.id
+              )
+              campaignPageNotFiltered <- CampaignDao.listCampaigns(
+                PageRequest(0, 99, Map.empty),
+                CampaignQueryParameters(),
+                user
+              )
+              campaignPageFiltered <- CampaignDao.listCampaigns(
+                PageRequest(0, 99, Map.empty),
+                CampaignQueryParameters().copy(isActive = Some(true)),
+                user
+              )
+            } yield (campaignPageNotFiltered, campaignPageFiltered)
+
+            val (listed, filteredList) = listIO.transact(xa).unsafeRunSync()
+
+            assert(
+              listed.results.length == 2,
+              "campaigns are listed by default ignoring the is_active field"
+            )
+            assert(
+              filteredList.results.length == 1,
+              "campaigns are listed by is_active field"
+            )
+            true
+          }
+      }
+    }
+  }
+
 }

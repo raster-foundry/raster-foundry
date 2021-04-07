@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Fix campaign label class summary endpoint [#5560](https://github.com/raster-foundry/raster-foundry/pull/5560)
 
+### Added
+- Made campaign and annotation project delete async [#5559](https://github.com/raster-foundry/raster-foundry/pull/5559)
+
 ## [1.61.2] - 2021-03-30
 ### Changed
 - Campaign creates can include an owner [#5558](https://github.com/raster-foundry/raster-foundry/pull/5558)
