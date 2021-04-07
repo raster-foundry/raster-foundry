@@ -31,9 +31,9 @@ object ColorCorrect extends LazyLogging {
         case (rgbTile, histogram) =>
           val breaks = histogram.quantileBreaks(100)
           val oldMin =
-            breaks(lowerQuantile.getOrElse(DefaultLowerBound)).toInt
+            breaks(lowerQuantile.getOrElse(defaultLowerBound)).toInt
           val oldMax =
-            breaks(upperQuantile.getOrElse(DefaultUpperBound)).toInt
+            breaks(upperQuantile.getOrElse(defaultUpperBound)).toInt
           rgbTile
             .withNoData(noDataValue)
             .mapIfSet { cell =>
