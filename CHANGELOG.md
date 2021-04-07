@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Fixed
 - Fix campaign label class summary endpoint [#5560](https://github.com/raster-foundry/raster-foundry/pull/5560)
+- Changed projection initialization so as not to flip xy and move Miami to Guyana [#5563](https://github.com/raster-foundry/raster-foundry/pull/5563)
 
 ### Added
 - Made campaign and annotation project delete async [#5559](https://github.com/raster-foundry/raster-foundry/pull/5559)

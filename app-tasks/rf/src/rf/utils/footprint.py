@@ -16,14 +16,14 @@ DOWNSAMPLE_FACTOR = 8.0
 logger = logging.getLogger(__name__)
 
 
-def transform_point_curried(tup: (Proj, Proj, Point)) -> Point:
+def transform_point_curried(tup: Tuple[Proj, Proj, Point]) -> Point:
     (src_proj, dst_proj, (x, y)) = tup
     return transform(src_proj, dst_proj, x, y)
 
 
 def transform_point_seq(
     src_proj: Proj, dst_proj: Proj, points: List[Point], pool: Pool
-) -> (float, float):
+) -> Tuple[float, float]:
     return pool.map(transform_point_curried, [(src_proj, dst_proj, p) for p in points])
 
 
@@ -52,8 +52,22 @@ def complex_footprint(tif_path: str) -> MultiPolygon:
         )
     nodata = ds.nodata
     downsampled_transform = ds.transform * ds.transform.scale(DOWNSAMPLE_FACTOR)
-    src_proj = Proj(ds.crs)
-    dst_proj = Proj("EPSG:4326")
+    # why not create the projections with ds.crs, ds.crs.data, "EPSG:4326", etc.?
+    # for some reason, when we removed the `init=foo` creation, that dramatically changed
+    # the projections that we wound up with, which at different times located a tif in Miami in:
+    # - the middle of the Atlantic
+    # - Antarctica
+    # - Guyana
+    # - the upper Caribbean
+    # That's weird and bad! The WKT string and the Proj4 string together have cooperated, and
+    # we no longer have to rely on pyproj to figure out the correct interpretation of our
+    # init args.
+    # Possibly this error is related to this rasterio commit:
+    # https://github.com/mapbox/rasterio/commit/c58d534182844abda7f8003c46601804cc75e2fe
+    # Which we upgraded to in
+    # https://github.com/raster-foundry/raster-foundry/pull/5557
+    src_proj = Proj(ds.crs.to_wkt())
+    dst_proj = Proj("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     if nodata is not None:
         data_mask = (band != nodata).astype(rasterio.uint8)
     else:
