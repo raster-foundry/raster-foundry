@@ -72,7 +72,7 @@ final case class WriteStacCatalog(
     )
 
     val sceneItems: List[ImageryItem] = sceneTaskAnnotation.scenes match {
-      case Nil =>
+      case _ =>
         List(
           TileLayersItemWithAbsolute(
             Utils.getTileLayersItem(
@@ -84,19 +84,19 @@ final case class WriteStacCatalog(
             )
           )
         )
-      case scenes =>
-        scenes flatMap { scene =>
-          (
-            Utils.getSceneItem(
-              catalog,
-              layerCollectionPrefix,
-              imageCollection,
-              scene
-            ),
-            scene.ingestLocation
-          ).mapN(SceneItemWithAbsolute.apply _)
+      // case scenes =>
+      //   scenes flatMap { scene =>
+      //     (
+      //       Utils.getSceneItem(
+      //         catalog,
+      //         layerCollectionPrefix,
+      //         imageCollection,
+      //         scene
+      //       ),
+      //       scene.ingestLocation
+      //     ).mapN(SceneItemWithAbsolute.apply _)
 
-        }
+      //   }
     }
 
     val absoluteLayerCollection =
@@ -259,7 +259,6 @@ final case class WriteStacCatalog(
     logger.info(s"Exporting STAC export for record $exportId...")
 
     logger.info(s"Getting STAC export data for record $exportId...")
-
     (for {
       exportDefinition <- StacExportDao.unsafeGetById(exportId).transact(xa)
       tempDir = ScalaFile.newTemporaryDirectory()
@@ -291,9 +290,12 @@ final case class WriteStacCatalog(
           val message = s"""
             | Your export for Campaign $campaignId is complete!
             | """.trim.stripMargin
+          logger.info(message)
+          logger.info(exportPath)
           notify(ExternalId(exportDefinition.owner), Message(message))
         }
       }
+      
       tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
       _ <- IO { tempDir.zipTo(tempZipFile) }
       _ <- StacFileIO.putToS3(
