@@ -500,11 +500,11 @@ class CampaignStacExport(
       scene: Scene,
       annotationProject: AnnotationProject
   ): Option[newtypes.SceneItem] = {
-    val s3ImageLocation = scene.ingestLocation
+    val tileUrl = Option(s"http://localhost:8081/${scene.id}/{z}/{x}/{y}")
     val footprint = scene.dataFootprint
     val sceneCreationTime =
       scene.filterFields.acquisitionDate orElse Some(scene.createdAt)
-    (s3ImageLocation, footprint, sceneCreationTime) mapN {
+    (tileUrl, footprint, sceneCreationTime) mapN {
       case (url, footprint, timestamp) =>
         makeSceneItem(
           url,
