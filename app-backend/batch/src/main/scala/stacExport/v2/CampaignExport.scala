@@ -500,11 +500,11 @@ class CampaignStacExport(
       scene: Scene,
       annotationProject: AnnotationProject
   ): Option[newtypes.SceneItem] = {
-    val tileUrl = Option(s"http://localhost:8081/${scene.id}/{z}/{x}/{y}")
+    val s3ImageLocation = scene.ingestLocation
     val footprint = scene.dataFootprint
     val sceneCreationTime =
       scene.filterFields.acquisitionDate orElse Some(scene.createdAt)
-    (tileUrl, footprint, sceneCreationTime) mapN {
+    (s3ImageLocation, footprint, sceneCreationTime) mapN {
       case (url, footprint, timestamp) =>
         makeSceneItem(
           url,
@@ -541,18 +541,12 @@ class CampaignStacExport(
   ): IO[ExportState] = {
     for {
       // make the catalog for this annotation project
-      // make the scene item for this annotation project with an s3 asset
-      scene <- AnnotationProjectDao
-        .getFirstScene(annotationProject.id)
-        .transact(xa)
-      imageryItemO <- scene.fold(
-        imageryItemFromTileLayers(
+      // make the scene item for this annotation project with a tile layer asset
+      imageryItemO <- imageryItemFromTileLayers(
           annotationProject,
           inputState.exportDefinition.taskStatuses
         )
-      )({ scene =>
-        IO.pure(imageryItemFromScene(scene, annotationProject))
-      })
+        
       imageryItemsAppend = imageryItemO map { (item: newtypes.SceneItem) =>
         Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
