@@ -72,7 +72,7 @@ final case class WriteStacCatalog(
     )
 
     val sceneItems: List[ImageryItem] = sceneTaskAnnotation.scenes match {
-      case _ =>
+      case Nil =>
         List(
           TileLayersItemWithAbsolute(
             Utils.getTileLayersItem(
@@ -84,19 +84,19 @@ final case class WriteStacCatalog(
             )
           )
         )
-      // case scenes =>
-      //   scenes flatMap { scene =>
-      //     (
-      //       Utils.getSceneItem(
-      //         catalog,
-      //         layerCollectionPrefix,
-      //         imageCollection,
-      //         scene
-      //       ),
-      //       scene.ingestLocation
-      //     ).mapN(SceneItemWithAbsolute.apply _)
+      case scenes =>
+        scenes flatMap { scene =>
+          (
+            Utils.getSceneItem(
+              catalog,
+              layerCollectionPrefix,
+              imageCollection,
+              scene
+            ),
+            scene.ingestLocation
+          ).mapN(SceneItemWithAbsolute.apply _)
 
-      //   }
+        }
     }
 
     val absoluteLayerCollection =
@@ -276,6 +276,7 @@ final case class WriteStacCatalog(
         runAnnotationProject(exportDefinition, pid, tempDir, exportPath)
       }
       _ <- exportDefinition.campaignId traverse { campaignId =>
+        // this is the spot
         new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
           case Some(exportData) =>
             exportData.toFileSystem(tempDir)
