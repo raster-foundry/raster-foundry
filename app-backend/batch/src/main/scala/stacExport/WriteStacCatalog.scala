@@ -259,7 +259,7 @@ final case class WriteStacCatalog(
     logger.info(s"Exporting STAC export for record $exportId...")
 
     logger.info(s"Getting STAC export data for record $exportId...")
-    
+
     (for {
       exportDefinition <- StacExportDao.unsafeGetById(exportId).transact(xa)
       tempDir = ScalaFile.newTemporaryDirectory()
