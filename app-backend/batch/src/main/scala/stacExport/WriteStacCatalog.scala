@@ -259,6 +259,7 @@ final case class WriteStacCatalog(
     logger.info(s"Exporting STAC export for record $exportId...")
 
     logger.info(s"Getting STAC export data for record $exportId...")
+    
     (for {
       exportDefinition <- StacExportDao.unsafeGetById(exportId).transact(xa)
       tempDir = ScalaFile.newTemporaryDirectory()
@@ -276,7 +277,6 @@ final case class WriteStacCatalog(
         runAnnotationProject(exportDefinition, pid, tempDir, exportPath)
       }
       _ <- exportDefinition.campaignId traverse { campaignId =>
-        // this is the spot
         new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
           case Some(exportData) =>
             exportData.toFileSystem(tempDir)
@@ -291,12 +291,9 @@ final case class WriteStacCatalog(
           val message = s"""
             | Your export for Campaign $campaignId is complete!
             | """.trim.stripMargin
-          logger.info(message)
-          logger.info(exportPath)
           notify(ExternalId(exportDefinition.owner), Message(message))
         }
       }
-      
       tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
       _ <- IO { tempDir.zipTo(tempZipFile) }
       _ <- StacFileIO.putToS3(
