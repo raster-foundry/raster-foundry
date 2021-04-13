@@ -543,10 +543,10 @@ class CampaignStacExport(
       // make the catalog for this annotation project
       // make the scene item for this annotation project with a tile layer asset
       imageryItemO <- imageryItemFromTileLayers(
-          annotationProject,
-          inputState.exportDefinition.taskStatuses
-        )
-        
+        annotationProject,
+        inputState.exportDefinition.taskStatuses
+      )
+
       imageryItemsAppend = imageryItemO map { (item: newtypes.SceneItem) =>
         Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
