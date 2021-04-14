@@ -28,8 +28,9 @@ class AnnotationProjectDaoSpec
         ) => {
           val insertIO = for {
             user <- UserDao.create(userCreate)
-            inserted <- AnnotationProjectDao
-              .insert(annotationProjectCreate, user)
+            inserted <-
+              AnnotationProjectDao
+                .insert(annotationProjectCreate, user)
           } yield inserted
 
           val result = insertIO.transact(xa).unsafeRunSync
@@ -73,10 +74,11 @@ class AnnotationProjectDaoSpec
 
           val listIO = for {
             user <- UserDao.create(userCreate)
-            insertedProjects <- annotationProjectCreates
-              .take(pageSize) traverse { toInsert =>
-              AnnotationProjectDao.insert(toInsert, user)
-            }
+            insertedProjects <-
+              annotationProjectCreates
+                .take(pageSize) traverse { toInsert =>
+                AnnotationProjectDao.insert(toInsert, user)
+              }
             _ <- insertedProjects traverse { project =>
               TaskDao.insertTasks(
                 fixupTaskFeaturesCollection(
@@ -87,12 +89,13 @@ class AnnotationProjectDaoSpec
                 user
               )
             }
-            listed <- AnnotationProjectDao
-              .listProjects(
-                pageRequest,
-                AnnotationProjectQueryParameters(),
-                user
-              )
+            listed <-
+              AnnotationProjectDao
+                .listProjects(
+                  pageRequest,
+                  AnnotationProjectQueryParameters(),
+                  user
+                )
           } yield (listed, insertedProjects)
 
           val (listedProjects, dbProjects) = listIO.transact(xa).unsafeRunSync
@@ -124,10 +127,11 @@ class AnnotationProjectDaoSpec
 
           val listIO = for {
             user <- UserDao.create(userCreate)
-            insertedProjects <- annotationProjectCreates
-              .take(pageSize) traverse { toInsert =>
-              AnnotationProjectDao.insert(toInsert, user)
-            }
+            insertedProjects <-
+              annotationProjectCreates
+                .take(pageSize) traverse { toInsert =>
+                AnnotationProjectDao.insert(toInsert, user)
+              }
             _ <- insertedProjects traverse { project =>
               TaskDao.insertTasks(
                 fixupTaskFeaturesCollection(
@@ -138,8 +142,9 @@ class AnnotationProjectDaoSpec
                 user
               )
             }
-            insertedProject <- AnnotationProjectDao
-              .insert(annotationProjectCreate, user)
+            insertedProject <-
+              AnnotationProjectDao
+                .insert(annotationProjectCreate, user)
             _ <- TaskDao.insertTasks(
               fixupTaskFeaturesCollection(
                 taskFeaturesCreate,
@@ -148,16 +153,18 @@ class AnnotationProjectDaoSpec
               ),
               user
             )
-            listed <- AnnotationProjectDao
-              .listProjects(
-                pageRequest,
-                AnnotationProjectQueryParameters(
-                  projectFilterParams = AnnotationProjectFilterQueryParameters(
-                    taskStatusesInclude = Seq(TaskStatus.Unlabeled)
-                  )
-                ),
-                user
-              )
+            listed <-
+              AnnotationProjectDao
+                .listProjects(
+                  pageRequest,
+                  AnnotationProjectQueryParameters(
+                    projectFilterParams =
+                      AnnotationProjectFilterQueryParameters(
+                        taskStatusesInclude = Seq(TaskStatus.Unlabeled)
+                      )
+                  ),
+                  user
+                )
           } yield { (listed, insertedProjects) }
 
           val (projects, unlabeledProjects) =
@@ -246,8 +253,9 @@ class AnnotationProjectDaoSpec
         ) => {
           val insertIO = for {
             user <- UserDao.create(userCreate)
-            inserted <- AnnotationProjectDao
-              .insert(annotationProjectCreate, user)
+            inserted <-
+              AnnotationProjectDao
+                .insert(annotationProjectCreate, user)
             fetched <- AnnotationProjectDao.getById(inserted.id)
           } yield { (inserted, fetched) }
 
@@ -275,15 +283,23 @@ class AnnotationProjectDaoSpec
         ) => {
           val updateIO = for {
             user <- UserDao.create(userCreate)
-            insertedCampaign <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                user
-              )
-            inserted1 <- AnnotationProjectDao
-              .insert(annotationProjectCreate, user)
-            inserted2 <- AnnotationProjectDao
-              .insert(annotationProjectUpdate.copy(campaignId = Some(insertedCampaign.id)), user)
+            insertedCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
+            inserted1 <-
+              AnnotationProjectDao
+                .insert(annotationProjectCreate, user)
+            inserted2 <-
+              AnnotationProjectDao
+                .insert(
+                  annotationProjectUpdate.copy(campaignId =
+                    Some(insertedCampaign.id)
+                  ),
+                  user
+                )
             _ <- AnnotationProjectDao.update(inserted2.toProject, inserted1.id)
             fetched <- AnnotationProjectDao.unsafeGetById(inserted1.id)
           } yield (fetched, inserted2)
@@ -333,8 +349,9 @@ class AnnotationProjectDaoSpec
         ) => {
           val deleteIO = for {
             user <- UserDao.create(userCreate)
-            inserted <- AnnotationProjectDao
-              .insert(annotationProjectCreate, user)
+            inserted <-
+              AnnotationProjectDao
+                .insert(annotationProjectCreate, user)
             deleted <- AnnotationProjectDao.deleteById(inserted.id, user)
             fetched <- AnnotationProjectDao.getById(inserted.id)
           } yield { (deleted, fetched) }
@@ -367,31 +384,35 @@ class AnnotationProjectDaoSpec
 
           val listIO = for {
             user <- UserDao.create(userCreate)
-            insertedCampaign <- CampaignDao
-              .insertCampaign(
-                campaignCreate.copy(parentCampaignId = None),
-                user
-              )
-            insertedProjects <- annotationProjectCreates1
-              .take(pageSize) traverse { toInsert =>
-              AnnotationProjectDao
-                .insert(
-                  toInsert.copy(campaignId = Some(insertedCampaign.id)),
+            insertedCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
                   user
                 )
-            }
-            _ <- annotationProjectCreates2
-              .take(pageSize) traverse { toInsert =>
-              AnnotationProjectDao.insert(toInsert, user)
-            }
-            listed <- AnnotationProjectDao
-              .listProjects(
-                pageRequest,
-                AnnotationProjectQueryParameters(
-                  campaignId = Some(insertedCampaign.id)
-                ),
-                user
-              )
+            insertedProjects <-
+              annotationProjectCreates1
+                .take(pageSize) traverse { toInsert =>
+                AnnotationProjectDao
+                  .insert(
+                    toInsert.copy(campaignId = Some(insertedCampaign.id)),
+                    user
+                  )
+              }
+            _ <-
+              annotationProjectCreates2
+                .take(pageSize) traverse { toInsert =>
+                AnnotationProjectDao.insert(toInsert, user)
+              }
+            listed <-
+              AnnotationProjectDao
+                .listProjects(
+                  pageRequest,
+                  AnnotationProjectQueryParameters(
+                    campaignId = Some(insertedCampaign.id)
+                  ),
+                  user
+                )
           } yield (listed, insertedProjects)
 
           val (listedProjects, dbProjects) = listIO.transact(xa).unsafeRunSync
@@ -423,24 +444,27 @@ class AnnotationProjectDaoSpec
 
           val listIO = for {
             user <- UserDao.create(userCreate)
-            insertedProjects <- annotationProjectCreates1
-              .take(pageSize) traverse { toInsert =>
+            insertedProjects <-
+              annotationProjectCreates1
+                .take(pageSize) traverse { toInsert =>
+                AnnotationProjectDao
+                  .insert(toInsert.copy(capturedAt = Some(capturedAt)), user)
+              }
+            _ <-
+              annotationProjectCreates2
+                .take(pageSize) traverse { toInsert =>
+                AnnotationProjectDao
+                  .insert(toInsert, user)
+              }
+            listed <-
               AnnotationProjectDao
-                .insert(toInsert.copy(capturedAt = Some(capturedAt)), user)
-            }
-            _ <- annotationProjectCreates2
-              .take(pageSize) traverse { toInsert =>
-              AnnotationProjectDao
-                .insert(toInsert, user)
-            }
-            listed <- AnnotationProjectDao
-              .listProjects(
-                pageRequest,
-                AnnotationProjectQueryParameters(
-                  capturedAt = Some(capturedAt)
-                ),
-                user
-              )
+                .listProjects(
+                  pageRequest,
+                  AnnotationProjectQueryParameters(
+                    capturedAt = Some(capturedAt)
+                  ),
+                  user
+                )
           } yield (listed, insertedProjects)
 
           val (listedProjects, dbProjects) =
@@ -449,6 +473,65 @@ class AnnotationProjectDaoSpec
           assert(
             listedProjects.count == dbProjects.size,
             "Listed projects are those with updated capture timestamp"
+          )
+
+          true
+        }
+      )
+    }
+  }
+
+  test("list annotation projects by campaign") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreateOne: AnnotationProject.Create,
+            annotationProjectCreateTwo: AnnotationProject.Create,
+            campaignCreate: Campaign.Create
+        ) => {
+          val pageSize = 20
+          val pageRequest = PageRequest(0, pageSize, Map.empty)
+
+          val listIO = for {
+            user <- UserDao.create(userCreate)
+            dbCampaign <- CampaignDao.insertCampaign(
+              campaignCreate.copy(parentCampaignId = None),
+              user
+            )
+            _ <- AnnotationProjectDao.insert(
+              annotationProjectCreateOne.copy(campaignId = Some(dbCampaign.id)),
+              user
+            )
+            dbProjTwo <- AnnotationProjectDao.insert(
+              annotationProjectCreateTwo.copy(campaignId = Some(dbCampaign.id)),
+              user
+            )
+            _ <- AnnotationProjectDao.update(
+              dbProjTwo.toProject.copy(isActive = false),
+              dbProjTwo.id
+            )
+            notFiltered <- AnnotationProjectDao.paginatedProjectsByCampaignId(
+              dbCampaign.id,
+              pageRequest,
+              AnnotationProjectQueryParameters()
+            )
+            filtered <- AnnotationProjectDao.paginatedProjectsByCampaignId(
+              dbCampaign.id,
+              pageRequest,
+              AnnotationProjectQueryParameters().copy(isActive = Some(true))
+            )
+          } yield (notFiltered, filtered)
+
+          val (listed, filteredList) = listIO.transact(xa).unsafeRunSync
+
+          assert(
+            listed.results.length == 2,
+            "annotation projects are listed by default ignoring the is_active field"
+          )
+          assert(
+            filteredList.results.length == 1,
+            "annotation projects are listed by is_active field"
           )
 
           true

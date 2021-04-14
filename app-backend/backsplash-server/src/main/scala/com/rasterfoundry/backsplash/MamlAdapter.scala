@@ -45,6 +45,8 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
                   None,
                   None,
                   true,
+                  None,
+                  None,
                   NoOpTracingContext[IO]("no-op-read")
                 )
             } map {
@@ -76,6 +78,8 @@ class BacksplashMamlAdapter[HistStore, LayerStore: RenderableStore](
                   None,
                   None,
                   true,
+                  None,
+                  None,
                   NoOpTracingContext[IO]("no-op-read")
                 ) map {
                 case (tracingContext, bsiList) =>

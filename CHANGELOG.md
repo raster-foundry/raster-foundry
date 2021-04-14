@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.62.0] - 2021-04-14
+### Changed
+- Update default color space clipping and expose QPs for tuning [#5561](https://github.com/raster-foundry/raster-foundry/pull/5561)
+
+### Fixed
+- Fix campaign label class summary endpoint [#5560](https://github.com/raster-foundry/raster-foundry/pull/5560)
+- Changed projection initialization so as not to flip xy and move Miami to Guyana [#5563](https://github.com/raster-foundry/raster-foundry/pull/5563)
+
+### Added
+- Made campaign and annotation project delete async [#5559](https://github.com/raster-foundry/raster-foundry/pull/5559)
+
 ## [1.61.2] - 2021-03-30
 ### Changed
 - Campaign creates can include an owner [#5558](https://github.com/raster-foundry/raster-foundry/pull/5558)
@@ -19,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - Updated setup instructions and scripts [#5544](https://github.com/raster-foundry/raster-foundry/pull/5544)
+- Skip cogification on uploads if the tiff is already a cog [#557](https://github.com/raster-foundry/raster-foundry/pull/5557)
 
 ## [1.61.0] - 2021-03-04
 ### Changed
@@ -900,7 +912,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.2...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.62.0...HEAD
+[1.62.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.2...v1.62.0
 [1.61.2]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.1...v1.61.2
 [1.61.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.0...v1.61.1
 [1.61.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.60.1...v1.61.0

@@ -37,6 +37,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
       mosaicDefinition: MosaicDefinition,
       bandOverride: Option[BandOverride],
       disableColorCorrect: Boolean,
+      lowerQuantile: Option[Int],
+      upperQuantile: Option[Int],
       projId: UUID
   ): BacksplashImage[IO] = {
     val singleBandOptions =
@@ -92,6 +94,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
       footprint,
       mosaicDefinition.sceneMetadataFields,
       disableColorCorrect,
+      lowerQuantile,
+      upperQuantile,
       xa
     )
   }
@@ -105,6 +109,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           bandOverride: Option[BandOverride],
           imageSubset: Option[NEL[UUID]],
           disableColorCorrectt: Boolean,
+          lowerQuantile: Option[Int],
+          upperQuantile: Option[Int],
           tracingContext: TracingContext[IO]
       ): BacksplashMosaic = {
         val tags = Map("sceneId" -> projId.toString)
@@ -142,6 +148,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
                     footprint,
                     scene.metadataFields,
                     disableColorCorrectt,
+                    lowerQuantile,
+                    upperQuantile,
                     xa
                   )
                 )
@@ -162,6 +170,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
           bandOverride: Option[BandOverride],
           imageSubset: Option[NEL[UUID]],
           disableColorCorrect: Boolean,
+          lowerQuantile: Option[Int],
+          upperQuantile: Option[Int],
           tracingContext: TracingContext[IO]
       ): BacksplashMosaic = {
         val tags = Map("projectId" -> projId.toString)
@@ -196,6 +206,8 @@ class RenderableStoreImplicits(xa: Transactor[IO])(
                   md,
                   bandOverride,
                   disableColorCorrect,
+                  lowerQuantile,
+                  upperQuantile,
                   projId
                 )
               }

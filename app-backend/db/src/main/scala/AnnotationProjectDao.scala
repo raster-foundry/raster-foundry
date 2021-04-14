@@ -41,7 +41,8 @@ object AnnotationProjectDao
     "status",
     "task_status_summary",
     "campaign_id",
-    "captured_at"
+    "captured_at",
+    "is_active"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -194,7 +195,7 @@ object AnnotationProjectDao
        ${newAnnotationProject.validatorsTeamId},
        ${newAnnotationProject.projectId}, ${newAnnotationProject.status},
        '{"UNLABELED": 0, "LABELING_IN_PROGRESS": 0, "LABELED": 0, "VALIDATION_IN_PROGRESS": 0, "VALIDATED": 0 }'::jsonb,
-       ${newAnnotationProject.campaignId}, ${newAnnotationProject.capturedAt}
+       ${newAnnotationProject.campaignId}, ${newAnnotationProject.capturedAt}, true
        )
     """).update.withUniqueGeneratedKeys[AnnotationProject](
         fieldNames: _*
@@ -347,7 +348,8 @@ object AnnotationProjectDao
       aoi = ${project.aoi},
       status = ${project.status},
       campaign_id = ${project.campaignId},
-      captured_at = ${project.capturedAt}
+      captured_at = ${project.capturedAt},
+      is_active= ${project.isActive}
     WHERE
       id = $id
     """).update.run;
@@ -495,7 +497,7 @@ object AnnotationProjectDao
              uuid_generate_v4(), now(), ${user.id}, name, project_type, task_size_meters, task_size_pixels,
              aoi, labelers_team_id, validators_team_id, project_id, status, task_status_summary, """ ++
       campaignId ++
-      fr""",captured_at
+      fr""",captured_at, is_active
            FROM """ ++ tableF ++ fr"""
            WHERE id = ${projectId}
         """)
@@ -634,4 +636,14 @@ object AnnotationProjectDao
         ProjectLayerScenesDao.listLayerScenesRaw(project.defaultLayerId)
       }
     } yield { scenes flatMap { _.headOption } }
+
+  def paginatedProjectsByCampaignId(
+      campaignId: UUID,
+      page: PageRequest,
+      params: AnnotationProjectQueryParameters
+  ): ConnectionIO[PaginatedResponse[AnnotationProject.WithRelated]] =
+    listByCampaignQB(campaignId)
+      .filter(params)
+      .page(page)
+      .flatMap(AnnotationProjectDao.toWithRelated)
 }

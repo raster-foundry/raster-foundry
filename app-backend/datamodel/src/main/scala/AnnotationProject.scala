@@ -22,7 +22,8 @@ final case class AnnotationProject(
     status: AnnotationProjectStatus,
     taskStatusSummary: Option[Map[String, Int]] = None,
     campaignId: Option[UUID] = None,
-    capturedAt: Option[Timestamp] = None
+    capturedAt: Option[Timestamp] = None,
+    isActive: Boolean
 ) {
   def withRelated(
       tileLayers: List[TileLayer],
@@ -45,13 +46,69 @@ final case class AnnotationProject(
       labelClassGroups,
       taskStatusSummary,
       campaignId,
-      capturedAt
+      capturedAt,
+      isActive
     )
 }
 
 object AnnotationProject {
   implicit val encAnnotationProject: Encoder[AnnotationProject] = deriveEncoder
-  implicit val decAnnotationProject: Decoder[AnnotationProject] = deriveDecoder
+  implicit val decAnnotationProject: Decoder[AnnotationProject] =
+    Decoder.forProduct16(
+      "id",
+      "createdAt",
+      "createdBy",
+      "name",
+      "projectType",
+      "taskSizeMeters",
+      "taskSizePixels",
+      "aoi",
+      "labelersTeamId",
+      "validatorsTeamId",
+      "projectId",
+      "status",
+      "taskStatusSummary",
+      "campaignId",
+      "capturedAt",
+      "isActive"
+    )(
+      (
+          id: UUID,
+          createdAt: Timestamp,
+          createdBy: String,
+          name: String,
+          projectType: AnnotationProjectType,
+          taskSizeMeters: Option[Double],
+          taskSizePixels: Int,
+          aoi: Option[Projected[Geometry]],
+          labelersTeamId: Option[UUID],
+          validatorsTeamId: Option[UUID],
+          projectId: Option[UUID],
+          status: AnnotationProjectStatus,
+          taskStatusSummary: Option[Map[String, Int]],
+          campaignId: Option[UUID],
+          capturedAt: Option[Timestamp],
+          isActive: Option[Boolean]
+      ) =>
+        AnnotationProject(
+          id,
+          createdAt,
+          createdBy,
+          name,
+          projectType,
+          taskSizeMeters,
+          taskSizePixels,
+          aoi,
+          labelersTeamId,
+          validatorsTeamId,
+          projectId,
+          status,
+          taskStatusSummary,
+          campaignId,
+          capturedAt,
+          isActive getOrElse true
+      )
+    )
 
   final case class Create(
       name: String,
@@ -89,7 +146,8 @@ object AnnotationProject {
       labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
       taskStatusSummary: Option[Map[String, Int]] = None,
       campaignId: Option[UUID] = None,
-      capturedAt: Option[Timestamp] = None
+      capturedAt: Option[Timestamp] = None,
+      isActive: Boolean
   ) {
     def toProject =
       AnnotationProject(
@@ -107,7 +165,8 @@ object AnnotationProject {
         status,
         taskStatusSummary,
         campaignId,
-        capturedAt
+        capturedAt,
+        isActive
       )
 
     def withSummary(
@@ -131,13 +190,75 @@ object AnnotationProject {
         taskStatusSummary,
         labelClassSummary,
         campaignId,
-        capturedAt
+        capturedAt,
+        isActive
       )
   }
 
   object WithRelated {
     implicit val encRelated: Encoder[WithRelated] = deriveEncoder
-    implicit val decRelated: Decoder[WithRelated] = deriveDecoder
+    implicit val decRelated: Decoder[WithRelated] =
+      Decoder.forProduct18(
+        "id",
+        "createdAt",
+        "createdBy",
+        "name",
+        "projectType",
+        "taskSizeMeters",
+        "taskSizePixels",
+        "aoi",
+        "labelersTeamId",
+        "validatorsTeamId",
+        "projectId",
+        "status",
+        "tileLayers",
+        "labelClassGroups",
+        "taskStatusSummary",
+        "campaignId",
+        "capturedAt",
+        "isActive"
+      )(
+        (
+            id: UUID,
+            createdAt: Timestamp,
+            createdBy: String,
+            name: String,
+            projectType: AnnotationProjectType,
+            taskSizeMeters: Option[Double],
+            taskSizePixels: Int,
+            aoi: Option[Projected[Geometry]],
+            labelersTeamId: Option[UUID],
+            validatorsTeamId: Option[UUID],
+            projectId: Option[UUID],
+            status: AnnotationProjectStatus,
+            tileLayers: List[TileLayer],
+            labelClassGroups: List[AnnotationLabelClassGroup.WithLabelClasses],
+            taskStatusSummary: Option[Map[String, Int]],
+            campaignId: Option[UUID],
+            capturedAt: Option[Timestamp],
+            isActive: Option[Boolean]
+        ) =>
+          WithRelated(
+            id,
+            createdAt,
+            createdBy,
+            name,
+            projectType,
+            taskSizeMeters,
+            taskSizePixels,
+            aoi,
+            labelersTeamId,
+            validatorsTeamId,
+            projectId,
+            status,
+            tileLayers,
+            labelClassGroups,
+            taskStatusSummary,
+            campaignId,
+            capturedAt,
+            isActive getOrElse true
+        )
+      )
   }
 
   final case class WithRelatedAndLabelClassSummary(
@@ -158,7 +279,8 @@ object AnnotationProject {
       taskStatusSummary: Option[Map[String, Int]] = None,
       labelClassSummary: List[LabelClassGroupSummary],
       campaignId: Option[UUID] = None,
-      capturedAt: Option[Timestamp] = None
+      capturedAt: Option[Timestamp] = None,
+      isActive: Boolean
   ) {
     def toProject =
       AnnotationProject(
@@ -176,7 +298,8 @@ object AnnotationProject {
         status,
         taskStatusSummary,
         campaignId,
-        capturedAt
+        capturedAt,
+        isActive
       )
   }
 

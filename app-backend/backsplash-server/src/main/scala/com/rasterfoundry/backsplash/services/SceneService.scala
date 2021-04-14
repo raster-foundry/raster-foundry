@@ -42,7 +42,9 @@ class SceneService[HistStore](
   private def sceneToBacksplashGeotiff(
       scene: Scene,
       bandOverride: Option[BandOverride],
-      disableColorCorrect: Boolean
+      disableColorCorrect: Boolean,
+      lowerQuantile: Option[Int],
+      upperQuantile: Option[Int]
   ): IO[BacksplashImage[IO]] = {
     val randomProjectId = UUID.randomUUID
     val ingestLocIO: IO[String] = IO {
@@ -85,6 +87,8 @@ class SceneService[HistStore](
           footprint,
           scene.metadataFields,
           disableColorCorrect,
+          lowerQuantile,
+          upperQuantile,
           xa
         )
     }
@@ -122,6 +126,10 @@ class SceneService[HistStore](
             bandOverride
           ) :? DisableAutoCorrectionQueryParamDecoder(
             disableColorCorrect
+          ) :? ColorCorrectLowerQuantile(
+            lowerQuantile
+          ) :? ColorCorrectUpperQuantile(
+            upperQuantile
           ) as user using tracingContext =>
         for {
           sceneFiber <- authorizers.authScene(user, sceneId).start
@@ -134,7 +142,9 @@ class SceneService[HistStore](
             sceneToBacksplashGeotiff(
               scene,
               bandOverride orElse bands,
-              disableColorCorrect getOrElse false
+              disableColorCorrect getOrElse false,
+              lowerQuantile,
+              upperQuantile
             ).map(a => (tracingContext, List(a)))
           )
           resp <- eval(z, x, y) flatMap {
@@ -148,7 +158,11 @@ class SceneService[HistStore](
       case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
             :? ThumbnailQueryParamDecoder(
               thumbnailSize
-            ) as user using tracingContext =>
+            ) :? ColorCorrectLowerQuantile(
+            lowerQuantile
+          ) :? ColorCorrectUpperQuantile(
+            upperQuantile
+          ) as user using tracingContext =>
         for {
           sceneFiber <- authorizers.authScene(user, sceneId).start
           bandsFiber <- getDefaultSceneBands(sceneId)
@@ -157,8 +171,13 @@ class SceneService[HistStore](
           }
           bands <- bandsFiber.join
           eval = LayerExtent.identity(
-            sceneToBacksplashGeotiff(scene, bands, true)
-              .map(a => (tracingContext, List(a)))
+            sceneToBacksplashGeotiff(
+              scene,
+              bands,
+              true,
+              lowerQuantile,
+              upperQuantile
+            ).map(a => (tracingContext, List(a)))
           )(paintedMosaicExtentReification, cs)
           extent <- IO.pure {
             (scene.dataFootprint orElse scene.tileFootprint) map {
