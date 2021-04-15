@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.61.2] - 2021-03-30
 ### Changed
 - Campaign creates can include an owner [#5558](https://github.com/raster-foundry/raster-foundry/pull/5558)
+- Always link to TMS layer in STAC export [#5564](https://github.com/raster-foundry/raster-foundry/pull/5564/)
 
 ### Fixed
 - Copy and routing for campaign and annotation projects were synchronized with the frontend app [#5558](https://github.com/raster-foundry/raster-foundry/pull/5558)

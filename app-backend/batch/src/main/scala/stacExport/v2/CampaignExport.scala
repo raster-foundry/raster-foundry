@@ -11,7 +11,6 @@ import com.rasterfoundry.database.{
 import com.rasterfoundry.datamodel.TileLayerType.{MVT, TMS}
 import com.rasterfoundry.datamodel.{
   AnnotationProject,
-  Scene,
   StacExport,
   TileLayer,
   UnionedGeomExtent
@@ -29,7 +28,7 @@ import com.azavea.stac4s.syntax._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.Transactor
 import doobie.implicits._
-import geotrellis.vector.{Extent, MultiPolygon, Projected}
+import geotrellis.vector.Extent
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
@@ -496,25 +495,6 @@ class CampaignStacExport(
   ): ExportState => ExportState =
     optics.labelAssetsLens.modify(_ ++ toAppend)
 
-  def imageryItemFromScene(
-      scene: Scene,
-      annotationProject: AnnotationProject
-  ): Option[newtypes.SceneItem] = {
-    val s3ImageLocation = scene.ingestLocation
-    val footprint = scene.dataFootprint
-    val sceneCreationTime =
-      scene.filterFields.acquisitionDate orElse Some(scene.createdAt)
-    (s3ImageLocation, footprint, sceneCreationTime) mapN {
-      case (url, footprint, timestamp) =>
-        makeSceneItem(
-          url,
-          footprint,
-          timestamp.toInstant,
-          annotationProject
-        )
-    }
-  }
-
   private def imageryItemFromTileLayers(
       annotationProject: AnnotationProject,
       taskStatuses: List[String]
@@ -541,18 +521,12 @@ class CampaignStacExport(
   ): IO[ExportState] = {
     for {
       // make the catalog for this annotation project
-      // make the scene item for this annotation project with an s3 asset
-      scene <- AnnotationProjectDao
-        .getFirstScene(annotationProject.id)
-        .transact(xa)
-      imageryItemO <- scene.fold(
-        imageryItemFromTileLayers(
-          annotationProject,
-          inputState.exportDefinition.taskStatuses
-        )
-      )({ scene =>
-        IO.pure(imageryItemFromScene(scene, annotationProject))
-      })
+      // make the scene item for this annotation project with a tile layer asset
+      imageryItemO <- imageryItemFromTileLayers(
+        annotationProject,
+        inputState.exportDefinition.taskStatuses
+      )
+
       imageryItemsAppend = imageryItemO map { (item: newtypes.SceneItem) =>
         Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
@@ -640,43 +614,6 @@ class CampaignStacExport(
         ),
         Nil,
         assets,
-        None,
-        Map("datetime" -> createdAt.asJson).asJsonObject
-      )
-    )
-  }
-
-  private def makeSceneItem(
-      url: String,
-      footprint: Projected[MultiPolygon],
-      createdAt: Instant,
-      annotationProject: AnnotationProject
-  ): newtypes.SceneItem = {
-    val latLngGeom = footprint.withSRID(4326)
-    val latLngExtent = Extent(latLngGeom.geom.getEnvelopeInternal)
-    newtypes.SceneItem(
-      StacItem(
-        s"${UUID.randomUUID}",
-        stacVersion,
-        Nil,
-        "Feature",
-        footprint.withSRID(4326),
-        TwoDimBbox(
-          latLngExtent.xmin,
-          latLngExtent.ymin,
-          latLngExtent.xmax,
-          latLngExtent.ymax
-        ),
-        Nil,
-        Map(
-          "data" -> StacItemAsset(
-            url,
-            Some(s"COG for project ${annotationProject.name}"),
-            None,
-            Set(StacAssetRole.Data),
-            Some(`image/cog`)
-          )
-        ),
         None,
         Map("datetime" -> createdAt.asJson).asJsonObject
       )
