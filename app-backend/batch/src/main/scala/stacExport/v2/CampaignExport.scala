@@ -2,6 +2,7 @@ package com.rasterfoundry.batch.stacExport.v2
 
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.{
+  AnnotationLabelClassGroupDao,
   AnnotationLabelDao,
   AnnotationProjectDao,
   CampaignDao,
@@ -10,6 +11,7 @@ import com.rasterfoundry.database.{
 }
 import com.rasterfoundry.datamodel.TileLayerType.{MVT, TMS}
 import com.rasterfoundry.datamodel.{
+  AnnotationLabelClassGroup,
   AnnotationProject,
   StacExport,
   TileLayer,
@@ -81,6 +83,7 @@ object optics {
 
 case class ExportState(
     exportDefinition: StacExport,
+    labelGroupOpt: Option[List[AnnotationLabelClassGroup]],
     rootCatalog: StacCatalog,
     remainingAnnotationProjects: List[AnnotationProject],
     annotationProjectImageryItems: Map[
@@ -170,22 +173,23 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val withCollection =
       optics.itemCollectionLens.modify(_ => Some(imageryCollectionId))
-    val withParentLinks = optics.itemLinksLens.modify(
-      links =>
-        StacLink(
-          "./collection.json",
-          StacLinkType.Collection,
-          Some(`application/json`),
-          None
-        ) +: StacLink(
-          "../catalog.json",
-          StacLinkType.StacRoot,
-          Some(`application/json`),
-          None
-        ) +:
-          links.filter(link =>
+    val withParentLinks = optics.itemLinksLens.modify(links =>
+      StacLink(
+        "./collection.json",
+        StacLinkType.Collection,
+        Some(`application/json`),
+        None
+      ) +: StacLink(
+        "../catalog.json",
+        StacLinkType.StacRoot,
+        Some(`application/json`),
+        None
+      ) +:
+        links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
-            .contains(link.rel)))
+            .contains(link.rel)
+        )
+    )
 
     def withAsset(stacItem: StacItem): IO[StacItem] = {
       stacItem.assets.get("data") match {
@@ -193,12 +197,13 @@ case class ExportData private (
           IO {
             s3Client.maybeSignUri(asset.href, duration = Duration.ofDays(7))
           } map { signedUrl =>
-            (optics.itemAssetLens.modify(
-              assets =>
-                assets ++ Map(
-                  "data" -> optics.assetHrefLens
-                    .modify(_ => signedUrl)(asset)
-              )))(stacItem)
+            (optics.itemAssetLens.modify(assets =>
+              assets ++ Map(
+                "data" -> optics.assetHrefLens
+                  .modify(_ => signedUrl)(asset)
+              )
+            )
+            )(stacItem)
           }
         case None =>
           IO.pure(stacItem)
@@ -348,34 +353,35 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val withCollection =
       optics.itemCollectionLens.modify(_ => Some(labelCollectionId))
-    val withParentLinks = optics.itemLinksLens.modify(
-      links =>
-        StacLink(
-          "./collection.json",
-          StacLinkType.Collection,
-          Some(`application/json`),
-          None
-        ) +: StacLink(
-          "../catalog.json",
-          StacLinkType.StacRoot,
-          Some(`application/json`),
-          None
-        ) +:
-          links.filter(link =>
+    val withParentLinks = optics.itemLinksLens.modify(links =>
+      StacLink(
+        "./collection.json",
+        StacLinkType.Collection,
+        Some(`application/json`),
+        None
+      ) +: StacLink(
+        "../catalog.json",
+        StacLinkType.StacRoot,
+        Some(`application/json`),
+        None
+      ) +:
+        links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
-            .contains(link.rel)))
+            .contains(link.rel)
+        )
+    )
     def withAsset(labelItem: StacItem) =
-      optics.itemAssetLens.modify(
-        assets =>
-          assets ++ Map(
-            "data" -> StacItemAsset(
-              s"./data/${labelItem.id}.geojson",
-              None,
-              None,
-              Set(StacAssetRole.Data),
-              Some(`application/geo+json`)
-            )
-        ))(labelItem)
+      optics.itemAssetLens.modify(assets =>
+        assets ++ Map(
+          "data" -> StacItemAsset(
+            s"./data/${labelItem.id}.geojson",
+            None,
+            None,
+            Set(StacAssetRole.Data),
+            Some(`application/geo+json`)
+          )
+        )
+      )(labelItem)
     (annotationProjectLabelItems.toList traverse {
       case (_, v) =>
         encodableToFile(
@@ -429,18 +435,22 @@ class CampaignStacExport(
     xa: Transactor[IO],
     exportDefinition: StacExport
 )(implicit
-  val
-  cs: ContextShift[IO]) {
+    val
+    cs: ContextShift[IO]
+) {
 
   val runExport = StateT { step }
 
   def run(): IO[Option[ExportData]] =
     for {
-      campaign <- CampaignDao.getCampaignById(campaignId).transact(xa)
-      childProjects <- campaign traverse { campaign =>
+      campaignOpt <- CampaignDao.getCampaignById(campaignId).transact(xa)
+      labelGroupOpt <- campaignOpt traverse { campaign =>
+        AnnotationLabelClassGroupDao.listByCampaignId(campaign.id).transact(xa)
+      }
+      childProjects <- campaignOpt traverse { campaign =>
         AnnotationProjectDao.listByCampaign(campaign.id).transact(xa)
       }
-      initialStateO = (campaign, childProjects) mapN {
+      initialStateO = (campaignOpt, childProjects) mapN {
         case (campaign, projects) =>
           val rootCatalog = StacCatalog(
             stacVersion,
@@ -452,6 +462,7 @@ class CampaignStacExport(
           )
           ExportState(
             exportDefinition,
+            labelGroupOpt,
             rootCatalog,
             projects,
             Map.empty,
@@ -500,12 +511,14 @@ class CampaignStacExport(
       taskStatuses: List[String]
   ): IO[Option[newtypes.SceneItem]] =
     for {
-      tileLayers <- TileLayerDao
-        .listByProjectId(annotationProject.id)
-        .transact(xa)
-      extentO <- TaskDao
-        .createUnionedGeomExtent(annotationProject.id, taskStatuses)
-        .transact(xa)
+      tileLayers <-
+        TileLayerDao
+          .listByProjectId(annotationProject.id)
+          .transact(xa)
+      extentO <-
+        TaskDao
+          .createUnionedGeomExtent(annotationProject.id, taskStatuses)
+          .transact(xa)
       item = extentO map { unionedGeom =>
         makeTileLayersItem(
           tileLayers,
@@ -526,17 +539,18 @@ class CampaignStacExport(
         annotationProject,
         inputState.exportDefinition.taskStatuses
       )
-
       imageryItemsAppend = imageryItemO map { (item: newtypes.SceneItem) =>
         Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
       // make label asset
-      featureGeoJSON <- AnnotationLabelDao
-        .getAnnotationJsonByTaskStatus(
-          annotationProject.id,
-          inputState.exportDefinition.taskStatuses
-        )
-        .transact(xa)
+      featureGeoJSON <-
+        AnnotationLabelDao
+          .getAnnotationJsonByTaskStatus(
+            annotationProject.id,
+            inputState.exportDefinition.taskStatuses,
+            inputState.labelGroupOpt
+          )
+          .transact(xa)
       labelAssetAppend = featureGeoJSON map { geojson =>
         Map(
           newtypes.AnnotationProjectId(annotationProject.id) -> newtypes
@@ -544,15 +558,20 @@ class CampaignStacExport(
         )
       } getOrElse Map.empty
       // make the label item
-      taskExtent <- TaskDao
-        .createUnionedGeomExtent(
-          annotationProject.id,
-          inputState.exportDefinition.taskStatuses
-        )
-        .transact(xa)
-      labelItemExtensionO <- AnnotationProjectDao
-        .getAnnotationProjectStacInfo(annotationProject.id)
-        .transact(xa)
+      taskExtent <-
+        TaskDao
+          .createUnionedGeomExtent(
+            annotationProject.id,
+            inputState.exportDefinition.taskStatuses
+          )
+          .transact(xa)
+      labelItemExtensionO <-
+        AnnotationProjectDao
+          .getAnnotationProjectStacInfo(
+            annotationProject.id,
+            inputState.labelGroupOpt
+          )
+          .transact(xa)
       labelItemsAppend = (taskExtent, labelItemExtensionO, imageryItemO) mapN {
         case (extent, labelItemExtension, imageryItem) =>
           Map(
