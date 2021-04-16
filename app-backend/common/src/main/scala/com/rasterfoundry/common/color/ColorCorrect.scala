@@ -30,7 +30,7 @@ object ColorCorrect extends LazyLogging {
       val bands = tile.bands.zip(rgbHist).map {
         case (rgbTile, histogram) =>
           val breaks = histogram.quantileBreaks(100)
-          val (oldTrueMin, oldTrueMax) = (breaks(0), breaks(255))
+          val (oldTrueMin, oldTrueMax) = (breaks(0), breaks(99))
           if (oldTrueMin < 0 || oldTrueMax > 255) {
             val oldMin =
               breaks(lowerQuantile.getOrElse(defaultLowerBound)).toInt
