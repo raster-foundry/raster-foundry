@@ -174,7 +174,7 @@ class SceneService[HistStore](
             sceneToBacksplashGeotiff(
               scene,
               bands,
-              true,
+              false,
               lowerQuantile,
               upperQuantile
             ).map(a => (tracingContext, List(a)))
