@@ -30,18 +30,23 @@ object ColorCorrect extends LazyLogging {
       val bands = tile.bands.zip(rgbHist).map {
         case (rgbTile, histogram) =>
           val breaks = histogram.quantileBreaks(100)
-          val oldMin =
-            breaks(lowerQuantile.getOrElse(defaultLowerBound)).toInt
-          val oldMax =
-            breaks(upperQuantile.getOrElse(defaultUpperBound)).toInt
-          rgbTile
-            .withNoData(noDataValue)
-            .mapIfSet { cell =>
-              if (cell < oldMin) oldMin
-              else if (cell > oldMax) oldMax
-              else cell
-            }
-            .normalize(oldMin, oldMax, 1, 255)
+          val (oldTrueMin, oldTrueMax) = (breaks(0), breaks(255))
+          if (oldTrueMin < 0 || oldTrueMax > 255) {
+            val oldMin =
+              breaks(lowerQuantile.getOrElse(defaultLowerBound)).toInt
+            val oldMax =
+              breaks(upperQuantile.getOrElse(defaultUpperBound)).toInt
+            rgbTile
+              .withNoData(noDataValue)
+              .mapIfSet { cell =>
+                if (cell < oldMin) oldMin
+                else if (cell > oldMax) oldMax
+                else cell
+              }
+              .normalize(oldMin, oldMax, 1, 255)
+          } else {
+            rgbTile.withNoData(noDataValue)
+          }
       }
       MultibandTile(bands)
     }
