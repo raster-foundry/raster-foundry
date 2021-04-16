@@ -175,7 +175,7 @@ object MVTLayerDao {
       def empty: StrictLayer =
         StrictLayer(
           "default",
-          256,
+          4096,
           2,
           tiling.tmsLevels(z).mapTransform.keyToExtent(x, y),
           Nil,
