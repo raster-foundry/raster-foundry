@@ -206,16 +206,15 @@ object AnnotationProjectDao
       tileLayers <- newAnnotationProject.tileLayers traverse { layer =>
         TileLayerDao.insertTileLayer(layer, annotationProject)
       }
-      labelClassGroups <-
-        newAnnotationProject.labelClassGroups.zipWithIndex traverse {
-          case (classGroup, idx) =>
-            AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
-              classGroup,
-              Some(annotationProject),
-              None,
-              idx
-            )
-        }
+      labelClassGroups <- newAnnotationProject.labelClassGroups.zipWithIndex traverse {
+        case (classGroup, idx) =>
+          AnnotationLabelClassGroupDao.insertAnnotationLabelClassGroup(
+            classGroup,
+            Some(annotationProject),
+            None,
+            idx
+          )
+      }
     } yield annotationProject.withRelated(tileLayers, labelClassGroups)
   }
 
@@ -231,9 +230,8 @@ object AnnotationProjectDao
     for {
       projectO <- getById(id)
       tileLayers <- TileLayerDao.listByProjectId(id)
-      labelClassGroup <-
-        AnnotationLabelClassGroupDao
-          .listByProjectId(id)
+      labelClassGroup <- AnnotationLabelClassGroupDao
+        .listByProjectId(id)
       labelClassGroupWithClass <- labelClassGroup traverse { group =>
         AnnotationLabelClassDao
           .listAnnotationLabelClassByGroupId(group.id)
@@ -380,12 +378,11 @@ object AnnotationProjectDao
 
   def getAllShareCounts(userId: String): ConnectionIO[Map[UUID, Long]] =
     for {
-      projectIds <-
-        (fr"select id from " ++ Fragment.const(
-          tableName
-        ) ++ fr" where owner = $userId")
-          .query[UUID]
-          .to[List]
+      projectIds <- (fr"select id from " ++ Fragment.const(
+        tableName
+      ) ++ fr" where owner = $userId")
+        .query[UUID]
+        .to[List]
       projectShareCounts <- projectIds traverse { id =>
         getShareCount(id, userId).map((id -> _))
       }
@@ -417,14 +414,14 @@ object AnnotationProjectDao
         labelGroups.flatMap { group =>
           groupToLabelClasses
             .get(group.id)
-            .map(classes =>
-              LabelClass(
-                LabelClassName.VectorName(group.name),
-                LabelClassClasses.NamedLabelClasses(
-                  classes.map(_.name).toNel.getOrElse(NonEmptyList.of(""))
-                )
-              )
-            )
+            .map(
+              classes =>
+                LabelClass(
+                  LabelClassName.VectorName(group.name),
+                  LabelClassClasses.NamedLabelClasses(
+                    classes.map(_.name).toNel.getOrElse(NonEmptyList.of(""))
+                  )
+              ))
         },
         s"Labels for annotation project ${annotationProject.name}",
         LabelType.Vector,
@@ -447,9 +444,9 @@ object AnnotationProjectDao
       permissions <- getPermissions(projectId)
       userThins <- permissions traverse {
         case ObjectAccessControlRule(
-              SubjectType.User,
-              Some(subjectId),
-              ActionType.Annotate
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Annotate
             ) =>
           UserDao
             .getUserById(subjectId)
@@ -457,9 +454,9 @@ object AnnotationProjectDao
               _.map(UserThinWithActionType.fromUser(_, ActionType.Annotate))
             )
         case ObjectAccessControlRule(
-              SubjectType.User,
-              Some(subjectId),
-              ActionType.Validate
+            SubjectType.User,
+            Some(subjectId),
+            ActionType.Validate
             ) =>
           UserDao
             .getUserById(subjectId)
@@ -510,40 +507,37 @@ object AnnotationProjectDao
            WHERE id = ${projectId}
         """)
     for {
-      annotationProjectCopy <-
-        insertQuery.update
-          .withUniqueGeneratedKeys[AnnotationProject](
-            fieldNames: _*
-          )
+      annotationProjectCopy <- insertQuery.update
+        .withUniqueGeneratedKeys[AnnotationProject](
+          fieldNames: _*
+        )
       classGroups <- AnnotationLabelClassGroupDao.listByProjectId(projectId)
       _ <- classGroups traverse { classGroup =>
         for {
-          labelClasses <-
-            AnnotationLabelClassDao
-              .listAnnotationLabelClassByGroupId(classGroup.id)
-          newClassGroup <-
-            AnnotationLabelClassGroupDao
-              .insertAnnotationLabelClassGroup(
-                AnnotationLabelClassGroup.Create(
-                  classGroup.name,
-                  Some(classGroup.index),
-                  labelClasses.map { labelClass =>
-                    AnnotationLabelClass.Create(
-                      labelClass.name,
-                      labelClass.colorHexCode,
-                      labelClass.default,
-                      labelClass.determinant,
-                      labelClass.index,
-                      labelClass.geometryType,
-                      labelClass.description
-                    )
-                  }
-                ),
-                Some(annotationProjectCopy),
-                None,
-                0,
-                labelClasses
-              )
+          labelClasses <- AnnotationLabelClassDao
+            .listAnnotationLabelClassByGroupId(classGroup.id)
+          newClassGroup <- AnnotationLabelClassGroupDao
+            .insertAnnotationLabelClassGroup(
+              AnnotationLabelClassGroup.Create(
+                classGroup.name,
+                Some(classGroup.index),
+                labelClasses.map { labelClass =>
+                  AnnotationLabelClass.Create(
+                    labelClass.name,
+                    labelClass.colorHexCode,
+                    labelClass.default,
+                    labelClass.determinant,
+                    labelClass.index,
+                    labelClass.geometryType,
+                    labelClass.description
+                  )
+                }
+              ),
+              Some(annotationProjectCopy),
+              None,
+              0,
+              labelClasses
+            )
         } yield newClassGroup
       }
       _ <- TaskDao.copyAnnotationProjectTasks(
@@ -574,20 +568,20 @@ object AnnotationProjectDao
       )
       _ <- projects traverse { project =>
         val rules =
-          userIds.foldLeft(List[ObjectAccessControlRule]())((acc, userId) =>
-            acc ++ List(
-              ObjectAccessControlRule(
-                SubjectType.User,
-                Some(userId),
-                ActionType.View
-              ),
-              ObjectAccessControlRule(
-                SubjectType.User,
-                Some(userId),
-                ActionType.Annotate
-              )
-            )
-          )
+          userIds.foldLeft(List[ObjectAccessControlRule]())(
+            (acc, userId) =>
+              acc ++ List(
+                ObjectAccessControlRule(
+                  SubjectType.User,
+                  Some(userId),
+                  ActionType.View
+                ),
+                ObjectAccessControlRule(
+                  SubjectType.User,
+                  Some(userId),
+                  ActionType.Annotate
+                )
+            ))
         AnnotationProjectDao.addPermissionsMany(
           project.id,
           rules
