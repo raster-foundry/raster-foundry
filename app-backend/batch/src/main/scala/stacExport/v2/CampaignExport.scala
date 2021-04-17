@@ -2,6 +2,7 @@ package com.rasterfoundry.batch.stacExport.v2
 
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.{
+  AnnotationLabelClassGroupDao,
   AnnotationLabelDao,
   AnnotationProjectDao,
   CampaignDao,
@@ -10,6 +11,7 @@ import com.rasterfoundry.database.{
 }
 import com.rasterfoundry.datamodel.TileLayerType.{MVT, TMS}
 import com.rasterfoundry.datamodel.{
+  AnnotationLabelClassGroup,
   AnnotationProject,
   StacExport,
   TileLayer,
@@ -81,6 +83,7 @@ object optics {
 
 case class ExportState(
     exportDefinition: StacExport,
+    labelGroupOpt: Option[List[AnnotationLabelClassGroup]],
     rootCatalog: StacCatalog,
     remainingAnnotationProjects: List[AnnotationProject],
     annotationProjectImageryItems: Map[
@@ -436,11 +439,14 @@ class CampaignStacExport(
 
   def run(): IO[Option[ExportData]] =
     for {
-      campaign <- CampaignDao.getCampaignById(campaignId).transact(xa)
-      childProjects <- campaign traverse { campaign =>
+      campaignOpt <- CampaignDao.getCampaignById(campaignId).transact(xa)
+      labelGroupOpt <- campaignOpt traverse { campaign =>
+        AnnotationLabelClassGroupDao.listByCampaignId(campaign.id).transact(xa)
+      }
+      childProjects <- campaignOpt traverse { campaign =>
         AnnotationProjectDao.listByCampaign(campaign.id).transact(xa)
       }
-      initialStateO = (campaign, childProjects) mapN {
+      initialStateO = (campaignOpt, childProjects) mapN {
         case (campaign, projects) =>
           val rootCatalog = StacCatalog(
             stacVersion,
@@ -452,6 +458,7 @@ class CampaignStacExport(
           )
           ExportState(
             exportDefinition,
+            labelGroupOpt,
             rootCatalog,
             projects,
             Map.empty,
@@ -526,7 +533,6 @@ class CampaignStacExport(
         annotationProject,
         inputState.exportDefinition.taskStatuses
       )
-
       imageryItemsAppend = imageryItemO map { (item: newtypes.SceneItem) =>
         Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
@@ -534,7 +540,8 @@ class CampaignStacExport(
       featureGeoJSON <- AnnotationLabelDao
         .getAnnotationJsonByTaskStatus(
           annotationProject.id,
-          inputState.exportDefinition.taskStatuses
+          inputState.exportDefinition.taskStatuses,
+          inputState.labelGroupOpt
         )
         .transact(xa)
       labelAssetAppend = featureGeoJSON map { geojson =>
@@ -551,7 +558,10 @@ class CampaignStacExport(
         )
         .transact(xa)
       labelItemExtensionO <- AnnotationProjectDao
-        .getAnnotationProjectStacInfo(annotationProject.id)
+        .getAnnotationProjectStacInfo(
+          annotationProject.id,
+          inputState.labelGroupOpt
+        )
         .transact(xa)
       labelItemsAppend = (taskExtent, labelItemExtensionO, imageryItemO) mapN {
         case (extent, labelItemExtension, imageryItem) =>
