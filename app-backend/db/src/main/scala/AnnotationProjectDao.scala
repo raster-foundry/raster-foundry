@@ -389,14 +389,19 @@ object AnnotationProjectDao
     } yield projectShareCounts.toMap
 
   def getAnnotationProjectStacInfo(
-      annotationProjectId: UUID
+      annotationProjectId: UUID,
+      labelGroupsOpt: Option[List[AnnotationLabelClassGroup]] = None
   ): ConnectionIO[Option[LabelItemExtension]] =
     (for {
       annotationProject <- OptionT {
         getProjectById(annotationProjectId)
       }
       labelGroups <- OptionT.liftF(
-        AnnotationLabelClassGroupDao.listByProjectId(annotationProjectId)
+        labelGroupsOpt.fold(
+          AnnotationLabelClassGroupDao.listByProjectId(annotationProjectId)
+        )({ groups =>
+          groups.pure[ConnectionIO]
+        })
       )
       groupedLabelClasses <- OptionT.liftF(labelGroups traverse { group =>
         AnnotationLabelClassDao

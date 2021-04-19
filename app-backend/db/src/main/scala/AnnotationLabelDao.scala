@@ -150,7 +150,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
 
   def getAnnotationJsonByTaskStatus(
       annotationProjectId: UUID,
-      taskStatuses: List[String]
+      taskStatuses: List[String],
+      labelGroupsOpt: Option[List[AnnotationLabelClassGroup]] = None
   ): ConnectionIO[Option[Json]] = {
     val taskJoinF = fr"JOIN tasks on " ++ Fragment.const(
       tableName
@@ -163,7 +164,11 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     }
     val fcIo = for {
       labelGroups <- OptionT.liftF(
-        AnnotationLabelClassGroupDao.listByProjectId(annotationProjectId)
+        labelGroupsOpt.fold(
+          AnnotationLabelClassGroupDao.listByProjectId(annotationProjectId)
+        )({ groups =>
+          groups.pure[ConnectionIO]
+        })
       )
       groupedLabelClasses <- OptionT.liftF(labelGroups traverse { group =>
         AnnotationLabelClassDao
