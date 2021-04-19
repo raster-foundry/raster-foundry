@@ -22,7 +22,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     else
         echo "Building Scala assembly JARs"
         pushd "app-backend"
-            sbt \
+            ./sbt \
                 ";api/assembly;backsplash-server/assembly;batch/assembly;backsplash-export/assembly"
         popd
 
