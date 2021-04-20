@@ -771,6 +771,7 @@ lazy val notification = Project("notification", file("notification"))
       Dependencies.sttpCore,
       Dependencies.sttpAsyncBackend,
       Dependencies.sttpCirce,
+      Dependencies.sttpJson,
       Dependencies.sttpModel
     )
   })

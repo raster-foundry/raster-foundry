@@ -36,7 +36,7 @@ trait Config {
 
   val intercomAppId = intercomConfig.getString("appId")
   val intercomToken = IntercomToken(intercomConfig.getString("token"))
-  val intercomAdminId = UserId(intercomConfig.getString("adminId"))
+  val intercomAdminId = AdminId(intercomConfig.getString("adminId"))
   val groundworkUrlBase = intercomConfig.getString("groundworkUrlBase")
 
   val rollbarClientToken = rollbarConfig.getString("clientToken")
