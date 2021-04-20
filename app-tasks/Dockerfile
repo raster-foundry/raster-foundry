@@ -3,6 +3,7 @@ FROM quay.io/azavea/openjdk-gdal:3.1-jdk8-slim
 # if so, make sure that you verify that tifs that have trouble
 # becoming COGs due to the tiling scheme can still be processed
 # successfully.
+# https://github.com/raster-foundry/raster-foundry/pull/5573
 
 COPY rf/requirements.txt /tmp/
 RUN set -ex \
