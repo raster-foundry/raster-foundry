@@ -23,7 +23,7 @@ import com.rasterfoundry.notification.intercom.{
 }
 
 import cats.data.OptionT
-import cats.effect.{Async, IO, LiftIO}
+import cats.effect.{Async, ContextShift, IO, LiftIO}
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
@@ -37,7 +37,8 @@ class CreateTaskGrid(
     taskSizeMeters: Double,
     notifier: IntercomNotifier[IO],
     xa: Transactor[IO]
-) extends LazyLogging {
+)(implicit cs: ContextShift[IO])
+    extends LazyLogging {
 
   private def info(s: String): ConnectionIO[Unit] =
     LiftIO[ConnectionIO].liftIO(

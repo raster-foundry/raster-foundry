@@ -2,7 +2,6 @@ package com.rasterfoundry.api.utils
 
 import com.rasterfoundry.api.user.{Auth0Service, PasswordResetTicket}
 import com.rasterfoundry.database.notification.Notify
-import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.UserIntercomConversationDao
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.notification.email.Model.{HtmlBody, PlainBody}
@@ -11,9 +10,11 @@ import com.rasterfoundry.notification.intercom.{
   IntercomConversation,
   LiveIntercomNotifier
 }
-import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
+import com.rasterfoundry.notification.intercom.Model.Message
 
 import cats.effect.{ContextShift, IO}
+import doobie.Transactor
+import doobie.implicits._
 import sttp.client.SttpBackend
 import sttp.client.asynchttpclient.WebSocketHandler
 
@@ -26,14 +27,12 @@ class IntercomNotifications(
       IO,
       Nothing,
       WebSocketHandler
-    ]
+    ],
+    xa: Transactor[IO]
 )(implicit contextShift: ContextShift[IO])
     extends Config {
 
   private val intercomNotifier = new LiveIntercomNotifier[IO](backend)
-
-  private val xa =
-    RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
 
   private val groundworkConfig =
     GroundworkConfig(intercomToken, intercomAdminId)

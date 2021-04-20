@@ -5,14 +5,12 @@ import com.rasterfoundry.datamodel.UserIntercomConversation
 import com.rasterfoundry.notification.intercom.GroundworkConfig
 
 import cats.effect.{ContextShift, IO}
+import doobie.implicits._
 import doobie.Transactor
 
 class DbIO(
     xa: Transactor[IO]
-)(implicit
-    val
-    cs: ContextShift[IO]
-) {
+)(implicit cs: ContextShift[IO]) {
   val groundworkConfig =
     GroundworkConfig(Config.intercomToken, Config.intercomAdminId)
 
