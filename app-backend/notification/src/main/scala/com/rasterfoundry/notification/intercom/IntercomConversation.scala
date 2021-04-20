@@ -8,7 +8,7 @@ import cats.syntax.all._
 
 case class GroundworkConfig(
     intercomToken: IntercomToken,
-    intercomAdminId: UserId
+    intercomAdminId: AdminId
 )
 
 object IntercomConversation {

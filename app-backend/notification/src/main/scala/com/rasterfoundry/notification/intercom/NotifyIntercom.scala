@@ -19,7 +19,7 @@ trait IntercomNotifier[F[_]] {
 
   def replyConversation(
       intercomToken: IntercomToken,
-      adminId: UserId,
+      adminId: AdminId,
       conversationId: String,
       message: Message
   ): F[Unit]
@@ -63,7 +63,7 @@ class LiveIntercomNotifier[F[_]: Sync](
 
   def replyConversation(
       intercomToken: IntercomToken,
-      adminId: UserId,
+      adminId: AdminId,
       conversationId: String,
       message: Message
   ): F[Unit] = {
