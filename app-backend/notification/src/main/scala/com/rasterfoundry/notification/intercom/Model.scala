@@ -38,8 +38,7 @@ object Model {
   object AdminObject {
     implicit val encAdminObject: Encoder[AdminObject] =
       Encoder.forProduct2("type", "id")(adminObject =>
-        ("admin", adminObject.adminId)
-      )
+        ("admin", adminObject.adminId))
   }
 
   case class UserObject(externalId: ExternalId)
@@ -56,20 +55,19 @@ object Model {
       Encoder.forProduct2(
         "from",
         "body"
-      )(conversationCreate =>
-        (
-          UserObject(conversationCreate.userId),
-          conversationCreate.message.underlying
-        )
-      )
+      )(
+        conversationCreate =>
+          (
+            UserObject(conversationCreate.userId),
+            conversationCreate.message.underlying
+        ))
   }
 
   case class Conversation(conversationId: ConversationId)
   object Conversation {
     implicit val decConversation: Decoder[Conversation] =
       Decoder.forProduct1("conversation_id")((conversationId: String) =>
-        Conversation(ConversationId(conversationId))
-      )
+        Conversation(ConversationId(conversationId)))
   }
 
   case class ConversationReply(adminId: AdminId, message: Message)
@@ -80,13 +78,13 @@ object Model {
         "type",
         "admin_id",
         "body"
-      )(conversationReply =>
-        (
-          "comment",
-          "admin",
-          conversationReply.adminId.underlying,
-          conversationReply.message.underlying
-        )
-      )
+      )(
+        conversationReply =>
+          (
+            "comment",
+            "admin",
+            conversationReply.adminId.underlying,
+            conversationReply.message.underlying
+        ))
   }
 }
