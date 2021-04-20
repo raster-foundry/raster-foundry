@@ -1,16 +1,16 @@
 package com.rasterfoundry.api.utils
 
 import com.rasterfoundry.api.user.{Auth0Service, PasswordResetTicket}
-import com.rasterfoundry.database.notification.Notify
 import com.rasterfoundry.database.UserIntercomConversationDao
+import com.rasterfoundry.database.notification.Notify
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.notification.email.Model.{HtmlBody, PlainBody}
+import com.rasterfoundry.notification.intercom.Model.Message
 import com.rasterfoundry.notification.intercom.{
   GroundworkConfig,
   IntercomConversation,
   LiveIntercomNotifier
 }
-import com.rasterfoundry.notification.intercom.Model.Message
 
 import cats.effect.{ContextShift, IO}
 import doobie.Transactor
@@ -149,16 +149,15 @@ class IntercomNotifications(
         value,
         ticket
       )
-      _ <-
-        Notify
-          .sendEmail(
-            sharingUserPlatform.publicSettings,
-            sharingUserPlatform.privateSettings,
-            newUserEmail,
-            subject,
-            messageRich.underlying,
-            messagePlain.underlying
-          )
+      _ <- Notify
+        .sendEmail(
+          sharingUserPlatform.publicSettings,
+          sharingUserPlatform.privateSettings,
+          newUserEmail,
+          subject,
+          messageRich.underlying,
+          messagePlain.underlying
+        )
     } yield ()).attempt.void.unsafeToFuture
   }
 

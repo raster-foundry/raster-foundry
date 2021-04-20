@@ -220,13 +220,12 @@ final case class WriteStacCatalog(
       exportPath: String
   ): IO[Unit] =
     (for {
-      layerInfoMap <-
-        DatabaseIO
-          .sceneTaskAnnotationforLayers(
-            annotationProjectId,
-            exportDefinition.taskStatuses
-          )
-          .transact(xa)
+      layerInfoMap <- DatabaseIO
+        .sceneTaskAnnotationforLayers(
+          annotationProjectId,
+          exportDefinition.taskStatuses
+        )
+        .transact(xa)
       _ = logger.info(s"Writing export under prefix: $exportPath")
       catalog = Utils.getAnnotationProjectStacCatalog(
         exportDefinition,
@@ -248,17 +247,16 @@ final case class WriteStacCatalog(
           exportData
         )
       }
-      _ <-
-        AnnotationProjectDao
-          .unsafeGetById(annotationProjectId)
-          .transact(xa) flatMap { project =>
-          val message = Message(s"""
+      _ <- AnnotationProjectDao
+        .unsafeGetById(annotationProjectId)
+        .transact(xa) flatMap { project =>
+        val message = Message(s"""
               | Your STAC export for project ${project.name} has completed!
               | You can see exports for your project at
               | ${GroundworkConfig.groundworkUrlBase}/app/projects/${annotationProjectId}/exports 
               """.trim.stripMargin)
-          notify(ExternalId(exportDefinition.owner), message)
-        }
+        notify(ExternalId(exportDefinition.owner), message)
+      }
     } yield ())
 
   def run(): IO[Unit] = {
@@ -273,13 +271,12 @@ final case class WriteStacCatalog(
       _ = tempDir.deleteOnExit()
       currentPath = s"s3://$dataBucket/stac-exports"
       exportPath = s"$currentPath/${exportDefinition.id}"
-      _ <-
-        StacExportDao
-          .update(
-            exportDefinition.copy(exportStatus = ExportStatus.Exporting),
-            exportDefinition.id
-          )
-          .transact(xa)
+      _ <- StacExportDao
+        .update(
+          exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+          exportDefinition.id
+        )
+        .transact(xa)
 
       _ <- exportDefinition.annotationProjectId traverse { pid =>
         runAnnotationProject(exportDefinition, pid, tempDir, exportPath)

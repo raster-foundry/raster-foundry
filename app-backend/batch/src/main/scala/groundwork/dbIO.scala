@@ -5,8 +5,8 @@ import com.rasterfoundry.datamodel.UserIntercomConversation
 import com.rasterfoundry.notification.intercom.GroundworkConfig
 
 import cats.effect.{ContextShift, IO}
-import doobie.implicits._
 import doobie.Transactor
+import doobie.implicits._
 
 class DbIO(
     xa: Transactor[IO]

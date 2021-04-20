@@ -35,7 +35,9 @@ object IntercomConversation {
             groundworkConfig.intercomToken,
             ExternalId(userId),
             message
-          ) map { convo => Some(convo.conversationId.underlying) }
+          ) map { convo =>
+            Some(convo.conversationId.underlying)
+          }
       }
       _ <- conversationIdOpt traverse { conversationId =>
         insertConversation(userId, conversationId)
