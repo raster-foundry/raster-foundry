@@ -17,6 +17,7 @@ import com.rasterfoundry.datamodel.{
 }
 import com.rasterfoundry.notification.intercom.Model._
 import com.rasterfoundry.notification.intercom.{
+  IntercomConversation,
   IntercomNotifier,
   LiveIntercomNotifier
 }
@@ -42,6 +43,8 @@ class CreateTaskGrid(
     LiftIO[ConnectionIO].liftIO(
       IO { logger.info(s) }
     )
+
+  val dbIO = new DbIO(xa);
 
   def run(): IO[Unit] =
     (for {
@@ -95,22 +98,28 @@ class CreateTaskGrid(
       _ <- OptionT.liftF { info("Updated annotation project") }
     } yield annotationProject).value.transact(xa) flatMap {
       case Some(annotationProject) =>
-        notifier.notifyUser(
-          Config.intercomToken,
-          Config.intercomAdminId,
-          ExternalId(annotationProject.createdBy),
-          Message(annotationProject.campaignId match {
-            case Some(campaignId) =>
-              s"""Your image "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/campaign/${campaignId}/overview?s=${annotationProject.id}"""
-            case _ =>
-              s"""Your project "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/projects/${annotationProject.id}/overview"""
-          })
+        val message = Message(annotationProject.campaignId match {
+          case Some(campaignId) =>
+            s"""Your image "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/campaign/${campaignId}/overview?s=${annotationProject.id}"""
+          case _ =>
+            s"""Your project "${annotationProject.name}" is ready! ${Config.groundworkUrlBase}/app/projects/${annotationProject.id}/overview"""
+        })
+
+        IntercomConversation.notifyIO(
+          annotationProject.createdBy,
+          message,
+          dbIO.groundworkConfig,
+          notifier,
+          dbIO.getConversation,
+          dbIO.insertConversation
         )
+
       case None =>
         (for {
-          projectO <- AnnotationProjectDao.query
-            .filter(annotationProjectId)
-            .selectOption
+          projectO <-
+            AnnotationProjectDao.query
+              .filter(annotationProjectId)
+              .selectOption
           _ <- projectO traverse { project =>
             AnnotationProjectDao.update(
               project.copy(status = AnnotationProjectStatus.TaskGridFailure),
@@ -124,18 +133,21 @@ class CreateTaskGrid(
             case (user, project) =>
               val entity =
                 if (project.campaignId.isEmpty) "project" else "image"
-              LiftIO[ConnectionIO].liftIO {
-                notifier.notifyUser(
-                  Config.intercomToken,
-                  Config.intercomAdminId,
-                  ExternalId(user.id),
-                  Message(
-                    s"""
+              val message = Message(
+                s"""
                   | Your ${entity} "${project.name}" failed to process. If you'd like help
                   | troubleshooting, please reach out to us here or at
                   | groundwork@azavea.com."
                   """.trim.stripMargin
-                  )
+              )
+              LiftIO[ConnectionIO].liftIO {
+                IntercomConversation.notifyIO(
+                  user.id,
+                  message,
+                  dbIO.groundworkConfig,
+                  notifier,
+                  dbIO.getConversation,
+                  dbIO.insertConversation
                 )
               }
           }

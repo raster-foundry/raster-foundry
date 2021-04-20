@@ -1,7 +1,7 @@
 package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.batch.groundwork.{Config => GroundworkConfig}
+import com.rasterfoundry.batch.groundwork.{Config => GroundworkConfig, DbIO}
 import com.rasterfoundry.batch.stacExport.v2.CampaignStacExport
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
@@ -10,6 +10,7 @@ import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
 import com.rasterfoundry.notification.intercom.{
+  IntercomConversation,
   IntercomNotifier,
   LiveIntercomNotifier
 }
@@ -33,12 +34,16 @@ final case class WriteStacCatalog(
     extends Config
     with RollbarNotifier {
 
+  private val dbIO = new DbIO(xa);
+
   private def notify(userId: ExternalId, message: Message): IO[Unit] =
-    notifier.notifyUser(
-      GroundworkConfig.intercomToken,
-      GroundworkConfig.intercomAdminId,
-      userId,
-      message
+    IntercomConversation.notifyIO(
+      userId.underlying,
+      message,
+      dbIO.groundworkConfig,
+      notifier,
+      dbIO.getConversation,
+      dbIO.insertConversation
     )
 
   private def processLayerCollection(
@@ -215,12 +220,13 @@ final case class WriteStacCatalog(
       exportPath: String
   ): IO[Unit] =
     (for {
-      layerInfoMap <- DatabaseIO
-        .sceneTaskAnnotationforLayers(
-          annotationProjectId,
-          exportDefinition.taskStatuses
-        )
-        .transact(xa)
+      layerInfoMap <-
+        DatabaseIO
+          .sceneTaskAnnotationforLayers(
+            annotationProjectId,
+            exportDefinition.taskStatuses
+          )
+          .transact(xa)
       _ = logger.info(s"Writing export under prefix: $exportPath")
       catalog = Utils.getAnnotationProjectStacCatalog(
         exportDefinition,
@@ -242,16 +248,17 @@ final case class WriteStacCatalog(
           exportData
         )
       }
-      _ <- AnnotationProjectDao
-        .unsafeGetById(annotationProjectId)
-        .transact(xa) flatMap { project =>
-        val message = Message(s"""
+      _ <-
+        AnnotationProjectDao
+          .unsafeGetById(annotationProjectId)
+          .transact(xa) flatMap { project =>
+          val message = Message(s"""
               | Your STAC export for project ${project.name} has completed!
               | You can see exports for your project at
               | ${GroundworkConfig.groundworkUrlBase}/app/projects/${annotationProjectId}/exports 
               """.trim.stripMargin)
-        notify(ExternalId(exportDefinition.owner), message)
-      }
+          notify(ExternalId(exportDefinition.owner), message)
+        }
     } yield ())
 
   def run(): IO[Unit] = {
@@ -266,12 +273,13 @@ final case class WriteStacCatalog(
       _ = tempDir.deleteOnExit()
       currentPath = s"s3://$dataBucket/stac-exports"
       exportPath = s"$currentPath/${exportDefinition.id}"
-      _ <- StacExportDao
-        .update(
-          exportDefinition.copy(exportStatus = ExportStatus.Exporting),
-          exportDefinition.id
-        )
-        .transact(xa)
+      _ <-
+        StacExportDao
+          .update(
+            exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+            exportDefinition.id
+          )
+          .transact(xa)
 
       _ <- exportDefinition.annotationProjectId traverse { pid =>
         runAnnotationProject(exportDefinition, pid, tempDir, exportPath)
