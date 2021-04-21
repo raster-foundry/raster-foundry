@@ -56,7 +56,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   val annotationProjectJoinTableF =
     Fragment.const(
-      """tasks left join task_actions on tasks.id = task_actions.task_id join annotation_projects
+      """tasks left join task_actions on tasks.id = task_actions.task_id
          join annotation_projects on tasks.annotation_project_id = annotation_projects.id
         """
     )
@@ -72,6 +72,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   val listF: Fragment =
     fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ joinTableF
+
+  val annotationProjectListF: Fragment =
+    fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ annotationProjectJoinTableF
 
   val insertF: Fragment =
     fr"INSERT INTO " ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")"
@@ -203,13 +206,15 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   ): Dao.QueryBuilder[Task] =
     Dao
       .QueryBuilder[Task](
-        listF,
+        annotationProjectListF,
         annotationProjectJoinTableF,
         Nil,
-        Some(fr"SELECT count(distinct id) FROM" ++ annotationProjectJoinTableF)
+        Some(
+          fr"SELECT count(distinct tasks.id) FROM" ++ annotationProjectJoinTableF
+        )
       )
       .filter(queryParams)
-      .filter(fr"campaign_id = $campaignId")
+      .filter(fr"annotation_projects.campaign_id = $campaignId")
 
   def listCampaignTasks(
       queryParams: TaskQueryParameters,
