@@ -53,23 +53,29 @@ object Filters {
       timestampParams: TimestampQueryParameters
   ): List[Option[Fragment]] = {
     val f1 = timestampParams.minCreateDatetime.map(minCreate =>
-      fr"created_at > $minCreate")
+      fr"created_at > $minCreate"
+    )
     val f2 = timestampParams.maxCreateDatetime.map(maxCreate =>
-      fr"created_at < $maxCreate")
+      fr"created_at < $maxCreate"
+    )
     val f3 = timestampParams.minModifiedDatetime.map(minMod =>
-      fr"modified_at > $minMod")
+      fr"modified_at > $minMod"
+    )
     val f4 = timestampParams.maxModifiedDatetime.map(maxMod =>
-      fr"modified_at < $maxMod")
+      fr"modified_at < $maxMod"
+    )
     List(f1, f2, f3, f4)
   }
 
   def imageQP(imageParams: ImageQueryParameters): List[Option[Fragment]] = {
     val f1 =
       imageParams.minRawDataBytes.map(minBytes =>
-        fr"raw_data_bytes > $minBytes")
+        fr"raw_data_bytes > $minBytes"
+      )
     val f2 =
       imageParams.maxRawDataBytes.map(maxBytes =>
-        fr"raw_data_bytes < $maxBytes")
+        fr"raw_data_bytes < $maxBytes"
+      )
     val f3 =
       imageParams.minResolution.map(minRes => fr"resolution_meters > $minRes")
     val f4 =
@@ -170,14 +176,14 @@ object Filters {
     )
   }
 
-  def taskQP(taskQP: TaskQueryParameters)(
-      implicit
+  def taskQP(taskQP: TaskQueryParameters)(implicit
       putTaskStatus: Put[TaskStatus],
       putTaskType: Put[TaskType],
-      putGeom: Put[Projected[Polygon]]): List[Option[Fragment]] =
+      putGeom: Put[Projected[Polygon]]
+  ): List[Option[Fragment]] =
     List(
       taskQP.status.toList.toNel map { qp =>
-        Fragments.in(fr"status", qp)
+        Fragments.in(fr"tasks.status", qp)
       },
       taskQP.taskType map { qp =>
         fr"task_type = $qp "
@@ -192,7 +198,8 @@ object Filters {
       taskQP.bboxPolygon match {
         case Some(bboxPolygons) =>
           val fragments = bboxPolygons.map(bbox =>
-            fr"(_ST_Intersects(geometry, ${bbox}) AND geometry && ${bbox})")
+            fr"(_ST_Intersects(geometry, ${bbox}) AND geometry && ${bbox})"
+          )
           Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
         case _ => None
       },

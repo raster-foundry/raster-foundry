@@ -56,9 +56,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   val annotationProjectJoinTableF =
     Fragment.const(
-      """tasks left join task_actions on tasks.id = task_actions.task_id
-         join annotation_projects on tasks.annotation_project_id = annotation_projects.id
-        """
+      "tasks join annotation_projects on tasks.annotation_project_id = annotation_projects.id"
     )
 
   val joinTaskSessionF =
@@ -221,21 +219,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       campaignId: UUID,
       pageRequest: PageRequest
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] = {
-    val actionFiltered = queryParams.actionUser.nonEmpty ||
-      queryParams.actionType.nonEmpty ||
-      queryParams.actionStartTime.nonEmpty ||
-      queryParams.actionEndTime.nonEmpty ||
-      queryParams.actionMinCount.nonEmpty ||
-      queryParams.actionMaxCount.nonEmpty
     for {
-      paginatedResponse <- actionFiltered match {
-        case true =>
-          taskForCampaignQB(queryParams, campaignId)
-            .page(pageRequest)
-        case _ =>
-          taskForCampaignQB(queryParams, campaignId)
-            .page(pageRequest)
-      }
+      paginatedResponse <- taskForCampaignQB(queryParams, campaignId)
+        .page(pageRequest)
       withActions <- paginatedResponse.results.toList traverse { task =>
         unsafeGetActionsForTask(task)
       }
