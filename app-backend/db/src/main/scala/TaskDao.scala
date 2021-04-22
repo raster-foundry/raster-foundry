@@ -56,7 +56,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
   val annotationProjectJoinTableF =
     Fragment.const(
-      "tasks join annotation_projects on tasks.annotation_project_id = annotation_projects.id"
+      """tasks left join task_actions on tasks.id = task_actions.task_id
+      join annotation_projects on tasks.annotation_project_id = annotation_projects.id"""
     )
 
   val joinTaskSessionF =
@@ -72,7 +73,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ joinTableF
 
   val annotationProjectListF: Fragment =
-    fr"SELECT" ++ selectFieldsF ++ fr"FROM" ++ annotationProjectJoinTableF
+    fr"SELECT distinct on (tasks.id) " ++ selectFieldsF ++ fr"FROM" ++ annotationProjectJoinTableF
 
   val insertF: Fragment =
     fr"INSERT INTO " ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")"
