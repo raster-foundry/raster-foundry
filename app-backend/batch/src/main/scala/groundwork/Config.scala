@@ -9,6 +9,6 @@ object Config {
   val config = ConfigFactory.load()
   private val intercomConfig = config.getConfig("intercom")
   val intercomToken = IntercomToken(intercomConfig.getString("token"))
-  val intercomAdminId = UserId(intercomConfig.getString("adminId"))
+  val intercomAdminId = AdminId(intercomConfig.getString("adminId"))
   val groundworkUrlBase = intercomConfig.getString("groundworkUrlBase")
 }

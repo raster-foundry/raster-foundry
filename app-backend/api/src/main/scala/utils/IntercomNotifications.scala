@@ -1,13 +1,20 @@
 package com.rasterfoundry.api.utils
 
 import com.rasterfoundry.api.user.{Auth0Service, PasswordResetTicket}
+import com.rasterfoundry.database.UserIntercomConversationDao
 import com.rasterfoundry.database.notification.Notify
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.notification.email.Model.{HtmlBody, PlainBody}
-import com.rasterfoundry.notification.intercom.LiveIntercomNotifier
-import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
+import com.rasterfoundry.notification.intercom.Model.Message
+import com.rasterfoundry.notification.intercom.{
+  GroundworkConfig,
+  IntercomConversation,
+  LiveIntercomNotifier
+}
 
 import cats.effect.{ContextShift, IO}
+import doobie.Transactor
+import doobie.implicits._
 import sttp.client.SttpBackend
 import sttp.client.asynchttpclient.WebSocketHandler
 
@@ -20,12 +27,28 @@ class IntercomNotifications(
       IO,
       Nothing,
       WebSocketHandler
-    ]
-)(implicit
-  contextShift: ContextShift[IO])
+    ],
+    xa: Transactor[IO]
+)(implicit contextShift: ContextShift[IO])
     extends Config {
 
   private val intercomNotifier = new LiveIntercomNotifier[IO](backend)
+
+  private val groundworkConfig =
+    GroundworkConfig(intercomToken, intercomAdminId)
+
+  private def getConversation(
+      id: String
+  ): IO[Option[UserIntercomConversation]] =
+    UserIntercomConversationDao.getByUserId(id).transact(xa)
+
+  private def insertConversation(
+      userId: String,
+      conversationId: String
+  ): IO[UserIntercomConversation] =
+    UserIntercomConversationDao
+      .insertUserConversation(userId, conversationId)
+      .transact(xa)
 
   def getDefaultShare(
       user: User,
@@ -83,15 +106,18 @@ class IntercomNotifications(
     } else {
       valueType
     }
-    intercomNotifier
-      .notifyUser(
-        intercomToken,
-        intercomAdminId,
-        ExternalId(sharedUser.id),
-        Message(s"""
+    val message = Message(s"""
         | ${getSharer(sharingUser)} has shared a ${singularized} with you!
         | ${groundworkUrlBase}/app/${valueType}/${value.id}/overview
         | """.trim.stripMargin)
+    IntercomConversation
+      .notifyIO(
+        sharedUser.id,
+        message,
+        groundworkConfig,
+        intercomNotifier,
+        getConversation,
+        insertConversation
       )
       .attempt
   }

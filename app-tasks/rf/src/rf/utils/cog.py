@@ -44,7 +44,7 @@ def georeference_file(file_path):
     return translated_tiff
 
 
-def convert_to_cog(tif_path, local_dir):
+def convert_to_cog(tif_path, local_dir, include_tiling_scheme: bool = True):
     is_valid_cog, _, _ = cog_validate(tif_path, strict=True)
     if is_valid_cog is True:
         logger.info("Skipping conversion of %s to a cog", tif_path)
@@ -57,8 +57,11 @@ def convert_to_cog(tif_path, local_dir):
     cog_command = [
         "gdal_translate",
         tif_path,
-        "-co",
-        "TILING_SCHEME=GoogleMapsCompatible",
+        *(
+            ["-co", "TILING_SCHEME=GoogleMapsCompatible"]
+            if include_tiling_scheme
+            else []
+        ),
         "-co",
         "COMPRESS=DEFLATE",
         "-co",
@@ -68,5 +71,17 @@ def convert_to_cog(tif_path, local_dir):
         "COG",
         out_path,
     ]
-    subprocess.check_call(cog_command)
+    try:
+        subprocess.check_output(cog_command, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        # This is fragile -- if the error message changes, we'll fail to detect the
+        # recoverable error. However, that can't happen unless we change the container, so we're
+        # Probably Fine™ for a while.
+        if b"ERROR 1: Could not find an appropriate zoom level" in e.output:
+            logger.warn(
+                "Couldn't process the tif with default command. Retrying without TILING_SCHEME=GoogleMapsCompatible"
+            )
+            return convert_to_cog(tif_path, local_dir, False)
+        else:
+            raise
     return out_path

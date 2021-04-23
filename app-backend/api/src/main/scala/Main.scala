@@ -32,15 +32,16 @@ object Main extends App with Config with Router {
       )
     )
 
+  val xa = RFTransactor.buildTransactor()
+
   val notifier = for {
     notifierIO <- Async.memoize(AsyncHttpClientCatsBackend[IO]() map {
       backend =>
-        new IntercomNotifications(backend)
+        new IntercomNotifications(backend, xa)
     })
     notifier <- notifierIO
   } yield notifier
 
-  val xa = RFTransactor.buildTransactor()
   implicit val ec = ExecutionContext.Implicits.global
 
   val commonLabelClassGroupRoutes = new CommonLabelClassGroupRoutes(xa, ec)

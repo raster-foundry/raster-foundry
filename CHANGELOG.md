@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added support for Intercom conversations [#5571](https://github.com/raster-foundry/raster-foundry/pull/5571)
+
 ### Fixed
+- Retried cogification for tifs that fail to become cogs with no appropriate zoom level error [#5573](https://github.com/raster-foundry/raster-foundry/pull/5573)
 - Fixed campaign task list endpoint [#5572](https://github.com/raster-foundry/raster-foundry/pull/5572)
 
 ## [1.62.1] - 2021-04-19
