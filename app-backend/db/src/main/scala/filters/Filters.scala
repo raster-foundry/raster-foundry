@@ -177,7 +177,7 @@ object Filters {
       putGeom: Put[Projected[Polygon]]): List[Option[Fragment]] =
     List(
       taskQP.status.toList.toNel map { qp =>
-        Fragments.in(fr"status", qp)
+        Fragments.in(fr"tasks.status", qp)
       },
       taskQP.taskType map { qp =>
         fr"task_type = $qp "

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - Retried cogification for tifs that fail to become cogs with no appropriate zoom level error [#5573](https://github.com/raster-foundry/raster-foundry/pull/5573)
+- Fixed campaign task list endpoint [#5572](https://github.com/raster-foundry/raster-foundry/pull/5572)
 
 ## [1.62.1] - 2021-04-19
 ### Fixed
