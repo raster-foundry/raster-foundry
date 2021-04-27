@@ -49,16 +49,15 @@ object Upload {
       files
         .map(new AmazonS3URI(_))
         .filter(dataBucket == _.getBucket)
-        .map(
-          s3Uri =>
-            s3Client
-              .getObjectMetadata(
-                new GetObjectMetadataRequest(
-                  s3Uri.getBucket,
-                  s3Uri.getKey
-                )
+        .map(s3Uri =>
+          s3Client
+            .getObjectMetadata(
+              new GetObjectMetadataRequest(
+                s3Uri.getBucket,
+                s3Uri.getKey
               )
-              .getContentLength()
+            )
+            .getContentLength()
         )
         .sum
         .toLong
@@ -89,7 +88,8 @@ object Upload {
       source: Option[String],
       keepInSourceBucket: Option[Boolean],
       annotationProjectId: Option[UUID],
-      generateTasks: Boolean
+      generateTasks: Boolean,
+      fileSizeBytes: Option[Long] = None
   ) {
     def toUpload(
         user: User,
@@ -113,10 +113,10 @@ object Upload {
         // when intendedOwner and user are different people, we check that both the two users' platforms
         // match and that the acting user is an admin of that platform
         case (
-            Some(intendedOwner),
-            Some(ownerPlatformId),
-            _,
-            (userPlatformId, userIsPlatformAdmin)
+              Some(intendedOwner),
+              Some(ownerPlatformId),
+              _,
+              (userPlatformId, userIsPlatformAdmin)
             ) =>
           if (ownerPlatformId == userPlatformId && userIsPlatformAdmin) {
             intendedOwner

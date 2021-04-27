@@ -27,10 +27,18 @@ object UploadDao extends Dao[Upload] {
     FROM
   """ ++ tableF
 
-  def getUserBytesUploaded(user: User): ConnectionIO[Long] =
-    fr"SELECT COALESCE(SUM(bytes_uploaded), 0) FROM uploads WHERE owner = ${user.id}"
+  def getUserBytesUploaded(
+      user: User,
+      excludeIdOpt: Option[UUID] = None
+  ): ConnectionIO[Long] = {
+    val excludeIdF = excludeIdOpt match {
+      case Some(id) => fr"and id <> ${id}"
+      case _        => fr""
+    }
+    (fr"SELECT COALESCE(SUM(bytes_uploaded), 0) FROM uploads WHERE owner = ${user.id}" ++ excludeIdF)
       .query[Long]
       .unique
+  }
 
   def getUploadById(uploadId: UUID): ConnectionIO[Option[Upload]] =
     query.filter(uploadId).selectOption
@@ -68,7 +76,7 @@ object UploadDao extends Dao[Upload] {
         bytesUploaded
       )
       insertedUpload <- (
-        sql"""
+          sql"""
        INSERT INTO uploads
          (id, created_at, created_by, modified_at,
           owner, upload_status, file_type, upload_type,
@@ -83,26 +91,26 @@ object UploadDao extends Dao[Upload] {
          ${upload.annotationProjectId}, ${upload.generateTasks}
        )
       """.update.withUniqueGeneratedKeys[Upload](
-          "id",
-          "created_at",
-          "created_by",
-          "modified_at",
-          "owner",
-          "upload_status",
-          "file_type",
-          "upload_type",
-          "files",
-          "datasource",
-          "metadata",
-          "visibility",
-          "project_id",
-          "layer_id",
-          "source",
-          "keep_in_source_bucket",
-          "bytes_uploaded",
-          "annotation_project_id",
-          "generate_tasks"
-        )
+            "id",
+            "created_at",
+            "created_by",
+            "modified_at",
+            "owner",
+            "upload_status",
+            "file_type",
+            "upload_type",
+            "files",
+            "datasource",
+            "metadata",
+            "visibility",
+            "project_id",
+            "layer_id",
+            "source",
+            "keep_in_source_bucket",
+            "bytes_uploaded",
+            "annotation_project_id",
+            "generate_tasks"
+          )
       )
     } yield insertedUpload
 
@@ -136,11 +144,11 @@ object UploadDao extends Dao[Upload] {
       owner <- UserDao.unsafeGetUserById(oldUpload.owner)
     } yield (oldUpload, newStatus, nAffected, userPlatform, owner)) flatMap {
       case (
-          oldUpload: Upload,
-          newStatus: UploadStatus,
-          nAffected: Int,
-          platform: Platform,
-          owner: User
+            oldUpload: Upload,
+            newStatus: UploadStatus,
+            nAffected: Int,
+            platform: Platform,
+            owner: User
           ) => {
         (
           oldUpload.uploadStatus,
@@ -178,6 +186,7 @@ object UploadDao extends Dao[Upload] {
   }
 
   def findForAnnotationProject(
-      annotationProjectId: UUID): ConnectionIO[List[Upload]] =
+      annotationProjectId: UUID
+  ): ConnectionIO[List[Upload]] =
     query.filter(fr"annotation_project_id = $annotationProjectId").list
 }
