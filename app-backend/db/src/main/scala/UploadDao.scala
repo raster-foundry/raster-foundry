@@ -76,7 +76,7 @@ object UploadDao extends Dao[Upload] {
         bytesUploaded
       )
       insertedUpload <- (
-          sql"""
+        sql"""
        INSERT INTO uploads
          (id, created_at, created_by, modified_at,
           owner, upload_status, file_type, upload_type,
@@ -91,26 +91,26 @@ object UploadDao extends Dao[Upload] {
          ${upload.annotationProjectId}, ${upload.generateTasks}
        )
       """.update.withUniqueGeneratedKeys[Upload](
-            "id",
-            "created_at",
-            "created_by",
-            "modified_at",
-            "owner",
-            "upload_status",
-            "file_type",
-            "upload_type",
-            "files",
-            "datasource",
-            "metadata",
-            "visibility",
-            "project_id",
-            "layer_id",
-            "source",
-            "keep_in_source_bucket",
-            "bytes_uploaded",
-            "annotation_project_id",
-            "generate_tasks"
-          )
+          "id",
+          "created_at",
+          "created_by",
+          "modified_at",
+          "owner",
+          "upload_status",
+          "file_type",
+          "upload_type",
+          "files",
+          "datasource",
+          "metadata",
+          "visibility",
+          "project_id",
+          "layer_id",
+          "source",
+          "keep_in_source_bucket",
+          "bytes_uploaded",
+          "annotation_project_id",
+          "generate_tasks"
+        )
       )
     } yield insertedUpload
 
@@ -144,11 +144,11 @@ object UploadDao extends Dao[Upload] {
       owner <- UserDao.unsafeGetUserById(oldUpload.owner)
     } yield (oldUpload, newStatus, nAffected, userPlatform, owner)) flatMap {
       case (
-            oldUpload: Upload,
-            newStatus: UploadStatus,
-            nAffected: Int,
-            platform: Platform,
-            owner: User
+          oldUpload: Upload,
+          newStatus: UploadStatus,
+          nAffected: Int,
+          platform: Platform,
+          owner: User
           ) => {
         (
           oldUpload.uploadStatus,

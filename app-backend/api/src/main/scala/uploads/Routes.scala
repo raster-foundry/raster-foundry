@@ -7,20 +7,21 @@ import com.rasterfoundry.database.UploadDao
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.datamodel._
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.model.headers.HttpChallenge
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.{AuthenticationFailedRejection, Route}
-import cats.implicits._
 import cats.effect.IO
+import cats.implicits._
 import com.amazonaws.HttpMethod
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
-import java.util.UUID
-import scala.util.Success
 import scala.concurrent.Future
+import scala.util.Success
+
+import java.util.UUID
 
 trait UploadRoutes
     extends Authentication
@@ -171,7 +172,9 @@ trait UploadRoutes
           onComplete {
             for {
               isBelow <- isBelowLimitCheck(
-                userBytesUploaded map { bytes => bytes + potentialNewBytes },
+                userBytesUploaded map { bytes =>
+                  bytes + potentialNewBytes
+                },
                 Domain.Uploads,
                 Action.Create,
                 user
@@ -256,10 +259,8 @@ trait UploadRoutes
                 if (rowsUpdated == 0) {
                   return complete { HttpResponse(StatusCodes.NoContent) }
                 }
-                if (
-                  upload.uploadStatus != UploadStatus.Uploaded &&
-                  updateUpload.uploadStatus == UploadStatus.Uploaded
-                ) {
+                if (upload.uploadStatus != UploadStatus.Uploaded &&
+                    updateUpload.uploadStatus == UploadStatus.Uploaded) {
                   kickoffSceneImport(upload.id)
                 }
                 complete { HttpResponse(StatusCodes.NoContent) }
