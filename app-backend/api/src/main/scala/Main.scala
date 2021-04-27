@@ -1,12 +1,16 @@
 package com.rasterfoundry.api
 
-import com.rasterfoundry.akkautil.RFRejectionHandler._
+import com.rasterfoundry.akkautil.RFRejectionHandler.rfRejectionHandler
 import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
 import com.rasterfoundry.database.util.RFTransactor
 
 import akka.actor.{ActorSystem, Terminated}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.server.RejectionHandler
 import cats.effect.{Async, ContextShift, IO}
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+import ch.megard.akka.http.cors.scaladsl.settings._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.implicits._
 import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
@@ -59,5 +63,23 @@ object Main extends App with Config with Router {
     ()
   }
 
-  Http().bindAndHandle(routes, httpHost, httpPort)
+  val corsSettings = CorsSettings.defaultSettings.copy(
+    allowedMethods =
+      scala.collection.immutable.Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE)
+  )
+
+  val corsRoutes = cors(corsSettings) {
+    val rejectionHandler: RejectionHandler = RejectionHandler.default
+
+    // rfRejectionHandler is responsible for handling circe rejections and transforming
+    // the messages into slightly more human-readable text.
+    // the default handler is responsible for making sure that headers survive
+    // from the initial request, so for example CORS headers are still present on the
+    // response if needed.
+    handleRejections(rejectionHandler)(
+      handleRejections(rfRejectionHandler)(routes)
+    )
+  }
+
+  Http().bindAndHandle(corsRoutes, httpHost, httpPort)
 }
