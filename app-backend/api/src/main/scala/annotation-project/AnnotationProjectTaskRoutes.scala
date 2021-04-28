@@ -233,11 +233,12 @@ trait AnnotationProjectTaskRoutes
               ),
             TaskDao.getTaskById(taskId)
           ).mapN({
-            case (success @ AuthSuccess(_), Some(task)) =>
-              if (task.annotationProjectId == projectId) success
-              else AuthFailure[AnnotationProject]()
-            case _ => AuthFailure[AnnotationProject]()
-          }).transact(xa)
+              case (success @ AuthSuccess(_), Some(task)) =>
+                if (task.annotationProjectId == projectId) success
+                else AuthFailure[AnnotationProject]()
+              case _ => AuthFailure[AnnotationProject]()
+            })
+            .transact(xa)
             .unsafeToFuture
         } {
           complete {
@@ -255,14 +256,13 @@ trait AnnotationProjectTaskRoutes
       ) {
         authorizeAsync {
           (for {
-            auth1 <-
-              AnnotationProjectDao
-                .authorized(
-                  user,
-                  ObjectType.AnnotationProject,
-                  projectId,
-                  ActionType.Annotate
-                )
+            auth1 <- AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Annotate
+              )
             auth2 <- TaskDao.isLockingUserOrUnlocked(taskId, user)
             auth3 <- TaskDao.getTaskById(taskId) map { taskO =>
               taskO map { _.annotationProjectId }
@@ -302,11 +302,12 @@ trait AnnotationProjectTaskRoutes
               ),
             TaskDao.getTaskById(taskId)
           ).mapN({
-            case (success @ AuthSuccess(_), Some(task)) =>
-              if (task.annotationProjectId == projectId) success
-              else AuthFailure[AnnotationProject]()
-            case _ => AuthFailure[AnnotationProject]()
-          }).transact(xa)
+              case (success @ AuthSuccess(_), Some(task)) =>
+                if (task.annotationProjectId == projectId) success
+                else AuthFailure[AnnotationProject]()
+              case _ => AuthFailure[AnnotationProject]()
+            })
+            .transact(xa)
             .unsafeToFuture
         } {
           complete {
@@ -342,8 +343,7 @@ trait AnnotationProjectTaskRoutes
                 ActionType.Annotate
               ),
             TaskDao.getTaskById(taskId)
-          )
-            .mapN({
+          ).mapN({
               case (success @ AuthSuccess(_), Some(task)) =>
                 if (task.annotationProjectId == projectId) success
                 else AuthFailure[AnnotationProject]()
@@ -439,14 +439,13 @@ trait AnnotationProjectTaskRoutes
       ) {
         authorizeAsync {
           (for {
-            auth1 <-
-              AnnotationProjectDao
-                .authorized(
-                  user,
-                  ObjectType.AnnotationProject,
-                  projectId,
-                  actionType
-                )
+            auth1 <- AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                actionType
+              )
             auth2 <- TaskDao.hasStatus(
               taskId,
               requiredStatuses
@@ -464,19 +463,17 @@ trait AnnotationProjectTaskRoutes
             }
             onSuccess(
               (for {
-                _ <-
-                  if (deleteBeforeAdding) {
-                    AnnotationLabelDao
-                      .deleteByProjectIdAndTaskId(projectId, taskId)
-                  } else { 0.pure[ConnectionIO] }
-                insert <-
+                _ <- if (deleteBeforeAdding) {
                   AnnotationLabelDao
-                    .insertAnnotations(
-                      projectId,
-                      taskId,
-                      annotationLabelWithClassesCreate.toList,
-                      user
-                    )
+                    .deleteByProjectIdAndTaskId(projectId, taskId)
+                } else { 0.pure[ConnectionIO] }
+                insert <- AnnotationLabelDao
+                  .insertAnnotations(
+                    projectId,
+                    taskId,
+                    annotationLabelWithClassesCreate.toList,
+                    user
+                  )
               } yield {
                 insert
               }).transact(xa)
@@ -541,8 +538,7 @@ trait AnnotationProjectTaskRoutes
                   ActionType.Annotate
                 ),
               TaskDao.getTaskById(taskId)
-            )
-              .mapN({
+            ).mapN({
                 case (success @ AuthSuccess(_), Some(task)) =>
                   if (task.annotationProjectId == projectId) success
                   else AuthFailure[AnnotationProject]()
@@ -578,11 +574,12 @@ trait AnnotationProjectTaskRoutes
               ),
             TaskDao.getTaskById(taskId)
           ).mapN({
-            case (success @ AuthSuccess(_), Some(task)) =>
-              if (task.annotationProjectId == projectId) success
-              else AuthFailure[AnnotationProject]()
-            case _ => AuthFailure[AnnotationProject]()
-          }).transact(xa)
+              case (success @ AuthSuccess(_), Some(task)) =>
+                if (task.annotationProjectId == projectId) success
+                else AuthFailure[AnnotationProject]()
+              case _ => AuthFailure[AnnotationProject]()
+            })
+            .transact(xa)
             .unsafeToFuture
         } {
           complete {
