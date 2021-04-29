@@ -1,4 +1,9 @@
 FROM quay.io/azavea/openjdk-gdal:3.1-jdk8-slim
+# did you change the image here, possibly to upgrade gdal?
+# if so, make sure that you verify that tifs that have trouble
+# becoming COGs due to the tiling scheme can still be processed
+# successfully.
+# https://github.com/raster-foundry/raster-foundry/pull/5573
 
 COPY rf/requirements.txt /tmp/
 RUN set -ex \

@@ -11,11 +11,17 @@ import sttp.client.circe._
 import sttp.model.Uri
 
 trait IntercomNotifier[F[_]] {
-  def notifyUser(
+  def createConversation(
       intercomToken: IntercomToken,
-      adminId: UserId,
       userId: ExternalId,
-      msg: Message
+      message: Message
+  ): F[Conversation]
+
+  def replyConversation(
+      intercomToken: IntercomToken,
+      adminId: AdminId,
+      conversationId: String,
+      message: Message
   ): F[Unit]
 }
 
@@ -31,27 +37,50 @@ class LiveIntercomNotifier[F[_]: Sync](
   implicit val unsafeLoggerF = Slf4jLogger.getLogger[F]
   implicit val sttpBackend = backend
 
-  def notifyUser(
+  def createConversation(
       intercomToken: IntercomToken,
-      adminId: UserId,
       userId: ExternalId,
-      msg: Message
-  ): F[Unit] = {
-    val uri = Uri(java.net.URI.create(s"$sttpApiBase/messages"))
-    val resp =
-      Logger[F].debug(s"Notifying $userId at $uri") *>
-        basicRequest.auth
-          .bearer(intercomToken.underlying)
-          .header("Accept", "application/json")
-          .post(uri)
-          .body(MessagePost(adminId, userId, msg))
-          .send() flatMap { resp =>
-        resp.body match {
-          case Left(err) => Logger[F].error(err)
-          case _         => ().pure[F]
-        }
+      message: Message
+  ): F[Conversation] = {
+    val uri = Uri(java.net.URI.create(s"$sttpApiBase/conversations"))
+    Logger[F].debug(s"Creating a conversation with $userId at $uri") *>
+      basicRequest.auth
+        .bearer(intercomToken.underlying)
+        .header("Accept", "application/json")
+        .post(uri)
+        .body(ConversationCreate(userId, message))
+        .response(asJson[Conversation])
+        .send() flatMap { res =>
+      res.body match {
+        case Left(err) =>
+          throw new RuntimeException(
+            s"Failed to create a conversation with ${userId}, error message: ${err.toString()}"
+          )
+        case Right(conversation) => conversation.pure[F]
       }
+    }
+  }
 
-    resp.void
+  def replyConversation(
+      intercomToken: IntercomToken,
+      adminId: AdminId,
+      conversationId: String,
+      message: Message
+  ): F[Unit] = {
+    val uri = Uri(
+      java.net.URI.create(s"$sttpApiBase/conversations/$conversationId/reply")
+    )
+    (Logger[F].debug(s"Replying a conversation ID: $conversationId at $uri") *>
+      basicRequest.auth
+        .bearer(intercomToken.underlying)
+        .header("Accept", "application/json")
+        .post(uri)
+        .body(ConversationReply(adminId, message))
+        .send() flatMap { resp =>
+      resp.body match {
+        case Left(err) => Logger[F].error(err)
+        case _         => ().pure[F]
+      }
+    }).void
   }
 }

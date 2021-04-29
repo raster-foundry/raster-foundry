@@ -25,12 +25,7 @@ import com.rasterfoundry.api.uploads.UploadRoutes
 import com.rasterfoundry.api.user.UserRoutes
 import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
 
-import akka.http.scaladsl.model.HttpMethods._
 import cats.effect.IO
-import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
-import ch.megard.akka.http.cors.scaladsl.settings._
-
-import scala.collection.immutable.Seq
 
 /**
   * Contains all routes for Raster Foundry API/Healthcheck endpoints.
@@ -63,13 +58,9 @@ trait Router
     with TaskRoutes
     with CampaignRoutes {
 
-  val settings = CorsSettings.defaultSettings.copy(
-    allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE)
-  )
-
   def notifier: IO[IntercomNotifications]
 
-  val routes = cors(settings) {
+  def routes =
     pathPrefix("healthcheck") {
       healthCheckRoutes
     } ~
@@ -141,5 +132,4 @@ trait Router
       pathPrefix("feature-flags") {
         featureFlagRoutes
       }
-  }
 }

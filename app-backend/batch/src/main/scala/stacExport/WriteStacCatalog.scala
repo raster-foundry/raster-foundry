@@ -1,7 +1,7 @@
 package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.batch.groundwork.{Config => GroundworkConfig}
+import com.rasterfoundry.batch.groundwork.{Config => GroundworkConfig, DbIO}
 import com.rasterfoundry.batch.stacExport.v2.CampaignStacExport
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
@@ -10,6 +10,7 @@ import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.notification.intercom.Model.{ExternalId, Message}
 import com.rasterfoundry.notification.intercom.{
+  IntercomConversation,
   IntercomNotifier,
   LiveIntercomNotifier
 }
@@ -33,12 +34,16 @@ final case class WriteStacCatalog(
     extends Config
     with RollbarNotifier {
 
+  private val dbIO = new DbIO(xa);
+
   private def notify(userId: ExternalId, message: Message): IO[Unit] =
-    notifier.notifyUser(
-      GroundworkConfig.intercomToken,
-      GroundworkConfig.intercomAdminId,
-      userId,
-      message
+    IntercomConversation.notifyIO(
+      userId.underlying,
+      message,
+      dbIO.groundworkConfig,
+      notifier,
+      dbIO.getConversation,
+      dbIO.insertConversation
     )
 
   private def processLayerCollection(
