@@ -5,7 +5,7 @@ server {
 }
 
 upstream api-server-upstream {
-    server api-server:9000;
+    server ${API_SERVER_HOST};
 }
 
 server {

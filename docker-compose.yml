@@ -24,6 +24,8 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.api
+    environment:
+      - API_SERVER_HOST=api-server:9000
     ports:
       - "9100:443"
     links:
