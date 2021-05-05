@@ -176,12 +176,11 @@ trait UploadRoutes
           ) {
             onComplete {
               for {
-                uploadOpt <-
-                  UploadDao
-                    .insert(uploadToInsert, user, potentialNewBytes)
-                    .map(Some(_))
-                    .transact(xa)
-                    .unsafeToFuture
+                uploadOpt <- UploadDao
+                  .insert(uploadToInsert, user, potentialNewBytes)
+                  .map(Some(_))
+                  .transact(xa)
+                  .unsafeToFuture
               } yield uploadOpt
             } {
               case Success(Some(upload)) =>
@@ -252,10 +251,8 @@ trait UploadRoutes
                 if (rowsUpdated == 0) {
                   return complete { HttpResponse(StatusCodes.NoContent) }
                 }
-                if (
-                  upload.uploadStatus != UploadStatus.Uploaded &&
-                  updateUpload.uploadStatus == UploadStatus.Uploaded
-                ) {
+                if (upload.uploadStatus != UploadStatus.Uploaded &&
+                    updateUpload.uploadStatus == UploadStatus.Uploaded) {
                   kickoffSceneImport(upload.id)
                 }
                 complete { HttpResponse(StatusCodes.NoContent) }
