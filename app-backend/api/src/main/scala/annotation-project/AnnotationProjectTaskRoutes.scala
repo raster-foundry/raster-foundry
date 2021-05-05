@@ -474,6 +474,7 @@ trait AnnotationProjectTaskRoutes
                     annotationLabelWithClassesCreate.toList,
                     user
                   )
+                _ <- TaskDao.updateStatus(taskId, fc.nextStatus)
               } yield {
                 insert
               }).transact(xa)

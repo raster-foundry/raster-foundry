@@ -38,7 +38,8 @@ final case class AnnotationLabelPropertiesCreate(
 
 @JsonCodec
 final case class AnnotationLabelWithClassesFeatureCollectionCreate(
-    features: Seq[AnnotationLabelWithClasses.GeoJSONFeatureCreate]
+    features: Seq[AnnotationLabelWithClasses.GeoJSONFeatureCreate],
+    nextStatus: TaskStatus
 )
 
 @JsonCodec
@@ -130,12 +131,12 @@ object AnnotationLabelWithClasses {
       id: UUID,
       geometry: Option[Projected[Geometry]],
       properties: AnnotationLabelWithClassesProperties,
-      _type: String = "Feature"
+      @JsonKey("type") _type: String = "Feature"
   ) extends GeoJSONFeature
   @JsonCodec
   final case class GeoJSONFeatureCreate(
       geometry: Projected[Geometry],
-      properties: AnnotationLabelWithClassesPropertiesCreate
+      properties: AnnotationLabelWithClassesPropertiesCreate,
   ) {
     def toAnnotationLabelWithClassesCreate
       : AnnotationLabelWithClasses.Create = {
@@ -145,12 +146,6 @@ object AnnotationLabelWithClasses {
         properties.description
       )
     }
-  }
-
-  object GeoJSON {
-    implicit val annoLabelWithClassesGeojonEncoder: Encoder[GeoJSON] =
-      Encoder.forProduct4("id", "geometry", "properties", "type")(geojson =>
-        (geojson.id, geojson.geometry, geojson.properties, geojson._type))
   }
 
   /**
