@@ -168,39 +168,32 @@ trait UploadRoutes
                   )
               }
             }
-
-          onComplete {
-            for {
-              isBelow <- isBelowLimitCheck(
-                userBytesUploaded map { bytes =>
-                  bytes + potentialNewBytes
-                },
-                Domain.Uploads,
-                Action.Create,
-                user
-              )
-              uploadOpt <- isBelow match {
-                case true =>
+          authorizeScopeLimit(
+            Future.successful(potentialNewBytes),
+            Domain.Uploads,
+            Action.Create,
+            user
+          ) {
+            onComplete {
+              for {
+                uploadOpt <-
                   UploadDao
                     .insert(uploadToInsert, user, potentialNewBytes)
                     .map(Some(_))
                     .transact(xa)
                     .unsafeToFuture
-                case _ => Option.empty.pure[Future]
-              }
-
-            } yield uploadOpt
-          } {
-            case Success(Some(upload)) =>
-              if (upload.uploadStatus == UploadStatus.Uploaded) {
-                kickoffSceneImport(upload.id)
-              }
-              complete((StatusCodes.Created, upload))
-            case Success(None) =>
-              complete { HttpResponse(StatusCodes.Forbidden) }
-            case _ =>
-              complete { HttpResponse(StatusCodes.BadRequest) }
+              } yield uploadOpt
+            } {
+              case Success(Some(upload)) =>
+                if (upload.uploadStatus == UploadStatus.Uploaded) {
+                  kickoffSceneImport(upload.id)
+                }
+                complete((StatusCodes.Created, upload))
+              case _ =>
+                complete { HttpResponse(StatusCodes.BadRequest) }
+            }
           }
+
         }
       }
     }
@@ -259,8 +252,10 @@ trait UploadRoutes
                 if (rowsUpdated == 0) {
                   return complete { HttpResponse(StatusCodes.NoContent) }
                 }
-                if (upload.uploadStatus != UploadStatus.Uploaded &&
-                    updateUpload.uploadStatus == UploadStatus.Uploaded) {
+                if (
+                  upload.uploadStatus != UploadStatus.Uploaded &&
+                  updateUpload.uploadStatus == UploadStatus.Uploaded
+                ) {
                   kickoffSceneImport(upload.id)
                 }
                 complete { HttpResponse(StatusCodes.NoContent) }
