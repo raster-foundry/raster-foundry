@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Included CORS headers with error responses when appropriate [#5574](https://github.com/raster-foundry/raster-foundry/pull/5574)
 - Task authorization now verifies project relationship [#5576](https://github.com/raster-foundry/raster-foundry/pull/5576)
 
+### Changed
+- Make upload limit check stricter [#5575](https://github.com/raster-foundry/raster-foundry/pull/5575)
+
 ## [1.62.1] - 2021-04-19
 ### Fixed
 - Corrected normalization behavior for scene thumbnails and annotation projects [#5569](https://github.com/raster-foundry/raster-foundry/pull/5569)
