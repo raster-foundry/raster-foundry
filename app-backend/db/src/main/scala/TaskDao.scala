@@ -1080,4 +1080,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           randomTask(taskParams, projectIds)
       }
     } yield taskOpt
+
+  def updateStatus(taskId: UUID, taskStatus: TaskStatus): ConnectionIO[Int] =
+    fr"update tasks set status = $taskStatus where id = $taskId".update.run
 }

@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Changed
 - Parameterize API Server host in Nginx upstream [#5577](https://github.com/raster-foundry/raster-foundry/pull/5577)
+- Task status updates occur as part of label requests [#5578](https://github.com/raster-foundry/raster-foundry/pull/5578)
 
 ## [1.63.0] - 2021-04-29
 ### Added

@@ -30,11 +30,6 @@ services:
       - "9100:443"
     links:
       - api-server
-    volumes:
-      - ./nginx/srv/dist/:/srv/dist/
-      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
-      - ./nginx/etc/nginx/templates/api.conf.template:/etc/nginx/templates/default.conf.template
 
   api-server:
     # If changing container, make sure to update app-backend/api/Dockerfile as well
@@ -120,7 +115,6 @@ services:
       - $HOME/.aws:/root/.aws:ro
     ports:
       - 2000
-    entrypoint: "/usr/bin/xray"
     command:
       - "-t"
       - "0.0.0.0:2000"
