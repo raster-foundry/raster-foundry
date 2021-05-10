@@ -39,7 +39,7 @@ final case class AnnotationLabelPropertiesCreate(
 @JsonCodec
 final case class AnnotationLabelWithClassesFeatureCollectionCreate(
     features: Seq[AnnotationLabelWithClasses.GeoJSONFeatureCreate],
-    nextStatus: TaskStatus
+    nextStatus: Option[TaskStatus] = None
 )
 
 @JsonCodec
@@ -136,7 +136,7 @@ object AnnotationLabelWithClasses {
   @JsonCodec
   final case class GeoJSONFeatureCreate(
       geometry: Projected[Geometry],
-      properties: AnnotationLabelWithClassesPropertiesCreate,
+      properties: AnnotationLabelWithClassesPropertiesCreate
   ) {
     def toAnnotationLabelWithClassesCreate
       : AnnotationLabelWithClasses.Create = {
