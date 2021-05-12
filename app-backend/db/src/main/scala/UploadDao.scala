@@ -27,10 +27,18 @@ object UploadDao extends Dao[Upload] {
     FROM
   """ ++ tableF
 
-  def getUserBytesUploaded(user: User): ConnectionIO[Long] =
-    fr"SELECT COALESCE(SUM(bytes_uploaded), 0) FROM uploads WHERE owner = ${user.id}"
+  def getUserBytesUploaded(
+      user: User,
+      excludeIdOpt: Option[UUID] = None
+  ): ConnectionIO[Long] = {
+    val excludeIdF = excludeIdOpt match {
+      case Some(id) => fr"and id <> ${id}"
+      case _        => fr""
+    }
+    (fr"SELECT COALESCE(SUM(bytes_uploaded), 0) FROM uploads WHERE owner = ${user.id}" ++ excludeIdF)
       .query[Long]
       .unique
+  }
 
   def getUploadById(uploadId: UUID): ConnectionIO[Option[Upload]] =
     query.filter(uploadId).selectOption
@@ -178,6 +186,7 @@ object UploadDao extends Dao[Upload] {
   }
 
   def findForAnnotationProject(
-      annotationProjectId: UUID): ConnectionIO[List[Upload]] =
+      annotationProjectId: UUID
+  ): ConnectionIO[List[Upload]] =
     query.filter(fr"annotation_project_id = $annotationProjectId").list
 }

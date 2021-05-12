@@ -2049,7 +2049,53 @@ class TaskDaoSpec
 
             assert(
               randTaskOpt == firstTaskOpt,
-              "One task availabel because the session expired"
+              "One task available because the session expired"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
+  test("update a task status") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            nextStatus: TaskStatus
+        ) =>
+          {
+            val updateIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProject <- AnnotationProjectDao.insert(
+                annotationProjectCreate,
+                dbUser
+              )
+              Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  taskFeaturesCreate.copy(features =
+                    taskFeaturesCreate.features.take(1)
+                  ),
+                  dbAnnotationProject
+                ),
+                dbUser
+              )
+              firstTask = features.headOption
+              updated <- firstTask traverse { task =>
+                TaskDao.updateStatus(task.id, nextStatus) *>
+                  TaskDao.unsafeGetTaskById(task.id)
+              }
+
+            } yield updated
+
+            val result = updateIO.transact(xa).unsafeRunSync
+
+            assert(
+              result map { _.status == nextStatus } getOrElse true,
+              "Status should be updated by helper method"
             )
 
             true

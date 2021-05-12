@@ -100,26 +100,54 @@ trait CommonHandlers extends RouteDirectives {
       )
     )
 
+  def isBelowLimitCheck(
+      usedLimitFuture: Future[Long],
+      domain: Domain,
+      action: Action,
+      user: User
+  ): Future[Boolean] = {
+    val userScopedAction = Scopes.resolveFor(domain, action, user.scope.actions)
+    val userLimitOption = userScopedAction.flatMap(_.limit)
+
+    // if user does not have an explicit scope limit, assume infinite
+    usedLimitFuture.map { usedLimit =>
+      (userScopedAction, userLimitOption) match {
+        case (None, _) => false
+        case (_, Some(userLimit)) =>
+          usedLimit <= userLimit
+        case _ => true
+      }
+    }
+  }
+
+  def isBelowLimitCheck(
+      usedLimit: Long,
+      domain: Domain,
+      action: Action,
+      user: User
+  ): Boolean = {
+    val userScopedAction = Scopes.resolveFor(domain, action, user.scope.actions)
+    val userLimitOption = userScopedAction.flatMap(_.limit)
+
+    // if user does not have an explicit scope limit, assume infinite
+    (userScopedAction, userLimitOption) match {
+      case (None, _) => false
+      case (_, Some(userLimit)) =>
+        usedLimit <= userLimit
+      case _ => true
+    }
+
+  }
+
   def authorizeScopeLimitDirective(
       usedLimitFuture: Future[Long],
       domain: Domain,
       action: Action,
       user: User
-  ): Directive0 = {
-    val userScopedAction = Scopes.resolveFor(domain, action, user.scope.actions)
-    val userLimitOption = userScopedAction.flatMap(_.limit)
-
-    // if user does not have an explicit scope limit, assume infinite
-    val isBelowLimit = usedLimitFuture.map { usedLimit =>
-      (userScopedAction, userLimitOption) match {
-        case (None, _) => false
-        case (_, Some(userLimit)) =>
-          usedLimit < userLimit
-        case _ => true
-      }
-    }
-    SecurityDirectives.authorizeAsync(isBelowLimit)
-  }
+  ): Directive0 =
+    SecurityDirectives.authorizeAsync(
+      isBelowLimitCheck(usedLimitFuture, domain, action, user)
+    )
 
   def authorizeScopeLimit(
       usedLimitFuture: Future[Long],

@@ -10,7 +10,7 @@ import com.rasterfoundry.datamodel.SingleBandOptions
 import cats.Semigroup
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
-import cats.effect.{ContextShift, IO}
+import cats.effect.implicits._
 import cats.implicits._
 import com.colisweb.tracing.core.TracingContext
 import com.typesafe.scalalogging.LazyLogging
@@ -81,7 +81,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       "renderMosaicSingleBand"
     ) use { context =>
       mosaic
-        .parTraverse((relevant: BacksplashImage[IO]) => {
+        .parTraverseN(streamConcurrency)((relevant: BacksplashImage[IO]) => {
           logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
           relevant.read(z, x, y, context) map {
             (_, relevant.singleBandOptions, relevant.metadata.noDataValue)
@@ -171,7 +171,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
     val ioMBT = tracingContext.span("renderMosaic") use { context =>
       mosaic
-        .parTraverse((relevant: BacksplashImage[IO]) => {
+        .parTraverseN(streamConcurrency)((relevant: BacksplashImage[IO]) => {
           val tags = Map(
             "sceneId" -> relevant.imageId.toString,
             "projectId" -> relevant.projectId.toString,
@@ -254,7 +254,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             val mbtIO = self.flatMap {
               case (tracingContext, listBsi) =>
                 tracingContext.span("getMergedRawMosaic") use { childContext =>
-                  val listIO = listBsi.parTraverse { bsi =>
+                  val listIO = listBsi.parTraverseN(streamConcurrency) { bsi =>
                     bsi.read(z, x, y, childContext)
                   }
                   childContext.span("mergeRawTiles") use { _ =>
@@ -384,7 +384,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   tracingContext.span(
                     "paintedMosaicExtentReification"
                   ) use { childContext =>
-                    bsiList parTraverse { relevant =>
+                    bsiList.parTraverseN(streamConcurrency) { relevant =>
                       val tags =
                         Map(
                           "imageId" -> relevant.imageId.toString,
@@ -473,7 +473,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                 corrected <- tracingContext.span(
                   "singleBandPaintedExtentReification"
                 ) use { childContext =>
-                  imageList.parTraverse { bsi =>
+                  imageList.parTraverseN(streamConcurrency) { bsi =>
                     bsi.singleBandOptions match {
                       case Some(opts) =>
                         bsi.read(extent, cs, childContext) map {
@@ -532,7 +532,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                       childContext.span(
                         "rawMosaicExtentReification.reads"
                       ) use { grandContext =>
-                        listBsi.parTraverse { relevant =>
+                        listBsi.parTraverseN(streamConcurrency) { relevant =>
                           relevant.read(extent, cs, grandContext)
                         }
                       }
@@ -573,7 +573,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         val mosaic = self.flatMap {
           case (tracingContext, bsiList) =>
             tracingContext.span("mosaicRasterExtents") use { childContext =>
-              bsiList.parTraverse({ img =>
+              bsiList.parTraverseN(streamConcurrency)({ img =>
                 img.getRasterSource(childContext) map { rs =>
                   val rasterExtents = rs.resolutions map { cellSize =>
                     ReprojectRasterExtent(
