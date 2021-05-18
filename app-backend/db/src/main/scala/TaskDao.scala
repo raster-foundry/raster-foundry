@@ -341,9 +341,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           AnnotationProjectDao.getFootprint(annotationProject.id)
         case _ => None.pure[ConnectionIO]
       }
-      taskSizeO = taskGridFeatureCreate.properties.sizeMeters orElse (annotationProjectO flatMap {
-        _.taskSizeMeters
-      })
+      taskSizeO =
+        taskGridFeatureCreate.properties.sizeMeters orElse (annotationProjectO flatMap {
+          _.taskSizeMeters
+        })
       gridInsert <- (geomO, taskSizeO).tupled.map { geomAndSize =>
         val (geom, size) = geomAndSize
         (insertF ++ fr"""
@@ -757,26 +758,29 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         for {
           _ <- info("Expiring stuck tasks")
           defaultUser <- UserDao.unsafeGetUserById("default")
-          stuckLockedTasks <- query
-            .filter(
-              fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
-            )
-            .list
-          stuckUnlockedTasks <- query
-            .filter(
-              fr"""
+          stuckLockedTasks <-
+            query
+              .filter(
+                fr"locked_on <= ${Timestamp.from(Instant.now.minusMillis(taskExpiration.toMillis))}"
+              )
+              .list
+          stuckUnlockedTasks <-
+            query
+              .filter(
+                fr"""
             locked_on IS NULL AND
             (status = ${TaskStatus.LabelingInProgress: TaskStatus} OR
              status = ${TaskStatus.ValidationInProgress: TaskStatus})"""
-            )
-            .list
-          _ <- (stuckUnlockedTasks map { _.annotationProjectId }).toNel traverse {
-            projectIdsList =>
-              val projectIdsSet = projectIdsList.toNes
-              warn(
-                s"Annotation project IDs for stuck in progress but unlocked tasks: $projectIdsSet"
               )
-          }
+              .list
+          _ <-
+            (stuckUnlockedTasks map { _.annotationProjectId }).toNel traverse {
+              projectIdsList =>
+                val projectIdsSet = projectIdsList.toNes
+                warn(
+                  s"Annotation project IDs for stuck in progress but unlocked tasks: $projectIdsSet"
+                )
+            }
           _ <- (stuckLockedTasks ++ stuckUnlockedTasks) traverse { task =>
             regressTaskStatus(task.id, task.status) flatMap {
               case (newStatus, newNote) =>
@@ -858,9 +862,10 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   ): ConnectionIO[PaginatedGeoJsonResponse[Task.TaskFeature]] = {
 
     for {
-      paginatedResponse <- query
-        .filter(fr"parent_task_id = $taskId")
-        .page(pageRequest)
+      paginatedResponse <-
+        query
+          .filter(fr"parent_task_id = $taskId")
+          .page(pageRequest)
 
       withActions <- paginatedResponse.results.toList traverse { task =>
         unsafeGetActionsForTask(task)
@@ -991,8 +996,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           )
           // - reassociate *the overlapping portions* of all labels on the parent task with the new task
           () <- (newTaskFeatureCollection.features traverse { taskFeature =>
-            reassociateLabelF(taskId, taskFeature.id).update.run
-          }).void
+              reassociateLabelF(taskId, taskFeature.id).update.run
+            }).void
           taskFeature = task.toGeoJSONFeature(Nil)
           createProperties = taskFeature.properties.toCreate.copy(
             status = TaskStatus.Split
@@ -1020,20 +1025,21 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       taskParams: TaskQueryParameters
   ): ConnectionIO[Option[Task.TaskFeature]] =
     for {
-      annotationProjectIds <- AnnotationProjectDao
-        .authQuery(
-          user,
-          ObjectType.AnnotationProject,
-          None,
-          None,
-          None
-        )
-        .filter(annotationProjectParams)
-        .filter(annotationProjectIdOpt)
-        .filter(fr"is_active = true")
-        .list(limit) map { projects =>
-        projects map { _.id }
-      }
+      annotationProjectIds <-
+        AnnotationProjectDao
+          .authQuery(
+            user,
+            ObjectType.AnnotationProject,
+            None,
+            None,
+            None
+          )
+          .filter(annotationProjectParams)
+          .filter(annotationProjectIdOpt)
+          .filter(fr"is_active = true")
+          .list(limit) map { projects =>
+          projects map { _.id }
+        }
       campaignAuthedProjects <- annotationProjectParams.campaignId traverse {
         campaignId =>
           for {
@@ -1075,12 +1081,11 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           case _ => Option(List.empty[UUID]).pure[ConnectionIO]
         }
       } map { _ getOrElse Nil }
-      taskOpt <- (annotationProjectIds ++ campaignAuthedProjects ++ idAuthedProjects).distinct.toNel flatTraverse {
-        projectIds =>
-          randomTask(taskParams, projectIds)
-      }
+      taskOpt <-
+        (annotationProjectIds ++ campaignAuthedProjects ++ idAuthedProjects).distinct.toNel flatTraverse {
+          projectIds =>
+            randomTask(taskParams, projectIds)
+        }
     } yield taskOpt
 
-  def updateStatus(taskId: UUID, taskStatus: TaskStatus): ConnectionIO[Int] =
-    fr"update tasks set status = $taskStatus where id = $taskId".update.run
 }
