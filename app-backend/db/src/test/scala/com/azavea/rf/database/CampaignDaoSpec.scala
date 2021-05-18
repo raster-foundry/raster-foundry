@@ -955,6 +955,7 @@ class CampaignDaoSpec
                   .filter(
                     fr"annotation_project_id = ${dbParentAnnotationProject.id}"
                   )
+                  .filter(fr"is_active = true")
                   .count
             } yield (childInserted, labelCountOnParentProject)
 
