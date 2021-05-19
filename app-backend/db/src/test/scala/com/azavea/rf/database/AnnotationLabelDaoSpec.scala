@@ -25,7 +25,8 @@ class AnnotationLabelDaoSpec
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
             annotationCreates: List[AnnotationLabelWithClasses.Create],
-            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
         ) => {
 
           val toInsert = annotationProjectCreate.copy(
@@ -49,11 +50,20 @@ class AnnotationLabelDaoSpec
               fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
               user
             ) map { _.features.head }
+            dbTaskSession <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  user,
+                  task.properties.status,
+                  task.id
+                )
             created <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
               task.id,
               annotationCreates map { create =>
                 addClasses(create, classIds)
+                  .copy(sessionId = Some(dbTaskSession.id))
               },
               user
             )
@@ -78,7 +88,8 @@ class AnnotationLabelDaoSpec
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
             annotationCreates: List[AnnotationLabelWithClasses.Create],
-            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
         ) => {
           val toInsert = annotationProjectCreate.copy(
             labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
@@ -101,8 +112,18 @@ class AnnotationLabelDaoSpec
             classIds = annotationProject.labelClassGroups flatMap {
               _.labelClasses
             } map { _.id }
+            dbTaskSession <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  user,
+                  task.properties.status,
+                  task.id
+                )
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds)
+              addClasses(create, classIds).copy(sessionId =
+                Some(dbTaskSession.id)
+              )
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
@@ -133,7 +154,8 @@ class AnnotationLabelDaoSpec
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
             annotationCreates: List[AnnotationLabelWithClasses.Create],
-            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
         ) => {
           val toInsert = annotationProjectCreate.copy(
             labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
@@ -156,8 +178,18 @@ class AnnotationLabelDaoSpec
             classIds = annotationProject.labelClassGroups flatMap {
               _.labelClasses
             } map { _.id }
+            dbTaskSession <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  user,
+                  task.properties.status,
+                  task.id
+                )
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds)
+              addClasses(create, classIds).copy(sessionId =
+                Some(dbTaskSession.id)
+              )
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
@@ -193,7 +225,8 @@ class AnnotationLabelDaoSpec
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
             annotationCreates: List[AnnotationLabelWithClasses.Create],
-            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
         ) => {
           val summaryIO = for {
             user <- UserDao.create(userCreate)
@@ -213,8 +246,18 @@ class AnnotationLabelDaoSpec
               annotationProject.labelClassGroups.head.labelClasses map {
                 _.id
               }
+            dbTaskSession <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  user,
+                  task.properties.status,
+                  task.id
+                )
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds)
+              addClasses(create, classIds).copy(sessionId =
+                Some(dbTaskSession.id)
+              )
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
@@ -243,9 +286,8 @@ class AnnotationLabelDaoSpec
               Some(annotationCreates.size)
             }
             assert(
-              (labelSummaryO map {
-                (summ: LabelClassSummary) =>
-                  summ.count
+              (labelSummaryO map { (summ: LabelClassSummary) =>
+                summ.count
               }) == expectation,
               "All the annotations with the real class were counted"
             )
@@ -269,7 +311,8 @@ class AnnotationLabelDaoSpec
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
             annotationCreates: List[AnnotationLabelWithClasses.Create],
-            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
         ) => {
           val listIO = for {
             user <- UserDao.create(userCreate)
@@ -288,8 +331,18 @@ class AnnotationLabelDaoSpec
             classIds = annotationProject.labelClassGroups flatMap {
               _.labelClasses
             } map { _.id }
+            dbTaskSession <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  user,
+                  task.properties.status,
+                  task.id
+                )
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds)
+              addClasses(create, classIds).copy(sessionId =
+                Some(dbTaskSession.id)
+              )
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
@@ -328,7 +381,8 @@ class AnnotationLabelDaoSpec
             userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
             annotationCreates: List[AnnotationLabelWithClasses.Create],
-            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
         ) => {
           val listIO = for {
             user <- UserDao.create(userCreate)
@@ -348,8 +402,18 @@ class AnnotationLabelDaoSpec
               annotationProject.labelClassGroups.head.labelClasses map {
                 _.id
               }
+            dbTaskSession <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  user,
+                  task.properties.status,
+                  task.id
+                )
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds)
+              addClasses(create, classIds).copy(sessionId =
+                Some(dbTaskSession.id)
+              )
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
