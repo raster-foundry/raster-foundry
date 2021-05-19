@@ -1483,7 +1483,7 @@ class CampaignDaoSpec
               )
             classIds = createdGroup.labelClasses.map { _.id }
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds)
+              addClasses(create, classIds).copy(sessionId = None)
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
