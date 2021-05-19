@@ -73,7 +73,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     val labelClassFragments: List[Fragment] =
       annotationLabelsWithClasses flatMap { label =>
         label.annotationLabelClasses.map(labelClassId =>
-          fr"(${label.id}, ${labelClassId})")
+          fr"(${label.id}, ${labelClassId})"
+        )
       }
     for {
       insertedAnnotationIds <- annotationFragments.toNel traverse { fragments =>
@@ -110,7 +111,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     val projectIdsF = projectIds map { projectId =>
       fr"$projectId"
     }
-    val activeLabelF = fr"al.is_active = true"
+    val activeLabelF = fr"AND al.is_active = true"
     val fragment = (fr"""
   SELECT
     alalc.annotation_class_id AS label_class_id,
@@ -186,20 +187,22 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
           .map((group.id, _))
       })
       labelGroupMap = labelGroups.map(g => (g.id -> g)).toMap
-      classIdToGroupName = groupedLabelClasses
-        .map { classGroups =>
-          classGroups._2.map(_.id -> labelGroupMap.get(classGroups._1))
-        }
-        .flatten
-        .toMap
-        .collect {
-          case (k, Some(v)) => k -> v.name
-        }
-      classIdToLabelName = groupedLabelClasses
-        .map(_._2)
-        .flatten
-        .map(c => c.id -> c.name)
-        .toMap
+      classIdToGroupName =
+        groupedLabelClasses
+          .map { classGroups =>
+            classGroups._2.map(_.id -> labelGroupMap.get(classGroups._1))
+          }
+          .flatten
+          .toMap
+          .collect {
+            case (k, Some(v)) => k -> v.name
+          }
+      classIdToLabelName =
+        groupedLabelClasses
+          .map(_._2)
+          .flatten
+          .map(c => c.id -> c.name)
+          .toMap
       annotations <- OptionT.liftF(
         (selectF ++ taskJoinF ++ Fragments
           .whereAndOpt(
@@ -211,11 +214,11 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
           .query[AnnotationLabelWithClasses]
           .to[List]
       )
-    } yield
-      StacGeoJSONFeatureCollection(
-        annotations.map(anno =>
-          anno.toStacGeoJSONFeature(classIdToGroupName, classIdToLabelName))
-      ).asJson
+    } yield StacGeoJSONFeatureCollection(
+      annotations.map(anno =>
+        anno.toStacGeoJSONFeature(classIdToGroupName, classIdToLabelName)
+      )
+    ).asJson
     fcIo.value
   }
 
@@ -224,11 +227,12 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       parentAnnotationProjectId: ParentAnnotationProjectId
   ): ConnectionIO[Unit] =
     for {
-      parentTask <- TaskDao.query
-        .filter(
-          fr"annotation_project_id = ${parentAnnotationProjectId.parentAnnotationProjectId}"
-        )
-        .select
+      parentTask <-
+        TaskDao.query
+          .filter(
+            fr"annotation_project_id = ${parentAnnotationProjectId.parentAnnotationProjectId}"
+          )
+          .select
       _ <- fr"""
       WITH source_labels_with_classes AS (
         SELECT * FROM

@@ -942,7 +942,8 @@ class CampaignDaoSpec
                 childLabels map { labelCreate =>
                   labelCreate.copy(
                     annotationLabelClasses =
-                      Random.shuffle(childClasses).take(1)
+                      Random.shuffle(childClasses).take(1),
+                    sessionId = None
                   )
                 },
                 dbChildUser
