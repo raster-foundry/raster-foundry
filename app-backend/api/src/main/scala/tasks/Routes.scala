@@ -8,6 +8,7 @@ import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server._
+import cats.data.NonEmptyList
 import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
@@ -121,8 +122,8 @@ trait TaskRoutes
           entity(as[TaskSession.Create]) { taskSessionCreate =>
             onComplete {
               (for {
-                hasActiveSession <- TaskSessionDao.hasActiveSessionByTaskId(
-                  taskId)
+                hasActiveSession <-
+                  TaskSessionDao.hasActiveSessionByTaskId(taskId)
                 hasValidStatus <- TaskSessionDao.isSessionTypeMatchTaskStatus(
                   taskId,
                   taskSessionCreate.sessionType
@@ -291,6 +292,20 @@ trait TaskRoutes
                       _ <- TaskSessionDao.completeTaskSession(
                         sessionId,
                         taskSessionComplete
+                      )
+                      prevSessions <- TaskSessionDao.listSessionsByTask(
+                        taskId,
+                        Some(List(sessionId))
+                      )
+                      _ <- prevSessions.map(_.id).toNel traverse { prev =>
+                        AnnotationLabelDao.toggleBySessionIds(
+                          prev,
+                          false
+                        )
+                      }
+                      _ <- AnnotationLabelDao.toggleBySessionIds(
+                        NonEmptyList(sessionId, Nil),
+                        true
                       )
                       taskOpt <- TaskDao.getTaskById(taskId)
                       rowCount <- taskOpt traverse { task =>
