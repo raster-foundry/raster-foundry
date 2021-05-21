@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
+import cats.data.NonEmptyList
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest.funsuite.AnyFunSuite
@@ -493,6 +494,78 @@ class AnnotationLabelDaoSpec
                 "stac label value for group name exists"
               )
             })
+
+          true
+        }
+      )
+    }
+  }
+
+  test("toggle label by session") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            annotationCreates: List[AnnotationLabelWithClasses.Create],
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
+        ) => {
+
+          val toInsert = annotationProjectCreate.copy(
+            labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
+          )
+
+          val insertIO = for {
+            user <- UserDao.create(userCreate)
+            annotationProject <-
+              AnnotationProjectDao
+                .insert(toInsert, user)
+            classIds = annotationProject.labelClassGroups flatMap {
+              _.labelClasses
+            } map { _.id }
+            fixedUpTasks = fixupTaskFeaturesCollection(
+              taskFeatureCollectionCreate,
+              annotationProject,
+              None
+            )
+            task <- TaskDao.insertTasks(
+              fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+              user
+            ) map { _.features.head }
+            dbTaskSession <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  user,
+                  task.properties.status,
+                  task.id
+                )
+            _ <- AnnotationLabelDao.insertAnnotations(
+              annotationProject.id,
+              task.id,
+              annotationCreates map { create =>
+                addClasses(create, classIds)
+                  .copy(sessionId = Some(dbTaskSession.id))
+              },
+              user
+            )
+            _ <- AnnotationLabelDao.toggleBySessionIds(
+              NonEmptyList(dbTaskSession.id, Nil),
+              false
+            )
+            activeLabels <-
+              AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
+                annotationProject.id,
+                task.id
+              )
+          } yield (activeLabels)
+
+          val active = insertIO.transact(xa).unsafeRunSync
+          assert(
+            active.size == 0,
+            "Labels are toggled off"
+          )
 
           true
         }
