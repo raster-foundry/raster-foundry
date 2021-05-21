@@ -73,8 +73,7 @@ object TaskSessionDao extends Dao[TaskSession] {
             task.status,
             taskId
           )
-        }
-      )
+      })
 
   def keepTaskSessionAlive(id: UUID): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
@@ -117,9 +116,7 @@ object TaskSessionDao extends Dao[TaskSession] {
     for {
       taskOpt <- TaskDao.getTaskById(taskId)
       isMatch <- taskOpt traverse { task =>
-        if (
-          task.status == TaskStatus.Invalid || task.status == TaskStatus.Split
-        ) {
+        if (task.status == TaskStatus.Invalid || task.status == TaskStatus.Split) {
           Applicative[ConnectionIO].pure(false)
         } else {
           sessionType match {
@@ -198,11 +195,11 @@ object TaskSessionDao extends Dao[TaskSession] {
         )
       }
       authCampaign <- (projectOpt flatTraverse { project =>
-          project.campaignId traverse { campaignId =>
-            CampaignDao
-              .authorized(user, ObjectType.Campaign, campaignId, actionType)
-          }
-        })
+        project.campaignId traverse { campaignId =>
+          CampaignDao
+            .authorized(user, ObjectType.Campaign, campaignId, actionType)
+        }
+      })
     } yield {
       (authProject, authCampaign) match {
         case (Some(authedProject), None)  => authedProject.toBoolean
@@ -248,20 +245,19 @@ object TaskSessionDao extends Dao[TaskSession] {
         case _    => TaskSession.Create(TaskSessionType.ValidateSession)
       }
     for {
-      annotationProjectIds <-
-        AnnotationProjectDao
-          .authQuery(
-            user,
-            ObjectType.AnnotationProject,
-            None,
-            None,
-            None
-          )
-          .filter(annotationProjectParams)
-          .filter(annotationProjectIdOpt)
-          .list(limit) map { projects =>
-          projects map { _.id }
-        }
+      annotationProjectIds <- AnnotationProjectDao
+        .authQuery(
+          user,
+          ObjectType.AnnotationProject,
+          None,
+          None,
+          None
+        )
+        .filter(annotationProjectParams)
+        .filter(annotationProjectIdOpt)
+        .list(limit) map { projects =>
+        projects map { _.id }
+      }
       taskOpt <- annotationProjectIds.toNel flatTraverse { projectIds =>
         TaskDao.randomTask(taskParams, projectIds, true)
       }
