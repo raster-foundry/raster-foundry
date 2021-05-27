@@ -559,12 +559,26 @@ class AnnotationLabelDaoSpec
                 annotationProject.id,
                 task.id
               )
-          } yield (activeLabels)
+            _ <- AnnotationLabelDao.toggleBySessionIds(
+              NonEmptyList.of(dbTaskSession.id),
+              true
+            )
+            reactiveLabels <-
+              AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
+                annotationProject.id,
+                task.id
+              )
+          } yield (activeLabels, reactiveLabels)
 
-          val active = insertIO.transact(xa).unsafeRunSync
+          val (inactivated, activated) = insertIO.transact(xa).unsafeRunSync
           assert(
-            active.size == 0,
+            inactivated.size == 0,
             "Labels are toggled off"
+          )
+
+          assert(
+            activated.size == annotationCreates.size,
+            "Labels are toggled on"
           )
 
           true
