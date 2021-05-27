@@ -53,14 +53,13 @@ object TaskSessionDao extends Dao[TaskSession] {
   ): ConnectionIO[TaskSession] =
     for {
       latestSession <- getLatestForTask(taskId)
-      inserted <-
-        (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
-          fr"""VALUES
+      inserted <- (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+        fr"""VALUES
       (uuid_generate_v4(), now(), now(), NULL, ${fromStatus}, NULL, ${taskSessionCreate.sessionType},
        ${user.id}, ${taskId}, NULL, ${latestSession map { _.id }})
     """).update.withUniqueGeneratedKeys[TaskSession](
-          fieldNames: _*
-        )
+        fieldNames: _*
+      )
     } yield inserted
 
   def insert(
@@ -78,8 +77,7 @@ object TaskSessionDao extends Dao[TaskSession] {
             task.status,
             taskId
           )
-        }
-      )
+      })
 
   def keepTaskSessionAlive(id: UUID): ConnectionIO[Int] =
     (fr"UPDATE " ++ tableF ++ fr"""SET
@@ -122,9 +120,7 @@ object TaskSessionDao extends Dao[TaskSession] {
     for {
       taskOpt <- TaskDao.getTaskById(taskId)
       isMatch <- taskOpt traverse { task =>
-        if (
-          task.status == TaskStatus.Invalid || task.status == TaskStatus.Split
-        ) {
+        if (task.status == TaskStatus.Invalid || task.status == TaskStatus.Split) {
           Applicative[ConnectionIO].pure(false)
         } else {
           sessionType match {
@@ -203,11 +199,11 @@ object TaskSessionDao extends Dao[TaskSession] {
         )
       }
       authCampaign <- (projectOpt flatTraverse { project =>
-          project.campaignId traverse { campaignId =>
-            CampaignDao
-              .authorized(user, ObjectType.Campaign, campaignId, actionType)
-          }
-        })
+        project.campaignId traverse { campaignId =>
+          CampaignDao
+            .authorized(user, ObjectType.Campaign, campaignId, actionType)
+        }
+      })
     } yield {
       (authProject, authCampaign) match {
         case (Some(authedProject), None)  => authedProject.toBoolean
@@ -253,20 +249,19 @@ object TaskSessionDao extends Dao[TaskSession] {
         case _    => TaskSession.Create(TaskSessionType.ValidateSession)
       }
     for {
-      annotationProjectIds <-
-        AnnotationProjectDao
-          .authQuery(
-            user,
-            ObjectType.AnnotationProject,
-            None,
-            None,
-            None
-          )
-          .filter(annotationProjectParams)
-          .filter(annotationProjectIdOpt)
-          .list(limit) map { projects =>
-          projects map { _.id }
-        }
+      annotationProjectIds <- AnnotationProjectDao
+        .authQuery(
+          user,
+          ObjectType.AnnotationProject,
+          None,
+          None,
+          None
+        )
+        .filter(annotationProjectParams)
+        .filter(annotationProjectIdOpt)
+        .list(limit) map { projects =>
+        projects map { _.id }
+      }
       taskOpt <- annotationProjectIds.toNel flatTraverse { projectIds =>
         TaskDao.randomTask(taskParams, projectIds, true)
       }
@@ -303,8 +298,7 @@ object TaskSessionDao extends Dao[TaskSession] {
           case t if !t.completedAt.isEmpty => t
         })
         .sortBy(session =>
-          session.completedAt.map(-_.toInstant.getEpochSecond())
-        )
+          session.completedAt.map(-_.toInstant.getEpochSecond()))
         .headOption
     }
 }
