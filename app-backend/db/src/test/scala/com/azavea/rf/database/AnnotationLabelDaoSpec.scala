@@ -3,7 +3,6 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
 
-import cats.data.NonEmptyList
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest.funsuite.AnyFunSuite
@@ -550,19 +549,13 @@ class AnnotationLabelDaoSpec
               },
               user
             )
-            _ <- AnnotationLabelDao.toggleBySessionIds(
-              NonEmptyList(dbTaskSession.id, Nil),
-              false
-            )
+            _ <- AnnotationLabelDao.toggleBySessionId(dbTaskSession.id)
             activeLabels <-
               AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
                 annotationProject.id,
                 task.id
               )
-            _ <- AnnotationLabelDao.toggleBySessionIds(
-              NonEmptyList.of(dbTaskSession.id),
-              true
-            )
+            _ <- AnnotationLabelDao.toggleBySessionId(dbTaskSession.id)
             reactiveLabels <-
               AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
                 annotationProject.id,

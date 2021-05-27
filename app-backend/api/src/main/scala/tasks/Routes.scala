@@ -122,8 +122,8 @@ trait TaskRoutes
           entity(as[TaskSession.Create]) { taskSessionCreate =>
             onComplete {
               (for {
-                hasActiveSession <- TaskSessionDao.hasActiveSessionByTaskId(
-                  taskId)
+                hasActiveSession <-
+                  TaskSessionDao.hasActiveSessionByTaskId(taskId)
                 hasValidStatus <- TaskSessionDao.isSessionTypeMatchTaskStatus(
                   taskId,
                   taskSessionCreate.sessionType
@@ -293,19 +293,14 @@ trait TaskRoutes
                         sessionId,
                         taskSessionComplete
                       )
-                      prevSessions <- TaskSessionDao.listSessionsByTask(
-                        taskId,
-                        Some(List(sessionId))
-                      )
-                      _ <- prevSessions.map(_.id).toNel traverse { prev =>
-                        AnnotationLabelDao.toggleBySessionIds(
-                          prev,
-                          false
+                      prevSession <- TaskSessionDao.getLatestForTask(taskId)
+                      _ <- prevSession traverse { session =>
+                        AnnotationLabelDao.toggleBySessionId(
+                          session.id
                         )
                       }
-                      _ <- AnnotationLabelDao.toggleBySessionIds(
-                        NonEmptyList(sessionId, Nil),
-                        true
+                      _ <- AnnotationLabelDao.toggleBySessionId(
+                        sessionId
                       )
                       taskOpt <- TaskDao.getTaskById(taskId)
                       rowCount <- taskOpt traverse { task =>
