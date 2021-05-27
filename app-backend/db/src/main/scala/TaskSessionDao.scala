@@ -289,8 +289,10 @@ object TaskSessionDao extends Dao[TaskSession] {
       .filter(fr"task_sessions.task_id = ${taskId}")
       .filter(excludeSessionIdsOpt match {
         case Some(excludeSessionIds) if excludeSessionIds.size > 0 =>
-          fr"task_sessions.id NOT in (${excludeSessionIds.map(id => fr"${id}").intercalate(fr",")})"
-        case _ => fr""
+          Some(
+            fr"task_sessions.id NOT in (${excludeSessionIds.map(id => fr"${id}").intercalate(fr",")})"
+          )
+        case _ => None
       })
       .list
 
