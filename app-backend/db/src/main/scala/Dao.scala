@@ -6,6 +6,7 @@ import com.rasterfoundry.database.util._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.{Order, PageRequest}
 
+import cats.data.NonEmptyList
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
@@ -17,7 +18,6 @@ import doobie.{LogHandler => _, _}
 import scala.concurrent.duration.FiniteDuration
 
 import java.util.UUID
-import cats.data.NonEmptyList
 
 /**
   * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
@@ -57,10 +57,10 @@ object Dao extends LazyLogging {
 
   implicit val logHandler: LogHandler = LogHandler {
     case Success(
-          s: String,
-          a: List[Any],
-          e1: FiniteDuration,
-          e2: FiniteDuration
+        s: String,
+        a: List[Any],
+        e1: FiniteDuration,
+        e2: FiniteDuration
         ) =>
       val queryString =
         s.lines.dropWhile(_.trim.isEmpty).toArray.mkString("\n  ")
@@ -135,9 +135,10 @@ object Dao extends LazyLogging {
         case _              => this.copy(filters = filters ++ filterable.toFilters(thing))
       }
 
-    def filter[M >: Model](id: UUID)(implicit
-        filterable: Filterable[M, Option[Fragment]]
-    ): GroupQueryBuilder[Model] = {
+    def filter[M >: Model](id: UUID)(
+        implicit
+        filterable: Filterable[M, Option[Fragment]])
+      : GroupQueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
@@ -182,9 +183,9 @@ object Dao extends LazyLogging {
         case _              => this.copy(filters = filters ++ filterable.toFilters(thing))
       }
 
-    def filter[M >: Model](id: UUID)(implicit
-        filterable: Filterable[M, Option[Fragment]]
-    ): QueryBuilder[Model] = {
+    def filter[M >: Model](id: UUID)(
+        implicit
+        filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
@@ -232,11 +233,10 @@ object Dao extends LazyLogging {
         groupClause: Fragment = Fragment.empty
     ): ConnectionIO[PaginatedResponse[T]] = {
       for {
-        page <-
-          (selectF ++ Fragments.whereAndOpt(filters: _*) ++ groupClause ++ Page(
-            pageRequest.copy(sort = orderClause ++ pageRequest.sort)
-          )).query[T]
-            .to[List]
+        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ groupClause ++ Page(
+          pageRequest.copy(sort = orderClause ++ pageRequest.sort)
+        )).query[T]
+          .to[List]
         (count: Int, hasNext: Boolean) <- doCount match {
           case true => {
             (countF ++ Fragments.whereAndOpt(filters: _*))
