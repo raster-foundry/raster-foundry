@@ -277,4 +277,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       )
       """.update.run
     } yield ()
+
+  def toggleBySessionId(
+      sessionId: UUID
+  ): ConnectionIO[Int] = {
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = not is_active""" ++ Fragments.whereAndOpt(
+      Some(fr"session_id = ${sessionId}")
+    )).update.run
+  }
 }

@@ -18,7 +18,8 @@ final case class TaskSession(
     sessionType: TaskSessionType,
     userId: String,
     taskId: UUID,
-    note: Option[String]
+    note: Option[String],
+    previousSessionId: Option[UUID]
 )
 
 object TaskSession {

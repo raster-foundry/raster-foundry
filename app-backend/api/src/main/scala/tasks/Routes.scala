@@ -292,6 +292,15 @@ trait TaskRoutes
                         sessionId,
                         taskSessionComplete
                       )
+                      prevSession <- TaskSessionDao.getLatestForTask(taskId)
+                      _ <- prevSession traverse { session =>
+                        AnnotationLabelDao.toggleBySessionId(
+                          session.id
+                        )
+                      }
+                      _ <- AnnotationLabelDao.toggleBySessionId(
+                        sessionId
+                      )
                       taskOpt <- TaskDao.getTaskById(taskId)
                       rowCount <- taskOpt traverse { task =>
                         val taskToUpdate = Task.TaskFeatureCreate(
