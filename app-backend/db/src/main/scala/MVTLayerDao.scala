@@ -97,6 +97,7 @@ object MVTLayerDao {
             ST_TileEnvelope(${z}, ${x}, ${y})
           )
           AND annotation_labels.annotation_project_id = ${annotationProjectId}
+          AND annotation_labels.is_active = true
           AND tasks.status <> 'SPLIT'
       """.query[LabelTileGeometry]
   }

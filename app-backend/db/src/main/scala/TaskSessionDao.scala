@@ -29,7 +29,8 @@ object TaskSessionDao extends Dao[TaskSession] {
     "session_type",
     "user_id",
     "task_id",
-    "note"
+    "note",
+    "previous_session_id"
   )
 
   def selectF: Fragment = fr"SELECT " ++ selectFieldsF ++ fr" FROM " ++ tableF
@@ -50,13 +51,16 @@ object TaskSessionDao extends Dao[TaskSession] {
       fromStatus: TaskStatus,
       taskId: UUID
   ): ConnectionIO[TaskSession] =
-    (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
-      fr"""VALUES
+    for {
+      latestSession <- getLatestForTask(taskId)
+      inserted <- (fr"INSERT INTO" ++ tableF ++ fr"(" ++ insertFieldsF ++ fr")" ++
+        fr"""VALUES
       (uuid_generate_v4(), now(), now(), NULL, ${fromStatus}, NULL, ${taskSessionCreate.sessionType},
-       ${user.id}, ${taskId}, NULL)
+       ${user.id}, ${taskId}, NULL, ${latestSession map { _.id }})
     """).update.withUniqueGeneratedKeys[TaskSession](
-      fieldNames: _*
-    )
+        fieldNames: _*
+      )
+    } yield inserted
 
   def insert(
       taskSessionCreate: TaskSession.Create,
@@ -271,4 +275,30 @@ object TaskSessionDao extends Dao[TaskSession] {
       }
     } yield sessionOpt
   }
+
+  def listSessionsByTask(
+      taskId: UUID,
+      excludeSessionIdsOpt: Option[List[UUID]]
+  ): ConnectionIO[List[TaskSession]] =
+    query
+      .filter(fr"task_sessions.task_id = ${taskId}")
+      .filter(excludeSessionIdsOpt match {
+        case Some(excludeSessionIds) if excludeSessionIds.size > 0 =>
+          Some(
+            fr"task_sessions.id NOT in (${excludeSessionIds.map(id => fr"${id}").intercalate(fr",")})"
+          )
+        case _ => None
+      })
+      .list
+
+  def getLatestForTask(taskId: UUID): ConnectionIO[Option[TaskSession]] =
+    listSessionsByTask(taskId, None) map { sessions =>
+      sessions
+        .collect({
+          case t if !t.completedAt.isEmpty => t
+        })
+        .sortBy(session =>
+          session.completedAt.map(-_.toInstant.getEpochSecond()))
+        .headOption
+    }
 }

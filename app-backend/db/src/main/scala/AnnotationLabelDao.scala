@@ -25,7 +25,9 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     "geometry",
     "annotation_project_id",
     "annotation_task_id",
-    "description"
+    "description",
+    "is_active",
+    "session_id"
   )
   val selectF: Fragment = fr"SELECT" ++
     selectFieldsF ++ fr", classes.class_ids as annotation_label_classes FROM " ++
@@ -36,6 +38,16 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       GROUP BY annotation_label_id
     ) as classes ON """ ++ Fragment.const(tableName) ++ fr".id = " ++
     fr"classes.annotation_label_id"
+
+  val withClassesQB: Dao.GroupQueryBuilder[AnnotationLabelWithClasses] =
+    Dao.GroupQueryBuilder[AnnotationLabelWithClasses](
+      fr"SELECT" ++ selectFieldsF ++ fr", array_agg(annotation_class_id) as annotation_label_classes",
+      fr"annotation_labels JOIN annotation_labels_annotation_label_classes ON annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id",
+      NonEmptyList.of(fr"id"),
+      Nil
+    )
+
+  val whereActiveF = fr"is_active = true"
 
   def insertAnnotations(
       annotationProjectId: UUID,
@@ -63,7 +75,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         ${annotationLabel.id}, ${annotationLabel.createdAt},
         ${annotationLabel.createdBy}, ${annotationLabel.geometry},
         ${annotationLabel.annotationProjectId}, ${annotationLabel.annotationTaskId},
-        ${annotationLabel.description}
+        ${annotationLabel.description}, ${annotationLabel.isActive}, ${annotationLabel.sessionId}
        )"""
     )
     val labelClassFragments: List[Fragment] =
@@ -85,7 +97,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       } getOrElse { ().pure[ConnectionIO] }
       recent <- insertedAnnotationIds flatMap { _.toNel } traverse {
         insertedIds =>
-          query.filter(Fragments.in(fr"id", insertedIds)).list
+          withClassesQB.filter(Fragments.in(fr"id", insertedIds)).list
       }
     } yield { recent getOrElse Nil }
   }
@@ -93,7 +105,10 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   def listProjectLabels(
       projectId: UUID
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
-    query.filter(fr"annotation_project_id = ${projectId}").list
+    withClassesQB
+      .filter(fr"annotation_project_id = ${projectId}")
+      .filter(whereActiveF)
+      .list
   }
 
   def countByProjectsAndGroup(
@@ -103,6 +118,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     val projectIdsF = projectIds map { projectId =>
       fr"$projectId"
     }
+    val activeLabelF = fr"AND al.is_active = true"
     val fragment = (fr"""
   SELECT
     alalc.annotation_class_id AS label_class_id,
@@ -119,7 +135,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   WHERE
     al.annotation_project_id in (""" ++ projectIdsF.intercalate(fr",") ++ fr""")
   AND
-    alcls.annotation_label_group_id = ${annotationLabelClassGroupId}
+    alcls.annotation_label_group_id = ${annotationLabelClassGroupId}""" ++ activeLabelF ++ fr"""
   GROUP BY
     alalc.annotation_class_id,
     alcls.name
@@ -131,9 +147,10 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       projectId: UUID,
       taskId: UUID
   ): ConnectionIO[List[AnnotationLabelWithClasses.GeoJSON]] =
-    query
+    withClassesQB
       .filter(fr"annotation_project_id=$projectId")
       .filter(fr"annotation_task_id=$taskId")
+      .filter(whereActiveF)
       .list
       .map { listed =>
         listed.map(_.toGeoJSONFeature)
@@ -159,6 +176,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     val taskFilterF = fr"tasks.annotation_project_id = ${annotationProjectId}"
     val labelFilterF =
       fr"annotation_labels.annotation_project_id = ${annotationProjectId}"
+    val activeLabelF = fr"annotation_labels.is_active = true"
     val statusFilterFO = taskStatuses.toNel map { statuses =>
       Fragments.in(fr"tasks.status", statuses.map(TaskStatus.fromString(_)))
     }
@@ -192,7 +210,12 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         .toMap
       annotations <- OptionT.liftF(
         (selectF ++ taskJoinF ++ Fragments
-          .whereAndOpt(Some(taskFilterF), Some(labelFilterF), statusFilterFO))
+          .whereAndOpt(
+            Some(taskFilterF),
+            Some(labelFilterF),
+            statusFilterFO,
+            Some(activeLabelF)
+          ))
           .query[AnnotationLabelWithClasses]
           .to[List]
       )
@@ -221,6 +244,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
              annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id)
         WHERE
           annotation_project_id = ${childAnnotationProjectId.childAnnotationProjectId}
+          AND is_active = true
       ),
       -- is this identical to selecting from annotation labels? probably! but running everything
       -- through the join table makes me feel more optimistic about likelihood of writing
@@ -253,4 +277,13 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       )
       """.update.run
     } yield ()
+
+  def toggleBySessionId(
+      sessionId: UUID
+  ): ConnectionIO[Int] = {
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = not is_active""" ++ Fragments.whereAndOpt(
+      Some(fr"session_id = ${sessionId}")
+    )).update.run
+  }
 }
