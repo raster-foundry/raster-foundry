@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS annotation_label_classes_annotation_label_group_id_idx ON annotation_label_classes (annotation_label_group_id);
