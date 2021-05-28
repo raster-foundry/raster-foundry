@@ -39,6 +39,14 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     ) as classes ON """ ++ Fragment.const(tableName) ++ fr".id = " ++
     fr"classes.annotation_label_id"
 
+  val withClassesQB: Dao.GroupQueryBuilder[AnnotationLabelWithClasses] =
+    Dao.GroupQueryBuilder[AnnotationLabelWithClasses](
+      fr"SELECT" ++ selectFieldsF ++ fr", array_agg(annotation_class_id) as annotation_label_classes",
+      fr"annotation_labels JOIN annotation_labels_annotation_label_classes ON annotation_labels.id = annotation_labels_annotation_label_classes.annotation_label_id",
+      NonEmptyList.of(fr"id"),
+      Nil
+    )
+
   val whereActiveF = fr"is_active = true"
 
   def insertAnnotations(
@@ -89,7 +97,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       } getOrElse { ().pure[ConnectionIO] }
       recent <- insertedAnnotationIds flatMap { _.toNel } traverse {
         insertedIds =>
-          query.filter(Fragments.in(fr"id", insertedIds)).list
+          withClassesQB.filter(Fragments.in(fr"id", insertedIds)).list
       }
     } yield { recent getOrElse Nil }
   }
@@ -97,7 +105,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   def listProjectLabels(
       projectId: UUID
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
-    query
+    withClassesQB
       .filter(fr"annotation_project_id = ${projectId}")
       .filter(whereActiveF)
       .list
@@ -139,7 +147,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       projectId: UUID,
       taskId: UUID
   ): ConnectionIO[List[AnnotationLabelWithClasses.GeoJSON]] =
-    query
+    withClassesQB
       .filter(fr"annotation_project_id=$projectId")
       .filter(fr"annotation_task_id=$taskId")
       .filter(whereActiveF)
