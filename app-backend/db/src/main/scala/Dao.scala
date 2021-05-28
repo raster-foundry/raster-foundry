@@ -6,6 +6,7 @@ import com.rasterfoundry.database.util._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.datamodel.{Order, PageRequest}
 
+import cats.data.NonEmptyList
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
@@ -42,6 +43,14 @@ abstract class Dao[Model: Read: Write] extends Filterables {
   /** Begin construction of a complex, filtered query */
   def query: Dao.QueryBuilder[Model] =
     Dao.QueryBuilder[Model](selectF, tableF, List.empty)
+
+  def groupQuery(groups: NonEmptyList[Fragment]): Dao.GroupQueryBuilder[Model] =
+    Dao.GroupQueryBuilder[Model](
+      selectF,
+      tableF,
+      groups,
+      Nil
+    )
 }
 
 object Dao extends LazyLogging {
@@ -104,6 +113,50 @@ object Dao extends LazyLogging {
       """.stripMargin)
   }
 
+  // This case class represents
+  final case class GroupQueryBuilder[Model: Read: Write](
+      selectF: Fragment,
+      tableF: Fragment,
+      groups: NonEmptyList[Fragment],
+      filters: List[Option[Fragment]]
+  ) {
+
+    /** Add another filter to the query being constructed */
+    def filter[M >: Model, T](
+        thing: T
+    )(implicit filterable: Filterable[M, T]): GroupQueryBuilder[Model] =
+      this.copy(filters = filters ++ filterable.toFilters(thing))
+
+    def filter[M >: Model](
+        thing: Fragment
+    )(implicit filterable: Filterable[M, Fragment]): GroupQueryBuilder[Model] =
+      thing match {
+        case Fragment.empty => this
+        case _              => this.copy(filters = filters ++ filterable.toFilters(thing))
+      }
+
+    def filter[M >: Model](id: UUID)(
+        implicit
+        filterable: Filterable[M, Option[Fragment]])
+      : GroupQueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
+    }
+
+    def filter[M >: Model](
+        fragments: List[Option[Fragment]]
+    ): GroupQueryBuilder[Model] = {
+      this.copy(filters = filters ::: fragments)
+    }
+
+    private def noLimitListQ: Query0[Model] =
+      (selectF ++ fr"FROM" ++ tableF ++ Fragments.whereAndOpt(
+        filters: _*
+      ) ++ fr"GROUP BY" ++ groups.intercalate(fr","))
+        .query[Model]
+
+    def list: ConnectionIO[List[Model]] = noLimitListQ.to[List]
+  }
+
   final case class QueryBuilder[Model: Read: Write](
       selectF: Fragment,
       tableF: Fragment,
@@ -131,8 +184,8 @@ object Dao extends LazyLogging {
       }
 
     def filter[M >: Model](id: UUID)(
-        implicit filterable: Filterable[M, Option[Fragment]]
-    ): QueryBuilder[Model] = {
+        implicit
+        filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
@@ -251,11 +304,13 @@ object Dao extends LazyLogging {
       listQ(pageRequest).to[List]
     }
 
-    /** Short circuit for quickly getting an approximate count for large queries (e.g. scenes) **/
+    /** Short circuit for quickly getting an approximate count for large queries (e.g. scenes) * */
     def sceneCountIO(exactCountOption: Option[Boolean]): ConnectionIO[Int] = {
       val countQuery = countF ++ Fragments.whereAndOpt(filters: _*)
       val over100IO: ConnectionIO[Boolean] =
-        (fr"SELECT EXISTS(" ++ (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"offset 100") ++ fr")")
+        (fr"SELECT EXISTS(" ++ (selectF ++ Fragments.whereAndOpt(
+          filters: _*
+        ) ++ fr"offset 100") ++ fr")")
           .query[Boolean]
           .unique
       over100IO.flatMap(over100 => {
@@ -282,7 +337,7 @@ object Dao extends LazyLogging {
       (selectF ++ Fragments.whereAndOpt(filters: _*))
         .query[Model]
 
-    /**Provide a stream of responses */
+    /** Provide a stream of responses */
     def stream: fs2.Stream[ConnectionIO, Model] =
       noLimitListQ.stream
 
@@ -292,11 +347,15 @@ object Dao extends LazyLogging {
     }
 
     def listQ(offset: Int, limit: Int): Query0[Model] =
-      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit")
+      (selectF ++ Fragments.whereAndOpt(
+        filters: _*
+      ) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit")
         .query[Model]
 
     def listQ(offset: Int, limit: Int, orderClause: Fragment): Query0[Model] =
-      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ fr"OFFSET $offset" ++ fr"LIMIT $limit")
+      (selectF ++ Fragments.whereAndOpt(
+        filters: _*
+      ) ++ orderClause ++ fr"OFFSET $offset" ++ fr"LIMIT $limit")
         .query[Model]
 
     /** Provide a list of responses */
