@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Fixed
 - Applied missing index to annotation label classes table [#5585](https://github.com/raster-foundry/raster-foundry/pull/5585)
+- Set is_active when splitting tasks [#5586](https://github.com/raster-foundry/raster-foundry/pull/5586)
 
 ## [1.64.2] - 2021-05-28
 ### Fixed
