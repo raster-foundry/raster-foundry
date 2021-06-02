@@ -390,10 +390,6 @@ object ProjectDao
         )
       }
     } yield {
-      logger
-        .info(
-          s"Kicking off layer overview creation for project-$projectId-layer-$projectLayerId"
-        )
       sceneToLayerInserts
     }
   }
