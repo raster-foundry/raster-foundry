@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Added index to annotation label class id in the labels to classes join table [#5587](https://github.com/raster-foundry/raster-foundry/pull/5587)
 
+### Fixed
+- Improved performance of random review task query [#5588](https://github.com/raster-foundry/raster-foundry/pull/5588)
+
 ## [1.64.3] - 2021-06-02
 ### Fixed
 - Applied missing index to annotation label classes table [#5585](https://github.com/raster-foundry/raster-foundry/pull/5585)
