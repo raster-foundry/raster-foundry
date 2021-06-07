@@ -279,8 +279,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       user: User
   ): ConnectionIO[Option[Task.TaskFeatureWithCampaign]] = {
     fr"""
-      WITH parent_tasks (id) AS (
-        SELECT t1.id
+      WITH parent_tasks (id, annotation_project_id) AS (
+        SELECT t1.id, t1.annotation_project_id
         FROM tasks t1
         WHERE t1.annotation_project_id IN (
           SELECT id
@@ -300,8 +300,11 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
         FROM parent_tasks t1
         JOIN tasks t2
           ON t2.parent_task_id = t1.id
+        JOIN annotation_projects on annotation_projects.id = t1.annotation_project_id
+        JOIN campaigns ON campaigns.id = annotation_projects.campaign_id
         WHERE t2.task_type = ${TaskType.Review.toString}::task_type
           AND t2.status <> ${TaskStatus.Labeled.toString}::task_status
+          AND campaigns.parent_campaign_id = ${campaignId}
         GROUP BY t1.id
         HAVING COUNT(t2.id) >= 3
       ),
