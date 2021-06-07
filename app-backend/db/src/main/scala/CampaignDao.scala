@@ -317,6 +317,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           ON ta.task_id = t2.id
           AND ta.user_id = ${user.id}
           AND ta.to_status = ${TaskStatus.Validated.toString}::task_status
+        JOIN annotation_projects ON annotation_projects.id = t2.annotation_project_id
+        JOIN campaigns ON campaigns.parent_campaign_id = ${campaignId}
         WHERE t2.task_type = ${TaskType.Review.toString}::task_type
         GROUP BY t1.id, t2.id
       ),
