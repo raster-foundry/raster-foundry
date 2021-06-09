@@ -702,16 +702,28 @@ trait CampaignRoutes
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
       ) {
-        withPagination { page =>
-          complete {
-            CampaignDao
-              .performance(
-                campaignId,
-                taskSessionType,
-                page
-              )
-              .transact(xa)
-              .unsafeToFuture
+        authorizeAuthResultAsync(
+          CampaignDao
+            .authorized(
+              user,
+              ObjectType.Campaign,
+              campaignId,
+              ActionType.Validate
+            )
+            .transact(xa)
+            .unsafeToFuture
+        ) {
+          withPagination { page =>
+            complete {
+              CampaignDao
+                .performance(
+                  campaignId,
+                  taskSessionType,
+                  page
+                )
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
       }
