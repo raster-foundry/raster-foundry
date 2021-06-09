@@ -561,4 +561,10 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           }
       }
     } yield labelClassSummaries
+
+  def performance(
+      campaignId: UUID,
+      sessionEndState: TaskSessionType,
+      sort: Map[String, Order]
+  ): ConnectionIO[PaginatedResponse[CampaignPerformance]] = ???
 }
