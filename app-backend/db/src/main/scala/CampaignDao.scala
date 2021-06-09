@@ -565,6 +565,6 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
   def performance(
       campaignId: UUID,
       sessionEndState: TaskSessionType,
-      sort: Map[String, Order]
+      page: PageRequest
   ): ConnectionIO[PaginatedResponse[CampaignPerformance]] = ???
 }

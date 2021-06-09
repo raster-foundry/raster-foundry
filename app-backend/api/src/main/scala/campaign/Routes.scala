@@ -219,6 +219,16 @@ trait CampaignRoutes
               }
             }
           }
+        } ~ pathPrefix("performance") {
+          pathPrefix("label") {
+            pathEndOrSingleSlash {
+              get { getLabelingPerformance(campaignId) }
+            }
+          } ~ pathPrefix("validate") {
+            pathEndOrSingleSlash {
+              get { getValidatingPerformance(campaignId) }
+            }
+          }
         }
       }
   }
@@ -682,4 +692,34 @@ trait CampaignRoutes
         }
       }
     }
+
+  private def getPerformance(
+      campaignId: UUID,
+      taskSessionType: TaskSessionType
+  ): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Campaigns, Action.Read, None),
+        user
+      ) {
+        withPagination { page =>
+          complete {
+            CampaignDao
+              .performance(
+                campaignId,
+                taskSessionType,
+                page
+              )
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def getValidatingPerformance(campaignId: UUID): Route =
+    getPerformance(campaignId, TaskSessionType.ValidateSession)
+
+  def getLabelingPerformance(campaignId: UUID): Route =
+    getPerformance(campaignId, TaskSessionType.LabelSession)
 }
