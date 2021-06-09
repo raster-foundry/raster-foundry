@@ -139,8 +139,7 @@ object AnnotationDao extends Dao[Annotation] {
                     project.copy(defaultAnnotationGroup = Some(defaultId)),
                     project.id
                   )
-                  .map(_ => defaultId)
-            )
+                  .map(_ => defaultId))
       }
       annotationFragments: List[Fragment] = annotations.map(
         (annotationCreate: Annotation.Create) => {
@@ -157,8 +156,7 @@ object AnnotationDao extends Dao[Annotation] {
           ${annotation.geometry}, ${annotation.annotationGroup}, ${annotation.labeledBy}, ${annotation.verifiedBy},
           ${annotation.projectLayerId}, ${annotation.taskId}
         )"""
-        }
-      )
+        })
       insertedAnnotations <- annotationFragments.toNel
         .map(
           fragments =>
@@ -183,8 +181,7 @@ object AnnotationDao extends Dao[Annotation] {
                 "task_id"
               )
               .compile
-              .toList
-        )
+              .toList)
         .getOrElse(List[Annotation]().pure[ConnectionIO])
     } yield insertedAnnotations
   }
@@ -273,10 +270,8 @@ object AnnotationDao extends Dao[Annotation] {
         }),
         queryParams.bboxPolygon match {
           case Some(bboxPolygons) =>
-            val fragments = bboxPolygons.map(
-              bbox =>
-                fr"(_ST_Intersects(a.geometry, ${bbox}) AND a.geometry && ${bbox})"
-            )
+            val fragments = bboxPolygons.map(bbox =>
+              fr"(_ST_Intersects(a.geometry, ${bbox}) AND a.geometry && ${bbox})")
             Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
           case _ => None
         }
@@ -321,7 +316,7 @@ object AnnotationDao extends Dao[Annotation] {
       )).query[AnnotationWithOwnerInfo]
         .to[List]
       count <- (countF ++ Fragments.whereAndOpt(filters: _*))
-        .query[Int]
+        .query[Long]
         .unique
     } yield {
       val hasPrevious = pageRequest.offset > 0

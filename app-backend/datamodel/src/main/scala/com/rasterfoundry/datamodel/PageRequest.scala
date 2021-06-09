@@ -1,3 +1,7 @@
 package com.rasterfoundry.datamodel
 
-final case class PageRequest(offset: Int, limit: Int, sort: Map[String, Order])
+final case class PageRequest(
+    offset: Long,
+    limit: Long,
+    sort: Map[String, Order]
+)

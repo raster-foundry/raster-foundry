@@ -33,9 +33,9 @@ object Page {
       case "childrenCount"  => Some("children_count")
       case "capturedAt"     => Some("captured_at")
       case "tasksCompleted" => Some("tasks_completed")
-      case "hoursSpent"     => Some("hours_spent")
-      case "labellingRate"  => Some("tasks_completed / hours_spent")
-      case "validationRate" => Some("tasks_completed / hours_spent")
+      case "hoursSpent"     => Some("duration")
+      case "labellingRate"  => Some("tasks_completed / duration")
+      case "validationRate" => Some("tasks_completed / duration")
       case _                => None
     }
   }
@@ -45,8 +45,8 @@ object Page {
       pageRequest: PageRequest,
       defaultOrderBy: Fragment = fr"id ASC"
   ): Fragment = {
-    val offset: Int = pageRequest.offset * pageRequest.limit
-    val limit: Int = pageRequest.limit
+    val offset = pageRequest.offset * pageRequest.limit
+    val limit = pageRequest.limit
 
     val orderBy: Fragment = createOrderClause(pageRequest, defaultOrderBy)
     orderBy ++ fr"LIMIT $limit OFFSET $offset"

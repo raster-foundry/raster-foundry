@@ -28,11 +28,11 @@ object GeoJsonCodec {
 
   @ConfiguredJsonCodec
   final case class PaginatedGeoJsonResponse[T](
-      count: Int,
+      count: Long,
       hasPrevious: Boolean,
       hasNext: Boolean,
-      page: Int,
-      pageSize: Int,
+      page: Long,
+      pageSize: Long,
       features: Iterable[T],
       _type: String = "FeatureCollection"
   )
@@ -49,7 +49,9 @@ object GeoJsonCodec {
       )
   }
 
-  def fromSeqToFeatureCollection[T1 <: GeoJSONSerializable[T2],
+  def fromSeqToFeatureCollection[T1 <: GeoJSONSerializable[
+                                   T2
+                                 ],
                                  T2 <: GeoJSONFeature](
       features: Iterable[T1]
   ): GeoJsonFeatureCollection[T2] = {
@@ -59,7 +61,9 @@ object GeoJsonCodec {
     )
   }
 
-  def fromPaginatedResponseToGeoJson[T1 <: GeoJSONSerializable[T2],
+  def fromPaginatedResponseToGeoJson[T1 <: GeoJSONSerializable[
+                                       T2
+                                     ],
                                      T2 <: GeoJSONFeature](
       resp: PaginatedResponse[T1]
   ): PaginatedGeoJsonResponse[T2] = {

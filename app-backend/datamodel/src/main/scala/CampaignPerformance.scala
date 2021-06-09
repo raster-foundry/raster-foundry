@@ -9,8 +9,9 @@ import scala.util.Try
 final case class CampaignPerformance(
     avatarUri: String,
     name: String,
-    tasksComplete: Long,
-    hoursSpent: Double
+    userId: String,
+    hoursSpent: Double,
+    tasksComplete: Long
 )
 
 object CampaignPerformance {
@@ -21,9 +22,10 @@ object CampaignPerformance {
   // database one aggregation and to make it impossible to mess up the
   // calculation in a way that creates an inconsistent result
   implicit val encCampaignPerformance: Encoder[CampaignPerformance] =
-    Encoder.forProduct5(
+    Encoder.forProduct6(
       "imageUri",
       "name",
+      "userId",
       "tasksComplete",
       "hoursSpent",
       "averageTasksPerHour"
@@ -32,6 +34,7 @@ object CampaignPerformance {
         (
           perf.avatarUri,
           perf.name,
+          perf.userId,
           perf.tasksComplete,
           perf.hoursSpent,
           Try(perf.tasksComplete / perf.hoursSpent).toOption
