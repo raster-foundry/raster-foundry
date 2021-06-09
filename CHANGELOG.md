@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Improved performance of random review task query [#5588](https://github.com/raster-foundry/raster-foundry/pull/5588)
 
+### Added
+- Added performance endpoints for labeling and validation [#5589](https://github.com/raster-foundry/raster-foundry/pull/5589)
+
 ## [1.64.3] - 2021-06-02
 ### Fixed
 - Applied missing index to annotation label classes table [#5585](https://github.com/raster-foundry/raster-foundry/pull/5585)
