@@ -437,4 +437,375 @@ class TaskSessionDaoSpec
     }
   }
 
+  test("Insert labels to session, toggle label, list label") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create,
+            annotationCreates: List[AnnotationLabelWithClasses.Create]
+        ) =>
+          {
+            val labelsOpt = annotationCreates.toNel
+            val listIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProj <-
+                AnnotationProjectDao
+                  .insert(
+                    annotationProjectCreate.copy(
+                      projectId = None,
+                      labelClassGroups =
+                        annotationProjectCreate.labelClassGroups.take(1)
+                    ),
+                    dbUser
+                  )
+              classIds = dbAnnotationProj.labelClassGroups flatMap {
+                _.labelClasses
+              } map { _.id }
+              fixedUpTasks = fixupTaskFeaturesCollection(
+                taskFeaturesCreate,
+                dbAnnotationProj,
+                None
+              )
+              task <- TaskDao.insertTasks(
+                fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+                dbUser
+              ) map { _.features.head }
+              dbTaskSession <-
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    dbUser,
+                    task.properties.status,
+                    task.id
+                  )
+              insertedLabelsOpt <- labelsOpt traverse { labels =>
+                TaskSessionDao.insertLabels(
+                  task.id,
+                  dbTaskSession.id,
+                  labels.toList map { create =>
+                    addClasses(create, classIds)
+                      .copy(sessionId = Some(dbTaskSession.id))
+                  },
+                  dbUser
+                )
+              }
+              labelToUpdateOpt = insertedLabelsOpt flatMap (_.headOption)
+              _ <- labelToUpdateOpt traverse { labelToUpdate =>
+                AnnotationLabelDao.toggleByLabelId(labelToUpdate.id, false)
+              }
+              listedLabels <- TaskSessionDao.listActiveLabels(dbTaskSession.id)
+              _ <- labelToUpdateOpt traverse { labelToUpdate =>
+                AnnotationLabelDao.toggleByLabelId(labelToUpdate.id, true)
+              }
+              listedLabelsAfterToggle <-
+                TaskSessionDao.listActiveLabels(dbTaskSession.id)
+            } yield (insertedLabelsOpt, listedLabels, listedLabelsAfterToggle)
+
+            val (insertedO, listed, listedToggled) =
+              listIO.transact(xa).unsafeRunSync
+
+            assert(
+              insertedO match {
+                case Some(inserted) =>
+                  inserted.size == listed.size + 1 && inserted.size == listedToggled.size
+                case _ => true
+              },
+              "Label insert and toggle both work and listing only includes active labels"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
+  test(
+    "update label in the current session and from another session of the same task"
+  ) {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create,
+            labelCreate: AnnotationLabelWithClasses.Create
+        ) =>
+          {
+            val updateIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProj <-
+                AnnotationProjectDao
+                  .insert(
+                    annotationProjectCreate.copy(
+                      projectId = None,
+                      labelClassGroups =
+                        annotationProjectCreate.labelClassGroups.take(1)
+                    ),
+                    dbUser
+                  )
+              classIds = dbAnnotationProj.labelClassGroups flatMap {
+                _.labelClasses
+              } map { _.id }
+              fixedUpTasks = fixupTaskFeaturesCollection(
+                taskFeaturesCreate,
+                dbAnnotationProj,
+                None
+              )
+              task <- TaskDao.insertTasks(
+                fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+                dbUser
+              ) map { _.features.head }
+              dbTaskSessionOne <-
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    dbUser,
+                    task.properties.status,
+                    task.id
+                  )
+              dbTaskSessionTwo <-
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    dbUser,
+                    task.properties.status,
+                    task.id
+                  )
+              insertedLabels <- TaskSessionDao.insertLabels(
+                task.id,
+                dbTaskSessionOne.id,
+                List(
+                  addClasses(labelCreate, classIds)
+                    .copy(sessionId = Some(dbTaskSessionOne.id))
+                ),
+                dbUser
+              )
+              newClassIds = classIds.take(1)
+              // updating label from session one with updated class ID list
+              updatedLabelOpt <- insertedLabels.headOption flatTraverse {
+                inserted =>
+                  TaskSessionDao.updateLabel(
+                    task.id,
+                    dbTaskSessionOne.id,
+                    inserted.id,
+                    inserted.copy(annotationLabelClasses = newClassIds),
+                    dbUser
+                  )
+              }
+              _ <- TaskSessionDao.completeTaskSession(
+                dbTaskSessionOne.id,
+                TaskSession.Complete(TaskStatus.Labeled, None)
+              )
+              // update label from session one by submitting it to session two
+              // label is from the same task but from session one
+              // so label from session one will be deactivated
+              // label one will be added as a label in session two
+              updatedLabelToSessionTwo <-
+                updatedLabelOpt.headOption flatTraverse { updated =>
+                  TaskSessionDao.updateLabel(
+                    task.id,
+                    dbTaskSessionTwo.id,
+                    updated.id,
+                    updated,
+                    dbUser
+                  )
+                }
+              // all labels from session one should be deactivated
+              listedFromSessionOne <-
+                TaskSessionDao.listActiveLabels(dbTaskSessionOne.id)
+              listedFromSessionTwo <-
+                TaskSessionDao.listActiveLabels(dbTaskSessionTwo.id)
+            } yield (
+              updatedLabelOpt,
+              updatedLabelToSessionTwo,
+              listedFromSessionOne,
+              listedFromSessionTwo,
+              newClassIds,
+              dbTaskSessionTwo
+            )
+
+            val (
+              updatedLabel,
+              updatedLabelInSessionTwo,
+              listedSessionOne,
+              listedSessionTwo,
+              newIds,
+              sessionTwo
+            ) = updateIO.transact(xa).unsafeRunSync
+
+            assert(
+              updatedLabel.foldLeft(true)((acc, label) =>
+                label.annotationLabelClasses.toSet == newIds.toSet && acc
+              ),
+              "Updated label one has new classes"
+            )
+            assert(
+              (updatedLabel, updatedLabelInSessionTwo).tupled.foldLeft(true)(
+                (acc, labels) => {
+                  val (updated, updatedInTwo) = labels
+                  updated.description == updatedInTwo.description && updatedInTwo.annotationLabelClasses.toSet == newIds.toSet && Some(
+                    sessionTwo.id
+                  ) == updatedInTwo.sessionId && acc
+                }
+              ),
+              "Updated label two has the same content as the updated label one"
+            )
+
+            assert(
+              listedSessionOne.size == 0,
+              "After using label one to update label two, label one is deactivated"
+            )
+
+            assert(
+              listedSessionTwo.size == 1,
+              "After using label one to update label two, label one is deactivated"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
+  test("Delete labels in different sessions of the same task") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create,
+            labelCreate: AnnotationLabelWithClasses.Create
+        ) =>
+          {
+            val deleteIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProj <-
+                AnnotationProjectDao
+                  .insert(
+                    annotationProjectCreate.copy(
+                      projectId = None,
+                      labelClassGroups =
+                        annotationProjectCreate.labelClassGroups.take(1)
+                    ),
+                    dbUser
+                  )
+              classIds = dbAnnotationProj.labelClassGroups flatMap {
+                _.labelClasses
+              } map { _.id }
+              fixedUpTasks = fixupTaskFeaturesCollection(
+                taskFeaturesCreate,
+                dbAnnotationProj,
+                None
+              )
+              task <- TaskDao.insertTasks(
+                fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+                dbUser
+              ) map { _.features.head }
+              dbTaskSessionOne <-
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    dbUser,
+                    task.properties.status,
+                    task.id
+                  )
+              insertedLabelsOne <- TaskSessionDao.insertLabels(
+                task.id,
+                dbTaskSessionOne.id,
+                List(
+                  addClasses(labelCreate, classIds)
+                    .copy(sessionId = Some(dbTaskSessionOne.id))
+                ),
+                dbUser
+              )
+              insertedLabelsTwo <- TaskSessionDao.insertLabels(
+                task.id,
+                dbTaskSessionOne.id,
+                List(
+                  addClasses(labelCreate, classIds)
+                    .copy(sessionId = Some(dbTaskSessionOne.id))
+                ),
+                dbUser
+              )
+              // delete the first label from session one
+              // then get the label from the DB
+              // label in the same session should be just removed
+              deleteLabelOneOpt <- insertedLabelsOne.headOption flatTraverse {
+                labelOne =>
+                  TaskSessionDao.deleteLabel(
+                    task.id,
+                    dbTaskSessionOne.id,
+                    labelOne.id
+                  ) *> TaskSessionDao.getLabel(dbTaskSessionOne.id, labelOne.id)
+              }
+              _ <- TaskSessionDao.completeTaskSession(
+                dbTaskSessionOne.id,
+                TaskSession.Complete(TaskStatus.Labeled, None)
+              )
+              dbTaskSessionTwo <-
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    dbUser,
+                    task.properties.status,
+                    task.id
+                  )
+              // delete label 2 from session 2
+              // the label is deactivated
+              // you can still access the label
+              // but listing active labels from session 1 will not include it
+              softDeletedLabelTwo <- insertedLabelsTwo.headOption flatTraverse {
+                labelTwo =>
+                  TaskSessionDao.deleteLabel(
+                    task.id,
+                    dbTaskSessionTwo.id,
+                    labelTwo.id
+                  ) *> TaskSessionDao.getLabel(dbTaskSessionOne.id, labelTwo.id)
+              }
+              sessionOneActiveLabels <-
+                TaskSessionDao.listActiveLabels(dbTaskSessionOne.id)
+            } yield (
+              deleteLabelOneOpt,
+              insertedLabelsTwo,
+              softDeletedLabelTwo,
+              sessionOneActiveLabels
+            )
+
+            val (
+              deletedOne,
+              insertedTwo,
+              softDeletedTwo,
+              activeLabelsFromSessionOne
+            ) = deleteIO.transact(xa).unsafeRunSync
+
+            assert(
+              deletedOne == None,
+              "Label deleted in the session it is created in is a hard delete"
+            )
+            assert(
+              (insertedTwo.headOption, softDeletedTwo).tupled.foldLeft(true)(
+                (acc, (labels)) => {
+                  val (inserted, softDeleted) = labels
+                  acc && inserted.description == softDeleted.description && inserted.isActive == true && softDeleted.isActive == false
+                }
+              ),
+              "Labeled deleted in the session it is not created is a soft delete"
+            )
+
+            assert(
+              activeLabelsFromSessionOne.size == 0,
+              "No labels left in session one after hard and soft deletions"
+            )
+
+            true
+          }
+      }
+    }
+  }
+
 }

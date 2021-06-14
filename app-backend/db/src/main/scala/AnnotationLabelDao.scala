@@ -286,4 +286,48 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       Some(fr"session_id = ${sessionId}")
     )).update.run
   }
+
+  def toggleByLabelId(
+      id: UUID,
+      toggle: Boolean
+  ): ConnectionIO[Int] = {
+    (fr"UPDATE " ++ tableF ++ fr"""SET
+      is_active = $toggle""" ++ Fragments.whereAndOpt(
+      Some(fr"id = $id")
+    )).update.run
+  }
+
+  def updateLabelById(
+      id: UUID,
+      label: AnnotationLabelWithClasses
+  ): ConnectionIO[Int] = {
+    val labelClassDeleteF =
+      fr"DELETE FROM" ++ Fragment.const(joinTableName) ++ fr"""
+      WHERE annotation_label_id = $id
+    """
+    val insertClassesF: Fragment =
+      fr"INSERT INTO" ++ Fragment.const(joinTableName) ++ fr"""(
+      annotation_label_id, annotation_class_id
+    ) VALUES
+    """
+
+    val labelClassF: List[Fragment] =
+      label.annotationLabelClasses.map(labelClassId =>
+        fr"(${id}, ${labelClassId})")
+
+    val updateLabelF = (fr"UPDATE " ++ tableF ++ fr"""SET
+      geometry = ${label.geometry},
+      description = ${label.description}
+    WHERE
+      id = $id
+    """);
+
+    for {
+      _ <- labelClassDeleteF.update.run
+      _ <- labelClassF.toNel map { fragments =>
+        (insertClassesF ++ fragments.intercalate(fr",")).update.run
+      } getOrElse { 0.pure[ConnectionIO] }
+      row <- updateLabelF.update.run
+    } yield row
+  }
 }

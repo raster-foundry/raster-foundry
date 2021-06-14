@@ -236,6 +236,27 @@ object TaskSessionDao extends Dao[TaskSession] {
       )
       .exists
 
+  def authWriteLabelToSession(
+      taskId: UUID,
+      sessionId: UUID,
+      user: User
+  ): ConnectionIO[Boolean] =
+    for {
+      auth1 <- TaskSessionDao
+        .authorized(
+          taskId,
+          user,
+          ActionType.Annotate
+        )
+      auth2 <- TaskSessionDao.isOwner(taskId, sessionId, user)
+      auth3 <- TaskSessionDao.isSessionActive(sessionId)
+      auth4 <- TaskSessionDao.getTaskSessionById(sessionId)
+    } yield {
+      auth1 && auth2 && auth3 && auth4.map(session => session.taskId) == Some(
+        taskId
+      )
+    }
+
   def getRandomTaskSession(
       user: User,
       annotationProjectParams: AnnotationProjectQueryParameters,
@@ -301,4 +322,118 @@ object TaskSessionDao extends Dao[TaskSession] {
           session.completedAt.map(-_.toInstant.getEpochSecond()))
         .headOption
     }
+
+  def listActiveLabels(
+      sessionId: UUID
+  ): ConnectionIO[List[AnnotationLabelWithClasses]] =
+    AnnotationLabelDao.withClassesQB
+      .filter(fr"session_id=$sessionId")
+      .filter(fr"is_active=true")
+      .list
+
+  def filterLabel(
+      sessionId: UUID,
+      labelId: UUID
+  ): Dao.QueryBuilder[AnnotationLabelWithClasses] =
+    AnnotationLabelDao.query
+      .filter(fr"id = ${labelId}")
+      .filter(fr"session_id = ${sessionId}")
+
+  def getLabel(
+      sessionId: UUID,
+      labelId: UUID
+  ): ConnectionIO[Option[AnnotationLabelWithClasses]] =
+    filterLabel(sessionId, labelId).selectOption
+
+  def unsafeGetLabel(
+      sessionId: UUID,
+      labelId: UUID
+  ): ConnectionIO[AnnotationLabelWithClasses] =
+    filterLabel(sessionId, labelId).select
+
+  def insertLabels(
+      taskId: UUID,
+      sessionId: UUID,
+      labels: List[AnnotationLabelWithClasses.Create],
+      user: User
+  ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
+    // always insert labels to the session passed down, which is the current session
+    val toInsert = labels.map(_.copy(sessionId = Some(sessionId)))
+    for {
+      // it is okay to use the unsafe version of the method bc we know task
+      // exists in a check from the authWriteLabelToSession method
+      dbtask <- TaskDao.unsafeGetTaskById(taskId)
+      inserted <- AnnotationLabelDao
+        .insertAnnotations(
+          dbtask.annotationProjectId,
+          taskId,
+          toInsert,
+          user
+        )
+    } yield inserted
+  }
+
+  def updateLabel(
+      taskId: UUID,
+      sessionId: UUID,
+      labelId: UUID,
+      label: AnnotationLabelWithClasses,
+      user: User
+  ): ConnectionIO[Option[AnnotationLabelWithClasses]] = {
+    // updating a label:
+    // 1. from the same session: overwrite the same label
+    // 2. from previous session: deactivate previous label, insert a new label
+    if (label.annotationTaskId != taskId) {
+      Option.empty.pure[ConnectionIO]
+    } else if (label.sessionId == Some(sessionId)) {
+      for {
+        _ <- AnnotationLabelDao.updateLabelById(labelId, label)
+        updatedLabel <- getLabel(sessionId, labelId)
+      } yield updatedLabel
+    } else {
+      for {
+        _ <- AnnotationLabelDao.toggleByLabelId(labelId, false)
+        inserted <- insertLabels(
+          taskId,
+          sessionId,
+          List(label.toCreate),
+          user
+        )
+      } yield inserted.headOption
+    }
+  }
+
+  def deleteLabelsFromSession(sessionId: UUID): ConnectionIO[Int] =
+    AnnotationLabelDao.query.filter(fr"session_id = $sessionId").delete
+
+  def deleteLabel(
+      taskId: UUID,
+      sessionId: UUID,
+      labelId: UUID
+  ): ConnectionIO[Int] =
+    // if label is from this session, remove it
+    // otherwise, deactivate it
+    for {
+      labelO <- AnnotationLabelDao.query
+        .filter(fr"id = ${labelId}")
+        .selectOption
+      row <- labelO match {
+        case Some(label) if label.annotationTaskId == taskId =>
+          if (label.sessionId == Some(sessionId))
+            filterLabel(sessionId, labelId).delete
+          else AnnotationLabelDao.toggleByLabelId(labelId, false)
+        case _ => (-1).pure[ConnectionIO]
+      }
+    } yield row
+
+  def bulkReplaceLabelsInSession(
+      taskId: UUID,
+      sessionId: UUID,
+      labels: List[AnnotationLabelWithClasses],
+      user: User
+  ): ConnectionIO[List[AnnotationLabelWithClasses]] =
+    for {
+      _ <- deleteLabelsFromSession(sessionId)
+      replaced <- insertLabels(taskId, sessionId, labels.map(_.toCreate), user)
+    } yield replaced
 }

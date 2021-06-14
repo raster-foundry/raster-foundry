@@ -258,3 +258,10 @@ Path,Domain:Action,Verb
 /api/tasks/{taskId}/sessions/{sessionId}/keep-alive,annotationProjects:createAnnotation,put
 /api/tasks/{taskId}/sessions/{sessionId}/complete,annotationProjects:createAnnotation,put
 /api/tasks/session,annotationProjects:readTasks,post
+/api/tasks/{taskId}/sessions/{sessionId}/labels,annotationProjects:createAnnotation,get
+/api/tasks/{taskId}/sessions/{sessionId}/labels,annotationProjects:createAnnotation,post
+/api/tasks/{taskId}/sessions/{sessionId}/labels/{labelId},annotationProjects:createAnnotation,get
+/api/tasks/{taskId}/sessions/{sessionId}/labels/{labelId},annotationProjects:createAnnotation,put
+/api/tasks/{taskId}/sessions/{sessionId}/labels/{labelId},annotationProjects:createAnnotation,delete
+/api/tasks/{taskId}/sessions/{sessionId}/labels/bulk,annotationProjects:createAnnotation,post
+/api/tasks/{taskId}/sessions/{sessionId}/labels/bulk,annotationProjects:createAnnotation,put
