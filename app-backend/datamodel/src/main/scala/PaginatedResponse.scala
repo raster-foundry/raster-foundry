@@ -13,9 +13,11 @@ import io.circe.generic.JsonCodec
   * @param results sequence of results for a page
   */
 @JsonCodec
-final case class PaginatedResponse[A](count: Int,
-                                      hasPrevious: Boolean,
-                                      hasNext: Boolean,
-                                      page: Int,
-                                      pageSize: Int,
-                                      results: Seq[A])
+final case class PaginatedResponse[A](
+    count: Long,
+    hasPrevious: Boolean,
+    hasNext: Boolean,
+    page: Long,
+    pageSize: Long,
+    results: Seq[A]
+)

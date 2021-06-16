@@ -240,7 +240,7 @@ object TaskSessionDao extends Dao[TaskSession] {
       user: User,
       annotationProjectParams: AnnotationProjectQueryParameters,
       annotationProjectIdOpt: Option[UUID],
-      limit: Int,
+      limit: Long,
       taskParams: TaskQueryParameters
   ): ConnectionIO[Option[TaskSession]] = {
     val sessionCreate =
@@ -259,7 +259,7 @@ object TaskSessionDao extends Dao[TaskSession] {
         )
         .filter(annotationProjectParams)
         .filter(annotationProjectIdOpt)
-        .list(limit) map { projects =>
+        .list(limit.toInt) map { projects =>
         projects map { _.id }
       }
       taskOpt <- annotationProjectIds.toNel flatTraverse { projectIds =>

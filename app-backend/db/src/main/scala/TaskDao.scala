@@ -1023,7 +1023,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       user: User,
       annotationProjectParams: AnnotationProjectQueryParameters,
       annotationProjectIdOpt: Option[UUID],
-      limit: Int,
+      limit: Long,
       taskParams: TaskQueryParameters
   ): ConnectionIO[Option[Task.TaskFeature]] =
     for {
@@ -1038,7 +1038,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         .filter(annotationProjectParams)
         .filter(annotationProjectIdOpt)
         .filter(fr"is_active = true")
-        .list(limit) map { projects =>
+        .list(limit.toInt) map { projects =>
         projects map { _.id }
       }
       campaignAuthedProjects <- annotationProjectParams.campaignId traverse {
@@ -1057,7 +1057,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                   .filter(annotationProjectParams)
                   .filter(annotationProjectIdOpt)
                   .filter(fr"is_active = true")
-                  .list(limit) map { projects =>
+                  .list(limit.toInt) map { projects =>
                   projects map { _.id }
                 }
               case AuthFailure() => List.empty[UUID].pure[ConnectionIO]

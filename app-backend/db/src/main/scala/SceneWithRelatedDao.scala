@@ -27,7 +27,8 @@ object SceneWithRelatedDao
   def listAuthorizedScenes(
       pageRequest: PageRequest,
       sceneParams: CombinedSceneQueryParams,
-      user: User): ConnectionIO[PaginatedResponse[Scene.Browse]] =
+      user: User
+  ): ConnectionIO[PaginatedResponse[Scene.Browse]] =
     for {
       shapeO <- sceneParams.sceneParams.shape match {
         case Some(shpId) => ShapeDao.getShapeById(shpId)
@@ -62,7 +63,8 @@ object SceneWithRelatedDao
         sceneParams.sceneParams.layer
       )
       count <- sceneSearchBuilder.sceneCountIO(
-        sceneParams.sceneSearchModeParams.exactCount)
+        sceneParams.sceneSearchModeParams.exactCount
+      )
     } yield {
       val hasPrevious = pageRequest.offset > 0
       PaginatedResponse[Scene.Browse](
@@ -71,12 +73,13 @@ object SceneWithRelatedDao
         scenesPage.hasNext,
         pageRequest.offset,
         pageRequest.limit,
-        sceneBrowses.take(pageRequest.limit)
+        sceneBrowses.take(pageRequest.limit.toInt)
       )
     }
 
   def getScenesDatasources(
-      datasourceIds: List[UUID]): ConnectionIO[List[Datasource]] =
+      datasourceIds: List[UUID]
+  ): ConnectionIO[List[Datasource]] =
     datasourceIds.toNel match {
       case Some(ids) =>
         DatasourceDao.query.filter(Fragments.in(fr"id", ids)).list
@@ -92,11 +95,14 @@ object SceneWithRelatedDao
              ON sl.project_layer_id = pl.id""" ++
       Fragments.whereAnd(
         Fragments.in(fr"scenes.id", sceneIds),
-        fr"pl.project_id = $projectId")).query[(UUID, Boolean)].to[List]
+        fr"pl.project_id = $projectId"
+      )).query[(UUID, Boolean)].to[List]
 
-  def getScenesInLayer(sceneIds: NonEmptyList[UUID],
-                       projectId: UUID,
-                       layerId: UUID) =
+  def getScenesInLayer(
+      sceneIds: NonEmptyList[UUID],
+      projectId: UUID,
+      layerId: UUID
+  ) =
     (fr"""SELECT scenes.id, CASE WHEN (sl.project_layer_id IS NULL OR pl.project_id != ${projectId}) THEN false ELSE true END as in_layer
              FROM scenes LEFT OUTER JOIN scenes_to_layers sl
              ON scenes.id = sl.scene_id
@@ -105,10 +111,12 @@ object SceneWithRelatedDao
 """ ++
       Fragments.whereAnd(
         Fragments.in(fr"scenes.id", sceneIds),
-        fr"sl.project_layer_id = $layerId")).query[(UUID, Boolean)].to[List]
+        fr"sl.project_layer_id = $layerId"
+      )).query[(UUID, Boolean)].to[List]
 
   def getScenesImages(
-      sceneIds: List[UUID]): ConnectionIO[List[Image.WithRelated]] =
+      sceneIds: List[UUID]
+  ): ConnectionIO[List[Image.WithRelated]] =
     sceneIds.toNel match {
       case Some(ids) =>
         ImageDao.query.filter(Fragments.in(fr"scene", ids)).list flatMap {
@@ -145,14 +153,19 @@ object SceneWithRelatedDao
   def scenesToSceneBrowse(
       scenes: List[Scene],
       projectIdO: Option[UUID],
-      layerIdO: Option[UUID]): ConnectionIO[List[Scene.Browse]] = {
+      layerIdO: Option[UUID]
+  ): ConnectionIO[List[Scene.Browse]] = {
     // "The astute among you will note that we don’t actually need a monad to do this;
     // an applicative functor is all we need here."
     // let's roll, doobie
-    val componentsIO: ConnectionIO[(List[Thumbnail],
-                                    List[Datasource],
-                                    List[(UUID, Boolean)],
-                                    List[(UUID, Boolean)])] = {
+    val componentsIO: ConnectionIO[
+      (
+          List[Thumbnail],
+          List[Datasource],
+          List[(UUID, Boolean)],
+          List[(UUID, Boolean)]
+      )
+    ] = {
       val thumbnails = getScenesThumbnails(scenes map { _.id })
       val datasources = getScenesDatasources(scenes map { _.datasource })
       val inProjects = (scenes.toNel, projectIdO) match {
@@ -185,12 +198,14 @@ object SceneWithRelatedDao
   // We know the datasources list head exists because of the foreign key relationship
   @SuppressWarnings(Array("FilterDotHead", "TraversableHead"))
   def scenesToScenesWithRelated(
-      scenes: List[Scene]): ConnectionIO[List[Scene.WithRelated]] = {
+      scenes: List[Scene]
+  ): ConnectionIO[List[Scene.WithRelated]] = {
     // "The astute among you will note that we don’t actually need a monad to do this;
     // an applicative functor is all we need here."
     // let's roll, doobie
     val componentsIO: ConnectionIO[
-      (List[Image.WithRelated], List[Thumbnail], List[Datasource])] = {
+      (List[Image.WithRelated], List[Thumbnail], List[Datasource])
+    ] = {
       val thumbnails = getScenesThumbnails(scenes map { _.id })
       val images = getScenesImages(scenes map { _.id })
       val datasources = getScenesDatasources(scenes map { _.datasource })
@@ -212,8 +227,9 @@ object SceneWithRelatedDao
   }
 
   def sceneToSceneWithRelated(scene: Scene): ConnectionIO[Scene.WithRelated] = {
-    val componentsIO
-      : ConnectionIO[(List[Image.WithRelated], List[Thumbnail], Datasource)] = {
+    val componentsIO: ConnectionIO[
+      (List[Image.WithRelated], List[Thumbnail], Datasource)
+    ] = {
       val thumbnails = getScenesThumbnails(List(scene.id))
       val images = getScenesImages(List(scene.id))
       val datasource = DatasourceDao.unsafeGetDatasourceById(scene.datasource)
@@ -227,7 +243,8 @@ object SceneWithRelatedDao
   }
 
   def sceneOToSceneWithRelatedO(
-      sceneO: Option[Scene]): ConnectionIO[Option[Scene.WithRelated]] = {
+      sceneO: Option[Scene]
+  ): ConnectionIO[Option[Scene.WithRelated]] = {
     sceneO match {
       case Some(scene) => sceneToSceneWithRelated(scene) map { _.some }
       case None        => Option.empty[Scene.WithRelated].pure[ConnectionIO]
@@ -264,15 +281,18 @@ object SceneWithRelatedDao
         fr"""(ingest_status = ${IngestStatus.Queued.toString} :: ingest_status
            OR (ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND (now() - modified_at) > '1 day'::interval)
            OR (ingest_status = ${IngestStatus.Failed.toString} :: ingest_status))
-        """),
+        """
+      ),
       Some(
-        fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId})")
+        fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId})"
+      )
     )
     SceneDao.query.filter(fragments).list
   }
 
   def makeFilters[T](myList: List[T])(
-      implicit filterable: Filterable[Scene.WithRelated, T])
+      implicit
+      filterable: Filterable[Scene.WithRelated, T])
     : List[List[Option[Fragment]]] = {
     myList.map(filterable.toFilters(_))
   }
@@ -282,27 +302,34 @@ object SceneWithRelatedDao
       objectType: ObjectType,
       ownershipTypeO: Option[String] = None,
       groupTypeO: Option[GroupType] = None,
-      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene.WithRelated] =
+      groupIdO: Option[UUID] = None
+  ): Dao.QueryBuilder[Scene.WithRelated] =
     user.isSuperuser match {
       case true =>
         Dao.QueryBuilder[Scene.WithRelated](selectF, tableF, List.empty)
       case false =>
-        Dao.QueryBuilder[Scene.WithRelated](selectF,
-                                            tableF,
-                                            List(
-                                              queryObjectsF(user,
-                                                            objectType,
-                                                            ActionType.View,
-                                                            ownershipTypeO,
-                                                            groupTypeO,
-                                                            groupIdO)))
+        Dao.QueryBuilder[Scene.WithRelated](
+          selectF,
+          tableF,
+          List(
+            queryObjectsF(
+              user,
+              objectType,
+              ActionType.View,
+              ownershipTypeO,
+              groupTypeO,
+              groupIdO
+            )
+          )
+        )
     }
 
   def authorized(
       user: User,
       objectType: ObjectType,
       objectId: UUID,
-      actionType: ActionType): ConnectionIO[AuthResult[Scene.WithRelated]] = {
+      actionType: ActionType
+  ): ConnectionIO[AuthResult[Scene.WithRelated]] = {
     SceneDao.authorized(user, objectType, objectId, actionType) flatMap {
       case AuthSuccess(scene) =>
         sceneToSceneWithRelated(scene) map { AuthSuccess[Scene.WithRelated](_) }
