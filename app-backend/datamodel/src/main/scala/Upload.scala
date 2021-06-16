@@ -58,8 +58,7 @@ object Upload {
                   s3Uri.getKey
                 )
               )
-              .getContentLength()
-        )
+              .getContentLength())
         .sum
         .toLong
 
@@ -89,7 +88,8 @@ object Upload {
       source: Option[String],
       keepInSourceBucket: Option[Boolean],
       annotationProjectId: Option[UUID],
-      generateTasks: Boolean
+      generateTasks: Boolean,
+      fileSizeBytes: Option[Long] = None
   ) {
     def toUpload(
         user: User,

@@ -942,7 +942,8 @@ class CampaignDaoSpec
                 childLabels map { labelCreate =>
                   labelCreate.copy(
                     annotationLabelClasses =
-                      Random.shuffle(childClasses).take(1)
+                      Random.shuffle(childClasses).take(1),
+                    sessionId = None
                   )
                 },
                 dbChildUser
@@ -955,6 +956,7 @@ class CampaignDaoSpec
                   .filter(
                     fr"annotation_project_id = ${dbParentAnnotationProject.id}"
                   )
+                  .filter(fr"is_active = true")
                   .count
             } yield (childInserted, labelCountOnParentProject)
 
@@ -1481,7 +1483,7 @@ class CampaignDaoSpec
               )
             classIds = createdGroup.labelClasses.map { _.id }
             withClasses = annotationCreates map { create =>
-              addClasses(create, classIds)
+              addClasses(create, classIds).copy(sessionId = None)
             }
             _ <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,

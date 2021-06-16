@@ -5,7 +5,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 ### Changed
+- Added index to annotation label class id in the labels to classes join table [#5587](https://github.com/raster-foundry/raster-foundry/pull/5587)
+
+### Fixed
+- Improved performance of random review task query [#5588](https://github.com/raster-foundry/raster-foundry/pull/5588)
+
+## [1.64.3] - 2021-06-02
+### Fixed
+- Applied missing index to annotation label classes table [#5585](https://github.com/raster-foundry/raster-foundry/pull/5585)
+- Set is_active when splitting tasks [#5586](https://github.com/raster-foundry/raster-foundry/pull/5586)
+
+## [1.64.2] - 2021-05-28
+### Fixed
+- Moved aggregate out of full table query for label list [#5584](https://github.com/raster-foundry/raster-foundry/pull/5584)
+
+### Changed
+- Session complete now deactivates previous labels [#5583](https://github.com/raster-foundry/raster-foundry/pull/5583)
+
+## [1.64.1] - 2021-05-18
+### Fixed
+- Ensured task actions are updated in single request for labels and task status [#5581](https://github.com/raster-foundry/raster-foundry/pull/5581)
+
+## [1.64.0] - 2021-05-12
+### Changed
 - Parameterize API Server host in Nginx upstream [#5577](https://github.com/raster-foundry/raster-foundry/pull/5577)
+- Task status updates occur as part of label requests [#5578](https://github.com/raster-foundry/raster-foundry/pull/5578)
 - Bumped up java version to adopt@1.8.0-292 [#5591](https://github.com/raster-foundry/raster-foundry/pull/5591)
 
 ## [1.63.0] - 2021-04-29
@@ -17,6 +41,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed campaign task list endpoint [#5572](https://github.com/raster-foundry/raster-foundry/pull/5572)
 - Included CORS headers with error responses when appropriate [#5574](https://github.com/raster-foundry/raster-foundry/pull/5574)
 - Task authorization now verifies project relationship [#5576](https://github.com/raster-foundry/raster-foundry/pull/5576)
+
+### Changed
+- Make upload limit check stricter [#5575](https://github.com/raster-foundry/raster-foundry/pull/5575)
 
 ## [1.62.1] - 2021-04-19
 ### Fixed
@@ -932,7 +959,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.63.0...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.64.3...HEAD
+[1.64.3]: https://github.com/raster-foundry/raster-foundry/compare/v1.64.2...v1.64.3
+[1.64.2]: https://github.com/raster-foundry/raster-foundry/compare/v1.64.1...v1.64.2
+[1.64.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.64.0...v1.64.1
+[1.64.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.63.0...v1.64.0
 [1.63.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.62.1...v1.63.0
 [1.62.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.62.0...v1.62.1
 [1.62.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.61.2...v1.62.0

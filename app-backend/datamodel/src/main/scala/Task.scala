@@ -258,7 +258,13 @@ object Task {
       properties: TaskProperties,
       geometry: Projected[Geometry],
       _type: String = "Feature"
-  )
+  ) {
+    def toFeatureCreate: Task.TaskFeatureCreate =
+      Task.TaskFeatureCreate(
+        properties.toCreate,
+        geometry
+      )
+  }
 
   object TaskFeature {
     implicit val encTaskFeature: Encoder[TaskFeature] =

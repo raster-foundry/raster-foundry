@@ -474,6 +474,21 @@ trait AnnotationProjectTaskRoutes
                     annotationLabelWithClassesCreate.toList,
                     user
                   )
+                _ <- fc.nextStatus traverse {
+                  status =>
+                    // this is fine to do unsafely, because we know from authorization that the
+                    // task definitely exists
+                    TaskDao.unsafeGetTaskById(taskId) flatMap { task =>
+                      val taskFeature =
+                        task.copy(status = status).toGeoJSONFeature(Nil)
+                      val tfc = taskFeature.toFeatureCreate
+                      TaskDao.updateTask(
+                        task.id,
+                        tfc,
+                        user
+                      )
+                    }
+                }
               } yield {
                 insert
               }).transact(xa)

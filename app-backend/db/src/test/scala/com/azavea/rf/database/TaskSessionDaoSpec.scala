@@ -368,4 +368,73 @@ class TaskSessionDaoSpec
     }
   }
 
+  test("list sessions by task") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
+        ) => {
+          val insertIO = for {
+            dbUser <- UserDao.create(userCreate)
+            dbAnnotationProj <-
+              AnnotationProjectDao
+                .insert(
+                  annotationProjectCreate.copy(projectId = None),
+                  dbUser
+                )
+            fixedUpTasks = fixupTaskFeaturesCollection(
+              taskFeaturesCreate,
+              dbAnnotationProj,
+              None
+            )
+            task <- TaskDao.insertTasks(
+              fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+              dbUser
+            ) map { _.features.head }
+            dbTaskSessionOne <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  dbUser,
+                  task.properties.status,
+                  task.id
+                )
+            dbTaskSessionTwo <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  dbUser,
+                  task.properties.status,
+                  task.id
+                )
+            listedSessionTwo <- TaskSessionDao.listSessionsByTask(
+              task.id,
+              Some(List(dbTaskSessionOne.id))
+            )
+            listedSessionNone <- TaskSessionDao.listSessionsByTask(
+              task.id,
+              Some(List(dbTaskSessionOne.id, dbTaskSessionTwo.id))
+            )
+          } yield (dbTaskSessionTwo, listedSessionTwo, listedSessionNone)
+
+          val (dbSessionTwo, listedSecondSession, listedNoSession) =
+            insertIO.transact(xa).unsafeRunSync
+
+          assert(
+            Set(dbSessionTwo) == listedSecondSession.toSet,
+            "List session by task ID works with session exclussions"
+          )
+          assert(
+            listedNoSession.size == 0,
+            "No session listed for task if all sessions are excluded"
+          )
+          true
+        }
+      )
+    }
+  }
+
 }

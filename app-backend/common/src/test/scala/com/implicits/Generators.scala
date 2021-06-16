@@ -1134,7 +1134,9 @@ object Generators extends ArbitraryInstances {
     (
       projectedMultiPolygonGen3857,
       Gen.const(Nil),
-      Gen.option(nonEmptyStringGen)
+      Gen.option(nonEmptyStringGen),
+      Gen.const(true),
+      Gen.option(uuidGen)
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
 
   private def continentGen: Gen[Continent] =

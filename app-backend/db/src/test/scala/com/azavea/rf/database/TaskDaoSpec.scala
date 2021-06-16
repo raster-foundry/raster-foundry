@@ -2049,7 +2049,7 @@ class TaskDaoSpec
 
             assert(
               randTaskOpt == firstTaskOpt,
-              "One task availabel because the session expired"
+              "One task available because the session expired"
             )
 
             true

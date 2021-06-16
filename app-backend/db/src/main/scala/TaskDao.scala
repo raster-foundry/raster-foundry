@@ -906,7 +906,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     -- insert into labels and label classes from the old view
     label_insert as
       (insert into annotation_labels (
-        id, created_at, created_by, annotation_project_id, annotation_task_id, geometry, description
+        id, created_at, created_by, annotation_project_id, annotation_task_id, geometry, description, is_active
       ) (
         SELECT new_label_id,
                now(),
@@ -914,14 +914,21 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                annotation_project_id,
                new_task_id,
                geom,
-               description from overlapping_labels
-      ))
-    insert into annotation_labels_annotation_label_classes (
-      annotation_label_id,
-      annotation_class_id
-    ) (
-      SELECT new_label_id, annotation_class_id from overlapping_labels
+               description,
+               true
+        FROM overlapping_labels
+      )),
+    -- insert label classes
+    label_class_insert as (
+      insert into annotation_labels_annotation_label_classes (
+        annotation_label_id,
+        annotation_class_id
+      ) (
+        SELECT new_label_id, annotation_class_id from overlapping_labels
+      )
     )
+    -- update the old labels no longer to be active
+    update annotation_labels set is_active = false where annotation_task_id = $oldTaskId
   """
 
   def splitTask(
@@ -1080,4 +1087,5 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           randomTask(taskParams, projectIds)
       }
     } yield taskOpt
+
 }
