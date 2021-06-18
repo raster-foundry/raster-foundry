@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Added index to annotation label class id in the labels to classes join table [#5587](https://github.com/raster-foundry/raster-foundry/pull/5587)
 
+### Added
+- CRUD for task session labels [#5590](https://github.com/raster-foundry/raster-foundry/pull/5590)
+
 ### Fixed
 - Improved performance of random review task query [#5588](https://github.com/raster-foundry/raster-foundry/pull/5588)
 
