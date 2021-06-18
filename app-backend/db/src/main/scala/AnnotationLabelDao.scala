@@ -287,7 +287,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     )).update.run
   }
 
-  def toggleByLabelId(
+  def toggleByActiveLabelId(
       id: UUID,
       toggle: Boolean
   ): ConnectionIO[Int] = {

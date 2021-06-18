@@ -392,7 +392,7 @@ object TaskSessionDao extends Dao[TaskSession] {
       } yield updatedLabel
     } else {
       for {
-        _ <- AnnotationLabelDao.toggleByLabelId(labelId, false)
+        _ <- AnnotationLabelDao.toggleByActiveLabelId(labelId, false)
         inserted <- insertLabels(
           taskId,
           sessionId,
@@ -421,7 +421,7 @@ object TaskSessionDao extends Dao[TaskSession] {
         case Some(label) if label.annotationTaskId == taskId =>
           if (label.sessionId == Some(sessionId))
             filterLabel(sessionId, labelId).delete
-          else AnnotationLabelDao.toggleByLabelId(labelId, false)
+          else AnnotationLabelDao.toggleByActiveLabelId(labelId, false)
         case _ => (-1).pure[ConnectionIO]
       }
     } yield row

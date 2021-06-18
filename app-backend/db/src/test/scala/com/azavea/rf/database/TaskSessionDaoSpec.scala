@@ -494,11 +494,11 @@ class TaskSessionDaoSpec
               }
               labelToUpdateOpt = insertedLabelsOpt flatMap (_.headOption)
               _ <- labelToUpdateOpt traverse { labelToUpdate =>
-                AnnotationLabelDao.toggleByLabelId(labelToUpdate.id, false)
+                AnnotationLabelDao.toggleByActiveLabelId(labelToUpdate.id, false)
               }
               listedLabels <- TaskSessionDao.listActiveLabels(dbTaskSession.id)
               _ <- labelToUpdateOpt traverse { labelToUpdate =>
-                AnnotationLabelDao.toggleByLabelId(labelToUpdate.id, true)
+                AnnotationLabelDao.toggleByActiveLabelId(labelToUpdate.id, true)
               }
               listedLabelsAfterToggle <-
                 TaskSessionDao.listActiveLabels(dbTaskSession.id)
