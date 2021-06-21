@@ -2057,4 +2057,60 @@ class TaskDaoSpec
       }
     }
   }
+
+  test("update task status with optional notes and actions") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskNextStatus: TaskNextStatus
+        ) =>
+          {
+            val tfcFirstTaskOnly = taskFeaturesCreate.copy(
+              features = taskFeaturesCreate.features.take(1)
+            )
+            val updateTaskStatusIO = for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProject <- AnnotationProjectDao.insert(
+                annotationProjectCreate,
+                dbUser
+              )
+              Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  tfcFirstTaskOnly,
+                  dbAnnotationProject
+                ),
+                dbUser
+              )
+              firstTask = features.headOption
+              updatedTask <- firstTask flatTraverse { task =>
+                TaskDao.updateTaskStatus(task.id, taskNextStatus, dbUser)
+              }
+            } yield (updatedTask, firstTask)
+
+            val (updated, before) =
+              updateTaskStatusIO.transact(xa).unsafeRunSync
+
+            assert(
+              ((updated, before).tupled map {
+                case (afterUpdate, beforeUpdate) =>
+                  val isStatusUpdateCorrect =
+                    afterUpdate.properties.status == taskNextStatus.nextStatus
+                  val isNoteUpdateCorrect =
+                    afterUpdate.properties.note == taskNextStatus.note
+                  val isActionUpdateCorrect =
+                    afterUpdate.properties.actions.exists(action =>
+                      action.fromStatus == beforeUpdate.properties.status && action.toStatus == taskNextStatus.nextStatus
+                    )
+                  isStatusUpdateCorrect && isNoteUpdateCorrect && isActionUpdateCorrect
+              }) getOrElse true
+            )
+
+            true
+          }
+      }
+    }
+  }
 }

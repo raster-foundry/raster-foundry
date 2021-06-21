@@ -48,6 +48,7 @@ Path,Domain:Action,Verb
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/,annotationProjects:readTasks,get
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/,annotationProjects:updateTasks,put
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/,annotationProjects:deleteTasks,delete
+/api/annotation-projects/{annotationProjectID}/tasks/{taskID}/status,annotationProjects:updateTasks,put
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/lock/,annotationProjects:createAnnotation,post
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/lock/,annotationProjects:createAnnotation,delete
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:createAnnotation,put

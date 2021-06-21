@@ -317,6 +317,45 @@ trait AnnotationProjectTaskRoutes
       }
     }
 
+  def updateTaskStatus(projectId: UUID, taskId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.UpdateTasks, None),
+        user
+      ) {
+        authorizeAsync {
+          (for {
+            auth1 <- AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Annotate
+              )
+            auth2 <- TaskDao.isLockingUserOrUnlocked(taskId, user)
+            auth3 <- TaskDao.getTaskById(taskId) map { taskO =>
+              taskO map { _.annotationProjectId }
+            }
+          } yield {
+            auth1.toBoolean && auth2 && auth3 == Some(projectId)
+          }).transact(xa).unsafeToFuture
+        } {
+          entity(as[TaskNextStatus]) { taskNextStatus =>
+            complete {
+              TaskDao
+                .updateTaskStatus(taskId, taskNextStatus, user)
+                .transact(xa) map {
+                case None =>
+                  HttpResponse(StatusCodes.NotFound)
+                case _ =>
+                  HttpResponse(StatusCodes.NoContent)
+              } unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+
   def lockTask(projectId: UUID, taskId: UUID): Route =
     toggleLock(projectId, taskId, TaskDao.lockTask(taskId))
 
@@ -474,20 +513,8 @@ trait AnnotationProjectTaskRoutes
                     annotationLabelWithClassesCreate.toList,
                     user
                   )
-                _ <- fc.nextStatus traverse {
-                  status =>
-                    // this is fine to do unsafely, because we know from authorization that the
-                    // task definitely exists
-                    TaskDao.unsafeGetTaskById(taskId) flatMap { task =>
-                      val taskFeature =
-                        task.copy(status = status).toGeoJSONFeature(Nil)
-                      val tfc = taskFeature.toFeatureCreate
-                      TaskDao.updateTask(
-                        task.id,
-                        tfc,
-                        user
-                      )
-                    }
+                _ <- fc.nextStatus traverse { status =>
+                  TaskDao.updateTaskStatus(taskId, TaskNextStatus(status), user)
                 }
               } yield {
                 insert
