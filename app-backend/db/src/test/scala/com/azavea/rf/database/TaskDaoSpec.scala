@@ -2098,9 +2098,14 @@ class TaskDaoSpec
                 case (afterUpdate, beforeUpdate) =>
                   val isStatusUpdateCorrect =
                     afterUpdate.properties.status == taskNextStatus.nextStatus
+
                   val isNoteUpdateCorrect =
                     afterUpdate.properties.note == taskNextStatus.note
-                  val isActionUpdateCorrect =
+
+                  val isActionUpdateCorrect = if (
+                    beforeUpdate.properties.status == taskNextStatus.nextStatus
+                  ) afterUpdate.properties.actions.size == 0
+                  else
                     afterUpdate.properties.actions.exists(action =>
                       action.fromStatus == beforeUpdate.properties.status && action.toStatus == taskNextStatus.nextStatus
                     )
