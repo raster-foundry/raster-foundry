@@ -341,15 +341,14 @@ trait AnnotationProjectTaskRoutes
           }).transact(xa).unsafeToFuture
         } {
           entity(as[TaskNextStatus]) { taskNextStatus =>
-            complete {
+            onSuccess(
               TaskDao
                 .updateTaskStatus(taskId, taskNextStatus, user)
-                .transact(xa) map {
-                case None =>
-                  HttpResponse(StatusCodes.NotFound)
-                case _ =>
-                  HttpResponse(StatusCodes.NoContent)
-              } unsafeToFuture
+                .transact(xa)
+                .unsafeToFuture
+            ) {
+              case Some(task) => complete((StatusCodes.Accepted, task))
+              case _          => complete(StatusCodes.NotFound)
             }
           }
         }
