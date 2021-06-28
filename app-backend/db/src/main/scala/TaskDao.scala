@@ -100,6 +100,12 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     """;
   }
 
+  def updateStatusF(taskId: UUID, status: TaskStatus): Fragment =
+    fr"UPDATE " ++ tableF ++ fr"SET status = ${status}" ++ fr"""
+    WHERE
+      id = $taskId
+    """;
+
   def setLockF(taskId: UUID, user: User): Fragment =
     fr"UPDATE " ++ tableF ++ fr"""SET
       locked_by = ${user.id},
@@ -176,6 +182,28 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           updateTask.properties.status,
           user.id,
           updateTask.properties.note
+        )
+      )
+      withActions <- OptionT(getTaskWithActions(taskId))
+    } yield withActions).value
+
+  def updateTaskStatus(
+      taskId: UUID,
+      taskNextStatus: TaskNextStatus,
+      user: User
+  ): ConnectionIO[Option[Task.TaskFeature]] =
+    (for {
+      initial <- OptionT(getTaskById(taskId))
+      _ <- OptionT.liftF(
+        updateStatusF(taskId, taskNextStatus.nextStatus).update.run
+      )
+      _ <- OptionT.liftF(
+        appendAction(
+          taskId,
+          initial.status,
+          taskNextStatus.nextStatus,
+          user.id,
+          taskNextStatus.note
         )
       )
       withActions <- OptionT(getTaskWithActions(taskId))
