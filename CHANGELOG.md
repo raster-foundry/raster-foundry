@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 - CRUD for task session labels [#5590](https://github.com/raster-foundry/raster-foundry/pull/5590)
+- Endpoint to update task status and action only [#5593](https://github.com/raster-foundry/raster-foundry/pull/5593)
 
 ### Fixed
 - Improved performance of random review task query [#5588](https://github.com/raster-foundry/raster-foundry/pull/5588)
