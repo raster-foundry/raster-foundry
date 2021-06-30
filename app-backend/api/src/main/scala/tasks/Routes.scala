@@ -4,6 +4,7 @@ import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel.GeoJsonCodec._
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
@@ -51,6 +52,32 @@ trait TaskRoutes
               } ~ pathPrefix("complete") {
                 put {
                   completeSession(taskId, sessionId)
+                }
+              } ~ pathPrefix("labels") {
+                pathEndOrSingleSlash {
+                  get {
+                    listSessionLabels(taskId, sessionId)
+                  } ~ post {
+                    createLabel(taskId, sessionId)
+                  }
+                } ~ pathPrefix(JavaUUID) { labelId =>
+                  {
+                    pathEndOrSingleSlash {
+                      get {
+                        getLabel(taskId, sessionId, labelId)
+                      } ~ put {
+                        updateLabel(taskId, sessionId, labelId)
+                      } ~ delete {
+                        deleteLabel(taskId, sessionId, labelId)
+                      }
+                    }
+                  }
+                } ~ pathPrefix("bulk") {
+                  post {
+                    bulkCreateSessionLabels(taskId, sessionId)
+                  } ~ put {
+                    bulkUpdateSessionLabels(taskId, sessionId)
+                  }
                 }
               }
             }
@@ -363,6 +390,262 @@ trait TaskRoutes
                 logger.error(e.getMessage)
                 complete { HttpResponse(StatusCodes.BadRequest) }
             }
+        }
+      }
+    }
+
+  def listSessionLabels(taskId: UUID, sessionId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAsync {
+          TaskSessionDao
+            .authorized(
+              taskId,
+              user,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            TaskSessionDao
+              .listActiveLabels(sessionId)
+              .transact(xa)
+              .unsafeToFuture
+              .map { labels: List[AnnotationLabelWithClasses] =>
+                labels.map(_.toGeoJSONFeature)
+              }
+          }
+        }
+      }
+    }
+
+  def createLabel(taskId: UUID, sessionId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAsync {
+          TaskSessionDao
+            .authWriteLabelToSession(taskId, sessionId, user)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[AnnotationLabelWithClasses.GeoJSONFeatureCreate]) {
+            featureCreate =>
+              onSuccess(
+                TaskSessionDao
+                  .insertLabels(
+                    taskId,
+                    sessionId,
+                    List(featureCreate.toAnnotationLabelWithClassesCreate),
+                    user
+                  )
+                  .transact(xa)
+                  .unsafeToFuture
+                  .map { labels: List[AnnotationLabelWithClasses] =>
+                    // the inserted annotation is just one feature
+                    // so we return the first feature from the returned list
+                    labels.headOption.map(_.toGeoJSONFeature)
+                  }
+              ) { createdLabel =>
+                complete((StatusCodes.Created, createdLabel))
+              }
+          }
+        }
+      }
+    }
+
+  def bulkCreateSessionLabels(taskId: UUID, sessionId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAsync {
+          TaskSessionDao
+            .authWriteLabelToSession(taskId, sessionId, user)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[AnnotationLabelWithClassesFeatureCollectionCreate]) { fc =>
+            val labelWithClassesCreateList = fc.features map {
+              _.toAnnotationLabelWithClassesCreate
+            }
+            onSuccess(
+              TaskSessionDao
+                .insertLabels(
+                  taskId,
+                  sessionId,
+                  labelWithClassesCreateList.toList,
+                  user
+                )
+                .transact(xa)
+                .unsafeToFuture
+                .map { labels: List[AnnotationLabelWithClasses] =>
+                  fromSeqToFeatureCollection[
+                    AnnotationLabelWithClasses,
+                    AnnotationLabelWithClasses.GeoJSON
+                  ](
+                    labels
+                  )
+                }
+            ) { createdLabels =>
+              complete((StatusCodes.Created, createdLabels))
+            }
+          }
+        }
+      }
+    }
+
+  def bulkUpdateSessionLabels(taskId: UUID, sessionId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAsync {
+          TaskSessionDao
+            .authWriteLabelToSession(taskId, sessionId, user)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[AnnotationLabelWithClassesFeatureCollection]) { fc =>
+            val labelWithClassesCreateList = fc.features map {
+              _.toAnnotationLabelWithClassesOpt
+            }
+            onSuccess(
+              TaskSessionDao
+                .bulkReplaceLabelsInSession(
+                  taskId,
+                  sessionId,
+                  labelWithClassesCreateList.toList.flatten,
+                  user
+                )
+                .transact(xa)
+                .unsafeToFuture
+                .map { labels: List[AnnotationLabelWithClasses] =>
+                  fromSeqToFeatureCollection[
+                    AnnotationLabelWithClasses,
+                    AnnotationLabelWithClasses.GeoJSON
+                  ](
+                    labels
+                  )
+                }
+            ) { createdLabels =>
+              complete((StatusCodes.Created, createdLabels))
+            }
+          }
+        }
+      }
+    }
+
+  def getLabel(taskId: UUID, sessionId: UUID, labelId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAsync {
+          TaskSessionDao
+            .authorized(
+              taskId,
+              user,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete {
+              TaskSessionDao
+                .getLabel(sessionId, labelId)
+                .transact(xa)
+                .unsafeToFuture
+                .map { labelOpt: Option[AnnotationLabelWithClasses] =>
+                  labelOpt.map(_.toGeoJSONFeature)
+                }
+            }
+          }
+        }
+      }
+    }
+
+  def updateLabel(taskId: UUID, sessionId: UUID, labelId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAsync {
+          TaskSessionDao
+            .authWriteLabelToSession(taskId, sessionId, user)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[AnnotationLabelWithClasses.GeoJSON]) { feature =>
+            onSuccess(
+              (feature.toAnnotationLabelWithClassesOpt traverse { label =>
+                TaskSessionDao
+                  .updateLabel(
+                    taskId,
+                    sessionId,
+                    labelId,
+                    label,
+                    user
+                  )
+              }).transact(xa).unsafeToFuture
+            ) {
+              case Some(updatedLabel) =>
+                complete(
+                  (StatusCodes.Created, updatedLabel.map(_.toGeoJSONFeature))
+                )
+              case _ =>
+                complete(
+                  (StatusCodes.BadRequest -> "NO MATCHING LABEL TO UPDATE")
+                )
+            }
+          }
+        }
+      }
+    }
+
+  def deleteLabel(taskId: UUID, sessionId: UUID, labelId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
+        user
+      ) {
+        authorizeAsync {
+          TaskSessionDao
+            .authWriteLabelToSession(
+              taskId,
+              sessionId,
+              user
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          onComplete {
+            TaskSessionDao
+              .deleteLabel(taskId, sessionId, labelId)
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            case Success(rowCount) =>
+              if (rowCount == -1) complete {
+                StatusCodes.BadRequest -> "NO MATCHING LABEL TO DELETE"
+              } else complete { StatusCodes.OK }
+            case Failure(e) =>
+              logger.error(e.getMessage)
+              complete {
+                StatusCodes.BadRequest -> "ERROR IN LABEL DELETE"
+              }
+          }
         }
       }
     }

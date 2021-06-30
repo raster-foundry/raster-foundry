@@ -414,3 +414,13 @@ final case class UnionedGeomWithStatus(
     status: TaskStatus,
     geometry: Projected[Geometry]
 )
+
+final case class TaskNextStatus(
+    nextStatus: TaskStatus,
+    note: Option[NonEmptyString] = None
+)
+
+object TaskNextStatus {
+  implicit val decTaskNextStatus: Decoder[TaskNextStatus] =
+    deriveDecoder
+}

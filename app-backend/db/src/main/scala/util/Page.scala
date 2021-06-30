@@ -21,18 +21,22 @@ object Page {
       // the COALESCE of these two columns is indexed already
       case "acquisitionDatetime" =>
         Some("COALESCE(acquisition_date, created_at)")
-      case "sunAzimuth"    => Some("sun_azimuth")
-      case "sunElevation"  => Some("sun_elevation")
-      case "cloudCover"    => Some("cloud_cover")
-      case "createdAt"     => Some("created_at")
-      case "modifiedAt"    => Some("modified_at")
-      case "title"         => Some("title")
-      case "id"            => Some("id")
-      case "role"          => Some("role")
-      case "visibility"    => Some("visibility")
-      case "childrenCount" => Some("children_count")
-      case "capturedAt"    => Some("captured_at")
-      case _               => None
+      case "sunAzimuth"     => Some("sun_azimuth")
+      case "sunElevation"   => Some("sun_elevation")
+      case "cloudCover"     => Some("cloud_cover")
+      case "createdAt"      => Some("created_at")
+      case "modifiedAt"     => Some("modified_at")
+      case "title"          => Some("title")
+      case "id"             => Some("id")
+      case "role"           => Some("role")
+      case "visibility"     => Some("visibility")
+      case "childrenCount"  => Some("children_count")
+      case "capturedAt"     => Some("captured_at")
+      case "tasksCompleted" => Some("tasks_completed")
+      case "hoursSpent"     => Some("duration")
+      case "labellingRate"  => Some("tasks_completed / duration")
+      case "validationRate" => Some("tasks_completed / duration")
+      case _                => None
     }
   }
 
@@ -41,17 +45,18 @@ object Page {
       pageRequest: PageRequest,
       defaultOrderBy: Fragment = fr"id ASC"
   ): Fragment = {
-    val offset: Int = pageRequest.offset * pageRequest.limit
-    val limit: Int = pageRequest.limit
+    val offset = pageRequest.offset * pageRequest.limit
+    val limit = pageRequest.limit
 
     val orderBy: Fragment = createOrderClause(pageRequest, defaultOrderBy)
     orderBy ++ fr"LIMIT $limit OFFSET $offset"
   }
 
-  def apply(pageRequest: Option[PageRequest]): Fragment = pageRequest match {
-    case Some(pr) => apply(pr)
-    case None     => fr""
-  }
+  def apply(pageRequest: Option[PageRequest]): Fragment =
+    pageRequest match {
+      case Some(pr) => apply(pr)
+      case None     => fr""
+    }
 
   @SuppressWarnings((Array("TraversableHead")))
   def createOrderClause(

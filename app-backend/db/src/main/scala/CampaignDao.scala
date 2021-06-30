@@ -2,6 +2,7 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.types._
+import com.rasterfoundry.database.util.Page
 import com.rasterfoundry.datamodel._
 
 import cats.data.OptionT
@@ -279,8 +280,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
       user: User
   ): ConnectionIO[Option[Task.TaskFeatureWithCampaign]] = {
     fr"""
-      WITH parent_tasks (id) AS (
-        SELECT t1.id
+      WITH parent_tasks (id, annotation_project_id) AS (
+        SELECT t1.id, t1.annotation_project_id
         FROM tasks t1
         WHERE t1.annotation_project_id IN (
           SELECT id
@@ -300,8 +301,11 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
         FROM parent_tasks t1
         JOIN tasks t2
           ON t2.parent_task_id = t1.id
+        JOIN annotation_projects on annotation_projects.id = t1.annotation_project_id
+        JOIN campaigns ON campaigns.id = annotation_projects.campaign_id
         WHERE t2.task_type = ${TaskType.Review.toString}::task_type
           AND t2.status <> ${TaskStatus.Labeled.toString}::task_status
+          AND campaigns.parent_campaign_id = ${campaignId}
         GROUP BY t1.id
         HAVING COUNT(t2.id) >= 3
       ),
@@ -314,6 +318,8 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           ON ta.task_id = t2.id
           AND ta.user_id = ${user.id}
           AND ta.to_status = ${TaskStatus.Validated.toString}::task_status
+        JOIN annotation_projects ON annotation_projects.id = t2.annotation_project_id
+        JOIN campaigns ON campaigns.parent_campaign_id = ${campaignId}
         WHERE t2.task_type = ${TaskType.Review.toString}::task_type
         GROUP BY t1.id, t2.id
       ),
@@ -556,4 +562,89 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
           }
       }
     } yield labelClassSummaries
+
+  private[database] def performanceQ(
+      campaignId: UUID,
+      sessionType: TaskSessionType,
+      page: PageRequest
+  ): Query0[CampaignPerformance] = {
+    val (fromStatus, toStatus): (TaskStatus, TaskStatus) = sessionType match {
+      case TaskSessionType.LabelSession =>
+        (TaskStatus.Unlabeled, TaskStatus.Labeled)
+      case TaskSessionType.ValidateSession =>
+        (TaskStatus.Labeled, TaskStatus.Validated)
+    }
+
+    (fr"""
+    with total_time_spent as (
+      select user_id, sum(date_part('epoch', last_tick_at - completed_at)) / (60 * 60) as duration
+      from
+        task_sessions join tasks on tasks.id = task_sessions.task_id
+        join annotation_projects on tasks.annotation_project_id = annotation_projects.id
+      where annotation_projects.campaign_id = $campaignId
+      group by user_id
+    ),
+    total_tasks_completed as (
+      select user_id, count(distinct(task_sessions.id)) as tasks_completed
+      from
+        task_sessions join tasks on task_sessions.task_id = tasks.id
+        join annotation_projects on tasks.annotation_project_id = annotation_projects.id
+      where from_status = $fromStatus and to_status = $toStatus
+      and campaign_id = $campaignId
+      group by user_id
+    )
+    select users.profile_image_uri, users.name, users.id,
+    total_time_spent.duration, total_tasks_completed.tasks_completed
+    from
+      total_tasks_completed join users on total_tasks_completed.user_id = users.id
+      join total_time_spent on total_time_spent.user_id = users.id
+    """ ++ Page(page)).query[CampaignPerformance]
+  }
+
+  private[database] def uniqueUsersQ(campaignId: UUID): Query0[Long] = fr"""
+    select count(distinct(user_id))
+    from
+      task_sessions join tasks on task_sessions.task_id = tasks.id
+      join annotation_projects on tasks.annotation_project_id = annotation_projects.id
+      where campaign_id = $campaignId
+  """.query[Long]
+
+  def performance(
+      campaignId: UUID,
+      sessionType: TaskSessionType,
+      page: PageRequest
+  ): ConnectionIO[PaginatedResponse[CampaignPerformance]] = {
+
+    // it's hard to use the GroupQueryBuilder here, since the task complete counts
+    // and total time spent have different support in task_sessions.
+    // the latter uses _all_ task sessions in this campaign, while the former uses
+    // only task sessions that result in a complete session.
+    // so instead, it's back to the common table expression adventure that has
+    // bitten us recently with performance problems where we had unfiltered joins.
+    // since it's on my mind, I just won't _do_ that, but uh you, dear reader,
+    // should be suspicious that I'm going to get this exactly right from a
+    // scalable query perspective.
+    // also note: this "time spent" doesn't do any de-duplication, which will give
+    // us weird results if, for example, someone opens multiple tabs to do labeling.
+    // this calculation gets a lot harder when worrying about overlapping intervals.
+    // that said, this effectively results in a performance penalty for keeping a lot
+    // of tasks pretty much locked against others interacting with them, which I think
+    // is a reasonable thing to do.
+    val perfQuery = performanceQ(campaignId, sessionType, page)
+      .to[List]
+
+    val uniqueUsersQuery: ConnectionIO[Long] = uniqueUsersQ(campaignId).unique
+
+    (perfQuery, uniqueUsersQuery) mapN {
+      case (results, count) =>
+        PaginatedResponse(
+          count.toInt,
+          page.offset > 0,
+          count > (page.offset + 1 * page.limit),
+          page.offset,
+          page.limit,
+          results
+        )
+    }
+  }
 }

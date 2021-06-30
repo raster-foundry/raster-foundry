@@ -48,6 +48,7 @@ Path,Domain:Action,Verb
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/,annotationProjects:readTasks,get
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/,annotationProjects:updateTasks,put
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/,annotationProjects:deleteTasks,delete
+/api/annotation-projects/{annotationProjectID}/tasks/{taskID}/status,annotationProjects:updateTasks,put
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/lock/,annotationProjects:createAnnotation,post
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/lock/,annotationProjects:createAnnotation,delete
 /api/annotation-projects/{annotationProjectID}/tasks/{taskID}/labels,annotationProjects:createAnnotation,put
@@ -250,9 +251,18 @@ Path,Domain:Action,Verb
 /api/campaigns/{campaignId}/share,campaigns:share,post
 /api/campaigns/{campaignId}/share,campaigns:share,get
 /api/campaigns/{campaignId}/share/{userId},campaigns:read,delete
+/api/campaigns/{campaignId}/performance/label,campaigns:read,get
+/api/campaigns/{campaignId}/performance/validate,campaigns:read,get
 /api/tasks/{taskId}/sessions,annotationProjects:readTasks,get
 /api/tasks/{taskId}/sessions,annotationProjects:createAnnotation,post
 /api/tasks/{taskId}/sessions/{sessionId},annotationProjects:readTasks,get
 /api/tasks/{taskId}/sessions/{sessionId}/keep-alive,annotationProjects:createAnnotation,put
 /api/tasks/{taskId}/sessions/{sessionId}/complete,annotationProjects:createAnnotation,put
 /api/tasks/session,annotationProjects:readTasks,post
+/api/tasks/{taskId}/sessions/{sessionId}/labels,annotationProjects:createAnnotation,get
+/api/tasks/{taskId}/sessions/{sessionId}/labels,annotationProjects:createAnnotation,post
+/api/tasks/{taskId}/sessions/{sessionId}/labels/{labelId},annotationProjects:createAnnotation,get
+/api/tasks/{taskId}/sessions/{sessionId}/labels/{labelId},annotationProjects:createAnnotation,put
+/api/tasks/{taskId}/sessions/{sessionId}/labels/{labelId},annotationProjects:createAnnotation,delete
+/api/tasks/{taskId}/sessions/{sessionId}/labels/bulk,annotationProjects:createAnnotation,post
+/api/tasks/{taskId}/sessions/{sessionId}/labels/bulk,annotationProjects:createAnnotation,put

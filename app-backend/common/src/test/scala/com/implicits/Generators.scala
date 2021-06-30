@@ -1046,6 +1046,19 @@ object Generators extends ArbitraryInstances {
   private def taskStatusListGen: Gen[List[TaskStatus]] =
     Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
 
+  private def taskNextStatusGen: Gen[TaskNextStatus] =
+    for {
+      nextStatus <- taskStatusGen
+      note <-
+        if (nextStatus == TaskStatus.Flagged) {
+          nonEmptyStringGen map { s =>
+            Some(NonEmptyString.unsafeFrom(s))
+          }
+        } else {
+          Gen.const(None)
+        }
+    } yield TaskNextStatus(nextStatus, note)
+
   private val stacAnnotationExportGenTup =
     (
       nonEmptyStringGen,
@@ -1509,5 +1522,8 @@ object Generators extends ArbitraryInstances {
     implicit def arbLabelClassGroup
         : Arbitrary[AnnotationLabelClassGroup.Create] =
       Arbitrary { labelClassGroupGen }
+
+    implicit def arbTaskNextStatus: Arbitrary[TaskNextStatus] =
+      Arbitrary { taskNextStatusGen }
   }
 }

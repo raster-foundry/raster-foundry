@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.65.0] - 2021-06-30
+### Changed
+- Added index to annotation label class id in the labels to classes join table [#5587](https://github.com/raster-foundry/raster-foundry/pull/5587)
+
+### Added
+- CRUD for task session labels [#5590](https://github.com/raster-foundry/raster-foundry/pull/5590)
+- Endpoint to update task status and action only [#5593](https://github.com/raster-foundry/raster-foundry/pull/5593)
+
+### Fixed
+- Improved performance of random review task query [#5588](https://github.com/raster-foundry/raster-foundry/pull/5588)
+
+### Added
+- Added performance endpoints for labeling and validation [#5589](https://github.com/raster-foundry/raster-foundry/pull/5589)
+
 ## [1.64.3] - 2021-06-02
 ### Fixed
 - Applied missing index to annotation label classes table [#5585](https://github.com/raster-foundry/raster-foundry/pull/5585)
@@ -25,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Parameterize API Server host in Nginx upstream [#5577](https://github.com/raster-foundry/raster-foundry/pull/5577)
 - Task status updates occur as part of label requests [#5578](https://github.com/raster-foundry/raster-foundry/pull/5578)
+- Bumped up java version to adopt@1.8.0-292 [#5591](https://github.com/raster-foundry/raster-foundry/pull/5591)
 
 ## [1.63.0] - 2021-04-29
 ### Added

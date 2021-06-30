@@ -100,6 +100,12 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     """;
   }
 
+  def updateStatusF(taskId: UUID, status: TaskStatus): Fragment =
+    fr"UPDATE " ++ tableF ++ fr"SET status = ${status}" ++ fr"""
+    WHERE
+      id = $taskId
+    """;
+
   def setLockF(taskId: UUID, user: User): Fragment =
     fr"UPDATE " ++ tableF ++ fr"""SET
       locked_by = ${user.id},
@@ -176,6 +182,28 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           updateTask.properties.status,
           user.id,
           updateTask.properties.note
+        )
+      )
+      withActions <- OptionT(getTaskWithActions(taskId))
+    } yield withActions).value
+
+  def updateTaskStatus(
+      taskId: UUID,
+      taskNextStatus: TaskNextStatus,
+      user: User
+  ): ConnectionIO[Option[Task.TaskFeature]] =
+    (for {
+      initial <- OptionT(getTaskById(taskId))
+      _ <- OptionT.liftF(
+        updateStatusF(taskId, taskNextStatus.nextStatus).update.run
+      )
+      _ <- OptionT.liftF(
+        appendAction(
+          taskId,
+          initial.status,
+          taskNextStatus.nextStatus,
+          user.id,
+          taskNextStatus.note
         )
       )
       withActions <- OptionT(getTaskWithActions(taskId))
@@ -1023,7 +1051,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       user: User,
       annotationProjectParams: AnnotationProjectQueryParameters,
       annotationProjectIdOpt: Option[UUID],
-      limit: Int,
+      limit: Long,
       taskParams: TaskQueryParameters
   ): ConnectionIO[Option[Task.TaskFeature]] =
     for {
@@ -1038,7 +1066,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
         .filter(annotationProjectParams)
         .filter(annotationProjectIdOpt)
         .filter(fr"is_active = true")
-        .list(limit) map { projects =>
+        .list(limit.toInt) map { projects =>
         projects map { _.id }
       }
       campaignAuthedProjects <- annotationProjectParams.campaignId traverse {
@@ -1057,7 +1085,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                   .filter(annotationProjectParams)
                   .filter(annotationProjectIdOpt)
                   .filter(fr"is_active = true")
-                  .list(limit) map { projects =>
+                  .list(limit.toInt) map { projects =>
                   projects map { _.id }
                 }
               case AuthFailure() => List.empty[UUID].pure[ConnectionIO]

@@ -178,6 +178,12 @@ trait AnnotationProjectRoutes
             } ~ delete {
               deleteTask(projectId, taskId)
             }
+          } ~ pathPrefix("status") {
+            pathEndOrSingleSlash {
+              put {
+                updateTaskStatus(projectId, taskId)
+              }
+            }
           } ~ pathPrefix("lock") {
             pathEndOrSingleSlash {
               post {
