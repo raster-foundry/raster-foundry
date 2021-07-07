@@ -334,8 +334,8 @@ object TaskSessionDao extends Dao[TaskSession] {
   def filterLabel(
       sessionId: UUID,
       labelId: UUID
-  ): Dao.QueryBuilder[AnnotationLabelWithClasses] =
-    AnnotationLabelDao.query
+  ): Dao.GroupQueryBuilder[AnnotationLabelWithClasses] =
+    AnnotationLabelDao.withClassesQB
       .filter(fr"id = ${labelId}")
       .filter(fr"session_id = ${sessionId}")
 
@@ -420,7 +420,10 @@ object TaskSessionDao extends Dao[TaskSession] {
       row <- labelO match {
         case Some(label) if label.annotationTaskId == taskId =>
           if (label.sessionId == Some(sessionId))
-            filterLabel(sessionId, labelId).delete
+            AnnotationLabelDao.query
+              .filter(fr"id = ${labelId}")
+              .filter(fr"session_id = ${sessionId}")
+              .delete
           else AnnotationLabelDao.toggleByActiveLabelId(labelId, false)
         case _ => (-1).pure[ConnectionIO]
       }

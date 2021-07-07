@@ -155,6 +155,10 @@ object Dao extends LazyLogging {
         .query[Model]
 
     def list: ConnectionIO[List[Model]] = noLimitListQ.to[List]
+
+    def selectOption: ConnectionIO[Option[Model]] = noLimitListQ.option
+
+    def select: ConnectionIO[Model] = noLimitListQ.unique
   }
 
   final case class QueryBuilder[Model: Read: Write](
