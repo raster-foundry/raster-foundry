@@ -335,7 +335,7 @@ object TaskSessionDao extends Dao[TaskSession] {
       sessionId: UUID,
       labelId: UUID
   ): Dao.QueryBuilder[AnnotationLabelWithClasses] =
-    AnnotationLabelDao.withClassesQB
+    AnnotationLabelDao.query
       .filter(fr"id = ${labelId}")
       .filter(fr"session_id = ${sessionId}")
 
@@ -404,7 +404,7 @@ object TaskSessionDao extends Dao[TaskSession] {
   }
 
   def deleteLabelsFromSession(sessionId: UUID): ConnectionIO[Int] =
-    AnnotationLabelDao.withClassesQB.filter(fr"session_id = $sessionId").delete
+    AnnotationLabelDao.query.filter(fr"session_id = $sessionId").delete
 
   def deleteLabel(
       taskId: UUID,
@@ -414,7 +414,7 @@ object TaskSessionDao extends Dao[TaskSession] {
     // if label is from this session, remove it
     // otherwise, deactivate it
     for {
-      labelO <- AnnotationLabelDao.withClassesQB
+      labelO <- AnnotationLabelDao.query
         .filter(fr"id = ${labelId}")
         .selectOption
       row <- labelO match {
