@@ -69,6 +69,10 @@ lazy val sharedSettings = Seq(
     "com.typesafe.scala-logging",
     "scala-logging"
   ),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "com.typesafe.scala-logging",
+    "scala-logging"
+  ),
   undeclaredCompileDependenciesFilter -= moduleFilter(
     "org.slf4j",
     "slf4j-api"
