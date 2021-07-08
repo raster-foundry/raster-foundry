@@ -40,6 +40,12 @@ trait Authentication extends Directives with LazyLogging {
 
   implicit def xa: Transactor[IO]
 
+  // We're in full "just make the Java lib work" mode here. The JWT libs we use
+  // at their base depend on an old Java JWT library. Somehow the `getAsString` method
+  // got lost in version upgrades (we did a 5 major version bump of the Scala wrapper)
+  // so this is a compatibility function to get back what we had. It's a poor man's
+  // decoder basically.
+  @SuppressWarnings(Array("AsInstanceOf"))
   private def getAsString(
       field: String,
       obj: java.util.Map[String, Object]
@@ -142,13 +148,13 @@ trait Authentication extends Directives with LazyLogging {
       (Option(claims.getStringClaim(field)), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
-    }
+      }
 
     val compareDelegatedToEmail = (field: String) =>
       (delegatedProfile.map(_.get(field).asInstanceOf[String]), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
-    }
+      }
 
     compareToEmail("name")
       .orElse(compareToEmail("nickname"))
@@ -180,7 +186,7 @@ trait Authentication extends Directives with LazyLogging {
       str match {
         case s if !s.trim.isEmpty => Some(s)
         case _                    => None
-    }
+      }
 
     val defaultFromClaims = (field: String, str: String) =>
       optionEmpty(field)
@@ -251,8 +257,8 @@ trait Authentication extends Directives with LazyLogging {
               }
             }
           }
-          platformRole = roles.find(role =>
-            role.groupType == GroupType.Platform)
+          platformRole =
+            roles.find(role => role.groupType == GroupType.Platform)
           plat <- OptionT {
             platformRole match {
               case Some(role) =>
