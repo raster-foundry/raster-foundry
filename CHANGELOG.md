@@ -4,8 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Switched to group query builder for AnnotationLabels for all non-test code [#5596](https://github.com/raster-foundry/raster-foundry/pull/5596)
 
-## [1.65.0] - 2021-06-30
+## 1.65.0 - 2021-06-30
 ### Changed
 - Added index to annotation label class id in the labels to classes join table [#5587](https://github.com/raster-foundry/raster-foundry/pull/5587)
 
