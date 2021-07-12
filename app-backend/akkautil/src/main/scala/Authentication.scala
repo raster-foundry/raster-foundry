@@ -9,11 +9,8 @@ import akka.http.scaladsl.server._
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import com.guizmaii.scalajwt.{
-  ConfigurableJwtValidator,
-  JwtToken,
-  UnknownException
-}
+import com.guizmaii.scalajwt.implementations.ConfigurableJwtValidator
+import com.guizmaii.scalajwt.{JwtToken, UnknownException}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
@@ -42,6 +39,20 @@ import java.util.UUID
 trait Authentication extends Directives with LazyLogging {
 
   implicit def xa: Transactor[IO]
+
+  // We're in full "just make the Java lib work" mode here. The JWT libs we use
+  // at their base depend on an old Java JWT library. Somehow the `getAsString` method
+  // got lost in version upgrades (we did a 5 major version bump of the Scala wrapper)
+  // so this is a compatibility function to get back what we had. It's a poor man's
+  // decoder basically.
+  @SuppressWarnings(Array("AsInstanceOf"))
+  private def getAsString(
+      field: String,
+      obj: java.util.Map[String, Object]
+  ): Option[String] =
+    Option(obj.get(field)) flatMap { s =>
+      Try(s.asInstanceOf[String]).toOption
+    }
 
   val configAuth = ConfigFactory.load()
   private val auth0Config = configAuth.getConfig("auth0")
@@ -140,7 +151,7 @@ trait Authentication extends Directives with LazyLogging {
     }
 
     val compareDelegatedToEmail = (field: String) =>
-      (delegatedProfile.map(_.getAsString(field)), email) match {
+      (delegatedProfile.map(_.get(field).asInstanceOf[String]), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
     }
@@ -157,8 +168,8 @@ trait Authentication extends Directives with LazyLogging {
       .orElse(compareDelegatedToEmail("nickname"))
       .orElse(
         List(
-          delegatedProfile.map(_.getAsString("given_name")),
-          delegatedProfile.map(_.getAsString("family_name"))
+          delegatedProfile flatMap { getAsString("given_name", _) },
+          delegatedProfile flatMap (getAsString("family_name", _))
         ).flatten.toNel.map(_.toList.mkString(" "))
       )
       .getOrElse(getStringClaimOrBlank(claims, "id"))
@@ -180,7 +191,7 @@ trait Authentication extends Directives with LazyLogging {
     val defaultFromClaims = (field: String, str: String) =>
       optionEmpty(field)
         .orElse(Option(claims.getStringClaim(str)))
-        .orElse(delegatedProfile.map(_.getAsString(str)))
+        .orElse(delegatedProfile flatMap { getAsString(str, _) })
         .getOrElse("")
 
     user.personalInfo.copy(

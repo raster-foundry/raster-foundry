@@ -69,6 +69,10 @@ lazy val sharedSettings = Seq(
     "com.typesafe.scala-logging",
     "scala-logging"
   ),
+  unusedCompileDependenciesFilter -= moduleFilter(
+    "com.typesafe.scala-logging",
+    "scala-logging"
+  ),
   undeclaredCompileDependenciesFilter -= moduleFilter(
     "org.slf4j",
     "slf4j-api"
@@ -98,20 +102,13 @@ lazy val sharedSettings = Seq(
     "imageio-ext Repository" at "https://maven.geo-solutions.it",
     DefaultMavenRepository,
     Resolver.sonatypeRepo("snapshots"),
-    Resolver.bintrayRepo("colisweb", "maven"),
-    Resolver.bintrayRepo("azavea", "maven"),
-    Resolver.bintrayRepo("azavea", "geotrellis"),
-    Resolver.bintrayRepo("guizmaii", "maven"),
-    Resolver.bintrayRepo("zamblauskas", "maven"), // for scala-csv-parser
     "eclipse-snapshots" at "https://repo.eclipse.org/content/groups/snapshots",
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     ("azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/")
       .withAllowInsecureProtocol(true),
-    Resolver.bintrayRepo("naftoligug", "maven"),
     Classpaths.sbtPluginReleases,
     Opts.resolver.sonatypeReleases,
-    Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins"),
     Resolver.file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
       Resolver.ivyStylePatterns
     ) // important to pull deps from the local repo
@@ -221,8 +218,7 @@ lazy val loggingDependencies = Seq(
 lazy val apiSettings = sharedSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
-  cancelable in Global := true,
-  resolvers += Resolver.bintrayRepo("azavea", "maven")
+  cancelable in Global := true
 )
 
 lazy val apiDependencies = Seq(
@@ -280,7 +276,6 @@ lazy val api = project
   .in(file("api"))
   .dependsOn(db, common % "test->test;compile->compile", akkautil, notification)
   .settings(apiSettings: _*)
-  .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
     libraryDependencies ++= apiDependencies ++ loggingDependencies
   })
@@ -456,8 +451,6 @@ lazy val batch = project
   .in(file("batch"))
   .dependsOn(common, backsplashCore, notification)
   .settings(sharedSettings: _*)
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.asyncHttpClient,
@@ -556,7 +549,6 @@ lazy val akkautil = project
       Dependencies.circeCore,
       Dependencies.doobieCore,
       Dependencies.doobieFree,
-      Dependencies.jsonSmart,
       Dependencies.nimbusJose,
       Dependencies.nimbusJoseJwt,
       Dependencies.postgres,

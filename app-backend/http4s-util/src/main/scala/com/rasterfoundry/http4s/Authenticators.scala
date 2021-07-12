@@ -5,7 +5,8 @@ import com.rasterfoundry.datamodel.User
 
 import cats.data.OptionT
 import cats.effect.IO
-import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
+import com.guizmaii.scalajwt.JwtToken
+import com.guizmaii.scalajwt.implementations.ConfigurableJwtValidator
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
@@ -35,14 +36,16 @@ trait Authenticators extends LazyLogging {
   val jwksURL = auth0Config.getString("jwksURL")
   val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(new URL(jwksURL))
 
-  private def verifyJWT(tokenString: String)
-    : Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
+  private def verifyJWT(
+      tokenString: String
+  ): Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
     val token: JwtToken = JwtToken(content = tokenString)
     ConfigurableJwtValidator(jwkSet).validate(token)
   }
 
-  def getUserFromJWTwithCache(userIdFromJWT: String)(
-      implicit flags: Flags): IO[Option[User]] =
+  def getUserFromJWTwithCache(
+      userIdFromJWT: String
+  )(implicit flags: Flags): IO[Option[User]] =
     memoizeF[IO, Option[User]](Some(30.seconds)) {
       logger.debug(s"Authentication - Getting User ${userIdFromJWT} from DB")
       UserDao
