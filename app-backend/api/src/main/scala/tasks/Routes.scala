@@ -81,6 +81,12 @@ trait TaskRoutes
                 }
               }
             }
+          } ~ pathPrefix("active") {
+            pathEndOrSingleSlash {
+              get {
+                getActiveTaskSession(taskId)
+              }
+            }
           }
         }
       }
@@ -645,6 +651,34 @@ trait TaskRoutes
               complete {
                 StatusCodes.BadRequest -> "ERROR IN LABEL DELETE"
               }
+          }
+        }
+      }
+    }
+
+  def getActiveTaskSession(taskId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
+        authorizeAsync {
+          TaskSessionDao
+            .authorized(
+              taskId,
+              user,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete {
+              TaskSessionDao
+                .getActiveSessionByTaskId(taskId, user)
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
       }
