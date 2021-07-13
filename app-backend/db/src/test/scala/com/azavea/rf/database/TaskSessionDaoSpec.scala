@@ -494,7 +494,10 @@ class TaskSessionDaoSpec
               }
               labelToUpdateOpt = insertedLabelsOpt flatMap (_.headOption)
               _ <- labelToUpdateOpt traverse { labelToUpdate =>
-                AnnotationLabelDao.toggleByActiveLabelId(labelToUpdate.id, false)
+                AnnotationLabelDao.toggleByActiveLabelId(
+                  labelToUpdate.id,
+                  false
+                )
               }
               listedLabels <- TaskSessionDao.listActiveLabels(dbTaskSession.id)
               _ <- labelToUpdateOpt traverse { labelToUpdate =>
@@ -805,6 +808,109 @@ class TaskSessionDaoSpec
             true
           }
       }
+    }
+  }
+
+  test("get active task session by task") {
+    check {
+      forAll(
+        (
+            userCreateOne: User.Create,
+            userCreateTwo: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
+        ) => {
+          val tfcFirstTaskOnly = taskFeaturesCreate.copy(
+            features = taskFeaturesCreate.features.take(1)
+          )
+          val getActiveSessionIO =
+            for {
+              dbUserOne <- UserDao.create(userCreateOne)
+              dbUserTwo <- UserDao.create(userCreateTwo)
+              dbAnnotationProj <-
+                AnnotationProjectDao
+                  .insert(
+                    annotationProjectCreate.copy(projectId = None),
+                    dbUserOne
+                  )
+              Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  tfcFirstTaskOnly,
+                  dbAnnotationProj
+                ),
+                dbUserOne
+              )
+              firstTask = features.headOption
+              // no session created yet, so no active session here
+              noActiveForUserOneOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id, dbUserOne)
+              }
+              dbTaskSession <- firstTask traverse { task =>
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    dbUserOne,
+                    task.properties.status,
+                    task.id
+                  )
+              }
+              activeOneBeforeOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id, dbUserOne)
+              }
+              // the active session was created by user one, so user two
+              // cannot access it
+              noActiveForUserTwoOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id, dbUserTwo)
+              }
+              _ <- dbTaskSession traverse { session =>
+                TaskSessionDao.completeTaskSession(
+                  session.id,
+                  TaskSession.Complete(TaskStatus.Labeled, None)
+                )
+              }
+              // after marking the session as complete
+              // requesting an active session on the same task
+              // returns nothing
+              noActiveAfterOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id, dbUserOne)
+              }
+            } yield (
+              noActiveForUserOneOpt,
+              dbTaskSession,
+              activeOneBeforeOpt,
+              noActiveForUserTwoOpt,
+              noActiveAfterOpt
+            )
+
+          val (
+            noActiveSessionForUserOne,
+            session,
+            activeOneBefore,
+            noActiveSessionForUserTwo,
+            noActiveAfter
+          ) =
+            getActiveSessionIO.transact(xa).unsafeRunSync
+
+          assert(
+            noActiveSessionForUserOne == None,
+            "No active task session since none is created yet"
+          )
+          assert(
+            session == activeOneBefore,
+            "Getting the first active session since it is the only active session created"
+          )
+          assert(
+            noActiveSessionForUserTwo == None,
+            "No active task session for user 2 since the session is created by user 1"
+          )
+          assert(
+            noActiveAfter == None,
+            "Getting no active session since it is marked as complete"
+          )
+          true
+        }
+      )
     }
   }
 
