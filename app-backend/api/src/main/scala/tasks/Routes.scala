@@ -154,8 +154,8 @@ trait TaskRoutes
           entity(as[TaskSession.Create]) { taskSessionCreate =>
             onComplete {
               (for {
-                hasActiveSession <-
-                  TaskSessionDao.hasActiveSessionByTaskId(taskId)
+                hasActiveSession <- TaskSessionDao.hasActiveSessionByTaskId(
+                  taskId)
                 hasValidStatus <- TaskSessionDao.isSessionTypeMatchTaskStatus(
                   taskId,
                   taskSessionCreate.sessionType
@@ -645,8 +645,7 @@ trait TaskRoutes
             case Success(rowCount) =>
               if (rowCount == -1) complete {
                 StatusCodes.BadRequest -> "NO MATCHING LABEL TO DELETE"
-              }
-              else complete { StatusCodes.OK }
+              } else complete { StatusCodes.OK }
             case Failure(e) =>
               logger.error(e.getMessage)
               complete {
