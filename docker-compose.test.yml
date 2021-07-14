@@ -21,24 +21,6 @@ services:
       context: ./nginx
       dockerfile: Dockerfile.api
 
-  app-frontend:
-    image: node:10
-    working_dir: /opt/raster-foundry/app-frontend/
-    volumes:
-      - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
-      - ./app-frontend/config/:/opt/raster-foundry/app-frontend/config/
-      - ./nginx/srv/dist/:/opt/raster-foundry/app-frontend/dist/
-      - ./app-frontend/yarn.lock:/opt/raster-foundry/app-frontend/yarn.lock
-      - ./app-frontend/.eslintrc:/opt/raster-foundry/app-frontend/.eslintrc
-      - ./app-frontend/karma.conf.js:/opt/raster-foundry/app-frontend/karma.conf.js
-      - ./.node_modules:/opt/raster-foundry/app-frontend/node_modules
-      - ./app-frontend/package.json:/opt/raster-foundry/app-frontend/package.json
-      - ./app-frontend/src:/opt/raster-foundry/app-frontend/src
-      - ./app-frontend/webpack.config.js:/opt/raster-foundry/app-frontend/webpack.config.js
-      - ./docs/swagger/:/opt/swagger/
-    entrypoint: yarn
-    command: run build
-
   api-server-test:
     # If changing container, make sure to update app-backend/api/Dockerfile as well
     image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim

@@ -47,18 +47,5 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             run --rm sbt-test \
             ";scalafmtCheck;scalafmtSbtCheck;scalafix --check;scapegoat;unusedCompileDependenciesTest;undeclaredCompileDependenciesTest;${TEST_CMD};apiIntegrationTest/test"
 
-
-        echo "Validating API service spec"
-        docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" \
-            run --rm app-frontend run validate-api-spec
-
-        echo "Validating tile service spec"
-        docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" \
-            run --rm app-frontend run validate-tile-spec
-
     fi
 fi
