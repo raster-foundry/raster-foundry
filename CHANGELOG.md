@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Switched to group query builder for AnnotationLabels for all non-test code [#5596](https://github.com/raster-foundry/raster-foundry/pull/5596)
 
+### Added
+- Added an endpoint to get active task session [#5599](https://github.com/raster-foundry/raster-foundry/pull/5599)
+
 ## 1.65.0 - 2021-06-30
 ### Changed
 - Added index to annotation label class id in the labels to classes join table [#5587](https://github.com/raster-foundry/raster-foundry/pull/5587)
