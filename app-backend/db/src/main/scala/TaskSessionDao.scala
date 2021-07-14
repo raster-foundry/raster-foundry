@@ -447,10 +447,9 @@ object TaskSessionDao extends Dao[TaskSession] {
     } yield replaced
 
   def getActiveSessionByTaskId(
-      taskId: UUID,
-      user: User
+      taskId: UUID
   ): ConnectionIO[Option[TaskSession]] =
-    activeSessionByTaskIdQB(taskId, Some(user.id))
+    activeSessionByTaskIdQB(taskId)
       .list(PageRequest(0, 1, Map("last_tick_at" -> Order.Desc)))
       .map(_.headOption)
 }

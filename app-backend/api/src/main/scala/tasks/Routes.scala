@@ -672,11 +672,19 @@ trait TaskRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
+          onComplete {
             TaskSessionDao
-              .getActiveSessionByTaskId(taskId, user)
+              .getActiveSessionByTaskId(taskId)
               .transact(xa)
               .unsafeToFuture
+          } {
+            case Success(Some(session)) =>
+              complete((StatusCodes.Created, session))
+            case Success(None) =>
+              complete(StatusCodes.NoContent)
+            case Failure(e) =>
+              logger.error(e.getMessage)
+              complete(StatusCodes.BadRequest, "ERROR IN LABEL DELETE")
           }
         }
       }

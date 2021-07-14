@@ -815,8 +815,7 @@ class TaskSessionDaoSpec
     check {
       forAll(
         (
-            userCreateOne: User.Create,
-            userCreateTwo: User.Create,
+            userCreate: User.Create,
             annotationProjectCreate: AnnotationProject.Create,
             taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
             taskSessionCreate: TaskSession.Create
@@ -826,42 +825,36 @@ class TaskSessionDaoSpec
           )
           val getActiveSessionIO =
             for {
-              dbUserOne <- UserDao.create(userCreateOne)
-              dbUserTwo <- UserDao.create(userCreateTwo)
+              dbUser <- UserDao.create(userCreate)
               dbAnnotationProj <-
                 AnnotationProjectDao
                   .insert(
                     annotationProjectCreate.copy(projectId = None),
-                    dbUserOne
+                    dbUser
                   )
               Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
                 fixupTaskFeaturesCollection(
                   tfcFirstTaskOnly,
                   dbAnnotationProj
                 ),
-                dbUserOne
+                dbUser
               )
               firstTask = features.headOption
               // no session created yet, so no active session here
-              noActiveForUserOneOpt <- firstTask flatTraverse { task =>
-                TaskSessionDao.getActiveSessionByTaskId(task.id, dbUserOne)
+              noActiveOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id)
               }
               dbTaskSession <- firstTask traverse { task =>
                 TaskSessionDao
                   .insertTaskSession(
                     taskSessionCreate,
-                    dbUserOne,
+                    dbUser,
                     task.properties.status,
                     task.id
                   )
               }
-              activeOneBeforeOpt <- firstTask flatTraverse { task =>
-                TaskSessionDao.getActiveSessionByTaskId(task.id, dbUserOne)
-              }
-              // the active session was created by user one, so user two
-              // cannot access it
-              noActiveForUserTwoOpt <- firstTask flatTraverse { task =>
-                TaskSessionDao.getActiveSessionByTaskId(task.id, dbUserTwo)
+              activeBeforeOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id)
               }
               _ <- dbTaskSession traverse { session =>
                 TaskSessionDao.completeTaskSession(
@@ -873,36 +866,30 @@ class TaskSessionDaoSpec
               // requesting an active session on the same task
               // returns nothing
               noActiveAfterOpt <- firstTask flatTraverse { task =>
-                TaskSessionDao.getActiveSessionByTaskId(task.id, dbUserOne)
+                TaskSessionDao.getActiveSessionByTaskId(task.id)
               }
             } yield (
-              noActiveForUserOneOpt,
+              noActiveOpt,
               dbTaskSession,
-              activeOneBeforeOpt,
-              noActiveForUserTwoOpt,
+              activeBeforeOpt,
               noActiveAfterOpt
             )
 
           val (
-            noActiveSessionForUserOne,
+            noActiveSession,
             session,
-            activeOneBefore,
-            noActiveSessionForUserTwo,
+            activeBefore,
             noActiveAfter
           ) =
             getActiveSessionIO.transact(xa).unsafeRunSync
 
           assert(
-            noActiveSessionForUserOne == None,
+            noActiveSession == None,
             "No active task session since none is created yet"
           )
           assert(
-            session == activeOneBefore,
+            session == activeBefore,
             "Getting the first active session since it is the only active session created"
-          )
-          assert(
-            noActiveSessionForUserTwo == None,
-            "No active task session for user 2 since the session is created by user 1"
           )
           assert(
             noActiveAfter == None,
