@@ -1,6 +1,12 @@
 import xerial.sbt.Sonatype._
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
 
+// NOTE: This file is at the root project directory so that scala-steward is happy. The app backend
+// code lives within a separate directory for code organization purposes. Build support files are
+// within the `project` directory (see
+// https://www.scala-sbt.org/1.x/docs/Directories.html#Build+support+files).
+val appBackendDir = "app-backend"
+
 addCommandAlias(
   "fix",
   ";scalafix;scalafmt;scalafmtSbt"
@@ -190,7 +196,7 @@ lazy val credentialSettings = Seq(
 )
 
 lazy val root = project
-  .in(file("."))
+  .in(file(appBackendDir))
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
   .aggregate(
@@ -273,7 +279,7 @@ lazy val apiDependencies = Seq(
 )
 
 lazy val api = project
-  .in(file("api"))
+  .in(file(appBackendDir + "/api"))
   .dependsOn(db, common % "test->test;compile->compile", akkautil, notification)
   .settings(apiSettings: _*)
   .settings({
@@ -284,7 +290,7 @@ lazy val api = project
   )
 
 lazy val apiIntegrationTest = project
-  .in(file("api-it"))
+  .in(file(appBackendDir + "/api-it"))
   .configs(IntegrationTest)
   .dependsOn(db)
   .settings({
@@ -308,7 +314,7 @@ lazy val apiIntegrationTest = project
   * Common Settings
   */
 lazy val common = project
-  .in(file("common"))
+  .in(file(appBackendDir + "/common"))
   .dependsOn(datamodel)
   .settings(apiSettings: _*)
   .settings({
@@ -351,7 +357,7 @@ lazy val common = project
   })
 
 lazy val datamodel = project
-  .in(file("datamodel"))
+  .in(file(appBackendDir + "/datamodel"))
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
@@ -386,7 +392,7 @@ lazy val datamodel = project
   * DB Settings
   */
 lazy val db = project
-  .in(file("db"))
+  .in(file(appBackendDir + "/db"))
   .dependsOn(common % "compile->compile;test->test", notification)
   .settings(name := "database")
   .settings(sharedSettings: _*)
@@ -448,7 +454,7 @@ lazy val db = project
   * Batch Settings
   */
 lazy val batch = project
-  .in(file("batch"))
+  .in(file(appBackendDir + "/batch"))
   .dependsOn(common, backsplashCore, notification)
   .settings(sharedSettings: _*)
   .settings({
@@ -533,7 +539,7 @@ lazy val batch = project
   * Akkautil Settings
   */
 lazy val akkautil = project
-  .in(file("akkautil"))
+  .in(file(appBackendDir + "/akkautil"))
   .dependsOn(common, db, datamodel)
   .settings(sharedSettings: _*)
   .settings({
@@ -563,7 +569,7 @@ lazy val akkautil = project
 /**
   * Backsplash Core Settings
   */
-lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
+lazy val backsplashCore = Project("backsplash-core", file(appBackendDir + "/backsplash-core"))
   .dependsOn(common, db)
   .settings(sharedSettings: _*)
   .settings(
@@ -608,7 +614,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
   * Backsplash Export Settings
   */
 lazy val backsplashExport =
-  Project("backsplash-export", file("backsplash-export"))
+  Project("backsplash-export", file(appBackendDir + "/backsplash-export"))
     .dependsOn(common)
     .settings(sharedSettings: _*)
     .settings(
@@ -656,7 +662,7 @@ lazy val backsplashExport =
   * Backsplash Server Settings
   */
 lazy val backsplashServer =
-  Project("backsplash-server", file("backsplash-server"))
+  Project("backsplash-server", file(appBackendDir + "/backsplash-server"))
     .dependsOn(http4sUtil, db, backsplashCore)
     .settings(sharedSettings: _*)
     .settings(noPublishSettings)
@@ -710,7 +716,7 @@ lazy val backsplashServer =
 /**
   * http4s Utility project
   */
-lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
+lazy val http4sUtil = Project("http4s-util", file(appBackendDir + "/http4s-util"))
   .dependsOn(db)
   .settings(sharedSettings: _*)
   .settings({
@@ -747,7 +753,7 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   *
   * For holding all of our shared code related to letting people know about things
   */
-lazy val notification = Project("notification", file("notification"))
+lazy val notification = Project("notification", file(appBackendDir + "/notification"))
   .dependsOn(datamodel)
   .settings(sharedSettings: _*)
   .settings({
