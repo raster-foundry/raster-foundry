@@ -255,6 +255,7 @@ Path,Domain:Action,Verb
 /api/campaigns/{campaignId}/performance/validate,campaigns:read,get
 /api/tasks/{taskId}/sessions,annotationProjects:readTasks,get
 /api/tasks/{taskId}/sessions,annotationProjects:createAnnotation,post
+/api/tasks/{taskId}/sessions/active,annotationProjects:readTasks,get
 /api/tasks/{taskId}/sessions/{sessionId},annotationProjects:readTasks,get
 /api/tasks/{taskId}/sessions/{sessionId}/keep-alive,annotationProjects:createAnnotation,put
 /api/tasks/{taskId}/sessions/{sessionId}/complete,annotationProjects:createAnnotation,put

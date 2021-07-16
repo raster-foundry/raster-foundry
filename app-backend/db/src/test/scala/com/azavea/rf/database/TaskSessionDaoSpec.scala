@@ -494,7 +494,10 @@ class TaskSessionDaoSpec
               }
               labelToUpdateOpt = insertedLabelsOpt flatMap (_.headOption)
               _ <- labelToUpdateOpt traverse { labelToUpdate =>
-                AnnotationLabelDao.toggleByActiveLabelId(labelToUpdate.id, false)
+                AnnotationLabelDao.toggleByActiveLabelId(
+                  labelToUpdate.id,
+                  false
+                )
               }
               listedLabels <- TaskSessionDao.listActiveLabels(dbTaskSession.id)
               _ <- labelToUpdateOpt traverse { labelToUpdate =>
@@ -805,6 +808,96 @@ class TaskSessionDaoSpec
             true
           }
       }
+    }
+  }
+
+  test("get active task session by task") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
+        ) => {
+          val tfcFirstTaskOnly = taskFeaturesCreate.copy(
+            features = taskFeaturesCreate.features.take(1)
+          )
+          val getActiveSessionIO =
+            for {
+              dbUser <- UserDao.create(userCreate)
+              dbAnnotationProj <-
+                AnnotationProjectDao
+                  .insert(
+                    annotationProjectCreate.copy(projectId = None),
+                    dbUser
+                  )
+              Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+                fixupTaskFeaturesCollection(
+                  tfcFirstTaskOnly,
+                  dbAnnotationProj
+                ),
+                dbUser
+              )
+              firstTask = features.headOption
+              // no session created yet, so no active session here
+              noActiveOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id)
+              }
+              dbTaskSession <- firstTask traverse { task =>
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    dbUser,
+                    task.properties.status,
+                    task.id
+                  )
+              }
+              activeBeforeOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id)
+              }
+              _ <- dbTaskSession traverse { session =>
+                TaskSessionDao.completeTaskSession(
+                  session.id,
+                  TaskSession.Complete(TaskStatus.Labeled, None)
+                )
+              }
+              // after marking the session as complete
+              // requesting an active session on the same task
+              // returns nothing
+              noActiveAfterOpt <- firstTask flatTraverse { task =>
+                TaskSessionDao.getActiveSessionByTaskId(task.id)
+              }
+            } yield (
+              noActiveOpt,
+              dbTaskSession,
+              activeBeforeOpt,
+              noActiveAfterOpt
+            )
+
+          val (
+            noActiveSession,
+            session,
+            activeBefore,
+            noActiveAfter
+          ) =
+            getActiveSessionIO.transact(xa).unsafeRunSync
+
+          assert(
+            noActiveSession == None,
+            "No active task session since none is created yet"
+          )
+          assert(
+            session == activeBefore,
+            "Getting the first active session since it is the only active session created"
+          )
+          assert(
+            noActiveAfter == None,
+            "Getting no active session since it is marked as complete"
+          )
+          true
+        }
+      )
     }
   }
 
