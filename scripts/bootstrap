@@ -67,9 +67,7 @@ function generate_sbtopts() {
 
     cp .sbtopts.sample .sbtopts
 
-    if host nexus.internal.azavea.com; then
-        override_build_repos "development"
-    elif host nexus.rasterfoundry.internal; then
+    if host nexus.rasterfoundry.internal; then
         override_build_repos "ci"
     fi
 
