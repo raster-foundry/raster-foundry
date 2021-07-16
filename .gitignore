@@ -64,10 +64,10 @@ lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
-/app-backend/project/.sbtboot
-/app-backend/project/.boot/
-/app-backend/project/.ivy/
-/app-backend/.sbtopts
+project/.sbtboot
+project/.boot/
+project/.ivy/
+.sbtopts
 
 # Molecule
 .molecule/

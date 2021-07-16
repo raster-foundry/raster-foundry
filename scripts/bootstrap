@@ -25,9 +25,9 @@ Bootstrap development environment.
 
 function build_containers() {
     echo "Building containers / pulling postgres and memcached"
-    
+
     ensure_dirs
-    
+
     pushd "${DIR}"
 
     docker-compose \
@@ -51,8 +51,8 @@ function pull_env() {
 
 function override_build_repos() {
     echo "Overriding repository configuration for ${1}"
-    echo "-Dsbt.override.build.repos=true" >> app-backend/.sbtopts
-    echo "-Dsbt.repository.config=project/${1}/repositories" >> app-backend/.sbtopts
+    echo "-Dsbt.override.build.repos=true" >> .sbtopts
+    echo "-Dsbt.repository.config=project/${1}/repositories" >> .sbtopts
 }
 
 function ensure_dirs() {
@@ -65,7 +65,7 @@ function generate_sbtopts() {
     echo "Generating .sbtopts"
     pushd "${DIR}"
 
-    cp app-backend/.sbtopts.sample app-backend/.sbtopts
+    cp .sbtopts.sample .sbtopts
 
     if host nexus.internal.azavea.com; then
         override_build_repos "development"
@@ -73,7 +73,7 @@ function generate_sbtopts() {
         override_build_repos "ci"
     fi
 
-    sort app-backend/.sbtopts | uniq > cleaned_sbtopts
+    sort .sbtopts | uniq > cleaned_sbtopts
     mv cleaned_sbtopts app-backend/.sbtopts
 
     popd
