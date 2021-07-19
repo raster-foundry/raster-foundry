@@ -133,6 +133,8 @@ services:
       - ./sbt:/opt/raster-foundry/sbt
       - ./.sbtopts:/opt/raster-foundry/.sbtopts
       - ./.jvmopts:/opt/raster-foundry/.jvmopts
+      - ./.scalafix.conf:/opt/raster-foundry/.scalafix.conf
+      - ./.scalafix.conf:/opt/raster-foundry/.scalafmt.conf
       - ./project:/opt/raster-foundry/project
       - ./data/:/opt/data/
       - $HOME/.sbt:/root/.sbt
