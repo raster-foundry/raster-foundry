@@ -196,7 +196,7 @@ lazy val credentialSettings = Seq(
 )
 
 lazy val root = project
-  .in(file(appBackendDir))
+  .in(file("."))
   .settings(sharedSettings: _*)
   .settings(noPublishSettings)
   .aggregate(
