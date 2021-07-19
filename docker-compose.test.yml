@@ -99,12 +99,17 @@ services:
       - COURSIER_CACHE=/root/.coursier
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./build.sbt:/opt/raster-foundry/build.sbt
+      - ./sbt:/opt/raster-foundry/sbt
+      - ./.sbtopts:/opt/raster-foundry/.sbtopts
+      - ./.jvmopts:/opt/raster-foundry/.jvmopts
+      - ./project:/opt/raster-foundry/project
       - ./scratch/:/opt/raster-foundry/scratch/
       - ./.git:/opt/raster-foundry/.git
       - $HOME/.coursier:/root/.coursier
       - $HOME/.sbt:/root/.sbt
       - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/raster-foundry/app-backend/
+    working_dir: /opt/raster-foundry
     entrypoint: ./sbt
 
   sbt-test:
@@ -124,12 +129,17 @@ services:
       - AUTH0_ENABLE_CACHE=true
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./build.sbt:/opt/raster-foundry/build.sbt
+      - ./sbt:/opt/raster-foundry/sbt
+      - ./.sbtopts:/opt/raster-foundry/.sbtopts
+      - ./.jvmopts:/opt/raster-foundry/.jvmopts
+      - ./project:/opt/raster-foundry/project
       - ./data/:/opt/data/
       - $HOME/.sbt:/root/.sbt
       - $HOME/.coursier:/root/.coursier
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/raster-foundry/app-backend/
+    working_dir: /opt/raster-foundry
     entrypoint: ./sbt
 
   shellcheck:
