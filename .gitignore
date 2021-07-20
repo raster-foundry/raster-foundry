@@ -100,7 +100,7 @@ dist/
 /data
 .idea
 .ensime_cache
-/app-tasks/jars/rf-batch.jar
+/app-tasks/jars/*.jar
 /data
 
 .vscode
