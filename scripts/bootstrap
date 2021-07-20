@@ -58,7 +58,6 @@ function override_build_repos() {
 function ensure_dirs() {
     # Ensure that a directory exists to house AWS profiles.
     mkdir -p "${HOME}/.aws"
-    mkdir -p "nginx/srv/dist/"
 }
 
 function generate_sbtopts() {
