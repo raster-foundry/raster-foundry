@@ -782,9 +782,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           _ <- info("Skipping unlocking stuck tasks - could not acquire lock")
         } yield 0
       case true =>
-        println("got a lock and the unlocker is running")
         for {
-          _ <- info("got a lock and the unlocker is running")
           _ <- info("Expiring stuck tasks")
           defaultUser <- UserDao.unsafeGetUserById("default")
           stuckLockedTasks <- query
