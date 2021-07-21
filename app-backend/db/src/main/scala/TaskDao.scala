@@ -779,9 +779,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
 
     lockAcquiredBoolean.flatMap {
       case false =>
-        println("couldn't get a lock, but at least it's running!")
         for {
-          _ <- info("couldn't get a lock, but at least it's running!")
           _ <- info("Skipping unlocking stuck tasks - could not acquire lock")
         } yield 0
       case true =>
@@ -797,7 +795,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               )
               .list
           _ <- stuckLockedTasks.toNel traverse { taskIdsList =>
-            val taskIdsSet = taskIdsList.toNes
+            val taskIdsSet = taskIdsList.map(_.id).toNes
             warn(
               s"Task ids for stuck in progress and locked tasks: $taskIdsSet"
             )
