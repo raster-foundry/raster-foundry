@@ -31,16 +31,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         ./scripts/bootstrap --sbtopts
         ./scripts/load_development_data --download
 
-        echo "Building static asset bundle"
-        docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" \
-            run --rm app-frontend install
-        docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" \
-            run --rm app-frontend run build
-
         echo "Building JARs (batch, backsplash-export, api)"
         docker-compose \
             -f "${DIR}/../docker-compose.test.yml" \

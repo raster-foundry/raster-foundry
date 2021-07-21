@@ -1,7 +1,0 @@
-<span ng-repeat="nav in $ctrl.navs track by $index">
-  <i class="icon-caret-right navbar-caret-right"></i>
-  <a ui-sref="{{nav.sref}}"
-     ng-class="{'layer-nav-active': $index === $ctrl.navs.length -1 }">
-    {{nav.title}}
-  </a>
-</span>

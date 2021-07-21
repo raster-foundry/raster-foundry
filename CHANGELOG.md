@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Added an endpoint to get active task session [#5599](https://github.com/raster-foundry/raster-foundry/pull/5599)
 
+### Changed
+- Remove frontend & promote backend [#5602](https://github.com/raster-foundry/raster-foundry/pull/5602)
+
 ## 1.65.0 - 2021-06-30
 ### Changed
 - Added index to annotation label class id in the labels to classes join table [#5587](https://github.com/raster-foundry/raster-foundry/pull/5587)
@@ -17,12 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - CRUD for task session labels [#5590](https://github.com/raster-foundry/raster-foundry/pull/5590)
 - Endpoint to update task status and action only [#5593](https://github.com/raster-foundry/raster-foundry/pull/5593)
+- Added performance endpoints for labeling and validation [#5589](https://github.com/raster-foundry/raster-foundry/pull/5589)
 
 ### Fixed
 - Improved performance of random review task query [#5588](https://github.com/raster-foundry/raster-foundry/pull/5588)
-
-### Added
-- Added performance endpoints for labeling and validation [#5589](https://github.com/raster-foundry/raster-foundry/pull/5589)
 
 ## [1.64.3] - 2021-06-02
 ### Fixed
