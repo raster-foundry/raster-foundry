@@ -127,7 +127,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
   ): ConnectionIO[Int] =
     if (initialStatus != newStatus) {
       fr"""INSERT INTO task_actions (task_id, user_id, timestamp, from_status, to_status, note) VALUES (
-          $taskId, $userId, now(), $initialStatus, $newStatus, $note
+          $taskId, $userId, ${Timestamp
+        .from(Instant.now)}, $initialStatus, $newStatus, $note
           )""".update.run
     } else {
       0.pure[ConnectionIO]
@@ -740,18 +741,24 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       // task action stamp
       case TaskStatus.LabelingInProgress | TaskStatus.ValidationInProgress =>
         getTaskActions(taskId).map({ (stamps: List[TaskActionStamp]) =>
-          stamps
-            .filter(stamp => stamp.fromStatus != taskStatus)
-            .maximumByOption(stamp => {
+          // It's a little dangerous to sort these with what we've recently learned about
+          // the right tail of task action list sizes. As a test, I sorted a list of
+          // 60k floats by the identity function to get some time estimates, and it regularly
+          // clocked in at about 0.85 seconds. Given that that's the absolute worst case we
+          // know of and that task is Fine Now™, I think this should be ok, but we can
+          // watch the CPU/memory of the deployed service to make sure that things are
+          // fine.
+          val sorted = stamps
+            .sortBy(stamp => {
               val instant = stamp.timestamp.toInstant
               // in testing, the epoch second was insufficient for generated actions
               // very close to each other in time
-              val result: Double =
-                instant.getEpochSecond + (instant.getNano / 1e9)
-              result
-            }) map { mostRecentStamp =>
-            val previousStatus = mostRecentStamp.fromStatus
-            val previousNote = mostRecentStamp.note
+              -instant.toEpochMilli
+            })
+          sorted.drop(1).headOption map { secondMostRecentStamp =>
+            println(s"Most recent stamp: $secondMostRecentStamp")
+            val previousStatus = secondMostRecentStamp.toStatus
+            val previousNote = secondMostRecentStamp.note
             (previousStatus, previousNote)
           } getOrElse {
             (TaskStatus.Unlabeled, None)
