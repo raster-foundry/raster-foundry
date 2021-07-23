@@ -730,7 +730,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       """).update.run
   }
 
-  private def regressTaskStatus(
+  private[database] def regressTaskStatus(
       taskId: UUID,
       taskStatus: TaskStatus
   ): ConnectionIO[(TaskStatus, Option[NonEmptyString])] =
