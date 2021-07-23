@@ -102,16 +102,22 @@ object TaskSessionDao extends Dao[TaskSession] {
     """).update.run;
   }
 
-  def hasActiveSessionByTaskId(taskId: UUID): ConnectionIO[Boolean] =
+  def activeSessionByTaskIdQB(
+      taskId: UUID,
+      userIdOpt: Option[String] = None
+  ): Dao.QueryBuilder[TaskSession] =
     query
       .filter(fr"task_id = ${taskId}")
       .filter(fr"completed_at is NULL")
+      .filter(List(userIdOpt.map(id => fr"user_id = ${id}")))
       .filter(
         Fragment.const(
           s"last_tick_at + INTERVAL '${taskSessionTtlConfig.taskSessionTtlSeconds} seconds' > now()"
         )
       )
-      .exists
+
+  def hasActiveSessionByTaskId(taskId: UUID): ConnectionIO[Boolean] =
+    activeSessionByTaskIdQB(taskId).exists
 
   def isSessionTypeMatchTaskStatus(
       taskId: UUID,
@@ -334,8 +340,8 @@ object TaskSessionDao extends Dao[TaskSession] {
   def filterLabel(
       sessionId: UUID,
       labelId: UUID
-  ): Dao.QueryBuilder[AnnotationLabelWithClasses] =
-    AnnotationLabelDao.query
+  ): Dao.GroupQueryBuilder[AnnotationLabelWithClasses] =
+    AnnotationLabelDao.withClassesQB
       .filter(fr"id = ${labelId}")
       .filter(fr"session_id = ${sessionId}")
 
@@ -420,7 +426,10 @@ object TaskSessionDao extends Dao[TaskSession] {
       row <- labelO match {
         case Some(label) if label.annotationTaskId == taskId =>
           if (label.sessionId == Some(sessionId))
-            filterLabel(sessionId, labelId).delete
+            AnnotationLabelDao.query
+              .filter(fr"id = ${labelId}")
+              .filter(fr"session_id = ${sessionId}")
+              .delete
           else AnnotationLabelDao.toggleByActiveLabelId(labelId, false)
         case _ => (-1).pure[ConnectionIO]
       }
@@ -436,4 +445,11 @@ object TaskSessionDao extends Dao[TaskSession] {
       _ <- deleteLabelsFromSession(sessionId)
       replaced <- insertLabels(taskId, sessionId, labels.map(_.toCreate), user)
     } yield replaced
+
+  def getActiveSessionByTaskId(
+      taskId: UUID
+  ): ConnectionIO[Option[TaskSession]] =
+    activeSessionByTaskIdQB(taskId)
+      .list(PageRequest(0, 1, Map("last_tick_at" -> Order.Desc)))
+      .map(_.headOption)
 }
