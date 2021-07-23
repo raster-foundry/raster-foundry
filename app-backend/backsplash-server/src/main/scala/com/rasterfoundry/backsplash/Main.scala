@@ -3,6 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.middleware.AccessLoggingMiddleware
+import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.{Config => CommonConfig}
 import com.rasterfoundry.database.Config.statusReapingConfig
 import com.rasterfoundry.database.TaskDao
@@ -20,7 +21,6 @@ import cats.implicits._
 import com.colisweb.tracing.core.TracingContextBuilder
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.olegpy.meow.hierarchy._
-import com.typesafe.scalalogging.LazyLogging
 import cron4s.Cron
 import doobie.implicits._
 import eu.timepit.fs2cron.awakeEveryCron
@@ -35,7 +35,7 @@ import scala.concurrent.duration._
 
 import java.util.concurrent.{Executors, TimeUnit}
 
-object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
+object Main extends IOApp with HistogramStoreImplicits with RollbarNotifier {
 
   val rasterIO: ContextShift[IO] = IO.contextShift(
     ExecutionContext.fromExecutor(
@@ -165,6 +165,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     .attempt
     .map {
       _.leftMap { err =>
+        sendError(err)
         logger.error(err.getMessage)
       }
     }
