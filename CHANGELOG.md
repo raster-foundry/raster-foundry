@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - Remove frontend & promote backend [#5602](https://github.com/raster-foundry/raster-foundry/pull/5602)
+- Added additional locking for auto task unlocker [#5604](https://github.com/raster-foundry/raster-foundry/pull/5604/files)
 
 ## 1.65.0 - 2021-06-30
 ### Changed
