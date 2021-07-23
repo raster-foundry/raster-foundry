@@ -437,7 +437,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     setLockF(taskId, user).update.run *> getTaskWithActions(taskId)
 
   def unlockTask(taskId: UUID): ConnectionIO[Option[Task.TaskFeature]] =
-    deleteLockF(taskId).update.run *> getTaskWithActions(taskId)
+    info(s"Unlocking task $taskId") >> deleteLockF(
+      taskId
+    ).update.run >> getTaskWithActions(taskId)
 
   def deleteProjectTasks(annotationProjectId: UUID): ConnectionIO[Int] = {
     (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE annotation_project_id = ${annotationProjectId}").update.run
@@ -812,23 +814,23 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               )
           }
           _ <- (stuckLockedTasks ++ stuckUnlockedTasks) traverse { task =>
-            regressTaskStatus(task.id, task.status) flatMap {
-              case (newStatus, newNote) =>
-                val update =
-                  Task.TaskFeatureCreate(
-                    TaskPropertiesCreate(
-                      newStatus,
-                      task.annotationProjectId,
-                      newNote,
-                      Some(task.taskType),
-                      task.parentTaskId,
-                      Some(task.reviews),
-                      task.reviewStatus
-                    ),
-                    task.geometry
-                  )
-                updateTask(task.id, update, defaultUser) <* unlockTask(task.id)
-            }
+            for {
+              (newStatus, newNote) <- regressTaskStatus(task.id, task.status)
+              update = Task.TaskFeatureCreate(
+                TaskPropertiesCreate(
+                  newStatus,
+                  task.annotationProjectId,
+                  newNote,
+                  Some(task.taskType),
+                  task.parentTaskId,
+                  Some(task.reviews),
+                  task.reviewStatus
+                ),
+                task.geometry
+              )
+              _ <- unlockTask(task.id)
+              _ <- updateTask(task.id, update, defaultUser)
+            } yield ()
           }
           _ <- fr"""update last_unlocked set unlocked_time = ${Timestamp.from(
             Instant.now
