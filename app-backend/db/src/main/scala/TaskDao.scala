@@ -756,7 +756,6 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               -instant.toEpochMilli
             })
           sorted.drop(1).headOption map { secondMostRecentStamp =>
-            println(s"Most recent stamp: $secondMostRecentStamp")
             val previousStatus = secondMostRecentStamp.toStatus
             val previousNote = secondMostRecentStamp.note
             (previousStatus, previousNote)
