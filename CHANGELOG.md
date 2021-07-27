@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 - Added an endpoint to get active task session [#5599](https://github.com/raster-foundry/raster-foundry/pull/5599)
+- Added a static page [#5607](https://github.com/raster-foundry/raster-foundry/pull/5607)
 
 ### Changed
 - Remove frontend & promote backend [#5602](https://github.com/raster-foundry/raster-foundry/pull/5602)

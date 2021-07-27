@@ -18,8 +18,8 @@ services:
   nginx-api:
     image: raster-foundry-nginx-api:${GIT_COMMIT:-latest}
     build:
-      context: ./nginx
-      dockerfile: Dockerfile.api
+      context: .
+      dockerfile: ./nginx/Dockerfile.api
 
   api-server-test:
     # If changing container, make sure to update app-backend/api/Dockerfile as well
