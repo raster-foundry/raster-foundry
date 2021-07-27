@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.66.0] - 2021-07-27
+### Fixed
+- Corrected strategy for acquiring note text when regressing task statuses to "flagged" [#5606](https://github.com/raster-foundry/raster-foundry/pull/5606)
+
+### Added
+- Failed task lock expirations now send errors to rollbar [#5606](https://github.com/raster-foundry/raster-foundry/pull/5606)
+- Added a static page [#5607](https://github.com/raster-foundry/raster-foundry/pull/5607)
+
 ## [1.66.0] - 2021-07-23
 ### Fixed
 - Switched to group query builder for AnnotationLabels for all non-test code [#5596](https://github.com/raster-foundry/raster-foundry/pull/5596)

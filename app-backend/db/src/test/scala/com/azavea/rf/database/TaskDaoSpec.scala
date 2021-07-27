@@ -2118,4 +2118,91 @@ class TaskDaoSpec
       }
     }
   }
+
+  test("regress a task status to flagged") {
+    (check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          val tfcFirstTaskOnly = taskFeaturesCreate.copy(
+            features = taskFeaturesCreate.features.take(1)
+          )
+          val regressTaskStatusIO: ConnectionIO[Task.TaskFeature] = for {
+            dbUser <- UserDao.create(userCreate)
+            dbAnnotationProject <- AnnotationProjectDao.insert(
+              annotationProjectCreate,
+              dbUser
+            )
+            Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+              fixupTaskFeaturesCollection(
+                tfcFirstTaskOnly,
+                dbAnnotationProject
+              ),
+              dbUser
+            )
+            firstTask = features.head
+            updateO <- TaskDao.updateTask(
+              firstTask.id,
+              firstTask.toFeatureCreate.copy(properties =
+                firstTask.properties.toCreate
+                  .copy(status = TaskStatus.Flagged, note = Some("no good"))
+              ),
+              dbUser
+            )
+            update2O <- updateO flatTraverse { updated =>
+              TaskDao.updateTask(
+                updated.id,
+                updated.toFeatureCreate.copy(properties =
+                  updated.properties.toCreate
+                    .copy(status = TaskStatus.LabelingInProgress, note = None)
+                ),
+                dbUser
+              )
+            }
+            _ <- update2O traverse { task =>
+              TaskDao.regressTaskStatus(
+                firstTask.id,
+                task.properties.status
+              ) flatMap {
+                case (nextStatus, note) =>
+                  TaskDao.updateTask(
+                    task.id,
+                    task.toFeatureCreate.copy(
+                      properties = task.properties.toCreate.copy(
+                        status = nextStatus,
+                        note = note
+                      )
+                    ),
+                    dbUser
+                  )
+              }
+            }
+            actions <- TaskDao.unsafeGetTaskById(firstTask.id) flatMap { task =>
+              TaskDao.unsafeGetActionsForTask(task)
+            }
+          } yield actions
+
+          val task = regressTaskStatusIO.transact(xa).unsafeRunSync
+
+          // there should be one action for each time we updated the task, which occurs:
+          // once to go forward
+          // once to go forward to LabelingInProgress
+          // once in the regression
+          assert(
+            task.properties.actions.size == 3,
+            s"Found a surprising number of actions: ${task.properties.actions.size}"
+          )
+
+          assert(
+            task.properties.status == TaskStatus.Flagged,
+            s"status was not flagged: ${task.properties.status}"
+          )
+
+          true
+      }
+    })
+  }
 }
