@@ -12,9 +12,12 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import org.http4s.Header
-import org.http4s.Response
+import org.http4s.CacheDirective.{`max-age`, `no-cache`}
 import org.http4s.dsl.Http4sDsl
+import org.http4s.headers.`Cache-Control`
+import org.http4s.{Header, Response}
+
+import scala.concurrent.duration._
 
 import java.util.UUID
 
@@ -26,6 +29,16 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
     with LazyLogging {
 
   val authorizers = new Authorizers(xa)
+
+  private def noCache(resp: Response[IO]): Response[IO] =
+    resp.putHeaders(
+      Header(`Cache-Control`.name.toString, `no-cache`.toString)
+    )
+
+  private def shortCache(resp: Response[IO]): Response[IO] =
+    resp.putHeaders(
+      Header(`Cache-Control`.name.toString, `max-age`(60 seconds).toString)
+    )
 
   private def getTags(
       annotationProjectId: UUID,
@@ -84,7 +97,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           x,
           y,
           context
-        )
+        ) map { shortCache }
 
       case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(
             z
@@ -100,7 +113,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           x,
           y,
           context
-        )
+        ) map { noCache }
     }
 
 }
