@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.66.2] - 2021-07-29
+### Changed
+- MVT layers for tasks and labels send cache-directives for more freshness [#5608](https://github.com/raster-foundry/raster-foundry/pull/5608)
+
 ## [1.66.0] - 2021-07-27
 ### Fixed
 - Corrected strategy for acquiring note text when regressing task statuses to "flagged" [#5606](https://github.com/raster-foundry/raster-foundry/pull/5606)
@@ -985,7 +989,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.0...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.2...HEAD
+[1.66.2]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.0...v1.66.2
+[1.66.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.65.0...v1.66.0
 [1.66.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.65.0...v1.66.0
 [1.64.3]: https://github.com/raster-foundry/raster-foundry/compare/v1.64.2...v1.64.3
 [1.64.2]: https://github.com/raster-foundry/raster-foundry/compare/v1.64.1...v1.64.2
