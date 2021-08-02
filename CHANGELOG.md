@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Use JDK11 images when we're running a JAR [#5609](https://github.com/raster-foundry/raster-foundry/pull/5609)
 
 ## [1.66.2] - 2021-07-29
 ### Changed
