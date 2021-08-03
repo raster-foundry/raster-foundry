@@ -250,7 +250,7 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val stacCollection = StacCollection(
       "Collection",
-      stacVersion,
+      "1.0.0",
       Nil,
       imageryCollectionId,
       None,
@@ -310,7 +310,7 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val stacCollection = StacCollection(
       "Collection",
-      stacVersion,
+      "1.0.0",
       Nil,
       labelCollectionId,
       None,
@@ -455,7 +455,7 @@ class CampaignStacExport(
         case (campaign, projects) =>
           val rootCatalog = StacCatalog(
             "Catalog",
-            stacVersion,
+            "1.0.0",
             Nil,
             s"${exportDefinition.id}",
             None,
@@ -478,8 +478,6 @@ class CampaignStacExport(
     } yield {
       assembled flatMap { ExportData.fromExportState }
     }
-
-  private val stacVersion = "1.0.0"
 
   private def step(from: ExportState): IO[(ExportState, Unit)] = {
     from.remainingAnnotationProjects match {
@@ -618,7 +616,7 @@ class CampaignStacExport(
     newtypes.SceneItem(
       StacItem(
         s"${UUID.randomUUID}",
-        stacVersion,
+        "1.0.0",
         Nil,
         "Feature",
         extent.toPolygon,
@@ -649,7 +647,7 @@ class CampaignStacExport(
     newtypes.LabelItem(
       StacItem(
         s"$itemId",
-        stacVersion,
+        "1.0.0",
         List("label"),
         "Feature",
         extent.geometry.withSRID(4326),

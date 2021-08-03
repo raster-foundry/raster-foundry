@@ -8,6 +8,7 @@ object Version {
   val akkaHttp = "10.1.11"
   val akkaHttpCors = "0.2.2"
   val akkaSlf4j = "2.4.13"
+  val algebra = "2.0.1"
   val apacheAvro = "1.8.2"
   val apacheCommonsEmail = "1.5"
   val asyncHttpClient = "2.12.1"
@@ -16,7 +17,7 @@ object Version {
   val awsCoreSdk = "1.11.763"
   val awsLambdaCore = "1.11.763"
   val awsSdkVersion = "1.11.763"
-  val awsSdkV2Version = "2.13.74"
+  val awsSdkV2Version = "2.16.13"
   val awsXrayRecorder = "2.8.0"
   val betterFiles = "3.4.0"
   val bcrypt = "4.1"
@@ -25,11 +26,11 @@ object Version {
   val catsEffect = "2.3.3"
   val catsMeow = "0.4.0"
   val catsScalacheck = "0.2.0"
-  val chronoscala = "0.3.2"
+  val chronoscala = "1.0.0"
   val circe = "0.14.1"
   val circeOptics = "0.12.0"
   val commonsCodec = "1.11"
-  val commonsIO = "2.7"
+  val commonsIO = "2.8.0"
   val cron4s = "0.6.0"
   val decline = "0.6.0"
   val disciplineScalatest = "1.0.1"
@@ -39,7 +40,7 @@ object Version {
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
   val flyway = "6.0.8"
-  val fs2 = "2.4.2"
+  val fs2 = "2.5.3"
   val fs2Cron = "0.2.2"
   val geotrellis = "3.6.0"
   val geotrellisServer = "4.1.0"
@@ -47,6 +48,8 @@ object Version {
   val hadoop = "2.8.4"
   val hikariCP = "3.4.2"
   val http4s = "0.21.3"
+  val httpComponentsClient = "4.5.13"
+  val httpComponentsCore = "4.4.13"
   val jaegerClient = "1.0.0"
   val jaegerCore = "1.0.0"
   val javaFaker = "1.0.2"
@@ -66,7 +69,7 @@ object Version {
   val postgres = "42.2.12"
   val refined = "0.9.27"
   val rollbar = "1.4.0"
-  val scaffeine = "4.0.1"
+  val scaffeine = "4.0.2"
   val scala = "2.12.10"
   val scalaCheck = "1.14.1"
   val scalaCsv = "1.3.6"
@@ -101,9 +104,14 @@ object Dependencies {
   val akkaStream = "com.typesafe.akka" %% "akka-stream" % Version.akka
   val akkatestkit =
     "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
+  val algebra = "org.typelevel" %% "algebra" % Version.algebra
   val apacheAvro = "org.apache.avro" % "avro" % Version.apacheAvro
   val apacheCommonsEmail =
     "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
+  val apacheHttpCore =
+    "org.apache.httpcomponents" % "httpcore" % Version.httpComponentsCore
+  val apacheHttpClient =
+    "org.apache.httpcomponents" % "httpclient" % Version.httpComponentsClient
   val asyncHttpClient =
     "org.asynchttpclient" % "async-http-client" % Version.asyncHttpClient
   val auth0 = "com.auth0" % "auth0" % Version.auth0

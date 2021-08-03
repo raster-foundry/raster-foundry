@@ -320,11 +320,15 @@ lazy val common = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.algebra,
+      Dependencies.apacheHttpClient,
+      Dependencies.apacheHttpCore,
       Dependencies.awsBatchSdk,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.awsUtilsSdkV2,
       Dependencies.awsS3SdkV2,
+      Dependencies.catsKernel,
       Dependencies.catsCore,
       Dependencies.catsEffect,
       Dependencies.catsScalacheck,
@@ -350,9 +354,8 @@ lazy val common = project
       Dependencies.rollbar,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.typesafeConfig,
-      "org.apache.httpcomponents" % "httpclient" % "4.5.9",
-      "org.apache.httpcomponents" % "httpcore" % "4.4.11"
+      Dependencies.spire,
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
 
