@@ -350,7 +350,6 @@ lazy val common = project
       Dependencies.rollbar,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.spireMath,
       Dependencies.typesafeConfig,
       "org.apache.httpcomponents" % "httpclient" % "4.5.9",
       "org.apache.httpcomponents" % "httpcore" % "4.4.11"
@@ -384,7 +383,7 @@ lazy val datamodel = project
       Dependencies.refined,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.spireMath,
+      Dependencies.spire,
       Dependencies.stac4s
     ) ++ loggingDependencies
   })
@@ -502,7 +501,7 @@ lazy val batch = project
       Dependencies.shapeless,
       Dependencies.slf4j,
       Dependencies.sourceCode,
-      Dependencies.spireMath,
+      Dependencies.spire,
       Dependencies.stac4s,
       Dependencies.sttpAsyncBackend,
       Dependencies.sttpCatsBackend,
@@ -603,7 +602,7 @@ lazy val backsplashCore =
         Dependencies.scalacacheCats,
         Dependencies.scalacacheCore,
         Dependencies.spatial4j,
-        Dependencies.spireMath,
+        Dependencies.spire,
         Dependencies.typesafeConfig
       ) ++ loggingDependencies,
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
