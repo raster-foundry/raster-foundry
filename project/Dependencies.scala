@@ -21,12 +21,12 @@ object Version {
   val betterFiles = "3.4.0"
   val bcrypt = "4.1"
   val caffeine = "2.3.5"
-  val cats = "2.5.0"
+  val cats = "2.6.1"
   val catsEffect = "2.3.3"
   val catsMeow = "0.4.0"
   val catsScalacheck = "0.2.0"
   val chronoscala = "0.3.2"
-  val circe = "0.13.0"
+  val circe = "0.14.1"
   val circeOptics = "0.12.0"
   val commonsCodec = "1.11"
   val commonsIO = "2.7"
@@ -41,7 +41,7 @@ object Version {
   val flyway = "6.0.8"
   val fs2 = "2.4.2"
   val fs2Cron = "0.2.2"
-  val geotrellis = "3.5.1"
+  val geotrellis = "3.6.0"
   val geotrellisServer = "4.1.0"
   val guava = "20.0"
   val hadoop = "2.8.4"
@@ -64,7 +64,7 @@ object Version {
   val opentracingApi = "0.33.0"
   val postgis = "2.2.1"
   val postgres = "42.2.12"
-  val refined = "0.9.17"
+  val refined = "0.9.27"
   val rollbar = "1.4.0"
   val scaffeine = "4.0.1"
   val scala = "2.12.10"
@@ -80,8 +80,7 @@ object Version {
   val slf4j = "1.7.25"
   val sourceCode = "0.2.1"
   val spatial4j = "0.7"
-  val spire = "0.16.0"
-  val spireMath = "0.13.0"
+  val spire = "0.17.0"
   val stac4s = "0.6.2"
   val sttp = "2.0.9"
   val sttpModel = "1.0.3"
@@ -249,12 +248,11 @@ object Dependencies {
   val scalatestplusScalaCheck =
     "org.scalatestplus" %% "scalacheck-1-14" % Version.scalatestPlus % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
-  val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
+  val shapeless = "com.chuusai" %% "shapeless" % "2.3.7"
   val slf4j = "org.slf4j" % "slf4j-api" % Version.slf4j
   val sourceCode = "com.lihaoyi" %% "sourcecode" % Version.sourceCode
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spire = "org.typelevel" %% "spire" % Version.spire
-  val spireMath = "org.spire-math" %% "spire" % Version.spireMath
   val stac4s = "com.azavea.stac4s" %% "core" % Version.stac4s
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
   val sttpAkka =
