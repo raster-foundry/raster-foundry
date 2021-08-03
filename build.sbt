@@ -113,6 +113,7 @@ lazy val sharedSettings = Seq(
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     ("azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/")
       .withAllowInsecureProtocol(true),
+    "jitpack" at "https://jitpack.io",
     Classpaths.sbtPluginReleases,
     Opts.resolver.sonatypeReleases,
     Resolver.file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
