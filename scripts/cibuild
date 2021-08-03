@@ -28,7 +28,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Pulling down configuration settings for test environment"
 
         ./scripts/bootstrap --env
-        ./scripts/bootstrap --sbtopts
+        # ./scripts/bootstrap --sbtopts
         ./scripts/load_development_data --download
 
         echo "Building JARs (batch, backsplash-export, api)"
