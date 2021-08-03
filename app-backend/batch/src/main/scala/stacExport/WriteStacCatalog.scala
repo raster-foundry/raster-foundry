@@ -229,7 +229,7 @@ final case class WriteStacCatalog(
       _ = logger.info(s"Writing export under prefix: $exportPath")
       catalog = Utils.getAnnotationProjectStacCatalog(
         exportDefinition,
-        "1.0.0-beta.1",
+        "1.0.0",
         annotationProjectId
       )
       catalogWithPath = ObjectWithAbsolute(

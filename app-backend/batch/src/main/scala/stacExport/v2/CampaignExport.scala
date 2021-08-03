@@ -30,6 +30,7 @@ import com.azavea.stac4s.syntax._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.Transactor
 import doobie.implicits._
+import eu.timepit.refined.auto._
 import geotrellis.vector.Extent
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
@@ -75,7 +76,7 @@ object optics {
     GenLens[StacItem](_.assets)
 
   val assetHrefLens =
-    GenLens[StacItemAsset](_.href)
+    GenLens[StacAsset](_.href)
 
   val catalogLinksLens =
     GenLens[StacCatalog](_.links)
@@ -248,7 +249,8 @@ case class ExportData private (
       file: File
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val stacCollection = StacCollection(
-      "1.0.0-beta2",
+      "Collection",
+      stacVersion,
       Nil,
       imageryCollectionId,
       None,
@@ -268,7 +270,7 @@ case class ExportData private (
           Interval(List(te))
         } getOrElse Interval(Nil)
       ),
-      ().asJsonObject,
+      Map.empty,
       ().asJsonObject,
       StacLink(
         "../catalog.json",
@@ -283,7 +285,8 @@ case class ExportData private (
             Some(`application/json`),
             None
           )
-      })
+      }),
+      None
     )
     encodableToFile(stacCollection, file, "images/collection.json")
   }
@@ -306,7 +309,8 @@ case class ExportData private (
       file: File
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val stacCollection = StacCollection(
-      "1.0.0-beta2",
+      "Collection",
+      stacVersion,
       Nil,
       labelCollectionId,
       None,
@@ -326,7 +330,7 @@ case class ExportData private (
           Interval(List(te))
         } getOrElse Interval(Nil)
       ),
-      ().asJsonObject,
+      Map.empty,
       ().asJsonObject,
       StacLink(
         "../catalog.json",
@@ -341,7 +345,8 @@ case class ExportData private (
             Some(`application/json`),
             None
           )
-      })
+      }),
+      None
     )
     encodableToFile(stacCollection, file, "labels/collection.json")
   }
@@ -371,7 +376,7 @@ case class ExportData private (
       optics.itemAssetLens.modify(
         assets =>
           assets ++ Map(
-            "data" -> StacItemAsset(
+            "data" -> StacAsset(
               s"./data/${labelItem.id}.geojson",
               None,
               None,
@@ -449,6 +454,7 @@ class CampaignStacExport(
       initialStateO = (campaignOpt, childProjects) mapN {
         case (campaign, projects) =>
           val rootCatalog = StacCatalog(
+            "Catalog",
             stacVersion,
             Nil,
             s"${exportDefinition.id}",
@@ -473,7 +479,7 @@ class CampaignStacExport(
       assembled flatMap { ExportData.fromExportState }
     }
 
-  private val stacVersion = "1.0.0-beta2"
+  private val stacVersion = "1.0.0"
 
   private def step(from: ExportState): IO[(ExportState, Unit)] = {
     from.remainingAnnotationProjects match {
@@ -597,7 +603,7 @@ class CampaignStacExport(
       createdAt: Instant
   ): newtypes.SceneItem = {
     val assets = Map(tileLayers map { layer =>
-      layer.name -> StacItemAsset(
+      layer.name -> StacAsset(
         layer.url,
         Some(layer.name),
         Some(s"${layer.layerType} tiles"),
@@ -625,7 +631,7 @@ class CampaignStacExport(
         Nil,
         assets,
         None,
-        Map("datetime" -> createdAt.asJson).asJsonObject
+        ItemProperties(ItemDatetime.PointInTime(createdAt))
       )
     )
   }
@@ -663,9 +669,7 @@ class CampaignStacExport(
         ),
         Map.empty,
         None,
-        Map(
-          "datetime" -> (datetime getOrElse Instant.now).asJson
-        ).asJsonObject
+        ItemProperties(ItemDatetime.PointInTime(datetime getOrElse Instant.now))
       ).addExtensionFields(labelItemExtension)
     )
   }

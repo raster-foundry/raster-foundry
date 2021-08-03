@@ -2,6 +2,8 @@ package com.rasterfoundry.datamodel
 
 import cats.syntax.functor._
 import com.azavea.stac4s._
+import eu.timepit.refined.auto._
+import eu.timepit.refined.types.string
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json, JsonObject}
@@ -33,10 +35,10 @@ final case class StacExport(
       keywords: List[String],
       providers: List[StacProvider],
       extent: StacExtent,
-      summaries: JsonObject,
+      summaries: Map[string.NonEmptyString, SummaryValue],
       properties: JsonObject,
       links: List[StacLink],
-      extensionFields: JsonObject = ().asJsonObject
+      extensionFields: JsonObject = JsonObject.empty
   ): StacCollection = {
     val updatedLinks = license.url match {
       case Some(url) =>
@@ -50,6 +52,7 @@ final case class StacExport(
     }
 
     StacCollection(
+      "Collection",
       stacVersion,
       stacExtensions,
       id,
@@ -62,6 +65,7 @@ final case class StacExport(
       summaries,
       properties,
       updatedLinks,
+      Option(Map.empty[String, StacAsset]),
       extensionFields
     )
   }
@@ -108,10 +112,11 @@ object StacExport {
   }
 
   implicit val encCreate: Encoder[Create] = new Encoder[Create] {
-    def apply(x: Create): Json = x match {
-      case ap @ AnnotationProjectExport(_, _, _, _) => ap.asJson
-      case c @ CampaignExport(_, _, _, _)           => c.asJson
-    }
+    def apply(x: Create): Json =
+      x match {
+        case ap @ AnnotationProjectExport(_, _, _, _) => ap.asJson
+        case c @ CampaignExport(_, _, _, _)           => c.asJson
+      }
   }
 
   implicit val decCreate: Decoder[Create] =
