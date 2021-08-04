@@ -1,8 +1,8 @@
 package com.rasterfoundry.datamodel.auth
 
 import cats.syntax.all._
-import io.circe.{Decoder, Encoder, HCursor}
 import io.circe.generic.semiauto._
+import io.circe.{Decoder, Encoder, HCursor}
 
 final case class AuthorizedToken(id_token: String,
                                  access_token: String,
