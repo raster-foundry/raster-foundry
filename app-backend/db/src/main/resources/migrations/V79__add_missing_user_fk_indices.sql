@@ -77,3 +77,21 @@ ALTER TABLE
     uploads
 ADD
     CONSTRAINT uploads_datasource_fkey FOREIGN KEY (datasource) REFERENCES datasources (id) ON DELETE CASCADE;
+
+ALTER TABLE
+    projects DROP CONSTRAINT projects_default_annotation_group_fkey;
+
+ALTER TABLE
+    projects
+ADD
+    CONSTRAINT projects_default_annotation_group_fkey FOREIGN KEY (default_annotation_group) REFERENCES annotation_groups (id) ON DELETE
+SET
+    NULL;
+
+ALTER TABLE
+    scenes DROP CONSTRAINT scenes_datasource_id_fkey;
+
+ALTER TABLE
+    scenes
+ADD
+    CONSTRAINT scenes_datasource_id_fkey FOREIGN KEY (datasource) REFERENCES datasources (id) ON DELETE CASCADE;
