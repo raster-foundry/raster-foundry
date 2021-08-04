@@ -76,4 +76,4 @@ ALTER TABLE
 ALTER TABLE
     uploads
 ADD
-    CONSTRAINT uploads_datasource_fkey FOREIGN KEY (datasource) REFERENCES datasources (id);
+    CONSTRAINT uploads_datasource_fkey FOREIGN KEY (datasource) REFERENCES datasources (id) ON DELETE CASCADE;
