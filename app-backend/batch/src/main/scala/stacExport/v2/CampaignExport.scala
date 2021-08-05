@@ -113,8 +113,8 @@ case class ExportData private (
   val imageryCollectionId = s"scenes-${UUID.randomUUID}"
   val s3Client = S3()
 
-  private def encodableToFile[T: Encoder](
-      value: T,
+  private def stringToFile(
+      value: String,
       file: File,
       relativePath: String
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
@@ -124,7 +124,7 @@ case class ExportData private (
         File(parent).createIfNotExists(true, true)
     }) *>
       fs2.Stream
-        .emit(value.asJson.spaces2)
+        .emit(value)
         .covary[IO]
         .through(
           fs2.text.utf8Encode[IO]
@@ -140,10 +140,17 @@ case class ExportData private (
         .drain
   }
 
+  private def encodableToFile[T: Encoder](
+      value: T,
+      file: File,
+      relativePath: String
+  )(implicit cs: ContextShift[IO]): IO[Unit] =
+    stringToFile(value.asJson.spaces2, file, relativePath)
+
   private def writeReadme(
       file: File
   )(implicit cs: ContextShift[IO]): IO[Unit] =
-    encodableToFile(readme, file, "README.md")
+    stringToFile(readme, file, "README.md")
 
   private def writeCatalog(
       file: File
