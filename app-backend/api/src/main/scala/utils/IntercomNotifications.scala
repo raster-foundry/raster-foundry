@@ -147,16 +147,15 @@ class IntercomNotifications(
         value,
         ticket
       )
-      _ <-
-        Notify
-          .sendEmail(
-            sharingUserPlatform.publicSettings,
-            sharingUserPlatform.privateSettings,
-            newUserEmail,
-            subject,
-            messageRich.underlying,
-            messagePlain.underlying
-          )
+      _ <- Notify
+        .sendEmail(
+          sharingUserPlatform.publicSettings,
+          sharingUserPlatform.privateSettings,
+          newUserEmail,
+          subject,
+          messageRich.underlying,
+          messagePlain.underlying
+        )
     } yield ()).attempt.void.unsafeToFuture
   }
 
