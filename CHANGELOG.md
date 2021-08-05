@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Indexed all foreign key references to users [#5611](https://github.com/raster-foundry/raster-foundry/pull/5611)
+
 ### Fixed
 - Updated some setup steps and Auth0 interaction for more convenient external user use [#5612](https://github.com/raster-foundry/raster-foundry/pull/5612)
 
@@ -20,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - MVT layers for tasks and labels send cache-directives for more freshness [#5608](https://github.com/raster-foundry/raster-foundry/pull/5608)
 
-## [1.66.0] - 2021-07-27
+## [1.66.1] - 2021-07-27
 ### Fixed
 - Corrected strategy for acquiring note text when regressing task statuses to "flagged" [#5606](https://github.com/raster-foundry/raster-foundry/pull/5606)
 
@@ -1001,8 +1004,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
 [Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.2...HEAD
-[1.66.2]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.0...v1.66.2
-[1.66.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.65.0...v1.66.0
+[1.66.2]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.1...v1.66.2
+[1.66.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.0...v1.66.1
 [1.66.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.65.0...v1.66.0
 [1.64.3]: https://github.com/raster-foundry/raster-foundry/compare/v1.64.2...v1.64.3
 [1.64.2]: https://github.com/raster-foundry/raster-foundry/compare/v1.64.1...v1.64.2
