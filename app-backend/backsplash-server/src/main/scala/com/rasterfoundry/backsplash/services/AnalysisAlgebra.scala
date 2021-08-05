@@ -20,13 +20,15 @@ import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 
 import java.util.UUID
+import io.chrisdavenport.log4cats.Logger
 
 @SuppressWarnings(Array("TraversableHead"))
 class AnalysisManager[Param: ToolStore, HistStore](
     analyses: Param,
     mosaicImplicits: MosaicImplicits[HistStore],
     toolstoreImplicits: ToolStoreImplicits[HistStore],
-    xa: Transactor[IO])(implicit cs: ContextShift[IO])
+    xa: Transactor[IO]
+)(implicit cs: ContextShift[IO], logger: Logger[IO])
     extends ColorImplicits {
 
   val authorizers = new Authorizers(xa)
@@ -40,12 +42,14 @@ class AnalysisManager[Param: ToolStore, HistStore](
   private val pngType = `Content-Type`(MediaType.image.png)
   private val tiffType = `Content-Type`(MediaType.image.tiff)
 
-  def tile(user: User,
-           analysisId: UUID,
-           nodeId: Option[UUID],
-           z: Int,
-           x: Int,
-           y: Int): IO[Response[IO]] =
+  def tile(
+      user: User,
+      analysisId: UUID,
+      nodeId: Option[UUID],
+      z: Int,
+      x: Int,
+      y: Int
+  ): IO[Response[IO]] =
     for {
       authFiber <- authorizers.authToolRun(user, analysisId).start
       paintableFiber <- analyses.read(analysisId, nodeId).start
@@ -69,9 +73,11 @@ class AnalysisManager[Param: ToolStore, HistStore](
       resp <- tileValidated
     } yield resp
 
-  def histogram(user: User,
-                analysisId: UUID,
-                nodeId: Option[UUID]): IO[Response[IO]] =
+  def histogram(
+      user: User,
+      analysisId: UUID,
+      nodeId: Option[UUID]
+  ): IO[Response[IO]] =
     for {
       authFiber <- authorizers.authToolRun(user, analysisId).start
       paintableFiber <- analyses.read(analysisId, nodeId).start
@@ -90,9 +96,11 @@ class AnalysisManager[Param: ToolStore, HistStore](
       resp <- histsValidated
     } yield resp
 
-  def statistics(user: User,
-                 analysisId: UUID,
-                 nodeId: Option[UUID]): IO[Response[IO]] =
+  def statistics(
+      user: User,
+      analysisId: UUID,
+      nodeId: Option[UUID]
+  ): IO[Response[IO]] =
     for {
       authFiber <- authorizers.authToolRun(user, analysisId).start
       paintableFiber <- analyses.read(analysisId, nodeId).start
@@ -109,12 +117,14 @@ class AnalysisManager[Param: ToolStore, HistStore](
       resp <- histsValidated
     } yield resp
 
-  def export(authedReq: AuthedRequest[IO, User],
-             user: User,
-             analysisId: UUID,
-             node: Option[UUID],
-             extent: Extent,
-             zoom: Int) = {
+  def export(
+      authedReq: AuthedRequest[IO, User],
+      user: User,
+      analysisId: UUID,
+      node: Option[UUID],
+      extent: Extent,
+      zoom: Int
+  ) = {
     val projectedExtent = extent.reproject(LatLng, WebMercator)
     val respType =
       authedReq.req.headers
@@ -132,11 +142,16 @@ class AnalysisManager[Param: ToolStore, HistStore](
       paintableTool <- paintableFiber.join
       tileValidated <- paintableTool.extent(
         projectedExtent,
-        BacksplashImage.tmsLevels(zoom).cellSize) map {
+        BacksplashImage.tmsLevels(zoom).cellSize
+      ) map {
         case Valid(tile) => {
           if (respType == tiffType) {
             Ok(
-              SinglebandGeoTiff(tile.band(0), projectedExtent, WebMercator).toByteArray,
+              SinglebandGeoTiff(
+                tile.band(0),
+                projectedExtent,
+                WebMercator
+              ).toByteArray,
               tiffType
             )
           } else {

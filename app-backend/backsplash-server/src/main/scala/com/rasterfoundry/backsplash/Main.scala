@@ -34,6 +34,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 import java.util.concurrent.{Executors, TimeUnit}
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
 object Main extends IOApp with HistogramStoreImplicits with RollbarNotifier {
 
@@ -46,6 +47,8 @@ object Main extends IOApp with HistogramStoreImplicits with RollbarNotifier {
   )
 
   override implicit val contextShift: ContextShift[IO] = rasterIO
+
+  implicit val log4CatsLogger = Slf4jLogger.getLogger[IO]
 
   val xa = RFTransactor.buildTransactor()
 

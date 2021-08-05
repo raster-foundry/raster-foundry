@@ -13,8 +13,6 @@ import com.azavea.maml.ast.{GeomLit, Masking, RasterVar}
 import com.azavea.maml.eval.ConcurrentInterpreter
 import com.colisweb.tracing.core.TracingContextBuilder
 import doobie.util.transactor.Transactor
-import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
 import geotrellis.vector.io.json.Implicits._
 import geotrellis.vector.{Polygon, Projected}
@@ -24,9 +22,10 @@ import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-import org.http4s.util.CaseInsensitiveString
 
 import java.util.UUID
+import com.azavea.maml.ast.Expression
+import io.chrisdavenport.log4cats.Logger
 
 class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     layers: LayerStore,
@@ -34,7 +33,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     analysisManager: AnalysisManager[ToolStore, HistStore],
     xa: Transactor[IO],
     contextShift: ContextShift[IO]
-)(implicit tracingContext: TracingContextBuilder[IO]) {
+)(implicit tracingContext: TracingContextBuilder[IO], logger: Logger[IO]) {
 
   implicit val cs = contextShift
 
@@ -45,7 +44,6 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
   implicit val tmsReification = paintedMosaicTmsReification
 
   private val pngType = `Content-Type`(MediaType.image.png)
-  private val tiffType = `Content-Type`(MediaType.image.tiff)
 
   val authorizers = new Authorizers(xa)
 
@@ -72,7 +70,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
               layer.geometry match {
                 case Some(mask) =>
                   // Intermediate val to anchor the implicit resolution with multiple argument lists
-                  val expression =
+                  val expression: Expression =
                     Masking(
                       List(GeomLit(mask.geom.toGeoJson), RasterVar("mosaic"))
                     )
@@ -87,10 +85,11 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                       upperQuantile,
                       childContext
                     )
-                  LayerTms.concurrent(
+                  LayerTms.apply(
                     IO.pure(expression),
                     IO.pure(Map("mosaic" -> param)),
-                    ConcurrentInterpreter.DEFAULT[IO]
+                    ConcurrentInterpreter.DEFAULT[IO],
+                    None
                   )
                 case _ =>
                   LayerTms.identity(
@@ -158,7 +157,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             None,
             tracingContext
           )
-          histFiber <- LayerHistogram.identity(mosaic, 4000).start
+          histFiber <- LayerHistogram.concurrent(mosaic, 4000).start
           _ <- authFiber.join.handleErrorWith { error =>
             histFiber.cancel *> IO.raiseError(error)
           }
@@ -206,7 +205,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                   None,
                   None
                 )
-                histFiber <- LayerHistogram.identity(mosaic, 4000).start
+                histFiber <- LayerHistogram.concurrent(mosaic, 4000).start
                 _ <- authFiber.join.handleErrorWith { error =>
                   histFiber.cancel *> IO.raiseError(error)
                 }
@@ -226,81 +225,6 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
               )
           }
         }
-
-      case tracedReq @ GET -> Root / UUIDWrapper(
-            projectId
-          ) / "layers" / UUIDWrapper(
-            layerId
-          ) / "export"
-          :? ExtentQueryParamMatcher(extent)
-          :? ZoomQueryParamMatcher(zoom)
-          :? BandOverrideQueryParamDecoder(
-            bandOverride
-          ) :? DisableAutoCorrectionQueryParamDecoder(
-            disableColorCorrect
-          ) as user using tracingContext =>
-        tracingContext.addTags(
-          Map(
-            "projectId" -> projectId.toString,
-            "layerId" -> layerId.toString,
-            "requestType" -> "layer-export",
-            "zoom" -> zoom.toString
-          )
-        )
-        val projectedExtent = extent.reproject(LatLng, WebMercator)
-        val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
-        val eval = tracedReq.authedRequest.req.headers
-          .get(CaseInsensitiveString("Accept")) match {
-          case Some(Header(_, "image/tiff")) =>
-            LayerExtent.identity(
-              layers.read(
-                layerId,
-                Some(Projected(projectedExtent, 3857)),
-                bandOverride,
-                None,
-                true,
-                None,
-                None
-              )
-            )(rawMosaicExtentReification, cs)
-          case _ =>
-            LayerExtent.identity(
-              layers.read(
-                layerId,
-                Some(Projected(projectedExtent, 3857)),
-                bandOverride,
-                None,
-                disableColorCorrect getOrElse false,
-                None,
-                None
-              )
-            )(paintedMosaicExtentReification, cs)
-        }
-        for {
-          authFiber <- authorizers.authProject(user, projectId).start
-          respFiber <- eval(projectedExtent, cellSize).start
-          _ <- authFiber.join.handleErrorWith { error =>
-            respFiber.cancel *> IO.raiseError(error)
-          }
-          resp <- respFiber.join.flatMap {
-            case Valid(tile) =>
-              tracedReq.authedRequest.req.headers
-                .get(CaseInsensitiveString("Accept")) match {
-                case Some(Header(_, "image/tiff")) =>
-                  Ok(
-                    MultibandGeoTiff(
-                      tile,
-                      projectedExtent,
-                      WebMercator
-                    ).toByteArray,
-                    tiffType
-                  )
-                case _ =>
-                  Ok(tile.renderPng.bytes, pngType)
-              }
-            case Invalid(e) => BadRequest(s"Could not produce extent: $e ")
-          }
-        } yield resp
 
       case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
             analysisId
