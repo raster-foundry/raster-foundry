@@ -210,7 +210,6 @@ lazy val root = project
     batch,
     backsplashCore,
     backsplashServer,
-    backsplashExport,
     notification
   )
 
@@ -612,54 +611,6 @@ lazy val backsplashCore =
       addCompilerPlugin(
         "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
       )
-    )
-
-/**
-  * Backsplash Export Settings
-  */
-lazy val backsplashExport =
-  Project("backsplash-export", file(appBackendDir + "/backsplash-export"))
-    .dependsOn(common)
-    .settings(sharedSettings: _*)
-    .settings(
-      resolvers += Resolver
-        .file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
-          Resolver.ivyStylePatterns
-        )
-    )
-    .settings(
-      fork in run := true,
-      libraryDependencies ++= Seq(
-        Dependencies.awsS3,
-        Dependencies.awsCoreSdk,
-        Dependencies.catsCore,
-        Dependencies.catsEffect,
-        Dependencies.circeCore,
-        Dependencies.circeParser,
-        Dependencies.circeShapes,
-        Dependencies.commonsIO,
-        Dependencies.decline,
-        Dependencies.geotrellisGdal,
-        Dependencies.geotrellisLayer,
-        Dependencies.geotrellisProj4,
-        Dependencies.geotrellisRaster,
-        Dependencies.geotrellisServer,
-        Dependencies.geotrellisVector,
-        Dependencies.jts,
-        Dependencies.mamlJvm,
-        Dependencies.scalaCheck,
-        Dependencies.scalajHttp,
-        Dependencies.scalatestplusScalaCheck,
-        Dependencies.scalatest,
-        Dependencies.shapeless,
-        Dependencies.typesafeConfig
-      ) ++ loggingDependencies,
-      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-      addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
-      addCompilerPlugin(
-        "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
-      ),
-      assemblyJarName in assembly := "backsplash-export-assembly.jar"
     )
 
 /**
