@@ -364,6 +364,10 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       logger: Logger[IO]
   ): ExtentReification[IO, BacksplashMosaic] =
     new ExtentReification[IO, BacksplashMosaic] {
+
+      // For now at least this is only called in the tile server, where we always have a cell size
+      // for the call.
+      @SuppressWarnings(Array("OptionGet"))
       def extentReification(
           self: BacksplashMosaic
       ): (Extent, Option[CellSize]) => IO[ProjectedRaster[MultibandTile]] =
@@ -518,7 +522,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       contextShift: ContextShift[IO]
   ): ExtentReification[IO, BacksplashMosaic] =
     new ExtentReification[IO, BacksplashMosaic] {
-
+      // For now at least this is only called in the tile server, where we always have a cell size
+      // for the call.
+      @SuppressWarnings(Array("OptionGet"))
       def extentReification(
           self: BacksplashMosaic
       ): (Extent, Option[CellSize]) => IO[ProjectedRaster[MultibandTile]] =
