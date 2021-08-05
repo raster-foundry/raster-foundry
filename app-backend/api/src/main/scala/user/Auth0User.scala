@@ -22,9 +22,9 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
-import sttp.client._
-import sttp.client.akkahttp._
-import sttp.client.circe._
+import sttp.client3._
+import sttp.client3.akkahttp._
+import sttp.client3.circe._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -88,18 +88,18 @@ object UserWithOAuth {
     "visibility",
     "dropboxCredential",
     "planetCredential"
-  )(
-    u =>
-      (
-        u.id,
-        u.name,
-        u.email,
-        u.profileImageUri,
-        u.emailNotifications,
-        u.visibility,
-        u.dropboxCredential,
-        u.planetCredential
-    ))
+  )(u =>
+    (
+      u.id,
+      u.name,
+      u.email,
+      u.profileImageUri,
+      u.emailNotifications,
+      u.visibility,
+      u.dropboxCredential,
+      u.planetCredential
+    )
+  )
 }
 @JsonCodec
 final case class Auth0UserUpdate(
@@ -118,7 +118,7 @@ object Auth0Service extends Config with LazyLogging {
 
   import com.rasterfoundry.api.AkkaSystem._
 
-  implicit val sttpBackend = AkkaHttpBackend()
+  val sttpBackend = AkkaHttpBackend()
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
   val userUri = Uri(s"https://$auth0Domain/api/v2/users")
@@ -381,7 +381,7 @@ object Auth0Service extends Config with LazyLogging {
         .header("Authorization", s"Bearer ${bearerToken.access_token}")
         .get(uri"https://$auth0Domain/api/v2/jobs/$jobId")
         .response(asJson[Auth0JobStatus])
-        .send()
+        .send(sttpBackend)
         .flatMap { response =>
           response.body match {
             case Left(_) => {
@@ -415,20 +415,21 @@ object Auth0Service extends Config with LazyLogging {
     for {
       managementToken <- authBearerTokenCache.get(1)
       authHeader = s"Bearer ${managementToken.access_token}"
-      response <- basicRequest
-        .header("Authorization", authHeader)
-        .get(requestUri)
-        .response(asJson[List[Auth0User]])
-        .send()
-        .map { r =>
-          r.body.leftMap { _ =>
-            val e = BulkJobRequestUsersError(
-              s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
-            )
-            logger.error(e.error)
-            e
+      response <-
+        basicRequest
+          .header("Authorization", authHeader)
+          .get(requestUri)
+          .response(asJson[List[Auth0User]])
+          .send(sttpBackend)
+          .map { r =>
+            r.body.leftMap { _ =>
+              val e = BulkJobRequestUsersError(
+                s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
+              )
+              logger.error(e.error)
+              e
+            }
           }
-        }
     } yield response
 
   }
@@ -438,15 +439,15 @@ object Auth0Service extends Config with LazyLogging {
   ): Future[Either[BulkCreateError, List[Auth0User]]] = {
     val bulkCreateId = UUID.randomUUID()
     val usersToCreate = userIds
-      .map(
-        uid =>
-          Auth0UserBulkCreate(
-            uid,
-            s"$uid@${auth0AnonymizedConnectionName}.com",
-            true,
-            uid.bcrypt(10),
-            Map("bulkCreateId" -> bulkCreateId.toString)
-        ))
+      .map(uid =>
+        Auth0UserBulkCreate(
+          uid,
+          s"$uid@${auth0AnonymizedConnectionName}.com",
+          true,
+          uid.bcrypt(10),
+          Map("bulkCreateId" -> bulkCreateId.toString)
+        )
+      )
       .asJson
       .noSpaces
     val tempFile = File.newTemporaryFile()
@@ -464,7 +465,7 @@ object Auth0Service extends Config with LazyLogging {
           )
           .response(asJson[ImportResponse])
           .post(uri"https://$auth0Domain/api/v2/jobs/users-imports")
-          .send()
+          .send(sttpBackend)
           .map { r =>
             r.body match {
               case Left(_) => {

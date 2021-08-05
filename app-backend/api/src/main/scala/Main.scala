@@ -8,12 +8,12 @@ import akka.actor.{ActorSystem, Terminated}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.server.RejectionHandler
-import cats.effect.{Async, ContextShift, IO}
+import cats.effect.{ContextShift, IO}
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.implicits._
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
+import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,13 +38,10 @@ object Main extends App with Config with Router {
 
   val xa = RFTransactor.buildTransactor()
 
-  val notifier = for {
-    notifierIO <- Async.memoize(AsyncHttpClientCatsBackend[IO]() map {
-      backend =>
-        new IntercomNotifications(backend, xa)
-    })
-    notifier <- notifierIO
-  } yield notifier
+  val notifier =
+    AsyncHttpClientCatsBackend[IO]() map { backend =>
+      new IntercomNotifications(backend, xa)
+    }
 
   implicit val ec = ExecutionContext.Implicits.global
 
@@ -81,5 +78,5 @@ object Main extends App with Config with Router {
     )
   }
 
-  Http().bindAndHandle(corsRoutes, httpHost, httpPort)
+  Http().newServerAt(httpHost, httpPort).bindFlow(corsRoutes)
 }

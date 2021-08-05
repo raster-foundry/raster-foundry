@@ -34,7 +34,7 @@ trait QueryParameterDeserializers {
     }
 
   implicit val deserializerAnnotationProjectType
-    : Unmarshaller[String, AnnotationProjectType] =
+      : Unmarshaller[String, AnnotationProjectType] =
     Unmarshaller.strict[String, AnnotationProjectType] { s =>
       AnnotationProjectType.fromString(s)
     }
@@ -88,17 +88,13 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
 
   def groupQueryParameters =
     parameters(
-      (
-        'groupType.as(deserializerGroupType).?,
-        'groupId.as(deserializerUUID).?
-      )
+      'groupType.as(deserializerGroupType).?,
+      'groupId.as(deserializerUUID).?
     ).as(GroupQueryParameters.apply _)
 
   def userAuditQueryParameters =
     parameters(
-      (
-        'createdBy.as[String].?
-      )
+      'createdBy.as[String].?
     ).as(UserAuditQueryParameters.apply _)
 
   def userQueryParameters =
@@ -110,29 +106,25 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
 
   def timestampQueryParameters =
     parameters(
-      (
-        'minCreateDatetime.as(deserializerTimestamp).?,
-        'maxCreateDatetime.as(deserializerTimestamp).?,
-        'minModifiedDatetime.as(deserializerTimestamp).?,
-        'maxModifiedDatetime.as(deserializerTimestamp).?
-      )
+      'minCreateDatetime.as(deserializerTimestamp).?,
+      'maxCreateDatetime.as(deserializerTimestamp).?,
+      'minModifiedDatetime.as(deserializerTimestamp).?,
+      'maxModifiedDatetime.as(deserializerTimestamp).?
     ).as(TimestampQueryParameters.apply _)
 
   def annotationQueryParams =
     (orgQueryParams &
       userQueryParameters &
       parameters(
-        (
-          'label.as[String].?,
-          'machineGenerated.as[Boolean].?,
-          'minConfidence.as[Double].?,
-          'maxConfidence.as[Double].?,
-          'quality.as[String].?,
-          'annotationGroup.as[UUID].?,
-          'bbox.as[String].*,
-          'withOwnerInfo.as[Boolean].?,
-          'taskId.as[UUID].?
-        )
+        'label.as[String].?,
+        'machineGenerated.as[Boolean].?,
+        'minConfidence.as[Double].?,
+        'maxConfidence.as[Double].?,
+        'quality.as[String].?,
+        'annotationGroup.as[UUID].?,
+        'bbox.as[String].*,
+        'withOwnerInfo.as[Boolean].?,
+        'taskId.as[UUID].?
       )).as(AnnotationQueryParameters.apply _)
 
   def shapeQueryParams =
@@ -216,10 +208,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
 
   def annotationProjectFilterParameters =
     parameters(
-      (
-        'projectType.as(deserializerAnnotationProjectType).?,
-        'taskStatusesInclude.as(deserializerTaskStatus).*
-      )
+      'projectType.as(deserializerAnnotationProjectType).?,
+      'taskStatusesInclude.as(deserializerTaskStatus).*
     ).as(AnnotationProjectFilterQueryParameters.apply _)
 
   def annotationProjectQueryParameters =

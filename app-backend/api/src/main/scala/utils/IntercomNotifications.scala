@@ -15,8 +15,7 @@ import com.rasterfoundry.notification.intercom.{
 import cats.effect.{ContextShift, IO}
 import doobie.Transactor
 import doobie.implicits._
-import sttp.client.SttpBackend
-import sttp.client.asynchttpclient.WebSocketHandler
+import sttp.client3.SttpBackend
 
 import scala.concurrent.Future
 
@@ -25,8 +24,7 @@ import java.{util => ju}
 class IntercomNotifications(
     backend: SttpBackend[
       IO,
-      Nothing,
-      WebSocketHandler
+      Any
     ],
     xa: Transactor[IO]
 )(implicit contextShift: ContextShift[IO])
@@ -149,15 +147,16 @@ class IntercomNotifications(
         value,
         ticket
       )
-      _ <- Notify
-        .sendEmail(
-          sharingUserPlatform.publicSettings,
-          sharingUserPlatform.privateSettings,
-          newUserEmail,
-          subject,
-          messageRich.underlying,
-          messagePlain.underlying
-        )
+      _ <-
+        Notify
+          .sendEmail(
+            sharingUserPlatform.publicSettings,
+            sharingUserPlatform.privateSettings,
+            newUserEmail,
+            subject,
+            messageRich.underlying,
+            messagePlain.underlying
+          )
     } yield ()).attempt.void.unsafeToFuture
   }
 

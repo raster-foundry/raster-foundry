@@ -28,7 +28,6 @@ object Version {
   val catsScalacheck = "0.2.0"
   val chronoscala = "1.0.0"
   val circe = "0.14.1"
-  val circeOptics = "0.12.0"
   val commonsCodec = "1.11"
   val commonsIO = "2.8.0"
   val cron4s = "0.6.0"
@@ -143,7 +142,7 @@ object Dependencies {
   val circeCore = "io.circe" %% "circe-core" % Version.circe
   val circeGeneric = "io.circe" %% "circe-generic" % Version.circe
   val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Version.circe
-  val circeOptics = "io.circe" %% "circe-optics" % Version.circeOptics
+  val circeOptics = "io.circe" %% "circe-optics" % Version.circe
   val circeParser = "io.circe" %% "circe-parser" % Version.circe
   val circeRefined = "io.circe" %% "circe-refined" % Version.circe
   val circeShapes = "io.circe" %% "circe-shapes" % Version.circe

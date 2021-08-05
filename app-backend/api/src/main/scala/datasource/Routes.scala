@@ -64,119 +64,139 @@ trait DatasourceRoutes
       }
   }
 
-  def listDatasources: Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Datasources, Action.Read, None), user) {
-      (withPagination & datasourceQueryParams) {
-        (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
-          complete {
-            DatasourceDao
-              .authQuery(
-                user,
-                ObjectType.Datasource,
-                datasourceParams.ownershipTypeParams.ownershipType,
-                datasourceParams.groupQueryParameters.groupType,
-                datasourceParams.groupQueryParameters.groupId
-              )
-              .filter(datasourceParams)
-              .page(page)
-              .transact(xa)
-              .unsafeToFuture
-          }
-      }
-    }
-  }
-
-  def getDatasource(datasourceId: UUID): Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Datasources, Action.Read, None), user) {
-      authorizeAuthResultAsync {
-        DatasourceDao
-          .authorized(
-            user,
-            ObjectType.Datasource,
-            datasourceId,
-            ActionType.View
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          complete {
-            DatasourceDao
-              .getDatasourceById(datasourceId)
-              .transact(xa)
-              .unsafeToFuture
-          }
+  def listDatasources: Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Datasources, Action.Read, None),
+        user
+      ) {
+        (withPagination & datasourceQueryParams) {
+          (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
+            complete {
+              DatasourceDao
+                .authQuery(
+                  user,
+                  ObjectType.Datasource,
+                  datasourceParams.ownershipTypeParams.ownershipType,
+                  datasourceParams.groupQueryParameters.groupType,
+                  datasourceParams.groupQueryParameters.groupId
+                )
+                .filter(datasourceParams)
+                .page(page)
+                .transact(xa)
+                .unsafeToFuture
+            }
         }
       }
     }
-  }
 
-  def createDatasource: Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Datasources, Action.Create, None), user) {
-      entity(as[Datasource.Create]) { newDatasource =>
-        onSuccess(
+  def getDatasource(datasourceId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Datasources, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
           DatasourceDao
-            .createDatasource(newDatasource, user)
+            .authorized(
+              user,
+              ObjectType.Datasource,
+              datasourceId,
+              ActionType.View
+            )
             .transact(xa)
             .unsafeToFuture
-        ) { datasource =>
-          complete((StatusCodes.Created, datasource))
+        } {
+          rejectEmptyResponse {
+            complete {
+              DatasourceDao
+                .getDatasourceById(datasourceId)
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
         }
       }
     }
-  }
 
-  def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Datasources, Action.Update, None), user) {
-      authorizeAuthResultAsync(
-        DatasourceDao
-          .authorized(
-            user,
-            ObjectType.Datasource,
-            datasourceId,
-            ActionType.Edit
-          )
-          .transact(xa)
-          .unsafeToFuture
+  def createDatasource: Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Datasources, Action.Create, None),
+        user
       ) {
-        entity(as[Datasource]) { updateDatasource =>
+        entity(as[Datasource.Create]) { newDatasource =>
           onSuccess(
             DatasourceDao
-              .updateDatasource(updateDatasource, datasourceId)
+              .createDatasource(newDatasource, user)
               .transact(xa)
               .unsafeToFuture
-          ) {
-            completeSingleOrNotFound
+          ) { datasource =>
+            complete((StatusCodes.Created, datasource))
           }
         }
       }
     }
-  }
 
-  def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
-    authorizeScope(ScopedAction(Domain.Datasources, Action.Delete, None), user) {
-      authorizeAsync {
-        DatasourceDao
-          .isDeletable(datasourceId, user)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        onSuccess(
+  def updateDatasource(datasourceId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Datasources, Action.Update, None),
+        user
+      ) {
+        authorizeAuthResultAsync(
           DatasourceDao
-            .deleteDatasourceWithRelated(datasourceId)
+            .authorized(
+              user,
+              ObjectType.Datasource,
+              datasourceId,
+              ActionType.Edit
+            )
             .transact(xa)
             .unsafeToFuture
-        ) { counts: List[Int] =>
-          complete(
-            StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted."
-          )
+        ) {
+          entity(as[Datasource]) { updateDatasource =>
+            onSuccess(
+              DatasourceDao
+                .updateDatasource(updateDatasource, datasourceId)
+                .transact(xa)
+                .unsafeToFuture
+            ) {
+              completeSingleOrNotFound
+            }
+          }
         }
       }
     }
-  }
 
-  def listDatasourcePermissions(datasourceId: UUID): Route = authenticate {
-    user =>
+  def deleteDatasource(datasourceId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.Datasources, Action.Delete, None),
+        user
+      ) {
+        authorizeAsync {
+          DatasourceDao
+            .isDeletable(datasourceId, user)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          onSuccess(
+            DatasourceDao
+              .deleteDatasourceWithRelated(datasourceId)
+              .transact(xa)
+              .unsafeToFuture
+          ) { counts: List[Int] =>
+            complete(
+              StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted."
+            )
+          }
+        }
+      }
+    }
+
+  def listDatasourcePermissions(datasourceId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.ReadPermissions, None),
         user
@@ -200,10 +220,10 @@ trait DatasourceRoutes
           }
         }
       }
-  }
+    }
 
-  def replaceDatasourcePermissions(datasourceId: UUID): Route = authenticate {
-    user =>
+  def replaceDatasourcePermissions(datasourceId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Share, None),
         user
@@ -248,10 +268,10 @@ trait DatasourceRoutes
           }
         }
       }
-  }
+    }
 
-  def addDatasourcePermission(datasourceId: UUID): Route = authenticate {
-    user =>
+  def addDatasourcePermission(datasourceId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Share, None),
         user
@@ -284,10 +304,10 @@ trait DatasourceRoutes
           }
         }
       }
-  }
+    }
 
-  def listUserDatasourceActions(datasourceId: UUID): Route = authenticate {
-    user =>
+  def listUserDatasourceActions(datasourceId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.ReadPermissions, None),
         user
@@ -322,10 +342,10 @@ trait DatasourceRoutes
           }
         }
       }
-  }
+    }
 
-  def deleteDatasourcePermissions(datasourceId: UUID): Route = authenticate {
-    user =>
+  def deleteDatasourcePermissions(datasourceId: UUID): Route =
+    authenticate { user =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Share, None),
         user
@@ -349,5 +369,5 @@ trait DatasourceRoutes
           }
         }
       }
-  }
+    }
 }
