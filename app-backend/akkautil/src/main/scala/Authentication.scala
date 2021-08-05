@@ -366,9 +366,11 @@ trait Authentication extends Directives with LazyLogging {
       case _       => GroupRole.Member
     }
 
-    val isGroundworkUser = jwtClaims
-      .getBooleanClaim("https://app.rasterfoundry.com;annotateApp")
-      .booleanValue()
+    val isGroundworkUser = Option(
+      jwtClaims
+        .getBooleanClaim("https://app.rasterfoundry.com;annotateApp")) map {
+      _.booleanValue()
+    } getOrElse false
 
     val userScope: Scope =
       Option(
