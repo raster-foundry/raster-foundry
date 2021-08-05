@@ -32,10 +32,9 @@ import doobie.Transactor
 import doobie.implicits._
 import eu.timepit.refined.auto._
 import geotrellis.vector.Extent
+import io.circe.Encoder
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
-import io.circe.{Encoder, Json}
-import io.estatico.newtype.macros.newtype
 import monocle.macros.GenLens
 
 import scala.concurrent.ExecutionContext
@@ -43,14 +42,6 @@ import scala.concurrent.ExecutionContext
 import java.time.{Duration, Instant}
 import java.util.UUID
 import java.util.concurrent.Executors
-
-@SuppressWarnings(Array("AsInstanceOf"))
-object newtypes {
-  @newtype case class AnnotationProjectId(value: UUID)
-  @newtype case class SceneItem(value: StacItem)
-  @newtype case class LabelItem(value: StacItem)
-  @newtype case class TaskGeoJSON(value: Json)
-}
 
 object optics {
 
@@ -114,7 +105,8 @@ case class ExportData private (
     labelAssets: Map[
       newtypes.AnnotationProjectId,
       newtypes.TaskGeoJSON
-    ]
+    ],
+    readme: String
 ) {
 
   val labelCollectionId = s"labels-${UUID.randomUUID}"
@@ -147,6 +139,11 @@ case class ExportData private (
         .compile
         .drain
   }
+
+  private def writeReadme(
+      file: File
+  )(implicit cs: ContextShift[IO]): IO[Unit] =
+    encodableToFile(readme, file, "README.md")
 
   private def writeCatalog(
       file: File
@@ -406,7 +403,7 @@ case class ExportData private (
       rootDir
     ) *> writeCatalog(
       rootDir
-    )
+    ) *> writeReadme(rootDir)
   }
 }
 
@@ -418,14 +415,18 @@ object ExportData {
   )
   val fileBlocker: Blocker = Blocker.liftExecutionContext(fileIO)
 
-  def fromExportState(state: ExportState): Option[ExportData] = {
+  def fromExportState(
+      state: ExportState,
+      readme: String
+  ): Option[ExportData] = {
     state.remainingAnnotationProjects.toNel.fold(
       Option(
         ExportData(
           state.rootCatalog,
           state.annotationProjectImageryItems,
           state.annotationProjectLabelItems,
-          state.labelAssets
+          state.labelAssets,
+          readme
         )
       )
     )(_ => Option.empty[ExportData])
@@ -475,8 +476,18 @@ class CampaignStacExport(
       assembled <- initialStateO traverse { init =>
         runExport.runS(init)
       }
+      readme = (childProjects, assembled) mapN {
+        case (projList, state) =>
+          README.render(
+            projList,
+            state.annotationProjectLabelItems,
+            state.annotationProjectImageryItems
+          )
+      }
     } yield {
-      assembled flatMap { ExportData.fromExportState }
+      (assembled, readme).tupled flatMap {
+        case (state, doc) => ExportData.fromExportState(state, doc)
+      }
     }
 
   private def step(from: ExportState): IO[(ExportState, Unit)] = {
