@@ -9,6 +9,7 @@ import com.rasterfoundry.http4s.TracedHTTPRoutes._
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
+import com.azavea.maml.ast.Expression
 import com.azavea.maml.ast.{GeomLit, Masking, RasterVar}
 import com.azavea.maml.eval.ConcurrentInterpreter
 import com.colisweb.tracing.core.TracingContextBuilder
@@ -16,6 +17,7 @@ import doobie.util.transactor.Transactor
 import geotrellis.server._
 import geotrellis.vector.io.json.Implicits._
 import geotrellis.vector.{Polygon, Projected}
+import io.chrisdavenport.log4cats.Logger
 import io.circe.parser._
 import io.circe.syntax._
 import org.http4s._
@@ -24,8 +26,6 @@ import org.http4s.dsl.io._
 import org.http4s.headers._
 
 import java.util.UUID
-import com.azavea.maml.ast.Expression
-import io.chrisdavenport.log4cats.Logger
 
 class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     layers: LayerStore,
@@ -109,20 +109,17 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
         }
 
         for {
-          fiberAuthProject <-
-            authorizers
-              .authProject(user, projectId, tracingContext)
-              .start
-          fiberAuthLayer <-
-            authorizers
-              .authProjectLayer(projectId, layerId, tracingContext)
-              .start
+          fiberAuthProject <- authorizers
+            .authProject(user, projectId, tracingContext)
+            .start
+          fiberAuthLayer <- authorizers
+            .authProjectLayer(projectId, layerId, tracingContext)
+            .start
           fiberResp <- getEval.flatMap(_(z, x, y)).start
-          _ <-
-            (fiberAuthProject, fiberAuthLayer).tupled.join
-              .handleErrorWith { error =>
-                fiberResp.cancel *> IO.raiseError(error)
-              }
+          _ <- (fiberAuthProject, fiberAuthLayer).tupled.join
+            .handleErrorWith { error =>
+              fiberResp.cancel *> IO.raiseError(error)
+            }
           resp <- fiberResp.join flatMap {
             case Valid(tile) =>
               tracingContext.span("render") use { _ =>
@@ -176,9 +173,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           ) / "layers" / UUIDWrapper(
             layerId
           ) / "histogram"
-          :? BandOverrideQueryParamDecoder(
-            overrides
-          ) as user using tracingContext =>
+            :? BandOverrideQueryParamDecoder(
+              overrides
+            ) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -229,7 +226,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
       case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
             analysisId
           ) / IntVar(z) / IntVar(x) / IntVar(y)
-          :? NodeQueryParamMatcher(node) as user using tracingContext =>
+            :? NodeQueryParamMatcher(node) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -240,10 +237,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
         )
         for {
           authFiber <- authorizers.authProject(user, projectId).start
-          respFiber <-
-            analysisManager
-              .tile(user, analysisId, node, z, x, y)
-              .start
+          respFiber <- analysisManager
+            .tile(user, analysisId, node, z, x, y)
+            .start
           _ <- authFiber.join.handleErrorWith { error =>
             respFiber.cancel *> IO.raiseError(error)
           }
@@ -265,10 +261,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
         )
         for {
           authFiber <- authorizers.authProject(user, projectId).start
-          respFiber <-
-            analysisManager
-              .histogram(user, analysisId, node)
-              .start
+          respFiber <- analysisManager
+            .histogram(user, analysisId, node)
+            .start
           _ <- authFiber.join.handleErrorWith { error =>
             respFiber.cancel *> IO.raiseError(error)
           }
@@ -290,10 +285,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
         )
         for {
           authFiber <- authorizers.authProject(user, projectId).start
-          respFiber <-
-            analysisManager
-              .statistics(user, analysisId, node)
-              .start
+          respFiber <- analysisManager
+            .statistics(user, analysisId, node)
+            .start
           _ <- authFiber.join.handleErrorWith { error =>
             respFiber.cancel *> IO.raiseError(error)
           }
@@ -305,9 +299,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           ) / "analyses" / UUIDWrapper(
             analysisId
           ) / "raw"
-          :? ExtentQueryParamMatcher(extent)
-          :? ZoomQueryParamMatcher(zoom)
-          :? NodeQueryParamMatcher(node) as user using tracingContext =>
+            :? ExtentQueryParamMatcher(extent)
+            :? ZoomQueryParamMatcher(zoom)
+            :? NodeQueryParamMatcher(node) as user using tracingContext =>
         tracingContext.addTags(
           Map(
             "projectId" -> projectId.toString,
@@ -318,21 +312,19 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           )
         )
         for {
-          authFiber <-
-            authorizers
-              .authProjectAnalysis(user, projectId, analysisId)
-              .start
-          respFiber <-
-            analysisManager
-              .export(
-                tracedReq.authedRequest,
-                user,
-                analysisId,
-                node,
-                extent,
-                zoom
-              )
-              .start
+          authFiber <- authorizers
+            .authProjectAnalysis(user, projectId, analysisId)
+            .start
+          respFiber <- analysisManager
+            .export(
+              tracedReq.authedRequest,
+              user,
+              analysisId,
+              node,
+              extent,
+              zoom
+            )
+            .start
           _ <- authFiber.join.handleErrorWith { error =>
             respFiber.cancel *> IO.raiseError(error)
           }

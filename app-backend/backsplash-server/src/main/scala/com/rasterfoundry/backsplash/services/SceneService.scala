@@ -11,6 +11,8 @@ import com.rasterfoundry.datamodel.{BandOverride, Datasource, Scene}
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
 
+import cats.Monad
+import cats.Parallel
 import cats.data.OptionT
 import cats.data.Validated._
 import cats.effect._
@@ -27,17 +29,15 @@ import org.http4s.dsl.io._
 import org.http4s.headers._
 
 import java.util.UUID
-import cats.Parallel
-import cats.Monad
 
 class SceneService[HistStore](
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO]
 )(implicit
-    cs: ContextShift[IO],
-    builder: TracingContextBuilder[IO],
-    logger: Logger[IO]
-) extends ToRenderableStoreOps {
+  cs: ContextShift[IO],
+  builder: TracingContextBuilder[IO],
+  logger: Logger[IO])
+    extends ToRenderableStoreOps {
 
   import mosaicImplicits._
 
@@ -162,9 +162,9 @@ class SceneService[HistStore](
         } yield resp
 
       case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
-          :? ThumbnailQueryParamDecoder(
-            thumbnailSize
-          ) :? ColorCorrectLowerQuantile(
+            :? ThumbnailQueryParamDecoder(
+              thumbnailSize
+            ) :? ColorCorrectLowerQuantile(
             lowerQuantile
           ) :? ColorCorrectUpperQuantile(
             upperQuantile

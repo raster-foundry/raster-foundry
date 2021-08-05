@@ -12,6 +12,7 @@ import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render.ColorRamps
 import geotrellis.raster.{io => _, _}
 import geotrellis.vector.Extent
+import io.chrisdavenport.log4cats.Logger
 import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe._
@@ -20,7 +21,6 @@ import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 
 import java.util.UUID
-import io.chrisdavenport.log4cats.Logger
 
 @SuppressWarnings(Array("TraversableHead"))
 class AnalysisManager[Param: ToolStore, HistStore](

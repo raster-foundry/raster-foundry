@@ -60,12 +60,12 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     bsm.map { case (_, backsplashImages) => backsplashImages.headOption }
   }
 
-  def layerHistogram(mosaic: BacksplashMosaic)(implicit
+  def layerHistogram(mosaic: BacksplashMosaic)(
+      implicit
       hasRasterExtents: HasRasterExtents[IO, BacksplashMosaic],
       extentReification: ExtentReification[IO, BacksplashMosaic],
       cs: ContextShift[IO],
-      logger: Logger[IO]
-  ) = {
+      logger: Logger[IO]) = {
     LayerHistogram.concurrent(mosaic, 4000)
   }
 
@@ -79,11 +79,10 @@ object BacksplashMosaic extends ToHistogramStoreOps {
       mosaic: BacksplashMosaic,
       histStore: T
   )(implicit
-      hasRasterExtents: HasRasterExtents[IO, BacksplashMosaic],
-      extentReification: ExtentReification[IO, BacksplashMosaic],
-      cs: ContextShift[IO],
-      logger: Logger[IO]
-  ): IO[List[Histogram[Double]]] =
+    hasRasterExtents: HasRasterExtents[IO, BacksplashMosaic],
+    extentReification: ExtentReification[IO, BacksplashMosaic],
+    cs: ContextShift[IO],
+    logger: Logger[IO]): IO[List[Histogram[Double]]] =
     for {
       (tracingContext, allImages) <- mosaic
       histArrays <- tracingContext.span("getAllImageHistograms") use {

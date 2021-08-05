@@ -8,25 +8,25 @@ import com.azavea.maml.ast.Expression
 import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.ConcurrentInterpreter
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster.{io => _, _}
 import geotrellis.raster.histogram.Histogram
+import geotrellis.raster.{io => _, _}
 import geotrellis.server._
 import geotrellis.vector.{io => _, _}
 import io.chrisdavenport.log4cats.Logger
 
 sealed trait PaintableTool extends ColorImplicits with LazyLogging {
-  def tms(z: Int, x: Int, y: Int)(implicit
+  def tms(z: Int, x: Int, y: Int)(
+      implicit
       cs: ContextShift[IO],
-      logger: Logger[IO]
-  ): IO[Interpreted[MultibandTile]]
-  def extent(extent: Extent, cellsize: CellSize)(implicit
+      logger: Logger[IO]): IO[Interpreted[MultibandTile]]
+  def extent(extent: Extent, cellsize: CellSize)(
+      implicit
       cs: ContextShift[IO],
-      logger: Logger[IO]
-  ): IO[Interpreted[MultibandTile]]
-  def histogram(maxCellsSampled: Int)(implicit
+      logger: Logger[IO]): IO[Interpreted[MultibandTile]]
+  def histogram(maxCellsSampled: Int)(
+      implicit
       cs: ContextShift[IO],
-      logger: Logger[IO]
-  ): IO[Interpreted[List[Histogram[Double]]]]
+      logger: Logger[IO]): IO[Interpreted[List[Histogram[Double]]]]
 
   def renderDefinition: Option[RenderDefinition]
 }
@@ -44,29 +44,29 @@ object PaintableTool {
   ): PaintableTool =
     new PaintableTool {
 
-      def tms(z: Int, x: Int, y: Int)(implicit
+      def tms(z: Int, x: Int, y: Int)(
+          implicit
           cs: ContextShift[IO],
-          logger: Logger[IO]
-      ): IO[Interpreted[MultibandTile]] = {
+          logger: Logger[IO]): IO[Interpreted[MultibandTile]] = {
         val interpreter = ConcurrentInterpreter.DEFAULT[IO]
         val eval = LayerTms(IO.pure(expr), IO.pure(paramMap), interpreter, None)
         eval(z, x, y)
       }
 
-      def extent(extent: Extent, cellsize: CellSize)(implicit
+      def extent(extent: Extent, cellsize: CellSize)(
+          implicit
           cs: ContextShift[IO],
-          logger: Logger[IO]
-      ): IO[Interpreted[MultibandTile]] = {
+          logger: Logger[IO]): IO[Interpreted[MultibandTile]] = {
         val interpreter = ConcurrentInterpreter.DEFAULT[IO]
         val eval =
           LayerExtent(IO.pure(expr), IO.pure(paramMap), interpreter, None)
         eval(extent, Some(cellsize))
       }
 
-      def histogram(maxCellsSampled: Int)(implicit
+      def histogram(maxCellsSampled: Int)(
+          implicit
           cs: ContextShift[IO],
-          logger: Logger[IO]
-      ): IO[Interpreted[List[Histogram[Double]]]] = {
+          logger: Logger[IO]): IO[Interpreted[List[Histogram[Double]]]] = {
         val interpreter = ConcurrentInterpreter.DEFAULT[IO]
         logger.debug(s"Cells to sample: $maxCellsSampled")
         LayerHistogram(IO.pure(expr), IO.pure(paramMap), interpreter, 2000000)
