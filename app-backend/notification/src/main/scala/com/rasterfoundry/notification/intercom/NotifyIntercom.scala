@@ -6,8 +6,9 @@ import cats.effect.Sync
 import cats.implicits._
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import sttp.client._
-import sttp.client.circe._
+import io.circe.syntax._
+import sttp.client3._
+import sttp.client3.circe._
 import sttp.model.Uri
 
 trait IntercomNotifier[F[_]] {
@@ -28,14 +29,12 @@ trait IntercomNotifier[F[_]] {
 class LiveIntercomNotifier[F[_]: Sync](
     backend: SttpBackend[
       F,
-      Nothing,
-      sttp.client.asynchttpclient.WebSocketHandler
+      Any
     ]
 ) extends IntercomNotifier[F] {
   val sttpApiBase = "https://api.intercom.io"
 
   implicit val unsafeLoggerF = Slf4jLogger.getLogger[F]
-  implicit val sttpBackend = backend
 
   def createConversation(
       intercomToken: IntercomToken,
@@ -50,7 +49,7 @@ class LiveIntercomNotifier[F[_]: Sync](
         .post(uri)
         .body(ConversationCreate(userId, message))
         .response(asJson[Conversation])
-        .send() flatMap { res =>
+        .send(backend) flatMap { res =>
       res.body match {
         case Left(err) =>
           throw new RuntimeException(
@@ -74,9 +73,10 @@ class LiveIntercomNotifier[F[_]: Sync](
       basicRequest.auth
         .bearer(intercomToken.underlying)
         .header("Accept", "application/json")
+        .header("Content-Type", "application/json")
         .post(uri)
-        .body(ConversationReply(adminId, message))
-        .send() flatMap { resp =>
+        .body(ConversationReply(adminId, message).asJson.noSpaces)
+        .send(backend) flatMap { resp =>
       resp.body match {
         case Left(err) => Logger[F].error(err)
         case _         => ().pure[F]

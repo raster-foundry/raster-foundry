@@ -16,23 +16,26 @@ import com.rasterfoundry.notification.intercom.{
 }
 
 import better.files.{File => ScalaFile}
-import cats.effect.{ContextShift, IO}
+import cats.effect._
 import cats.implicits._
 import com.azavea.stac4s._
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
+import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import java.net.URI
 import java.util.UUID
 
 final case class WriteStacCatalog(
     exportId: UUID,
-    notifier: IntercomNotifier[IO]
-)(implicit val xa: Transactor[IO], cs: ContextShift[IO])
+    notifier: IntercomNotifier[IO],
+    xa: Transactor[IO]
+)(implicit cs: ContextShift[IO])
     extends Config
     with RollbarNotifier {
+
+  implicitly[Async[IO]]
 
   private val dbIO = new DbIO(xa);
 
@@ -348,13 +351,13 @@ object WriteStacCatalog extends Job {
 
   def runJob(args: List[String]): IO[Unit] = {
     RFTransactor.xaResource.use(transactor => {
-      AsyncHttpClientCatsBackend[IO]() flatMap { backend =>
+      AsyncHttpClientCatsBackend.resource[IO]() use { backend =>
         val notifier = new LiveIntercomNotifier[IO](backend)
         implicit val xa: HikariTransactor[IO] = transactor
 
         val job = args match {
           case List(id: String) =>
-            WriteStacCatalog(UUID.fromString(id), notifier)
+            WriteStacCatalog(UUID.fromString(id), notifier, xa)
         }
         job.run()
       }

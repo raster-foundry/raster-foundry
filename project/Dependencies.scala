@@ -85,8 +85,8 @@ object Version {
   val spatial4j = "0.7"
   val spire = "0.17.0"
   val stac4s = "0.6.2"
-  val sttp = "2.0.9"
-  val sttpModel = "1.0.3"
+  val sttp = "3.2.3"
+  val sttpModel = "1.4.9"
   val sup = "0.7.0"
   val typesafeConfig = "1.4.0"
   val vault = "2.0.0"
@@ -264,14 +264,14 @@ object Dependencies {
   val stac4s = "com.azavea.stac4s" %% "core" % Version.stac4s
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
   val sttpAkka =
-    "com.softwaremill.sttp.client" %% "akka-http-backend" % Version.sttp
+    "com.softwaremill.sttp.client3" %% "akka-http-backend" % Version.sttp
   val sttpAsyncBackend =
-    "com.softwaremill.sttp.client" %% "async-http-client-backend" % Version.sttp
+    "com.softwaremill.sttp.client3" %% "async-http-client-backend" % Version.sttp
   val sttpCatsBackend =
-    "com.softwaremill.sttp.client" %% "async-http-client-backend-cats" % Version.sttp
-  val sttpCirce = "com.softwaremill.sttp.client" %% "circe" % Version.sttp
-  val sttpCore = "com.softwaremill.sttp.client" %% "core" % Version.sttp
-  val sttpJson = "com.softwaremill.sttp.client" %% "json-common" % Version.sttp
+    "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % Version.sttp
+  val sttpCirce = "com.softwaremill.sttp.client3" %% "circe" % Version.sttp
+  val sttpCore = "com.softwaremill.sttp.client3" %% "core" % Version.sttp
+  val sttpJson = "com.softwaremill.sttp.client3" %% "json-common" % Version.sttp
   val sttpOkHttpBackend =
     "com.softwaremill.sttp.client" %% "okhttp-backend" % Version.sttp
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
