@@ -5,13 +5,13 @@ import sbt._
 object Version {
   val akka = "2.6.4"
   val akkaCirceJson = "1.32.0"
-  val akkaHttp = "10.1.11"
+  val akkaHttp = "10.2.4"
   val akkaHttpCors = "0.2.2"
   val akkaSlf4j = "2.4.13"
   val algebra = "2.0.1"
   val apacheAvro = "1.8.2"
   val apacheCommonsEmail = "1.5"
-  val asyncHttpClient = "2.12.1"
+  val asyncHttpClient = "2.12.3"
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.763"
   val awsCoreSdk = "1.11.763"
@@ -23,7 +23,7 @@ object Version {
   val bcrypt = "4.1"
   val caffeine = "2.3.5"
   val cats = "2.6.1"
-  val catsEffect = "2.3.3"
+  val catsEffect = "2.5.1"
   val catsMeow = "0.4.0"
   val catsScalacheck = "0.2.0"
   val chronoscala = "1.0.0"
@@ -86,6 +86,7 @@ object Version {
   val stac4s = "0.6.2"
   val sttp = "3.2.3"
   val sttpModel = "1.4.9"
+  val sttpShared = "1.1.1"
   val sup = "0.7.0"
   val typesafeConfig = "1.4.0"
   val vault = "2.0.0"
@@ -261,6 +262,8 @@ object Dependencies {
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spire = "org.typelevel" %% "spire" % Version.spire
   val stac4s = "com.azavea.stac4s" %% "core" % Version.stac4s
+  val sttpSharedCore = "com.softwaremill.sttp.shared" %% "core" % Version.sttpShared
+  val sttpSharedAkka = "com.softwaremill.sttp.shared" %% "akka" % Version.sttpShared
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
   val sttpAkka =
     "com.softwaremill.sttp.client3" %% "akka-http-backend" % Version.sttp

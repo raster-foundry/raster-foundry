@@ -274,6 +274,8 @@ lazy val apiDependencies = Seq(
   Dependencies.sttpCirce,
   Dependencies.sttpCore,
   Dependencies.sttpJson,
+  Dependencies.sttpSharedCore,
+  Dependencies.sttpSharedAkka,
   Dependencies.sttpModel,
   Dependencies.typesafeConfig
 )
@@ -505,7 +507,6 @@ lazy val batch = project
       Dependencies.sourceCode,
       Dependencies.spire,
       Dependencies.stac4s,
-      Dependencies.sttpAsyncBackend,
       Dependencies.sttpCatsBackend,
       Dependencies.sttpCore,
       Dependencies.typesafeConfig
@@ -596,6 +597,7 @@ lazy val backsplashCore =
         Dependencies.http4sCore,
         Dependencies.http4sDSL,
         Dependencies.jts,
+        Dependencies.log4cats,
         Dependencies.mamlJvm,
         Dependencies.opentracingCore,
         Dependencies.opentracingContext,
@@ -651,6 +653,8 @@ lazy val backsplashServer =
         Dependencies.http4sDSL,
         Dependencies.http4sServer,
         Dependencies.jts,
+        Dependencies.log4cats,
+        Dependencies.log4catsSlf4j,
         Dependencies.mamlJvm,
         Dependencies.opentracingApi,
         Dependencies.opentracingCore,
@@ -723,9 +727,9 @@ lazy val notification =
         Dependencies.log4cats,
         Dependencies.log4catsSlf4j,
         Dependencies.newtype,
-        Dependencies.sttpCore,
-        Dependencies.sttpAsyncBackend,
+        Dependencies.sttpSharedCore,
         Dependencies.sttpCirce,
+        Dependencies.sttpCore,
         Dependencies.sttpJson,
         Dependencies.sttpModel
       )
