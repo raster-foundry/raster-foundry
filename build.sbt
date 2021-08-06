@@ -269,7 +269,6 @@ lazy val apiDependencies = Seq(
   Dependencies.shapeless,
   Dependencies.sourceCode,
   Dependencies.sttpAkka,
-  Dependencies.sttpAsyncBackend,
   Dependencies.sttpCatsBackend,
   Dependencies.sttpCirce,
   Dependencies.sttpCore,
