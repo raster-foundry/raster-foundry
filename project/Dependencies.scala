@@ -275,7 +275,7 @@ object Dependencies {
   val sttpCore = "com.softwaremill.sttp.client3" %% "core" % Version.sttp
   val sttpJson = "com.softwaremill.sttp.client3" %% "json-common" % Version.sttp
   val sttpOkHttpBackend =
-    "com.softwaremill.sttp.client" %% "okhttp-backend" % Version.sttp
+    "com.softwaremill.sttp.client3" %% "okhttp-backend" % Version.sttp
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
   val typesafeConfig = "com.typesafe" % "config" % Version.typesafeConfig
   val vault = "io.chrisdavenport" %% "vault" % Version.vault
