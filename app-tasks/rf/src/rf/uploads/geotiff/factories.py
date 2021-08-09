@@ -68,15 +68,15 @@ class GeoTiffS3SceneFactory(object):
             logger.info("Downloading %s => %s", infile, filename)
             bucket = s3.Bucket(bucket_name)
             with get_tempdir() as tempdir:
-                tmp_fname = os.path.join(tempdir, filename)
-                bucket.download_file(key, tmp_fname)
+                tmp_path = os.path.join(tempdir, filename)
+                bucket.download_file(key, tmp_path)
 
                 if self.fileType == "NON_SPATIAL":
-                    warped_fname = cog.georeference_file(tmp_fname)
+                    warped_path = cog.georeference_file(tmp_path)
                 else:
-                    warped_fname = tmp_fname
+                    warped_path = tmp_path
 
-                cog_path = cog.convert_to_cog(warped_fname, tempdir)
+                cog_path = cog.convert_to_cog(warped_path, tempdir, filename)
                 scene = self.create_geotiff_scene(
                     cog_path, os.path.splitext(filename)[0]
                 )
@@ -90,7 +90,7 @@ class GeoTiffS3SceneFactory(object):
                     )[0]
                 images = [
                     self.create_geotiff_image(
-                        warped_fname, unquote(scene.ingestLocation), scene, cog_path
+                        warped_path, unquote(scene.ingestLocation), scene, cog_path
                     )
                 ]
 
