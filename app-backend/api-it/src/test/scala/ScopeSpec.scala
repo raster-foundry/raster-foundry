@@ -2,24 +2,29 @@ package com.rasterfoundry.api.it
 
 import com.rasterfoundry.datamodel._
 
+import cats.effect._
 import cats.implicits._
 import com.github.tototoshi.csv._
 import com.typesafe.config.ConfigFactory
 import io.circe._
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.syntax._
+import org.http4s.Method._
+import org.http4s._
+import org.http4s.circe.CirceEntityDecoder._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.client._
+import org.http4s.client.blaze._
+import org.http4s.client.dsl.io._
+import org.scalatest.compatible.Assertion
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.prop.TableDrivenPropertyChecks._
-import sttp.capabilities.Effect
-import sttp.client3._
-import sttp.client3.circe._
-import sttp.client3.okhttp.OkHttpSyncBackend
-import sttp.model.Uri
 
+import scala.concurrent.ExecutionContext.global
 import scala.io.Source
 
 import java.net.URI
 import java.util.UUID
+import java.util.concurrent._
 
 sealed abstract class Verb
 case object Get extends Verb
@@ -78,7 +83,12 @@ object TokenResponse {
 
 class ScopeSpec extends AnyFunSpec {
 
-  val okHttpBackend = OkHttpSyncBackend()
+  val blockingPool = Executors.newCachedThreadPool()
+  val blocker = Blocker.liftExecutorService(blockingPool)
+  implicit val contextShift: ContextShift[IO] =
+    IO.contextShift(blocker.blockingContext)
+  val httpClient: Resource[IO, Client[IO]] =
+    BlazeClientBuilder[IO](blocker.blockingContext).resource
 
   private val config = ConfigFactory.load()
 
@@ -96,99 +106,83 @@ class ScopeSpec extends AnyFunSpec {
 
   def makeRoute(path: String): Uri = {
     val cleaned = subUUID(path)
-    val unsafeUri = URI.create(s"$apiHost$cleaned")
-    val out = Uri(unsafeUri)
-    out
+    Uri.unsafeFromString(s"$apiHost$cleaned")
   }
 
-  val authTokenE: Either[String, TokenResponse] = {
+  def authTokenIO(client: Client[IO]): IO[TokenResponse] = {
     val tokenRoute = makeRoute("/api/tokens/")
-    val response =
-      basicRequest
-        .post(tokenRoute)
-        .body(Map("refresh_token" -> refreshToken).asJson)
-        .response(asJson[TokenResponse])
-        .send(okHttpBackend)
-    response.body match {
-      case Right(tokenResp) =>
-        Right(tokenResp)
-      case _ => {
-        Left("could not get token")
-      }
-    }
+    val request =
+      POST(
+        Map("refresh_token" -> refreshToken).asJson,
+        tokenRoute
+      )
+    client.expect[TokenResponse](request)
   }
 
-  def getBaseRequest(
-      tokenResp: TokenResponse,
-      scope: Scope,
-      expectSuccess: Boolean
-  ): RequestT[Empty, Either[String, String], Effect[Identity]] = {
-    val root =
-      basicRequest.header("X-PolicySim", "true").auth.bearer(tokenResp.id_token)
-    val scopeStringNoQuotes = scope.asJson.noSpaces.replace("\"", "")
-    if (expectSuccess) {
-      root.header("X-PolicySim-Include", scopeStringNoQuotes)
-    } else {
-      root.header("X-PolicySim-Exclude", scopeStringNoQuotes)
-    }
-  }
-
-  def addMethod(
-      request: RequestT[Empty, Either[String, String], Effect[Identity]],
-      path: Uri,
-      verb: Verb
-  ): Request[Either[String, String], Effect[Identity]] =
-    (verb match {
-      case Get    => request.get(path)
-      case Post   => request.post(path)
-      case Put    => request.put(path)
-      case Patch  => request.patch(path)
-      case Delete => request.delete(path)
-    })
-
-  def routes(rows: List[Either[String, UnparsedRow]]) =
-    Table(
-      ("Path", "Domain:Action", "Verb"),
-      (rows collect {
-        case Right(row) => row.tupled
-      }): _*
-    )
+  def memoizedAuthTokenIO(client: Client[IO]) =
+    Async.memoize[IO, TokenResponse] {
+      authTokenIO(client)
+    } flatMap { identity }
 
   def getSimResult(
-      baseRequest: RequestT[Empty, Either[String, String], Effect[Identity]],
       row: ParsedCsvRow,
-      expectation: Boolean
-  ) = {
+      expectation: Boolean,
+      tokenResponse: TokenResponse,
+      client: Client[IO]
+  ): IO[Assertion] = {
     val requestUri = makeRoute(row.path)
-    val response =
-      addMethod(baseRequest, requestUri, row.verb)
-        .response(asJson[SimResponse])
-        .send(okHttpBackend)
+    val policySimHeader = Header("X-PolicySim", "true")
+    val authHeader =
+      Header("Authorization", s"Bearer ${tokenResponse.id_token}")
+    val scopeModHeader = if (expectation) {
+      Header("X-PolicySim-Include", row.scope.asJson.noSpaces.replace("\"", ""))
+    } else {
+      Header(
+        "X-PolicySim-Exclude",
+        row.scope.asJson.noSpaces.replace("\"", "")
+      )
+    }
+    val headers = List(policySimHeader, authHeader, scopeModHeader)
+    val response = client.expect[SimResponse](row.verb match {
+      case Post =>
+        POST(requestUri, headers: _*)
+      case Get =>
+        GET(requestUri, headers: _*)
+      case Delete =>
+        DELETE(requestUri, headers: _*)
+      case Put =>
+        PUT(requestUri, headers: _*)
+      case Patch =>
+        PATCH(requestUri, headers: _*)
+    })
     // for some reason I'm not allowed to bail on the Id wrapper in the previous step, though I'd really
     // prefer to. this is a bit janky but I'm not sure what to do about it.
-    val resultBody: Either[String, SimResponse] = response.body.leftMap(err =>
-      s"body deserialization failed: $err, code: ${response.code} body: ${response.body}")
-    assert(
-      resultBody == Right(SimResponse(expectation)),
-      s"""
+    response map { resultBody =>
+      assert(
+        resultBody == SimResponse(expectation),
+        s"""
         |
         | Authorization expectation failed.
         | Received $resultBody
         | Expected $expectation
         | From url: $requestUri
         | """.trim.stripMargin
-    )
+      )
+    }
+
   }
 
   def expectAllowed(
-      baseRequest: RequestT[Empty, Either[String, String], Effect[Identity]],
-      row: ParsedCsvRow
-  ) = getSimResult(baseRequest, row, true)
+      row: ParsedCsvRow,
+      tokenResponse: TokenResponse,
+      client: Client[IO]
+  ): IO[Assertion] = getSimResult(row, true, tokenResponse, client)
 
   def expectForbidden(
-      baseRequest: RequestT[Empty, Either[String, String], Effect[Identity]],
-      row: ParsedCsvRow
-  ): Unit = getSimResult(baseRequest, row, false)
+      row: ParsedCsvRow,
+      tokenResponse: TokenResponse,
+      client: Client[IO]
+  ): IO[Assertion] = getSimResult(row, false, tokenResponse, client)
 
   val unparsedRows = CSVReader.open(csvPath).all().drop(1) map {
     case p :: s :: v :: Nil => Right(UnparsedRow(p, s, v))
@@ -202,43 +196,57 @@ class ScopeSpec extends AnyFunSpec {
 
   describe("Policy simulation") {
     it("reports expected failure when relevant scopes are excluded") {
-      forAll(routes(unparsedRows)) {
-        (path: String, scope: String, verb: String) =>
-          {
-            (for {
-              tokenResponse <- authTokenE
-              updatedPath = tokenQueryParameterSegment.replaceAllIn(
-                path,
-                s"${tokenResponse.id_token}"
-              )
-              row <- ParsedCsvRow.fromStringsE(updatedPath, scope, verb)
-              baseRequest = getBaseRequest(tokenResponse, row.scope, false)
-            } yield { expectForbidden(baseRequest, row) }) getOrElse {
-              fail(inputDataFailureMessage(path, scope, verb))
+      httpClient
+        .use({ client =>
+          unparsedRows traverse {
+            case Left(err) =>
+              IO { fail(s"Couldn't parse a row appropriately: $err") }
+            case Right(UnparsedRow(path, scope, verb)) => {
+              (for {
+                tokenResponse <- memoizedAuthTokenIO(client)
+                updatedPath = tokenQueryParameterSegment.replaceAllIn(
+                  path,
+                  s"${tokenResponse.id_token}"
+                )
+                row <- IO.fromEither(
+                  ParsedCsvRow.fromStringsE(updatedPath, scope, verb)
+                )
+                result <- expectForbidden(row, tokenResponse, client)
+              } yield { result })
             }
           }
-      }
+
+        })
+        .unsafeRunSync
+
     }
 
     it("reports expected success when relevant scopes are included") {
-      forAll(routes(unparsedRows)) {
-        (path: String, scope: String, verb: String) =>
-          {
-            (for {
-              tokenResponse <- authTokenE
-              updatedPath = tokenQueryParameterSegment.replaceAllIn(
-                path,
-                s"${tokenResponse.id_token}"
-              )
-              row <- ParsedCsvRow.fromStringsE(updatedPath, scope, verb)
-              baseRequest = {
-                getBaseRequest(tokenResponse, row.scope, true)
-              }
-            } yield { expectAllowed(baseRequest, row) }) getOrElse {
-              fail(inputDataFailureMessage(path, scope, verb))
+      httpClient
+        .use({ client =>
+          unparsedRows traverse {
+            case Left(err) =>
+              IO { fail(s"Couldn't parse a row appropriately: $err") }
+            case Right(UnparsedRow(path, scope, verb)) => {
+              (for {
+                tokenResponse <- memoizedAuthTokenIO(client)
+                updatedPath = tokenQueryParameterSegment.replaceAllIn(
+                  path,
+                  s"${tokenResponse.id_token}"
+                )
+                row <- IO.fromEither(
+                  ParsedCsvRow.fromStringsE(updatedPath, scope, verb)
+                )
+                result <- expectAllowed(row, tokenResponse, client)
+              } yield {
+                result
+              })
             }
+
           }
-      }
+        })
+        .unsafeRunSync
+
     }
   }
 }

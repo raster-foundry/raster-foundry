@@ -296,10 +296,10 @@ lazy val apiIntegrationTest = project
   .dependsOn(db)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sCirce,
+      Dependencies.http4sClient,
       Dependencies.scalaCsv % "test",
-      Dependencies.sttpCore % "test",
-      Dependencies.sttpCirce % "test",
-      Dependencies.sttpOkHttpBackend % "test",
       Dependencies.scalatest
     )
   })

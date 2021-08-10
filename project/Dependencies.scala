@@ -46,7 +46,7 @@ object Version {
   val guava = "20.0"
   val hadoop = "2.8.4"
   val hikariCP = "3.4.2"
-  val http4s = "0.21.3"
+  val http4s = "0.21.25"
   val httpComponentsClient = "4.5.13"
   val httpComponentsCore = "4.4.13"
   val jaegerClient = "1.0.0"
@@ -201,6 +201,7 @@ object Dependencies {
   val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
   val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
+  val http4sClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCore = "org.http4s" %% "http4s-core" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
@@ -262,8 +263,10 @@ object Dependencies {
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spire = "org.typelevel" %% "spire" % Version.spire
   val stac4s = "com.azavea.stac4s" %% "core" % Version.stac4s
-  val sttpSharedCore = "com.softwaremill.sttp.shared" %% "core" % Version.sttpShared
-  val sttpSharedAkka = "com.softwaremill.sttp.shared" %% "akka" % Version.sttpShared
+  val sttpSharedCore =
+    "com.softwaremill.sttp.shared" %% "core" % Version.sttpShared
+  val sttpSharedAkka =
+    "com.softwaremill.sttp.shared" %% "akka" % Version.sttpShared
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
   val sttpAkka =
     "com.softwaremill.sttp.client3" %% "akka-http-backend" % Version.sttp
@@ -274,8 +277,6 @@ object Dependencies {
   val sttpCirce = "com.softwaremill.sttp.client3" %% "circe" % Version.sttp
   val sttpCore = "com.softwaremill.sttp.client3" %% "core" % Version.sttp
   val sttpJson = "com.softwaremill.sttp.client3" %% "json-common" % Version.sttp
-  val sttpOkHttpBackend =
-    "com.softwaremill.sttp.client3" %% "okhttp-backend" % Version.sttp
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
   val typesafeConfig = "com.typesafe" % "config" % Version.typesafeConfig
   val vault = "io.chrisdavenport" %% "vault" % Version.vault
