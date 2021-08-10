@@ -32,6 +32,7 @@ import org.http4s.server.middleware.{CORS, CORSConfig, Timeout}
 import org.http4s.syntax.kleisli._
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 import java.util.concurrent.{Executors, TimeUnit}
@@ -197,7 +198,7 @@ object Main extends IOApp with HistogramStoreImplicits with RollbarNotifier {
       .toList
 
   def stream =
-    BlazeServerBuilder[IO]
+    BlazeServerBuilder[IO](global)
       .withBanner(startupBanner)
       .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")
