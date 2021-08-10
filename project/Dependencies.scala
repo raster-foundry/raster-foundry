@@ -39,7 +39,7 @@ object Version {
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
   val flyway = "6.0.8"
-  val fs2 = "2.5.3"
+  val fs2 = "2.5.9"
   val fs2Cron = "0.2.2"
   val geotrellis = "3.6.0"
   val geotrellisServer = "4.5.0"
