@@ -176,11 +176,10 @@ trait UploadRoutes
           ) {
             onComplete {
               for {
-                upload <-
-                  UploadDao
-                    .insert(uploadToInsert, user, potentialNewBytes)
-                    .transact(xa)
-                    .unsafeToFuture
+                upload <- UploadDao
+                  .insert(uploadToInsert, user, potentialNewBytes)
+                  .transact(xa)
+                  .unsafeToFuture
               } yield upload
             } {
               case Success(upload) =>
@@ -251,10 +250,8 @@ trait UploadRoutes
                 if (rowsUpdated == 0) {
                   return complete { HttpResponse(StatusCodes.NoContent) }
                 }
-                if (
-                  upload.uploadStatus != UploadStatus.Uploaded &&
-                  updateUpload.uploadStatus == UploadStatus.Uploaded
-                ) {
+                if (upload.uploadStatus != UploadStatus.Uploaded &&
+                    updateUpload.uploadStatus == UploadStatus.Uploaded) {
                   kickoffSceneImport(upload.id)
                 }
                 complete { HttpResponse(StatusCodes.NoContent) }
@@ -306,10 +303,10 @@ trait UploadRoutes
                   .transact(xa)
                   .unsafeToFuture
               ) {
-                case Some(_) =>
+                case Some(upload) =>
                   complete(
                     CredentialsService
-                      .getCredentials(user, uploadId, jwt.split(" ").last)
+                      .getCredentials(upload, jwt.split(" ").last)
                   )
                 case None => complete(StatusCodes.NotFound)
               }
@@ -349,7 +346,7 @@ trait UploadRoutes
                   case Some(filename) => {
                     val signed = s3.getSignedUrl(
                       dataBucket,
-                      s"user-uploads/${user.id}/${uploadId}/${filename}",
+                      s"${upload.s3Path}/$filename",
                       method = HttpMethod.PUT
                     )
                     Upload.PutUrl(s"$signed")
