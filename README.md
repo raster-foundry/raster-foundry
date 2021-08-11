@@ -116,6 +116,7 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | `cipublish`             | Publish container images to container image repositories.    |
 | `load_development_data` | Load data for development purposes from S3                   |
 | `rsync-back`            | Perform a one-way `rsync` from the VM to the host.           |
+| `process-upload`        | Process an upload in development                             |
 
 ## Testing
 
@@ -123,4 +124,13 @@ Run all the tests:
 
 ```bash
 $ ./scripts/test
+```
+
+## Processing Imagery
+
+In staging and production, a batch job will automatically be kicked off for processing after a
+successful upload. In development, you need to process the upload manually which you can do like so:
+
+```bash
+$ ./scripts/process-upload <upload_id>
 ```
