@@ -303,10 +303,10 @@ trait UploadRoutes
                   .transact(xa)
                   .unsafeToFuture
               ) {
-                case Some(_) =>
+                case Some(upload) =>
                   complete(
                     CredentialsService
-                      .getCredentials(user, uploadId, jwt.split(" ").last)
+                      .getCredentials(upload, jwt.split(" ").last)
                   )
                 case None => complete(StatusCodes.NotFound)
               }
@@ -332,13 +332,29 @@ trait UploadRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
-            val signed = s3.getSignedUrl(
-              dataBucket,
-              s"user-uploads/${user.id}/${uploadId}/${uploadId}.tif",
-              method = HttpMethod.PUT
-            )
-            Upload.PutUrl(s"$signed")
+          onSuccess(
+            UploadDao.query
+              .filter(uploadId)
+              .selectOption
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            case Some(upload) =>
+              complete {
+                // NOTE: We expect there to be exactly one file for this upload
+                upload.files.headOption match {
+                  case Some(filename) => {
+                    val signed = s3.getSignedUrl(
+                      dataBucket,
+                      s"${upload.s3Path}/$filename",
+                      method = HttpMethod.PUT
+                    )
+                    Upload.PutUrl(s"$signed")
+                  }
+                  case None => StatusCodes.BadRequest
+                }
+              }
+            case None => complete(StatusCodes.NotFound)
           }
         }
       }
