@@ -77,7 +77,7 @@ be interested in are:
 - [PySTAC](https://github.com/stac-utils/pystac) for reading and manipulating the STAC
 
 If there's something specific you'd like to be able to do with your STAC export or that you've done that you'd like
-to tell us about, please contact us with the chat in GroundWork or [by email](mailto:info@rasterfoundry.com).
+to tell us about, please contact us with the chat in GroundWork or [by email](mailto:groundwork@azavea.com).
 """
 
 }
