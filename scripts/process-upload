@@ -13,13 +13,23 @@ Convenience script for processing an upload by id in development.
 "
 }
 
+function is_service_running() {
+  docker ps -q -f "status=running" --no-trunc | grep -q "$(docker-compose ps -q "$1")"
+}
+
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        docker-compose run --rm \
-                batch \
-                rf process-upload "$@"
+        service_name='api-server'
+        if is_service_running $service_name ; then
+            docker-compose run --rm \
+                    batch \
+                    rf process-upload "$@"
+        else
+            echo "The $service_name service must be running for upload processing to succeed. Exiting."
+            exit 1
+        fi
     fi
 fi
 
