@@ -10,6 +10,7 @@ import io.circe.{Decoder, Encoder, Json, JsonObject}
 
 import java.sql.Timestamp
 import java.util.{Date, UUID}
+import cats.data.NonEmptyList
 
 @JsonCodec
 final case class StacExport(
@@ -24,7 +25,8 @@ final case class StacExport(
     exportStatus: ExportStatus,
     taskStatuses: List[String],
     annotationProjectId: Option[UUID],
-    campaignId: Option[UUID]
+    campaignId: Option[UUID],
+    assetTypes: Option[NonEmptyList[ExportAssetType]]
 ) {
   def createStacCollection(
       stacVersion: String,
