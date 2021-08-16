@@ -11,11 +11,13 @@ import geotrellis.proj4.CRS
 import geotrellis.raster.MosaicRasterSource
 import geotrellis.raster.histogram._
 import geotrellis.server._
+import io.chrisdavenport.log4cats.Logger
 
 object BacksplashMosaic extends ToHistogramStoreOps {
 
-  def toRasterSource(bsm: BacksplashMosaic)(
-      implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
+  def toRasterSource(
+      bsm: BacksplashMosaic
+  )(implicit contextShift: ContextShift[IO]): IO[MosaicRasterSource] = {
     bsm flatMap {
       case (tracingContext, backsplashImages) =>
         tracingContext.span("bsm.toRasterSource") use { childContext =>
@@ -33,8 +35,9 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     }
   }
 
-  def getRasterSourceOriginalCRS(bsm: BacksplashMosaic)(
-      implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
+  def getRasterSourceOriginalCRS(
+      bsm: BacksplashMosaic
+  )(implicit contextShift: ContextShift[IO]): IO[List[CRS]] = {
     bsm flatMap {
       case (tracingContext, backsplashImages) =>
         tracingContext.span("bsm.getRasterSourceOriginalCRS") use {
@@ -58,10 +61,12 @@ object BacksplashMosaic extends ToHistogramStoreOps {
   }
 
   def layerHistogram(mosaic: BacksplashMosaic)(
-      implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],
-      extentReification: ExtentReification[BacksplashMosaic],
-      cs: ContextShift[IO]) = {
-    LayerHistogram.identity(mosaic, 4000)
+      implicit
+      hasRasterExtents: HasRasterExtents[IO, BacksplashMosaic],
+      extentReification: ExtentReification[IO, BacksplashMosaic],
+      cs: ContextShift[IO],
+      logger: Logger[IO]) = {
+    LayerHistogram.concurrent(mosaic, 4000)
   }
 
   /** We're in the non-Nil branch of the match, so we definitely have histograms
@@ -70,11 +75,14 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     * that I disagree with, so suppressing.
     */
   @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
-  def getStoreHistogram[T: HistogramStore](mosaic: BacksplashMosaic,
-                                           histStore: T)(
-      implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],
-      extentReification: ExtentReification[BacksplashMosaic],
-      cs: ContextShift[IO]): IO[List[Histogram[Double]]] =
+  def getStoreHistogram[T: HistogramStore](
+      mosaic: BacksplashMosaic,
+      histStore: T
+  )(implicit
+    hasRasterExtents: HasRasterExtents[IO, BacksplashMosaic],
+    extentReification: ExtentReification[IO, BacksplashMosaic],
+    cs: ContextShift[IO],
+    logger: Logger[IO]): IO[List[Histogram[Double]]] =
     for {
       (tracingContext, allImages) <- mosaic
       histArrays <- tracingContext.span("getAllImageHistograms") use {
@@ -82,9 +90,11 @@ object BacksplashMosaic extends ToHistogramStoreOps {
           allImages parTraverse { im =>
             {
               childContext.span("layerHistogram") use { histogramContext =>
-                histStore.layerHistogram(im.imageId,
-                                         im.subsetBands,
-                                         histogramContext)
+                histStore.layerHistogram(
+                  im.imageId,
+                  im.subsetBands,
+                  histogramContext
+                )
               }
             }
           }
@@ -100,9 +110,13 @@ object BacksplashMosaic extends ToHistogramStoreOps {
           val hists = arrs
             .foldLeft(
               Array.fill(arrs.head.length)(
-                StreamingHistogram(255): Histogram[Double]))(
-              (histArr1: Array[Histogram[Double]],
-               histArr2: Array[Histogram[Double]]) => {
+                StreamingHistogram(255): Histogram[Double]
+              )
+            )(
+              (
+                  histArr1: Array[Histogram[Double]],
+                  histArr2: Array[Histogram[Double]]
+              ) => {
                 histArr1 zip histArr2 map {
                   case (h1, h2) => h1 merge h2
                 }

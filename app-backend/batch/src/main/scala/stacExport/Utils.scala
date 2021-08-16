@@ -5,6 +5,9 @@ import com.rasterfoundry.datamodel._
 
 import cats.implicits._
 import com.azavea.stac4s._
+import com.azavea.stac4s.extensions.label.LabelItemExtension
+import com.azavea.stac4s.syntax._
+import eu.timepit.refined.auto._
 import geotrellis.proj4.CRS
 import geotrellis.vector.methods.Implicits._
 import geotrellis.vector.reproject.Reproject
@@ -63,6 +66,7 @@ object Utils {
     // this field should be an empty list on catalog
     val stacExtensions = List()
     StacCatalog(
+      "Catalog",
       stacVersion,
       stacExtensions, // list of exten
       catalogId,
@@ -127,31 +131,25 @@ object Utils {
 
     val dateTime = labelCollection.extent.temporal.interval.headOption match {
       case Some(interval) =>
-        interval.value match {
-          case Some(s) :: _           => Timestamp.from(s)
-          case None :: Some(e) :: Nil => Timestamp.from(e)
-          case _                      => new Timestamp(new java.util.Date().getTime)
+        (interval.start, interval.end) match {
+          case (Some(s), _) => Timestamp.from(s)
+          case (_, Some(e)) => Timestamp.from(e)
+          case _            => new Timestamp(new java.util.Date().getTime)
         }
       case _ => new Timestamp(new java.util.Date().getTime)
     }
 
-    val labelItemPropertiesJsonObj = JsonObject.fromMap(
-      Map(
-        "label:properties" -> sceneTaskAnnotation.labelItemExtension.properties.asJson,
-        "label:classes" -> sceneTaskAnnotation.labelItemExtension.classes.asJson,
-        "label:description" -> sceneTaskAnnotation.labelItemExtension.description.asJson,
-        "label:type" -> sceneTaskAnnotation.labelItemExtension._type.asJson,
-        "label:tasks" -> sceneTaskAnnotation.labelItemExtension.tasks.asJson,
-        "label:methods" -> sceneTaskAnnotation.labelItemExtension.methods.asJson,
-        "label:overviews" -> sceneTaskAnnotation.labelItemExtension.overviews.asJson,
-        "datetime" -> dateTime.asJson,
+    val itemProperties = ItemProperties(
+      ItemDatetime.PointInTime(dateTime.toInstant),
+      extensionFields = Map(
         "groundwork:taskStatuses" -> sceneTaskAnnotation.taskStatuses.asJson
-      )
+      ).asJsonObject
     )
+
     val labelDataRelLink = "./data.geojson"
     val labelAsset = Map(
       "label" ->
-        StacItemAsset(
+        StacAsset(
           labelDataRelLink,
           Some("Label Data Feature Collection"),
           Some("Label Data Feature Collection"),
@@ -170,7 +168,9 @@ object Utils {
       labelItemLinks,
       labelAsset,
       Some(labelCollection.id),
-      labelItemPropertiesJsonObj
+      itemProperties
+    ).addExtensionFields[LabelItemExtension](
+      sceneTaskAnnotation.labelItemExtension
     )
 
     ObjectWithAbsolute(labelItemSelfAbsPath, labelItem)
@@ -206,12 +206,12 @@ object Utils {
       taskExtent.yMax
     )
 
-    val properties = JsonObject.fromMap(
-      Map("datetime" -> Instant.now.asJson)
+    val properties = ItemProperties(
+      datetime = ItemDatetime.PointInTime(Instant.now)
     )
 
     val assets = Map(tileLayers map { layer =>
-      layer.name -> StacItemAsset(
+      layer.name -> StacAsset(
         layer.url,
         Some(layer.name),
         Some(s"${layer.layerType} tiles"),
@@ -286,19 +286,17 @@ object Utils {
       relativeCatalogRoot
     )
 
-    val sceneProperties = JsonObject.fromMap(
-      Map(
-        "datetime" -> scene.filterFields.acquisitionDate
+    val sceneProperties = ItemProperties(
+      datetime = ItemDatetime.PointInTime(
+        scene.filterFields.acquisitionDate
           .getOrElse(scene.createdAt)
-          .toLocalDateTime
-          .toString
-          .asJson
+          .toInstant
       )
     )
     val sceneAssetOption = scene.ingestLocation map { _ =>
       Map(
         scene.id.toString ->
-          StacItemAsset(
+          StacAsset(
             s"./${scene.id}.tiff",
             Some("scene"),
             Some("scene"),
@@ -350,7 +348,7 @@ object Utils {
       List[String](),
       List[StacProvider](),
       layerStacCollection.extent,
-      JsonObject.empty,
+      Map.empty,
       JsonObject.empty,
       labelCollectionLinks
     )
@@ -375,7 +373,7 @@ object Utils {
       List[String](),
       List[StacProvider](),
       layerStacCollection.extent,
-      JsonObject.empty,
+      Map.empty,
       JsonObject.empty,
       imageCollectionOwnLinks
     )
@@ -443,7 +441,7 @@ object Utils {
       List[String](),
       List[StacProvider](),
       layerExtent,
-      JsonObject.empty,
+      Map.empty,
       JsonObject.empty,
       layerLinks
     )

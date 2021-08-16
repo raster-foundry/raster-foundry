@@ -10,11 +10,10 @@ import java.util.UUID
 
 trait ExportQueryParameterDirective extends QueryParametersCommon {
   val exportQueryParams = parameters(
-    (
-      'organization.as[UUID].?,
-      'project.as[UUID].?,
-      'analysis.as[UUID].?,
-      'exportStatus.as[String].*,
-      'layer.as[UUID].?
-    )).as(ExportQueryParameters.apply _)
+    'organization.as[UUID].?,
+    'project.as[UUID].?,
+    'analysis.as[UUID].?,
+    'exportStatus.as[String].*,
+    'layer.as[UUID].?
+  ).as(ExportQueryParameters.apply _)
 }

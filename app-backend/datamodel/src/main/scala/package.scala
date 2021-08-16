@@ -3,7 +3,7 @@ package com.rasterfoundry
 import cats.syntax.either._
 import geotrellis.proj4.{io => _, _}
 import geotrellis.raster.GridExtent
-import geotrellis.raster.render.{RGB, RGBA}
+import geotrellis.raster.render.RGBA
 import geotrellis.vector.io.json.{Implicits => GeoJsonImplicits}
 import geotrellis.vector.{io => _, _}
 import io.circe._
@@ -77,7 +77,7 @@ trait JsonCodecs extends GeoJsonImplicits {
             Integer.parseInt(hexByte, 16)
           })
           .toList
-        Right(RGBA(bytes(0), bytes(1), bytes(2), bytes(3)))
+        Right(RGBA(bytes(0) + bytes(1) + bytes(2) + bytes(3)))
       case hex if (hex.size == 6) =>
         val bytes = hex
           .sliding(2, 2)
@@ -85,7 +85,7 @@ trait JsonCodecs extends GeoJsonImplicits {
             Integer.parseInt(hexByte, 16)
           })
           .toList
-        Right(RGB(bytes(0), bytes(1), bytes(2)))
+        Right(RGBA(bytes(0) + bytes(1) + bytes(2)))
       case hex => Left(s"Unable to parse $hex as an RGBA")
     }
   }
@@ -134,8 +134,7 @@ trait JsonCodecs extends GeoJsonImplicits {
               DecodingFailure(
                 s"Could not parse local dates from ($s1, $s2)",
                 List.empty
-            )
-          )
+            ))
       }
     }
 
@@ -158,8 +157,8 @@ trait JsonCodecs extends GeoJsonImplicits {
     Decoder.decodeString.emap { str =>
       Either.catchNonFatal(UUID.fromString(str)).leftMap(_ => "UUID")
     }
-  implicit val uuidDecoder
-    : Decoder[UUID] = directUUIDDecoder or withUUIDFieldUUIDDecoder
+  implicit val uuidDecoder: Decoder[UUID] =
+    directUUIDDecoder or withUUIDFieldUUIDDecoder
 
   implicit val uriEncoder: Encoder[URI] =
     Encoder.encodeString.contramap[URI] { _.toString }
@@ -215,17 +214,17 @@ trait JsonCodecs extends GeoJsonImplicits {
     }
 
   // TODO: make this tolerate more than one incoming srid
-  implicit val projectedGeometryDecoder
-    : Decoder[Projected[Geometry]] = Decoder[Json] map { js =>
-    Projected(js.spaces4.parseGeoJson[Geometry], 4326)
-      .reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
-  }
+  implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] =
+    Decoder[Json] map { js =>
+      Projected(js.spaces4.parseGeoJson[Geometry], 4326)
+        .reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
+    }
 
-  implicit val projectedMultiPolygonDecoder
-    : Decoder[Projected[MultiPolygon]] = Decoder[Json] map { js =>
-    Projected(js.spaces4.parseGeoJson[MultiPolygon], 4326)
-      .reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
-  }
+  implicit val projectedMultiPolygonDecoder: Decoder[Projected[MultiPolygon]] =
+    Decoder[Json] map { js =>
+      Projected(js.spaces4.parseGeoJson[MultiPolygon], 4326)
+        .reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
+    }
 }
 
 package object datamodel extends JsonCodecs {

@@ -30,11 +30,11 @@ import com.azavea.stac4s.syntax._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.Transactor
 import doobie.implicits._
+import eu.timepit.refined.auto._
 import geotrellis.vector.Extent
+import io.circe.Encoder
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
-import io.circe.{Encoder, Json}
-import io.estatico.newtype.macros.newtype
 import monocle.macros.GenLens
 
 import scala.concurrent.ExecutionContext
@@ -42,14 +42,6 @@ import scala.concurrent.ExecutionContext
 import java.time.{Duration, Instant}
 import java.util.UUID
 import java.util.concurrent.Executors
-
-@SuppressWarnings(Array("AsInstanceOf"))
-object newtypes {
-  @newtype case class AnnotationProjectId(value: UUID)
-  @newtype case class SceneItem(value: StacItem)
-  @newtype case class LabelItem(value: StacItem)
-  @newtype case class TaskGeoJSON(value: Json)
-}
 
 object optics {
 
@@ -75,7 +67,7 @@ object optics {
     GenLens[StacItem](_.assets)
 
   val assetHrefLens =
-    GenLens[StacItemAsset](_.href)
+    GenLens[StacAsset](_.href)
 
   val catalogLinksLens =
     GenLens[StacCatalog](_.links)
@@ -113,15 +105,16 @@ case class ExportData private (
     labelAssets: Map[
       newtypes.AnnotationProjectId,
       newtypes.TaskGeoJSON
-    ]
+    ],
+    readme: String
 ) {
 
   val labelCollectionId = s"labels-${UUID.randomUUID}"
   val imageryCollectionId = s"scenes-${UUID.randomUUID}"
   val s3Client = S3()
 
-  private def encodableToFile[T: Encoder](
-      value: T,
+  private def stringToFile(
+      value: String,
       file: File,
       relativePath: String
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
@@ -131,7 +124,7 @@ case class ExportData private (
         File(parent).createIfNotExists(true, true)
     }) *>
       fs2.Stream
-        .emit(value.asJson.spaces2)
+        .emit(value)
         .covary[IO]
         .through(
           fs2.text.utf8Encode[IO]
@@ -146,6 +139,18 @@ case class ExportData private (
         .compile
         .drain
   }
+
+  private def encodableToFile[T: Encoder](
+      value: T,
+      file: File,
+      relativePath: String
+  )(implicit cs: ContextShift[IO]): IO[Unit] =
+    stringToFile(value.asJson.spaces2, file, relativePath)
+
+  private def writeReadme(
+      file: File
+  )(implicit cs: ContextShift[IO]): IO[Unit] =
+    stringToFile(readme, file, "README.md")
 
   private def writeCatalog(
       file: File
@@ -248,7 +253,8 @@ case class ExportData private (
       file: File
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val stacCollection = StacCollection(
-      "1.0.0-beta2",
+      "Collection",
+      "1.0.0",
       Nil,
       imageryCollectionId,
       None,
@@ -268,7 +274,7 @@ case class ExportData private (
           Interval(List(te))
         } getOrElse Interval(Nil)
       ),
-      ().asJsonObject,
+      Map.empty,
       ().asJsonObject,
       StacLink(
         "../catalog.json",
@@ -283,7 +289,8 @@ case class ExportData private (
             Some(`application/json`),
             None
           )
-      })
+      }),
+      None
     )
     encodableToFile(stacCollection, file, "images/collection.json")
   }
@@ -306,7 +313,8 @@ case class ExportData private (
       file: File
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val stacCollection = StacCollection(
-      "1.0.0-beta2",
+      "Collection",
+      "1.0.0",
       Nil,
       labelCollectionId,
       None,
@@ -326,7 +334,7 @@ case class ExportData private (
           Interval(List(te))
         } getOrElse Interval(Nil)
       ),
-      ().asJsonObject,
+      Map.empty,
       ().asJsonObject,
       StacLink(
         "../catalog.json",
@@ -341,7 +349,8 @@ case class ExportData private (
             Some(`application/json`),
             None
           )
-      })
+      }),
+      None
     )
     encodableToFile(stacCollection, file, "labels/collection.json")
   }
@@ -371,7 +380,7 @@ case class ExportData private (
       optics.itemAssetLens.modify(
         assets =>
           assets ++ Map(
-            "data" -> StacItemAsset(
+            "data" -> StacAsset(
               s"./data/${labelItem.id}.geojson",
               None,
               None,
@@ -401,7 +410,7 @@ case class ExportData private (
       rootDir
     ) *> writeCatalog(
       rootDir
-    )
+    ) *> writeReadme(rootDir)
   }
 }
 
@@ -413,14 +422,18 @@ object ExportData {
   )
   val fileBlocker: Blocker = Blocker.liftExecutionContext(fileIO)
 
-  def fromExportState(state: ExportState): Option[ExportData] = {
+  def fromExportState(
+      state: ExportState,
+      readme: String
+  ): Option[ExportData] = {
     state.remainingAnnotationProjects.toNel.fold(
       Option(
         ExportData(
           state.rootCatalog,
           state.annotationProjectImageryItems,
           state.annotationProjectLabelItems,
-          state.labelAssets
+          state.labelAssets,
+          readme
         )
       )
     )(_ => Option.empty[ExportData])
@@ -449,7 +462,8 @@ class CampaignStacExport(
       initialStateO = (campaignOpt, childProjects) mapN {
         case (campaign, projects) =>
           val rootCatalog = StacCatalog(
-            stacVersion,
+            "Catalog",
+            "1.0.0",
             Nil,
             s"${exportDefinition.id}",
             None,
@@ -469,11 +483,19 @@ class CampaignStacExport(
       assembled <- initialStateO traverse { init =>
         runExport.runS(init)
       }
+      readme = (childProjects, assembled) mapN {
+        case (projList, state) =>
+          README.render(
+            projList,
+            state.annotationProjectLabelItems,
+            state.annotationProjectImageryItems
+          )
+      }
     } yield {
-      assembled flatMap { ExportData.fromExportState }
+      (assembled, readme).tupled flatMap {
+        case (state, doc) => ExportData.fromExportState(state, doc)
+      }
     }
-
-  private val stacVersion = "1.0.0-beta2"
 
   private def step(from: ExportState): IO[(ExportState, Unit)] = {
     from.remainingAnnotationProjects match {
@@ -597,7 +619,7 @@ class CampaignStacExport(
       createdAt: Instant
   ): newtypes.SceneItem = {
     val assets = Map(tileLayers map { layer =>
-      layer.name -> StacItemAsset(
+      layer.name -> StacAsset(
         layer.url,
         Some(layer.name),
         Some(s"${layer.layerType} tiles"),
@@ -612,7 +634,7 @@ class CampaignStacExport(
     newtypes.SceneItem(
       StacItem(
         s"${UUID.randomUUID}",
-        stacVersion,
+        "1.0.0",
         Nil,
         "Feature",
         extent.toPolygon,
@@ -625,7 +647,7 @@ class CampaignStacExport(
         Nil,
         assets,
         None,
-        Map("datetime" -> createdAt.asJson).asJsonObject
+        ItemProperties(ItemDatetime.PointInTime(createdAt))
       )
     )
   }
@@ -643,7 +665,7 @@ class CampaignStacExport(
     newtypes.LabelItem(
       StacItem(
         s"$itemId",
-        stacVersion,
+        "1.0.0",
         List("label"),
         "Feature",
         extent.geometry.withSRID(4326),
@@ -663,9 +685,7 @@ class CampaignStacExport(
         ),
         Map.empty,
         None,
-        Map(
-          "datetime" -> (datetime getOrElse Instant.now).asJson
-        ).asJsonObject
+        ItemProperties(ItemDatetime.PointInTime(datetime getOrElse Instant.now))
       ).addExtensionFields(labelItemExtension)
     )
   }

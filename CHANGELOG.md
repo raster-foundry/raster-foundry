@@ -11,6 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Updated some setup steps and Auth0 interaction for more convenient external user use [#5612](https://github.com/raster-foundry/raster-foundry/pull/5612)
 
+### Added
+- Included a README in STAC exports for campaigns [#5610](https://github.com/raster-foundry/raster-foundry/pull/5610/)
+
+### Removed
+- Tore down backsplash-export module and job [#5610](https://github.com/raster-foundry/raster-foundry/pull/5610/)
+
+### Changed
+- Upgraded STAC export versions to 1.0.0 [#5610](https://github.com/raster-foundry/raster-foundry/pull/5610/)
+
 ## [1.66.2] - 2021-07-29
 ### Changed
 - MVT layers for tasks and labels send cache-directives for more freshness [#5608](https://github.com/raster-foundry/raster-foundry/pull/5608)

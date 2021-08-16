@@ -11,7 +11,7 @@ import com.amazonaws.services.s3.model.{
   PutObjectRequest,
   PutObjectResult
 }
-import com.azavea.stac4s.{`image/cog`, StacAssetRole, StacItem, StacItemAsset}
+import com.azavea.stac4s.{`image/cog`, StacAsset, StacAssetRole, StacItem}
 import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
@@ -90,7 +90,7 @@ object StacFileIO extends LazyLogging with Config {
     IO {
       s3Client.maybeSignUri(assetLocation, duration = Duration.ofDays(7))
     } map { signedUrl =>
-      val dataAssetFallback = StacItemAsset(
+      val dataAssetFallback = StacAsset(
         signedUrl,
         None,
         None,

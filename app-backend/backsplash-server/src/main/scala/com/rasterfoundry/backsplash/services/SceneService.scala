@@ -11,6 +11,8 @@ import com.rasterfoundry.datamodel.{BandOverride, Datasource, Scene}
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
 
+import cats.Monad
+import cats.Parallel
 import cats.data.OptionT
 import cats.data.Validated._
 import cats.effect._
@@ -20,7 +22,8 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.CellSize
 import geotrellis.server._
-import geotrellis.vector._
+import geotrellis.vector.{io => _, _}
+import io.chrisdavenport.log4cats.Logger
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
@@ -30,7 +33,10 @@ import java.util.UUID
 class SceneService[HistStore](
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO]
-)(implicit cs: ContextShift[IO], builder: TracingContextBuilder[IO])
+)(implicit
+  cs: ContextShift[IO],
+  builder: TracingContextBuilder[IO],
+  logger: Logger[IO])
     extends ToRenderableStoreOps {
 
   import mosaicImplicits._
@@ -178,7 +184,13 @@ class SceneService[HistStore](
               lowerQuantile,
               upperQuantile
             ).map(a => (tracingContext, List(a)))
-          )(paintedMosaicExtentReification, cs)
+          )(
+            Logger[IO],
+            Parallel[IO],
+            Monad[IO],
+            Concurrent[IO],
+            paintedMosaicExtentReification
+          )
           extent <- IO.pure {
             (scene.dataFootprint orElse scene.tileFootprint) map {
               _.geom.extent
@@ -192,7 +204,7 @@ class SceneService[HistStore](
           }
           xSize = extent.width / thumbnailSize.width
           ySize = extent.height / thumbnailSize.height
-          resp <- eval(extent, CellSize(xSize, ySize)) flatMap {
+          resp <- eval(extent, Some(CellSize(xSize, ySize))) flatMap {
             case Valid(tile) =>
               Ok(tile.renderPng.bytes, pngType)
             case Invalid(e) =>

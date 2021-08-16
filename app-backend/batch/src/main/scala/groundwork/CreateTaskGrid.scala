@@ -23,12 +23,12 @@ import com.rasterfoundry.notification.intercom.{
 }
 
 import cats.data.OptionT
-import cats.effect.{Async, ContextShift, IO, LiftIO}
+import cats.effect.{ContextShift, IO, LiftIO}
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.{ConnectionIO, Transactor}
-import sttp.client.asynchttpclient.cats.AsyncHttpClientCatsBackend
+import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import java.util.UUID
 
@@ -159,27 +159,20 @@ object CreateTaskGrid extends Job {
 
   val name = "create-task-grid"
 
-  val getBackend = for {
-    backendRef <- Async.memoize {
-      AsyncHttpClientCatsBackend[IO]()
-    }
-    backend <- backendRef
-  } yield backend
-
   def runJob(args: List[String]): IO[Unit] =
     args match {
       case annotationProjectId +: taskSizeMeters +: Nil =>
         val xa =
           RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
-        for {
-          backend <- getBackend
-          _ <- new CreateTaskGrid(
+        AsyncHttpClientCatsBackend.resource[IO]().use { backend =>
+          new CreateTaskGrid(
             UUID.fromString(annotationProjectId),
             taskSizeMeters.toDouble,
             new LiveIntercomNotifier[IO](backend),
             xa
           ).run()
-        } yield ()
+        }
+
       case _ =>
         IO.raiseError(
           new Exception("Must provide exactly one annotation project id")

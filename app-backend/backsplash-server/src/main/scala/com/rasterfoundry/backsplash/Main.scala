@@ -24,6 +24,7 @@ import com.olegpy.meow.hierarchy._
 import cron4s.Cron
 import doobie.implicits._
 import eu.timepit.fs2cron.awakeEveryCron
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.http4s._
 import org.http4s.server.Router
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -31,6 +32,7 @@ import org.http4s.server.middleware.{CORS, CORSConfig, Timeout}
 import org.http4s.syntax.kleisli._
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 import java.util.concurrent.{Executors, TimeUnit}
@@ -46,6 +48,8 @@ object Main extends IOApp with HistogramStoreImplicits with RollbarNotifier {
   )
 
   override implicit val contextShift: ContextShift[IO] = rasterIO
+
+  implicit val log4CatsLogger = Slf4jLogger.getLogger[IO]
 
   val xa = RFTransactor.buildTransactor()
 
@@ -194,7 +198,7 @@ object Main extends IOApp with HistogramStoreImplicits with RollbarNotifier {
       .toList
 
   def stream =
-    BlazeServerBuilder[IO]
+    BlazeServerBuilder[IO](global)
       .withBanner(startupBanner)
       .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")

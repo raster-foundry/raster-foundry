@@ -113,6 +113,7 @@ lazy val sharedSettings = Seq(
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     ("azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/")
       .withAllowInsecureProtocol(true),
+    "jitpack" at "https://jitpack.io",
     Classpaths.sbtPluginReleases,
     Opts.resolver.sonatypeReleases,
     Resolver.file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
@@ -209,7 +210,6 @@ lazy val root = project
     batch,
     backsplashCore,
     backsplashServer,
-    backsplashExport,
     notification
   )
 
@@ -269,11 +269,12 @@ lazy val apiDependencies = Seq(
   Dependencies.shapeless,
   Dependencies.sourceCode,
   Dependencies.sttpAkka,
-  Dependencies.sttpAsyncBackend,
   Dependencies.sttpCatsBackend,
   Dependencies.sttpCirce,
   Dependencies.sttpCore,
   Dependencies.sttpJson,
+  Dependencies.sttpSharedCore,
+  Dependencies.sttpSharedAkka,
   Dependencies.sttpModel,
   Dependencies.typesafeConfig
 )
@@ -295,10 +296,10 @@ lazy val apiIntegrationTest = project
   .dependsOn(db)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sCirce,
+      Dependencies.http4sClient,
       Dependencies.scalaCsv % "test",
-      Dependencies.sttpCore % "test",
-      Dependencies.sttpCirce % "test",
-      Dependencies.sttpOkHttpBackend % "test",
       Dependencies.scalatest
     )
   })
@@ -319,11 +320,15 @@ lazy val common = project
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
+      Dependencies.algebra,
+      Dependencies.apacheHttpClient,
+      Dependencies.apacheHttpCore,
       Dependencies.awsBatchSdk,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.awsUtilsSdkV2,
       Dependencies.awsS3SdkV2,
+      Dependencies.catsKernel,
       Dependencies.catsCore,
       Dependencies.catsEffect,
       Dependencies.catsScalacheck,
@@ -349,10 +354,8 @@ lazy val common = project
       Dependencies.rollbar,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.spireMath,
-      Dependencies.typesafeConfig,
-      "org.apache.httpcomponents" % "httpclient" % "4.5.9",
-      "org.apache.httpcomponents" % "httpcore" % "4.4.11"
+      Dependencies.spire,
+      Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
 
@@ -383,7 +386,7 @@ lazy val datamodel = project
       Dependencies.refined,
       Dependencies.scalaCheck,
       Dependencies.shapeless,
-      Dependencies.spireMath,
+      Dependencies.spire,
       Dependencies.stac4s
     ) ++ loggingDependencies
   })
@@ -501,9 +504,8 @@ lazy val batch = project
       Dependencies.shapeless,
       Dependencies.slf4j,
       Dependencies.sourceCode,
-      Dependencies.spireMath,
+      Dependencies.spire,
       Dependencies.stac4s,
-      Dependencies.sttpAsyncBackend,
       Dependencies.sttpCatsBackend,
       Dependencies.sttpCore,
       Dependencies.typesafeConfig
@@ -594,6 +596,7 @@ lazy val backsplashCore =
         Dependencies.http4sCore,
         Dependencies.http4sDSL,
         Dependencies.jts,
+        Dependencies.log4cats,
         Dependencies.mamlJvm,
         Dependencies.opentracingCore,
         Dependencies.opentracingContext,
@@ -602,61 +605,13 @@ lazy val backsplashCore =
         Dependencies.scalacacheCats,
         Dependencies.scalacacheCore,
         Dependencies.spatial4j,
-        Dependencies.spireMath,
+        Dependencies.spire,
         Dependencies.typesafeConfig
       ) ++ loggingDependencies,
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
       addCompilerPlugin(
         "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
       )
-    )
-
-/**
-  * Backsplash Export Settings
-  */
-lazy val backsplashExport =
-  Project("backsplash-export", file(appBackendDir + "/backsplash-export"))
-    .dependsOn(common)
-    .settings(sharedSettings: _*)
-    .settings(
-      resolvers += Resolver
-        .file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
-          Resolver.ivyStylePatterns
-        )
-    )
-    .settings(
-      fork in run := true,
-      libraryDependencies ++= Seq(
-        Dependencies.awsS3,
-        Dependencies.awsCoreSdk,
-        Dependencies.catsCore,
-        Dependencies.catsEffect,
-        Dependencies.circeCore,
-        Dependencies.circeParser,
-        Dependencies.circeShapes,
-        Dependencies.commonsIO,
-        Dependencies.decline,
-        Dependencies.geotrellisGdal,
-        Dependencies.geotrellisLayer,
-        Dependencies.geotrellisProj4,
-        Dependencies.geotrellisRaster,
-        Dependencies.geotrellisServer,
-        Dependencies.geotrellisVector,
-        Dependencies.jts,
-        Dependencies.mamlJvm,
-        Dependencies.scalaCheck,
-        Dependencies.scalajHttp,
-        Dependencies.scalatestplusScalaCheck,
-        Dependencies.scalatest,
-        Dependencies.shapeless,
-        Dependencies.typesafeConfig
-      ) ++ loggingDependencies,
-      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-      addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
-      addCompilerPlugin(
-        "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
-      ),
-      assemblyJarName in assembly := "backsplash-export-assembly.jar"
     )
 
 /**
@@ -697,6 +652,8 @@ lazy val backsplashServer =
         Dependencies.http4sDSL,
         Dependencies.http4sServer,
         Dependencies.jts,
+        Dependencies.log4cats,
+        Dependencies.log4catsSlf4j,
         Dependencies.mamlJvm,
         Dependencies.opentracingApi,
         Dependencies.opentracingCore,
@@ -769,9 +726,9 @@ lazy val notification =
         Dependencies.log4cats,
         Dependencies.log4catsSlf4j,
         Dependencies.newtype,
-        Dependencies.sttpCore,
-        Dependencies.sttpAsyncBackend,
+        Dependencies.sttpSharedCore,
         Dependencies.sttpCirce,
+        Dependencies.sttpCore,
         Dependencies.sttpJson,
         Dependencies.sttpModel
       )
