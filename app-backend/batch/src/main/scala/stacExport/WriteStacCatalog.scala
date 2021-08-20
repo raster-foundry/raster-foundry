@@ -88,23 +88,18 @@ final case class WriteStacCatalog(
           sceneTaskAnnotation.taskGeomExtent
         )
       )
-    val sceneItems: List[ImageryItem] = sceneTaskAnnotation.scenes match {
-      case Nil =>
-        List(tileLayerItem)
-      case scenes =>
-        scenes flatMap { scene =>
-          (
-            Utils.getSceneItem(
-              catalog,
-              layerCollectionPrefix,
-              imageCollection,
-              scene
-            ),
-            scene.ingestLocation
-          ).mapN(SceneItemWithAbsolute.apply _)
-
-        }
-    }
+    val layerItems: List[ImageryItem] =
+      (sceneTaskAnnotation.scenes flatMap { scene =>
+        (
+          Utils.getSceneItem(
+            catalog,
+            layerCollectionPrefix,
+            imageCollection,
+            scene
+          ),
+          scene.ingestLocation
+        ).mapN(SceneItemWithAbsolute.apply _)
+      }) ++ List(tileLayerItem)
 
     val absoluteLayerCollection =
       ObjectWithAbsolute(
@@ -127,7 +122,7 @@ final case class WriteStacCatalog(
         )
       )
 
-    val updatedSceneLinks = imageCollection.links ++ sceneItems.map {
+    val updatedSceneLinks = imageCollection.links ++ layerItems.map {
       imageryItem =>
         StacLink(
           s"./${imageryItem.item.item.id}.json",
@@ -149,7 +144,7 @@ final case class WriteStacCatalog(
         catalog,
         sceneTaskAnnotation,
         labelCollection,
-        sceneItems map { _.item },
+        layerItems map { _.item },
         s"$layerCollectionPrefix/labels",
         labelRootURI
       )
@@ -171,7 +166,7 @@ final case class WriteStacCatalog(
         tempDir,
         labelCollectionWithPath
       )
-      localSceneItemResults <- sceneItems.parTraverse {
+      localSceneItemResults <- layerItems.parTraverse {
         case SceneItemWithAbsolute(item, ingestLocation) =>
           StacFileIO.signTiffAsset(item.item, ingestLocation) flatMap {
             withSignedUrl =>
