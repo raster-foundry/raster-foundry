@@ -26,7 +26,7 @@ final case class StacExport(
     taskStatuses: List[String],
     annotationProjectId: Option[UUID],
     campaignId: Option[UUID],
-    exportAssetTypes: Option[NonEmptyList[String]]
+    exportAssetTypes: Option[NonEmptyList[ExportAssetType]]
 ) {
   def createStacCollection(
       stacVersion: String,

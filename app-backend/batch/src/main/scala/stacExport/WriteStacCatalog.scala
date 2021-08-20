@@ -99,7 +99,7 @@ final case class WriteStacCatalog(
           ),
           scene.ingestLocation
         ).mapN(SceneItemWithAbsolute.apply _)
-      }) ++ List(tileLayerItem)
+      }) ++ List(tileLayerItem) // Always include tile layer
 
     val absoluteLayerCollection =
       ObjectWithAbsolute(

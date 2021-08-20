@@ -3,10 +3,11 @@ package com.rasterfoundry
 import com.rasterfoundry.database.filter.Filterables
 import com.rasterfoundry.database.meta.RFMeta
 import com.rasterfoundry.datamodel.Credential
+import com.rasterfoundry.datamodel.ExportAssetType
 
 import cats.data.NonEmptyList
-import scala.reflect.runtime.universe.TypeTag
 
+import doobie.Get
 import doobie.Meta
 import doobie.Put
 
@@ -27,9 +28,16 @@ package object database {
     implicit val credMeta2: Meta[Credential] =
       Meta[String].timap(fromString)(toString)
 
-    implicit def nelPut[A: TypeTag](implicit ev: Put[List[A]]) =
-      ev.contramap { (nel: NonEmptyList[A]) =>
-        nel.toList
+    implicit def nelExportAssetTypesGet(implicit ev: Get[List[String]]) =
+      ev.map { (list: List[String]) =>
+        NonEmptyList.fromListUnsafe(list.map {
+          ExportAssetType.unsafeFromString(_)
+        })
+      }
+
+    implicit def nelExportAssetTypesPut(implicit ev: Put[List[String]]) =
+      ev.contramap { (nel: NonEmptyList[ExportAssetType]) =>
+        nel.toList.map { _.toString }
       }
 
   }
