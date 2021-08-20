@@ -26,7 +26,7 @@ final case class StacExport(
     taskStatuses: List[String],
     annotationProjectId: Option[UUID],
     campaignId: Option[UUID],
-    assetTypes: Option[NonEmptyList[ExportAssetType]]
+    exportAssetTypes: Option[NonEmptyList[String]]
 ) {
   def createStacCollection(
       stacVersion: String,
@@ -147,6 +147,7 @@ object StacExport {
         ExportStatus.NotExported,
         this.taskStatuses.map(_.toString),
         Some(annotationProjectId),
+        None,
         None
       )
     }
@@ -175,7 +176,8 @@ object StacExport {
         ExportStatus.NotExported,
         this.taskStatuses.map(_.toString),
         None,
-        Some(campaignId)
+        Some(campaignId),
+        None
       )
     }
   }
