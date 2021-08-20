@@ -55,7 +55,8 @@ final case class AnnotationLabelWithClasses(
     description: Option[String] = None,
     isActive: Boolean,
     sessionId: Option[UUID] = None,
-    annotationLabelClasses: List[UUID]
+    confidence: Option[Double] = None,
+    annotationLabelClasses: List[UUID] = Nil
 ) extends GeoJSONSerializable[AnnotationLabelWithClasses.GeoJSON] {
   def toGeoJSONFeature =
     AnnotationLabelWithClasses.GeoJSON(
@@ -69,7 +70,8 @@ final case class AnnotationLabelWithClasses(
         this.annotationLabelClasses,
         this.description,
         this.isActive,
-        this.sessionId
+        this.sessionId,
+        this.confidence
       )
     )
 
@@ -125,7 +127,8 @@ object AnnotationLabelWithClasses {
       annotationLabelClasses: List[UUID],
       description: Option[String] = None,
       isActive: Boolean,
-      sessionId: Option[UUID]
+      sessionId: Option[UUID],
+      confidence: Option[Double] = None
   ) {
     def toAnnotationLabelWithClasses(
         annotationProjectId: UUID,
@@ -143,6 +146,7 @@ object AnnotationLabelWithClasses {
         description,
         isActive,
         sessionId,
+        confidence,
         annotationLabelClasses
       )
     }
@@ -167,6 +171,7 @@ object AnnotationLabelWithClasses {
           properties.description,
           properties.isActive,
           properties.sessionId,
+          properties.confidence,
           properties.annotationLabelClasses
         )
       }
@@ -247,30 +252,34 @@ final case class AnnotationLabelWithClassesPropertiesCreate(
     annotationLabelClasses: List[UUID],
     description: Option[String] = None,
     isActive: Boolean = true,
-    sessionId: Option[UUID] = None
+    sessionId: Option[UUID] = None,
+    confidence: Option[Double] = None
 )
 
 object AnnotationLabelWithClassesPropertiesCreate {
   implicit val encALWCPC: Encoder[AnnotationLabelWithClassesPropertiesCreate] =
     deriveEncoder
   implicit val decALWCPC: Decoder[AnnotationLabelWithClassesPropertiesCreate] =
-    Decoder.forProduct4(
+    Decoder.forProduct5(
       "annotationLabelClasses",
       "description",
       "isActive",
-      "sessionId"
+      "sessionId",
+      "confidence"
     )(
       (
           annotationLabelClasses: List[UUID],
           description: Option[String],
           isActive: Option[Boolean],
-          sessionId: Option[UUID]
+          sessionId: Option[UUID],
+          confidence: Option[Double]
       ) =>
         AnnotationLabelWithClassesPropertiesCreate(
           annotationLabelClasses,
           description,
           isActive getOrElse true,
-          sessionId
+          sessionId,
+          confidence
       )
     )
 }
@@ -284,7 +293,8 @@ final case class AnnotationLabelWithClassesProperties(
     annotationLabelClasses: List[UUID],
     description: Option[String] = None,
     isActive: Boolean,
-    sessionId: Option[UUID]
+    sessionId: Option[UUID],
+    confidence: Option[Double]
 )
 
 final case class StacGeoJSONFeatureCollection(
