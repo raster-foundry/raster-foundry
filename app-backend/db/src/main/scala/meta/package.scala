@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.datamodel._
 
 import cats.implicits._
+import cats.data.NonEmptyList
 import doobie._
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
@@ -10,6 +11,7 @@ import io.circe.syntax._
 import org.postgresql.util.PGobject
 
 import scala.util.Try
+import scala.reflect.runtime.universe.TypeTag
 
 import java.net.URI
 import java.time.LocalDate
@@ -22,8 +24,8 @@ package object meta {
       with PermissionsMeta {
 
     implicit val crsMeta: Meta[CRS] =
-      Meta[String].timap(
-        s => Try { CRS.fromString(s) } getOrElse { CRS.fromName(s) }
+      Meta[String].timap(s =>
+        Try { CRS.fromString(s) } getOrElse { CRS.fromName(s) }
       )(_.toProj4String)
 
     implicit val cellTypeMeta: Meta[CellType] =
@@ -55,13 +57,19 @@ package object meta {
             .catchNonFatal((LocalDate.parse(s1), LocalDate.parse(s2)))
             .leftMap[(LocalDate, LocalDate)](e => throw e)
             .merge
-        })(
-          a => {
-            val o = new PGobject
-            o.setType("tsrange")
-            o.setValue(a.asJson.noSpaces.replace("\"", ""))
-            o
-          }
-        )
+        })(a => {
+          val o = new PGobject
+          o.setType("tsrange")
+          o.setValue(a.asJson.noSpaces.replace("\"", ""))
+          o
+        })
+
+    implicit def nelMeta[A: TypeTag](implicit
+        ev: Meta[List[A]]
+    ): Meta[NonEmptyList[A]] =
+      ev.timap(_.toNel.getOrElse(throw new Exception(s"Empty non-empty list")))(
+        _.toList
+      )
   }
+
 }
