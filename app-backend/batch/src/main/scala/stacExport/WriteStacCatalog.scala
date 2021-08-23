@@ -78,6 +78,10 @@ final case class WriteStacCatalog(
       sceneTaskAnnotation.annotations
     )
 
+    val exportImages = exportDef.exportAssetTypes map { assetTypes =>
+      assetTypes.toList.contains(ExportAssetType.Images)
+    } getOrElse (false)
+
     val tileLayerItem: ImageryItem =
       TileLayersItemWithAbsolute(
         Utils.getTileLayersItem(
@@ -166,7 +170,12 @@ final case class WriteStacCatalog(
         tempDir,
         labelCollectionWithPath
       )
-      localSceneItemResults <- layerItems.parTraverse {
+      layerItemsToDownload = layerItems filter {
+        case _: TileLayersItemWithAbsolute                    => true
+        case _: SceneItemWithAbsolute if exportImages == true => true
+        case _                                                => false
+      }
+      localSceneItemResults <- layerItemsToDownload parTraverse {
         case SceneItemWithAbsolute(item, ingestLocation) =>
           StacFileIO.signTiffAsset(item.item, ingestLocation) flatMap {
             withSignedUrl =>
