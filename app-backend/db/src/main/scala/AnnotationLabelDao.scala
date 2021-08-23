@@ -28,7 +28,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     "description",
     "is_active",
     "session_id",
-    "confidence"
+    "score"
   )
   val selectF: Fragment = fr"SELECT" ++
     selectFieldsF ++ fr", classes.class_ids as annotation_label_classes FROM " ++
@@ -77,7 +77,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         ${annotationLabel.createdBy}, ${annotationLabel.geometry},
         ${annotationLabel.annotationProjectId}, ${annotationLabel.annotationTaskId},
         ${annotationLabel.description}, ${annotationLabel.isActive}, ${annotationLabel.sessionId},
-        ${annotationLabel.confidence}
+        ${annotationLabel.score}
        )"""
     )
     val labelClassFragments: List[Fragment] =

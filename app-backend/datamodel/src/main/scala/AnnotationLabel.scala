@@ -55,7 +55,7 @@ final case class AnnotationLabelWithClasses(
     description: Option[String] = None,
     isActive: Boolean,
     sessionId: Option[UUID] = None,
-    confidence: Option[Double] = None,
+    score: Option[Double] = None,
     annotationLabelClasses: List[UUID] = Nil
 ) extends GeoJSONSerializable[AnnotationLabelWithClasses.GeoJSON] {
   def toGeoJSONFeature =
@@ -71,7 +71,7 @@ final case class AnnotationLabelWithClasses(
         this.description,
         this.isActive,
         this.sessionId,
-        this.confidence
+        this.score
       )
     )
 
@@ -128,7 +128,7 @@ object AnnotationLabelWithClasses {
       description: Option[String] = None,
       isActive: Boolean,
       sessionId: Option[UUID],
-      confidence: Option[Double] = None
+      score: Option[Double] = None
   ) {
     def toAnnotationLabelWithClasses(
         annotationProjectId: UUID,
@@ -146,7 +146,7 @@ object AnnotationLabelWithClasses {
         description,
         isActive,
         sessionId,
-        confidence,
+        score,
         annotationLabelClasses
       )
     }
@@ -171,7 +171,7 @@ object AnnotationLabelWithClasses {
           properties.description,
           properties.isActive,
           properties.sessionId,
-          properties.confidence,
+          properties.score,
           properties.annotationLabelClasses
         )
       }
@@ -253,7 +253,7 @@ final case class AnnotationLabelWithClassesPropertiesCreate(
     description: Option[String] = None,
     isActive: Boolean = true,
     sessionId: Option[UUID] = None,
-    confidence: Option[Double] = None
+    score: Option[Double] = None
 )
 
 object AnnotationLabelWithClassesPropertiesCreate {
@@ -265,21 +265,21 @@ object AnnotationLabelWithClassesPropertiesCreate {
       "description",
       "isActive",
       "sessionId",
-      "confidence"
+      "score"
     )(
       (
           annotationLabelClasses: List[UUID],
           description: Option[String],
           isActive: Option[Boolean],
           sessionId: Option[UUID],
-          confidence: Option[Double]
+          score: Option[Double]
       ) =>
         AnnotationLabelWithClassesPropertiesCreate(
           annotationLabelClasses,
           description,
           isActive getOrElse true,
           sessionId,
-          confidence
+          score
       )
     )
 }
@@ -294,7 +294,7 @@ final case class AnnotationLabelWithClassesProperties(
     description: Option[String] = None,
     isActive: Boolean,
     sessionId: Option[UUID],
-    confidence: Option[Double]
+    score: Option[Double]
 )
 
 final case class StacGeoJSONFeatureCollection(
