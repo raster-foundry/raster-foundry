@@ -181,7 +181,13 @@ final case class WriteStacCatalog(
             withSignedUrl =>
               StacFileIO.writeObjectToFilesystem(
                 tempDir,
-                item.copy(item = withSignedUrl)
+                item.copy(item = withSignedUrl),
+                // This was the previous default filename given to all COGS. The original filename
+                // is now preserved but we fall back to the annotation project name if we don't have
+                // the original.
+                if (ingestLocation.endsWith("cog.tif"))
+                  Some(sceneTaskAnnotation.annotationProjectName)
+                else None
               )
           }
         case TileLayersItemWithAbsolute(item) =>

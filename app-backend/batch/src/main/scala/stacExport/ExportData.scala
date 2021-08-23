@@ -8,6 +8,7 @@ import io.circe.Json
 import java.util.UUID
 
 case class ExportData(
+    annotationProjectName: String,
     scenes: List[Scene],
     scenesGeomExtent: Option[UnionedGeomExtent],
     tasks: List[Task],

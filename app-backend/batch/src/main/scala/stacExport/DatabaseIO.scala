@@ -1,6 +1,7 @@
 package com.rasterfoundry.batch.stacExport
 
 import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel.AnnotationProject
 import com.rasterfoundry.datamodel.TaskStatus
 
 import cats.implicits._
@@ -22,10 +23,16 @@ object DatabaseIO {
         ProjectDao.getProjectById(pid)
       }
       info <- project.fold(
-        getExportData(annotationProjectId, None, taskStatuses)
+        getExportData(
+          annotationProjectId,
+          annotationProject,
+          None,
+          taskStatuses
+        )
       )({ proj =>
         getExportData(
           annotationProjectId,
+          annotationProject,
           Some(proj.defaultLayerId),
           taskStatuses
         )
@@ -34,6 +41,7 @@ object DatabaseIO {
 
   protected def getExportData(
       annotationProjectId: UUID,
+      annotationProject: Option[AnnotationProject],
       defaultLayerId: Option[UUID],
       taskStatuses: List[String]
   ): ConnectionIO[Option[ExportData]] = {
@@ -55,26 +63,31 @@ object DatabaseIO {
         annotationProjectId,
         taskStatuses
       )
-      annotationsOption <- AnnotationLabelDao
-        .getAnnotationJsonByTaskStatus(
-          annotationProjectId,
-          taskStatuses
-        )
-      labelItemPropsThinOption <- AnnotationProjectDao
-        .getAnnotationProjectStacInfo(annotationProjectId)
+      annotationsOption <-
+        AnnotationLabelDao
+          .getAnnotationJsonByTaskStatus(
+            annotationProjectId,
+            taskStatuses
+          )
+      labelItemPropsThinOption <-
+        AnnotationProjectDao
+          .getAnnotationProjectStacInfo(annotationProjectId)
     } yield {
       (
+        annotationProject,
         annotationsOption,
         labelItemPropsThinOption,
         tasksGeomExtentOption
       ) match {
         case (
-            Some(annotations),
-            Some(labelItemPropsThin),
-            Some(tasksGeomExtent)
+              Some(annotationProject),
+              Some(annotations),
+              Some(labelItemPropsThin),
+              Some(tasksGeomExtent)
             ) => {
           Some(
             ExportData(
+              annotationProject.name,
               scenes getOrElse Nil,
               scenesGeomExtentOption,
               tasks,

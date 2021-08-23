@@ -41,12 +41,13 @@ object StacFileIO extends LazyLogging with Config {
 
   def writeObjectToFilesystem[A: Encoder](
       tempDir: ScalaFile,
-      stacWithAbsolute: ObjectWithAbsolute[A]
+      stacWithAbsolute: ObjectWithAbsolute[A],
+      localFilename: Option[String] = None
   ): IO[ScalaFile] =
     IO {
       val absolutePathURI = new AmazonS3URI(stacWithAbsolute.absolutePath)
       val key = absolutePathURI.getKey
-      val localOutputPath = s"${tempDir.path}/$key"
+      val localOutputPath = s"${tempDir.path}/${localFilename.getOrElse(key)}"
       val data = stacWithAbsolute.item
       val file = ScalaFile(localOutputPath)
       logger.debug(s"Writing to Local File System: $localOutputPath")
