@@ -666,7 +666,9 @@ class CampaignStacExport(
       StacItem(
         s"$itemId",
         "1.0.0",
-        List("label"),
+        List(
+          "https://raw.githubusercontent.com/stac-extensions/label/v1.0.0/json-schema/schema.json"
+        ),
         "Feature",
         extent.geometry.withSRID(4326),
         TwoDimBbox(

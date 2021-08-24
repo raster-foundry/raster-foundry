@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 - Included a README in STAC exports for campaigns [#5610](https://github.com/raster-foundry/raster-foundry/pull/5610/)
+- Added a `score` field to labels [#5614](https://github.com/raster-foundry/raster-foundry/pull/5614)
 - Use the presence of groundworkProUser key in verified JWTs to upgrade users' limits [#5615](https://github.com/raster-foundry/raster-foundry/pull/5615)
 
 ### Removed

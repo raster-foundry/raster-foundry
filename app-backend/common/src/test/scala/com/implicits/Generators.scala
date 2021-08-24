@@ -1149,7 +1149,8 @@ object Generators extends ArbitraryInstances {
       Gen.const(Nil),
       Gen.option(nonEmptyStringGen),
       Gen.const(true),
-      Gen.option(uuidGen)
+      Gen.option(uuidGen),
+      Gen.option(arbitrary[Int].map(_.toDouble))
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
 
   private def continentGen: Gen[Continent] =
