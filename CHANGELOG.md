@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 - Included a README in STAC exports for campaigns [#5610](https://github.com/raster-foundry/raster-foundry/pull/5610/)
+- Use the presence of groundworkProUser key in verified JWTs to upgrade users' limits [#5615](https://github.com/raster-foundry/raster-foundry/pull/5615)
 
 ### Removed
 - Tore down backsplash-export module and job [#5610](https://github.com/raster-foundry/raster-foundry/pull/5610/)
