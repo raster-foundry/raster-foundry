@@ -386,8 +386,16 @@ object UserDao extends Dao[User] with Sanitization {
     }
   }
 
-  def appendScope(userId: String, scope: Scope): ConnectionIO[Int] =
+  def appendScope(userId: String, scope: Scope): ConnectionIO[Int] = {
     fr"""update users set scopes = to_jsonb(trim(both '"' from cast(scopes :: jsonb as text)) || ${";" ++ scope.asJson.noSpaces
-      .replace("\"", "")}) where id = $userId""".update.run
+      .replace("\"", "")}) where id = $userId""".update.run <* Cache
+      .bust[ConnectionIO, User](
+        // I learned the cache key by telnet-ing to my local memcached and dumping all
+        // the keys: https://stackoverflow.com/a/19562199
+        // I'm assuming this isn't sensitive to the deployment environment, but it could
+        // go wrong in staging if so (we'll learn really fast if it is).
+        s"user:$userId"
+      )
+  }
 
 }
