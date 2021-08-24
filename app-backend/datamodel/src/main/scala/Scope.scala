@@ -224,6 +224,9 @@ object SimpleScope {
   def unapply(simpleScope: SimpleScope): Option[Set[ScopedAction]] =
     Some(simpleScope.actions)
 
+  def fromActions(actions: Set[ScopedAction]) =
+    new SimpleScope(actions)
+
   def fromEithers(
       actions: List[Either[DecodingFailure, ScopedAction]]
   ): Either[DecodingFailure, SimpleScope] = {
@@ -270,7 +273,8 @@ object Scope {
           Json.fromString("organizations:admin")
         case Scopes.RasterFoundryUser =>
           Json.fromString("platformUser")
-        case Scopes.GroundworkUser => Json.fromString("groundworkUser")
+        case Scopes.GroundworkUser    => Json.fromString("groundworkUser")
+        case Scopes.GroundworkProUser => Json.fromString("groundworkProUser")
         case Scopes.RasterFoundryPlatformAdmin =>
           Json.fromString("platforms:admin")
         case Scopes.RasterFoundryTeamsAdmin => Json.fromString("teams:admin")
@@ -312,6 +316,8 @@ object Scope {
 
 object Scopes {
 
+  private[datamodel] val oneGb = scala.math.pow(2, 30).toLong
+
   def resolveFor(
       domain: Domain,
       action: Action,
@@ -338,11 +344,12 @@ object Scopes {
     s match {
       case "organizations:admin" =>
         Right(Scopes.RasterFoundryOrganizationAdmin)
-      case "platformUser"    => Right(Scopes.RasterFoundryUser)
-      case "groundworkUser"  => Right(Scopes.GroundworkUser)
-      case "platforms:admin" => Right(Scopes.RasterFoundryPlatformAdmin)
-      case "teams:admin"     => Right(Scopes.RasterFoundryTeamsAdmin)
-      case "annotateTasks"   => Right(Scopes.AnnotateTasksScope)
+      case "platformUser"      => Right(Scopes.RasterFoundryUser)
+      case "groundworkUser"    => Right(Scopes.GroundworkUser)
+      case "groundworkProUser" => Right(Scopes.GroundworkProUser)
+      case "platforms:admin"   => Right(Scopes.RasterFoundryPlatformAdmin)
+      case "teams:admin"       => Right(Scopes.RasterFoundryTeamsAdmin)
+      case "annotateTasks"     => Right(Scopes.AnnotateTasksScope)
       case _ =>
         val message = s"$s is not a canned policy"
         Left(ParsingFailure(message, new Exception(message)))
@@ -574,11 +581,7 @@ object Scopes {
           ScopedAction(Domain.Licenses, Action.Read, None),
           ScopedAction(Domain.Scenes, Action.Read, None),
           ScopedAction(Domain.Uploads, Action.Read, None),
-          ScopedAction(
-            Domain.Uploads,
-            Action.Create,
-            Some((10 * scala.math.pow(2, 30)).toLong)
-          ),
+          ScopedAction(Domain.Uploads, Action.Create, Some(10 * oneGb)),
           ScopedAction(Domain.Uploads, Action.Update, None),
           ScopedAction(Domain.Uploads, Action.Delete, None),
           ScopedAction(Domain.Uploads, Action.ReadPermissions, None),
@@ -588,7 +591,11 @@ object Scopes {
             Action.Create,
             None
           ),
-          ScopedAction(Domain.AnnotationProjects, Action.Share, Some(5.toLong)),
+          ScopedAction(
+            Domain.AnnotationProjects,
+            Action.Share,
+            Some(5.toLong)
+          ),
           ScopedAction(Domain.Projects, Action.Create, None),
           ScopedAction(
             Domain.Campaigns,
@@ -620,6 +627,20 @@ object Scopes {
           StacExportsCRUD.actions ++
           UserSelfScope.actions ++
           FeatureFlagsScope.actions
+      )
+
+  case object GroundworkProUser
+      extends ComplexScope(
+        Set(
+          GroundworkUser,
+          SimpleScope.fromActions(
+            Set(
+              ScopedAction(Domain.Campaigns, Action.Create, Some(50L)),
+              ScopedAction(Domain.Campaigns, Action.Share, Some(50L)),
+              ScopedAction(Domain.Uploads, Action.Create, Some(50 * oneGb))
+            )
+          )
+        )
       )
 }
 

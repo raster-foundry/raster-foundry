@@ -107,7 +107,9 @@ class ScopeSpec
       Scopes.RasterFoundryPlatformAdmin,
       Scopes.RasterFoundryUser,
       Scopes.RasterFoundryTeamsAdmin,
-      Scopes.RasterFoundryOrganizationAdmin
+      Scopes.RasterFoundryOrganizationAdmin,
+      Scopes.GroundworkUser,
+      Scopes.GroundworkProUser
     )
 
   // Not separating out into a separate object until we have more than
@@ -115,12 +117,10 @@ class ScopeSpec
   // but in this case, since it determines user powers, I wanted the extra
   // security
   implicit val arbScope: Arbitrary[Scope] = Arbitrary[Scope] {
-    for {
-      scope <- Gen.oneOf(
-        Arbitrary.arbitrary[Set[ScopedAction]] map { new SimpleScope(_) },
-        cannedPolicyGen
-      )
-    } yield scope
+    Gen.oneOf(
+      Arbitrary.arbitrary[Set[ScopedAction]] map { new SimpleScope(_) },
+      cannedPolicyGen
+    )
   }
 
   checkAll("Scope.MonoidLaws", MonoidTests[Scope].monoid)
@@ -199,6 +199,42 @@ class ScopeSpec
           Scopes.GroundworkUser.actions
         )
         .flatMap(_.limit) == None
+    )
+  }
+
+  test("Groundwork Pro users can create 50 campaigns") {
+    assert(
+      Scopes
+        .resolveFor(
+          Domain.Campaigns,
+          Action.Create,
+          Scopes.GroundworkProUser.actions
+        )
+        .flatMap(_.limit) == Some(50L)
+    )
+  }
+
+  test("Groundwork Pro users can share with 50 users per campaign") {
+    assert(
+      Scopes
+        .resolveFor(
+          Domain.Campaigns,
+          Action.Share,
+          Scopes.GroundworkProUser.actions
+        )
+        .flatMap(_.limit) == Some(50L)
+    )
+  }
+
+  test("Groundwork Pro users can upload 50gb of data") {
+    assert(
+      Scopes
+        .resolveFor(
+          Domain.Uploads,
+          Action.Create,
+          Scopes.GroundworkProUser.actions
+        )
+        .flatMap(_.limit) == Some(50 * Scopes.oneGb)
     )
   }
 }
