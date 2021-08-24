@@ -10,6 +10,7 @@ import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.implicits.javasql._
+import io.circe.syntax._
 import scalacache.CatsEffect.modes._
 import scalacache._
 
@@ -50,11 +51,12 @@ object UserDao extends Dao[User] with Sanitization {
   def unsafeGetUserById(
       id: String,
       isOwn: Option[Boolean] = Some(true)
-  ): ConnectionIO[User] = isOwn match {
-    case Some(true) => filterById(id).select
-    case _ =>
-      filterById(id).select map { sanitizeUser _ }
-  }
+  ): ConnectionIO[User] =
+    isOwn match {
+      case Some(true) => filterById(id).select
+      case _ =>
+        filterById(id).select map { sanitizeUser _ }
+    }
 
   def unsafeGetUserPlatform(id: String): ConnectionIO[Platform] =
     for {
@@ -195,7 +197,8 @@ object UserDao extends Dao[User] with Sanitization {
 
     (fr"INSERT INTO users (" ++ insertFieldsF ++ fr""")
        VALUES
-          (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, '', '', false,
+          (${newUser.id}, ${UserRole
+      .toString(newUser.role)}, ${now}, ${now}, '', '', false,
           ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true,
           ${UserVisibility.Private.toString}::user_visibility, DEFAULT, ${newUser.scope})
        """).update.withUniqueGeneratedKeys[User](
@@ -382,5 +385,9 @@ object UserDao extends Dao[User] with Sanitization {
         } yield userAndCampaign
     }
   }
+
+  def appendScope(userId: String, scope: Scope): ConnectionIO[Int] =
+    fr"""update users set scopes = to_jsonb(trim(both '"' from cast(scopes :: jsonb as text)) || ${";" ++ scope.asJson.noSpaces
+      .replace("\"", "")}) where id = $userId""".update.run
 
 }
