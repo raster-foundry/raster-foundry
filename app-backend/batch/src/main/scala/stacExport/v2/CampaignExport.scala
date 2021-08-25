@@ -16,6 +16,7 @@ import com.rasterfoundry.datamodel.{
   ExportAssetType,
   Scene,
   StacExport,
+  TileLayer,
   UnionedGeomExtent
 }
 
@@ -537,40 +538,12 @@ class CampaignStacExport(
       assetTypes.toList.contains(assetType)
     } getOrElse (false)
 
-  private def signedURLAsset(
-      name: String,
-      ingestLocation: String
-  ): IO[Option[Tuple2[String, StacAsset]]] =
-    IO {
-      S3().maybeSignUri(
-        ingestLocation,
-        duration = Duration.ofDays(7)
-      )
-    } map { signedUrl =>
-      Some(
-        (
-          "signedURL",
-          StacAsset(
-            signedUrl,
-            Some(name),
-            Some("Signed URLs"),
-            Set(StacAssetRole.Data),
-            Some(`image/cog`)
-          )
-        )
-      )
-    }
-
-  private def imageryItemFromTileLayers(
-      annotationProject: AnnotationProject,
-      exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
-      taskStatuses: List[String]
-  ): IO[Option[newtypes.SceneItem]] = {
+  private def exportAssets(
+      maybeScene: Option[Scene],
+      tileLayers: List[TileLayer],
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]]
+  ): IO[Map[String, StacAsset]] = {
     for {
-      maybeScene <-
-        AnnotationProjectDao
-          .getFirstScene(annotationProject.id)
-          .transact(xa)
       maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <-
         maybeScene match {
           case Some(
@@ -599,19 +572,29 @@ class CampaignStacExport(
                 exportAssetTypes,
                 ExportAssetType.SignedURL
               ) =>
-            signedURLAsset(name, ingestLocation)
+            IO {
+              S3().maybeSignUri(
+                ingestLocation,
+                duration = Duration.ofDays(7)
+              )
+            } map { signedUrl =>
+              Some(
+                (
+                  "signedURL",
+                  StacAsset(
+                    signedUrl,
+                    Some(name),
+                    Some("Signed URL"),
+                    Set(StacAssetRole.Data),
+                    Some(`image/cog`)
+                  )
+                )
+              )
+            }
           case _ =>
             IO.pure(None)
         }
-      tileLayers <-
-        TileLayerDao
-          .listByProjectId(annotationProject.id)
-          .transact(xa)
-      extentO <-
-        TaskDao
-          .createUnionedGeomExtent(annotationProject.id, taskStatuses)
-          .transact(xa)
-      tileLayersAsset: List[Tuple2[String, StacAsset]] = tileLayers map {
+      tileLayersAssets: List[Tuple2[String, StacAsset]] = tileLayers map {
         layer =>
           (
             layer.name,
@@ -629,11 +612,33 @@ class CampaignStacExport(
           )
       }
       assets: Map[String, StacAsset] = Map(
-        tileLayersAsset ++
+        tileLayersAssets ++
           List(
             maybeSignedURLAsset
           ).flatten: _*
       )
+    } yield (assets)
+  }
+
+  private def imageryItemFromTileLayers(
+      annotationProject: AnnotationProject,
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
+      taskStatuses: List[String]
+  ): IO[Option[newtypes.SceneItem]] = {
+    for {
+      maybeScene <-
+        AnnotationProjectDao
+          .getFirstScene(annotationProject.id)
+          .transact(xa)
+      tileLayers <-
+        TileLayerDao
+          .listByProjectId(annotationProject.id)
+          .transact(xa)
+      extentO <-
+        TaskDao
+          .createUnionedGeomExtent(annotationProject.id, taskStatuses)
+          .transact(xa)
+      assets <- exportAssets(maybeScene, tileLayers, exportAssetTypes)
       item = extentO map { unionedGeom =>
         makeTileLayersItem(
           assets,
