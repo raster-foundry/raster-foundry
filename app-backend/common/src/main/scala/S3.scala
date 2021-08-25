@@ -102,6 +102,11 @@ final case class S3(
     client.generatePresignedUrl(generatePresignedUrlRequest)
   }
 
+  def signUri(uriString: String, duration: Duration): String = {
+    val s3Uri = new AmazonS3URI(URLDecoder.decode(uriString, "utf-8"))
+    getSignedUrl(s3Uri.getBucket, s3Uri.getKey, duration).toString
+  }
+
   def maybeSignUri(
       uriString: String,
       whitelist: List[String] = List(),
@@ -110,8 +115,7 @@ final case class S3(
     val whitelisted =
       whitelist.map(uriString.startsWith(_)).foldLeft(false)(_ || _)
     if (whitelisted) {
-      val s3Uri = new AmazonS3URI(URLDecoder.decode(uriString, "utf-8"))
-      getSignedUrl(s3Uri.getBucket, s3Uri.getKey, duration).toString
+      signUri(uriString, duration)
     } else uriString
   }
 
@@ -174,7 +178,9 @@ final case class S3(
       def getObjects: List[String] =
         listing.getObjectSummaries.asScala.toList
           .filterNot(_.getKey.endsWith("/"))
-          .map(os => "s3://" + os.getBucketName + "/" + os.getKey) ::: accumulator
+          .map(os =>
+            "s3://" + os.getBucketName + "/" + os.getKey
+          ) ::: accumulator
 
       if (!listing.isTruncated) getObjects
       else get(client.listNextBatchOfObjects(listing), getObjects)

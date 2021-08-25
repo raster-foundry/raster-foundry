@@ -573,7 +573,7 @@ class CampaignStacExport(
                 ExportAssetType.SignedURL
               ) =>
             IO {
-              S3().maybeSignUri(
+              S3().signUri(
                 ingestLocation,
                 duration = Duration.ofDays(7)
               )
