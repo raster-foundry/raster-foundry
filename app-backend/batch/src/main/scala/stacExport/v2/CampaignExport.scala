@@ -544,31 +544,36 @@ class CampaignStacExport(
       tileLayers: List[TileLayer],
       exportAssetTypes: Option[NonEmptyList[ExportAssetType]]
   ): IO[Map[String, StacAsset]] = {
+    val maybeNameAndIngestLocation = maybeScene match {
+      case Some(
+            Scene(
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              name,
+              _,
+              _,
+              _,
+              Some(ingestLocation),
+              _,
+              _,
+              _,
+              _
+            )
+          ) =>
+        Some((name, ingestLocation))
+      case _ => None
+    }
     for {
       maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <-
-        maybeScene match {
-          case Some(
-                Scene(
-                  _,
-                  _,
-                  _,
-                  _,
-                  _,
-                  _,
-                  _,
-                  _,
-                  _,
-                  name,
-                  _,
-                  _,
-                  _,
-                  Some(ingestLocation),
-                  _,
-                  _,
-                  _,
-                  _
-                )
-              )
+        maybeNameAndIngestLocation match {
+          case Some((name, ingestLocation))
               if includeAssetTypeInExport(
                 exportAssetTypes,
                 ExportAssetType.SignedURL
@@ -595,6 +600,30 @@ class CampaignStacExport(
           case _ =>
             IO.pure(None)
         }
+      maybeCOG: Option[Tuple2[String, StacAsset]] <-
+        maybeNameAndIngestLocation match {
+          case Some((name, ingestLocation))
+              if includeAssetTypeInExport(
+                exportAssetTypes,
+                ExportAssetType.Images
+              ) =>
+            IO.pure(
+              Some(
+                (
+                  "cog",
+                  StacAsset(
+                    ingestLocation,
+                    Some(name),
+                    Some("COG"),
+                    Set(StacAssetRole.Data),
+                    Some(`image/cog`)
+                  )
+                )
+              )
+            )
+          case _ =>
+            IO.pure(None)
+        }
       tileLayersAssets: List[Tuple2[String, StacAsset]] = tileLayers map {
         layer =>
           (
@@ -615,7 +644,8 @@ class CampaignStacExport(
       assets: Map[String, StacAsset] = Map(
         tileLayersAssets ++
           List(
-            maybeSignedURLAsset
+            maybeSignedURLAsset,
+            maybeCOG
           ).flatten: _*
       )
     } yield (assets)
@@ -729,8 +759,6 @@ class CampaignStacExport(
       extent: Extent,
       createdAt: Instant
   ): newtypes.SceneItem = {
-    // TODO: Conditionally add assets for signed URLs (can just be the URLs themselves) and for COGs
-    // (must be included in export and the asset should reference the COG)
     newtypes.SceneItem(
       StacItem(
         s"${UUID.randomUUID}",
