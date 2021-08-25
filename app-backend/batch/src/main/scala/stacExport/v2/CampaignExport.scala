@@ -13,13 +13,14 @@ import com.rasterfoundry.datamodel.TileLayerType.{MVT, TMS}
 import com.rasterfoundry.datamodel.{
   AnnotationLabelClassGroup,
   AnnotationProject,
+  ExportAssetType,
+  Scene,
   StacExport,
-  TileLayer,
   UnionedGeomExtent
 }
 
 import better.files.File
-import cats.data.StateT
+import cats.data.{NonEmptyList, StateT}
 import cats.effect.{Blocker, ContextShift, IO}
 import cats.syntax.apply._
 import cats.syntax.list._
@@ -178,22 +179,23 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val withCollection =
       optics.itemCollectionLens.modify(_ => Some(imageryCollectionId))
-    val withParentLinks = optics.itemLinksLens.modify(
-      links =>
-        StacLink(
-          "./collection.json",
-          StacLinkType.Collection,
-          Some(`application/json`),
-          None
-        ) +: StacLink(
-          "../catalog.json",
-          StacLinkType.StacRoot,
-          Some(`application/json`),
-          None
-        ) +:
-          links.filter(link =>
+    val withParentLinks = optics.itemLinksLens.modify(links =>
+      StacLink(
+        "./collection.json",
+        StacLinkType.Collection,
+        Some(`application/json`),
+        None
+      ) +: StacLink(
+        "../catalog.json",
+        StacLinkType.StacRoot,
+        Some(`application/json`),
+        None
+      ) +:
+        links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
-            .contains(link.rel)))
+            .contains(link.rel)
+        )
+    )
 
     def withAsset(stacItem: StacItem): IO[StacItem] = {
       stacItem.assets.get("data") match {
@@ -201,12 +203,13 @@ case class ExportData private (
           IO {
             s3Client.maybeSignUri(asset.href, duration = Duration.ofDays(7))
           } map { signedUrl =>
-            (optics.itemAssetLens.modify(
-              assets =>
-                assets ++ Map(
-                  "data" -> optics.assetHrefLens
-                    .modify(_ => signedUrl)(asset)
-              )))(stacItem)
+            (optics.itemAssetLens.modify(assets =>
+              assets ++ Map(
+                "data" -> optics.assetHrefLens
+                  .modify(_ => signedUrl)(asset)
+              )
+            )
+            )(stacItem)
           }
         case None =>
           IO.pure(stacItem)
@@ -360,34 +363,35 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val withCollection =
       optics.itemCollectionLens.modify(_ => Some(labelCollectionId))
-    val withParentLinks = optics.itemLinksLens.modify(
-      links =>
-        StacLink(
-          "./collection.json",
-          StacLinkType.Collection,
-          Some(`application/json`),
-          None
-        ) +: StacLink(
-          "../catalog.json",
-          StacLinkType.StacRoot,
-          Some(`application/json`),
-          None
-        ) +:
-          links.filter(link =>
+    val withParentLinks = optics.itemLinksLens.modify(links =>
+      StacLink(
+        "./collection.json",
+        StacLinkType.Collection,
+        Some(`application/json`),
+        None
+      ) +: StacLink(
+        "../catalog.json",
+        StacLinkType.StacRoot,
+        Some(`application/json`),
+        None
+      ) +:
+        links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
-            .contains(link.rel)))
+            .contains(link.rel)
+        )
+    )
     def withAsset(labelItem: StacItem) =
-      optics.itemAssetLens.modify(
-        assets =>
-          assets ++ Map(
-            "data" -> StacAsset(
-              s"./data/${labelItem.id}.geojson",
-              None,
-              None,
-              Set(StacAssetRole.Data),
-              Some(`application/geo+json`)
-            )
-        ))(labelItem)
+      optics.itemAssetLens.modify(assets =>
+        assets ++ Map(
+          "data" -> StacAsset(
+            s"./data/${labelItem.id}.geojson",
+            None,
+            None,
+            Set(StacAssetRole.Data),
+            Some(`application/geo+json`)
+          )
+        )
+      )(labelItem)
     (annotationProjectLabelItems.toList traverse {
       case (_, v) =>
         encodableToFile(
@@ -445,8 +449,9 @@ class CampaignStacExport(
     xa: Transactor[IO],
     exportDefinition: StacExport
 )(implicit
-  val
-  cs: ContextShift[IO]) {
+    val
+    cs: ContextShift[IO]
+) {
 
   val runExport = StateT { step }
 
@@ -524,48 +529,146 @@ class CampaignStacExport(
   ): ExportState => ExportState =
     optics.labelAssetsLens.modify(_ ++ toAppend)
 
+  private def includeAssetTypeInExport(
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
+      assetType: ExportAssetType
+  ): Boolean =
+    exportAssetTypes map { assetTypes =>
+      assetTypes.toList.contains(assetType)
+    } getOrElse (false)
+
+  private def signedURLAsset(
+      name: String,
+      ingestLocation: String
+  ): IO[Option[Tuple2[String, StacAsset]]] =
+    IO {
+      S3().maybeSignUri(
+        ingestLocation,
+        duration = Duration.ofDays(7)
+      )
+    } map { signedUrl =>
+      Some(
+        (
+          "signedURL",
+          StacAsset(
+            signedUrl,
+            Some(name),
+            Some("Signed URLs"),
+            Set(StacAssetRole.Data),
+            Some(`image/cog`)
+          )
+        )
+      )
+    }
+
   private def imageryItemFromTileLayers(
       annotationProject: AnnotationProject,
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
       taskStatuses: List[String]
-  ): IO[Option[newtypes.SceneItem]] =
+  ): IO[Option[newtypes.SceneItem]] = {
     for {
-      tileLayers <- TileLayerDao
-        .listByProjectId(annotationProject.id)
-        .transact(xa)
-      extentO <- TaskDao
-        .createUnionedGeomExtent(annotationProject.id, taskStatuses)
-        .transact(xa)
+      maybeScene <-
+        AnnotationProjectDao
+          .getFirstScene(annotationProject.id)
+          .transact(xa)
+      maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <-
+        maybeScene match {
+          case Some(
+                Scene(
+                  _,
+                  _,
+                  _,
+                  _,
+                  _,
+                  _,
+                  _,
+                  _,
+                  _,
+                  name,
+                  _,
+                  _,
+                  _,
+                  Some(ingestLocation),
+                  _,
+                  _,
+                  _,
+                  _
+                )
+              )
+              if includeAssetTypeInExport(
+                exportAssetTypes,
+                ExportAssetType.SignedURL
+              ) =>
+            signedURLAsset(name, ingestLocation)
+          case _ =>
+            IO.pure(None)
+        }
+      tileLayers <-
+        TileLayerDao
+          .listByProjectId(annotationProject.id)
+          .transact(xa)
+      extentO <-
+        TaskDao
+          .createUnionedGeomExtent(annotationProject.id, taskStatuses)
+          .transact(xa)
+      tileLayersAsset: List[Tuple2[String, StacAsset]] = tileLayers map {
+        layer =>
+          (
+            layer.name,
+            StacAsset(
+              layer.url,
+              Some(layer.name),
+              Some(s"${layer.layerType} tiles"),
+              Set(StacAssetRole.Data),
+              layer.layerType match {
+                case MVT =>
+                  Some(VendorMediaType("application/vnd.mapbox-vector-tile"))
+                case TMS => Some(`image/png`)
+              }
+            )
+          )
+      }
+      assets: Map[String, StacAsset] = Map(
+        tileLayersAsset ++
+          List(
+            maybeSignedURLAsset
+          ).flatten: _*
+      )
       item = extentO map { unionedGeom =>
         makeTileLayersItem(
-          tileLayers,
+          assets,
           unionedGeom.geometry.geom.getEnvelopeInternal,
           Instant.now
         )
       }
     } yield item
+  }
 
   private def processAnnotationProject(
       inputState: ExportState,
       annotationProject: AnnotationProject
   ): IO[ExportState] = {
     for {
+      // TODO: Add COG from scene to export and reference it in asset
       // make the catalog for this annotation project
       // make the scene item for this annotation project with a tile layer asset
       imageryItemO <- imageryItemFromTileLayers(
         annotationProject,
+        inputState.exportDefinition.exportAssetTypes,
         inputState.exportDefinition.taskStatuses
       )
       imageryItemsAppend = imageryItemO map { (item: newtypes.SceneItem) =>
         Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
       // make label asset
-      featureGeoJSON <- AnnotationLabelDao
-        .getAnnotationJsonByTaskStatus(
-          annotationProject.id,
-          inputState.exportDefinition.taskStatuses,
-          inputState.labelGroupOpt
-        )
-        .transact(xa)
+      featureGeoJSON <-
+        AnnotationLabelDao
+          .getAnnotationJsonByTaskStatus(
+            annotationProject.id,
+            inputState.exportDefinition.taskStatuses,
+            inputState.labelGroupOpt
+          )
+          .transact(xa)
       labelAssetAppend = featureGeoJSON map { geojson =>
         Map(
           newtypes.AnnotationProjectId(annotationProject.id) -> newtypes
@@ -573,18 +676,20 @@ class CampaignStacExport(
         )
       } getOrElse Map.empty
       // make the label item
-      taskExtent <- TaskDao
-        .createUnionedGeomExtent(
-          annotationProject.id,
-          inputState.exportDefinition.taskStatuses
-        )
-        .transact(xa)
-      labelItemExtensionO <- AnnotationProjectDao
-        .getAnnotationProjectStacInfo(
-          annotationProject.id,
-          inputState.labelGroupOpt
-        )
-        .transact(xa)
+      taskExtent <-
+        TaskDao
+          .createUnionedGeomExtent(
+            annotationProject.id,
+            inputState.exportDefinition.taskStatuses
+          )
+          .transact(xa)
+      labelItemExtensionO <-
+        AnnotationProjectDao
+          .getAnnotationProjectStacInfo(
+            annotationProject.id,
+            inputState.labelGroupOpt
+          )
+          .transact(xa)
       labelItemsAppend = (taskExtent, labelItemExtensionO, imageryItemO) mapN {
         case (extent, labelItemExtension, imageryItem) =>
           Map(
@@ -614,23 +719,12 @@ class CampaignStacExport(
   }
 
   private def makeTileLayersItem(
-      tileLayers: List[TileLayer],
+      assets: Map[String, StacAsset],
       extent: Extent,
       createdAt: Instant
   ): newtypes.SceneItem = {
-    val assets = Map(tileLayers map { layer =>
-      layer.name -> StacAsset(
-        layer.url,
-        Some(layer.name),
-        Some(s"${layer.layerType} tiles"),
-        Set(StacAssetRole.Data),
-        layer.layerType match {
-          case MVT =>
-            Some(VendorMediaType("application/vnd.mapbox-vector-tile"))
-          case TMS => Some(`image/png`)
-        }
-      )
-    }: _*)
+    // TODO: Conditionally add assets for signed URLs (can just be the URLs themselves) and for COGs
+    // (must be included in export and the asset should reference the COG)
     newtypes.SceneItem(
       StacItem(
         s"${UUID.randomUUID}",
