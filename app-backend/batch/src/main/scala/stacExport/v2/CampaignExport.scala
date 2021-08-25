@@ -453,6 +453,7 @@ class CampaignStacExport(
     val
     cs: ContextShift[IO]
 ) {
+  val s3Client = S3()
 
   val runExport = StateT { step }
 
@@ -573,7 +574,7 @@ class CampaignStacExport(
                 ExportAssetType.SignedURL
               ) =>
             IO {
-              S3().signUri(
+              s3Client.signUri(
                 ingestLocation,
                 duration = Duration.ofDays(7)
               )
