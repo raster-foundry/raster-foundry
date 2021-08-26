@@ -41,7 +41,7 @@ class HealthcheckService(xa: Transactor[IO])(
           case _ => HealthResult[Id](Health.Healthy)
         }
       }
-      .through(mods.timeoutToSick(3 seconds))
+      .through(mods.timeoutToSick(10 seconds))
       .through(mods.tagWith("db"))
 
   private def cacheHealth =
@@ -54,7 +54,7 @@ class HealthcheckService(xa: Transactor[IO])(
           case _ => HealthResult[Id](Health.Healthy)
         }
       }
-      .through(mods.timeoutToSick(3 seconds))
+      .through(mods.timeoutToSick(10 seconds))
       .through(mods.tagWith("cache"))
 
   val routes: HttpRoutes[IO] = HttpRoutes.of {
