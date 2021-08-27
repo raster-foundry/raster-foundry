@@ -25,6 +25,7 @@ object MVTLayerDao {
       geom: Projected[Geometry],
       envelope: ProjectedExtent,
       taskId: UUID,
+      score: Option[Double],
       labelClassId: UUID,
       className: String,
       colorHexCode: String
@@ -83,6 +84,7 @@ object MVTLayerDao {
           annotation_labels.geometry,
           ST_TileEnvelope(${z}, ${x}, ${y}) as envelope,
           annotation_labels.annotation_task_id,
+          annotation_labels.score,
           annotation_label_classes.id as label_class_id,
           annotation_label_classes.name,
           annotation_label_classes.color_hex_code
