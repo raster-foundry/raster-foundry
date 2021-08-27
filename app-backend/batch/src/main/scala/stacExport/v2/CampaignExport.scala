@@ -539,11 +539,11 @@ class CampaignStacExport(
       assetTypes.toList.contains(assetType)
     } getOrElse (false)
 
-  private def exportAssets(
+  private def exportAssetsAndLinks(
       maybeScene: Option[Scene],
       tileLayers: List[TileLayer],
       exportAssetTypes: Option[NonEmptyList[ExportAssetType]]
-  ): IO[Map[String, StacAsset]] = {
+  ): IO[(Map[String, StacAsset], List[StacLink])] = {
     val maybeNameAndIngestLocation = maybeScene match {
       case Some(
             Scene(
@@ -600,7 +600,7 @@ class CampaignStacExport(
           case _ =>
             IO.pure(None)
         }
-      maybeCOG: Option[Tuple2[String, StacAsset]] <-
+      maybeCOGAssetAndLink: Option[(Tuple2[String, StacAsset], StacLink)] <-
         maybeNameAndIngestLocation match {
           case Some((name, ingestLocation))
               if includeAssetTypeInExport(
@@ -608,18 +608,26 @@ class CampaignStacExport(
                 ExportAssetType.Images
               ) =>
             IO.pure(
-              Some(
+              Some((
                 (
-                  "cog",
-                  StacAsset(
-                    ingestLocation,
-                    Some(name),
-                    Some("COG"),
-                    Set(StacAssetRole.Data),
-                    Some(`image/cog`)
+                  (
+                    "cog",
+                    StacAsset(
+                      ingestLocation,
+                      Some(name),
+                      Some("COG"),
+                      Set(StacAssetRole.Data),
+                      Some(`image/cog`)
+                    )
                   )
+                ),
+                StacLink(
+                  s"./${new java.io.File(ingestLocation).getName}.json",
+                  StacLinkType.Item,
+                  Some(`image/cog`),
+                  None
                 )
-              )
+              ))
             )
           case _ =>
             IO.pure(None)
@@ -645,10 +653,17 @@ class CampaignStacExport(
         tileLayersAssets ++
           List(
             maybeSignedURLAsset,
-            maybeCOG
+            maybeCOGAssetAndLink flatMap {
+              case ((maybeCog, _)) => Some(maybeCog)
+              case _               => None
+            }
           ).flatten: _*
       )
-    } yield (assets)
+      links: List[StacLink] = maybeCOGAssetAndLink match {
+        case Some((_, link: StacLink)) => List(link)
+        case _                         => List.empty
+      }
+    } yield (assets, links)
   }
 
   private def imageryItemFromTileLayers(
@@ -669,10 +684,12 @@ class CampaignStacExport(
         TaskDao
           .createUnionedGeomExtent(annotationProject.id, taskStatuses)
           .transact(xa)
-      assets <- exportAssets(maybeScene, tileLayers, exportAssetTypes)
+      (assets, links) <-
+        exportAssetsAndLinks(maybeScene, tileLayers, exportAssetTypes)
       item = extentO map { unionedGeom =>
         makeTileLayersItem(
           assets,
+          links,
           unionedGeom.geometry.geom.getEnvelopeInternal,
           Instant.now
         )
@@ -756,6 +773,7 @@ class CampaignStacExport(
 
   private def makeTileLayersItem(
       assets: Map[String, StacAsset],
+      links: List[StacLink],
       extent: Extent,
       createdAt: Instant
   ): newtypes.SceneItem = {
@@ -772,7 +790,7 @@ class CampaignStacExport(
           extent.xmax,
           extent.ymax
         ),
-        Nil,
+        links,
         assets,
         None,
         ItemProperties(ItemDatetime.PointInTime(createdAt))
