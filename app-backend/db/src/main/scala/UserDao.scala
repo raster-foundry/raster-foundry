@@ -10,6 +10,7 @@ import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.implicits.javasql._
+import io.circe.syntax._
 import scalacache.CatsEffect.modes._
 import scalacache._
 
@@ -50,11 +51,12 @@ object UserDao extends Dao[User] with Sanitization {
   def unsafeGetUserById(
       id: String,
       isOwn: Option[Boolean] = Some(true)
-  ): ConnectionIO[User] = isOwn match {
-    case Some(true) => filterById(id).select
-    case _ =>
-      filterById(id).select map { sanitizeUser _ }
-  }
+  ): ConnectionIO[User] =
+    isOwn match {
+      case Some(true) => filterById(id).select
+      case _ =>
+        filterById(id).select map { sanitizeUser _ }
+    }
 
   def unsafeGetUserPlatform(id: String): ConnectionIO[Platform] =
     for {
@@ -195,7 +197,8 @@ object UserDao extends Dao[User] with Sanitization {
 
     (fr"INSERT INTO users (" ++ insertFieldsF ++ fr""")
        VALUES
-          (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, '', '', false,
+          (${newUser.id}, ${UserRole
+      .toString(newUser.role)}, ${now}, ${now}, '', '', false,
           ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true,
           ${UserVisibility.Private.toString}::user_visibility, DEFAULT, ${newUser.scope})
        """).update.withUniqueGeneratedKeys[User](
@@ -380,6 +383,39 @@ object UserDao extends Dao[User] with Sanitization {
             }
           }
         } yield userAndCampaign
+    }
+  }
+
+  def appendScope(userId: String, scope: Scope): ConnectionIO[Int] = {
+    appendScope(userId, scope, true)
+  }
+
+  private[database] def appendScope(
+      userId: String,
+      scope: Scope,
+      bust: Boolean
+  ): ConnectionIO[Int] = {
+    if (scope.actions.isEmpty) {
+      0.pure[ConnectionIO]
+    } else {
+      fr"""update users set scopes = to_jsonb(trim(both '"' from cast(scopes :: jsonb as text)) || ${";" ++ scope.asJson.noSpaces
+        .replace("\"", "")}) where id = $userId""".update.run <* (if (bust) {
+                                                                    Cache
+                                                                      .bust[
+                                                                        ConnectionIO,
+                                                                        User
+                                                                      ](
+                                                                        // I learned the cache key by telnet-ing to my local memcached and dumping all
+                                                                        // the keys: https://stackoverflow.com/a/19562199
+                                                                        // I'm assuming this isn't sensitive to the deployment environment, but it could
+                                                                        // go wrong in staging if so (we'll learn really fast if it is).
+                                                                        s"user:$userId"
+                                                                      )
+                                                                  } else {
+                                                                    ().pure[
+                                                                      ConnectionIO
+                                                                    ]
+                                                                  })
     }
   }
 

@@ -29,9 +29,10 @@ object Cache extends LazyLogging {
 
   def getOptionCache[F[_]: Monad, T](
       cacheKey: String,
-      ttl: Option[Duration] = None)(f: => F[Option[T]])(
-      implicit cache: Cache[T],
-      mode: Mode[F]): F[Option[T]] = {
+      ttl: Option[Duration] = None
+  )(
+      f: => F[Option[T]]
+  )(implicit cache: Cache[T], mode: Mode[F]): F[Option[T]] = {
     val cacheValue: F[Option[T]] = get(cacheKey)
     cacheValue.flatMap {
       case Some(t) =>
@@ -48,13 +49,21 @@ object Cache extends LazyLogging {
     }
   }
 
+  def bust[F[_]: Monad, T](
+      cacheKey: String
+  )(implicit cache: Cache[T], mode: Mode[F]): F[Unit] =
+    cache.remove(cacheKey).void
+
   lazy val es = Executors.newCachedThreadPool(
-    new ThreadFactoryBuilder().setNameFormat("cache-%d").build())
+    new ThreadFactoryBuilder().setNameFormat("cache-%d").build()
+  )
   val address =
     new InetSocketAddress(Config.memcached.host, Config.memcached.port)
   val memcachedClient =
-    new MemcachedClient(new BacksplashConnectionFactory(es),
-                        List(address).asJava)
+    new MemcachedClient(
+      new BacksplashConnectionFactory(es),
+      List(address).asJava
+    )
 
   object ProjectCache {
     implicit val projectCache: Cache[Project] = {

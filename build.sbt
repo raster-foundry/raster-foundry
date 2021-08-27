@@ -396,7 +396,11 @@ lazy val datamodel = project
   */
 lazy val db = project
   .in(file(appBackendDir + "/db"))
-  .dependsOn(common % "compile->compile;test->test", notification)
+  .dependsOn(
+    common % "compile->compile;test->test",
+    datamodel % "test->test;compile->compile",
+    notification
+  )
   .settings(name := "database")
   .settings(sharedSettings: _*)
   .settings({
