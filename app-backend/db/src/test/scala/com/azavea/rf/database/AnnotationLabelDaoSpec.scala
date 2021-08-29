@@ -579,4 +579,69 @@ class AnnotationLabelDaoSpec
       )
     }
   }
+
+  test("check annotation project has predictions") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            annotationCreates: List[AnnotationLabelWithClasses.Create],
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create
+        ) => {
+
+          val toInsert = annotationProjectCreate.copy(
+            labelClassGroups = annotationProjectCreate.labelClassGroups.take(1)
+          )
+
+          val insertIO = for {
+            user <- UserDao.create(userCreate)
+            annotationProject <-
+              AnnotationProjectDao
+                .insert(toInsert, user)
+            classIds = annotationProject.labelClassGroups flatMap {
+              _.labelClasses
+            } map { _.id }
+            fixedUpTasks = fixupTaskFeaturesCollection(
+              taskFeatureCollectionCreate,
+              annotationProject,
+              None
+            )
+            task <- TaskDao.insertTasks(
+              fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+              user
+            ) map { _.features.head }
+            dbTaskSession <-
+              TaskSessionDao
+                .insertTaskSession(
+                  taskSessionCreate,
+                  user,
+                  task.properties.status,
+                  task.id
+                )
+            _ <- AnnotationLabelDao.insertAnnotations(
+              annotationProject.id,
+              task.id,
+              annotationCreates map { create =>
+                addClasses(create, classIds)
+                  .copy(sessionId = Some(dbTaskSession.id))
+              },
+              user
+            )
+            hasScores <- AnnotationLabelDao.hasPredictionAnnotationLabels(annotationProject.id)
+          } yield hasScores
+
+          val hasScores = insertIO.transact(xa).unsafeRunSync
+          assert(
+            hasScores === annotationCreates.exists(create => create.scores.isSome),
+            "Project should have scores when input labels have scores"
+          )
+
+          true
+        }
+      }
+    }
+        
+  }
 }
