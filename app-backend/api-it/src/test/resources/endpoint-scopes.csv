@@ -21,6 +21,7 @@ Path,Domain:Action,Verb
 /api/annotation-projects/{annotationProjectID}/,annotationProjects:read,get
 /api/annotation-projects/{annotationProjectID}/,annotationProjects:update,put
 /api/annotation-projects/{annotationProjectID}/,annotationProjects:delete,delete
+/api/annotation-projects/{annotationProjectID}/hitl,annotationProjects:read,get
 /api/annotation-projects/{annotationProjectID}/permissions/,annotationProjects:readPermissions,get
 /api/annotation-projects/{annotationProjectID}/permissions/,annotationProjects:share,put
 /api/annotation-projects/{annotationProjectID}/permissions/,annotationProjects:share,post
