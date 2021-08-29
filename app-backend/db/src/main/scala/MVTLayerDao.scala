@@ -35,8 +35,8 @@ object MVTLayerDao {
         "annotation_task_id" -> VString(taskId.toString),
         "label_class_id" -> VString(labelClassId.toString),
         "name" -> VString(className),
-        "color_hex_code" -> VString(colorHexCode)
-      )
+        "color_hex_code" -> VString(colorHexCode),
+      ) ++ score.fold(Map.empty[String, Value])(v => Map("score" -> VDouble(v)))
   }
 
   private[database] def getAnnotationProjectTasksQ(
