@@ -634,7 +634,7 @@ class AnnotationLabelDaoSpec
 
           val hasScores = insertIO.transact(xa).unsafeRunSync
           assert(
-            hasScores === annotationCreates.exists(create => create.score.isSome),
+            hasScores === annotationCreates.exists(create => create.score.isDefined),
             "Project should have scores when input labels have scores"
           )
 
