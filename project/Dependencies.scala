@@ -201,7 +201,7 @@ object Dependencies {
   val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
   val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
-  val http4sClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
+  val http4sClient = "org.http4s" %% "http4s-client" % Version.http4s
   val http4sCore = "org.http4s" %% "http4s-core" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s

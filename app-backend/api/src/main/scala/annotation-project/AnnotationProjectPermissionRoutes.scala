@@ -33,7 +33,7 @@ trait AnnotationProjectPermissionRoutes
 
   implicit def contextShift: ContextShift[IO]
 
-  def notifier: IO[IntercomNotifications]
+  def notifier: IntercomNotifications
 
   private def shareWithExistingUsers(
       users: List[User],
@@ -43,7 +43,7 @@ trait AnnotationProjectPermissionRoutes
       sharingUser: User
   ): IO[ValidatedNel[String, List[ObjectAccessControlRule]]] =
     users traverse { existingUser =>
-      (notifier flatMap { notifier =>
+      (
         for {
           auth0User <- IO.fromFuture {
             IO {
@@ -86,7 +86,7 @@ trait AnnotationProjectPermissionRoutes
             case _ => IO.pure(())
           }
         } yield dbAcrs
-      }).attempt map {
+      ).attempt map {
         case Left(_)     => userByEmail.email.invalidNel
         case Right(acrs) => acrs.validNel
       }
@@ -166,14 +166,12 @@ trait AnnotationProjectPermissionRoutes
                   // the isValidPermission check
                   UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                     sharedUser =>
-                      notifier flatMap { notifier =>
-                        notifier.shareNotify(
-                          sharedUser,
-                          user,
-                          annotationProject,
-                          "projects"
-                        )
-                      }
+                      notifier.shareNotify(
+                        sharedUser,
+                        user,
+                        annotationProject,
+                        "projects"
+                      )
                   }
                 })
               })).unsafeToFuture
@@ -220,14 +218,12 @@ trait AnnotationProjectPermissionRoutes
                   acr.getUserId traverse { userId =>
                     UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                       sharedUser =>
-                        notifier flatMap { notifier =>
-                          notifier.shareNotify(
-                            sharedUser,
-                            user,
-                            annotationProject,
-                            "projects"
-                          )
-                        }
+                        notifier.shareNotify(
+                          sharedUser,
+                          user,
+                          annotationProject,
+                          "projects"
+                        )
                     }
                   }
                 }
@@ -408,7 +404,6 @@ trait AnnotationProjectPermissionRoutes
                             )
                           } yield user
                         }).transact(xa)
-                        notifier <- notifier
                         acrs = newUserOpt map { newUser =>
                           notifier
                             .getDefaultShare(newUser, userByEmail.actionType)

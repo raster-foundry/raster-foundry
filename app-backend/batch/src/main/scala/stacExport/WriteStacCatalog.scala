@@ -22,7 +22,6 @@ import com.azavea.stac4s._
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
-import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import java.net.URI
 import java.util.UUID
@@ -351,17 +350,14 @@ object WriteStacCatalog extends Job {
 
   def runJob(args: List[String]): IO[Unit] = {
     RFTransactor.xaResource.use(transactor => {
-      AsyncHttpClientCatsBackend.resource[IO]() use { backend =>
-        val notifier = new LiveIntercomNotifier[IO](backend)
-        implicit val xa: HikariTransactor[IO] = transactor
+      val notifier = new LiveIntercomNotifier[IO]
+      implicit val xa: HikariTransactor[IO] = transactor
 
-        val job = args match {
-          case List(id: String) =>
-            WriteStacCatalog(UUID.fromString(id), notifier, xa)
-        }
-        job.run()
+      val job = args match {
+        case List(id: String) =>
+          WriteStacCatalog(UUID.fromString(id), notifier, xa)
       }
-
+      job.run()
     })
   }
 }

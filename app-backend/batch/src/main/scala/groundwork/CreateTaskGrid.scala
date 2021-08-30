@@ -28,7 +28,6 @@ import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.{ConnectionIO, Transactor}
-import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import java.util.UUID
 
@@ -164,14 +163,12 @@ object CreateTaskGrid extends Job {
       case annotationProjectId +: taskSizeMeters +: Nil =>
         val xa =
           RFTransactor.nonHikariTransactor(RFTransactor.TransactorConfig())
-        AsyncHttpClientCatsBackend.resource[IO]().use { backend =>
-          new CreateTaskGrid(
-            UUID.fromString(annotationProjectId),
-            taskSizeMeters.toDouble,
-            new LiveIntercomNotifier[IO](backend),
-            xa
-          ).run()
-        }
+        new CreateTaskGrid(
+          UUID.fromString(annotationProjectId),
+          taskSizeMeters.toDouble,
+          new LiveIntercomNotifier[IO],
+          xa
+        ).run()
 
       case _ =>
         IO.raiseError(
