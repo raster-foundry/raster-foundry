@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - Updated some setup steps and Auth0 interaction for more convenient external user use [#5612](https://github.com/raster-foundry/raster-foundry/pull/5612)
+- Resolved dependency problems causing missing methods in `batch` subproject [#5618](https://github.com/raster-foundry/raster-foundry/pull/5618)
 
 ### Added
 - Included a README in STAC exports for campaigns [#5610](https://github.com/raster-foundry/raster-foundry/pull/5610/)
@@ -663,7 +664,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.20.0] - 2019-05-01
 ### Added
 - Included tests for project layer split behavior [#4901](https://github.com/raster-foundry/raster-foundry/pull/4901)
-- New publish page now lists analyses for selected layers [\\4902](https://github.com/raster-foundry/raster-foundry/pull/4902)
+- New publish page now lists analyses for selected layers [\4902](https://github.com/raster-foundry/raster-foundry/pull/4902)
 - Created metrics table and MetricDao for incrementing request counts [#4916](https://github.com/raster-foundry/raster-foundry/pull/4916)
 
 ### Changed
@@ -721,7 +722,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Preserve state of visible layers [#4802](https://github.com/raster-foundry/raster-foundry/pull/4802)
 - Display processing imports on layer scenes UI [#4809](https://github.com/raster-foundry/raster-foundry/pull/4809)
 - Added quick edit functionality for project analyses [#4804](https://github.com/raster-foundry/raster-foundry/pull/4804)
-- Add zooming, showing, hiding options to multi-select menu on analyses, layers [\\4816](https://github.com/raster-foundry/raster-foundry/pull/4816)
+- Add zooming, showing, hiding options to multi-select menu on analyses, layers [\4816](https://github.com/raster-foundry/raster-foundry/pull/4816)
 - Added API specifications back to core repository [#4819](https://github.com/raster-foundry/raster-foundry/pull/4819)
 - Added tile server support for visualizing masked mosaic layers [#4822](https://github.com/raster-foundry/raster-foundry/pull/4822/)
 - Added `overviewsLocation` and `minZoomLevel` to `projectLayers` [#4857](https://github.com/raster-foundry/raster-foundry/pull/4857)
@@ -806,7 +807,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added project, project layer, and template ID fields to tool runs for later filtering [#4546](https://github.com/raster-foundry/raster-foundry/pull/4546) and to API routes as filter fields [#4551](https://github.com/raster-foundry/raster-foundry/pull/4551)
 - Added project layer mosaic and scene order endpoint [#4547](https://github.com/raster-foundry/raster-foundry/pull/4547)
 - Add Layer ID to Annotations and Annotation Groups [#4558](https://github.com/raster-foundry/raster-foundry/pull/4558)
-- Support uploads to project layers on the API [#\\4524](https://github.com/raster-foundry/raster-foundry/pull/4524)
+- Support uploads to project layers on the API [#\4524](https://github.com/raster-foundry/raster-foundry/pull/4524)
 
 ### Changed
 - Reorganized project structure to simplify dependency graph (`tool` was mostly removed;   `tool`s still-relevant pieces,   `bridge`, and `datamodel` moved into the project `common`) [#4564](https://github.com/raster-foundry/raster-foundry/pull/4564)
@@ -826,7 +827,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - Shapes drawn within the scene search filter context can now be saved [#4474](https://github.com/raster-foundry/raster-foundry/pull/4474)
-- Mosaics are again constructed with rasters instead of with IO[rasters][\#4498](<https://github.com/raster-foundry/raster-foundry/pull/4498>)
+- Mosaics are again constructed with rasters instead of with IO\[rasters][#4498](https://github.com/raster-foundry/raster-foundry/pull/4498)
 - Improved healthcheck logic in backsplash healthcheck endpoint [#4548](https://github.com/raster-foundry/raster-foundry/pull/4548)
 - Fixed bug for publishing project page [#4578](https://github.com/raster-foundry/raster-foundry/pull/4578)
 
@@ -913,7 +914,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added S3 path suggestions in scene import modal when users upload imageries from S3 buckets [#4290](https://github.com/raster-foundry/raster-foundry/pull/4290)
 - Enabled deleting lab templates on the frontend [#4287](https://github.com/raster-foundry/raster-foundry/pull/4287)
 - Added support for viewing public projects using backsplash [#4299](https://github.com/raster-foundry/raster-foundry/pull/4299)
-- Added script for reprocessing sentinel 2 scenes which were imported with the wrong number of bands [\4349]\(<https://github.com/raster-foundry/raster-foundry/pull/4349>
+- Added script for reprocessing sentinel 2 scenes which were imported with the wrong number of bands \[\4349]\(<https://github.com/raster-foundry/raster-foundry/pull/4349>
 
 ### Changed
 - Populate user profiles from their identity tokens more intelligently [#4298](https://github.com/raster-foundry/raster-foundry/pull/4298)
@@ -947,7 +948,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.14.0] - 2018-11-08
 ### Added
 - Administration
-  - Allow platforms to set a "From" email field in order to change notification "From" name [#\\4214](https://github.com/raster-foundry/raster-foundry/pull/4214)
+  - Allow platforms to set a "From" email field in order to change notification "From" name [#\4214](https://github.com/raster-foundry/raster-foundry/pull/4214)
   - Allow platform administrators to create uploads for other users within their platforms [#4237](https://github.com/raster-foundry/raster-foundry/pull/4237)
 - Added summary endpoint for annotation groups to list the number of labels with different qualities (YES, NO, MISS, UNSURE) to support annotation applications [#4221](https://github.com/raster-foundry/raster-foundry/pull/4221)
 - Added project histogram support for COG and Avro scenes in backsplash [#4190](https://github.com/raster-foundry/raster-foundry/pull/4190)
