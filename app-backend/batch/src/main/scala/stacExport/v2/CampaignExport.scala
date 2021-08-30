@@ -44,6 +44,7 @@ import scala.concurrent.ExecutionContext
 import java.time.{Duration, Instant}
 import java.util.UUID
 import java.util.concurrent.Executors
+import java.net.URI
 
 object optics {
 
@@ -149,6 +150,37 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] =
     stringToFile(value.asJson.spaces2, file, relativePath)
 
+  private def writeCOGToFile(
+      uri: URI,
+      file: File,
+      relativePath: String
+  )(implicit cs: ContextShift[IO]): IO[Unit] = {
+    for {
+      s3Object <- IO { s3Client.getObject(uri) }
+      _ <-
+        (IO { file.path.resolve(relativePath) } map {
+          (absPath: java.nio.file.Path) =>
+            val parent = absPath.getParent
+            File(parent).createIfNotExists(true, true)
+        }) *>
+          fs2.io
+            .readInputStream(
+              IO(s3Object.getObjectContent().getDelegateStream),
+              1024,
+              ExportData.fileBlocker
+            )
+            .through(
+              fs2.io.file
+                .writeAll[IO](
+                  file.path.resolve(relativePath),
+                  ExportData.fileBlocker
+                )
+            )
+            .compile
+            .drain
+    } yield ()
+  }
+
   private def writeReadme(
       file: File
   )(implicit cs: ContextShift[IO]): IO[Unit] =
@@ -216,14 +248,24 @@ case class ExportData private (
           IO.pure(stacItem)
       }
     }
-    (annotationProjectImageryItems.toList traverse {
+    (annotationProjectImageryItems.toList flatTraverse {
       case (_, v) =>
         withAsset(v.value) flatMap { (item: StacItem) =>
-          encodableToFile(
-            (withCollection `compose` withParentLinks)(item),
-            file,
-            s"images/${item.id}.json"
-          )
+          (List(item) ++ item.links).traverse {
+            case item: StacItem =>
+              encodableToFile(
+                (withCollection `compose` withParentLinks)(item),
+                file,
+                s"images/${item.id}.json"
+              )
+            case stacLink: StacLink =>
+              // TODO: Fix filename
+              writeCOGToFile(
+                URI.create(stacLink.href),
+                file,
+                s"images/${item.id}.tif"
+              )
+          }
         }
     }).void
   }
@@ -702,7 +744,6 @@ class CampaignStacExport(
       annotationProject: AnnotationProject
   ): IO[ExportState] = {
     for {
-      // TODO: Add COG from scene to export and reference it in asset
       // make the catalog for this annotation project
       // make the scene item for this annotation project with a tile layer asset
       imageryItemO <- imageryItemFromTileLayers(
