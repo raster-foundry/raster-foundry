@@ -55,7 +55,7 @@ final case class AnnotationLabelWithClasses(
     description: Option[String] = None,
     isActive: Boolean,
     sessionId: Option[UUID] = None,
-    score: Option[Double] = None,
+    score: Option[Float] = None,
     annotationLabelClasses: List[UUID] = Nil
 ) extends GeoJSONSerializable[AnnotationLabelWithClasses.GeoJSON] {
   def toGeoJSONFeature =
@@ -128,7 +128,7 @@ object AnnotationLabelWithClasses {
       description: Option[String] = None,
       isActive: Boolean,
       sessionId: Option[UUID],
-      score: Option[Double] = None
+      score: Option[Float] = None
   ) {
     def toAnnotationLabelWithClasses(
         annotationProjectId: UUID,
@@ -253,7 +253,7 @@ final case class AnnotationLabelWithClassesPropertiesCreate(
     description: Option[String] = None,
     isActive: Boolean = true,
     sessionId: Option[UUID] = None,
-    score: Option[Double] = None
+    score: Option[Float] = None
 )
 
 object AnnotationLabelWithClassesPropertiesCreate {
@@ -272,7 +272,7 @@ object AnnotationLabelWithClassesPropertiesCreate {
           description: Option[String],
           isActive: Option[Boolean],
           sessionId: Option[UUID],
-          score: Option[Double]
+          score: Option[Float]
       ) =>
         AnnotationLabelWithClassesPropertiesCreate(
           annotationLabelClasses,
@@ -294,7 +294,7 @@ final case class AnnotationLabelWithClassesProperties(
     description: Option[String] = None,
     isActive: Boolean,
     sessionId: Option[UUID],
-    score: Option[Double]
+    score: Option[Float]
 )
 
 final case class StacGeoJSONFeatureCollection(

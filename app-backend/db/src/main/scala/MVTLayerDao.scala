@@ -25,7 +25,7 @@ object MVTLayerDao {
       geom: Projected[Geometry],
       envelope: ProjectedExtent,
       taskId: UUID,
-      score: Option[Double],
+      score: Option[Float],
       labelClassId: UUID,
       className: String,
       colorHexCode: String
