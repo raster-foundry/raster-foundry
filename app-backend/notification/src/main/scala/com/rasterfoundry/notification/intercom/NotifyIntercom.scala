@@ -2,7 +2,6 @@ package com.rasterfoundry.notification.intercom
 
 import com.rasterfoundry.notification.intercom.Model._
 
-import cats.effect.Sync
 import cats.effect.{Blocker, ConcurrentEffect, Resource}
 import cats.implicits._
 import io.chrisdavenport.log4cats.Logger
@@ -33,7 +32,7 @@ trait IntercomNotifier[F[_]] {
   ): F[Unit]
 }
 
-class LiveIntercomNotifier[F[_]: Sync: ConcurrentEffect]
+class LiveIntercomNotifier[F[_]: ConcurrentEffect]
     extends IntercomNotifier[F]
     with Http4sClientDsl[F] {
 
