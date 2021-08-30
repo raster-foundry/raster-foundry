@@ -8,6 +8,7 @@ import cats.implicits._
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.http4s.Method._
+import org.http4s.Response
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.client._
@@ -56,10 +57,12 @@ class LiveIntercomNotifier[F[_]: Sync: ConcurrentEffect]
         val authHeader =
           Header("Authorization", s"Bearer ${intercomToken.underlying}")
         val acceptHeader = Header("Accept", "application/json")
-        val request = POST(ConversationCreate(userId, message),
-                           uri,
-                           authHeader,
-                           acceptHeader)
+        val request = POST(
+          ConversationCreate(userId, message),
+          uri,
+          authHeader,
+          acceptHeader
+        )
         client.expect[Conversation](request)
       }
     }
@@ -69,27 +72,36 @@ class LiveIntercomNotifier[F[_]: Sync: ConcurrentEffect]
       adminId: AdminId,
       conversationId: String,
       message: Message
-  ): F[Unit] = httpClient.use { client =>
-    val uri = Uri.unsafeFromString(s"$apiBase/conversations")
-    Logger[F].debug(s"Replying a conversation ID: $conversationId at $uri") *> {
-      val authHeader =
-        Header("Authorization", s"Bearer ${intercomToken.underlying}")
-      val acceptHeader = Header("Accept", "application/json")
+  ): F[Unit] =
+    httpClient.use { client =>
+      val uri =
+        Uri.unsafeFromString(s"$apiBase/conversations/$conversationId/reply")
+      Logger[F].debug(
+        s"Replying a conversation ID: $conversationId at $uri"
+      ) *> {
+        val authHeader =
+          Header("Authorization", s"Bearer ${intercomToken.underlying}")
+        val acceptHeader = Header("Accept", "application/json")
 
-      val request =
-        POST(ConversationReply(adminId, message), uri, authHeader, acceptHeader)
-      client.expect[Unit](request).void
+        val request =
+          POST(
+            ConversationReply(adminId, message),
+            uri,
+            authHeader,
+            acceptHeader
+          )
+        request flatMap { req =>
+          client.run(req) use {
+            case Response(status, _, _, _, _) if status.code >= 400 =>
+              Logger[F].error(
+                s"Could not reply to conversation $conversationId at $uri"
+              )
+            case _ =>
+              Logger[F].info(
+                s"Notified user on conversation id $conversationId")
+          }
+
+        }
+      }
     }
-  // basicRequest.auth
-  //   .bearer(intercomToken.underlying)
-  //   .header("Accept", "application/json")
-  //   .header("Content-Type", "application/json")
-  //   .post(uri)
-  //   .body(ConversationReply(adminId, message).asJson.noSpaces)
-  //   .send(backend) flatMap { resp =>
-  // resp.body match {
-  //   case Left(err) => Logger[F].error(err)
-  //   case _         => ().pure[F]
-  // }
-  }
 }
