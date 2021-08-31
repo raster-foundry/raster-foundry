@@ -272,7 +272,7 @@ case class ExportData private (
                   writeCOGToFile(
                     URI.create(asset.href),
                     file,
-                    s"images/${item.id}.tif"
+                    s"images/${new java.io.File(asset.href).getName}"
                   )
                 case _ => IO.pure(())
               })
