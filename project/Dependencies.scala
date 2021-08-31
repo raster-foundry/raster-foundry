@@ -11,7 +11,6 @@ object Version {
   val algebra = "2.0.1"
   val apacheAvro = "1.8.2"
   val apacheCommonsEmail = "1.5"
-  val asyncHttpClient = "2.12.3"
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.763"
   val awsCoreSdk = "1.11.763"
@@ -112,8 +111,6 @@ object Dependencies {
     "org.apache.httpcomponents" % "httpcore" % Version.httpComponentsCore
   val apacheHttpClient =
     "org.apache.httpcomponents" % "httpclient" % Version.httpComponentsClient
-  val asyncHttpClient =
-    "org.asynchttpclient" % "async-http-client" % Version.asyncHttpClient
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsCoreSdk = "com.amazonaws" % "aws-java-sdk-core" % Version.awsCoreSdk
@@ -201,7 +198,7 @@ object Dependencies {
   val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
   val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
-  val http4sClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
+  val http4sClient = "org.http4s" %% "http4s-client" % Version.http4s
   val http4sCore = "org.http4s" %% "http4s-core" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
@@ -272,8 +269,6 @@ object Dependencies {
     "com.softwaremill.sttp.client3" %% "akka-http-backend" % Version.sttp
   val sttpAsyncBackend =
     "com.softwaremill.sttp.client3" %% "async-http-client-backend" % Version.sttp
-  val sttpCatsBackend =
-    "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % Version.sttp
   val sttpCirce = "com.softwaremill.sttp.client3" %% "circe" % Version.sttp
   val sttpCore = "com.softwaremill.sttp.client3" %% "core" % Version.sttp
   val sttpJson = "com.softwaremill.sttp.client3" %% "json-common" % Version.sttp

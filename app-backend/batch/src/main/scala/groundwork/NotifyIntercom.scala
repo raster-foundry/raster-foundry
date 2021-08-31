@@ -7,7 +7,6 @@ import com.rasterfoundry.notification.intercom.Model._
 import com.rasterfoundry.notification.intercom._
 
 import cats.effect.IO
-import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 object NotifyIntercomProgram extends Job {
   val name = "notify-intercom"
@@ -20,16 +19,14 @@ object NotifyIntercomProgram extends Job {
 
     args match {
       case externalId +: msg +: Nil =>
-        AsyncHttpClientCatsBackend.resource[IO]() use { backend =>
-          IntercomConversation.notifyIO(
-            externalId,
-            Message(msg),
-            dbIO.groundworkConfig,
-            new LiveIntercomNotifier[IO](backend),
-            dbIO.getConversation,
-            dbIO.insertConversation
-          )
-        }
+        IntercomConversation.notifyIO(
+          externalId,
+          Message(msg),
+          dbIO.groundworkConfig,
+          new LiveIntercomNotifier[IO],
+          dbIO.getConversation,
+          dbIO.insertConversation
+        )
       case _ =>
         IO.raiseError(
           new Exception(

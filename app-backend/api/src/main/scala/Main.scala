@@ -13,7 +13,6 @@ import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import doobie.implicits._
-import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,9 +38,7 @@ object Main extends App with Config with Router {
   val xa = RFTransactor.buildTransactor()
 
   val notifier =
-    AsyncHttpClientCatsBackend[IO]() map { backend =>
-      new IntercomNotifications(backend, xa)
-    }
+    new IntercomNotifications(xa)
 
   implicit val ec = ExecutionContext.Implicits.global
 

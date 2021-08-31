@@ -15,22 +15,17 @@ import com.rasterfoundry.notification.intercom.{
 import cats.effect.{ContextShift, IO}
 import doobie.Transactor
 import doobie.implicits._
-import sttp.client3.SttpBackend
 
 import scala.concurrent.Future
 
 import java.{util => ju}
 
 class IntercomNotifications(
-    backend: SttpBackend[
-      IO,
-      Any
-    ],
     xa: Transactor[IO]
 )(implicit contextShift: ContextShift[IO])
     extends Config {
 
-  private val intercomNotifier = new LiveIntercomNotifier[IO](backend)
+  private val intercomNotifier = new LiveIntercomNotifier[IO]
 
   private val groundworkConfig =
     GroundworkConfig(intercomToken, intercomAdminId)

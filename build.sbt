@@ -238,7 +238,6 @@ lazy val apiDependencies = Seq(
   Dependencies.akkaSlf4j,
   Dependencies.akkaStream,
   Dependencies.akkaStream,
-  Dependencies.asyncHttpClient,
   Dependencies.awsCoreSdk,
   Dependencies.awsS3,
   Dependencies.awsStsSdk,
@@ -269,7 +268,6 @@ lazy val apiDependencies = Seq(
   Dependencies.shapeless,
   Dependencies.sourceCode,
   Dependencies.sttpAkka,
-  Dependencies.sttpCatsBackend,
   Dependencies.sttpCirce,
   Dependencies.sttpCore,
   Dependencies.sttpJson,
@@ -466,7 +464,6 @@ lazy val batch = project
   .settings(sharedSettings: _*)
   .settings({
     libraryDependencies ++= Seq(
-      Dependencies.asyncHttpClient,
       Dependencies.awsCoreSdk,
       Dependencies.awsS3,
       Dependencies.betterFiles,
@@ -510,8 +507,6 @@ lazy val batch = project
       Dependencies.sourceCode,
       Dependencies.spire,
       Dependencies.stac4s,
-      Dependencies.sttpCatsBackend,
-      Dependencies.sttpCore,
       Dependencies.typesafeConfig
     ) ++ loggingDependencies
   })
@@ -726,14 +721,13 @@ lazy val notification =
         Dependencies.catsCore,
         Dependencies.catsEffect,
         Dependencies.circeCore,
+        Dependencies.http4sCore,
+        Dependencies.http4sBlazeClient,
+        Dependencies.http4sCirce,
+        Dependencies.http4sClient,
         Dependencies.javaMail,
         Dependencies.log4cats,
         Dependencies.log4catsSlf4j,
-        Dependencies.newtype,
-        Dependencies.sttpSharedCore,
-        Dependencies.sttpCirce,
-        Dependencies.sttpCore,
-        Dependencies.sttpJson,
-        Dependencies.sttpModel
+        Dependencies.newtype
       )
     })
