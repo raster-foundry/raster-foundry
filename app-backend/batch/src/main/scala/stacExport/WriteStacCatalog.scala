@@ -1,10 +1,12 @@
 package com.rasterfoundry.batch.stacExport
 
+import com.amazonaws.services.s3.AmazonS3URI
+import com.amazonaws.services.s3.model.PutObjectResult
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.groundwork.DbIO
 import com.rasterfoundry.batch.stacExport.v2.CampaignStacExport
 import com.rasterfoundry.batch.util.conf.Config
-import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.{RollbarNotifier, S3}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
@@ -35,6 +37,15 @@ final case class WriteStacCatalog(
 
   private val dbIO = new DbIO(xa);
 
+  private val s3Client = S3()
+
+  private def putToS3(path: String, file: ScalaFile): IO[PutObjectResult] =
+    IO {
+      logger.debug(s"Writing to S3: $path")
+      val uri = new AmazonS3URI(path)
+      s3Client.putObject(uri.getBucket, uri.getKey, file.toJava)
+    }
+
   private def notify(userId: ExternalId, message: Message): IO[Unit] =
     IntercomConversation.notifyIO(
       userId.underlying,
@@ -57,12 +68,13 @@ final case class WriteStacCatalog(
       _ = tempDir.deleteOnExit()
       currentPath = s"s3://$dataBucket/stac-exports"
       exportPath = s"$currentPath/${exportDefinition.id}"
-      _ <- StacExportDao
-        .update(
-          exportDefinition.copy(exportStatus = ExportStatus.Exporting),
-          exportDefinition.id
-        )
-        .transact(xa)
+      _ <-
+        StacExportDao
+          .update(
+            exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+            exportDefinition.id
+          )
+          .transact(xa)
       _ <- exportDefinition.campaignId traverse { campaignId =>
         new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
           case Some(exportData) =>
@@ -83,7 +95,7 @@ final case class WriteStacCatalog(
       }
       tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
       _ <- IO { tempDir.zipTo(tempZipFile) }
-      _ <- StacFileIO.putToS3(
+      _ <- putToS3(
         s"$exportPath/catalog.zip",
         tempZipFile
       )
