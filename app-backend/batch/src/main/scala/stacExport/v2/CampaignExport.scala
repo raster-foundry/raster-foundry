@@ -623,7 +623,7 @@ class CampaignStacExport(
                     signedUrl,
                     Some(name),
                     Some(
-                      s"Signed URL (expires ${java.time.LocalDateTime.now().plusDays(signedUrlDurationInDays)}"
+                      s"Signed URL (expires ${java.time.LocalDateTime.now().plusDays(signedUrlDurationInDays)})"
                     ),
                     Set(StacAssetRole.Data),
                     Some(`image/cog`)
