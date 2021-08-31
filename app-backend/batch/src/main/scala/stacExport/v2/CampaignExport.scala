@@ -127,10 +127,11 @@ case class ExportData private (
       file: File,
       relativePath: String
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
-    (IO { file.path.resolve(relativePath) } map {
-      (absPath: java.nio.file.Path) =>
-        val parent = absPath.getParent
-        File(parent).createIfNotExists(true, true)
+    (IO(logger.info(s"Writing text file to $relativePath")) *> IO {
+      file.path.resolve(relativePath)
+    } map { (absPath: java.nio.file.Path) =>
+      val parent = absPath.getParent
+      File(parent).createIfNotExists(true, true)
     }) *>
       fs2.Stream
         .emit(value)
