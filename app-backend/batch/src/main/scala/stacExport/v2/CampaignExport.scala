@@ -77,6 +77,11 @@ object optics {
     GenLens[StacCatalog](_.links)
 }
 
+object AssetTypesKey {
+  val cog = "cog"
+  val signedURL = "signedURL"
+}
+
 case class ExportState(
     exportDefinition: StacExport,
     labelGroupOpt: Option[List[AnnotationLabelClassGroup]],
@@ -262,8 +267,7 @@ case class ExportData private (
               file,
               s"images/${item.id}.json"
             )
-            // TODO: use constants for asset keys
-            _ <- (item.assets.get("cog") match {
+            _ <- (item.assets.get(AssetTypesKey.cog) match {
                 case Some(asset) =>
                   writeCOGToFile(
                     URI.create(asset.href),
@@ -635,7 +639,7 @@ class CampaignStacExport(
             } map { signedUrl =>
               Some(
                 (
-                  "signedURL",
+                  AssetTypesKey.signedURL,
                   StacAsset(
                     signedUrl,
                     Some(name),
@@ -662,7 +666,7 @@ class CampaignStacExport(
                 (
                   (
                     (
-                      "cog",
+                      AssetTypesKey.cog,
                       StacAsset(
                         ingestLocation,
                         Some(name),
