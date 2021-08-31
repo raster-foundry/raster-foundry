@@ -111,7 +111,7 @@ case class ExportData private (
       newtypes.TaskGeoJSON
     ],
     readme: String
-) {
+) extends LazyLogging {
 
   val labelCollectionId = s"labels-${UUID.randomUUID}"
   val imageryCollectionId = s"scenes-${UUID.randomUUID}"
@@ -157,6 +157,7 @@ case class ExportData private (
       relativePath: String
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     for {
+      _ <- IO(logger.info(s"Writing COG at $uri to $relativePath"))
       s3Object <- IO { s3Client.getObject(uri) }
       _ <-
         (IO { file.path.resolve(relativePath) } map {
@@ -633,6 +634,7 @@ class CampaignStacExport(
                   StacAsset(
                     signedUrl,
                     Some(name),
+                    // TODO: Add signed URL expiration to description
                     Some("Signed URL"),
                     Set(StacAssetRole.Data),
                     Some(`image/cog`)
@@ -753,7 +755,17 @@ class CampaignStacExport(
       }
       _ <- IO {
         logger.info(
-          s"Found assets $assets and links $links"
+          s"Found assets $assets"
+        )
+      }
+      _ <- IO {
+        logger.info(
+          s"Found links $links"
+        )
+      }
+      _ <- IO {
+        logger.info(
+          s"Returning STAC item $item"
         )
       }
     } yield item
