@@ -260,23 +260,20 @@ case class ExportData private (
     (annotationProjectImageryItems.toList traverse {
       case (_, v) =>
         withAsset(v.value) flatMap { (item: StacItem) =>
-          // TODO: do this applicatively
-          for {
-            _ <- encodableToFile(
-              (withCollection `compose` withParentLinks)(item),
-              file,
-              s"images/${item.id}.json"
-            )
-            _ <- (item.assets.get(AssetTypesKey.cog) match {
-                case Some(asset) =>
-                  writeCOGToFile(
-                    URI.create(asset.href),
-                    file,
-                    s"images/${new java.io.File(asset.href).getName}"
-                  )
-                case _ => IO.pure(())
-              })
-          } yield ()
+          encodableToFile(
+            (withCollection `compose` withParentLinks)(item),
+            file,
+            s"images/${item.id}.json"
+          ) *>
+            (item.assets.get(AssetTypesKey.cog) match {
+              case Some(asset) =>
+                writeCOGToFile(
+                  URI.create(asset.href),
+                  file,
+                  s"images/${new java.io.File(asset.href).getName}"
+                )
+              case _ => IO.pure(())
+            })
         }
     }).void
   }
