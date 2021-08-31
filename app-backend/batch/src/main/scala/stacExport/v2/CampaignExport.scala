@@ -240,42 +240,22 @@ case class ExportData private (
         )
     )
 
-    def withAsset(stacItem: StacItem): IO[StacItem] = {
-      stacItem.assets.get("data") match {
-        case Some(asset) =>
-          IO {
-            s3Client.maybeSignUri(asset.href, duration = Duration.ofDays(7))
-          } map { signedUrl =>
-            (optics.itemAssetLens.modify(assets =>
-              assets ++ Map(
-                "data" -> optics.assetHrefLens
-                  .modify(_ => signedUrl)(asset)
-              )
-            )
-            )(stacItem)
-          }
-        case None =>
-          IO.pure(stacItem)
-      }
-    }
     (annotationProjectImageryItems.toList traverse {
-      case (_, v) =>
-        withAsset(v.value) flatMap { (item: StacItem) =>
-          encodableToFile(
-            (withCollection `compose` withParentLinks)(item),
-            file,
-            s"images/${item.id}/item.json"
-          ) *>
-            (item.assets.get(AssetTypesKey.cog) match {
-              case Some(asset) =>
-                writeCOGToFile(
-                  URI.create(asset.href),
-                  file,
-                  s"images/${item.id}/${new java.io.File(asset.href).getName}"
-                )
-              case _ => IO.pure(())
-            })
-        }
+      case (_, sceneItem) =>
+        encodableToFile(
+          (withCollection `compose` withParentLinks)(sceneItem.value),
+          file,
+          s"images/${sceneItem.value.id}/item.json"
+        ) *>
+          (sceneItem.value.assets.get(AssetTypesKey.cog) match {
+            case Some(asset) =>
+              writeCOGToFile(
+                URI.create(asset.href),
+                file,
+                s"images/${sceneItem.value.id}/${new java.io.File(asset.href).getName}"
+              )
+            case _ => IO.pure(())
+          })
     }).void
   }
 
