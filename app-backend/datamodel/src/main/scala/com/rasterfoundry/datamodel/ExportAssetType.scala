@@ -9,12 +9,12 @@ sealed abstract class ExportAssetType(val repr: String) {
 
 object ExportAssetType {
   case object SignedURL extends ExportAssetType("SIGNED_URL")
-  case object Images extends ExportAssetType("IMAGES")
+  case object COG extends ExportAssetType("COG")
 
   def fromString(s: String): Option[ExportAssetType] =
     Option(s.toUpperCase) collect {
       case "SIGNED_URL" => SignedURL
-      case "IMAGES"     => Images
+      case "COG"        => COG
     }
 
   def unsafeFromString(s: String): ExportAssetType =

@@ -648,7 +648,7 @@ class CampaignStacExport(
           case Some((name, ingestLocation))
               if includeAssetTypeInExport(
                 exportAssetTypes,
-                ExportAssetType.Images
+                ExportAssetType.COG
               ) =>
             IO.pure(
               Some(
