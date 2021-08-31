@@ -63,15 +63,13 @@ object DatabaseIO {
         annotationProjectId,
         taskStatuses
       )
-      annotationsOption <-
-        AnnotationLabelDao
-          .getAnnotationJsonByTaskStatus(
-            annotationProjectId,
-            taskStatuses
-          )
-      labelItemPropsThinOption <-
-        AnnotationProjectDao
-          .getAnnotationProjectStacInfo(annotationProjectId)
+      annotationsOption <- AnnotationLabelDao
+        .getAnnotationJsonByTaskStatus(
+          annotationProjectId,
+          taskStatuses
+        )
+      labelItemPropsThinOption <- AnnotationProjectDao
+        .getAnnotationProjectStacInfo(annotationProjectId)
     } yield {
       (
         annotationProject,
@@ -80,10 +78,10 @@ object DatabaseIO {
         tasksGeomExtentOption
       ) match {
         case (
-              Some(annotationProject),
-              Some(annotations),
-              Some(labelItemPropsThin),
-              Some(tasksGeomExtent)
+            Some(annotationProject),
+            Some(annotations),
+            Some(labelItemPropsThin),
+            Some(tasksGeomExtent)
             ) => {
           Some(
             ExportData(

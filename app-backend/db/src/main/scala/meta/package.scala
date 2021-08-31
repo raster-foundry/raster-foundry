@@ -25,8 +25,8 @@ package object meta {
 
     implicit val crsMeta: Meta[CRS] =
       Meta[String].timap(s =>
-        Try { CRS.fromString(s) } getOrElse { CRS.fromName(s) }
-      )(_.toProj4String)
+        Try { CRS.fromString(s) } getOrElse { CRS.fromName(s) })(
+        _.toProj4String)
 
     implicit val cellTypeMeta: Meta[CellType] =
       Meta[String].timap(CellType.fromName)(CellType.toName)
@@ -64,9 +64,9 @@ package object meta {
           o
         })
 
-    implicit def nelMeta[A: TypeTag](implicit
-        ev: Meta[List[A]]
-    ): Meta[NonEmptyList[A]] =
+    implicit def nelMeta[A: TypeTag](
+        implicit
+        ev: Meta[List[A]]): Meta[NonEmptyList[A]] =
       ev.timap(_.toNel.getOrElse(throw new Exception(s"Empty non-empty list")))(
         _.toList
       )

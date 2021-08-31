@@ -178,9 +178,7 @@ final case class S3(
       def getObjects: List[String] =
         listing.getObjectSummaries.asScala.toList
           .filterNot(_.getKey.endsWith("/"))
-          .map(os =>
-            "s3://" + os.getBucketName + "/" + os.getKey
-          ) ::: accumulator
+          .map(os => "s3://" + os.getBucketName + "/" + os.getKey) ::: accumulator
 
       if (!listing.isTruncated) getObjects
       else get(client.listNextBatchOfObjects(listing), getObjects)
