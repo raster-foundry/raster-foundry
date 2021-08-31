@@ -68,13 +68,12 @@ final case class WriteStacCatalog(
       _ = tempDir.deleteOnExit()
       currentPath = s"s3://$dataBucket/stac-exports"
       exportPath = s"$currentPath/${exportDefinition.id}"
-      _ <-
-        StacExportDao
-          .update(
-            exportDefinition.copy(exportStatus = ExportStatus.Exporting),
-            exportDefinition.id
-          )
-          .transact(xa)
+      _ <- StacExportDao
+        .update(
+          exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+          exportDefinition.id
+        )
+        .transact(xa)
       _ <- exportDefinition.campaignId traverse { campaignId =>
         new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
           case Some(exportData) =>

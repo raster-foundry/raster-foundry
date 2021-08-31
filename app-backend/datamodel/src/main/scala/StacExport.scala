@@ -117,7 +117,7 @@ object StacExport {
     def apply(x: Create): Json =
       x match {
         case ap @ AnnotationProjectExport(_, _, _, _) => ap.asJson
-        case c @ CampaignExport(_, _, _, _)           => c.asJson
+        case c @ CampaignExport(_, _, _, _, _)        => c.asJson
       }
   }
 
@@ -158,6 +158,7 @@ object StacExport {
       name: String,
       license: StacExportLicense,
       taskStatuses: List[TaskStatus],
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]] = None,
       campaignId: UUID
   ) extends Create {
     def toStacExport(user: User): StacExport = {
@@ -177,7 +178,7 @@ object StacExport {
         this.taskStatuses.map(_.toString),
         None,
         Some(campaignId),
-        None
+        exportAssetTypes
       )
     }
   }
