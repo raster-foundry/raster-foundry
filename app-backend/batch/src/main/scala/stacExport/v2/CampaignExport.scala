@@ -168,7 +168,9 @@ case class ExportData private (
           fs2.io
             .readInputStream(
               IO(s3Object.getObjectContent().getDelegateStream),
-              1024,
+              // Chunk size is set to default used for S3 CLI multipart (8MB)
+              // See: https://docs.aws.amazon.com/cli/latest/topic/s3-config.html#multipart-chunksize
+              1024 * 8,
               ExportData.fileBlocker
             )
             .through(
