@@ -62,6 +62,12 @@ trait AnnotationProjectRoutes
         } ~ delete {
           deleteAnnotationProject(projectId)
         }
+      } ~ pathPrefix("hitl") {
+        pathEndOrSingleSlash {
+          get {
+            checkIsHITLAnnotationProject(projectId)
+          }
+        }
       } ~ pathPrefix("share") {
         pathEndOrSingleSlash {
           post {
@@ -437,6 +443,33 @@ trait AnnotationProjectRoutes
                   (projectActions ++ campaignActions)
                 }).transact(xa).unsafeToFuture
               }
+          }
+        }
+      }
+    }
+
+  def checkIsHITLAnnotationProject(projectId: UUID): Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          AnnotationProjectDao
+            .authorized(
+              user,
+              ObjectType.AnnotationProject,
+              projectId,
+              ActionType.View
+            )
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            AnnotationLabelDao
+              .hasPredictionAnnotationLabels(projectId)
+              .transact(xa)
+              .unsafeToFuture
           }
         }
       }

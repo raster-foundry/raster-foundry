@@ -332,4 +332,12 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       row <- updateLabelF.update.run
     } yield row
   }
+
+  def hasPredictionAnnotationLabels(
+      annotationProjectId: UUID
+  ): ConnectionIO[Boolean] =
+    query
+      .filter(fr"annotation_project_id = ${annotationProjectId}")
+      .filter(fr"score IS NOT NULL")
+      .exists
 }
