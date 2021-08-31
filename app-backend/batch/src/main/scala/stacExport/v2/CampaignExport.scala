@@ -623,6 +623,7 @@ class CampaignStacExport(
         Some((name, ingestLocation))
       case _ => None
     }
+    val signedUrlDurationInDays = 7
     for {
       maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <-
         maybeNameAndIngestLocation match {
@@ -634,7 +635,7 @@ class CampaignStacExport(
             IO {
               s3Client.signUri(
                 ingestLocation,
-                duration = Duration.ofDays(7)
+                duration = Duration.ofDays(signedUrlDurationInDays)
               )
             } map { signedUrl =>
               Some(
@@ -643,8 +644,9 @@ class CampaignStacExport(
                   StacAsset(
                     signedUrl,
                     Some(name),
-                    // TODO: Add signed URL expiration to description
-                    Some("Signed URL"),
+                    Some(
+                      s"Signed URL (expires ${java.time.LocalDateTime.now().plusDays(signedUrlDurationInDays)}"
+                    ),
                     Set(StacAssetRole.Data),
                     Some(`image/cog`)
                   )
