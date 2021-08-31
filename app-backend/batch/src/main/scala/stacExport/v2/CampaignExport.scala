@@ -250,24 +250,27 @@ case class ExportData private (
           IO.pure(stacItem)
       }
     }
-    (annotationProjectImageryItems.toList flatTraverse {
+    (annotationProjectImageryItems.toList traverse {
       case (_, v) =>
         withAsset(v.value) flatMap { (item: StacItem) =>
-          (List(item) ++ item.links).traverse {
-            case item: StacItem =>
-              encodableToFile(
-                (withCollection `compose` withParentLinks)(item),
-                file,
-                s"images/${item.id}.json"
-              )
-            case stacLink: StacLink =>
-              // TODO: Fix filename
-              writeCOGToFile(
-                URI.create(stacLink.href),
-                file,
-                s"images/${item.id}.tif"
-              )
-          }
+          // TODO: do this applicatively
+          for {
+            _ <- encodableToFile(
+              (withCollection `compose` withParentLinks)(item),
+              file,
+              s"images/${item.id}.json"
+            )
+            // TODO: use constants for asset keys
+            _ <- (item.assets.get("cog") match {
+                case Some(asset) =>
+                  writeCOGToFile(
+                    URI.create(asset.href),
+                    file,
+                    s"images/${item.id}.tif"
+                  )
+                case _ => IO.pure(())
+              })
+          } yield ()
         }
     }).void
   }
