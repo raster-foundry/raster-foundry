@@ -264,14 +264,14 @@ case class ExportData private (
           encodableToFile(
             (withCollection `compose` withParentLinks)(item),
             file,
-            s"images/${item.id}.json"
+            s"images/${item.id}/item.json"
           ) *>
             (item.assets.get(AssetTypesKey.cog) match {
               case Some(asset) =>
                 writeCOGToFile(
                   URI.create(asset.href),
                   file,
-                  s"images/${new java.io.File(asset.href).getName}"
+                  s"images/${item.id}/${new java.io.File(asset.href).getName}"
                 )
               case _ => IO.pure(())
             })
@@ -339,7 +339,7 @@ case class ExportData private (
       ) +: (annotationProjectImageryItems.values.toList map {
         (sceneItem: newtypes.SceneItem) =>
           StacLink(
-            s"./${sceneItem.value.id}.json",
+            s"./${sceneItem.value.id}/item.json",
             StacLinkType.Item,
             Some(`application/json`),
             None
