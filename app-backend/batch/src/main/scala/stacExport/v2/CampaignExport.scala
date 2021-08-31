@@ -224,12 +224,12 @@ case class ExportData private (
       optics.itemCollectionLens.modify(_ => Some(imageryCollectionId))
     val withParentLinks = optics.itemLinksLens.modify(links =>
       StacLink(
-        "./collection.json",
+        "../collection.json",
         StacLinkType.Collection,
         Some(`application/json`),
         None
       ) +: StacLink(
-        "../catalog.json",
+        "../../catalog.json",
         StacLinkType.StacRoot,
         Some(`application/json`),
         None
