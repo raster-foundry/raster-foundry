@@ -18,10 +18,11 @@ import sup.{mods, Health, HealthCheck, HealthResult}
 
 import scala.concurrent.duration._
 
-class HealthcheckService(xa: Transactor[IO])(
-    implicit timer: Timer[IO],
-    contextShift: ContextShift[IO]
-) extends Http4sDsl[IO]
+class HealthcheckService(xa: Transactor[IO], timeout: FiniteDuration)(
+    implicit
+    timer: Timer[IO],
+    contextShift: ContextShift[IO])
+    extends Http4sDsl[IO]
     with LazyLogging {
 
   val cache = ProjectLayerCache.projectLayerCache
@@ -41,7 +42,7 @@ class HealthcheckService(xa: Transactor[IO])(
           case _ => HealthResult[Id](Health.Healthy)
         }
       }
-      .through(mods.timeoutToSick(3 seconds))
+      .through(mods.timeoutToSick(timeout))
       .through(mods.tagWith("db"))
 
   private def cacheHealth =
@@ -54,7 +55,7 @@ class HealthcheckService(xa: Transactor[IO])(
           case _ => HealthResult[Id](Health.Healthy)
         }
       }
-      .through(mods.timeoutToSick(3 seconds))
+      .through(mods.timeoutToSick(timeout))
       .through(mods.tagWith("cache"))
 
   val routes: HttpRoutes[IO] = HttpRoutes.of {
@@ -66,11 +67,13 @@ class HealthcheckService(xa: Transactor[IO])(
         val report = result.value
         if (report.health == Health.sick) {
           ServiceUnavailable(
-            Map("result" -> "sick".asJson,
-                "errors" -> report.checks
-                  .filter(_.health == Health.sick)
-                  .map(_.tag)
-                  .asJson)
+            Map(
+              "result" -> "sick".asJson,
+              "errors" -> report.checks
+                .filter(_.health == Health.sick)
+                .map(_.tag)
+                .asJson
+            )
           )
         } else {
           Ok(Map("result" -> "A-ok"))

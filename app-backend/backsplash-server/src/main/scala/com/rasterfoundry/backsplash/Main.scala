@@ -56,6 +56,12 @@ object Main extends IOApp with HistogramStoreImplicits with RollbarNotifier {
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
 
+  val healthcheckTimeout: FiniteDuration =
+    new FiniteDuration(
+      Config.server.healthcheckTimeoutSeconds,
+      TimeUnit.SECONDS
+    )
+
   val backsplashErrorHandler: HttpErrorHandler[IO, BacksplashException] =
     new BacksplashHttpErrorHandler[IO]
 
@@ -154,7 +160,8 @@ object Main extends IOApp with HistogramStoreImplicits with RollbarNotifier {
   )
 
   val healthcheckService: HttpRoutes[IO] = new HealthcheckService(
-    xa
+    xa,
+    healthcheckTimeout
   ).routes
 
   private val statusExpirationDuration =
