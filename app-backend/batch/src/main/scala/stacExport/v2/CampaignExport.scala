@@ -30,6 +30,7 @@ import com.azavea.stac4s._
 import com.azavea.stac4s.extensions.label._
 import com.azavea.stac4s.syntax._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
 import doobie.implicits._
 import eu.timepit.refined.auto._
@@ -494,7 +495,7 @@ class CampaignStacExport(
 )(implicit
     val
     cs: ContextShift[IO]
-) {
+) extends LazyLogging {
   val s3Client = S3()
 
   val runExport = StateT { step }
@@ -650,26 +651,28 @@ class CampaignStacExport(
                 ExportAssetType.Images
               ) =>
             IO.pure(
-              Some((
+              Some(
                 (
                   (
-                    "cog",
-                    StacAsset(
-                      ingestLocation,
-                      Some(name),
-                      Some("COG"),
-                      Set(StacAssetRole.Data),
-                      Some(`image/cog`)
+                    (
+                      "cog",
+                      StacAsset(
+                        ingestLocation,
+                        Some(name),
+                        Some("COG"),
+                        Set(StacAssetRole.Data),
+                        Some(`image/cog`)
+                      )
                     )
+                  ),
+                  StacLink(
+                    s"./${new java.io.File(ingestLocation).getName}",
+                    StacLinkType.Item,
+                    Some(`image/cog`),
+                    None
                   )
-                ),
-                StacLink(
-                  s"./${new java.io.File(ingestLocation).getName}.json",
-                  StacLinkType.Item,
-                  Some(`image/cog`),
-                  None
                 )
-              ))
+              )
             )
           case _ =>
             IO.pure(None)
@@ -714,14 +717,26 @@ class CampaignStacExport(
       taskStatuses: List[String]
   ): IO[Option[newtypes.SceneItem]] = {
     for {
+      _ <- IO(logger.info(s"Building layer item from tile layers"))
       maybeScene <-
         AnnotationProjectDao
           .getFirstScene(annotationProject.id)
           .transact(xa)
+      _ <- IO {
+        logger.info(maybeScene match {
+          case Some(scene) => s"Found scene with id ${scene.id}"
+          case _           => "No scene found"
+        })
+      }
       tileLayers <-
         TileLayerDao
           .listByProjectId(annotationProject.id)
           .transact(xa)
+      _ <- IO {
+        logger.info(
+          s"Found ${tileLayers.size} tile layers"
+        )
+      }
       extentO <-
         TaskDao
           .createUnionedGeomExtent(annotationProject.id, taskStatuses)
@@ -734,6 +749,11 @@ class CampaignStacExport(
           links,
           unionedGeom.geometry.geom.getEnvelopeInternal,
           Instant.now
+        )
+      }
+      _ <- IO {
+        logger.info(
+          s"Found assets $assets and links $links"
         )
       }
     } yield item
