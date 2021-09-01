@@ -8,6 +8,7 @@ import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
 import io.circe.syntax._
 import org.postgresql.util.PGobject
+
 import scala.util.Try
 
 import java.net.URI
