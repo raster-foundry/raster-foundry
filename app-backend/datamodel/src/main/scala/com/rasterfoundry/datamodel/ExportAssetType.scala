@@ -30,7 +30,6 @@ object ExportAssetType {
       Either
         .catchNonFatal(unsafeFromString(str))
         .leftMap(_ =>
-          s"The string '$str' could not be decoded to ExportAssetType"
-        )
+          s"The string '$str' could not be decoded to ExportAssetType")
     }
 }
