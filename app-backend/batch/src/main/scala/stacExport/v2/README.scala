@@ -29,7 +29,7 @@ object README {
         val labelItemPath =
           s"labels/${labelItem.value.id}.json"
         val imageryItemPath =
-          s"images/${imageryItem.value.id}.json"
+          s"images/${imageryItem.value.id}/item.json"
         s"| ${annotationProject.name} | $labelItemPath | $imageryItemPath |"
     }
 

@@ -877,7 +877,7 @@ class CampaignStacExport(
         ),
         List(
           StacLink(
-            s"../images/${sceneItem.value.id}.json",
+            s"../images/${sceneItem.value.id}/item.json",
             StacLinkType.Source,
             Some(`application/json`),
             None
