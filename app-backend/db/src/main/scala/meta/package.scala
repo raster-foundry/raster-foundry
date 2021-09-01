@@ -2,15 +2,12 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
 
-import cats.data.NonEmptyList
 import cats.implicits._
 import doobie._
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
 import io.circe.syntax._
 import org.postgresql.util.PGobject
-
-import scala.reflect.runtime.universe.TypeTag
 import scala.util.Try
 
 import java.net.URI
@@ -63,13 +60,6 @@ package object meta {
           o.setValue(a.asJson.noSpaces.replace("\"", ""))
           o
         })
-
-    implicit def nelMeta[A: TypeTag](
-        implicit
-        ev: Meta[List[A]]): Meta[NonEmptyList[A]] =
-      ev.timap(_.toNel.getOrElse(throw new Exception(s"Empty non-empty list")))(
-        _.toList
-      )
   }
 
 }
