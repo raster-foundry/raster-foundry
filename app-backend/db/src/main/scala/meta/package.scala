@@ -22,9 +22,9 @@ package object meta {
       with PermissionsMeta {
 
     implicit val crsMeta: Meta[CRS] =
-      Meta[String].timap(
-        s => Try { CRS.fromString(s) } getOrElse { CRS.fromName(s) }
-      )(_.toProj4String)
+      Meta[String].timap(s =>
+        Try { CRS.fromString(s) } getOrElse { CRS.fromName(s) })(
+        _.toProj4String)
 
     implicit val cellTypeMeta: Meta[CellType] =
       Meta[String].timap(CellType.fromName)(CellType.toName)
@@ -55,13 +55,12 @@ package object meta {
             .catchNonFatal((LocalDate.parse(s1), LocalDate.parse(s2)))
             .leftMap[(LocalDate, LocalDate)](e => throw e)
             .merge
-        })(
-          a => {
-            val o = new PGobject
-            o.setType("tsrange")
-            o.setValue(a.asJson.noSpaces.replace("\"", ""))
-            o
-          }
-        )
+        })(a => {
+          val o = new PGobject
+          o.setType("tsrange")
+          o.setValue(a.asJson.noSpaces.replace("\"", ""))
+          o
+        })
   }
+
 }

@@ -1,5 +1,6 @@
 package com.rasterfoundry.datamodel
 
+import cats.data.NonEmptyList
 import cats.syntax.functor._
 import com.azavea.stac4s._
 import eu.timepit.refined.auto._
@@ -24,7 +25,8 @@ final case class StacExport(
     exportStatus: ExportStatus,
     taskStatuses: List[String],
     annotationProjectId: Option[UUID],
-    campaignId: Option[UUID]
+    campaignId: Option[UUID],
+    exportAssetTypes: Option[NonEmptyList[ExportAssetType]]
 ) {
   def createStacCollection(
       stacVersion: String,
@@ -115,7 +117,7 @@ object StacExport {
     def apply(x: Create): Json =
       x match {
         case ap @ AnnotationProjectExport(_, _, _, _) => ap.asJson
-        case c @ CampaignExport(_, _, _, _)           => c.asJson
+        case c @ CampaignExport(_, _, _, _, _)        => c.asJson
       }
   }
 
@@ -145,6 +147,7 @@ object StacExport {
         ExportStatus.NotExported,
         this.taskStatuses.map(_.toString),
         Some(annotationProjectId),
+        None,
         None
       )
     }
@@ -155,6 +158,7 @@ object StacExport {
       name: String,
       license: StacExportLicense,
       taskStatuses: List[TaskStatus],
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]] = None,
       campaignId: UUID
   ) extends Create {
     def toStacExport(user: User): StacExport = {
@@ -173,7 +177,8 @@ object StacExport {
         ExportStatus.NotExported,
         this.taskStatuses.map(_.toString),
         None,
-        Some(campaignId)
+        Some(campaignId),
+        exportAssetTypes
       )
     }
   }
