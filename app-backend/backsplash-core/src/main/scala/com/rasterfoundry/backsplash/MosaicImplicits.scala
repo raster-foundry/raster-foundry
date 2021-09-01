@@ -15,19 +15,14 @@ import cats.implicits._
 import com.colisweb.tracing.core.TracingContext
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.WebMercator
-import geotrellis.raster._
 import geotrellis.raster.reproject._
-import geotrellis.server.ExtentReification._
-import geotrellis.server.HasRasterExtents._
-import geotrellis.server.TmsReification._
+import geotrellis.raster.{io => _, _}
 import geotrellis.server._
-import geotrellis.vector._
+import geotrellis.vector.{io => _, _}
+import io.chrisdavenport.log4cats.Logger
 
 class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
-    extends ToTmsReificationOps
-    with ToExtentReificationOps
-    with ToHasRasterExtentsOps
-    with ToHistogramStoreOps
+    extends ToHistogramStoreOps
     with ToRenderableStoreOps
     with ToToolStoreOps
     with LazyLogging {
@@ -240,13 +235,15 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     }
   }
 
-  val rawMosaicTmsReification: TmsReification[BacksplashMosaic] =
-    new TmsReification[BacksplashMosaic] {
+  def rawMosaicTmsReification(
+      implicit
+      cs: ContextShift[IO]): TmsReification[IO, BacksplashMosaic] =
+    new TmsReification[IO, BacksplashMosaic] {
 
-      def tmsReification(self: BacksplashMosaic, buffer: Int)(
-          implicit
-          contextShift: ContextShift[IO])
-        : (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+      def tmsReification(
+          self: BacksplashMosaic,
+          buffer: Int
+      ): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) => {
           val extent =
             BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
@@ -280,13 +277,15 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         }
     }
 
-  val paintedMosaicTmsReification: TmsReification[BacksplashMosaic] =
-    new TmsReification[BacksplashMosaic] {
+  def paintedMosaicTmsReification(
+      implicit
+      cs: ContextShift[IO]): TmsReification[IO, BacksplashMosaic] =
+    new TmsReification[IO, BacksplashMosaic] {
 
-      def tmsReification(self: BacksplashMosaic, buffer: Int)(
-          implicit
-          contextShift: ContextShift[IO])
-        : (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+      def tmsReification(
+          self: BacksplashMosaic,
+          buffer: Int
+      ): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) => {
           val imagesIO: IO[(TracingContext[IO], List[BacksplashImage[IO]])] =
             self
@@ -360,23 +359,26 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
   //
   // Neither of those changes really fits in the scope of backsplash performance work, so we're doing
   // this for now instead.
-  val paintedMosaicExtentReification: ExtentReification[BacksplashMosaic] =
-    new ExtentReification[BacksplashMosaic] {
+  def paintedMosaicExtentReification(
+      implicit
+      contextShift: ContextShift[IO],
+      logger: Logger[IO]): ExtentReification[IO, BacksplashMosaic] =
+    new ExtentReification[IO, BacksplashMosaic] {
+
+      // For now at least this is only called in the tile server, where we always have a cell size
+      // for the call.
+      @SuppressWarnings(Array("OptionGet"))
       def extentReification(
           self: BacksplashMosaic
-      )(implicit
-        contextShift: ContextShift[IO])
-        : (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
-        (extent: Extent, cs: CellSize) => {
+      ): (Extent, Option[CellSize]) => IO[ProjectedRaster[MultibandTile]] =
+        (extent: Extent, cs: Option[CellSize]) => {
           for {
-            bands <- {
-              self.map {
-                case (_, bsiList) =>
-                  bsiList.headOption match {
-                    case Some(image) => image.subsetBands
-                    case _           => throw NoScenesException
-                  }
-              }
+            bands <- self.map {
+              case (_, bsiList) =>
+                bsiList.headOption match {
+                  case Some(image) => image.subsetBands
+                  case _           => throw NoScenesException
+                }
             }
             mosaic <- if (bands.length == 3) {
               val bsm = self.map {
@@ -392,7 +394,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                         )
                       for {
                         imFiber <- relevant
-                          .read(extent, cs, childContext)
+                          .read(extent, cs.get, childContext)
                           .start
                         histsFiber <- childContext.span(
                           "layerHistogram",
@@ -476,7 +478,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                   imageList.parTraverseN(streamConcurrency) { bsi =>
                     bsi.singleBandOptions match {
                       case Some(opts) =>
-                        bsi.read(extent, cs, childContext) map {
+                        bsi.read(extent, cs.get, childContext) map {
                           case Some(mbt) =>
                             ColorRampMosaic.colorTile(mbt, histograms, opts)
                           case _ =>
@@ -514,15 +516,17 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         }
     }
 
-  implicit val rawMosaicExtentReification: ExtentReification[BacksplashMosaic] =
-    new ExtentReification[BacksplashMosaic] {
-
+  implicit def rawMosaicExtentReification(
+      implicit
+      contextShift: ContextShift[IO]): ExtentReification[IO, BacksplashMosaic] =
+    new ExtentReification[IO, BacksplashMosaic] {
+      // For now at least this is only called in the tile server, where we always have a cell size
+      // for the call.
+      @SuppressWarnings(Array("OptionGet"))
       def extentReification(
           self: BacksplashMosaic
-      )(implicit
-        contextShift: ContextShift[IO])
-        : (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
-        (extent: Extent, cs: CellSize) => {
+      ): (Extent, Option[CellSize]) => IO[ProjectedRaster[MultibandTile]] =
+        (extent: Extent, cs: Option[CellSize]) => {
           val mosaic = self.map {
             case (tracingContext, listBsi) =>
               tracingContext.span("rawMosaicExtentReification") use {
@@ -533,7 +537,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
                         "rawMosaicExtentReification.reads"
                       ) use { grandContext =>
                         listBsi.parTraverseN(streamConcurrency) { relevant =>
-                          relevant.read(extent, cs, grandContext)
+                          relevant.read(extent, cs.get, grandContext)
                         }
                       }
                     }
@@ -565,11 +569,13 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     def combine(x: Extent, y: Extent): Extent = x.combine(y)
   }
 
-  implicit val mosaicHasRasterExtents: HasRasterExtents[BacksplashMosaic] =
-    new HasRasterExtents[BacksplashMosaic] {
+  implicit def mosaicHasRasterExtents(
+      implicit
+      contextShift: ContextShift[IO]): HasRasterExtents[IO, BacksplashMosaic] =
+    new HasRasterExtents[IO, BacksplashMosaic] {
       def rasterExtents(
           self: BacksplashMosaic
-      )(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] = {
+      ): IO[NEL[RasterExtent]] = {
         val mosaic = self.flatMap {
           case (tracingContext, bsiList) =>
             tracingContext.span("mosaicRasterExtents") use { childContext =>

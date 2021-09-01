@@ -28,7 +28,7 @@ trait CampaignPermissionRoutes
 
   implicit def contextShift: ContextShift[IO]
 
-  def notifier: IO[IntercomNotifications]
+  def notifier: IntercomNotifications
 
   val xa: Transactor[IO]
 
@@ -104,14 +104,12 @@ trait CampaignPermissionRoutes
                   distinctUserIds traverse { userId =>
                     UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                       sharedUser =>
-                        notifier flatMap { notifier =>
-                          notifier.shareNotify(
-                            sharedUser,
-                            user,
-                            campaign,
-                            "campaign"
-                          )
-                        }
+                        notifier.shareNotify(
+                          sharedUser,
+                          user,
+                          campaign,
+                          "campaign"
+                        )
                     }
 
                   }
@@ -160,14 +158,12 @@ trait CampaignPermissionRoutes
                   acr.getUserId traverse { userId =>
                     UserDao.unsafeGetUserById(userId).transact(xa) flatMap {
                       sharedUser =>
-                        notifier flatMap { notifier =>
-                          notifier.shareNotify(
-                            sharedUser,
-                            user,
-                            campaign,
-                            "campaign"
-                          )
-                        }
+                        notifier.shareNotify(
+                          sharedUser,
+                          user,
+                          campaign,
+                          "campaign"
+                        )
                     }
                   }
                 }
@@ -342,7 +338,6 @@ trait CampaignPermissionRoutes
                             )
                           } yield user
                         }).transact(xa).unsafeToFuture
-                        notifier <- notifier.unsafeToFuture
                         acrs = newUserOpt map { newUser =>
                           notifier.getDefaultShare(
                             newUser,
@@ -378,45 +373,43 @@ trait CampaignPermissionRoutes
                       } yield dbAcrs
                     case existingUsers =>
                       existingUsers traverse { existingUser =>
-                        notifier.unsafeToFuture flatMap { notifier =>
-                          val acrs =
-                            notifier.getDefaultShare(
-                              existingUser,
+                        val acrs =
+                          notifier.getDefaultShare(
+                            existingUser,
+                            userByEmail.actionType
+                          )
+                        Auth0Service
+                          .addUserMetadata(
+                            existingUser.id,
+                            managementToken,
+                            Map(
+                              "app_metadata" -> Map("annotateApp" -> true)
+                            ).asJson
+                          ) *>
+                          (CampaignDao
+                            .handleSharedPermissions(
+                              campaignId,
+                              existingUser.id,
+                              acrs,
                               userByEmail.actionType
                             )
-                          Auth0Service
-                            .addUserMetadata(
-                              existingUser.id,
-                              managementToken,
-                              Map(
-                                "app_metadata" -> Map("annotateApp" -> true)
-                              ).asJson
-                            ) *>
-                            (CampaignDao
-                              .handleSharedPermissions(
-                                campaignId,
-                                existingUser.id,
-                                acrs,
-                                userByEmail.actionType
-                              )
-                              .transact(xa) <* (
-                              // if silent param is not provided, we notify
-                              userByEmail.silent match {
-                                case Some(false) | None =>
-                                  CampaignDao
-                                    .unsafeGetCampaignById(campaignId)
-                                    .transact(xa) flatMap { campaign =>
-                                    notifier.shareNotify(
-                                      existingUser,
-                                      user,
-                                      campaign,
-                                      "campaign"
-                                    )
-                                  }
-                                case _ => IO.pure(())
-                              }
-                            )).unsafeToFuture
-                        }
+                            .transact(xa) <* (
+                            // if silent param is not provided, we notify
+                            userByEmail.silent match {
+                              case Some(false) | None =>
+                                CampaignDao
+                                  .unsafeGetCampaignById(campaignId)
+                                  .transact(xa) flatMap { campaign =>
+                                  notifier.shareNotify(
+                                    existingUser,
+                                    user,
+                                    campaign,
+                                    "campaign"
+                                  )
+                                }
+                              case _ => IO.pure(())
+                            }
+                          )).unsafeToFuture
 
                       } map { _.flatten }
                   }

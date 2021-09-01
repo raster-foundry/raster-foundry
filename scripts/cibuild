@@ -16,7 +16,7 @@ DIR="$(dirname "$0")"
 
 function usage() {
     echo -n \
-"Usage: $(basename "$0")
+        "Usage: $(basename "$0")
 Build application for staging or release.
 "
 }
@@ -28,26 +28,23 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Pulling down configuration settings for test environment"
 
         ./scripts/bootstrap --env
-        ./scripts/bootstrap --sbtopts
+        # ./scripts/bootstrap --sbtopts
         ./scripts/load_development_data --download
 
-        echo "Building JARs (batch, backsplash-export, api)"
+        echo "Building JARs (batch, api)"
         docker-compose \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm --no-deps \
-            build "; batch/assembly; backsplash-export/assembly; api/assembly"
+            build "; batch/assembly; api/assembly"
 
         cp "${DIR}/../app-backend/batch/target/scala-2.12/batch-assembly.jar" \
-           "${DIR}/../app-tasks/jars/batch-assembly.jar"
-
-        cp "${DIR}/../app-backend/backsplash-export/target/scala-2.12/backsplash-export-assembly.jar" \
-           "${DIR}/../app-tasks/jars/backsplash-export-assembly.jar"
+            "${DIR}/../app-tasks/jars/batch-assembly.jar"
 
         echo "Building Batch container image"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-                  -f "${DIR}/../docker-compose.yml" \
-                  -f "${DIR}/../docker-compose.test.yml" \
-                  build batch
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            build batch
 
         echo "Running tests"
         GIT_COMMIT="${GIT_COMMIT}" ./scripts/test

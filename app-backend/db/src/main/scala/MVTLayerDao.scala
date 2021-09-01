@@ -25,6 +25,7 @@ object MVTLayerDao {
       geom: Projected[Geometry],
       envelope: ProjectedExtent,
       taskId: UUID,
+      score: Option[Float],
       labelClassId: UUID,
       className: String,
       colorHexCode: String
@@ -34,8 +35,8 @@ object MVTLayerDao {
         "annotation_task_id" -> VString(taskId.toString),
         "label_class_id" -> VString(labelClassId.toString),
         "name" -> VString(className),
-        "color_hex_code" -> VString(colorHexCode)
-      )
+        "color_hex_code" -> VString(colorHexCode),
+      ) ++ score.fold(Map.empty[String, Value])(v => Map("score" -> VDouble(v)))
   }
 
   private[database] def getAnnotationProjectTasksQ(
@@ -83,6 +84,7 @@ object MVTLayerDao {
           annotation_labels.geometry,
           ST_TileEnvelope(${z}, ${x}, ${y}) as envelope,
           annotation_labels.annotation_task_id,
+          annotation_labels.score,
           annotation_label_classes.id as label_class_id,
           annotation_label_classes.name,
           annotation_label_classes.color_hex_code
@@ -113,12 +115,11 @@ object MVTLayerDao {
       x: Int,
       y: Int
   ): ConnectionIO[Array[Byte]] = {
-    implicit val monoidStrictLayer = getMonoidStrictLayer(z, x, y)
     getAnnotationProjectLabelsQ(annotationProjectId, z, x, y).stream
       .foldMap({ labelTileGeom =>
         labelTileGeom.geom.geom match {
           case g: MultiPolygon =>
-            Monoid[StrictLayer].empty.copy(
+            Monoid[MVTFeatures].empty.copy(
               multiPolygons = List(
                 MVTFeature(
                   None,
@@ -128,7 +129,7 @@ object MVTLayerDao {
               )
             )
           case g: Polygon =>
-            Monoid[StrictLayer].empty.copy(
+            Monoid[MVTFeatures].empty.copy(
               polygons = List(
                 MVTFeature(
                   None,
@@ -137,55 +138,20 @@ object MVTLayerDao {
                 )
               )
             )
-          case _ => Monoid[StrictLayer].empty
+          case _ => Monoid[MVTFeatures].empty
         }
       })
       .compile
-      .toList map { layers =>
-      val first = layers.head
-      VectorTile(Map("default" -> first), first.tileExtent).toBytes
+      .toList map { featuresList =>
+      val features = featuresList.head
+      val layer = StrictLayer(
+        "default",
+        4096,
+        2,
+        tiling.tmsLevels(z).mapTransform.keyToExtent(x, y),
+        features
+      )
+      VectorTile(Map("default" -> layer), layer.tileExtent).toBytes
     }
   }
-
-  // this is not a lawful monoid, because it doesn't satisfy left and right identity
-  // laws. _however_, for our purposes, the only layers in the universe
-  // are those of the correct size that are named default for MVT spec version 2.
-  // it's possible that in the future we'll want to start naming layers, but until
-  // then this monoid is lawful for the universe of StrictLayers that Raster Foundry
-  // can produce
-  private def getMonoidStrictLayer(
-      z: Int,
-      x: Int,
-      y: Int
-  ): Monoid[StrictLayer] =
-    new Monoid[StrictLayer] {
-      def combine(left: StrictLayer, right: StrictLayer): StrictLayer =
-        StrictLayer(
-          left.name,
-          left.tileWidth,
-          left.version,
-          left.tileExtent.combine(right.tileExtent),
-          left.points ++ right.points,
-          left.multiPoints ++ right.multiPoints,
-          left.lines ++ right.lines,
-          left.multiLines ++ right.multiLines,
-          left.polygons ++ right.polygons,
-          left.multiPolygons ++ right.multiPolygons
-        )
-
-      def empty: StrictLayer =
-        StrictLayer(
-          "default",
-          4096,
-          2,
-          tiling.tmsLevels(z).mapTransform.keyToExtent(x, y),
-          Nil,
-          Nil,
-          Nil,
-          Nil,
-          Nil,
-          Nil
-        )
-    }
-
 }

@@ -6,7 +6,7 @@ import logging
 
 import click
 
-from .commands import export, process_upload
+from .commands import process_upload
 
 logger = logging.getLogger("rf")
 
@@ -22,5 +22,4 @@ def run(verbose):
         logger.setLevel(logging.INFO)
 
 
-run.add_command(export)
 run.add_command(process_upload)

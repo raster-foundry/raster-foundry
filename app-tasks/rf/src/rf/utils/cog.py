@@ -44,7 +44,7 @@ def georeference_file(file_path):
     return translated_tiff
 
 
-def convert_to_cog(tif_path, local_dir, include_tiling_scheme: bool = True):
+def convert_to_cog(tif_path: str, local_dir: str, orig_filename: str, include_tiling_scheme: bool = True):
     is_valid_cog, _, _ = cog_validate(tif_path, strict=True)
     if is_valid_cog is True:
         logger.info("Skipping conversion of %s to a cog", tif_path)
@@ -53,7 +53,10 @@ def convert_to_cog(tif_path, local_dir, include_tiling_scheme: bool = True):
     logger.info("Converting %s to a cog", tif_path)
     with rasterio.open(tif_path) as src:
         has_64_bit = rasterio.dtypes.float64 in src.dtypes
-    out_path = os.path.join(local_dir, "cog.tif")
+    cog_dir = os.path.join(local_dir, "cog")
+    if not os.path.exists(cog_dir):
+        os.makedirs(cog_dir)
+    out_path = os.path.join(cog_dir, orig_filename)
     cog_command = [
         "gdal_translate",
         tif_path,
@@ -81,7 +84,7 @@ def convert_to_cog(tif_path, local_dir, include_tiling_scheme: bool = True):
             logger.warn(
                 "Couldn't process the tif with default command. Retrying without TILING_SCHEME=GoogleMapsCompatible"
             )
-            return convert_to_cog(tif_path, local_dir, False)
+            return convert_to_cog(tif_path, local_dir, orig_filename, False)
         else:
             raise
     return out_path

@@ -137,6 +137,13 @@ trait Authentication extends Directives with LazyLogging {
     ConfigurableJwtValidator(jwkSet).validate(token)
   }
 
+  def getBooleanClaimOrFallback(
+      claims: JWTClaimsSet,
+      key: String,
+      fallback: java.lang.Boolean
+  ): java.lang.Boolean =
+    Try { claims.getBooleanClaim(key) } getOrElse { fallback }
+
   def getStringClaimOrBlank(claims: JWTClaimsSet, key: String): String =
     Option(claims.getStringClaim(key)).getOrElse("")
 
@@ -226,6 +233,12 @@ trait Authentication extends Directives with LazyLogging {
         val email = getStringClaimOrBlank(jwtClaims, "email")
         val name = getNameOrFallback(jwtClaims)
         val picture = getStringClaimOrBlank(jwtClaims, "picture")
+        val groundworkProUser =
+          getBooleanClaimOrFallback(
+            jwtClaims,
+            "https://app.rasterfoundry.com;groundworkProUser",
+            false
+          )
         final case class MembershipAndUser(
             platform: Option[Platform],
             user: User
@@ -238,7 +251,36 @@ trait Authentication extends Directives with LazyLogging {
           (user, roles) <- OptionT {
             u match {
               case UserOptionAndRoles(Some(user), roles) =>
-                IO.pure(Some((user, roles)))
+                val campaignScope = Scopes.resolveFor(
+                  Domain.Campaigns,
+                  Action.Create,
+                  user.scope.actions
+                )
+                campaignScope match {
+                  // a user who is present, who has a campaign creation scope, who has no limit
+                  // doesn't need to have the pro scope appended since they're already superpowered
+                  // for campaign creation
+                  case Some(ScopedAction(_, _, None)) =>
+                    IO.pure(Some((user, roles)))
+                  // similarly, a user who is present, who has a campaign creation scope, who has a limit
+                  // at least as large as the Groundwork Pro scope limit doesn't require any action
+                  case Some(ScopedAction(_, _, Some(x))) if x >= 50L =>
+                    IO.pure(Some((user, roles)))
+                  // For a user who has a scope that is present and less than 50L, if they're a pro user,
+                  // we need to append the Groundwork Pro user scope to their record
+                  case Some(_) if groundworkProUser =>
+                    (UserDao
+                      .appendScope(user.id, Scopes.GroundworkProUser) flatMap {
+                      _ =>
+                        UserDao.unsafeGetUserById(user.id) map { user =>
+                          Some((user, roles))
+                        }
+                    }).transact(xa)
+                  // a user who is present but has no campaigns claim is not a pro user, so do nothing. Also,
+                  // for any other limit if they don't have the groundwork pro claim in their JWT, do
+                  // nothing
+                  case None | Some(_) => IO.pure(Some((user, roles)))
+                }
               case UserOptionAndRoles(None, _) => {
                 createUserWithRoles(userId, email, name, picture, jwtClaims)
                   .transact(xa)
@@ -366,9 +408,12 @@ trait Authentication extends Directives with LazyLogging {
       case _       => GroupRole.Member
     }
 
-    val isGroundworkUser = jwtClaims
-      .getBooleanClaim("https://app.rasterfoundry.com;annotateApp")
-      .booleanValue()
+    val isGroundworkUser = Option(
+      jwtClaims
+        .getBooleanClaim("https://app.rasterfoundry.com;annotateApp")
+    ) map {
+      _.booleanValue()
+    } getOrElse false
 
     val userScope: Scope =
       Option(

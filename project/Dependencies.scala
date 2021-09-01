@@ -5,31 +5,30 @@ import sbt._
 object Version {
   val akka = "2.6.4"
   val akkaCirceJson = "1.32.0"
-  val akkaHttp = "10.1.11"
+  val akkaHttp = "10.2.4"
   val akkaHttpCors = "0.2.2"
   val akkaSlf4j = "2.4.13"
+  val algebra = "2.0.1"
   val apacheAvro = "1.8.2"
   val apacheCommonsEmail = "1.5"
-  val asyncHttpClient = "2.12.1"
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.763"
   val awsCoreSdk = "1.11.763"
   val awsLambdaCore = "1.11.763"
   val awsSdkVersion = "1.11.763"
-  val awsSdkV2Version = "2.13.74"
+  val awsSdkV2Version = "2.16.13"
   val awsXrayRecorder = "2.8.0"
   val betterFiles = "3.4.0"
   val bcrypt = "4.1"
   val caffeine = "2.3.5"
-  val cats = "2.5.0"
-  val catsEffect = "2.3.3"
+  val cats = "2.6.1"
+  val catsEffect = "2.5.1"
   val catsMeow = "0.4.0"
   val catsScalacheck = "0.2.0"
-  val chronoscala = "0.3.2"
-  val circe = "0.13.0"
-  val circeOptics = "0.12.0"
+  val chronoscala = "1.0.0"
+  val circe = "0.14.1"
   val commonsCodec = "1.11"
-  val commonsIO = "2.7"
+  val commonsIO = "2.8.0"
   val cron4s = "0.6.0"
   val decline = "0.6.0"
   val disciplineScalatest = "1.0.1"
@@ -39,14 +38,16 @@ object Version {
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
   val flyway = "6.0.8"
-  val fs2 = "2.4.2"
+  val fs2 = "2.5.9"
   val fs2Cron = "0.2.2"
-  val geotrellis = "3.5.1"
-  val geotrellisServer = "4.1.0"
+  val geotrellis = "3.6.0"
+  val geotrellisServer = "4.5.0"
   val guava = "20.0"
   val hadoop = "2.8.4"
   val hikariCP = "3.4.2"
-  val http4s = "0.21.3"
+  val http4s = "0.21.25"
+  val httpComponentsClient = "4.5.13"
+  val httpComponentsCore = "4.4.13"
   val jaegerClient = "1.0.0"
   val jaegerCore = "1.0.0"
   val javaFaker = "1.0.2"
@@ -55,7 +56,7 @@ object Version {
   val jts = "1.16.1"
   val log4cats = "1.1.1"
   val logback = "1.2.3"
-  val maml = "0.6.0"
+  val maml = "0.6.1"
   val monocle = "2.1.0"
   val newtype = "0.4.3"
   val nimbusJose = "1.0.2"
@@ -64,9 +65,9 @@ object Version {
   val opentracingApi = "0.33.0"
   val postgis = "2.2.1"
   val postgres = "42.2.12"
-  val refined = "0.9.17"
+  val refined = "0.9.27"
   val rollbar = "1.4.0"
-  val scaffeine = "4.0.1"
+  val scaffeine = "4.0.2"
   val scala = "2.12.10"
   val scalaCheck = "1.14.1"
   val scalaCsv = "1.3.6"
@@ -80,11 +81,11 @@ object Version {
   val slf4j = "1.7.25"
   val sourceCode = "0.2.1"
   val spatial4j = "0.7"
-  val spire = "0.16.0"
-  val spireMath = "0.13.0"
-  val stac4s = "0.0.16"
-  val sttp = "2.0.9"
-  val sttpModel = "1.0.3"
+  val spire = "0.17.0"
+  val stac4s = "0.6.2"
+  val sttp = "3.2.3"
+  val sttpModel = "1.4.9"
+  val sttpShared = "1.1.1"
   val sup = "0.7.0"
   val typesafeConfig = "1.4.0"
   val vault = "2.0.0"
@@ -102,11 +103,14 @@ object Dependencies {
   val akkaStream = "com.typesafe.akka" %% "akka-stream" % Version.akka
   val akkatestkit =
     "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
+  val algebra = "org.typelevel" %% "algebra" % Version.algebra
   val apacheAvro = "org.apache.avro" % "avro" % Version.apacheAvro
   val apacheCommonsEmail =
     "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
-  val asyncHttpClient =
-    "org.asynchttpclient" % "async-http-client" % Version.asyncHttpClient
+  val apacheHttpCore =
+    "org.apache.httpcomponents" % "httpcore" % Version.httpComponentsCore
+  val apacheHttpClient =
+    "org.apache.httpcomponents" % "httpclient" % Version.httpComponentsClient
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
   val awsCoreSdk = "com.amazonaws" % "aws-java-sdk-core" % Version.awsCoreSdk
@@ -136,7 +140,7 @@ object Dependencies {
   val circeCore = "io.circe" %% "circe-core" % Version.circe
   val circeGeneric = "io.circe" %% "circe-generic" % Version.circe
   val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Version.circe
-  val circeOptics = "io.circe" %% "circe-optics" % Version.circeOptics
+  val circeOptics = "io.circe" %% "circe-optics" % Version.circe
   val circeParser = "io.circe" %% "circe-parser" % Version.circe
   val circeRefined = "io.circe" %% "circe-refined" % Version.circe
   val circeShapes = "io.circe" %% "circe-shapes" % Version.circe
@@ -194,6 +198,7 @@ object Dependencies {
   val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
   val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
+  val http4sClient = "org.http4s" %% "http4s-client" % Version.http4s
   val http4sCore = "org.http4s" %% "http4s-core" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
@@ -249,25 +254,24 @@ object Dependencies {
   val scalatestplusScalaCheck =
     "org.scalatestplus" %% "scalacheck-1-14" % Version.scalatestPlus % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
-  val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
+  val shapeless = "com.chuusai" %% "shapeless" % "2.3.7"
   val slf4j = "org.slf4j" % "slf4j-api" % Version.slf4j
   val sourceCode = "com.lihaoyi" %% "sourcecode" % Version.sourceCode
   val spatial4j = "org.locationtech.spatial4j" % "spatial4j" % Version.spatial4j
   val spire = "org.typelevel" %% "spire" % Version.spire
-  val spireMath = "org.spire-math" %% "spire" % Version.spireMath
   val stac4s = "com.azavea.stac4s" %% "core" % Version.stac4s
+  val sttpSharedCore =
+    "com.softwaremill.sttp.shared" %% "core" % Version.sttpShared
+  val sttpSharedAkka =
+    "com.softwaremill.sttp.shared" %% "akka" % Version.sttpShared
   val sttpModel = "com.softwaremill.sttp.model" %% "core" % Version.sttpModel
   val sttpAkka =
-    "com.softwaremill.sttp.client" %% "akka-http-backend" % Version.sttp
+    "com.softwaremill.sttp.client3" %% "akka-http-backend" % Version.sttp
   val sttpAsyncBackend =
-    "com.softwaremill.sttp.client" %% "async-http-client-backend" % Version.sttp
-  val sttpCatsBackend =
-    "com.softwaremill.sttp.client" %% "async-http-client-backend-cats" % Version.sttp
-  val sttpCirce = "com.softwaremill.sttp.client" %% "circe" % Version.sttp
-  val sttpCore = "com.softwaremill.sttp.client" %% "core" % Version.sttp
-  val sttpJson = "com.softwaremill.sttp.client" %% "json-common" % Version.sttp
-  val sttpOkHttpBackend =
-    "com.softwaremill.sttp.client" %% "okhttp-backend" % Version.sttp
+    "com.softwaremill.sttp.client3" %% "async-http-client-backend" % Version.sttp
+  val sttpCirce = "com.softwaremill.sttp.client3" %% "circe" % Version.sttp
+  val sttpCore = "com.softwaremill.sttp.client3" %% "core" % Version.sttp
+  val sttpJson = "com.softwaremill.sttp.client3" %% "json-common" % Version.sttp
   val sup = "com.kubukoz" %% "sup-core" % Version.sup
   val typesafeConfig = "com.typesafe" % "config" % Version.typesafeConfig
   val vault = "io.chrisdavenport" %% "vault" % Version.vault

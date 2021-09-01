@@ -2,6 +2,7 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.Generators.Implicits._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Implicits._
 
 import cats.data.NonEmptyList
 import com.typesafe.scalalogging.LazyLogging
@@ -22,16 +23,14 @@ class UserDaoSpec
   // create
   test("inserting users") {
     check(
-      forAll(
-        (user: User.Create) => {
-          val insertedUserIO = for {
-            created <- UserDao.create(user)
-          } yield (created)
-          val insertedUser =
-            insertedUserIO.transact(xa).unsafeRunSync
-          insertedUser.id == user.id
-        }
-      )
+      forAll((user: User.Create) => {
+        val insertedUserIO = for {
+          created <- UserDao.create(user)
+        } yield (created)
+        val insertedUser =
+          insertedUserIO.transact(xa).unsafeRunSync
+        insertedUser.id == user.id
+      })
     )
   }
 
@@ -88,15 +87,13 @@ class UserDaoSpec
   // getUserById
   test("get a user by id") {
     check(
-      forAll(
-        (userCreate: User.Create) => {
-          val createdIdIO = for {
-            inserted <- UserDao.create(userCreate)
-            byId <- UserDao.getUserById(inserted.id)
-          } yield (byId)
-          userCreate.id == createdIdIO.transact(xa).unsafeRunSync.get.id
-        }
-      )
+      forAll((userCreate: User.Create) => {
+        val createdIdIO = for {
+          inserted <- UserDao.create(userCreate)
+          byId <- UserDao.getUserById(inserted.id)
+        } yield (byId)
+        userCreate.id == createdIdIO.transact(xa).unsafeRunSync.get.id
+      })
     )
   }
 
@@ -201,27 +198,27 @@ class UserDaoSpec
   // storeDropboxAccessToken
   test("set a dropbox token") {
     check(
-      forAll(
-        (user: User.Create, dropboxCredential: Credential) => {
-          val insertedUserIO = for {
-            created <- UserDao.create(user)
-          } yield (created)
-          val (affectedRows, updatedToken) = (insertedUserIO flatMap {
-            case (insertUser: User) => {
-              UserDao.storeDropboxAccessToken(insertUser.id, dropboxCredential) flatMap {
-                case (affectedRows: Int) => {
-                  val updatedDbxTokenIO = UserDao.unsafeGetUserById(
-                    insertUser.id
-                  ) map { _.dropboxCredential }
-                  updatedDbxTokenIO map { (affectedRows, _) }
-                }
+      forAll((user: User.Create, dropboxCredential: Credential) => {
+        val insertedUserIO = for {
+          created <- UserDao.create(user)
+        } yield (created)
+        val (affectedRows, updatedToken) = (insertedUserIO flatMap {
+          case (insertUser: User) => {
+            UserDao.storeDropboxAccessToken(
+              insertUser.id,
+              dropboxCredential
+            ) flatMap {
+              case (affectedRows: Int) => {
+                val updatedDbxTokenIO = UserDao.unsafeGetUserById(
+                  insertUser.id
+                ) map { _.dropboxCredential }
+                updatedDbxTokenIO map { (affectedRows, _) }
               }
             }
-          }).transact(xa)
-            .unsafeRunSync
-          (updatedToken.token == dropboxCredential.token) && (affectedRows == 1)
-        }
-      )
+          }
+        }).transact(xa).unsafeRunSync
+        (updatedToken.token == dropboxCredential.token) && (affectedRows == 1)
+      })
     )
   }
 
@@ -296,8 +293,12 @@ class UserDaoSpec
             u1VisibleUsers <- UserDao.viewFilter(u1).list
             u2VisibleUsers <- UserDao.viewFilter(u2).list
             u3VisibleUsers <- UserDao.viewFilter(u3).list
-            _ <- UserGroupRoleDao
-              .update(u3platugr.copy(groupRole = GroupRole.Admin), u3platugr.id)
+            _ <-
+              UserGroupRoleDao
+                .update(
+                  u3platugr.copy(groupRole = GroupRole.Admin),
+                  u3platugr.id
+                )
             u3AdminVisibleUsers <- UserDao.viewFilter(u3).list
           } yield {
             (
@@ -462,6 +463,41 @@ class UserDaoSpec
           )
           true
         }
+      }
+    }
+  }
+
+  test("append a scope to an existing user") {
+    check {
+      forAll {
+        (
+            userCreate: User.Create,
+            scope1: Scope,
+            scope2: Scope
+        ) =>
+          {
+            val scopeAppendIO = for {
+              dbUser <- UserDao.create(userCreate)
+              _ <- UserDao.appendScope(
+                dbUser.id,
+                scope1,
+                false
+              )
+              _ <- UserDao.appendScope(
+                dbUser.id,
+                scope2,
+                false
+              )
+              fetched <- UserDao.unsafeGetUserById(dbUser.id)
+            } yield fetched.scope
+
+            val result = scopeAppendIO.transact(xa).unsafeRunSync
+            result.actions.intersect(
+              scope1.actions
+            ) == scope1.actions && result.actions.intersect(
+              scope2.actions
+            ) == scope2.actions
+          }
       }
     }
   }

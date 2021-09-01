@@ -10,12 +10,11 @@ import java.util.UUID
 
 trait ToolRunQueryParametersDirective extends QueryParametersCommon {
   val toolRunSpecificQueryParams = parameters(
-    (
-      'createdBy.as[String].?,
-      'projectId.as[UUID].?,
-      'templateId.as[UUID].?,
-      'projectLayerId.as[UUID].?
-    )).as(ToolRunQueryParameters.apply _)
+    'createdBy.as[String].?,
+    'projectId.as[UUID].?,
+    'templateId.as[UUID].?,
+    'projectLayerId.as[UUID].?
+  ).as(ToolRunQueryParameters.apply _)
 
   val toolRunQueryParameters = (
     toolRunSpecificQueryParams &

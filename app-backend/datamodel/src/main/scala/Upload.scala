@@ -29,7 +29,11 @@ final case class Upload(
     bytesUploaded: Long,
     annotationProjectId: Option[UUID],
     generateTasks: Boolean
-)
+) {
+
+  lazy val s3Path: String =
+    s"user-uploads/$createdBy/$id"
+}
 
 object Upload {
 

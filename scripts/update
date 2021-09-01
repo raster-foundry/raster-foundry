@@ -7,7 +7,7 @@ fi
 
 function usage() {
     echo -n \
-"Usage: $(basename "$0")
+        "Usage: $(basename "$0")
 
 Update project dependencies, build assembly JARs, run database migrations.
 "
@@ -18,10 +18,8 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         echo "Building Scala assembly JARs"
-        pushd "app-backend"
-            ./sbt \
-                ";api/assembly;backsplash-server/assembly;batch/assembly;backsplash-export/assembly"
-        popd
+        ./sbt \
+            ";api/assembly;backsplash-server/assembly;batch/assembly"
 
         echo "Running application database migrations"
         ./scripts/migrate migrate

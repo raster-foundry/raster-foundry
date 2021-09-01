@@ -19,7 +19,8 @@ object StacExportDao extends Dao[StacExport] {
       SELECT
         id, created_at, created_by, modified_at, owner,
         name, license, export_location, export_status,
-        task_statuses, annotation_project_id, campaign_id
+        task_statuses, annotation_project_id, campaign_id,
+        export_asset_types
       FROM
     """ ++ tableF
 
@@ -50,12 +51,13 @@ object StacExportDao extends Dao[StacExport] {
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, owner,
       name, license, export_location, export_status,
-      task_statuses, annotation_project_id, campaign_id)
+      task_statuses, annotation_project_id, campaign_id,
+      export_asset_types)
     VALUES
       (${newExport.id}, ${newExport.createdAt}, ${newExport.createdBy}, ${newExport.modifiedAt},
       ${newExport.owner}, ${newExport.name}, ${newExport.license}, ${newExport.exportLocation},
       ${newExport.exportStatus}, ${newExport.taskStatuses}, ${newExport.annotationProjectId},
-      ${newExport.campaignId})
+      ${newExport.campaignId}, ${newExport.exportAssetTypes})
     """).update.withUniqueGeneratedKeys[StacExport](
       "id",
       "created_at",
@@ -68,7 +70,8 @@ object StacExportDao extends Dao[StacExport] {
       "export_status",
       "task_statuses",
       "annotation_project_id",
-      "campaign_id"
+      "campaign_id",
+      "export_asset_types"
     )
   }
 

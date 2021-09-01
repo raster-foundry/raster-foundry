@@ -25,8 +25,6 @@ import com.rasterfoundry.api.uploads.UploadRoutes
 import com.rasterfoundry.api.user.UserRoutes
 import com.rasterfoundry.api.utils.{Config, IntercomNotifications}
 
-import cats.effect.IO
-
 /**
   * Contains all routes for Raster Foundry API/Healthcheck endpoints.
   *
@@ -58,7 +56,7 @@ trait Router
     with TaskRoutes
     with CampaignRoutes {
 
-  def notifier: IO[IntercomNotifications]
+  def notifier: IntercomNotifications
 
   def routes =
     pathPrefix("healthcheck") {

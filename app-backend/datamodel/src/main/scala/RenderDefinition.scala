@@ -16,8 +16,7 @@ trait ScaleOpt { def repr: String }
 case object Continuous extends ScaleOpt { def repr = "Continuous" }
 case object Sequential extends ScaleOpt { def repr = "Sequential" }
 case object Diverging extends ScaleOpt { def repr = "Diverging" }
-final case class Qualitative(fallback: RGBA = RGBA(0, 0, 0, 0))
-    extends ScaleOpt {
+final case class Qualitative(fallback: RGBA = RGBA(0)) extends ScaleOpt {
   def repr = {
     val hex = fallback.asJson.noSpaces.stripPrefix("\"").stripSuffix("\"")
     s"Qualitative[$hex]"

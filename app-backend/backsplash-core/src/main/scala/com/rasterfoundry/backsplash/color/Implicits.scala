@@ -37,7 +37,7 @@ trait Implicits {
             Integer.parseInt(hexByte, 16)
           })
           .toList
-        Right(RGBA(bytes(0), bytes(1), bytes(2), bytes(3)))
+        Right(RGBA(bytes(0) + bytes(1) + bytes(2) + bytes(3)))
       case hex if (hex.size == 6) =>
         val bytes = hex
           .sliding(2, 2)
@@ -45,7 +45,7 @@ trait Implicits {
             Integer.parseInt(hexByte, 16)
           })
           .toList
-        Right(RGB(bytes(0), bytes(1), bytes(2)))
+        Right(RGBA(bytes(0) + bytes(1) + bytes(2)))
       case hex => Left(s"Unable to parse $hex as an RGBA")
     }
   }
@@ -71,9 +71,9 @@ trait Implicits {
       val r = (color1.red + (color2.red - color1.red) * proportion).toInt
       val g = (color1.green + (color2.green - color1.green) * proportion).toInt
       val b = (color1.blue + (color2.blue - color1.blue) * proportion).toInt
-      val a
-        : Double = (color1.alpha + (color2.alpha - color1.alpha) * proportion).toDouble / 2.55
-      RGBA(r, g, b, a)
+      val a: Double =
+        (color1.alpha + (color2.alpha - color1.alpha) * proportion).toDouble / 2.55
+      RGBA.fromRGBA(r, g, b, (a * 255).toInt).toARGB
     }
 
     /** For production of colors along a continuum */
@@ -88,13 +88,13 @@ trait Implicits {
           // MIN VALUE
           definition.clip match {
             case ClipNone | ClipRight => colors(0)
-            case ClipLeft | ClipBoth  => 0x00000000
+            case ClipLeft | ClipBoth  => RGBA(0x00000000)
           }
         } else if (abs(insertionPoint) - 1 == breaks.size) {
           // MAX VALUE
           definition.clip match {
             case ClipNone | ClipLeft  => colors.last
-            case ClipRight | ClipBoth => 0x00000000
+            case ClipRight | ClipBoth => RGBA(0x00000000)
           }
         } else if (insertionPoint < 0) {
           // MUST INTERPOLATE
@@ -104,7 +104,7 @@ trait Implicits {
           val higher = breaks(higherIdx)
           val proportion = (dbl - lower) / (higher - lower)
 
-          rgbLerp(colors(lowerIdx), colors(higherIdx), proportion)
+          RGBA(rgbLerp(colors(lowerIdx), colors(higherIdx), proportion))
         } else {
           // Direct hit
           colors(insertionPoint)
@@ -125,13 +125,13 @@ trait Implicits {
         // MIN VALUE
         definition.clip match {
           case ClipNone | ClipRight => fallback
-          case ClipLeft | ClipBoth  => 0x00000000
+          case ClipLeft | ClipBoth  => RGBA(0x00000000)
         }
       } else if (abs(insertionPoint) - 1 == breaks.size) {
         // MAX VALUE
         definition.clip match {
           case ClipNone | ClipLeft  => fallback
-          case ClipRight | ClipBoth => 0x00000000
+          case ClipRight | ClipBoth => RGBA(0x00000000)
         }
       } else if (insertionPoint < 0) {
         // GRAB LOWER VALUE

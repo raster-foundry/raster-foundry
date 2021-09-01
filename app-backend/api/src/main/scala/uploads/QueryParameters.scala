@@ -10,10 +10,9 @@ import java.util.UUID
 
 trait UploadQueryParameterDirective extends QueryParametersCommon {
   val uploadQueryParams = parameters(
-    (
-      'datasource.as[UUID].?,
-      'uploadStatus.as[String].?,
-      'projectId.as[UUID].?,
-      'layerId.as[UUID].?
-    )).as(UploadQueryParameters.apply _)
+    'datasource.as[UUID].?,
+    'uploadStatus.as[String].?,
+    'projectId.as[UUID].?,
+    'layerId.as[UUID].?
+  ).as(UploadQueryParameters.apply _)
 }

@@ -43,6 +43,9 @@ object Generators extends ArbitraryInstances {
   private def userRoleGen: Gen[UserRole] =
     Gen.oneOf(UserRoleRole, Viewer, Admin)
 
+  private def exportAssetTypeGen: Gen[ExportAssetType] =
+    Gen.oneOf(ExportAssetType.COG, ExportAssetType.SignedURL)
+
   private def groupTypeGen: Gen[GroupType] =
     Gen.oneOf(GroupType.Platform, GroupType.Organization, GroupType.Team)
 
@@ -1046,6 +1049,12 @@ object Generators extends ArbitraryInstances {
   private def taskStatusListGen: Gen[List[TaskStatus]] =
     Gen.oneOf(0, 5) flatMap { Gen.listOfN(_, taskStatusGen) }
 
+  private def exportAssetTypeNelGen: Gen[Option[NEL[ExportAssetType]]] =
+    for {
+      exportAssetType <- exportAssetTypeGen
+      exportAssetTypes <- Gen.nonEmptyListOf(exportAssetType)
+    } yield (NEL.fromList(exportAssetTypes))
+
   private def taskNextStatusGen: Gen[TaskNextStatus] =
     for {
       nextStatus <- taskStatusGen
@@ -1072,6 +1081,7 @@ object Generators extends ArbitraryInstances {
       nonEmptyStringGen,
       Gen.const(StacExportLicense(Proprietary(), Some("http://example.com"))),
       taskStatusListGen,
+      exportAssetTypeNelGen,
       uuidGen
     )
 
@@ -1149,7 +1159,8 @@ object Generators extends ArbitraryInstances {
       Gen.const(Nil),
       Gen.option(nonEmptyStringGen),
       Gen.const(true),
-      Gen.option(uuidGen)
+      Gen.option(uuidGen),
+      Gen.option(arbitrary[Int].map(_.toFloat))
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
 
   private def continentGen: Gen[Continent] =

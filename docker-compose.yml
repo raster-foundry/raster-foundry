@@ -80,7 +80,6 @@ services:
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-backend/batch/target/scala-2.12/batch-assembly.jar:/opt/raster-foundry/jars/batch-assembly.jar
-      - ./app-backend/backsplash-export/target/scala-2.12/backsplash-export-assembly.jar:/opt/raster-foundry/jars/backsplash-export-assembly.jar
       - ./data/:/opt/data/
       - $HOME/.aws:/root/.aws:ro
     build:

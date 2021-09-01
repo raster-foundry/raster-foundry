@@ -14,6 +14,8 @@ object Config {
   object server {
     private val serverConfig = config.getConfig("server")
     val timeoutSeconds = serverConfig.getInt("timeoutSeconds")
+    val healthcheckTimeoutSeconds =
+      serverConfig.getInt("healthcheckTimeoutSeconds")
     val doAccessLogging = serverConfig.getBoolean("doAccessLogging")
   }
 

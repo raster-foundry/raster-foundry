@@ -27,7 +27,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     "annotation_task_id",
     "description",
     "is_active",
-    "session_id"
+    "session_id",
+    "score"
   )
   val selectF: Fragment = fr"SELECT" ++
     selectFieldsF ++ fr", classes.class_ids as annotation_label_classes FROM " ++
@@ -75,7 +76,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         ${annotationLabel.id}, ${annotationLabel.createdAt},
         ${annotationLabel.createdBy}, ${annotationLabel.geometry},
         ${annotationLabel.annotationProjectId}, ${annotationLabel.annotationTaskId},
-        ${annotationLabel.description}, ${annotationLabel.isActive}, ${annotationLabel.sessionId}
+        ${annotationLabel.description}, ${annotationLabel.isActive}, ${annotationLabel.sessionId},
+        ${annotationLabel.score}
        )"""
     )
     val labelClassFragments: List[Fragment] =
@@ -330,4 +332,12 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       row <- updateLabelF.update.run
     } yield row
   }
+
+  def hasPredictionAnnotationLabels(
+      annotationProjectId: UUID
+  ): ConnectionIO[Boolean] =
+    query
+      .filter(fr"annotation_project_id = ${annotationProjectId}")
+      .filter(fr"score IS NOT NULL")
+      .exists
 }

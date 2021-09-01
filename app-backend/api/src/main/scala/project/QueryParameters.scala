@@ -10,11 +10,9 @@ import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 trait ProjectSceneQueryParameterDirective extends QueryParametersCommon {
 
   val projectSceneQueryParameters = parameters(
-    (
-      'ingested.as[Boolean].?,
-      'ingestStatus.as[String].*,
-      'accepted.as[Boolean].?
-    )
+    'ingested.as[Boolean].?,
+    'ingestStatus.as[String].*,
+    'accepted.as[Boolean].?
   ).as(ProjectSceneQueryParameters.apply _)
 
 }
