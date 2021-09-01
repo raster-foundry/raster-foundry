@@ -29,6 +29,8 @@ object ExportAssetType {
     Decoder.decodeString.emap { str =>
       Either
         .catchNonFatal(unsafeFromString(str))
-        .leftMap(_ => "ExportAssetType")
+        .leftMap(_ =>
+          s"The string '$str' could not be decoded to ExportAssetType"
+        )
     }
 }
