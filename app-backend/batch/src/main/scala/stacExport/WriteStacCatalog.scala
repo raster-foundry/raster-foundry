@@ -1,7 +1,5 @@
 package com.rasterfoundry.batch.stacExport
 
-import com.amazonaws.services.s3.AmazonS3URI
-import com.amazonaws.services.s3.model.PutObjectResult
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.groundwork.DbIO
 import com.rasterfoundry.batch.stacExport.v2.CampaignStacExport
@@ -20,9 +18,12 @@ import com.rasterfoundry.notification.intercom.{
 import better.files.{File => ScalaFile}
 import cats.effect._
 import cats.implicits._
+import com.amazonaws.services.s3.AmazonS3URI
+import com.amazonaws.services.s3.model.PutObjectResult
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
+
 import java.util.UUID
 
 final case class WriteStacCatalog(

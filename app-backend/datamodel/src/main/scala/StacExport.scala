@@ -1,5 +1,6 @@
 package com.rasterfoundry.datamodel
 
+import cats.data.NonEmptyList
 import cats.syntax.functor._
 import com.azavea.stac4s._
 import eu.timepit.refined.auto._
@@ -10,7 +11,6 @@ import io.circe.{Decoder, Encoder, Json, JsonObject}
 
 import java.sql.Timestamp
 import java.util.{Date, UUID}
-import cats.data.NonEmptyList
 
 @JsonCodec
 final case class StacExport(

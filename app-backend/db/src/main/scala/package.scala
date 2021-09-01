@@ -6,7 +6,6 @@ import com.rasterfoundry.datamodel.Credential
 import com.rasterfoundry.datamodel.ExportAssetType
 
 import cats.data.NonEmptyList
-
 import doobie.Get
 import doobie.Meta
 import doobie.Put

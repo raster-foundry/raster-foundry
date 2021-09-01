@@ -42,10 +42,10 @@ import monocle.macros.GenLens
 
 import scala.concurrent.ExecutionContext
 
+import java.net.URI
 import java.time.{Duration, Instant}
 import java.util.UUID
 import java.util.concurrent.Executors
-import java.net.URI
 
 object optics {
 

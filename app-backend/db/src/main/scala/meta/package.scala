@@ -2,16 +2,16 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.datamodel._
 
-import cats.implicits._
 import cats.data.NonEmptyList
+import cats.implicits._
 import doobie._
 import geotrellis.proj4.CRS
 import geotrellis.raster.CellType
 import io.circe.syntax._
 import org.postgresql.util.PGobject
 
-import scala.util.Try
 import scala.reflect.runtime.universe.TypeTag
+import scala.util.Try
 
 import java.net.URI
 import java.time.LocalDate
