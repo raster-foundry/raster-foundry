@@ -253,7 +253,7 @@ case class ExportData private (
         imageryS3Links.get(newtypes.AnnotationProjectId(
           UUID.fromString(sceneItem.value.id))) match {
           case Some(s3Link) =>
-            val ingestLocation = s3Link.value.toString
+            val ingestLocation = s3Link.value
             writeCOGToFile(
               URI.create(ingestLocation),
               file,
