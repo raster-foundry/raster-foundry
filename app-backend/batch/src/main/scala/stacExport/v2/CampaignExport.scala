@@ -248,14 +248,12 @@ case class ExportData private (
           links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
             .contains(link.rel)))
-    println(s"imageryS3Links: ${imageryS3Links}")
     (annotationProjectImageryItems.toList traverse {
       case (_, sceneItem) =>
         imageryS3Links.get(newtypes.AnnotationProjectId(
           UUID.fromString(sceneItem.value.id))) match {
           case Some(s3Link) =>
             val ingestLocation = s3Link.value.toString
-            println(s"Ingest location: ${ingestLocation}")
             writeCOGToFile(
               URI.create(ingestLocation),
               file,
