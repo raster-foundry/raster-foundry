@@ -18,6 +18,9 @@ object README {
     "| :--------- | ----------- | ------------ |"
   )
 
+  private def tableEscape(s: String): String =
+    s.replace("|", """\\|""")
+
   private def renderRow(
       annotationProject: AnnotationProject,
       labelItemMap: LabelItemMap,
@@ -32,7 +35,7 @@ object README {
           s"labels/${labelItem.value.id}.json"
         val imageryItemPath =
           s"images/${imageryItem.value.id}/item.json"
-        s"| ${annotationProject.name} | $labelItemPath | $imageryItemPath |"
+        s"| ${tableEscape(annotationProject.name)} | $labelItemPath | $imageryItemPath |"
     }
 
   }
@@ -42,12 +45,12 @@ object README {
   ): String = {
     val assetDescriptionList = assetTypes map {
       case ExportAssetType.SignedURL =>
-        """| - *Signed URLs*: These URLs are links to files in AWS S3.
-           |   You can download those files by visiting the link in any browser.
-           |   After seven days, the URL will no longer work.""".trim.stripMargin
+        """|- *Signed URLs*: These URLs are links to files in AWS S3.
+           |  You can download those files by visiting the link in any browser.
+           |  After seven days, the URL will no longer work.""".trim.stripMargin
       case ExportAssetType.COG =>
-        """| - *Cloud-optimized GeoTIFFs*: These links refer to files present in the export. You can find them at the address listed relative to the item location.
-           |   You can open these files in QGIS.""".stripMargin
+        """|- *Cloud-optimized GeoTIFFs*: These links refer to files present in the export. You can find them at the address listed relative to the item location.
+           |  You can open these files in QGIS.""".trim.stripMargin
     }
     assetDescriptionList.toList.mkString("\n")
   }
@@ -57,15 +60,15 @@ object README {
   ): String = {
     val tmsDescription =
       """Imagery items in this export contain [TMS](https://en.wikipedia.org/wiki/Tile_Map_Service) URLs. You can put those
-  TMS URLs into tools like [geojson.io](http://geojson.io/#map=2/20.0/0.0) (via "Meta" -> "Add map layer") or QGIS (via
-  "XYZ Tiles") to view them."""
+TMS URLs into tools like [geojson.io](http://geojson.io/#map=2/20.0/0.0) (via "Meta" -> "Add map layer") or QGIS (via
+"XYZ Tiles") to view them."""
 
     exportAssetTypes.fold(tmsDescription)(nelAssetTypes => {
       tmsDescription ++ s"""
         | Imagery items also contain the following extra assets:
         |
-        | ${renderExtraAssetDescriptions(nelAssetTypes)}
-      """
+        |${renderExtraAssetDescriptions(nelAssetTypes)}
+      """.trim.stripMargin
     })
   }
 

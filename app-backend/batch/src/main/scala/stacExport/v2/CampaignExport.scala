@@ -704,12 +704,12 @@ class CampaignStacExport(
       taskStatuses: List[String]
   ): IO[Option[newtypes.SceneItem]] = {
     for {
-      _ <- IO(logger.info(s"Building layer item from tile layers"))
+      _ <- IO(logger.info(s"Building imagery item from tile layers"))
       maybeScene <- AnnotationProjectDao
         .getFirstScene(annotationProject.id)
         .transact(xa)
       _ <- IO {
-        logger.info(maybeScene match {
+        logger.debug(maybeScene match {
           case Some(scene) => s"Found scene with id ${scene.id}"
           case _           => "No scene found"
         })
@@ -718,7 +718,7 @@ class CampaignStacExport(
         .listByProjectId(annotationProject.id)
         .transact(xa)
       _ <- IO {
-        logger.info(
+        logger.debug(
           s"Found ${tileLayers.size} tile layers"
         )
       }
@@ -737,17 +737,17 @@ class CampaignStacExport(
         )
       }
       _ <- IO {
-        logger.info(
+        logger.debug(
           s"Found assets $assets"
         )
       }
       _ <- IO {
-        logger.info(
+        logger.debug(
           s"Found links $links"
         )
       }
       _ <- IO {
-        logger.info(
+        logger.debug(
           s"Returning STAC item $item"
         )
       }
