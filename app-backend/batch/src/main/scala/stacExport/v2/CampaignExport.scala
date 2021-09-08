@@ -523,7 +523,8 @@ class CampaignStacExport(
           README.render(
             projList,
             state.annotationProjectLabelItems,
-            state.annotationProjectImageryItems
+            state.annotationProjectImageryItems,
+            state.exportDefinition.exportAssetTypes
           )
       }
     } yield {
