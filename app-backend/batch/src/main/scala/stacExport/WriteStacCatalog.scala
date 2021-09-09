@@ -112,8 +112,9 @@ final case class WriteStacCatalog(
           exportDefinition.copy(
             exportStatus = ExportStatus.Exported,
             exportLocation = Some(exportPath),
-            expiration =
+            expiration = if (isCogExport) {
               Some(Timestamp.from(Instant.now.plus(Duration.ofDays(30L))))
+            } else { None }
           )
         StacExportDao.update(updatedExport, exportDefinition.id).transact(xa)
       }
