@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - STAC exports with COGs get uploaded to a prefix with an expiration policy configured [#5622](https://github.com/raster-foundry/raster-foundry/pull/5622)
 ### Fixed
-- Fixed STAC export image item's asset `href`s [#5621](https://github.com/raster-foundry/raster-foundry/pull/5621)
+- Fixed STAC export image item's asset `href`s [#5621](https://github.com/raster-foundry/raster-foundry/pull/5621), [#5625](https://github.com/raster-foundry/raster-foundry/pull/5625)
 
 ## [1.67.0] - 2021-09-01
 ### Changed
