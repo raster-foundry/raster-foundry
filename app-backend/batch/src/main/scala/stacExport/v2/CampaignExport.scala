@@ -61,6 +61,9 @@ object optics {
   val labelAssetsLens =
     GenLens[ExportState](_.labelAssets)
 
+  val imageryS3LinksLens =
+    GenLens[ExportState](_.imageryS3Links)
+
   val itemCollectionLens =
     GenLens[StacItem](_.collection)
 
@@ -98,6 +101,10 @@ case class ExportState(
     labelAssets: Map[
       newtypes.AnnotationProjectId,
       newtypes.TaskGeoJSON
+    ],
+    imageryS3Links: Map[
+      newtypes.AnnotationProjectId,
+      newtypes.S3URL
     ]
 )
 
@@ -115,7 +122,11 @@ case class ExportData private (
       newtypes.AnnotationProjectId,
       newtypes.TaskGeoJSON
     ],
-    readme: String
+    readme: String,
+    imageryS3Links: Map[
+      newtypes.AnnotationProjectId,
+      newtypes.S3URL
+    ]
 ) extends LazyLogging {
 
   val labelCollectionId = s"labels-${UUID.randomUUID}"
@@ -237,23 +248,24 @@ case class ExportData private (
           links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
             .contains(link.rel)))
-
     (annotationProjectImageryItems.toList traverse {
       case (_, sceneItem) =>
-        encodableToFile(
-          (withCollection `compose` withParentLinks)(sceneItem.value),
-          file,
-          s"images/${sceneItem.value.id}/item.json"
-        ) *>
-          (sceneItem.value.assets.get(AssetTypesKey.cog) match {
-            case Some(asset) =>
-              writeCOGToFile(
-                URI.create(asset.href),
+        imageryS3Links.get(newtypes.AnnotationProjectId(
+          UUID.fromString(sceneItem.value.id))) match {
+          case Some(s3Link) =>
+            val ingestLocation = s3Link.value
+            writeCOGToFile(
+              URI.create(ingestLocation),
+              file,
+              s"images/${sceneItem.value.id}/${new java.io.File(ingestLocation).getName}"
+            ) *>
+              encodableToFile(
+                (withCollection `compose` withParentLinks)(sceneItem.value),
                 file,
-                s"images/${sceneItem.value.id}/${new java.io.File(asset.href).getName}"
+                s"images/${sceneItem.value.id}/item.json"
               )
-            case _ => IO.pure(())
-          })
+          case _ => IO.pure(())
+        }
     }).void
   }
 
@@ -466,7 +478,8 @@ object ExportData {
           state.annotationProjectImageryItems,
           state.annotationProjectLabelItems,
           state.labelAssets,
-          readme
+          readme,
+          state.imageryS3Links
         )
       )
     )(_ => Option.empty[ExportData])
@@ -510,6 +523,7 @@ class CampaignStacExport(
             labelGroupOpt,
             rootCatalog,
             projects,
+            Map.empty,
             Map.empty,
             Map.empty,
             Map.empty
@@ -559,6 +573,11 @@ class CampaignStacExport(
   ): ExportState => ExportState =
     optics.labelAssetsLens.modify(_ ++ toAppend)
 
+  private def appendImageS3Links(
+      toAppend: Map[newtypes.AnnotationProjectId, newtypes.S3URL]
+  ): ExportState => ExportState =
+    optics.imageryS3LinksLens.modify(_ ++ toAppend)
+
   private def includeAssetTypeInExport(
       exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
       assetType: ExportAssetType
@@ -570,9 +589,11 @@ class CampaignStacExport(
   private def exportAssetsAndLinks(
       maybeScene: Option[Scene],
       tileLayers: List[TileLayer],
-      exportAssetTypes: Option[NonEmptyList[ExportAssetType]]
-  ): IO[(Map[String, StacAsset], List[StacLink])] = {
-    val maybeNameAndIngestLocation = maybeScene match {
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
+      annotationProjectId: UUID
+  ): IO[(Map[String, StacAsset],
+         Map[newtypes.AnnotationProjectId, newtypes.S3URL])] = {
+    val maybeIngestLocation = maybeScene match {
       case Some(
           Scene(
             _,
@@ -584,7 +605,7 @@ class CampaignStacExport(
             _,
             _,
             _,
-            name,
+            _,
             _,
             _,
             _,
@@ -595,13 +616,13 @@ class CampaignStacExport(
             _
           )
           ) =>
-        Some((name, ingestLocation))
+        Some(ingestLocation)
       case _ => None
     }
     val signedUrlDurationInDays = 7
     for {
-      maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <- maybeNameAndIngestLocation match {
-        case Some((name, ingestLocation))
+      maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <- maybeIngestLocation match {
+        case Some(ingestLocation)
             if includeAssetTypeInExport(
               exportAssetTypes,
               ExportAssetType.SignedURL
@@ -617,7 +638,7 @@ class CampaignStacExport(
                 AssetTypesKey.signedURL,
                 StacAsset(
                   signedUrl,
-                  Some(name),
+                  Some("Image download URL"), // The displayed title for clients and users
                   Some(
                     s"Signed URL (expires ${java.time.LocalDateTime.now().plusDays(signedUrlDurationInDays)})"
                   ),
@@ -630,8 +651,10 @@ class CampaignStacExport(
         case _ =>
           IO.pure(None)
       }
-      maybeCOGAssetAndLink: Option[(Tuple2[String, StacAsset], StacLink)] <- maybeNameAndIngestLocation match {
-        case Some((name, ingestLocation))
+      maybeCOGAssetAndS3Link: Option[(Tuple2[String, StacAsset], Tuple2[
+        newtypes.AnnotationProjectId,
+        newtypes.S3URL])] <- maybeIngestLocation match {
+        case Some(ingestLocation)
             if includeAssetTypeInExport(
               exportAssetTypes,
               ExportAssetType.COG
@@ -643,20 +666,16 @@ class CampaignStacExport(
                   (
                     AssetTypesKey.cog,
                     StacAsset(
-                      ingestLocation,
-                      Some(name),
+                      s"./${new java.io.File(ingestLocation).getName}", // relative path to COG
+                      Some("Image local relative path"), // The displayed title for clients and users
                       Some("COG"),
                       Set(StacAssetRole.Data),
                       Some(`image/cog`)
                     )
                   )
                 ),
-                StacLink(
-                  s"./${new java.io.File(ingestLocation).getName}",
-                  StacLinkType.Item,
-                  Some(`image/cog`),
-                  None
-                )
+                (newtypes.AnnotationProjectId(annotationProjectId),
+                 newtypes.S3URL(ingestLocation))
               )
             )
           )
@@ -669,7 +688,7 @@ class CampaignStacExport(
             layer.name,
             StacAsset(
               layer.url,
-              Some(layer.name),
+              Some("Image layer"), // The displayed title for clients and users
               Some(s"${layer.layerType} tiles"),
               Set(StacAssetRole.Data),
               layer.layerType match {
@@ -684,24 +703,27 @@ class CampaignStacExport(
         tileLayersAssets ++
           List(
             maybeSignedURLAsset,
-            maybeCOGAssetAndLink flatMap {
+            maybeCOGAssetAndS3Link flatMap {
               case ((maybeCog, _)) => Some(maybeCog)
               case _               => None
             }
           ).flatten: _*
       )
-      links: List[StacLink] = maybeCOGAssetAndLink match {
-        case Some((_, link: StacLink)) => List(link)
-        case _                         => List.empty
-      }
-    } yield (assets, links)
+      s3Links: Map[newtypes.AnnotationProjectId, newtypes.S3URL] = Map(
+        List(maybeCOGAssetAndS3Link flatMap {
+          case ((_, maybeS3Link)) => Some(maybeS3Link)
+          case _                  => None
+        }).flatten: _*
+      )
+    } yield (assets, s3Links)
   }
 
   private def imageryItemFromTileLayers(
       annotationProject: AnnotationProject,
       exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
       taskStatuses: List[String]
-  ): IO[Option[newtypes.SceneItem]] = {
+  ): IO[(Option[newtypes.SceneItem],
+         Map[newtypes.AnnotationProjectId, newtypes.S3URL])] = {
     for {
       _ <- IO(logger.info(s"Building layer item from tile layers"))
       maybeScene <- AnnotationProjectDao
@@ -724,13 +746,14 @@ class CampaignStacExport(
       extentO <- TaskDao
         .createUnionedGeomExtent(annotationProject.id, taskStatuses)
         .transact(xa)
-      (assets, links) <- exportAssetsAndLinks(maybeScene,
-                                              tileLayers,
-                                              exportAssetTypes)
+      (assets, link) <- exportAssetsAndLinks(maybeScene,
+                                             tileLayers,
+                                             exportAssetTypes,
+                                             annotationProject.id)
       item = extentO map { unionedGeom =>
         makeTileLayersItem(
+          annotationProject.id,
           assets,
-          links,
           unionedGeom.geometry.geom.getEnvelopeInternal,
           Instant.now
         )
@@ -742,15 +765,10 @@ class CampaignStacExport(
       }
       _ <- IO {
         logger.info(
-          s"Found links $links"
-        )
-      }
-      _ <- IO {
-        logger.info(
           s"Returning STAC item $item"
         )
       }
-    } yield item
+    } yield (item, link)
   }
 
   private def processAnnotationProject(
@@ -760,7 +778,7 @@ class CampaignStacExport(
     for {
       // make the catalog for this annotation project
       // make the scene item for this annotation project with a tile layer asset
-      imageryItemO <- imageryItemFromTileLayers(
+      (imageryItemO, imageS3Link) <- imageryItemFromTileLayers(
         annotationProject,
         inputState.exportDefinition.exportAssetTypes,
         inputState.exportDefinition.taskStatuses
@@ -816,7 +834,8 @@ class CampaignStacExport(
         newtypes.AnnotationProjectId(annotationProject.id)
       ) `compose` appendImageryItem(
         imageryItemsAppend
-      ) `compose` appendLabelAssets(labelAssetAppend))(
+      ) `compose` appendLabelAssets(labelAssetAppend) `compose` appendImageS3Links(
+        imageS3Link))(
         inputState
       )
     }
@@ -824,14 +843,14 @@ class CampaignStacExport(
   }
 
   private def makeTileLayersItem(
+      annotationProjectId: UUID,
       assets: Map[String, StacAsset],
-      links: List[StacLink],
       extent: Extent,
       createdAt: Instant
   ): newtypes.SceneItem = {
     newtypes.SceneItem(
       StacItem(
-        s"${UUID.randomUUID}",
+        annotationProjectId.toString,
         "1.0.0",
         Nil,
         "Feature",
@@ -842,7 +861,7 @@ class CampaignStacExport(
           extent.xmax,
           extent.ymax
         ),
-        links,
+        Nil,
         assets,
         None,
         ItemProperties(ItemDatetime.PointInTime(createdAt))
