@@ -16,6 +16,7 @@ import com.rasterfoundry.notification.intercom.{
 }
 
 import better.files.{File => ScalaFile}
+import cats.data.Nested
 import cats.effect._
 import cats.implicits._
 import com.amazonaws.services.s3.AmazonS3URI
@@ -24,6 +25,8 @@ import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
 
+import java.sql.Timestamp
+import java.time.{Duration, Instant}
 import java.util.UUID
 
 final case class WriteStacCatalog(
@@ -67,7 +70,12 @@ final case class WriteStacCatalog(
       exportDefinition <- StacExportDao.unsafeGetById(exportId).transact(xa)
       tempDir = ScalaFile.newTemporaryDirectory()
       _ = tempDir.deleteOnExit()
-      currentPath = s"s3://$dataBucket/stac-exports"
+      isCogExport = Nested(exportDefinition.exportAssetTypes)
+        .find(_ == ExportAssetType.COG)
+        .isDefined
+      currentPath = if (isCogExport) {
+        s"s3://$dataBucket/stac-exports/cog-exports"
+      } else { s"s3://$dataBucket/stac-exports" }
       exportPath = s"$currentPath/${exportDefinition.id}"
       _ <- StacExportDao
         .update(
@@ -103,7 +111,10 @@ final case class WriteStacCatalog(
         val updatedExport =
           exportDefinition.copy(
             exportStatus = ExportStatus.Exported,
-            exportLocation = Some(exportPath)
+            exportLocation = Some(exportPath),
+            expiration = if (isCogExport) {
+              Some(Timestamp.from(Instant.now.plus(Duration.ofDays(30L))))
+            } else { None }
           )
         StacExportDao.update(updatedExport, exportDefinition.id).transact(xa)
       }

@@ -537,7 +537,8 @@ class CampaignStacExport(
           README.render(
             projList,
             state.annotationProjectLabelItems,
-            state.annotationProjectImageryItems
+            state.annotationProjectImageryItems,
+            state.exportDefinition.exportAssetTypes
           )
       }
     } yield {
@@ -593,35 +594,10 @@ class CampaignStacExport(
       annotationProjectId: UUID
   ): IO[(Map[String, StacAsset],
          Map[newtypes.AnnotationProjectId, newtypes.S3URL])] = {
-    val maybeIngestLocation = maybeScene match {
-      case Some(
-          Scene(
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            Some(ingestLocation),
-            _,
-            _,
-            _,
-            _
-          )
-          ) =>
-        Some(ingestLocation)
-      case _ => None
-    }
+    val maybeIngestLocation = maybeScene flatMap { _.ingestLocation }
     val signedUrlDurationInDays = 7
     for {
-      maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <- maybeIngestLocation match {
+      maybeSignedURLAsset: Option[(String, StacAsset)] <- maybeIngestLocation match {
         case Some(ingestLocation)
             if includeAssetTypeInExport(
               exportAssetTypes,
@@ -651,9 +627,9 @@ class CampaignStacExport(
         case _ =>
           IO.pure(None)
       }
-      maybeCOGAssetAndS3Link: Option[(Tuple2[String, StacAsset], Tuple2[
-        newtypes.AnnotationProjectId,
-        newtypes.S3URL])] <- maybeIngestLocation match {
+      maybeCOGAssetAndS3Link: Option[((String, StacAsset),
+      (newtypes.AnnotationProjectId,
+      newtypes.S3URL))] <- maybeIngestLocation match {
         case Some(ingestLocation)
             if includeAssetTypeInExport(
               exportAssetTypes,
@@ -682,22 +658,21 @@ class CampaignStacExport(
         case _ =>
           IO.pure(None)
       }
-      tileLayersAssets: List[Tuple2[String, StacAsset]] = tileLayers map {
-        layer =>
-          (
-            layer.name,
-            StacAsset(
-              layer.url,
-              Some("Image layer"), // The displayed title for clients and users
-              Some(s"${layer.layerType} tiles"),
-              Set(StacAssetRole.Data),
-              layer.layerType match {
-                case MVT =>
-                  Some(VendorMediaType("application/vnd.mapbox-vector-tile"))
-                case TMS => Some(`image/png`)
-              }
-            )
+      tileLayersAssets: List[(String, StacAsset)] = tileLayers map { layer =>
+        (
+          layer.name,
+          StacAsset(
+            layer.url,
+            Some("Image layer"), // The displayed title for clients and users
+            Some(s"${layer.layerType} tiles"),
+            Set(StacAssetRole.Data),
+            layer.layerType match {
+              case MVT =>
+                Some(VendorMediaType("application/vnd.mapbox-vector-tile"))
+              case TMS => Some(`image/png`)
+            }
           )
+        )
       }
       assets: Map[String, StacAsset] = Map(
         tileLayersAssets ++
@@ -725,12 +700,12 @@ class CampaignStacExport(
   ): IO[(Option[newtypes.SceneItem],
          Map[newtypes.AnnotationProjectId, newtypes.S3URL])] = {
     for {
-      _ <- IO(logger.info(s"Building layer item from tile layers"))
+      _ <- IO(logger.info(s"Building imagery item from tile layers"))
       maybeScene <- AnnotationProjectDao
         .getFirstScene(annotationProject.id)
         .transact(xa)
       _ <- IO {
-        logger.info(maybeScene match {
+        logger.debug(maybeScene match {
           case Some(scene) => s"Found scene with id ${scene.id}"
           case _           => "No scene found"
         })
@@ -739,7 +714,7 @@ class CampaignStacExport(
         .listByProjectId(annotationProject.id)
         .transact(xa)
       _ <- IO {
-        logger.info(
+        logger.debug(
           s"Found ${tileLayers.size} tile layers"
         )
       }
@@ -759,12 +734,12 @@ class CampaignStacExport(
         )
       }
       _ <- IO {
-        logger.info(
+        logger.debug(
           s"Found assets $assets"
         )
       }
       _ <- IO {
-        logger.info(
+        logger.debug(
           s"Returning STAC item $item"
         )
       }
