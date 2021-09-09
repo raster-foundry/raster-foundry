@@ -92,6 +92,7 @@ object StacExport {
       taskStatuses: List[String],
       downloadUrl: Option[String],
       annotationProjectId: Option[UUID],
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
       expiration: Option[Timestamp]
   )
 
@@ -109,6 +110,7 @@ object StacExport {
       export.taskStatuses,
       signedDownload,
       export.annotationProjectId,
+      export.exportAssetTypes,
       export.expiration
     )
 
