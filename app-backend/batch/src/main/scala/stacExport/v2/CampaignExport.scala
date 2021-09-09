@@ -597,7 +597,7 @@ class CampaignStacExport(
     val maybeIngestLocation = maybeScene flatMap { _.ingestLocation }
     val signedUrlDurationInDays = 7
     for {
-      maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <- maybeIngestLocation match {
+      maybeSignedURLAsset: Option[(String, StacAsset)] <- maybeIngestLocation match {
         case Some(ingestLocation)
             if includeAssetTypeInExport(
               exportAssetTypes,
@@ -627,9 +627,9 @@ class CampaignStacExport(
         case _ =>
           IO.pure(None)
       }
-      maybeCOGAssetAndS3Link: Option[(Tuple2[String, StacAsset], Tuple2[
-        newtypes.AnnotationProjectId,
-        newtypes.S3URL])] <- maybeIngestLocation match {
+      maybeCOGAssetAndS3Link: Option[((String, StacAsset),
+      (newtypes.AnnotationProjectId,
+      newtypes.S3URL))] <- maybeIngestLocation match {
         case Some(ingestLocation)
             if includeAssetTypeInExport(
               exportAssetTypes,
@@ -658,22 +658,21 @@ class CampaignStacExport(
         case _ =>
           IO.pure(None)
       }
-      tileLayersAssets: List[Tuple2[String, StacAsset]] = tileLayers map {
-        layer =>
-          (
-            layer.name,
-            StacAsset(
-              layer.url,
-              Some("Image layer"), // The displayed title for clients and users
-              Some(s"${layer.layerType} tiles"),
-              Set(StacAssetRole.Data),
-              layer.layerType match {
-                case MVT =>
-                  Some(VendorMediaType("application/vnd.mapbox-vector-tile"))
-                case TMS => Some(`image/png`)
-              }
-            )
+      tileLayersAssets: List[(String, StacAsset)] = tileLayers map { layer =>
+        (
+          layer.name,
+          StacAsset(
+            layer.url,
+            Some("Image layer"), // The displayed title for clients and users
+            Some(s"${layer.layerType} tiles"),
+            Set(StacAssetRole.Data),
+            layer.layerType match {
+              case MVT =>
+                Some(VendorMediaType("application/vnd.mapbox-vector-tile"))
+              case TMS => Some(`image/png`)
+            }
           )
+        )
       }
       assets: Map[String, StacAsset] = Map(
         tileLayersAssets ++
