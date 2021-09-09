@@ -594,32 +594,7 @@ class CampaignStacExport(
       annotationProjectId: UUID
   ): IO[(Map[String, StacAsset],
          Map[newtypes.AnnotationProjectId, newtypes.S3URL])] = {
-    val maybeIngestLocation = maybeScene match {
-      case Some(
-          Scene(
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            Some(ingestLocation),
-            _,
-            _,
-            _,
-            _
-          )
-          ) =>
-        Some(ingestLocation)
-      case _ => None
-    }
+    val maybeIngestLocation = maybeScene flatMap { _.ingestLocation }
     val signedUrlDurationInDays = 7
     for {
       maybeSignedURLAsset: Option[Tuple2[String, StacAsset]] <- maybeIngestLocation match {
