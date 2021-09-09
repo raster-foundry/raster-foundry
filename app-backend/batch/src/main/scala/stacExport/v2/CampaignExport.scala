@@ -741,11 +741,6 @@ class CampaignStacExport(
       }
       _ <- IO {
         logger.debug(
-          s"Found links $links"
-        )
-      }
-      _ <- IO {
-        logger.debug(
           s"Returning STAC item $item"
         )
       }
