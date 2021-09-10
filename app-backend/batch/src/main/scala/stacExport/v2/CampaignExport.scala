@@ -264,7 +264,11 @@ case class ExportData private (
                 file,
                 s"images/${sceneItem.value.id}/item.json"
               )
-          case _ => IO.pure(())
+          case _ =>
+            encodableToFile(
+              (withCollection `compose` withParentLinks)(sceneItem.value),
+              file,
+              s"images/${sceneItem.value.id}/item.json")
         }
     }).void
   }
@@ -684,12 +688,11 @@ class CampaignStacExport(
             }
           ).flatten: _*
       )
-      s3Links: Map[newtypes.AnnotationProjectId, newtypes.S3URL] = Map(
-        List(maybeCOGAssetAndS3Link flatMap {
-          case ((_, maybeS3Link)) => Some(maybeS3Link)
-          case _                  => None
-        }).flatten: _*
-      )
+      s3Links: Map[newtypes.AnnotationProjectId, newtypes.S3URL] = maybeCOGAssetAndS3Link
+        .map({ pair =>
+          Map(pair._2)
+        })
+        .getOrElse(Map.empty)
     } yield (assets, s3Links)
   }
 

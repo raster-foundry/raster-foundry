@@ -91,7 +91,9 @@ object StacExport {
       exportStatus: ExportStatus,
       taskStatuses: List[String],
       downloadUrl: Option[String],
-      annotationProjectId: Option[UUID]
+      annotationProjectId: Option[UUID],
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
+      expiration: Option[Timestamp]
   )
 
   def signDownloadUrl(export: StacExport, signedDownload: Option[String]) =
@@ -107,7 +109,9 @@ object StacExport {
       export.exportStatus,
       export.taskStatuses,
       signedDownload,
-      export.annotationProjectId
+      export.annotationProjectId,
+      export.exportAssetTypes,
+      export.expiration
     )
 
   sealed abstract class Create {
