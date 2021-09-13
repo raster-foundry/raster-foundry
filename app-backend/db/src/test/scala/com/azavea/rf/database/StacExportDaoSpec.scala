@@ -9,6 +9,8 @@ import org.scalacheck.Prop.forAll
 import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import java.sql.Timestamp
+import java.time.{Duration, Instant}
 
 class StacExportDaoSpec
     extends AnyFunSuite
@@ -208,6 +210,7 @@ class StacExportDaoSpec
             projectCreate: AnnotationProject.Create,
             stacExportCreate: StacExport.AnnotationProjectExport
         ) => {
+          val newExpiration = Timestamp.from(Instant.now.plus(Duration.ofDays(30L)))
           val updatetStacExportIO = for {
             dbUser <- UserDao.create(userCreate)
             dbProject <- AnnotationProjectDao.insert(projectCreate, dbUser)
@@ -223,7 +226,8 @@ class StacExportDaoSpec
               dbStacExport.copy(
                 exportStatus = ExportStatus.Exported,
                 exportLocation = Some(""),
-                taskStatuses = List()
+                taskStatuses = List(),
+                expiration=Some(newExpiration)
               ),
               dbStacExport.id
             )
@@ -267,6 +271,10 @@ class StacExportDaoSpec
           assert(
             se.annotationProjectId == selectedSe.annotationProjectId,
             "Selected and inserted StacExport annotation project ids should be the same"
+          )
+          assert(
+            selectedSe.expiration.isDefined && selectedSe.expiration == Some(newExpiration),
+            "Expiration was correctly updated"
           )
           true
         }

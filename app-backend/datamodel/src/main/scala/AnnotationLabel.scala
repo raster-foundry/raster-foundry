@@ -189,7 +189,8 @@ object AnnotationLabelWithClasses {
         properties.annotationLabelClasses,
         properties.description,
         properties.isActive,
-        properties.sessionId
+        properties.sessionId,
+        properties.score
       )
     }
   }

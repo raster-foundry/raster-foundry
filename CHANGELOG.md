@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.68.0] - 2021-09-13
+### Changed
+- STAC exports with COGs get uploaded to a prefix with an expiration policy configured [#5622](https://github.com/raster-foundry/raster-foundry/pull/5622)
+
+### Fixed
+- Fixed STAC export image item's asset `href`s [#5621](https://github.com/raster-foundry/raster-foundry/pull/5621), [#5625](https://github.com/raster-foundry/raster-foundry/pull/5625)
+- POSTed / PUT labels with scores actually keep their scores [#5626](https://github.com/raster-foundry/raster-foundry/pull/5626)
+
 ## [1.67.0] - 2021-09-01
 ### Changed
 - Indexed all foreign key references to users [#5611](https://github.com/raster-foundry/raster-foundry/pull/5611)
@@ -1012,7 +1020,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.67.0...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.68.0...HEAD
+[1.68.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.67.0...v1.68.0
 [1.67.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.2...v1.67.0
 [1.66.2]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.1...v1.66.2
 [1.66.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.66.0...v1.66.1

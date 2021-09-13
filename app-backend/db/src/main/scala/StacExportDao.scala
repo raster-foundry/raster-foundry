@@ -20,7 +20,7 @@ object StacExportDao extends Dao[StacExport] {
         id, created_at, created_by, modified_at, owner,
         name, license, export_location, export_status,
         task_statuses, annotation_project_id, campaign_id,
-        export_asset_types
+        export_asset_types, expiration
       FROM
     """ ++ tableF
 
@@ -71,7 +71,8 @@ object StacExportDao extends Dao[StacExport] {
       "task_statuses",
       "annotation_project_id",
       "campaign_id",
-      "export_asset_types"
+      "export_asset_types",
+      "expiration"
     )
   }
 
@@ -81,7 +82,8 @@ object StacExportDao extends Dao[StacExport] {
       modified_at = ${now},
       name = ${stacExport.name},
       export_location = ${stacExport.exportLocation},
-      export_status = ${stacExport.exportStatus}
+      export_status = ${stacExport.exportStatus},
+      expiration = ${stacExport.expiration}
       where id = ${id}
       """).update.run
   }

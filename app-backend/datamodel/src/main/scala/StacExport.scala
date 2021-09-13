@@ -26,7 +26,8 @@ final case class StacExport(
     taskStatuses: List[String],
     annotationProjectId: Option[UUID],
     campaignId: Option[UUID],
-    exportAssetTypes: Option[NonEmptyList[ExportAssetType]]
+    exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
+    expiration: Option[Timestamp]
 ) {
   def createStacCollection(
       stacVersion: String,
@@ -90,7 +91,9 @@ object StacExport {
       exportStatus: ExportStatus,
       taskStatuses: List[String],
       downloadUrl: Option[String],
-      annotationProjectId: Option[UUID]
+      annotationProjectId: Option[UUID],
+      exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
+      expiration: Option[Timestamp]
   )
 
   def signDownloadUrl(export: StacExport, signedDownload: Option[String]) =
@@ -106,7 +109,9 @@ object StacExport {
       export.exportStatus,
       export.taskStatuses,
       signedDownload,
-      export.annotationProjectId
+      export.annotationProjectId,
+      export.exportAssetTypes,
+      export.expiration
     )
 
   sealed abstract class Create {
@@ -148,6 +153,7 @@ object StacExport {
         this.taskStatuses.map(_.toString),
         Some(annotationProjectId),
         None,
+        None,
         None
       )
     }
@@ -178,7 +184,8 @@ object StacExport {
         this.taskStatuses.map(_.toString),
         None,
         Some(campaignId),
-        exportAssetTypes
+        exportAssetTypes,
+        None
       )
     }
   }

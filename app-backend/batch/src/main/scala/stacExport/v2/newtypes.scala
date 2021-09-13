@@ -12,5 +12,5 @@ object newtypes {
   @newtype case class SceneItem(value: StacItem)
   @newtype case class LabelItem(value: StacItem)
   @newtype case class TaskGeoJSON(value: Json)
-
+  @newtype case class S3URL(value: String)
 }
