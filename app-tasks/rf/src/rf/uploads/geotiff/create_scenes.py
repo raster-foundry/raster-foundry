@@ -1,9 +1,8 @@
 import logging
 import uuid
 
-from rf.models import Footprint, Scene
+from rf.models import Scene
 from rf.utils.io import IngestStatus, JobStatus, Visibility
-from rf.utils.footprint import complex_footprint
 from shapely.geometry import mapping, MultiPolygon, Polygon
 
 from .io import get_geotiff_metadata, get_geotiff_name
@@ -65,8 +64,6 @@ def create_geotiff_scene(
     }
     # Override defaults with kwargs
     sceneKwargs.update(kwargs)
-    data_footprint = complex_footprint(tif_path)
-    tile_footprint = MultiPolygon([Polygon.from_bounds(*data_footprint.bounds)])
 
     # Construct Scene
     scene = Scene(
@@ -81,8 +78,8 @@ def create_geotiff_scene(
         metadataFiles,
         owner=owner,
         sceneType=sceneType,
-        dataFootprint=Footprint(mapping(data_footprint)["coordinates"]),
-        tileFootprint=Footprint(mapping(tile_footprint)["coordinates"]),
+        dataFootprint=None,
+        tileFootprint=None,
         **sceneKwargs
     )
 

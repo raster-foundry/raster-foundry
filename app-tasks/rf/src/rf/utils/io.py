@@ -5,6 +5,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from urllib.parse import urlparse, unquote, quote
 
 import boto3
@@ -20,6 +21,29 @@ s3 = boto3.resource("s3", region_name="eu-central-1")
 
 debug_data_bucket = os.getenv("RF_DEBUG_DATA_BUCKET")
 data_bucket = os.getenv("DATA_BUCKET")
+
+
+class JobStatus(object):
+    QUEUED = "QUEUED"
+    PROCESSING = "PROCESSING"
+    FAILURE = "FAILURE"
+    SUCCESS = "SUCCESS"
+    UPLOADING = "UPLOADING"
+    PARTIALFAILURE = "PARTIALFAILURE"
+
+
+class IngestStatus(object):
+    NOTINGESTED = "NOTINGESTED"
+    TOBEINGESTED = "TOBEINGESTED"
+    INGESTING = "INGESTING"
+    INGESTED = "INGESTED"
+    FAILED = "FAILED"
+
+
+class Visibility(object):
+    PUBLIC = "PUBLIC"
+    ORGANIZATION = "ORGANIZATION"
+    PRIVATE = "PRIVATE"
 
 
 @contextmanager
@@ -271,26 +295,3 @@ def copy_to_debug(upload):
             Key=source_key,
             CopySource={"Bucket": source_bucket, "Key": source_key},
         )
-
-
-class JobStatus(object):
-    QUEUED = "QUEUED"
-    PROCESSING = "PROCESSING"
-    FAILURE = "FAILURE"
-    SUCCESS = "SUCCESS"
-    UPLOADING = "UPLOADING"
-    PARTIALFAILURE = "PARTIALFAILURE"
-
-
-class IngestStatus(object):
-    NOTINGESTED = "NOTINGESTED"
-    TOBEINGESTED = "TOBEINGESTED"
-    INGESTING = "INGESTING"
-    INGESTED = "INGESTED"
-    FAILED = "FAILED"
-
-
-class Visibility(object):
-    PUBLIC = "PUBLIC"
-    ORGANIZATION = "ORGANIZATION"
-    PRIVATE = "PRIVATE"
