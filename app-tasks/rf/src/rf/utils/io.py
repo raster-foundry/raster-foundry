@@ -5,7 +5,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-import time
 from urllib.parse import urlparse, unquote, quote
 
 import boto3
