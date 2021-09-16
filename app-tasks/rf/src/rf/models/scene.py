@@ -4,10 +4,10 @@ import uuid
 from requests.exceptions import HTTPError
 import logging
 
-from .base import BaseModel
-from .thumbnail import Thumbnail
-from .image import Image
-from .footprint import Footprint
+from rf.models.base import BaseModel
+from rf.models.thumbnail import Thumbnail
+from rf.models.image import Image
+from rf.models.footprint import Footprint
 
 logger = logging.getLogger(__name__)
 

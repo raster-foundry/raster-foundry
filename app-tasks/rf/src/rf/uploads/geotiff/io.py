@@ -6,6 +6,7 @@ import rasterio
 
 
 from rf.models import AnnotationProject
+from rf.utils.io import get_tempdir
 
 
 def get_geotiff_metadata(tif_path):
@@ -43,8 +44,17 @@ def get_geotiff_resolution(tif_path):
     Returns:
         Resolution of the GeoTIFF as an (x, y) tuple.
     """
-    with rasterio.open(tif_path) as src:
-        return src.res
+    with get_tempdir() as tempdir:
+        warped_path = os.path.join(tempdir, "warped-web-mercator.vrt")
+        subprocess.check_call([
+            "gdalwarp",
+            "-t_srs",
+            "epsg:3857",
+            tif_path.replace("s3://", "/vsis3/"),
+            warped_path
+        ])
+        with rasterio.open(warped_path) as src:
+            return src.res
 
 
 def get_geotiff_size_bytes(tif_path):

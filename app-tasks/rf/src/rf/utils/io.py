@@ -22,6 +22,29 @@ debug_data_bucket = os.getenv("RF_DEBUG_DATA_BUCKET")
 data_bucket = os.getenv("DATA_BUCKET")
 
 
+class JobStatus(object):
+    QUEUED = "QUEUED"
+    PROCESSING = "PROCESSING"
+    FAILURE = "FAILURE"
+    SUCCESS = "SUCCESS"
+    UPLOADING = "UPLOADING"
+    PARTIALFAILURE = "PARTIALFAILURE"
+
+
+class IngestStatus(object):
+    NOTINGESTED = "NOTINGESTED"
+    TOBEINGESTED = "TOBEINGESTED"
+    INGESTING = "INGESTING"
+    INGESTED = "INGESTED"
+    FAILED = "FAILED"
+
+
+class Visibility(object):
+    PUBLIC = "PUBLIC"
+    ORGANIZATION = "ORGANIZATION"
+    PRIVATE = "PRIVATE"
+
+
 @contextmanager
 def get_tempdir(debug=False):
     """Returns a temporary directory that is cleaned up after usage
@@ -271,26 +294,3 @@ def copy_to_debug(upload):
             Key=source_key,
             CopySource={"Bucket": source_bucket, "Key": source_key},
         )
-
-
-class JobStatus(object):
-    QUEUED = "QUEUED"
-    PROCESSING = "PROCESSING"
-    FAILURE = "FAILURE"
-    SUCCESS = "SUCCESS"
-    UPLOADING = "UPLOADING"
-    PARTIALFAILURE = "PARTIALFAILURE"
-
-
-class IngestStatus(object):
-    NOTINGESTED = "NOTINGESTED"
-    TOBEINGESTED = "TOBEINGESTED"
-    INGESTING = "INGESTING"
-    INGESTED = "INGESTED"
-    FAILED = "FAILED"
-
-
-class Visibility(object):
-    PUBLIC = "PUBLIC"
-    ORGANIZATION = "ORGANIZATION"
-    PRIVATE = "PRIVATE"

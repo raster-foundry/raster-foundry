@@ -1,14 +1,15 @@
 import logging
 import os
+import time
 
 import click
 from planet import api
 
-from ..models import Upload, AnnotationProject
+from ..models import Upload, Scene, AnnotationProject
 from ..uploads.geotiff import GeoTiffS3SceneFactory
 from ..uploads.geotiff.io import update_annotation_project
 from ..utils.exception_reporting import wrap_rollbar
-from ..utils.io import get_session, notify_intercom, copy_to_debug
+from ..utils.io import get_session, notify_intercom, copy_to_debug, IngestStatus
 
 logger = logging.getLogger(__name__)
 HOST = os.getenv("RF_HOST")
@@ -17,6 +18,19 @@ JOB_ATTEMPT = int(os.getenv("AWS_BATCH_JOB_ATTEMPT", -1))
 
 class TaskGridError(Exception):
     pass
+
+
+def wait_for_scene(scene_id, attempt, max_attempts):
+    scene = Scene.from_id(scene_id)
+    if scene.ingestStatus != IngestStatus.INGESTED and attempt < max_attempts - 1:
+        time.sleep(3)
+        return wait_for_scene(scene_id, attempt + 1, max_attempts)
+    elif scene.ingestStatus == IngestStatus.INGESTED:
+        return
+    else:
+        raise Exception(
+            "Scene did not become ingested in a reasonable amount of time. If this completes eventually, you can resume upload processing later at the next step"
+        )
 
 
 @click.command(name="process-upload")
@@ -106,6 +120,9 @@ def process_upload(upload_id):
         )
 
         generate_tasks = upload.annotationProjectId is not None and upload.generateTasks
+        for new_scene_id in scene_ids:
+            wait_for_scene(new_scene_id, 0, 10)
+
         if generate_tasks:
             try:
                 [
