@@ -8,6 +8,7 @@ import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3URI}
@@ -83,16 +84,16 @@ trait StacRoutes
             complete {
               StacExportDao
                 .list(page, params, user)
-                .map(
-                  p =>
-                    PaginatedResponse[StacExport.WithSignedDownload](
-                      p.count,
-                      p.hasPrevious,
-                      p.hasNext,
-                      p.page,
-                      p.pageSize,
-                      p.results.map(signExportUrl(_))
-                  ))
+                .map(p =>
+                  PaginatedResponse[StacExport.WithSignedDownload](
+                    p.count,
+                    p.hasPrevious,
+                    p.hasNext,
+                    p.page,
+                    p.pageSize,
+                    p.results.map(signExportUrl(_))
+                  )
+                )
                 .transact(xa)
                 .unsafeToFuture
             }
@@ -137,14 +138,23 @@ trait StacRoutes
               }
           }
           {
-            onSuccess(
-              StacExportDao
-                .create(newStacExport, user)
-                .transact(xa)
-                .unsafeToFuture
-            ) { stacExport =>
-              kickoffStacExport(stacExport.id)
-              complete((StatusCodes.Created, stacExport))
+            (newStacExport.toStacExport(user).includesCOG match {
+              case true =>
+                authorizeScope(
+                  ScopedAction(Domain.StacExports, Action.CreateCOG, None),
+                  user
+                )
+              case false => SecurityDirectives.authorize(_ => true)
+            }) {
+              onSuccess(
+                StacExportDao
+                  .create(newStacExport, user)
+                  .transact(xa)
+                  .unsafeToFuture
+              ) { stacExport =>
+                kickoffStacExport(stacExport.id)
+                complete((StatusCodes.Created, stacExport))
+              }
             }
           }
         }
