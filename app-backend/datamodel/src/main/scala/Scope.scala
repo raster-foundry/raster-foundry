@@ -639,7 +639,8 @@ object Scopes {
             Set(
               ScopedAction(Domain.Campaigns, Action.Create, Some(50L)),
               ScopedAction(Domain.Campaigns, Action.Share, Some(50L)),
-              ScopedAction(Domain.Uploads, Action.Create, Some(50 * oneGb))
+              ScopedAction(Domain.Uploads, Action.Create, Some(50 * oneGb)),
+              ScopedAction(Domain.StacExports, Action.CreateCOG, None)
             )
           )
         )
