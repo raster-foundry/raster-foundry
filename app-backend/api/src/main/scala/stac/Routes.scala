@@ -8,7 +8,6 @@ import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3URI}
@@ -101,51 +100,6 @@ trait StacRoutes
       }
     }
 
-  private def authorizeCreateStacExport(
-      newStacExport: StacExport.Create,
-      user: User
-  ): Directive0 = {
-    val canCreateCOG: Directive0 =
-      (newStacExport.toStacExport(user).includesCOG match {
-        case true =>
-          authorizeScope(
-            ScopedAction(Domain.StacExports, Action.CreateCOG, None),
-            user
-          )
-        case false => authorize(_ => true)
-      })
-    val canAccess: Directive0 = (newStacExport match {
-      case StacExport
-            .AnnotationProjectExport(_, _, _, annotationProjectId) =>
-        authorizeAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              annotationProjectId,
-              ActionType.View
-            )
-            .map(_.toBoolean)
-            .transact(xa)
-            .unsafeToFuture
-        }
-      case StacExport.CampaignExport(_, _, _, _, campaignId) =>
-        authorizeAsync {
-          CampaignDao
-            .authorized(
-              user,
-              ObjectType.Campaign,
-              campaignId,
-              ActionType.View
-            )
-            .map(_.toBoolean)
-            .transact(xa)
-            .unsafeToFuture
-        }
-    })
-    canCreateCOG & canAccess
-  }
-
   def createStacExport: Route =
     authenticate { user =>
       authorizeScope(
@@ -153,7 +107,40 @@ trait StacRoutes
         user
       ) {
         entity(as[StacExport.Create]) { newStacExport =>
-          authorizeCreateStacExport(newStacExport, user) {
+          ((newStacExport.toStacExport(user).includesCOG match {
+            case true =>
+              authorizeScope(
+                ScopedAction(Domain.StacExports, Action.CreateCOG, None),
+                user
+              )
+            case false => authorize(_ => true)
+          }) & (authorizeAsync {
+            newStacExport match {
+              case StacExport
+                    .AnnotationProjectExport(_, _, _, annotationProjectId) =>
+                AnnotationProjectDao
+                  .authorized(
+                    user,
+                    ObjectType.AnnotationProject,
+                    annotationProjectId,
+                    ActionType.View
+                  )
+                  .map(_.toBoolean)
+                  .transact(xa)
+                  .unsafeToFuture
+              case StacExport.CampaignExport(_, _, _, _, campaignId) =>
+                CampaignDao
+                  .authorized(
+                    user,
+                    ObjectType.Campaign,
+                    campaignId,
+                    ActionType.View
+                  )
+                  .map(_.toBoolean)
+                  .transact(xa)
+                  .unsafeToFuture
+            }
+          })) {
             onSuccess(
               StacExportDao
                 .create(newStacExport, user)
