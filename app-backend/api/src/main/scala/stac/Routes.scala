@@ -83,16 +83,16 @@ trait StacRoutes
             complete {
               StacExportDao
                 .list(page, params, user)
-                .map(p =>
-                  PaginatedResponse[StacExport.WithSignedDownload](
-                    p.count,
-                    p.hasPrevious,
-                    p.hasNext,
-                    p.page,
-                    p.pageSize,
-                    p.results.map(signExportUrl(_))
-                  )
-                )
+                .map(
+                  p =>
+                    PaginatedResponse[StacExport.WithSignedDownload](
+                      p.count,
+                      p.hasPrevious,
+                      p.hasNext,
+                      p.page,
+                      p.pageSize,
+                      p.results.map(signExportUrl(_))
+                  ))
                 .transact(xa)
                 .unsafeToFuture
             }
