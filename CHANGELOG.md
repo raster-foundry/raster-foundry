@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.68.1] - 2021-09-16
 ### Fixed
 - Corrected task side length calculation for non-Web Mercator COGs [#5627](https://github.com/raster-foundry/raster-foundry/pull/5627)
+- Fixed link in README.md.
 
 ## [1.68.0] - 2021-09-13
 ### Changed
