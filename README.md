@@ -74,7 +74,7 @@ with other developers. This script will also apply any outstanding migrations no
 
 ### Migrations
 
-Database migrations are managed using [flyway](flyway). You can run `flyway` commands with `scripts/migrate`. Some commands you
+Database migrations are managed using [flyway](https://flywaydb.org/). You can run `flyway` commands with `scripts/migrate`. Some commands you
 can run are:
 
 - `scripts/migrate migrate`: apply outtanding migrations
