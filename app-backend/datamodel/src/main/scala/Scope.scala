@@ -92,6 +92,7 @@ object Action {
   case object ColorCorrect extends Action("colorCorrect")
   case object Clone extends Action("clone")
   case object Create extends Action("create")
+  case object CreateCOG extends Action("createCOG")
   case object CreateAnnotation extends Action("createAnnotation")
   case object CreateExport extends Action("createExport")
   case object CreateScopes extends Action("createScopes")
@@ -133,6 +134,7 @@ object Action {
       case "clone"                => Success(Clone)
       case "create"               => Success(Create)
       case "createAnnotation"     => Success(CreateAnnotation)
+      case "createCOG"            => Success(CreateCOG)
       case "createExport"         => Success(CreateExport)
       case "createScopes"         => Success(CreateScopes)
       case "createTaskGrid"       => Success(CreateTaskGrid)
@@ -637,7 +639,8 @@ object Scopes {
             Set(
               ScopedAction(Domain.Campaigns, Action.Create, Some(50L)),
               ScopedAction(Domain.Campaigns, Action.Share, Some(50L)),
-              ScopedAction(Domain.Uploads, Action.Create, Some(50 * oneGb))
+              ScopedAction(Domain.Uploads, Action.Create, Some(50 * oneGb)),
+              ScopedAction(Domain.StacExports, Action.CreateCOG, None)
             )
           )
         )

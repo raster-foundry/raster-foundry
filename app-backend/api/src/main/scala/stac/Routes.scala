@@ -107,10 +107,17 @@ trait StacRoutes
         user
       ) {
         entity(as[StacExport.Create]) { newStacExport =>
-          newStacExport match {
-            case StacExport
-                  .AnnotationProjectExport(_, _, _, annotationProjectId) =>
-              authorizeAsync {
+          ((newStacExport.toStacExport(user).includesCOG match {
+            case true =>
+              authorizeScope(
+                ScopedAction(Domain.StacExports, Action.CreateCOG, None),
+                user
+              )
+            case false => authorize(_ => true)
+          }) & (authorizeAsync {
+            newStacExport match {
+              case StacExport
+                    .AnnotationProjectExport(_, _, _, annotationProjectId) =>
                 AnnotationProjectDao
                   .authorized(
                     user,
@@ -121,9 +128,7 @@ trait StacRoutes
                   .map(_.toBoolean)
                   .transact(xa)
                   .unsafeToFuture
-              }
-            case StacExport.CampaignExport(_, _, _, _, campaignId) =>
-              authorizeAsync {
+              case StacExport.CampaignExport(_, _, _, _, campaignId) =>
                 CampaignDao
                   .authorized(
                     user,
@@ -134,9 +139,8 @@ trait StacRoutes
                   .map(_.toBoolean)
                   .transact(xa)
                   .unsafeToFuture
-              }
-          }
-          {
+            }
+          })) {
             onSuccess(
               StacExportDao
                 .create(newStacExport, user)

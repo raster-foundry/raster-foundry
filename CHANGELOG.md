@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.68.0] - 2021-09-13
 ### Changed
 - STAC exports with COGs get uploaded to a prefix with an expiration policy configured [#5622](https://github.com/raster-foundry/raster-foundry/pull/5622)
+- Enforce pro permissions for including COG in STAC export [#5628](https://github.com/raster-foundry/raster-foundry/pull/5628)
 
 ### Fixed
 - Fixed STAC export image item's asset `href`s [#5621](https://github.com/raster-foundry/raster-foundry/pull/5621), [#5625](https://github.com/raster-foundry/raster-foundry/pull/5625)

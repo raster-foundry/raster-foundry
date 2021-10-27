@@ -29,6 +29,12 @@ final case class StacExport(
     exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
     expiration: Option[Timestamp]
 ) {
+
+  def includesCOG: Boolean =
+    exportAssetTypes map { assetTypes =>
+      assetTypes.toList.contains(ExportAssetType.COG)
+    } getOrElse (false)
+
   def createStacCollection(
       stacVersion: String,
       stacExtensions: List[String],

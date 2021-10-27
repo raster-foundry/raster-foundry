@@ -130,4 +130,16 @@ class ScopeSpec
         .flatMap(_.limit) == Some(50 * Scopes.oneGb)
     )
   }
+
+  test("Groundwork Pro users can create STAC exports that include COGs") {
+    assert(
+      Scopes
+        .resolveFor(
+          Domain.StacExports,
+          Action.CreateCOG,
+          Scopes.GroundworkProUser.actions
+        )
+        .isDefined
+    )
+  }
 }
