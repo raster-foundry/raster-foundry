@@ -325,13 +325,15 @@ trait UserRoutes
             userBulkCreate.peudoUserNameType
           )
 
-          val connectionInfo = Auth0Service.getConnectionInfo(userBulkCreate.isAltConnection)
+          val connectionInfo =
+            Auth0Service.getConnectionInfo(userBulkCreate.isAltConnection)
 
-          val createdUsers = Auth0Service.bulkCreateUsers(names, connectionInfo).map {
-            // At this point, if we have an error we throw because the server should return a 500
-            case Left(e)      => throw new Exception(e.error)
-            case Right(users) => users
-          }
+          val createdUsers =
+            Auth0Service.bulkCreateUsers(names, connectionInfo).map {
+              // At this point, if we have an error we throw because the server should return a 500
+              case Left(e)      => throw new Exception(e.error)
+              case Right(users) => users
+            }
 
           val uwcsFuture = for {
             users <- createdUsers

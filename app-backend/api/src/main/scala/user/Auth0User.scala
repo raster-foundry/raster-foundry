@@ -90,18 +90,18 @@ object UserWithOAuth {
     "visibility",
     "dropboxCredential",
     "planetCredential"
-  )(u =>
-    (
-      u.id,
-      u.name,
-      u.email,
-      u.profileImageUri,
-      u.emailNotifications,
-      u.visibility,
-      u.dropboxCredential,
-      u.planetCredential
-    )
-  )
+  )(
+    u =>
+      (
+        u.id,
+        u.name,
+        u.email,
+        u.profileImageUri,
+        u.emailNotifications,
+        u.visibility,
+        u.dropboxCredential,
+        u.planetCredential
+    ))
 }
 @JsonCodec
 final case class Auth0UserUpdate(
@@ -417,21 +417,20 @@ object Auth0Service extends Config with LazyLogging {
     for {
       managementToken <- authBearerTokenCache.get(1)
       authHeader = s"Bearer ${managementToken.access_token}"
-      response <-
-        basicRequest
-          .header("Authorization", authHeader)
-          .get(requestUri)
-          .response(asJson[List[Auth0User]])
-          .send(sttpBackend)
-          .map { r =>
-            r.body.leftMap { _ =>
-              val e = BulkJobRequestUsersError(
-                s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
-              )
-              logger.error(e.error)
-              e
-            }
+      response <- basicRequest
+        .header("Authorization", authHeader)
+        .get(requestUri)
+        .response(asJson[List[Auth0User]])
+        .send(sttpBackend)
+        .map { r =>
+          r.body.leftMap { _ =>
+            val e = BulkJobRequestUsersError(
+              s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
+            )
+            logger.error(e.error)
+            e
           }
+        }
     } yield response
 
   }
@@ -442,15 +441,15 @@ object Auth0Service extends Config with LazyLogging {
   ): Future[Either[BulkCreateError, List[Auth0User]]] = {
     val bulkCreateId = UUID.randomUUID()
     val usersToCreate = userIds
-      .map(uid =>
-        Auth0UserBulkCreate(
-          uid,
-          s"$uid@${connectionInfo.name}.com",
-          true,
-          uid.bcrypt(10),
-          Map("bulkCreateId" -> bulkCreateId.toString)
-        )
-      )
+      .map(
+        uid =>
+          Auth0UserBulkCreate(
+            uid,
+            s"$uid@${connectionInfo.name}.com",
+            true,
+            uid.bcrypt(10),
+            Map("bulkCreateId" -> bulkCreateId.toString)
+        ))
       .asJson
       .noSpaces
     val tempFile = File.newTemporaryFile()
