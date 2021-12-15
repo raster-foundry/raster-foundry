@@ -78,6 +78,8 @@ final case class UserWithOAuth(
 @JsonCodec
 final case class PasswordResetTicket(ticket: String)
 
+final case class Auth0ConnectionInfo(id: String, name: String)
+
 object UserWithOAuth {
   implicit val encodeUser: Encoder[User] = Encoder.forProduct8(
     "id",
@@ -88,18 +90,18 @@ object UserWithOAuth {
     "visibility",
     "dropboxCredential",
     "planetCredential"
-  )(
-    u =>
-      (
-        u.id,
-        u.name,
-        u.email,
-        u.profileImageUri,
-        u.emailNotifications,
-        u.visibility,
-        u.dropboxCredential,
-        u.planetCredential
-    ))
+  )(u =>
+    (
+      u.id,
+      u.name,
+      u.email,
+      u.profileImageUri,
+      u.emailNotifications,
+      u.visibility,
+      u.dropboxCredential,
+      u.planetCredential
+    )
+  )
 }
 @JsonCodec
 final case class Auth0UserUpdate(
@@ -415,38 +417,40 @@ object Auth0Service extends Config with LazyLogging {
     for {
       managementToken <- authBearerTokenCache.get(1)
       authHeader = s"Bearer ${managementToken.access_token}"
-      response <- basicRequest
-        .header("Authorization", authHeader)
-        .get(requestUri)
-        .response(asJson[List[Auth0User]])
-        .send(sttpBackend)
-        .map { r =>
-          r.body.leftMap { _ =>
-            val e = BulkJobRequestUsersError(
-              s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
-            )
-            logger.error(e.error)
-            e
+      response <-
+        basicRequest
+          .header("Authorization", authHeader)
+          .get(requestUri)
+          .response(asJson[List[Auth0User]])
+          .send(sttpBackend)
+          .map { r =>
+            r.body.leftMap { _ =>
+              val e = BulkJobRequestUsersError(
+                s"Status Code: ${r.code}, Status Text: ${r.statusText} for $requestUri"
+              )
+              logger.error(e.error)
+              e
+            }
           }
-        }
     } yield response
 
   }
 
   def bulkCreateUsers(
-      userIds: List[String]
+      userIds: List[String],
+      connectionInfo: Auth0ConnectionInfo
   ): Future[Either[BulkCreateError, List[Auth0User]]] = {
     val bulkCreateId = UUID.randomUUID()
     val usersToCreate = userIds
-      .map(
-        uid =>
-          Auth0UserBulkCreate(
-            uid,
-            s"$uid@${auth0AnonymizedConnectionName}.com",
-            true,
-            uid.bcrypt(10),
-            Map("bulkCreateId" -> bulkCreateId.toString)
-        ))
+      .map(uid =>
+        Auth0UserBulkCreate(
+          uid,
+          s"$uid@${connectionInfo.name}.com",
+          true,
+          uid.bcrypt(10),
+          Map("bulkCreateId" -> bulkCreateId.toString)
+        )
+      )
       .asJson
       .noSpaces
     val tempFile = File.newTemporaryFile()
@@ -458,7 +462,7 @@ object Auth0Service extends Config with LazyLogging {
           .header("Authorization", s"Bearer ${managementToken.access_token}")
           .multipartBody(
             multipart("upsert", true),
-            multipart("connection_id", auth0AnonymizedConnectionId),
+            multipart("connection_id", connectionInfo.id),
             multipartFile("users", tempFile.path),
             multipart("send_completion_email", false)
           )
@@ -521,4 +525,18 @@ object Auth0Service extends Config with LazyLogging {
         throw new Exception("Unable to create a password change ticket")
     }
   }
+
+  def getConnectionInfo(isAltConnection: Option[Boolean]): Auth0ConnectionInfo =
+    isAltConnection match {
+      case Some(true) =>
+        Auth0ConnectionInfo(
+          auth0AnonymizedConnectionAltId,
+          auth0AnonymizedConnectionAltName
+        )
+      case _ =>
+        Auth0ConnectionInfo(
+          auth0AnonymizedConnectionId,
+          auth0AnonymizedConnectionName
+        )
+    }
 }

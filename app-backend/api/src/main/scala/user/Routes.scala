@@ -325,7 +325,9 @@ trait UserRoutes
             userBulkCreate.peudoUserNameType
           )
 
-          val createdUsers = Auth0Service.bulkCreateUsers(names).map {
+          val connectionInfo = Auth0Service.getConnectionInfo(userBulkCreate.isAltConnection)
+
+          val createdUsers = Auth0Service.bulkCreateUsers(names, connectionInfo).map {
             // At this point, if we have an error we throw because the server should return a 500
             case Left(e)      => throw new Exception(e.error)
             case Right(users) => users
@@ -341,7 +343,7 @@ trait UserRoutes
                       .createUserWithCampaign(
                         UserInfo(
                           userId,
-                          s"${username}@$auth0AnonymizedConnectionName.com",
+                          s"${username}@${connectionInfo.name}.com",
                           username
                         ),
                         userBulkCreate,
