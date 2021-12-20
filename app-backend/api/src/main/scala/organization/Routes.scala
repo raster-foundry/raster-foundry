@@ -4,6 +4,7 @@ import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
+  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.Config
@@ -48,58 +49,70 @@ trait OrganizationRoutes
     }
   }
 
-  def getOrganization(orgId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Organizations, Action.Read, None), user) {
-      rejectEmptyResponse {
-        complete {
-          OrganizationDao
-            .viewFilter(user)
-            .filter(orgId)
-            .selectOption
-            .transact(xa)
-            .unsafeToFuture()
-        }
-      }
-    }
-  }
-
-  def searchOrganizations(): Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(
-      ScopedAction(Domain.Organizations, Action.Search, None),
-      user
-    ) {
-      searchParams { (searchParams) =>
-        complete {
-          OrganizationDao
-            .searchOrganizations(user, searchParams)
-            .transact(xa)
-            .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def addOrganizationLogo(orgID: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(
-      ScopedAction(Domain.Organizations, Action.Update, None),
-      user
-    ) {
-      authorizeAsync(
-        OrganizationDao.userIsAdmin(user, orgID).transact(xa).unsafeToFuture()
-      ) {
-        entity(as[String]) { logoBase64 =>
-          onSuccess(
-            OrganizationDao
-              .addLogo(logoBase64, orgID, dataBucket)
-              .transact(xa)
-              .unsafeToFuture()
-          ) { organization =>
-            complete((StatusCodes.Created, organization))
+  def getOrganization(orgId: UUID): Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Organizations, Action.Read, None),
+          user
+        ) {
+          rejectEmptyResponse {
+            complete {
+              OrganizationDao
+                .viewFilter(user)
+                .filter(orgId)
+                .selectOption
+                .transact(xa)
+                .unsafeToFuture()
+            }
           }
         }
-      }
     }
-  }
+
+  def searchOrganizations(): Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Organizations, Action.Search, None),
+          user
+        ) {
+          searchParams { (searchParams) =>
+            complete {
+              OrganizationDao
+                .searchOrganizations(user, searchParams)
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
+    }
+
+  def addOrganizationLogo(orgID: UUID): Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Organizations, Action.Update, None),
+          user
+        ) {
+          authorizeAsync(
+            OrganizationDao
+              .userIsAdmin(user, orgID)
+              .transact(xa)
+              .unsafeToFuture()
+          ) {
+            entity(as[String]) { logoBase64 =>
+              onSuccess(
+                OrganizationDao
+                  .addLogo(logoBase64, orgID, dataBucket)
+                  .transact(xa)
+                  .unsafeToFuture()
+              ) { organization =>
+                complete((StatusCodes.Created, organization))
+              }
+            }
+          }
+        }
+    }
 
   // @TODO: There is no delete functionality as we most likely will want to instead deactivate organizations
 }

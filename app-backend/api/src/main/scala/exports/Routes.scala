@@ -251,7 +251,7 @@ trait ExportRoutes
   }
 
   def redirectRoute(exportId: UUID, objectKey: String): Route =
-    authenticateWithParameter { user =>
+    authenticateWithParameter { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
         authorizeAsync {
           ExportDao.query

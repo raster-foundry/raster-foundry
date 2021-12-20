@@ -4,10 +4,11 @@ import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
+  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.database.FeatureFlagDao
-import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction, User}
+import com.rasterfoundry.datamodel.{Action, Domain, ScopedAction}
 
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
@@ -33,9 +34,14 @@ trait FeatureFlagRoutes
     }
   }
 
-  def getFeatureFlags: Route = authenticate { user: User =>
-    authorizeScope(ScopedAction(Domain.FeatureFlags, Action.Read, None), user) {
-      complete(FeatureFlagDao.query.list.transact(xa).unsafeToFuture())
+  def getFeatureFlags: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.FeatureFlags, Action.Read, None),
+          user
+        ) {
+          complete(FeatureFlagDao.query.list.transact(xa).unsafeToFuture())
+        }
     }
-  }
 }

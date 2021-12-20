@@ -4,6 +4,7 @@ import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
+  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.Config
@@ -50,57 +51,63 @@ trait ThumbnailRoutes
 
   @SuppressWarnings(Array("AsInstanceOf"))
   def getThumbnailImage(thumbnailPath: String): Route =
-    authenticateWithParameter { user =>
-      authorizeScope(
-        ScopedAction(Domain.Thumbnails, Action.Read, None),
-        user
-      ) {
-        val uriString =
-          s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
-        val uri = new URI(uriString)
-        val s3Object = S3().getObject(uri)
-        val metaData = S3.getObjectMetadata(s3Object)
-        val s3MediaType = MediaType.parse(metaData.getContentType()) match {
-          case Right(m) => m.asInstanceOf[MediaType.Binary]
-          case Left(_)  => MediaTypes.`image/png`
-        }
-        complete(
-          HttpResponse(
-            entity =
-              HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))
+    authenticateWithParameter {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Thumbnails, Action.Read, None),
+          user
+        ) {
+          val uriString =
+            s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
+          val uri = new URI(uriString)
+          val s3Object = S3().getObject(uri)
+          val metaData = S3.getObjectMetadata(s3Object)
+          val s3MediaType = MediaType.parse(metaData.getContentType()) match {
+            case Right(m) => m.asInstanceOf[MediaType.Binary]
+            case Left(_)  => MediaTypes.`image/png`
+          }
+          complete(
+            HttpResponse(
+              entity = HttpEntity(
+                ContentType(s3MediaType),
+                S3.getObjectBytes(s3Object)
+              )
+            )
           )
-        )
-      }
+        }
     }
 
   @SuppressWarnings(Array("AsInstanceOf"))
   def getProxiedThumbnailImage(thumbnailUri: String): Route =
-    authenticateWithParameter { user =>
-      authorizeScope(
-        ScopedAction(Domain.Scenes, Action.ReadThumbnail, None),
-        user
-      ) {
-        val bucketAndPrefix =
-          sentinelS3client.bucketAndPrefixFromURI(
-            new URI(URLDecoder.decode(thumbnailUri, "UTF-8"))
+    authenticateWithParameter {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Scenes, Action.ReadThumbnail, None),
+          user
+        ) {
+          val bucketAndPrefix =
+            sentinelS3client.bucketAndPrefixFromURI(
+              new URI(URLDecoder.decode(thumbnailUri, "UTF-8"))
+            )
+          val s3Object =
+            sentinelS3client.getObject(
+              bucketAndPrefix._1,
+              bucketAndPrefix._2,
+              true
+            )
+          val metaData = S3.getObjectMetadata(s3Object)
+          val s3MediaType = MediaType.parse(metaData.getContentType()) match {
+            case Right(m) => m.asInstanceOf[MediaType.Binary]
+            case Left(_)  => MediaTypes.`image/png`
+          }
+          complete(
+            HttpResponse(
+              entity = HttpEntity(
+                ContentType(s3MediaType),
+                S3.getObjectBytes(s3Object)
+              )
+            )
           )
-        val s3Object =
-          sentinelS3client.getObject(
-            bucketAndPrefix._1,
-            bucketAndPrefix._2,
-            true
-          )
-        val metaData = S3.getObjectMetadata(s3Object)
-        val s3MediaType = MediaType.parse(metaData.getContentType()) match {
-          case Right(m) => m.asInstanceOf[MediaType.Binary]
-          case Left(_)  => MediaTypes.`image/png`
         }
-        complete(
-          HttpResponse(
-            entity =
-              HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))
-          )
-        )
-      }
     }
 }

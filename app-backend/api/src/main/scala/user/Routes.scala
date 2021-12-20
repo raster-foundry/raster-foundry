@@ -4,6 +4,7 @@ import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
+  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.Config
@@ -82,305 +83,362 @@ trait UserRoutes
       }
   }
 
-  def updateOwnUser: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Users, Action.UpdateSelf, None), user) {
-      entity(as[User]) { userToUpdate =>
-        if (userToUpdate.id == user.id) {
-          onSuccess(
-            UserDao.updateOwnUser(userToUpdate).transact(xa).unsafeToFuture()
-          ) {
-            completeSingleOrNotFound
+  def updateOwnUser: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Users, Action.UpdateSelf, None),
+          user
+        ) {
+          entity(as[User]) { userToUpdate =>
+            if (userToUpdate.id == user.id) {
+              onSuccess(
+                UserDao
+                  .updateOwnUser(userToUpdate)
+                  .transact(xa)
+                  .unsafeToFuture()
+              ) {
+                completeSingleOrNotFound
+              }
+            } else {
+              complete(StatusCodes.NotFound)
+            }
           }
-        } else {
-          complete(StatusCodes.NotFound)
         }
-      }
     }
-  }
 
-  def getDbOwnUser: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
-      complete(
-        UserDao
-          .unsafeGetUserById(user.id, Some(true))
-          .transact(xa)
-          .unsafeToFuture()
-      )
-    }
-  }
-
-  def updateAuth0User: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Users, Action.UpdateSelf, None), user) {
-      entity(as[Auth0UserUpdate]) { userUpdate =>
-        complete {
-          Auth0Service.updateAuth0User(user.id, userUpdate)
+  def getDbOwnUser: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Users, Action.ReadSelf, None),
+          user
+        ) {
+          complete(
+            UserDao
+              .unsafeGetUserById(user.id, Some(true))
+              .transact(xa)
+              .unsafeToFuture()
+          )
         }
-      }
     }
-  }
 
-  def getDropboxAccessToken: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Users, Action.UpdateDropbox, None), user) {
-      entity(as[DropboxAuthRequest]) { dbxAuthRequest =>
-        val (dbxKey, dbxSecret) =
-          (sys.env.get("DROPBOX_KEY"), sys.env.get("DROPBOX_SECRET")) match {
-            case (Some(key), Some(secret)) => (key, secret)
-            case _ =>
-              throw new RuntimeException(
-                "App dropbox credentials must be configured"
-              )
+  def updateAuth0User: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Users, Action.UpdateSelf, None),
+          user
+        ) {
+          entity(as[Auth0UserUpdate]) { userUpdate =>
+            complete {
+              Auth0Service.updateAuth0User(user.id, userUpdate)
+            }
           }
-        val dbxConfig = new DbxRequestConfig("raster-foundry-authorizer")
-        val appInfo = new DbxAppInfo(dbxKey, dbxSecret)
-        val webAuth = new DbxWebAuth(dbxConfig, appInfo)
-        val session = new DummySessionStore()
-        val queryParams = Map[String, Array[String]](
-          "code" -> Array(dbxAuthRequest.authorizationCode),
-          "state" -> Array(session.get)
-        ).asJava
-        val authFinish = webAuth.finishFromRedirect(
-          dbxAuthRequest.redirectURI,
-          session,
-          queryParams
-        )
-        logger.debug("Auth finish from Dropbox successful")
-        complete(
-          UserDao
-            .storeDropboxAccessToken(
-              user.id,
-              Credential.fromString(authFinish.getAccessToken)
-            )
-            .transact(xa)
-            .unsafeToFuture()
-        )
-      }
+        }
     }
-  }
 
-  def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate { case MembershipAndUser(_, user) =>
-      authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
-        rejectEmptyResponse {
-          val authId = URLDecoder.decode(authIdEncoded, "UTF-8")
-          if (user.id == authId) {
-            complete(
-              UserDao.unsafeGetUserById(authId).transact(xa).unsafeToFuture()
+  def getDropboxAccessToken: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Users, Action.UpdateDropbox, None),
+          user
+        ) {
+          entity(as[DropboxAuthRequest]) { dbxAuthRequest =>
+            val (dbxKey, dbxSecret) =
+              (
+                sys.env.get("DROPBOX_KEY"),
+                sys.env.get("DROPBOX_SECRET")
+              ) match {
+                case (Some(key), Some(secret)) => (key, secret)
+                case _ =>
+                  throw new RuntimeException(
+                    "App dropbox credentials must be configured"
+                  )
+              }
+            val dbxConfig = new DbxRequestConfig("raster-foundry-authorizer")
+            val appInfo = new DbxAppInfo(dbxKey, dbxSecret)
+            val webAuth = new DbxWebAuth(dbxConfig, appInfo)
+            val session = new DummySessionStore()
+            val queryParams = Map[String, Array[String]](
+              "code" -> Array(dbxAuthRequest.authorizationCode),
+              "state" -> Array(session.get)
+            ).asJava
+            val authFinish = webAuth.finishFromRedirect(
+              dbxAuthRequest.redirectURI,
+              session,
+              queryParams
             )
-          } else if (user.id != authId) {
+            logger.debug("Auth finish from Dropbox successful")
             complete(
               UserDao
-                .unsafeGetUserById(authId, Some(false))
+                .storeDropboxAccessToken(
+                  user.id,
+                  Credential.fromString(authFinish.getAccessToken)
+                )
                 .transact(xa)
                 .unsafeToFuture()
             )
-          } else {
-            complete(StatusCodes.NotFound)
           }
         }
-      }
-  }
-
-  def getUserTeams: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Users, Action.Read, None), user) {
-      complete {
-        TeamDao.teamsForUser(user).transact(xa).unsafeToFuture
-      }
     }
-  }
+
+  def getUserByEncodedAuthId(authIdEncoded: String): Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Users, Action.ReadSelf, None),
+          user
+        ) {
+          rejectEmptyResponse {
+            val authId = URLDecoder.decode(authIdEncoded, "UTF-8")
+            if (user.id == authId) {
+              complete(
+                UserDao.unsafeGetUserById(authId).transact(xa).unsafeToFuture()
+              )
+            } else if (user.id != authId) {
+              complete(
+                UserDao
+                  .unsafeGetUserById(authId, Some(false))
+                  .transact(xa)
+                  .unsafeToFuture()
+              )
+            } else {
+              complete(StatusCodes.NotFound)
+            }
+          }
+        }
+    }
+
+  def getUserTeams: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(ScopedAction(Domain.Users, Action.Read, None), user) {
+          complete {
+            TeamDao.teamsForUser(user).transact(xa).unsafeToFuture
+          }
+        }
+    }
 
   def updateUserByEncodedAuthId(authIdEncoded: String): Route =
-    authenticateSuperUser { user =>
-      authorizeScope(ScopedAction(Domain.Users, Action.Update, None), user) {
-        entity(as[User]) { updatedUser =>
-          onSuccess(
-            UserDao
-              .updateUser(updatedUser, authIdEncoded)
+    authenticateSuperUser {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(ScopedAction(Domain.Users, Action.Update, None), user) {
+          entity(as[User]) { updatedUser =>
+            onSuccess(
+              UserDao
+                .updateUser(updatedUser, authIdEncoded)
+                .transact(xa)
+                .unsafeToFuture()
+            ) {
+              completeSingleOrNotFound
+            }
+          }
+        }
+    }
+
+  def getUserRoles: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Users, Action.ReadSelf, None),
+          user
+        ) {
+          complete {
+            UserGroupRoleDao
+              .listByUserWithRelated(user)
               .transact(xa)
               .unsafeToFuture()
-          ) {
-            completeSingleOrNotFound
           }
         }
-      }
     }
-
-  def getUserRoles: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
-      complete {
-        UserGroupRoleDao
-          .listByUserWithRelated(user)
-          .transact(xa)
-          .unsafeToFuture()
-      }
-    }
-  }
 
   // Hard coded limits
-  def getUserLimits: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
-      val io = for {
-        projectCount <- AnnotationProjectDao.countUserProjects(user)
-        projectLimit = Scopes
-          .resolveFor(
-            Domain.AnnotationProjects,
-            Action.Create,
-            user.scope.actions
-          )
-          .flatMap(_.limit.map(_.toFloat))
-        uploadBytes <- UploadDao.getUserBytesUploaded(user)
-        uploadLimit = Scopes
-          .resolveFor(Domain.Uploads, Action.Create, user.scope.actions)
-          .flatMap(_.limit.map(_.toFloat))
-        projectShares <- AnnotationProjectDao.getAllShareCounts(user.id)
-        projectShareLimit = Scopes
-          .resolveFor(
-            Domain.AnnotationProjects,
-            Action.Share,
-            user.scope.actions
-          )
-          .flatMap(_.limit.map(_.toFloat))
-        campaignCount <- CampaignDao.countUserCampaigns(user)
-        campaignLimit = Scopes
-          .resolveFor(
-            Domain.Campaigns,
-            Action.Create,
-            user.scope.actions
-          )
-          .flatMap(_.limit.map(_.toFloat))
-        campaignShares <- CampaignDao.getAllShareCounts(user.id)
-        campaignShareLimit = Scopes
-          .resolveFor(
-            Domain.Campaigns,
-            Action.Share,
-            user.scope.actions
-          )
-          .flatMap(_.limit.map(_.toFloat))
-      } yield
-        List(
-          ScopeUsage(
-            Domain.AnnotationProjects,
-            Action.Create,
-            None,
-            projectCount,
-            projectLimit
-          ),
-          ScopeUsage(
-            Domain.Uploads,
-            Action.Create,
-            None,
-            uploadBytes,
-            uploadLimit
-          ),
-          ScopeUsage(
-            Domain.Campaigns,
-            Action.Create,
-            None,
-            campaignCount,
-            campaignLimit
-          )
-        ) ++ (projectShares.toList.map {
-          case (id, count) =>
+  def getUserLimits: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Users, Action.ReadSelf, None),
+          user
+        ) {
+          val io = for {
+            projectCount <- AnnotationProjectDao.countUserProjects(user)
+            projectLimit =
+              Scopes
+                .resolveFor(
+                  Domain.AnnotationProjects,
+                  Action.Create,
+                  user.scope.actions
+                )
+                .flatMap(_.limit.map(_.toFloat))
+            uploadBytes <- UploadDao.getUserBytesUploaded(user)
+            uploadLimit =
+              Scopes
+                .resolveFor(Domain.Uploads, Action.Create, user.scope.actions)
+                .flatMap(_.limit.map(_.toFloat))
+            projectShares <- AnnotationProjectDao.getAllShareCounts(user.id)
+            projectShareLimit =
+              Scopes
+                .resolveFor(
+                  Domain.AnnotationProjects,
+                  Action.Share,
+                  user.scope.actions
+                )
+                .flatMap(_.limit.map(_.toFloat))
+            campaignCount <- CampaignDao.countUserCampaigns(user)
+            campaignLimit =
+              Scopes
+                .resolveFor(
+                  Domain.Campaigns,
+                  Action.Create,
+                  user.scope.actions
+                )
+                .flatMap(_.limit.map(_.toFloat))
+            campaignShares <- CampaignDao.getAllShareCounts(user.id)
+            campaignShareLimit =
+              Scopes
+                .resolveFor(
+                  Domain.Campaigns,
+                  Action.Share,
+                  user.scope.actions
+                )
+                .flatMap(_.limit.map(_.toFloat))
+          } yield List(
             ScopeUsage(
               Domain.AnnotationProjects,
-              Action.Share,
-              Some(id.toString),
-              count,
-              projectShareLimit
-            )
-        }) ++ (campaignShares.toList.map {
-          case (id, count) =>
+              Action.Create,
+              None,
+              projectCount,
+              projectLimit
+            ),
+            ScopeUsage(
+              Domain.Uploads,
+              Action.Create,
+              None,
+              uploadBytes,
+              uploadLimit
+            ),
             ScopeUsage(
               Domain.Campaigns,
-              Action.Share,
-              Some(id.toString),
-              count,
-              campaignShareLimit
+              Action.Create,
+              None,
+              campaignCount,
+              campaignLimit
             )
-        })
-      complete {
-        io.transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def searchUsers: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Users, Action.Search, None), user) {
-      searchParams { (searchParams) =>
-        complete {
-          UserDao.searchUsers(user, searchParams).transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def createUserBulk: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(
-      ScopedAction(Domain.Users, Action.BulkCreate, None),
-      user
-    ) {
-      entity(as[UserBulkCreate]) { userBulkCreate =>
-        complete {
-          val names = PseudoUsernameService.createPseudoNames(
-            userBulkCreate.count.value,
-            userBulkCreate.peudoUserNameType
-          )
-
-          val createdUsers = Auth0Service.bulkCreateUsers(names).map {
-            // At this point, if we have an error we throw because the server should return a 500
-            case Left(e)      => throw new Exception(e.error)
-            case Right(users) => users
+          ) ++ (projectShares.toList.map {
+            case (id, count) =>
+              ScopeUsage(
+                Domain.AnnotationProjects,
+                Action.Share,
+                Some(id.toString),
+                count,
+                projectShareLimit
+              )
+          }) ++ (campaignShares.toList.map {
+            case (id, count) =>
+              ScopeUsage(
+                Domain.Campaigns,
+                Action.Share,
+                Some(id.toString),
+                count,
+                campaignShareLimit
+              )
+          })
+          complete {
+            io.transact(xa).unsafeToFuture
           }
+        }
+    }
 
-          val uwcsFuture = for {
-            users <- createdUsers
-            userWithCampaigns <- users traverse { auth0User =>
-              for {
-                userWithCampaign <- (auth0User.user_id, auth0User.username).tupled traverse {
-                  case (userId, username) =>
-                    UserDao
-                      .createUserWithCampaign(
-                        UserInfo(
-                          userId,
-                          s"${username}@$auth0AnonymizedConnectionName.com",
-                          username
-                        ),
-                        userBulkCreate,
-                        user
-                      )
-                      .transact(xa)
-                      .unsafeToFuture
-                }
-              } yield userWithCampaign
+  def searchUsers: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(ScopedAction(Domain.Users, Action.Search, None), user) {
+          searchParams { (searchParams) =>
+            complete {
+              UserDao
+                .searchUsers(user, searchParams)
+                .transact(xa)
+                .unsafeToFuture
             }
-          } yield userWithCampaigns
-
-          userBulkCreate.grantAccessToChildrenCampaignOwner match {
-            case false =>
-              for {
-                uwcs <- uwcsFuture
-              } yield
-                uwcs traverse { uwc =>
-                  uwc.map(_.user.name)
-                }
-            case true =>
-              for {
-                uwcs <- uwcsFuture
-                usersO = uwcs traverse { uwc =>
-                  uwc.map(_.user)
-                }
-                _ <- (userBulkCreate.campaignId traverse { campaignId =>
-                  CampaignDao
-                    .grantCloneChildrenAccessById(campaignId, ActionType.View)
-                }).transact(xa).unsafeToFuture()
-              } yield
-                usersO map { users =>
-                  users map {
-                    _.name
-                  }
-                }
-
           }
         }
-      }
     }
-  }
+
+  def createUserBulk: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Users, Action.BulkCreate, None),
+          user
+        ) {
+          entity(as[UserBulkCreate]) { userBulkCreate =>
+            complete {
+              val names = PseudoUsernameService.createPseudoNames(
+                userBulkCreate.count.value,
+                userBulkCreate.peudoUserNameType
+              )
+
+              val createdUsers = Auth0Service.bulkCreateUsers(names).map {
+                // At this point, if we have an error we throw because the server should return a 500
+                case Left(e)      => throw new Exception(e.error)
+                case Right(users) => users
+              }
+
+              val uwcsFuture = for {
+                users <- createdUsers
+                userWithCampaigns <- users traverse { auth0User =>
+                  for {
+                    userWithCampaign <-
+                      (auth0User.user_id, auth0User.username).tupled traverse {
+                        case (userId, username) =>
+                          UserDao
+                            .createUserWithCampaign(
+                              UserInfo(
+                                userId,
+                                s"${username}@$auth0AnonymizedConnectionName.com",
+                                username
+                              ),
+                              userBulkCreate,
+                              user
+                            )
+                            .transact(xa)
+                            .unsafeToFuture
+                      }
+                  } yield userWithCampaign
+                }
+              } yield userWithCampaigns
+
+              userBulkCreate.grantAccessToChildrenCampaignOwner match {
+                case false =>
+                  for {
+                    uwcs <- uwcsFuture
+                  } yield uwcs traverse { uwc =>
+                    uwc.map(_.user.name)
+                  }
+                case true =>
+                  for {
+                    uwcs <- uwcsFuture
+                    usersO = uwcs traverse { uwc =>
+                      uwc.map(_.user)
+                    }
+                    _ <- (userBulkCreate.campaignId traverse { campaignId =>
+                        CampaignDao
+                          .grantCloneChildrenAccessById(
+                            campaignId,
+                            ActionType.View
+                          )
+                      }).transact(xa).unsafeToFuture()
+                  } yield usersO map { users =>
+                    users map {
+                      _.name
+                    }
+                  }
+
+              }
+            }
+          }
+        }
+    }
 }

@@ -3,6 +3,7 @@ package com.rasterfoundry.api.token
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
+  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.Auth0ErrorHandler
@@ -36,13 +37,15 @@ trait TokenRoutes
         }
     }
 
-  def listRefreshTokens: Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Tokens, Action.Read, None), user) {
-      complete {
-        TokenService.listRefreshTokens(user)
-      }
+  def listRefreshTokens: Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(ScopedAction(Domain.Tokens, Action.Read, None), user) {
+          complete {
+            TokenService.listRefreshTokens(user)
+          }
+        }
     }
-  }
 
   def getAuthorizedToken: Route = {
     entity(as[RefreshToken]) { refreshToken =>
@@ -52,11 +55,13 @@ trait TokenRoutes
     }
   }
 
-  def revokeRefreshToken(deviceId: String): Route = authenticate { case MembershipAndUser(_, user) =>
-    authorizeScope(ScopedAction(Domain.Tokens, Action.Delete, None), user) {
-      complete {
-        TokenService.revokeRefreshToken(user, deviceId)
-      }
+  def revokeRefreshToken(deviceId: String): Route =
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(ScopedAction(Domain.Tokens, Action.Delete, None), user) {
+          complete {
+            TokenService.revokeRefreshToken(user, deviceId)
+          }
+        }
     }
-  }
 }
