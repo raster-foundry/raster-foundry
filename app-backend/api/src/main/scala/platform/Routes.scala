@@ -281,8 +281,7 @@ trait PlatformRoutes
     }
   }
 
-  def listPlatformOrganizations(platformId: UUID): Route = authenticate {
-    user =>
+  def listPlatformOrganizations(platformId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Organizations, Action.Read, None),
         user
@@ -319,8 +318,7 @@ trait PlatformRoutes
     }
   }
 
-  def getOrganization(platformId: UUID, orgId: UUID): Route = authenticate {
-    user =>
+  def getOrganization(platformId: UUID, orgId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Organizations, Action.Read, None),
         user
@@ -344,8 +342,7 @@ trait PlatformRoutes
       }
   }
 
-  def updateOrganization(platformId: UUID, orgId: UUID): Route = authenticate {
-    user =>
+  def updateOrganization(platformId: UUID, orgId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Organizations, Action.Update, None),
         user
@@ -448,8 +445,7 @@ trait PlatformRoutes
       }
     }
 
-  def listTeams(platformId: UUID, organizationId: UUID): Route = authenticate {
-    user =>
+  def listTeams(platformId: UUID, organizationId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Teams, Action.Read, None), user) {
         authorizeAsync {
           OrganizationDao

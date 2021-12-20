@@ -110,8 +110,7 @@ trait ProjectAnnotationRoutes
     }
   }
 
-  def getAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate {
-    user =>
+  def getAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
         authorizeAuthResultAsync {
           ProjectDao
@@ -263,8 +262,7 @@ trait ProjectAnnotationRoutes
     }
   }
 
-  def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
-    user =>
+  def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Read, None),
         user
@@ -309,8 +307,7 @@ trait ProjectAnnotationRoutes
     }
   }
 
-  def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
-    user =>
+  def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Update, None),
         user
@@ -338,8 +335,7 @@ trait ProjectAnnotationRoutes
       }
   }
 
-  def deleteAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
-    user =>
+  def deleteAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Delete, None),
         user

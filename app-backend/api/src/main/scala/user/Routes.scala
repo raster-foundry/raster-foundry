@@ -157,8 +157,7 @@ trait UserRoutes
     }
   }
 
-  def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate {
-    user =>
+  def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
         rejectEmptyResponse {
           val authId = URLDecoder.decode(authIdEncoded, "UTF-8")

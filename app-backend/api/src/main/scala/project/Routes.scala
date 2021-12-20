@@ -556,8 +556,7 @@ trait ProjectRoutes
     }
   }
 
-  def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate {
-    user =>
+  def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.AddScenes, None),
         user
@@ -795,8 +794,7 @@ trait ProjectRoutes
   }
 
   /** Set color correction parameters for a list of scenes */
-  def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate {
-    user =>
+  def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.ColorCorrect, None),
         user

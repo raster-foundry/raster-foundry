@@ -31,8 +31,7 @@ trait ProjectLayerAnnotationRoutes
 
   implicit val ec: ExecutionContext
 
-  def listLayerLabels(projectId: UUID, layerId: UUID): Route = authenticate {
-    user =>
+  def listLayerLabels(projectId: UUID, layerId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
         authorizeAsync {
           ProjectDao
