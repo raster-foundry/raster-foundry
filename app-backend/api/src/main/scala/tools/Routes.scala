@@ -84,7 +84,7 @@ trait ToolRoutes
       }
   }
 
-  def getToolSources(toolId: UUID): Route = authenticate { user =>
+  def getToolSources(toolId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ToolDao
@@ -110,7 +110,7 @@ trait ToolRoutes
     }
   }
 
-  def listTools: Route = authenticate { user =>
+  def listTools: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
       (withPagination & combinedToolQueryParams) {
         (page, combinedToolQueryParameters) =>
@@ -132,7 +132,7 @@ trait ToolRoutes
     }
   }
 
-  def createTool: Route = authenticate { user =>
+  def createTool: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Create, None), user) {
       entity(as[Tool.Create]) { newTool =>
         onSuccess(ToolDao.insert(newTool, user).transact(xa).unsafeToFuture) {
@@ -143,7 +143,7 @@ trait ToolRoutes
     }
   }
 
-  def getTool(toolId: UUID): Route = authenticate { user =>
+  def getTool(toolId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ToolDao
@@ -164,7 +164,7 @@ trait ToolRoutes
     }
   }
 
-  def updateTool(toolId: UUID): Route = authenticate { user =>
+  def updateTool(toolId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Update, None), user) {
       authorizeAuthResultAsync {
         ToolDao
@@ -186,7 +186,7 @@ trait ToolRoutes
     }
   }
 
-  def deleteTool(toolId: UUID): Route = authenticate { user =>
+  def deleteTool(toolId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Delete, None), user) {
       authorizeAuthResultAsync {
         ToolDao
@@ -203,7 +203,7 @@ trait ToolRoutes
     }
   }
 
-  def listToolPermissions(toolId: UUID): Route = authenticate { user =>
+  def listToolPermissions(toolId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Templates, Action.ReadPermissions, None),
       user
@@ -224,7 +224,7 @@ trait ToolRoutes
     }
   }
 
-  def replaceToolPermissions(toolId: UUID): Route = authenticate { user =>
+  def replaceToolPermissions(toolId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
       entity(as[List[ObjectAccessControlRule]]) { acrList =>
         authorizeAsync {
@@ -268,7 +268,7 @@ trait ToolRoutes
     }
   }
 
-  def addToolPermission(toolId: UUID): Route = authenticate { user =>
+  def addToolPermission(toolId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
       entity(as[ObjectAccessControlRule]) { acr =>
         authorizeAsync {
@@ -300,7 +300,7 @@ trait ToolRoutes
     }
   }
 
-  def listUserTemplateActions(templateId: UUID): Route = authenticate { user =>
+  def listUserTemplateActions(templateId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Templates, Action.ReadPermissions, None),
       user
@@ -337,7 +337,7 @@ trait ToolRoutes
     }
   }
 
-  def deleteToolPermissions(toolId: UUID): Route = authenticate { user =>
+  def deleteToolPermissions(toolId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
       authorizeAuthResultAsync {
         ToolDao

@@ -38,7 +38,7 @@ trait TeamRoutes
     }
   }
 
-  def getTeam(teamId: UUID): Route = authenticate { user =>
+  def getTeam(teamId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Teams, Action.Read, None), user) {
       authorizeAsync {
         val authIO = for {

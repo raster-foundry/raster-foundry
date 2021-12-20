@@ -26,7 +26,7 @@ trait AnnotationProjectLabelClassRoutes
       projectId: UUID,
       labelClassGroupId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -51,7 +51,7 @@ trait AnnotationProjectLabelClassRoutes
       projectId: UUID,
       groupId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user
@@ -78,7 +78,7 @@ trait AnnotationProjectLabelClassRoutes
       projectId: UUID,
       labelClassId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -107,7 +107,7 @@ trait AnnotationProjectLabelClassRoutes
       projectId: UUID,
       labelClassId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user
@@ -139,7 +139,7 @@ trait AnnotationProjectLabelClassRoutes
       projectId: UUID,
       labelClassId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user
@@ -165,7 +165,7 @@ trait AnnotationProjectLabelClassRoutes
       projectId: UUID,
       labelClassId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user

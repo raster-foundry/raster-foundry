@@ -29,7 +29,7 @@ The solutions below (except for the last) all treat scopes as access reduction m
 Usage at the endpoint level might look like:
 
 ```scala
-  def createProject: Route = authenticate { user =>
+  def createProject: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeAsync {
       UserDao
         .withoutScoping(ObjectType.Project)
@@ -70,7 +70,7 @@ This solution has almost no constraints.
 Usage at the endpoint level might look like:
 
 ```scala
-  def createProject: Route = authenticate { user =>
+  def createProject: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeAsync {
       UserDao
         .withoutScoping(ScopeType.ProjectReadOnly)
@@ -111,7 +111,7 @@ This solution is more constrained in order to solve the conflicting rules proble
 Usage at the endpoint level might look like:
 
 ```scala
-  def createProject: Route = authenticate { user =>
+  def createProject: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeAsync {
       UserDao
         .withoutScoping(ObjectType.Project, ScopeType.ReadOnly)
@@ -153,7 +153,7 @@ This solution is similar to _The Civilized Solution_ in that it would use an abs
 Usage at the endpoint level might look like:
 
 ```scala
-  def createProject: Route = authenticate { user =>
+  def createProject: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeAsync {
       UserDao
         .hasScope(ObjectType.Project, ScopeType.Read)

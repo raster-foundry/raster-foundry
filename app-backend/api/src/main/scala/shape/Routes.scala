@@ -73,7 +73,7 @@ trait ShapeRoutes
       }
   }
 
-  def listShapes: Route = authenticate { user =>
+  def listShapes: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Shapes, Action.Read, None), user) {
       (withPagination & shapeQueryParams) {
         (page: PageRequest, queryParams: ShapeQueryParameters) =>
@@ -100,7 +100,7 @@ trait ShapeRoutes
     }
   }
 
-  def getShape(shapeId: UUID): Route = authenticate { user =>
+  def getShape(shapeId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Shapes, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ShapeDao
@@ -126,7 +126,7 @@ trait ShapeRoutes
     }
   }
 
-  def createShape: Route = authenticate { user =>
+  def createShape: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Shapes, Action.Create, None), user) {
       entity(as[ShapeFeatureCollectionCreate]) { fc =>
         val shapesCreate = fc.features map {
@@ -142,7 +142,7 @@ trait ShapeRoutes
     }
   }
 
-  def updateShape(shapeId: UUID): Route = authenticate { user =>
+  def updateShape(shapeId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Shapes, Action.Update, None), user) {
       authorizeAuthResultAsync {
         ShapeDao
@@ -164,7 +164,7 @@ trait ShapeRoutes
     }
   }
 
-  def deleteShape(shapeId: UUID): Route = authenticate { user =>
+  def deleteShape(shapeId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Shapes, Action.Delete, None), user) {
       authorizeAuthResultAsync {
         ShapeDao
@@ -181,7 +181,7 @@ trait ShapeRoutes
     }
   }
 
-  def listShapePermissions(shapeId: UUID): Route = authenticate { user =>
+  def listShapePermissions(shapeId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Shapes, Action.ReadPermissions, None),
       user
@@ -202,7 +202,7 @@ trait ShapeRoutes
     }
   }
 
-  def replaceShapePermissions(shapeId: UUID): Route = authenticate { user =>
+  def replaceShapePermissions(shapeId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Shapes, Action.Share, None), user) {
       entity(as[List[ObjectAccessControlRule]]) { acrList =>
         authorizeAsync {
@@ -242,7 +242,7 @@ trait ShapeRoutes
     }
   }
 
-  def addShapePermission(shapeId: UUID): Route = authenticate { user =>
+  def addShapePermission(shapeId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Shapes, Action.Share, None), user) {
       entity(as[ObjectAccessControlRule]) { acr =>
         authorizeAsync {
@@ -270,7 +270,7 @@ trait ShapeRoutes
     }
   }
 
-  def listUserShapeActions(shapeId: UUID): Route = authenticate { user =>
+  def listUserShapeActions(shapeId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Shapes, Action.ReadPermissions, None),
       user
@@ -299,7 +299,7 @@ trait ShapeRoutes
     }
   }
 
-  def deleteShapePermissions(shapeId: UUID): Route = authenticate { user =>
+  def deleteShapePermissions(shapeId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Shapes, Action.Share, None), user) {
       authorizeAuthResultAsync {
         ShapeDao

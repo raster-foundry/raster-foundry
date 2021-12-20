@@ -452,7 +452,7 @@ trait ProjectRoutes
       }
   }
 
-  def listProjects: Route = authenticate { user =>
+  def listProjects: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
       (withPagination & projectQueryParameters) {
         (page, projectQueryParameters) =>
@@ -466,7 +466,7 @@ trait ProjectRoutes
     }
   }
 
-  def createProject: Route = authenticate { user =>
+  def createProject: Route = authenticate { case MembershipAndUser(_, user) =>
     val userProjectCount = ProjectDao.query
       .filter(fr"owner = ${user.id}")
       .count
@@ -502,7 +502,7 @@ trait ProjectRoutes
     }
   }
 
-  def updateProject(projectId: UUID): Route = authenticate { user =>
+  def updateProject(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Update, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
@@ -524,7 +524,7 @@ trait ProjectRoutes
     }
   }
 
-  def deleteProject(projectId: UUID): Route = authenticate { user =>
+  def deleteProject(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Delete, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
@@ -541,7 +541,7 @@ trait ProjectRoutes
     }
   }
 
-  def listLabels(projectId: UUID): Route = authenticate { user =>
+  def listLabels(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
@@ -583,7 +583,7 @@ trait ProjectRoutes
       }
   }
 
-  def acceptScenes(projectId: UUID): Route = authenticate { user =>
+  def acceptScenes(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.AddScenes, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
@@ -612,7 +612,7 @@ trait ProjectRoutes
     }
   }
 
-  def listProjectScenes(projectId: UUID): Route = authenticate { user =>
+  def listProjectScenes(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
@@ -637,7 +637,7 @@ trait ProjectRoutes
     }
   }
 
-  def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
+  def listProjectDatasources(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Datasources, Action.Read, None), user) {
       (projectQueryParameters) { projectQueryParams =>
         authorizeAsync {
@@ -670,7 +670,7 @@ trait ProjectRoutes
   }
 
   /** Set the manually defined z-ordering for scenes within a given project */
-  def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
+  def setProjectSceneOrder(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Projects, Action.ColorCorrect, None),
       user
@@ -704,7 +704,7 @@ trait ProjectRoutes
 
   /** Get the color correction paramters for a project/scene pairing */
   def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.ColorCorrect, None),
         user
@@ -734,7 +734,7 @@ trait ProjectRoutes
 
   /** Set color correction parameters for a project/scene pairing */
   def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.ColorCorrect, None),
         user
@@ -766,7 +766,7 @@ trait ProjectRoutes
       }
     }
 
-  def setProjectColorMode(projectId: UUID) = authenticate { user =>
+  def setProjectColorMode(projectId: UUID) = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Projects, Action.ColorCorrect, None),
       user
@@ -826,7 +826,7 @@ trait ProjectRoutes
   }
 
   /** Get the information which defines mosaicing behavior for each scene in a given project */
-  def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
+  def getProjectMosaicDefinition(projectId: UUID) = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
@@ -854,7 +854,7 @@ trait ProjectRoutes
   }
 
   def addProjectScenes(projectId: UUID, layerIdO: Option[UUID] = None): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.AddScenes, None),
         user
@@ -893,7 +893,7 @@ trait ProjectRoutes
       projectId: UUID,
       layerIdO: Option[UUID] = None
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.EditScenes, None),
         user
@@ -934,7 +934,7 @@ trait ProjectRoutes
   def deleteProjectScenes(
       projectId: UUID,
       layerIdO: Option[UUID] = None
-  ): Route = authenticate { user =>
+  ): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.EditScenes, None), user) {
       authorizeAuthResultAsync {
         ProjectDao
@@ -961,7 +961,7 @@ trait ProjectRoutes
     }
   }
 
-  def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
+  def listProjectPermissions(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Projects, Action.ReadPermissions, None),
       user
@@ -982,7 +982,7 @@ trait ProjectRoutes
     }
   }
 
-  def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
+  def replaceProjectPermissions(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Share, None), user) {
       entity(as[List[ObjectAccessControlRule]]) { acrList =>
         authorizeAsync {
@@ -1026,7 +1026,7 @@ trait ProjectRoutes
     }
   }
 
-  def addProjectPermission(projectId: UUID): Route = authenticate { user =>
+  def addProjectPermission(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     val shareCount =
       ProjectDao.getShareCount(projectId, user.id).transact(xa).unsafeToFuture
     authorizeScopeLimit(
@@ -1065,7 +1065,7 @@ trait ProjectRoutes
     }
   }
 
-  def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
+  def listUserProjectActions(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Projects, Action.ReadPermissions, None),
       user
@@ -1101,7 +1101,7 @@ trait ProjectRoutes
     }
   }
 
-  def deleteProjectPermissions(projectId: UUID): Route = authenticate { user =>
+  def deleteProjectPermissions(projectId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Share, None), user) {
       authorizeAuthResultAsync {
         ProjectDao

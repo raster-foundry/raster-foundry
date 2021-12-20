@@ -36,7 +36,7 @@ trait TokenRoutes
         }
     }
 
-  def listRefreshTokens: Route = authenticate { user =>
+  def listRefreshTokens: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Tokens, Action.Read, None), user) {
       complete {
         TokenService.listRefreshTokens(user)
@@ -52,7 +52,7 @@ trait TokenRoutes
     }
   }
 
-  def revokeRefreshToken(deviceId: String): Route = authenticate { user =>
+  def revokeRefreshToken(deviceId: String): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Tokens, Action.Delete, None), user) {
       complete {
         TokenService.revokeRefreshToken(user, deviceId)

@@ -124,7 +124,7 @@ trait SceneRoutes
   }
 
   def listScenes: Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Read, None), user) {
         (withPagination & sceneQueryParameters) { (page, sceneParams) =>
           complete {
@@ -138,7 +138,7 @@ trait SceneRoutes
     }
 
   def createScene: Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Create, None), user) {
         entity(as[Scene.Create]) { newScene =>
           val metadataIO = (sceneId: UUID) => {
@@ -211,7 +211,7 @@ trait SceneRoutes
     }
 
   def getScene(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Read, None), user) {
         authorizeAsync {
           SceneDao
@@ -231,7 +231,7 @@ trait SceneRoutes
     }
 
   def updateScene(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Update, None), user) {
         authorizeAuthResultAsync {
           SceneDao
@@ -254,7 +254,7 @@ trait SceneRoutes
     }
 
   def deleteScene(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Delete, None), user) {
         authorizeAuthResultAsync {
           SceneDao
@@ -274,7 +274,7 @@ trait SceneRoutes
     }
 
   def getDownloadUrl(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Download, None), user) {
         authorizeAuthResultAsync {
           SceneWithRelatedDao
@@ -318,7 +318,7 @@ trait SceneRoutes
     }
 
   def listScenePermissions(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Scenes, Action.ReadPermissions, None),
         user
@@ -340,7 +340,7 @@ trait SceneRoutes
     }
 
   def replaceScenePermissions(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Share, None), user) {
         entity(as[List[ObjectAccessControlRule]]) { acrList =>
           authorizeAsync {
@@ -386,7 +386,7 @@ trait SceneRoutes
     }
 
   def addScenePermission(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Share, None), user) {
         entity(as[ObjectAccessControlRule]) { acr =>
           authorizeAsync {
@@ -418,7 +418,7 @@ trait SceneRoutes
     }
 
   def listUserSceneActions(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Scenes, Action.ReadPermissions, None),
         user
@@ -453,7 +453,7 @@ trait SceneRoutes
     }
 
   def deleteScenePermissions(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Scenes, Action.Share, None), user) {
         authorizeAuthResultAsync {
           SceneDao
@@ -472,7 +472,7 @@ trait SceneRoutes
     }
 
   def getSceneDatasource(sceneId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Read, None),
         user
@@ -500,7 +500,7 @@ trait SceneRoutes
     }
 
   def getSentinelMetadata(sceneId: UUID, metadataUrl: String): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Scenes, Action.ReadSentinelMetadata, None),
         user

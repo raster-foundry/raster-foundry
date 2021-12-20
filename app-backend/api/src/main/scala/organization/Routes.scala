@@ -48,7 +48,7 @@ trait OrganizationRoutes
     }
   }
 
-  def getOrganization(orgId: UUID): Route = authenticate { user =>
+  def getOrganization(orgId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Organizations, Action.Read, None), user) {
       rejectEmptyResponse {
         complete {
@@ -63,7 +63,7 @@ trait OrganizationRoutes
     }
   }
 
-  def searchOrganizations(): Route = authenticate { user =>
+  def searchOrganizations(): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Organizations, Action.Search, None),
       user
@@ -79,7 +79,7 @@ trait OrganizationRoutes
     }
   }
 
-  def addOrganizationLogo(orgID: UUID): Route = authenticate { user =>
+  def addOrganizationLogo(orgID: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Organizations, Action.Update, None),
       user

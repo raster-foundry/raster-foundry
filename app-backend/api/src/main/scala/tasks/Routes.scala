@@ -98,7 +98,7 @@ trait TaskRoutes
   }
 
   def listTasks: Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -136,7 +136,7 @@ trait TaskRoutes
   // - there should be no active sessions on the task
   // - the session type should match the current task status
   def createTaskSession(taskId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -184,7 +184,7 @@ trait TaskRoutes
     }
 
   def listTaskSessions(taskId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -213,7 +213,7 @@ trait TaskRoutes
     }
 
   def getTaskSession(taskId: UUID, sessionId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -241,7 +241,7 @@ trait TaskRoutes
     }
 
   def keepSessionAlive(taskId: UUID, sessionId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -286,7 +286,7 @@ trait TaskRoutes
     }
 
   def completeSession(taskId: UUID, sessionId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -365,7 +365,7 @@ trait TaskRoutes
     }
 
   def randomTaskSession: Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -401,7 +401,7 @@ trait TaskRoutes
     }
 
   def listSessionLabels(taskId: UUID, sessionId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -430,7 +430,7 @@ trait TaskRoutes
     }
 
   def createLabel(taskId: UUID, sessionId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -467,7 +467,7 @@ trait TaskRoutes
     }
 
   def bulkCreateSessionLabels(taskId: UUID, sessionId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -509,7 +509,7 @@ trait TaskRoutes
     }
 
   def bulkUpdateSessionLabels(taskId: UUID, sessionId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -551,7 +551,7 @@ trait TaskRoutes
     }
 
   def getLabel(taskId: UUID, sessionId: UUID, labelId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -582,7 +582,7 @@ trait TaskRoutes
     }
 
   def updateLabel(taskId: UUID, sessionId: UUID, labelId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -621,7 +621,7 @@ trait TaskRoutes
     }
 
   def deleteLabel(taskId: UUID, sessionId: UUID, labelId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -657,7 +657,7 @@ trait TaskRoutes
     }
 
   def getActiveTaskSession(taskId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user

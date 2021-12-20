@@ -102,7 +102,7 @@ trait ProjectLayerAnnotationRoutes
     }
 
   def createLayerAnnotation(projectId: UUID, layerId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.CreateAnnotation, None),
         user
@@ -146,7 +146,7 @@ trait ProjectLayerAnnotationRoutes
     }
 
   def deleteLayerAnnotations(projectId: UUID, layerId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
         user
@@ -176,7 +176,7 @@ trait ProjectLayerAnnotationRoutes
       projectId: UUID,
       annotationId: UUID,
       layerId: UUID
-  ): Route = authenticate { user =>
+  ): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
       authorizeAsync {
         ProjectDao
@@ -201,7 +201,7 @@ trait ProjectLayerAnnotationRoutes
     }
   }
   def updateLayerAnnotation(projectId: UUID, layerId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.UpdateAnnotation, None),
         user
@@ -237,7 +237,7 @@ trait ProjectLayerAnnotationRoutes
       annotationId: UUID,
       layerId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
         user
@@ -266,7 +266,7 @@ trait ProjectLayerAnnotationRoutes
     }
 
   def listLayerAnnotationGroups(projectId: UUID, layerId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Read, None),
         user
@@ -288,7 +288,7 @@ trait ProjectLayerAnnotationRoutes
     }
 
   def createLayerAnnotationGroup(projectId: UUID, layerId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Create, None),
         user
@@ -320,7 +320,7 @@ trait ProjectLayerAnnotationRoutes
       projectId: UUID,
       layerId: UUID,
       agId: UUID
-  ): Route = authenticate { user =>
+  ): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.AnnotationGroups, Action.Read, None),
       user
@@ -352,7 +352,7 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       agId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Update, None),
         user
@@ -386,7 +386,7 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       agId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Delete, None),
         user
@@ -418,7 +418,7 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       annotationGroupId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Read, None),
         user
@@ -452,7 +452,7 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       annotationGroupId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationUploads, Action.Read, None),
         user
@@ -490,7 +490,7 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       annotationGroupId: UUID
   ): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationUploads, Action.Create, None),
         user
@@ -573,7 +573,7 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       annotationGroupId: UUID,
       uploadId: UUID
-  ): Route = authenticate { user =>
+  ): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.AnnotationUploads, Action.Read, None),
       user
@@ -599,7 +599,7 @@ trait ProjectLayerAnnotationRoutes
       projectLayerId: UUID,
       annotationGroupId: UUID,
       uploadId: UUID
-  ): Route = authenticate { user =>
+  ): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.AnnotationUploads, Action.Update, None),
       user
@@ -634,7 +634,7 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       annotationGroupId: UUID,
       uploadId: UUID
-  ): Route = authenticate { user =>
+  ): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.AnnotationUploads, Action.Delete, None),
       user

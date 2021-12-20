@@ -180,7 +180,7 @@ trait PlatformRoutes
 
   // @TODO: most platform API interactions should be highly restricted -- only 'super-users' should
   // be able to do list, create, update, delete. Non-super users can only get a platform if they belong to it.
-  def listPlatforms: Route = authenticate { user =>
+  def listPlatforms: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Platforms, Action.Read, None), user) {
       authorizeAsync {
         UserDao.isSuperUser(user).transact(xa).unsafeToFuture
@@ -194,7 +194,7 @@ trait PlatformRoutes
     }
   }
 
-  def createPlatform: Route = authenticate { user =>
+  def createPlatform: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Platforms, Action.Create, None), user) {
       authorizeAsync {
         UserDao.isSuperUser(user).transact(xa).unsafeToFuture
@@ -208,7 +208,7 @@ trait PlatformRoutes
     }
   }
 
-  def getPlatform(platformId: UUID): Route = authenticate { user =>
+  def getPlatform(platformId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Platforms, Action.Read, None), user) {
       authorizeAsync {
         PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
@@ -222,7 +222,7 @@ trait PlatformRoutes
     }
   }
 
-  def updatePlatform(platformId: UUID): Route = authenticate { user =>
+  def updatePlatform(platformId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Platforms, Action.Update, None), user) {
       authorizeAsync {
         PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
@@ -239,7 +239,7 @@ trait PlatformRoutes
     }
   }
 
-  def listPlatformMembers(platformId: UUID): Route = authenticate { user =>
+  def listPlatformMembers(platformId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Platforms, Action.ListUsers, None),
       user
@@ -264,7 +264,7 @@ trait PlatformRoutes
   // - the operating user can see due to organization membership
   // - limited to first 5 ordered by team name
   // - filtered by `search=<team name>` if specified
-  def listPlatformUserTeams(platformId: UUID): Route = authenticate { user =>
+  def listPlatformUserTeams(platformId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Teams, Action.Search, None), user) {
       authorizeAsync {
         PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
@@ -302,7 +302,7 @@ trait PlatformRoutes
       }
   }
 
-  def createOrganization(platformId: UUID): Route = authenticate { user =>
+  def createOrganization(platformId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Organizations, Action.Create, None),
       user
@@ -368,7 +368,7 @@ trait PlatformRoutes
   }
 
   def listOrganizationMembers(orgId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Organizations, Action.ListUsers, None),
         user
@@ -390,7 +390,7 @@ trait PlatformRoutes
     }
 
   def addUserToOrganization(platformId: UUID, orgId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Organizations, Action.AddUser, None),
         user
@@ -421,7 +421,7 @@ trait PlatformRoutes
     }
 
   def removeUserFromOrganization(orgId: UUID, userId: String): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Organizations, Action.RemoveUser, None),
         user
@@ -471,7 +471,7 @@ trait PlatformRoutes
       }
   }
 
-  def createTeam(platformId: UUID, orgId: UUID): Route = authenticate { user =>
+  def createTeam(platformId: UUID, orgId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Teams, Action.Create, None), user) {
       authorizeAsync {
         OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
@@ -501,7 +501,7 @@ trait PlatformRoutes
   }
 
   def getTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Teams, Action.Read, None), user) {
         authorizeAsync {
           OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
@@ -522,7 +522,7 @@ trait PlatformRoutes
     }
 
   def updateTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Teams, Action.Update, None), user) {
         authorizeAsync {
           TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
@@ -544,7 +544,7 @@ trait PlatformRoutes
     }
 
   def deleteTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Teams, Action.Delete, None), user) {
         authorizeAsync {
           TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
@@ -559,7 +559,7 @@ trait PlatformRoutes
     }
 
   def listTeamMembers(platformId: UUID, orgId: UUID, teamId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Teams, Action.ListUsers, None), user) {
         authorizeAsync {
           // The authorization here is necessary to allow users within cross-organizational teams to view
@@ -588,7 +588,7 @@ trait PlatformRoutes
     }
 
   def addUserToTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Teams, Action.AddUser, None), user) {
         entity(as[UserGroupRole.UserRole]) { ur =>
           authorizeAsync {
@@ -628,7 +628,7 @@ trait PlatformRoutes
       orgId: UUID,
       teamId: UUID,
       userId: String
-  ): Route = authenticate { user =>
+  ): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Teams, Action.RemoveUser, None), user) {
       authorizeAsync {
         val authCheck = (
@@ -654,7 +654,7 @@ trait PlatformRoutes
     }
   }
 
-  def setPlatformStatus(platformId: UUID): Route = authenticate { user =>
+  def setPlatformStatus(platformId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Platforms, Action.Update, None), user) {
       authorizeAsync {
         PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
@@ -685,7 +685,7 @@ trait PlatformRoutes
   }
 
   def setOrganizationStatus(platformId: UUID, organizationId: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.Organizations, Action.Update, None),
         user

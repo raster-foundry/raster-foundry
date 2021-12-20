@@ -73,7 +73,7 @@ trait StacRoutes
   }
 
   def listStacExports: Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.StacExports, Action.Read, None),
         user
@@ -101,7 +101,7 @@ trait StacRoutes
     }
 
   def createStacExport: Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.StacExports, Action.Create, None),
         user
@@ -156,7 +156,7 @@ trait StacRoutes
     }
 
   def getStacExport(id: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.StacExports, Action.Read, None),
         user
@@ -187,7 +187,7 @@ trait StacRoutes
     }
 
   def deleteStacExport(id: UUID): Route =
-    authenticate { user =>
+    authenticate { case MembershipAndUser(_, user) =>
       authorizeScope(
         ScopedAction(Domain.StacExports, Action.Delete, None),
         user

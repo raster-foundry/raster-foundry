@@ -82,7 +82,7 @@ trait UserRoutes
       }
   }
 
-  def updateOwnUser: Route = authenticate { user =>
+  def updateOwnUser: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Users, Action.UpdateSelf, None), user) {
       entity(as[User]) { userToUpdate =>
         if (userToUpdate.id == user.id) {
@@ -98,7 +98,7 @@ trait UserRoutes
     }
   }
 
-  def getDbOwnUser: Route = authenticate { user =>
+  def getDbOwnUser: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
       complete(
         UserDao
@@ -109,7 +109,7 @@ trait UserRoutes
     }
   }
 
-  def updateAuth0User: Route = authenticate { user =>
+  def updateAuth0User: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Users, Action.UpdateSelf, None), user) {
       entity(as[Auth0UserUpdate]) { userUpdate =>
         complete {
@@ -119,7 +119,7 @@ trait UserRoutes
     }
   }
 
-  def getDropboxAccessToken: Route = authenticate { user =>
+  def getDropboxAccessToken: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Users, Action.UpdateDropbox, None), user) {
       entity(as[DropboxAuthRequest]) { dbxAuthRequest =>
         val (dbxKey, dbxSecret) =
@@ -180,7 +180,7 @@ trait UserRoutes
       }
   }
 
-  def getUserTeams: Route = authenticate { user =>
+  def getUserTeams: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Users, Action.Read, None), user) {
       complete {
         TeamDao.teamsForUser(user).transact(xa).unsafeToFuture
@@ -204,7 +204,7 @@ trait UserRoutes
       }
     }
 
-  def getUserRoles: Route = authenticate { user =>
+  def getUserRoles: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
       complete {
         UserGroupRoleDao
@@ -216,7 +216,7 @@ trait UserRoutes
   }
 
   // Hard coded limits
-  def getUserLimits: Route = authenticate { user =>
+  def getUserLimits: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
       val io = for {
         projectCount <- AnnotationProjectDao.countUserProjects(user)
@@ -303,7 +303,7 @@ trait UserRoutes
     }
   }
 
-  def searchUsers: Route = authenticate { user =>
+  def searchUsers: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Users, Action.Search, None), user) {
       searchParams { (searchParams) =>
         complete {
@@ -313,7 +313,7 @@ trait UserRoutes
     }
   }
 
-  def createUserBulk: Route = authenticate { user =>
+  def createUserBulk: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(
       ScopedAction(Domain.Users, Action.BulkCreate, None),
       user

@@ -42,7 +42,7 @@ trait MapTokenRoutes
       }
   }
 
-  def listMapTokens: Route = authenticate { user =>
+  def listMapTokens: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.MapTokens, Action.Read, None), user) {
       (withPagination & mapTokenQueryParams) { (page, mapTokenParams) =>
         complete {
@@ -55,7 +55,7 @@ trait MapTokenRoutes
     }
   }
 
-  def createMapToken: Route = authenticate { user =>
+  def createMapToken: Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.MapTokens, Action.Create, None), user) {
       entity(as[MapToken.Create]) { newMapToken =>
         authorizeAsync {
@@ -94,7 +94,7 @@ trait MapTokenRoutes
     }
   }
 
-  def getMapToken(mapTokenId: UUID): Route = authenticate { user =>
+  def getMapToken(mapTokenId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.MapTokens, Action.Read, None), user) {
       authorizeAsync {
         MapTokenDao
@@ -117,7 +117,7 @@ trait MapTokenRoutes
     }
   }
 
-  def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
+  def updateMapToken(mapTokenId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.MapTokens, Action.Update, None), user) {
       authorizeAsync {
         MapTokenDao
@@ -139,7 +139,7 @@ trait MapTokenRoutes
     }
   }
 
-  def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
+  def deleteMapToken(mapTokenId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.MapTokens, Action.Delete, None), user) {
       authorizeAsync {
         MapTokenDao
