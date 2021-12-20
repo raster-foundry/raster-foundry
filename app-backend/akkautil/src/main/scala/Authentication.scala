@@ -36,6 +36,11 @@ import scala.util.Try
 import java.net.URL
 import java.util.UUID
 
+final case class MembershipAndUser(
+    platform: Option[Platform],
+    user: User
+)
+
 trait Authentication extends Directives with LazyLogging {
 
   implicit def xa: Transactor[IO]
@@ -81,13 +86,13 @@ trait Authentication extends Directives with LazyLogging {
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
 
   // Use on endpoints where you need to return an anonymous user for public endpoints
-  def authenticateAllowAnonymous: Directive1[User] = {
+  def authenticateAllowAnonymous: Directive1[MembershipAndUser] = {
     extractTokenHeader.flatMap {
       case Some(token) =>
         authenticateWithToken(token.split(" ").last)
       case None =>
         onSuccess(anonymousUser) flatMap {
-          case Some(user) => provide(user)
+          case Some(user) => provide(MembershipAndUser(None, user))
           case _ =>
             reject(
               AuthenticationFailedRejection(CredentialsRejected, challenge)
@@ -99,7 +104,7 @@ trait Authentication extends Directives with LazyLogging {
   /**
     * Authenticates user based on bearer token (JWT)
     */
-  def authenticate: Directive1[User] = {
+  def authenticate: Directive1[MembershipAndUser] = {
     extractTokenHeader.flatMap {
       case Some(token) =>
         authenticateWithToken(token.split(" ").last)
@@ -111,7 +116,7 @@ trait Authentication extends Directives with LazyLogging {
   /**
     * Authenticates user based on bearer token (JWT)
     */
-  def authenticateWithParameter: Directive1[User] = {
+  def authenticateWithParameter: Directive1[MembershipAndUser] = {
     parameter('token).flatMap { token =>
       authenticateWithToken(token)
     }
@@ -155,13 +160,13 @@ trait Authentication extends Directives with LazyLogging {
       (Option(claims.getStringClaim(field)), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
-    }
+      }
 
     val compareDelegatedToEmail = (field: String) =>
       (delegatedProfile.map(_.get(field).asInstanceOf[String]), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
         case (f, _)                             => f
-    }
+      }
 
     compareToEmail("name")
       .orElse(compareToEmail("nickname"))
@@ -193,7 +198,7 @@ trait Authentication extends Directives with LazyLogging {
       str match {
         case s if !s.trim.isEmpty => Some(s)
         case _                    => None
-    }
+      }
 
     val defaultFromClaims = (field: String, str: String) =>
       optionEmpty(field)
@@ -209,7 +214,9 @@ trait Authentication extends Directives with LazyLogging {
   }
 
   @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
-  def authenticateWithToken(tokenString: String): Directive1[User] = {
+  def authenticateWithToken(
+      tokenString: String
+  ): Directive1[MembershipAndUser] = {
 
     val result: EitherJWT[(JwtToken, JWTClaimsSet)] =
       memoize[Id, EitherJWT[(JwtToken, JWTClaimsSet)]](
@@ -239,10 +246,6 @@ trait Authentication extends Directives with LazyLogging {
             "https://app.rasterfoundry.com;groundworkProUser",
             false
           )
-        final case class MembershipAndUser(
-            platform: Option[Platform],
-            user: User
-        )
 
         val getOrCreateUserProgram = for {
           u <- OptionT.liftF(
@@ -299,8 +302,8 @@ trait Authentication extends Directives with LazyLogging {
               }
             }
           }
-          platformRole = roles.find(role =>
-            role.groupType == GroupType.Platform)
+          platformRole =
+            roles.find(role => role.groupType == GroupType.Platform)
           plat <- OptionT {
             platformRole match {
               case Some(role) =>
@@ -351,10 +354,10 @@ trait Authentication extends Directives with LazyLogging {
         } yield MembershipAndUser(Some(plat), userUpdate)
 
         onSuccess(getOrCreateUserProgram.value.unsafeToFuture).flatMap {
-          case Some(MembershipAndUser(plat, userUpdate)) =>
+          case Some(membershipAndUser @ MembershipAndUser(plat, _)) =>
             plat map { _.isActive } match {
               case Some(true) =>
-                provide(userUpdate)
+                provide(membershipAndUser)
               case _ =>
                 reject(
                   AuthenticationFailedRejection(CredentialsRejected, challenge)
@@ -493,10 +496,10 @@ trait Authentication extends Directives with LazyLogging {
   /**
     * Directive that only allows members of root organization
     */
-  def authenticateSuperUser: Directive1[User] = {
-    authenticate.flatMap { user =>
-      if (user.isSuperuser) {
-        provide(user)
+  def authenticateSuperUser: Directive1[MembershipAndUser] = {
+    authenticate.flatMap { membershipAndUser =>
+      if (membershipAndUser.user.isSuperuser) {
+        provide(membershipAndUser)
       } else {
         reject(AuthorizationFailedRejection)
       }
