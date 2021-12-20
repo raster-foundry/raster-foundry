@@ -1,7 +1,11 @@
 package com.rasterfoundry.api.project
 
 import com.rasterfoundry.akkautil.PaginationDirectives
-import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  MembershipAndUser
+}
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.common._
 import com.rasterfoundry.common.color._
@@ -63,7 +67,7 @@ trait ProjectLayerRoutes
     }
 
   def listProjectLayers(projectId: UUID): Route =
-    authenticateAllowAnonymous { user =>
+    authenticateAllowAnonymous { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
         (authorizeAsync(
           ProjectDao
@@ -86,68 +90,77 @@ trait ProjectLayerRoutes
     }
 
   def getProjectLayer(projectId: UUID, layerId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
-        authorizeAuthResultAsync {
-          ProjectDao
-            .authorized(user, ObjectType.Project, projectId, ActionType.View)
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          rejectEmptyResponse {
-            complete {
-              ProjectLayerDao
-                .getProjectLayer(projectId, layerId)
-                .transact(xa)
-                .unsafeToFuture
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+          authorizeAuthResultAsync {
+            ProjectDao
+              .authorized(user, ObjectType.Project, projectId, ActionType.View)
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            rejectEmptyResponse {
+              complete {
+                ProjectLayerDao
+                  .getProjectLayer(projectId, layerId)
+                  .transact(xa)
+                  .unsafeToFuture
+              }
             }
           }
         }
-      }
     }
 
   def updateProjectLayer(projectId: UUID, layerId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.Update, None), user) {
-        authorizeAsync {
-          ProjectDao
-            .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[ProjectLayer]) { updatedProjectLayer =>
-            onSuccess(
-              ProjectLayerDao
-                .updateProjectLayer(updatedProjectLayer, layerId)
-                .transact(xa)
-                .unsafeToFuture
-            ) {
-              completeSingleOrNotFound
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Projects, Action.Update, None),
+          user
+        ) {
+          authorizeAsync {
+            ProjectDao
+              .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            entity(as[ProjectLayer]) { updatedProjectLayer =>
+              onSuccess(
+                ProjectLayerDao
+                  .updateProjectLayer(updatedProjectLayer, layerId)
+                  .transact(xa)
+                  .unsafeToFuture
+              ) {
+                completeSingleOrNotFound
+              }
             }
           }
         }
-      }
     }
 
   def deleteProjectLayer(projectId: UUID, layerId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.Delete, None), user) {
-        authorizeAsync {
-          ProjectDao
-            .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          rejectEmptyResponse {
-            complete {
-              ProjectLayerDao
-                .deleteProjectLayer(layerId)
-                .transact(xa)
-                .unsafeToFuture
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(
+          ScopedAction(Domain.Projects, Action.Delete, None),
+          user
+        ) {
+          authorizeAsync {
+            ProjectDao
+              .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            rejectEmptyResponse {
+              complete {
+                ProjectLayerDao
+                  .deleteProjectLayer(layerId)
+                  .transact(xa)
+                  .unsafeToFuture
+              }
             }
           }
         }
-      }
     }
 
   def getProjectLayerMosaicDefinition(projectId: UUID, layerId: UUID): Route =
@@ -289,25 +302,26 @@ trait ProjectLayerRoutes
     }
 
   def listLayerScenes(projectId: UUID, layerId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
-        authorizeAuthResultAsync {
-          ProjectDao
-            .authorized(user, ObjectType.Project, projectId, ActionType.View)
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          (withPagination & projectSceneQueryParameters) {
-            (page, sceneParams) =>
-              complete {
-                ProjectLayerScenesDao
-                  .listLayerScenes(layerId, page, sceneParams)
-                  .transact(xa)
-                  .unsafeToFuture
-              }
+    authenticate {
+      case MembershipAndUser(_, user) =>
+        authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+          authorizeAuthResultAsync {
+            ProjectDao
+              .authorized(user, ObjectType.Project, projectId, ActionType.View)
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            (withPagination & projectSceneQueryParameters) {
+              (page, sceneParams) =>
+                complete {
+                  ProjectLayerScenesDao
+                    .listLayerScenes(layerId, page, sceneParams)
+                    .transact(xa)
+                    .unsafeToFuture
+                }
+            }
           }
         }
-      }
     }
 
   def listLayerDatasources(projectId: UUID, layerId: UUID): Route =

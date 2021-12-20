@@ -486,7 +486,7 @@ trait ProjectRoutes
     }
   }
 
-  def getProject(projectId: UUID): Route = authenticateAllowAnonymous { user =>
+  def getProject(projectId: UUID): Route = authenticateAllowAnonymous { case MembershipAndUser(_, user) =>
     authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
       (authorizeAsync(
         ProjectDao

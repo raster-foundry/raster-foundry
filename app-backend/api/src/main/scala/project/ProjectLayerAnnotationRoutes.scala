@@ -50,7 +50,7 @@ trait ProjectLayerAnnotationRoutes
   }
 
   def listLayerAnnotations(projectId: UUID, layerId: UUID): Route =
-    authenticateAllowAnonymous { user =>
+    authenticateAllowAnonymous { case MembershipAndUser(_, user) =>
       authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
         (authorizeAsync(
           ProjectDao
