@@ -36,11 +36,6 @@ import scala.util.Try
 import java.net.URL
 import java.util.UUID
 
-final case class MembershipAndUser(
-    platform: Option[Platform],
-    user: User
-)
-
 trait Authentication extends Directives with LazyLogging {
 
   implicit def xa: Transactor[IO]
@@ -79,20 +74,20 @@ trait Authentication extends Directives with LazyLogging {
   implicit val cacheEnabled = Flags(authCacheEnabled, authCacheEnabled)
 
   // Default user returned when no credentials are provided
-  lazy val anonymousUser: Future[Option[User]] =
+  lazy val anonymousUser: Future[Option[UserMaybePlatform]] =
     UserDao.getUserById("default").transact(xa).unsafeToFuture
 
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
 
   // Use on endpoints where you need to return an anonymous user for public endpoints
-  def authenticateAllowAnonymous: Directive1[MembershipAndUser] = {
+  def authenticateAllowAnonymous: Directive1[UserMaybePlatform] = {
     extractTokenHeader.flatMap {
       case Some(token) =>
         authenticateWithToken(token.split(" ").last)
       case None =>
         onSuccess(anonymousUser) flatMap {
-          case Some(user) => provide(MembershipAndUser(None, user))
+          case Some(userMaybePlatform) => provide(userMaybePlatform)
           case _ =>
             reject(
               AuthenticationFailedRejection(CredentialsRejected, challenge)
@@ -104,7 +99,7 @@ trait Authentication extends Directives with LazyLogging {
   /**
     * Authenticates user based on bearer token (JWT)
     */
-  def authenticate: Directive1[MembershipAndUser] = {
+  def authenticate: Directive1[UserMaybePlatform] = {
     extractTokenHeader.flatMap {
       case Some(token) =>
         authenticateWithToken(token.split(" ").last)
@@ -116,7 +111,7 @@ trait Authentication extends Directives with LazyLogging {
   /**
     * Authenticates user based on bearer token (JWT)
     */
-  def authenticateWithParameter: Directive1[MembershipAndUser] = {
+  def authenticateWithParameter: Directive1[UserMaybePlatform] = {
     parameter('token).flatMap { token =>
       authenticateWithToken(token)
     }
@@ -216,7 +211,7 @@ trait Authentication extends Directives with LazyLogging {
   @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
   def authenticateWithToken(
       tokenString: String
-  ): Directive1[MembershipAndUser] = {
+  ): Directive1[UserMaybePlatform] = {
 
     val result: EitherJWT[(JwtToken, JWTClaimsSet)] =
       memoize[Id, EitherJWT[(JwtToken, JWTClaimsSet)]](
@@ -351,13 +346,13 @@ trait Authentication extends Directives with LazyLogging {
               case _ => IO.pure(user)
             }
           }
-        } yield MembershipAndUser(Some(plat), userUpdate)
+        } yield (userUpdate, Some(plat))
 
         onSuccess(getOrCreateUserProgram.value.unsafeToFuture).flatMap {
-          case Some(membershipAndUser @ MembershipAndUser(plat, _)) =>
+          case Some(userMaybePlatform @ (_, plat)) =>
             plat map { _.isActive } match {
               case Some(true) =>
-                provide(membershipAndUser)
+                provide(userMaybePlatform)
               case _ =>
                 reject(
                   AuthenticationFailedRejection(CredentialsRejected, challenge)
@@ -457,7 +452,7 @@ trait Authentication extends Directives with LazyLogging {
         orgID
       )
       newUserWithRoles <- UserDao.createUserWithJWT(
-        systemUser,
+        systemUser._1,
         jwtUser,
         userRole,
         userScope
@@ -496,13 +491,14 @@ trait Authentication extends Directives with LazyLogging {
   /**
     * Directive that only allows members of root organization
     */
-  def authenticateSuperUser: Directive1[MembershipAndUser] = {
-    authenticate.flatMap { membershipAndUser =>
-      if (membershipAndUser.user.isSuperuser) {
-        provide(membershipAndUser)
-      } else {
-        reject(AuthorizationFailedRejection)
-      }
+  def authenticateSuperUser: Directive1[UserMaybePlatform] = {
+    authenticate.flatMap {
+      case userMaybePlatform @ (user, _) =>
+        if (user.isSuperuser) {
+          provide(userMaybePlatform)
+        } else {
+          reject(AuthorizationFailedRejection)
+        }
     }
   }
 }
