@@ -48,6 +48,11 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           group_role = ${ugr.groupRole}
           where id = ${id}
         """
+  def getPlatformRoleForUserById(userId: String) =
+    query
+      .filter(fr"group_type = 'PLATFORM' :: group_type")
+      .filter(fr"user_id = $userId")
+      .filter(fr"is_active = true")
 
   def getUserGroupRoleById(
       ugrId: UUID,
@@ -117,11 +122,12 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           .selectOption
       }
       existingMembershipStatus = existingRoleO map { _.membershipStatus }
-      rolesMatch = existingRoleO
-        .map(
-          (ugr: UserGroupRole) => ugr.groupRole == userGroupRoleCreate.groupRole
-        )
-        .getOrElse(false)
+      rolesMatch =
+        existingRoleO
+          .map((ugr: UserGroupRole) =>
+            ugr.groupRole == userGroupRoleCreate.groupRole
+          )
+          .getOrElse(false)
       isSameOrg <- isSameOrgIO
       createdOrReturned <- {
         (existingMembershipStatus, adminCheck, rolesMatch) match {
@@ -339,10 +345,16 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
               case false => Some(ff)
             }
           )
-          .page[User.WithGroupRole](page, sf, cf, orderClauseO match {
-            case Some(orderClause) => orderClause
-            case None              => Map.empty[String, Order]
-          }, true)
+          .page[User.WithGroupRole](
+            page,
+            sf,
+            cf,
+            orderClauseO match {
+              case Some(orderClause) => orderClause
+              case None              => Map.empty[String, Order]
+            },
+            true
+          )
       }
     } yield { result }
   }
@@ -415,10 +427,11 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     )
     for {
       systemUserO <- UserDao.getUserById(Config.auth0Config.systemUser)
-      inserted <- systemUserO traverse { systemUser =>
-        List(orgUgrCreate, platUgrCreate) traverse { ugr =>
-          create(ugr.toUserGroupRole(systemUser, MembershipStatus.Approved))
-        }
+      inserted <- systemUserO traverse {
+        case (systemUser, _) =>
+          List(orgUgrCreate, platUgrCreate) traverse { ugr =>
+            create(ugr.toUserGroupRole(systemUser, MembershipStatus.Approved))
+          }
       }
     } yield (inserted getOrElse Nil)
   }

@@ -6,6 +6,7 @@ import com.rasterfoundry.common.{
   Config,
   SceneToLayerWithSceneType
 }
+import com.rasterfoundry.database.UserMaybePlatform
 import com.rasterfoundry.datamodel._
 
 import cats._
@@ -83,10 +84,16 @@ object Cache extends LazyLogging {
     }
   }
 
+  object UserMaybePlatformCache {
+    implicit val userMaybePlatformCache: Cache[UserMaybePlatform] = {
+      MemcachedCache[UserMaybePlatform](memcachedClient)
+    }
+  }
+
   object MosaicDefinitionCache {
     import scalacache.serialization.binary._
     implicit val mosaicDefinitionCache
-      : Cache[List[SceneToLayerWithSceneType]] = {
+        : Cache[List[SceneToLayerWithSceneType]] = {
       MemcachedCache[List[SceneToLayerWithSceneType]](memcachedClient)
     }
   }

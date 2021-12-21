@@ -99,12 +99,13 @@ object ExportDao extends Dao[Export] {
     logger.debug("Decoded export options successfully")
 
     val outputDefinition: ConnectionIO[OutputDefinition] = for {
-      user <- UserDao.getUserById(export.owner)
+      userMaybePlatform <- UserDao.getUserById(export.owner)
     } yield {
       OutputDefinition(
         crs = exportOptions.getCrs,
         destination = exportOptions.source.toString,
-        dropboxCredential = user.flatMap(_.dropboxCredential.token)
+        dropboxCredential =
+          userMaybePlatform.flatMap(_._1.dropboxCredential.token)
       )
     }
 
@@ -155,9 +156,10 @@ object ExportDao extends Dao[Export] {
     for {
       _ <- logger.debug("Creating output definition").pure[ConnectionIO]
       outputDef <- outputDefinition
-      _ <- logger
-        .info(s"Created output definition for ${exportOptions.source}")
-        .pure[ConnectionIO]
+      _ <-
+        logger
+          .info(s"Created output definition for ${exportOptions.source}")
+          .pure[ConnectionIO]
       _ <- logger.debug(s"Creating input definition").pure[ConnectionIO]
       sourceDef <- exportSource
       _ <- logger.debug("Created input definition").pure[ConnectionIO]
@@ -191,9 +193,10 @@ object ExportDao extends Dao[Export] {
       }.pure[ConnectionIO]
       _ <- logger.debug("Fetched ast").pure[ConnectionIO]
       exportParameters <- getExportParameters(oldAST)
-      _ <- logger
-        .debug("Found ingest locations for projects")
-        .pure[ConnectionIO]
+      _ <-
+        logger
+          .debug("Found ingest locations for projects")
+          .pure[ConnectionIO]
     } yield {
       val mamlExpression = MamlConversion.fromDeprecatedAST(oldAST)
       exportOptions.mask.map(_.geom.reproject(WebMercator, LatLng)) match {
@@ -239,13 +242,14 @@ object ExportDao extends Dao[Export] {
     }
   }
 
-  private def stripMetadata(ast: MapAlgebraAST): MapAlgebraAST = ast match {
-    case astLeaf: MapAlgebraAST.MapAlgebraLeaf =>
-      astLeaf.withMetadata(NodeMetadata())
-    case _: MapAlgebraAST =>
-      val args = ast.args.map(stripMetadata)
-      ast.withMetadata(NodeMetadata()).withArgs(args)
-  }
+  private def stripMetadata(ast: MapAlgebraAST): MapAlgebraAST =
+    ast match {
+      case astLeaf: MapAlgebraAST.MapAlgebraLeaf =>
+        astLeaf.withMetadata(NodeMetadata())
+      case _: MapAlgebraAST =>
+        val args = ast.args.map(stripMetadata)
+        ast.withMetadata(NodeMetadata()).withArgs(args)
+    }
 
   private def getProjectLocations(
       projects: NonEmptyList[UUID]
@@ -268,9 +272,10 @@ object ExportDao extends Dao[Export] {
       ) ++
         fr"GROUP BY projects.id"
     for {
-      projectSceneLocations <- q
-        .query[(UUID, List[UUID], List[String])]
-        .to[List]
+      projectSceneLocations <-
+        q
+          .query[(UUID, List[UUID], List[String])]
+          .to[List]
     } yield {
       projectSceneLocations.map {
         case (projectId, sceneIds, locations) =>
@@ -296,9 +301,10 @@ object ExportDao extends Dao[Export] {
       ) ++
         fr"GROUP BY stl.project_layer_id"
     for {
-      projectLayerSceneLocations <- q
-        .query[(UUID, List[UUID], List[String])]
-        .to[List]
+      projectLayerSceneLocations <-
+        q
+          .query[(UUID, List[UUID], List[String])]
+          .to[List]
     } yield {
       projectLayerSceneLocations.map {
         case (layerId, sceneIds, locations) =>

@@ -4,6 +4,8 @@ import com.rasterfoundry.database.filter.Filterables
 import com.rasterfoundry.database.meta.RFMeta
 import com.rasterfoundry.datamodel.Credential
 import com.rasterfoundry.datamodel.ExportAssetType
+import com.rasterfoundry.datamodel.Platform
+import com.rasterfoundry.datamodel.User
 
 import cats.data.NonEmptyList
 import doobie.Get
@@ -11,6 +13,8 @@ import doobie.Meta
 import doobie.Put
 
 package object database {
+
+  type UserMaybePlatform = (User, Option[Platform])
 
   object Implicits extends RFMeta with Filterables {
     def fromString(s: String): Credential = {
