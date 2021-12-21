@@ -34,8 +34,8 @@ class Authenticators(val xa: Transactor[IO])
           userFromMapToken(MapTokenDao.checkProject(projectId), mapTokenId)
 
         case req @ _ -> UUIDWrapper(analysisId) /: _
-            :? TokenQueryParamMatcher(tokenQP)
-            :? MapTokenQueryParamMatcher(mapTokenQP)
+              :? TokenQueryParamMatcher(tokenQP)
+              :? MapTokenQueryParamMatcher(mapTokenQP)
             if req.scriptName == "/tools" =>
           val authHeader: OptionT[IO, Header] =
             OptionT.fromOption(
@@ -52,8 +52,8 @@ class Authenticators(val xa: Transactor[IO])
             ) reduce { _ orElse _ }
 
         case req @ _ -> UUIDWrapper(projectId) /: _
-            :? TokenQueryParamMatcher(tokenQP)
-            :? MapTokenQueryParamMatcher(mapTokenQP) => {
+              :? TokenQueryParamMatcher(tokenQP)
+              :? MapTokenQueryParamMatcher(mapTokenQP) => {
           val authHeaderO: Option[Header] =
             req.headers.get(CaseInsensitiveString("Authorization"))
           val mapTokenO = mapTokenQP orElse (req.params

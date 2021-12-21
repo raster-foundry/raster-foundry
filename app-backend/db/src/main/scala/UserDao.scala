@@ -53,18 +53,18 @@ object UserDao extends Dao[User] with Sanitization {
   ): ConnectionIO[Option[UserMaybePlatformId]] =
     for {
       maybeUser <- query.filter(fr"id = ${id}").selectOption
-      maybePlatformIdRole <-
-        UserGroupRoleDao
-          .getPlatformRoleForUserById(id)
-          .selectOption
+      maybePlatformIdRole <- UserGroupRoleDao
+        .getPlatformRoleForUserById(id)
+        .selectOption
       maybePlatformId <- maybePlatformIdRole match {
         case Some(platformRole) =>
           PlatformDao.getPlatformById(platformRole.groupId)
         case _ => (None: Option[Platform]).pure[ConnectionIO]
       }
-    } yield maybeUser map { user =>
-      (user, maybePlatformId map { _.id })
-    }
+    } yield
+      maybeUser map { user =>
+        (user, maybePlatformId map { _.id })
+      }
 
   def unsafeGetUserById(
       id: String,
@@ -122,10 +122,9 @@ object UserDao extends Dao[User] with Sanitization {
       scope: Scope
   ): ConnectionIO[(User, List[UserGroupRole])] = {
     for {
-      organization <-
-        OrganizationDao.query
-          .filter(jwtUser.organizationId)
-          .selectOption
+      organization <- OrganizationDao.query
+        .filter(jwtUser.organizationId)
+        .selectOption
       createdUser <- {
         organization match {
           case Some(_) =>
@@ -306,7 +305,7 @@ object UserDao extends Dao[User] with Sanitization {
     val planetCredential = user.planetCredential.token.getOrElse("")
     for {
       query <- (
-          sql"""
+        sql"""
         UPDATE users
         SET
           modified_at = ${updateTime},
@@ -315,7 +314,7 @@ object UserDao extends Dao[User] with Sanitization {
           visibility = ${user.visibility},
           personal_info = ${user.personalInfo}
           """ ++
-            Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
+          Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
       ).update.run
       _ <- remove(user.cacheKey)(
         userMaybePlatformIdCache,
