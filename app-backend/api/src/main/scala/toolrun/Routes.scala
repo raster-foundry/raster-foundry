@@ -125,7 +125,7 @@ trait ToolRunRoutes
             }
           }
         case _ =>
-          authenticate { case MembershipAndUser(_, user) =>
+          authenticate { case (user, _) =>
             authorizeScope(
               ScopedAction(Domain.Analyses, Action.Read, None),
               user
@@ -150,7 +150,7 @@ trait ToolRunRoutes
       }
   }
 
-  def createToolRun: Route = authenticate { case MembershipAndUser(_, user) =>
+  def createToolRun: Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Analyses, Action.Create, None), user) {
       entity(as[ToolRun.Create]) { newRun =>
         onSuccess(
@@ -166,7 +166,7 @@ trait ToolRunRoutes
     }
   }
 
-  def getToolRun(runId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def getToolRun(runId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Analyses, Action.Read, None), user) {
       authorizeAuthResultAsync {
         ToolRunDao
@@ -187,7 +187,7 @@ trait ToolRunRoutes
     }
   }
 
-  def updateToolRun(runId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def updateToolRun(runId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Analyses, Action.Update, None), user) {
       authorizeAuthResultAsync {
         ToolRunDao
@@ -209,7 +209,7 @@ trait ToolRunRoutes
     }
   }
 
-  def deleteToolRun(runId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def deleteToolRun(runId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Analyses, Action.Delete, None), user) {
       authorizeAuthResultAsync {
         ToolRunDao
@@ -226,7 +226,7 @@ trait ToolRunRoutes
     }
   }
 
-  def listToolRunPermissions(toolRunId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def listToolRunPermissions(toolRunId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(
       ScopedAction(Domain.Analyses, Action.ReadPermissions, None),
       user
@@ -247,7 +247,7 @@ trait ToolRunRoutes
     }
   }
 
-  def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Analyses, Action.Share, None), user) {
       entity(as[List[ObjectAccessControlRule]]) { acrList =>
         authorizeAsync {
@@ -291,7 +291,7 @@ trait ToolRunRoutes
     }
   }
 
-  def addToolRunPermission(toolRunId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def addToolRunPermission(toolRunId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Analyses, Action.Share, None), user) {
       entity(as[ObjectAccessControlRule]) { acr =>
         authorizeAsync {
@@ -319,7 +319,7 @@ trait ToolRunRoutes
     }
   }
 
-  def listUserAnalysisActions(analysisId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def listUserAnalysisActions(analysisId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(
       ScopedAction(Domain.Analyses, Action.ReadPermissions, None),
       user
@@ -356,7 +356,7 @@ trait ToolRunRoutes
     }
   }
 
-  def deleteToolRunPermissions(toolRunId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def deleteToolRunPermissions(toolRunId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Analyses, Action.Share, None), user) {
       authorizeAuthResultAsync {
         ToolRunDao

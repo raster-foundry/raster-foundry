@@ -25,7 +25,7 @@ trait CampaignProjectRoutes
   val xa: Transactor[IO]
 
   def listCampaignProjects(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -64,7 +64,7 @@ trait CampaignProjectRoutes
     }
 
   def getCampaignProject(campaignId: UUID, annotationProjectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user

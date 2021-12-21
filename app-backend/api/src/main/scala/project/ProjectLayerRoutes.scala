@@ -36,7 +36,7 @@ trait ProjectLayerRoutes
 
   def createProjectLayer(projectId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Projects, Action.Create, None),
           user
@@ -67,7 +67,7 @@ trait ProjectLayerRoutes
     }
 
   def listProjectLayers(projectId: UUID): Route =
-    authenticateAllowAnonymous { case MembershipAndUser(_, user) =>
+    authenticateAllowAnonymous { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
         (authorizeAsync(
           ProjectDao
@@ -91,7 +91,7 @@ trait ProjectLayerRoutes
 
   def getProjectLayer(projectId: UUID, layerId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
           authorizeAuthResultAsync {
             ProjectDao
@@ -113,7 +113,7 @@ trait ProjectLayerRoutes
 
   def updateProjectLayer(projectId: UUID, layerId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Projects, Action.Update, None),
           user
@@ -140,7 +140,7 @@ trait ProjectLayerRoutes
 
   def deleteProjectLayer(projectId: UUID, layerId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Projects, Action.Delete, None),
           user
@@ -165,7 +165,7 @@ trait ProjectLayerRoutes
 
   def getProjectLayerMosaicDefinition(projectId: UUID, layerId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
           authorizeAsync {
             ProjectDao
@@ -191,7 +191,7 @@ trait ProjectLayerRoutes
       sceneId: UUID
   ): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
           authorizeAsync {
             ProjectDao
@@ -215,7 +215,7 @@ trait ProjectLayerRoutes
       sceneId: UUID
   ): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Projects, Action.ColorCorrect, None),
           user
@@ -245,7 +245,7 @@ trait ProjectLayerRoutes
       layerId: UUID
   ): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Projects, Action.ColorCorrect, None),
           user
@@ -272,7 +272,7 @@ trait ProjectLayerRoutes
 
   def setProjectLayerSceneOrder(projectId: UUID, layerId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Projects, Action.ColorCorrect, None),
           user
@@ -303,7 +303,7 @@ trait ProjectLayerRoutes
 
   def listLayerScenes(projectId: UUID, layerId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
           authorizeAuthResultAsync {
             ProjectDao
@@ -326,7 +326,7 @@ trait ProjectLayerRoutes
 
   def listLayerDatasources(projectId: UUID, layerId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
           (projectQueryParameters) { projectQueryParams =>
             authorizeAsync {
@@ -361,7 +361,7 @@ trait ProjectLayerRoutes
 
   def getProjectLayerSceneCounts(projectId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
           authorizeAuthResultAsync {
             ProjectDao
@@ -382,7 +382,7 @@ trait ProjectLayerRoutes
 
   def setProjectLayerColorMode(projectId: UUID, layerId: UUID) =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Projects, Action.Update, None),
           user

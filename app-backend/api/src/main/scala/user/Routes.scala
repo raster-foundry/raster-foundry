@@ -85,7 +85,7 @@ trait UserRoutes
 
   def updateOwnUser: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Users, Action.UpdateSelf, None),
           user
@@ -109,7 +109,7 @@ trait UserRoutes
 
   def getDbOwnUser: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Users, Action.ReadSelf, None),
           user
@@ -125,7 +125,7 @@ trait UserRoutes
 
   def updateAuth0User: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Users, Action.UpdateSelf, None),
           user
@@ -140,7 +140,7 @@ trait UserRoutes
 
   def getDropboxAccessToken: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Users, Action.UpdateDropbox, None),
           user
@@ -186,7 +186,7 @@ trait UserRoutes
 
   def getUserByEncodedAuthId(authIdEncoded: String): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Users, Action.ReadSelf, None),
           user
@@ -213,7 +213,7 @@ trait UserRoutes
 
   def getUserTeams: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Users, Action.Read, None), user) {
           complete {
             TeamDao.teamsForUser(user).transact(xa).unsafeToFuture
@@ -223,7 +223,7 @@ trait UserRoutes
 
   def updateUserByEncodedAuthId(authIdEncoded: String): Route =
     authenticateSuperUser {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Users, Action.Update, None), user) {
           entity(as[User]) { updatedUser =>
             onSuccess(
@@ -240,7 +240,7 @@ trait UserRoutes
 
   def getUserRoles: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Users, Action.ReadSelf, None),
           user
@@ -257,7 +257,7 @@ trait UserRoutes
   // Hard coded limits
   def getUserLimits: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Users, Action.ReadSelf, None),
           user
@@ -353,7 +353,7 @@ trait UserRoutes
 
   def searchUsers: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Users, Action.Search, None), user) {
           searchParams { (searchParams) =>
             complete {
@@ -368,7 +368,7 @@ trait UserRoutes
 
   def createUserBulk: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Users, Action.BulkCreate, None),
           user

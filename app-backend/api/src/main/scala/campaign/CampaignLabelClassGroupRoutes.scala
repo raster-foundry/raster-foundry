@@ -31,7 +31,7 @@ trait CampaignLabelClassGroupRoutes
   def commonLabelClassGroupRoutes: CommonLabelClassGroupRoutes
 
   def listCampaignLabelClassGroups(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
@@ -60,7 +60,7 @@ trait CampaignLabelClassGroupRoutes
     }
 
   def createCampaignLabelClassGroup(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Update, None),
         user
@@ -110,7 +110,7 @@ trait CampaignLabelClassGroupRoutes
     }
 
   def getCampaignLabelClassGroup(campaignId: UUID, classGroupId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
@@ -137,7 +137,7 @@ trait CampaignLabelClassGroupRoutes
       campaignId: UUID,
       classGroupId: UUID
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Update, None),
         user
@@ -169,7 +169,7 @@ trait CampaignLabelClassGroupRoutes
       campaignId: UUID,
       classGroupId: UUID
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Update, None),
         user
@@ -195,7 +195,7 @@ trait CampaignLabelClassGroupRoutes
       campaignId: UUID,
       classGroupId: UUID
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Update, None),
         user

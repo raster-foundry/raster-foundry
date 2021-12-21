@@ -65,7 +65,7 @@ trait DatasourceRoutes
   }
 
   def listDatasources: Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Read, None),
         user
@@ -91,7 +91,7 @@ trait DatasourceRoutes
     }
 
   def getDatasource(datasourceId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Read, None),
         user
@@ -120,7 +120,7 @@ trait DatasourceRoutes
     }
 
   def createDatasource: Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Create, None),
         user
@@ -139,7 +139,7 @@ trait DatasourceRoutes
     }
 
   def updateDatasource(datasourceId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Update, None),
         user
@@ -170,7 +170,7 @@ trait DatasourceRoutes
     }
 
   def deleteDatasource(datasourceId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Delete, None),
         user
@@ -196,7 +196,7 @@ trait DatasourceRoutes
     }
 
   def listDatasourcePermissions(datasourceId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.ReadPermissions, None),
         user
@@ -223,7 +223,7 @@ trait DatasourceRoutes
     }
 
   def replaceDatasourcePermissions(datasourceId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Share, None),
         user
@@ -271,7 +271,7 @@ trait DatasourceRoutes
     }
 
   def addDatasourcePermission(datasourceId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Share, None),
         user
@@ -307,7 +307,7 @@ trait DatasourceRoutes
     }
 
   def listUserDatasourceActions(datasourceId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.ReadPermissions, None),
         user
@@ -345,7 +345,7 @@ trait DatasourceRoutes
     }
 
   def deleteDatasourcePermissions(datasourceId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Datasources, Action.Share, None),
         user

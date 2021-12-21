@@ -45,7 +45,7 @@ trait MapTokenRoutes
 
   def listMapTokens: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.MapTokens, Action.Read, None),
           user
@@ -63,7 +63,7 @@ trait MapTokenRoutes
 
   def createMapToken: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.MapTokens, Action.Create, None),
           user
@@ -110,7 +110,7 @@ trait MapTokenRoutes
 
   def getMapToken(mapTokenId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.MapTokens, Action.Read, None),
           user
@@ -138,7 +138,7 @@ trait MapTokenRoutes
 
   def updateMapToken(mapTokenId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.MapTokens, Action.Update, None),
           user
@@ -165,7 +165,7 @@ trait MapTokenRoutes
 
   def deleteMapToken(mapTokenId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.MapTokens, Action.Delete, None),
           user

@@ -95,7 +95,7 @@ trait AnnotationProjectPermissionRoutes
 
   def listPermissions(projectId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.AnnotationProjects, Action.ReadPermissions, None),
           user
@@ -123,7 +123,7 @@ trait AnnotationProjectPermissionRoutes
 
   def replacePermissions(projectId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.AnnotationProjects, Action.Share, None),
           user
@@ -186,7 +186,7 @@ trait AnnotationProjectPermissionRoutes
 
   def addPermission(projectId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         val shareCount =
           AnnotationProjectDao
             .getShareCount(projectId, user.id)
@@ -240,7 +240,7 @@ trait AnnotationProjectPermissionRoutes
 
   def deletePermissions(projectId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.AnnotationProjects, Action.Share, None),
           user
@@ -268,7 +268,7 @@ trait AnnotationProjectPermissionRoutes
 
   def listAnnotationProjectShares(projectId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.AnnotationProjects, Action.Share, None),
           user
@@ -296,7 +296,7 @@ trait AnnotationProjectPermissionRoutes
 
   def deleteAnnotationProjectShare(projectId: UUID, deleteId: String): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.AnnotationProjects, Action.Read, None),
           user
@@ -339,7 +339,7 @@ trait AnnotationProjectPermissionRoutes
 
   def shareAnnotationProject(projectId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         val shareCount =
           AnnotationProjectDao
             .getShareCount(projectId, user.id)

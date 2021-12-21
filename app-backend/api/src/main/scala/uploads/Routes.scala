@@ -57,7 +57,7 @@ trait UploadRoutes
   }
 
   def listUploads: Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Uploads, Action.Read, None), user) {
         (withPagination & uploadQueryParams) {
           (page: PageRequest, queryParams: UploadQueryParameters) =>
@@ -74,7 +74,7 @@ trait UploadRoutes
     }
 
   def getUpload(uploadId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Uploads, Action.Read, None), user) {
         authorizeAsync {
           UploadDao.query
@@ -97,7 +97,7 @@ trait UploadRoutes
     }
 
   def createUpload: Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       // check if user has already hit the storage quota
       val userBytesUploaded =
         UploadDao.getUserBytesUploaded(user).transact(xa).unsafeToFuture()
@@ -197,7 +197,7 @@ trait UploadRoutes
     }
 
   def updateUpload(uploadId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Uploads, Action.Update, None), user) {
         authorizeAsync {
           UploadDao.query
@@ -266,7 +266,7 @@ trait UploadRoutes
     }
 
   def deleteUpload(uploadId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Uploads, Action.Delete, None), user) {
         authorizeAsync {
           UploadDao.query
@@ -285,7 +285,7 @@ trait UploadRoutes
     }
 
   def getUploadCredentials(uploadId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Uploads, Action.Create, None), user) {
         authorizeAsync {
           UploadDao.query
@@ -323,7 +323,7 @@ trait UploadRoutes
     }
 
   def getSignedUploadUrl(uploadId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Uploads, Action.Read, None), user) {
         authorizeAsync {
           UploadDao.query

@@ -36,7 +36,7 @@ trait FeatureFlagRoutes
 
   def getFeatureFlags: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.FeatureFlags, Action.Read, None),
           user

@@ -66,7 +66,7 @@ trait ExportRoutes
       }
   }
 
-  def listExports: Route = authenticate { case MembershipAndUser(_, user) =>
+  def listExports: Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
       (withPagination & exportQueryParams) {
         (page: PageRequest, queryParams: ExportQueryParameters) =>
@@ -82,7 +82,7 @@ trait ExportRoutes
     }
   }
 
-  def getExport(exportId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def getExport(exportId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
       authorizeAsync {
         ExportDao.query
@@ -104,7 +104,7 @@ trait ExportRoutes
     }
   }
 
-  def getExportDefinition(exportId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def getExportDefinition(exportId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
       authorizeAsync {
         ExportDao.query
@@ -128,7 +128,7 @@ trait ExportRoutes
     }
   }
 
-  def createExport: Route = authenticate { case MembershipAndUser(_, user) =>
+  def createExport: Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Exports, Action.Create, None), user) {
       entity(as[Export.Create]) { newExport =>
         newExport.exportOptions.as[ExportOptions] match {
@@ -151,7 +151,7 @@ trait ExportRoutes
     }
   }
 
-  def updateExport(exportId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def updateExport(exportId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Exports, Action.Update, None), user) {
       authorizeAsync {
         ExportDao.query
@@ -174,7 +174,7 @@ trait ExportRoutes
     }
   }
 
-  def deleteExport(exportId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def deleteExport(exportId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Exports, Action.Delete, None), user) {
       authorizeAsync {
         ExportDao.query
@@ -192,7 +192,7 @@ trait ExportRoutes
     }
   }
 
-  def exportFiles(exportId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def exportFiles(exportId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
       authorizeAsync {
         ExportDao.query
@@ -221,7 +221,7 @@ trait ExportRoutes
     }
   }
 
-  def proxiedFiles(exportId: UUID): Route = authenticate { case MembershipAndUser(_, user) =>
+  def proxiedFiles(exportId: UUID): Route = authenticate { case (user, _) =>
     authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
       authorizeAsync {
         ExportDao.query
@@ -251,7 +251,7 @@ trait ExportRoutes
   }
 
   def redirectRoute(exportId: UUID, objectKey: String): Route =
-    authenticateWithParameter { case MembershipAndUser(_, user) =>
+    authenticateWithParameter { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
         authorizeAsync {
           ExportDao.query

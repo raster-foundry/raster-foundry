@@ -31,7 +31,7 @@ trait AnnotationProjectLabelClassGroupRoutes
   def commonLabelClassGroupRoutes: CommonLabelClassGroupRoutes
 
   def listAnnotationProjectLabelClassGroups(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -60,7 +60,7 @@ trait AnnotationProjectLabelClassGroupRoutes
     }
 
   def createAnnotationProjectLabelClassGroup(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user
@@ -113,7 +113,7 @@ trait AnnotationProjectLabelClassGroupRoutes
       projectId: UUID,
       classGroupId: UUID
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -140,7 +140,7 @@ trait AnnotationProjectLabelClassGroupRoutes
       projectId: UUID,
       classGroupId: UUID
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user
@@ -172,7 +172,7 @@ trait AnnotationProjectLabelClassGroupRoutes
       projectId: UUID,
       classGroupId: UUID
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user
@@ -198,7 +198,7 @@ trait AnnotationProjectLabelClassGroupRoutes
       projectId: UUID,
       classGroupId: UUID
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user

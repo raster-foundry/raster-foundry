@@ -243,7 +243,7 @@ trait AnnotationProjectRoutes
   }
 
   def listAnnotationProjects: Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -261,7 +261,7 @@ trait AnnotationProjectRoutes
     }
 
   def createAnnotationProject: Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScopeLimit(
         AnnotationProjectDao
           .countUserProjects(user)
@@ -285,7 +285,7 @@ trait AnnotationProjectRoutes
     }
 
   def getAnnotationProject(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -314,7 +314,7 @@ trait AnnotationProjectRoutes
     }
 
   def updateAnnotationProject(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Update, None),
         user
@@ -348,7 +348,7 @@ trait AnnotationProjectRoutes
     }
 
   def deleteAnnotationProject(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Delete, None),
         user
@@ -393,7 +393,7 @@ trait AnnotationProjectRoutes
     }
 
   def listUserActions(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadPermissions, None),
         user
@@ -449,7 +449,7 @@ trait AnnotationProjectRoutes
     }
 
   def checkIsHITLAnnotationProject(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user

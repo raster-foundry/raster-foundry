@@ -52,7 +52,7 @@ trait ThumbnailRoutes
   @SuppressWarnings(Array("AsInstanceOf"))
   def getThumbnailImage(thumbnailPath: String): Route =
     authenticateWithParameter {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Thumbnails, Action.Read, None),
           user
@@ -80,7 +80,7 @@ trait ThumbnailRoutes
   @SuppressWarnings(Array("AsInstanceOf"))
   def getProxiedThumbnailImage(thumbnailUri: String): Route =
     authenticateWithParameter {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Scenes, Action.ReadThumbnail, None),
           user

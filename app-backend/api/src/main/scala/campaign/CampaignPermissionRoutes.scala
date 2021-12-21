@@ -33,7 +33,7 @@ trait CampaignPermissionRoutes
   val xa: Transactor[IO]
 
   def listCampaignPermissions(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.ReadPermissions, None),
         user
@@ -60,7 +60,7 @@ trait CampaignPermissionRoutes
     }
 
   def replaceCampaignPermissions(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Share, None),
         user
@@ -122,7 +122,7 @@ trait CampaignPermissionRoutes
     }
 
   def addCampaignPermission(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       val shareCount =
         CampaignDao
           .getShareCount(campaignId, user.id)
@@ -175,7 +175,7 @@ trait CampaignPermissionRoutes
     }
 
   def deleteCampaignPermissions(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Share, None),
         user
@@ -202,7 +202,7 @@ trait CampaignPermissionRoutes
     }
 
   def listCampaignShares(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Share, None),
         user
@@ -229,7 +229,7 @@ trait CampaignPermissionRoutes
     }
 
   def deleteCampaignShare(campaignId: UUID, deleteId: String): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(ScopedAction(Domain.Campaigns, Action.Read, None), user) {
         if (user.id == deleteId) {
           authorizeAuthResultAsync {
@@ -269,7 +269,7 @@ trait CampaignPermissionRoutes
     }
 
   def shareCampaign(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       val shareCount =
         CampaignDao
           .getShareCount(campaignId, user.id)

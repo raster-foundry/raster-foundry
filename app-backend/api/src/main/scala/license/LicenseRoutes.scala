@@ -36,7 +36,7 @@ trait LicenseRoutes
 
   def listLicenses: Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Licenses, Action.Read, None), user) {
           withPagination { pageRequest =>
             complete(
@@ -48,7 +48,7 @@ trait LicenseRoutes
 
   def getLicense(shortName: String): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(ScopedAction(Domain.Licenses, Action.Read, None), user) {
           rejectEmptyResponse {
             complete(

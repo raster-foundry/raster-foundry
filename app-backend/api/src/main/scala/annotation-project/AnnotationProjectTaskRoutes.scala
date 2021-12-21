@@ -42,7 +42,7 @@ trait AnnotationProjectTaskRoutes
   val xa: Transactor[IO]
 
   def listAnnotationProjectTasks(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -77,7 +77,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def createTasks(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateTasks, None),
         user
@@ -107,7 +107,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def deleteTasks(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.DeleteTasks, None),
         user
@@ -136,7 +136,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def createTaskGrid(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateTaskGrid, None),
         user
@@ -183,7 +183,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def getTaskUserSummary(projectId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -217,7 +217,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def getTask(projectId: UUID, taskId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -249,7 +249,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def updateTask(projectId: UUID, taskId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.UpdateTasks, None),
         user
@@ -286,7 +286,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def deleteTask(projectId: UUID, taskId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.DeleteTasks, None),
         user
@@ -318,7 +318,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def updateTaskStatus(projectId: UUID, taskId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.UpdateTasks, None),
         user
@@ -366,7 +366,7 @@ trait AnnotationProjectTaskRoutes
       taskId: UUID,
       f: (User => ConnectionIO[Option[Task.TaskFeature]])
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -400,7 +400,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def listTaskLabels(projectId: UUID, taskId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.Read, None),
         user
@@ -470,7 +470,7 @@ trait AnnotationProjectTaskRoutes
       requiredStatuses: List[TaskStatus],
       deleteBeforeAdding: Boolean
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.CreateAnnotation, None),
         user
@@ -536,7 +536,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def deleteTaskLabels(projectId: UUID, task: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.DeleteAnnotation, None),
         user
@@ -563,7 +563,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def children(projectId: UUID, taskId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user
@@ -599,7 +599,7 @@ trait AnnotationProjectTaskRoutes
     }
 
   def splitTask(projectId: UUID, taskId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
         user

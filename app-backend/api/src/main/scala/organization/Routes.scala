@@ -51,7 +51,7 @@ trait OrganizationRoutes
 
   def getOrganization(orgId: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Organizations, Action.Read, None),
           user
@@ -71,7 +71,7 @@ trait OrganizationRoutes
 
   def searchOrganizations(): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Organizations, Action.Search, None),
           user
@@ -89,7 +89,7 @@ trait OrganizationRoutes
 
   def addOrganizationLogo(orgID: UUID): Route =
     authenticate {
-      case MembershipAndUser(_, user) =>
+      case (user, _) =>
         authorizeScope(
           ScopedAction(Domain.Organizations, Action.Update, None),
           user

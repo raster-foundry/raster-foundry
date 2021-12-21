@@ -234,7 +234,7 @@ trait CampaignRoutes
   }
 
   def listCampaigns: Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
@@ -251,7 +251,7 @@ trait CampaignRoutes
     }
 
   def createCampaign: Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScopeLimit(
         CampaignDao.countUserCampaigns(user).transact(xa).unsafeToFuture,
         Domain.Campaigns,
@@ -272,7 +272,7 @@ trait CampaignRoutes
     }
 
   def getCampaign(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
@@ -301,7 +301,7 @@ trait CampaignRoutes
     }
 
   def updateCampaign(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Update, None),
         user
@@ -335,7 +335,7 @@ trait CampaignRoutes
     }
 
   def deleteCampaign(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Delete, None),
         user
@@ -391,7 +391,7 @@ trait CampaignRoutes
     }
 
   def cloneCampaign(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Clone, None),
         user
@@ -478,7 +478,7 @@ trait CampaignRoutes
     }
 
   def listCampaignUserActions(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.ReadPermissions, None),
         user
@@ -522,7 +522,7 @@ trait CampaignRoutes
     }
 
   def listCampaignCloneOwners(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Clone, None),
         user
@@ -549,7 +549,7 @@ trait CampaignRoutes
     }
 
   def getReviewTask(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
@@ -603,7 +603,7 @@ trait CampaignRoutes
     }
 
   def retrieveChildCampaignLabels(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Clone, None),
         user
@@ -630,7 +630,7 @@ trait CampaignRoutes
     }
 
   def listCampaignTasks(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
@@ -665,7 +665,7 @@ trait CampaignRoutes
     }
 
   def getCampaignLabelClassSummary(campaignId: UUID): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
@@ -697,7 +697,7 @@ trait CampaignRoutes
       campaignId: UUID,
       taskSessionType: TaskSessionType
   ): Route =
-    authenticate { case MembershipAndUser(_, user) =>
+    authenticate { case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.Campaigns, Action.Read, None),
         user
