@@ -122,12 +122,10 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           .selectOption
       }
       existingMembershipStatus = existingRoleO map { _.membershipStatus }
-      rolesMatch =
-        existingRoleO
-          .map((ugr: UserGroupRole) =>
-            ugr.groupRole == userGroupRoleCreate.groupRole
-          )
-          .getOrElse(false)
+      rolesMatch = existingRoleO
+        .map((ugr: UserGroupRole) =>
+          ugr.groupRole == userGroupRoleCreate.groupRole)
+        .getOrElse(false)
       isSameOrg <- isSameOrgIO
       createdOrReturned <- {
         (existingMembershipStatus, adminCheck, rolesMatch) match {

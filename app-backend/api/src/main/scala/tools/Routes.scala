@@ -84,274 +84,285 @@ trait ToolRoutes
       }
   }
 
-  def getToolSources(toolId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
-      authorizeAuthResultAsync {
-        ToolDao
-          .authorized(user, ObjectType.Template, toolId, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          onSuccess(
-            ToolDao.query
-              .filter(toolId)
-              .selectOption
-              .transact(xa)
-              .unsafeToFuture
-          ) { maybeTool =>
-            val sources = maybeTool.map(
-              _.definition.as[MapAlgebraAST].valueOr(throw _).sources
-            )
-            complete(sources)
-          }
-        }
-      }
-    }
-  }
-
-  def listTools: Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
-      (withPagination & combinedToolQueryParams) {
-        (page, combinedToolQueryParameters) =>
-          complete {
-            ToolDao
-              .authQuery(
-                user,
-                ObjectType.Template,
-                combinedToolQueryParameters.ownershipTypeParams.ownershipType,
-                combinedToolQueryParameters.groupQueryParameters.groupType,
-                combinedToolQueryParameters.groupQueryParameters.groupId
+  def getToolSources(toolId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
+        authorizeAuthResultAsync {
+          ToolDao
+            .authorized(user, ObjectType.Template, toolId, ActionType.View)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            onSuccess(
+              ToolDao.query
+                .filter(toolId)
+                .selectOption
+                .transact(xa)
+                .unsafeToFuture
+            ) { maybeTool =>
+              val sources = maybeTool.map(
+                _.definition.as[MapAlgebraAST].valueOr(throw _).sources
               )
-              .filter(combinedToolQueryParameters)
-              .page(page)
-              .transact(xa)
-              .unsafeToFuture
+              complete(sources)
+            }
           }
-      }
-    }
-  }
-
-  def createTool: Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Create, None), user) {
-      entity(as[Tool.Create]) { newTool =>
-        onSuccess(ToolDao.insert(newTool, user).transact(xa).unsafeToFuture) {
-          tool =>
-            complete(StatusCodes.Created, tool)
         }
       }
-    }
   }
 
-  def getTool(toolId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
-      authorizeAuthResultAsync {
-        ToolDao
-          .authorized(user, ObjectType.Template, toolId, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          complete(
-            ToolDao.query
-              .filter(toolId)
-              .selectOption
-              .transact(xa)
-              .unsafeToFuture
-          )
+  def listTools: Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
+        (withPagination & combinedToolQueryParams) {
+          (page, combinedToolQueryParameters) =>
+            complete {
+              ToolDao
+                .authQuery(
+                  user,
+                  ObjectType.Template,
+                  combinedToolQueryParameters.ownershipTypeParams.ownershipType,
+                  combinedToolQueryParameters.groupQueryParameters.groupType,
+                  combinedToolQueryParameters.groupQueryParameters.groupId
+                )
+                .filter(combinedToolQueryParameters)
+                .page(page)
+                .transact(xa)
+                .unsafeToFuture
+            }
         }
       }
-    }
   }
 
-  def updateTool(toolId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Update, None), user) {
-      authorizeAuthResultAsync {
-        ToolDao
-          .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[Tool]) { updatedTool =>
+  def createTool: Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Create, None), user) {
+        entity(as[Tool.Create]) { newTool =>
+          onSuccess(ToolDao.insert(newTool, user).transact(xa).unsafeToFuture) {
+            tool =>
+              complete(StatusCodes.Created, tool)
+          }
+        }
+      }
+  }
+
+  def getTool(toolId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Read, None), user) {
+        authorizeAuthResultAsync {
+          ToolDao
+            .authorized(user, ObjectType.Template, toolId, ActionType.View)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete(
+              ToolDao.query
+                .filter(toolId)
+                .selectOption
+                .transact(xa)
+                .unsafeToFuture
+            )
+          }
+        }
+      }
+  }
+
+  def updateTool(toolId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Update, None), user) {
+        authorizeAuthResultAsync {
+          ToolDao
+            .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[Tool]) { updatedTool =>
+            onSuccess(
+              ToolDao
+                .update(updatedTool, toolId)
+                .transact(xa)
+                .unsafeToFuture
+            ) {
+              completeSingleOrNotFound
+            }
+          }
+        }
+      }
+  }
+
+  def deleteTool(toolId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Delete, None), user) {
+        authorizeAuthResultAsync {
+          ToolDao
+            .authorized(user, ObjectType.Template, toolId, ActionType.Delete)
+            .transact(xa)
+            .unsafeToFuture
+        } {
           onSuccess(
-            ToolDao
-              .update(updatedTool, toolId)
-              .transact(xa)
-              .unsafeToFuture
+            ToolDao.query.filter(toolId).delete.transact(xa).unsafeToFuture
           ) {
             completeSingleOrNotFound
           }
         }
       }
-    }
   }
 
-  def deleteTool(toolId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Delete, None), user) {
-      authorizeAuthResultAsync {
-        ToolDao
-          .authorized(user, ObjectType.Template, toolId, ActionType.Delete)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        onSuccess(
-          ToolDao.query.filter(toolId).delete.transact(xa).unsafeToFuture
-        ) {
-          completeSingleOrNotFound
-        }
-      }
-    }
-  }
-
-  def listToolPermissions(toolId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(
-      ScopedAction(Domain.Templates, Action.ReadPermissions, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        ToolDao
-          .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
+  def listToolPermissions(toolId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(
+        ScopedAction(Domain.Templates, Action.ReadPermissions, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
           ToolDao
-            .getPermissions(toolId)
-            .transact(xa)
-            .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def replaceToolPermissions(toolId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
-      entity(as[List[ObjectAccessControlRule]]) { acrList =>
-        authorizeAsync {
-          (
-            ToolDao.authorized(
-              user,
-              ObjectType.Template,
-              toolId,
-              ActionType.Edit
-            ) map {
-              _.toBoolean
-            },
-            acrList traverse { acr =>
-              ToolDao.isValidPermission(acr, user)
-            } map {
-              _.foldLeft(true)(_ && _)
-            } map {
-              case true =>
-                ToolDao.isReplaceWithinScopedLimit(
-                  Domain.Templates,
-                  user,
-                  acrList
-                )
-              case _ => false
-            }
-          ).tupled
-            .map({ authTup =>
-              authTup._1 && authTup._2
-            })
+            .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
             .transact(xa)
             .unsafeToFuture
         } {
           complete {
             ToolDao
-              .replacePermissions(toolId, acrList)
+              .getPermissions(toolId)
               .transact(xa)
               .unsafeToFuture
           }
         }
       }
-    }
   }
 
-  def addToolPermission(toolId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
-      entity(as[ObjectAccessControlRule]) { acr =>
-        authorizeAsync {
-          (
-            ToolDao.authorized(
-              user,
-              ObjectType.Template,
-              toolId,
-              ActionType.Edit
-            ) map {
-              _.toBoolean
-            },
-            ToolDao.isValidPermission(acr, user)
-          ).tupled
-            .map({ authTup =>
-              authTup._1 && authTup._2
-            })
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            ToolDao
-              .addPermission(toolId, acr)
+  def replaceToolPermissions(toolId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
+        entity(as[List[ObjectAccessControlRule]]) { acrList =>
+          authorizeAsync {
+            (
+              ToolDao.authorized(
+                user,
+                ObjectType.Template,
+                toolId,
+                ActionType.Edit
+              ) map {
+                _.toBoolean
+              },
+              acrList traverse { acr =>
+                ToolDao.isValidPermission(acr, user)
+              } map {
+                _.foldLeft(true)(_ && _)
+              } map {
+                case true =>
+                  ToolDao.isReplaceWithinScopedLimit(
+                    Domain.Templates,
+                    user,
+                    acrList
+                  )
+                case _ => false
+              }
+            ).tupled
+              .map({ authTup =>
+                authTup._1 && authTup._2
+              })
               .transact(xa)
               .unsafeToFuture
-          }
-        }
-      }
-    }
-  }
-
-  def listUserTemplateActions(templateId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(
-      ScopedAction(Domain.Templates, Action.ReadPermissions, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        ToolDao
-          .authorized(user, ObjectType.Template, templateId, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        user.isSuperuser match {
-          case true => complete(List("*"))
-          case false =>
-            onSuccess(
-              ToolDao.query
-                .filter(templateId)
-                .select
+          } {
+            complete {
+              ToolDao
+                .replacePermissions(toolId, acrList)
                 .transact(xa)
                 .unsafeToFuture
-            ) { template =>
-              template.owner == user.id match {
-                case true => complete(List("*"))
-                case false =>
-                  complete {
-                    ToolDao
-                      .listUserActions(user, templateId)
-                      .transact(xa)
-                      .unsafeToFuture
-                  }
-              }
             }
+          }
         }
       }
-    }
   }
 
-  def deleteToolPermissions(toolId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
-      authorizeAuthResultAsync {
-        ToolDao
-          .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          ToolDao
-            .deletePermissions(toolId)
-            .transact(xa)
-            .unsafeToFuture
+  def addToolPermission(toolId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
+        entity(as[ObjectAccessControlRule]) { acr =>
+          authorizeAsync {
+            (
+              ToolDao.authorized(
+                user,
+                ObjectType.Template,
+                toolId,
+                ActionType.Edit
+              ) map {
+                _.toBoolean
+              },
+              ToolDao.isValidPermission(acr, user)
+            ).tupled
+              .map({ authTup =>
+                authTup._1 && authTup._2
+              })
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            complete {
+              ToolDao
+                .addPermission(toolId, acr)
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
         }
       }
-    }
+  }
+
+  def listUserTemplateActions(templateId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(
+        ScopedAction(Domain.Templates, Action.ReadPermissions, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ToolDao
+            .authorized(user, ObjectType.Template, templateId, ActionType.View)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          user.isSuperuser match {
+            case true => complete(List("*"))
+            case false =>
+              onSuccess(
+                ToolDao.query
+                  .filter(templateId)
+                  .select
+                  .transact(xa)
+                  .unsafeToFuture
+              ) { template =>
+                template.owner == user.id match {
+                  case true => complete(List("*"))
+                  case false =>
+                    complete {
+                      ToolDao
+                        .listUserActions(user, templateId)
+                        .transact(xa)
+                        .unsafeToFuture
+                    }
+                }
+              }
+          }
+        }
+      }
+  }
+
+  def deleteToolPermissions(toolId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Templates, Action.Share, None), user) {
+        authorizeAuthResultAsync {
+          ToolDao
+            .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          complete {
+            ToolDao
+              .deletePermissions(toolId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
   }
 }

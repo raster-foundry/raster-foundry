@@ -3,7 +3,6 @@ package com.rasterfoundry.api.token
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
-  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.Auth0ErrorHandler

@@ -93,7 +93,7 @@ object Cache extends LazyLogging {
   object MosaicDefinitionCache {
     import scalacache.serialization.binary._
     implicit val mosaicDefinitionCache
-        : Cache[List[SceneToLayerWithSceneType]] = {
+      : Cache[List[SceneToLayerWithSceneType]] = {
       MemcachedCache[List[SceneToLayerWithSceneType]](memcachedClient)
     }
   }

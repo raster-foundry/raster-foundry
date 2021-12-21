@@ -26,58 +26,12 @@ trait CampaignLabelClassRoutes
       campaignId: UUID,
       labelClassGroupId: UUID
   ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Campaigns, Action.Read, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          CampaignDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              campaignId,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          commonLabelClassRoutes.listLabelClasses(labelClassGroupId)
-        }
-      }
-    }
-
-  def addCampaignLabelClassToGroup(campaignId: UUID, groupId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Campaigns, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          CampaignDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              campaignId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationLabelClass.Create]) { labelClassCreate =>
-            commonLabelClassRoutes.addLabelClass(labelClassCreate, groupId)
-          }
-        }
-      }
-    }
-
-  def getCampaignLabelClass(campaignId: UUID, labelClassId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Campaigns, Action.Read, None),
-        user
-      ) {
-        {
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Campaigns, Action.Read, None),
+          user
+        ) {
           authorizeAuthResultAsync {
             CampaignDao
               .authorized(
@@ -89,21 +43,18 @@ trait CampaignLabelClassRoutes
               .transact(xa)
               .unsafeToFuture
           } {
-            commonLabelClassRoutes.getLabelClass(
-              labelClassId
-            )
+            commonLabelClassRoutes.listLabelClasses(labelClassGroupId)
           }
         }
-      }
     }
 
-  def updateCampaignLabelClass(campaignId: UUID, labelClassId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Campaigns, Action.Update, None),
-        user
-      ) {
-        {
+  def addCampaignLabelClassToGroup(campaignId: UUID, groupId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Campaigns, Action.Update, None),
+          user
+        ) {
           authorizeAuthResultAsync {
             CampaignDao
               .authorized(
@@ -115,62 +66,117 @@ trait CampaignLabelClassRoutes
               .transact(xa)
               .unsafeToFuture
           } {
-            entity(as[AnnotationLabelClass]) { updatedClass =>
-              commonLabelClassRoutes.updateLabelClass(
-                updatedClass,
+            entity(as[AnnotationLabelClass.Create]) { labelClassCreate =>
+              commonLabelClassRoutes.addLabelClass(labelClassCreate, groupId)
+            }
+          }
+        }
+    }
+
+  def getCampaignLabelClass(campaignId: UUID, labelClassId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Campaigns, Action.Read, None),
+          user
+        ) {
+          {
+            authorizeAuthResultAsync {
+              CampaignDao
+                .authorized(
+                  user,
+                  ObjectType.AnnotationProject,
+                  campaignId,
+                  ActionType.Annotate
+                )
+                .transact(xa)
+                .unsafeToFuture
+            } {
+              commonLabelClassRoutes.getLabelClass(
                 labelClassId
               )
             }
           }
         }
-      }
+    }
+
+  def updateCampaignLabelClass(campaignId: UUID, labelClassId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Campaigns, Action.Update, None),
+          user
+        ) {
+          {
+            authorizeAuthResultAsync {
+              CampaignDao
+                .authorized(
+                  user,
+                  ObjectType.AnnotationProject,
+                  campaignId,
+                  ActionType.Edit
+                )
+                .transact(xa)
+                .unsafeToFuture
+            } {
+              entity(as[AnnotationLabelClass]) { updatedClass =>
+                commonLabelClassRoutes.updateLabelClass(
+                  updatedClass,
+                  labelClassId
+                )
+              }
+            }
+          }
+        }
     }
 
   def activateCampaignLabelClass(campaignId: UUID, labelClassId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Campaigns, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          CampaignDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              campaignId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          commonLabelClassRoutes.activeLabelClass(labelClassId)
-        }
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Campaigns, Action.Update, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            CampaignDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                campaignId,
+                ActionType.Edit
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            commonLabelClassRoutes.activeLabelClass(labelClassId)
+          }
 
-      }
+        }
     }
 
   def deactivateCampaignLabelClass(
       campaignId: UUID,
       labelClassId: UUID
   ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Campaigns, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          CampaignDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              campaignId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          commonLabelClassRoutes.deactivateLabelClass(labelClassId)
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Campaigns, Action.Update, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            CampaignDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                campaignId,
+                ActionType.Edit
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            commonLabelClassRoutes.deactivateLabelClass(labelClassId)
+          }
         }
-      }
     }
 }

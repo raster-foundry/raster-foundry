@@ -1,11 +1,7 @@
 package com.rasterfoundry.api.project
 
 import com.rasterfoundry.akkautil.PaginationDirectives
-import com.rasterfoundry.akkautil.{
-  Authentication,
-  CommonHandlers,
-  MembershipAndUser
-}
+import com.rasterfoundry.akkautil.{Authentication, CommonHandlers}
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.common._
 import com.rasterfoundry.common.color._
@@ -67,26 +63,27 @@ trait ProjectLayerRoutes
     }
 
   def listProjectLayers(projectId: UUID): Route =
-    authenticateAllowAnonymous { case (user, _) =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
-        (authorizeAsync(
-          ProjectDao
-            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-            .transact(xa)
-            .unsafeToFuture
-            .map(_.toBoolean)
-        ) | projectIsPublic(projectId)) {
-          (withPagination) { (page) =>
-            complete {
-              ProjectLayerDao
-                .listProjectLayersForProject(page, projectId)
-                .transact(xa)
-                .unsafeToFuture
+    authenticateAllowAnonymous {
+      case (user, _) =>
+        authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+          (authorizeAsync(
+            ProjectDao
+              .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+              .transact(xa)
+              .unsafeToFuture
+              .map(_.toBoolean)
+          ) | projectIsPublic(projectId)) {
+            (withPagination) { (page) =>
+              complete {
+                ProjectLayerDao
+                  .listProjectLayersForProject(page, projectId)
+                  .transact(xa)
+                  .unsafeToFuture
+              }
             }
           }
-        }
 
-      }
+        }
     }
 
   def getProjectLayer(projectId: UUID, layerId: UUID): Route =
@@ -337,14 +334,13 @@ trait ProjectLayerRoutes
                   projectId,
                   ActionType.View
                 )
-                authResult <-
-                  (authProject, projectQueryParams.analysisId) match {
-                    case (AuthFailure(), Some(analysisId: UUID)) =>
-                      ToolRunDao
-                        .authorizeReferencedProject(user, analysisId, projectId)
-                    case (_, _) =>
-                      Applicative[ConnectionIO].pure(authProject.toBoolean)
-                  }
+                authResult <- (authProject, projectQueryParams.analysisId) match {
+                  case (AuthFailure(), Some(analysisId: UUID)) =>
+                    ToolRunDao
+                      .authorizeReferencedProject(user, analysisId, projectId)
+                  case (_, _) =>
+                    Applicative[ConnectionIO].pure(authProject.toBoolean)
+                }
               } yield authResult
               authorized.transact(xa).unsafeToFuture
             } {
@@ -395,9 +391,8 @@ trait ProjectLayerRoutes
           } {
             entity(as[ProjectColorModeParams]) { colorBands =>
               val setProjectLayerColorBandsIO = for {
-                rowsAffected <-
-                  SceneToLayerDao
-                    .setProjectLayerColorBands(layerId, colorBands)
+                rowsAffected <- SceneToLayerDao
+                  .setProjectLayerColorBands(layerId, colorBands)
               } yield {
                 rowsAffected
               }

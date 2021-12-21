@@ -26,64 +26,12 @@ trait AnnotationProjectLabelClassRoutes
       projectId: UUID,
       labelClassGroupId: UUID
   ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          commonLabelClassRoutes.listLabelClasses(labelClassGroupId)
-        }
-      }
-    }
-
-  def addAnnotationProjectLabelClassToGroup(
-      projectId: UUID,
-      groupId: UUID
-  ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationLabelClass.Create]) { labelClassCreate =>
-            commonLabelClassRoutes.addLabelClass(labelClassCreate, groupId)
-          }
-        }
-      }
-    }
-
-  def getAnnotationProjectLabelClass(
-      projectId: UUID,
-      labelClassId: UUID
-  ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
-        user
-      ) {
-        {
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+          user
+        ) {
           authorizeAuthResultAsync {
             AnnotationProjectDao
               .authorized(
@@ -95,24 +43,21 @@ trait AnnotationProjectLabelClassRoutes
               .transact(xa)
               .unsafeToFuture
           } {
-            commonLabelClassRoutes.getLabelClass(
-              labelClassId
-            )
+            commonLabelClassRoutes.listLabelClasses(labelClassGroupId)
           }
         }
-      }
     }
 
-  def updateAnnotationProjectLabelClass(
+  def addAnnotationProjectLabelClassToGroup(
       projectId: UUID,
-      labelClassId: UUID
+      groupId: UUID
   ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
-        user
-      ) {
-        {
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+          user
+        ) {
           authorizeAuthResultAsync {
             AnnotationProjectDao
               .authorized(
@@ -124,65 +69,126 @@ trait AnnotationProjectLabelClassRoutes
               .transact(xa)
               .unsafeToFuture
           } {
-            entity(as[AnnotationLabelClass]) { updatedClass =>
-              commonLabelClassRoutes.updateLabelClass(
-                updatedClass,
+            entity(as[AnnotationLabelClass.Create]) { labelClassCreate =>
+              commonLabelClassRoutes.addLabelClass(labelClassCreate, groupId)
+            }
+          }
+        }
+    }
+
+  def getAnnotationProjectLabelClass(
+      projectId: UUID,
+      labelClassId: UUID
+  ): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+          user
+        ) {
+          {
+            authorizeAuthResultAsync {
+              AnnotationProjectDao
+                .authorized(
+                  user,
+                  ObjectType.AnnotationProject,
+                  projectId,
+                  ActionType.Annotate
+                )
+                .transact(xa)
+                .unsafeToFuture
+            } {
+              commonLabelClassRoutes.getLabelClass(
                 labelClassId
               )
             }
           }
         }
-      }
+    }
+
+  def updateAnnotationProjectLabelClass(
+      projectId: UUID,
+      labelClassId: UUID
+  ): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+          user
+        ) {
+          {
+            authorizeAuthResultAsync {
+              AnnotationProjectDao
+                .authorized(
+                  user,
+                  ObjectType.AnnotationProject,
+                  projectId,
+                  ActionType.Edit
+                )
+                .transact(xa)
+                .unsafeToFuture
+            } {
+              entity(as[AnnotationLabelClass]) { updatedClass =>
+                commonLabelClassRoutes.updateLabelClass(
+                  updatedClass,
+                  labelClassId
+                )
+              }
+            }
+          }
+        }
     }
 
   def activateAnnotationProjectLabelClass(
       projectId: UUID,
       labelClassId: UUID
   ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          commonLabelClassRoutes.activeLabelClass(labelClassId)
-        }
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Edit
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            commonLabelClassRoutes.activeLabelClass(labelClassId)
+          }
 
-      }
+        }
     }
 
   def deactivateAnnotationProjectLabelClass(
       projectId: UUID,
       labelClassId: UUID
   ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          commonLabelClassRoutes.deactivateLabelClass(labelClassId)
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Edit
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            commonLabelClassRoutes.deactivateLabelClass(labelClassId)
+          }
         }
-      }
     }
 }

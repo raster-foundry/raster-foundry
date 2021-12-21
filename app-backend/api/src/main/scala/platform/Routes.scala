@@ -4,7 +4,6 @@ import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
-  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
@@ -357,8 +356,8 @@ trait PlatformRoutes
             completeOrFail {
               val createdOrg = for {
                 isAdmin <- PlatformDao.userIsAdmin(user, platformId)
-                org <-
-                  OrganizationDao.create(orgToCreate.toOrganization(isAdmin))
+                org <- OrganizationDao.create(
+                  orgToCreate.toOrganization(isAdmin))
               } yield org
               createdOrg.transact(xa).unsafeToFuture
             }

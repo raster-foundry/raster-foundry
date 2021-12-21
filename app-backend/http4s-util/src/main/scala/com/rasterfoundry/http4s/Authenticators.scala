@@ -1,7 +1,7 @@
 package com.rasterfoundry.http4s
 
 import com.rasterfoundry.database.UserDao
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.database.UserMaybePlatform
 
 import cats.data.OptionT
 import cats.effect.IO
@@ -45,22 +45,22 @@ trait Authenticators extends LazyLogging {
 
   def getUserFromJWTwithCache(
       userIdFromJWT: String
-  )(implicit flags: Flags): IO[Option[User]] =
-    memoizeF[IO, Option[User]](Some(30.seconds)) {
+  )(implicit flags: Flags): IO[Option[UserMaybePlatform]] =
+    memoizeF[IO, Option[UserMaybePlatform]](Some(30.seconds)) {
       logger.debug(s"Authentication - Getting User ${userIdFromJWT} from DB")
       UserDao
         .getUserById(userIdFromJWT)
         .transact(xa)
     }
 
-  def userFromToken(token: String): OptionT[IO, User] = {
+  def userFromToken(token: String): OptionT[IO, UserMaybePlatform] = {
     val userFromTokenIO = verifyJWT(token) match {
       case Right((_, jwtClaims)) => {
         val userIdFromJWT = jwtClaims.getStringClaim("sub")
         getUserFromJWTwithCache(userIdFromJWT)
       }
       case Left(_) =>
-        IO(None: Option[User])
+        IO(None: Option[UserMaybePlatform])
     }
     OptionT(userFromTokenIO)
   }

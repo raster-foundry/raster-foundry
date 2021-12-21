@@ -4,7 +4,6 @@ import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
-  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.Config

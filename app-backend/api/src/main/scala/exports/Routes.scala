@@ -66,192 +66,143 @@ trait ExportRoutes
       }
   }
 
-  def listExports: Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
-      (withPagination & exportQueryParams) {
-        (page: PageRequest, queryParams: ExportQueryParameters) =>
-          complete {
-            ExportDao.query
-              .filter(queryParams)
-              .filter(user)
-              .page(page)
-              .transact(xa)
-              .unsafeToFuture()
-          }
-      }
-    }
-  }
-
-  def getExport(exportId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
-      authorizeAsync {
-        ExportDao.query
-          .ownedByOrSuperUser(user, exportId)
-          .exists
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          complete {
-            ExportDao.query
-              .filter(exportId)
-              .selectOption
-              .transact(xa)
-              .unsafeToFuture
-          }
-        }
-      }
-    }
-  }
-
-  def getExportDefinition(exportId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
-      authorizeAsync {
-        ExportDao.query
-          .ownedByOrSuperUser(user, exportId)
-          .exists
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          val exportDefinition = for {
-            export <- ExportDao.query.filter(exportId).select
-            eo <- ExportDao.getExportDefinition(export)
-          } yield eo
-          onSuccess(exportDefinition.transact(xa).unsafeToFuture) { eo =>
+  def listExports: Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
+        (withPagination & exportQueryParams) {
+          (page: PageRequest, queryParams: ExportQueryParameters) =>
             complete {
-              eo
+              ExportDao.query
+                .filter(queryParams)
+                .filter(user)
+                .page(page)
+                .transact(xa)
+                .unsafeToFuture()
+            }
+        }
+      }
+  }
+
+  def getExport(exportId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
+        authorizeAsync {
+          ExportDao.query
+            .ownedByOrSuperUser(user, exportId)
+            .exists
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete {
+              ExportDao.query
+                .filter(exportId)
+                .selectOption
+                .transact(xa)
+                .unsafeToFuture
             }
           }
         }
       }
-    }
   }
 
-  def createExport: Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Exports, Action.Create, None), user) {
-      entity(as[Export.Create]) { newExport =>
-        newExport.exportOptions.as[ExportOptions] match {
-          case Left(df: DecodingFailure) =>
-            complete(
-              (StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}")
-            )
-          case Right(_) => {
-            val updatedExport =
-              user.updateDefaultExportSource(newExport.toExport(user))
+  def getExportDefinition(exportId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
+        authorizeAsync {
+          ExportDao.query
+            .ownedByOrSuperUser(user, exportId)
+            .exists
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            val exportDefinition = for {
+              export <- ExportDao.query.filter(exportId).select
+              eo <- ExportDao.getExportDefinition(export)
+            } yield eo
+            onSuccess(exportDefinition.transact(xa).unsafeToFuture) { eo =>
+              complete {
+                eo
+              }
+            }
+          }
+        }
+      }
+  }
+
+  def createExport: Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Exports, Action.Create, None), user) {
+        entity(as[Export.Create]) { newExport =>
+          newExport.exportOptions.as[ExportOptions] match {
+            case Left(df: DecodingFailure) =>
+              complete(
+                (StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}")
+              )
+            case Right(_) => {
+              val updatedExport =
+                user.updateDefaultExportSource(newExport.toExport(user))
+              onSuccess(
+                ExportDao
+                  .insert(updatedExport, user)
+                  .transact(xa)
+                  .unsafeToFuture
+              ) { export =>
+                kickoffProjectExport(export.id)
+                complete((StatusCodes.Created, export))
+              }
+            }
+          }
+        }
+      }
+  }
+
+  def updateExport(exportId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Exports, Action.Update, None), user) {
+        authorizeAsync {
+          ExportDao.query
+            .ownedBy(user, exportId)
+            .exists
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[Export]) { updateExport =>
             onSuccess(
-              ExportDao.insert(updatedExport, user).transact(xa).unsafeToFuture
-            ) { export =>
-              kickoffProjectExport(export.id)
-              complete((StatusCodes.Created, export))
+              ExportDao
+                .update(updateExport, exportId)
+                .transact(xa)
+                .unsafeToFuture
+            ) {
+              completeSingleOrNotFound
             }
           }
         }
       }
-    }
   }
 
-  def updateExport(exportId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Exports, Action.Update, None), user) {
-      authorizeAsync {
-        ExportDao.query
-          .ownedBy(user, exportId)
-          .exists
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[Export]) { updateExport =>
+  def deleteExport(exportId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Exports, Action.Delete, None), user) {
+        authorizeAsync {
+          ExportDao.query
+            .ownedBy(user, exportId)
+            .exists
+            .transact(xa)
+            .unsafeToFuture
+        } {
           onSuccess(
-            ExportDao
-              .update(updateExport, exportId)
-              .transact(xa)
-              .unsafeToFuture
+            ExportDao.query.filter(exportId).delete.transact(xa).unsafeToFuture
           ) {
             completeSingleOrNotFound
           }
         }
       }
-    }
   }
 
-  def deleteExport(exportId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Exports, Action.Delete, None), user) {
-      authorizeAsync {
-        ExportDao.query
-          .ownedBy(user, exportId)
-          .exists
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        onSuccess(
-          ExportDao.query.filter(exportId).delete.transact(xa).unsafeToFuture
-        ) {
-          completeSingleOrNotFound
-        }
-      }
-    }
-  }
-
-  def exportFiles(exportId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
-      authorizeAsync {
-        ExportDao.query
-          .ownedBy(user, exportId)
-          .exists
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          complete {
-            (for {
-              export: Export <- OptionT(
-                ExportDao.query
-                  .filter(exportId)
-                  .selectOption
-                  .transact(xa)
-                  .unsafeToFuture
-              )
-              list: List[String] <- OptionT.fromOption[Future] {
-                export.getExportOptions.map(_.getSignedUrls(): List[String])
-              }
-            } yield list).value
-          }
-        }
-      }
-    }
-  }
-
-  def proxiedFiles(exportId: UUID): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
-      authorizeAsync {
-        ExportDao.query
-          .ownedBy(user, exportId)
-          .exists
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          complete {
-            (for {
-              export: Export <- OptionT(
-                ExportDao.query
-                  .filter(exportId)
-                  .selectOption
-                  .transact(xa)
-                  .unsafeToFuture
-              )
-              list: List[String] <- OptionT.fromOption[Future] {
-                export.getExportOptions.map(_.getObjectKeys(): List[String])
-              }
-            } yield list).value
-          }
-        }
-      }
-    }
-  }
-
-  def redirectRoute(exportId: UUID, objectKey: String): Route =
-    authenticateWithParameter { case (user, _) =>
+  def exportFiles(exportId: UUID): Route = authenticate {
+    case (user, _) =>
       authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
         authorizeAsync {
           ExportDao.query
@@ -260,28 +211,90 @@ trait ExportRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          implicit def javaURLAsAkkaURI(url: URL): Uri = Uri(url.toString)
-
-          val x: Future[Option[Uri]] =
-            OptionT(
-              ExportDao.query
-                .filter(exportId)
-                .selectOption
-                .transact(xa)
-                .unsafeToFuture
-            ).flatMap { y: Export =>
-              {
-                OptionT.fromOption[Future] {
-                  y.getExportOptions.map(_.getSignedUrl(objectKey): Uri)
+          rejectEmptyResponse {
+            complete {
+              (for {
+                export: Export <- OptionT(
+                  ExportDao.query
+                    .filter(exportId)
+                    .selectOption
+                    .transact(xa)
+                    .unsafeToFuture
+                )
+                list: List[String] <- OptionT.fromOption[Future] {
+                  export.getExportOptions.map(_.getSignedUrls(): List[String])
                 }
-              }
-            }.value
-
-          onComplete(x) {
-            case Success(Some(z)) => redirect(z, StatusCodes.TemporaryRedirect)
-            case _                => throw new Exception
+              } yield list).value
+            }
           }
         }
       }
+  }
+
+  def proxiedFiles(exportId: UUID): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
+        authorizeAsync {
+          ExportDao.query
+            .ownedBy(user, exportId)
+            .exists
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete {
+              (for {
+                export: Export <- OptionT(
+                  ExportDao.query
+                    .filter(exportId)
+                    .selectOption
+                    .transact(xa)
+                    .unsafeToFuture
+                )
+                list: List[String] <- OptionT.fromOption[Future] {
+                  export.getExportOptions.map(_.getObjectKeys(): List[String])
+                }
+              } yield list).value
+            }
+          }
+        }
+      }
+  }
+
+  def redirectRoute(exportId: UUID, objectKey: String): Route =
+    authenticateWithParameter {
+      case (user, _) =>
+        authorizeScope(ScopedAction(Domain.Exports, Action.Read, None), user) {
+          authorizeAsync {
+            ExportDao.query
+              .ownedBy(user, exportId)
+              .exists
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            implicit def javaURLAsAkkaURI(url: URL): Uri = Uri(url.toString)
+
+            val x: Future[Option[Uri]] =
+              OptionT(
+                ExportDao.query
+                  .filter(exportId)
+                  .selectOption
+                  .transact(xa)
+                  .unsafeToFuture
+              ).flatMap { y: Export =>
+                {
+                  OptionT.fromOption[Future] {
+                    y.getExportOptions.map(_.getSignedUrl(objectKey): Uri)
+                  }
+                }
+              }.value
+
+            onComplete(x) {
+              case Success(Some(z)) =>
+                redirect(z, StatusCodes.TemporaryRedirect)
+              case _ => throw new Exception
+            }
+          }
+        }
     }
 }

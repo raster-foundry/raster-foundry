@@ -31,7 +31,8 @@ trait ProjectLayerAnnotationRoutes
 
   implicit val ec: ExecutionContext
 
-  def listLayerLabels(projectId: UUID, layerId: UUID): Route = authenticate { case (user, _) =>
+  def listLayerLabels(projectId: UUID, layerId: UUID): Route = authenticate {
+    case (user, _) =>
       authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
         authorizeAsync {
           ProjectDao
@@ -50,185 +51,193 @@ trait ProjectLayerAnnotationRoutes
   }
 
   def listLayerAnnotations(projectId: UUID, layerId: UUID): Route =
-    authenticateAllowAnonymous { case (user, _) =>
-      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
-        (authorizeAsync(
-          ProjectDao
-            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-            .transact(xa)
-            .unsafeToFuture
-            .map(_.toBoolean)) | projectIsPublic(projectId)) {
-          (withPagination & annotationQueryParams) {
-            (page: PageRequest, queryParams: AnnotationQueryParameters) =>
-              complete {
-                (queryParams.withOwnerInfo match {
-                  case Some(true) =>
-                    AnnotationDao
-                      .listByLayerWithOwnerInfo(
-                        projectId,
-                        page,
-                        queryParams,
-                        Some(layerId)
-                      )
-                      .transact(xa)
-                      .unsafeToFuture
-                      .map { p =>
-                        {
-                          fromPaginatedResponseToGeoJson[
-                            AnnotationWithOwnerInfo,
-                            AnnotationWithOwnerInfo.GeoJSON
-                          ](p)
+    authenticateAllowAnonymous {
+      case (user, _) =>
+        authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
+          (authorizeAsync(
+            ProjectDao
+              .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+              .transact(xa)
+              .unsafeToFuture
+              .map(_.toBoolean)) | projectIsPublic(projectId)) {
+            (withPagination & annotationQueryParams) {
+              (page: PageRequest, queryParams: AnnotationQueryParameters) =>
+                complete {
+                  (queryParams.withOwnerInfo match {
+                    case Some(true) =>
+                      AnnotationDao
+                        .listByLayerWithOwnerInfo(
+                          projectId,
+                          page,
+                          queryParams,
+                          Some(layerId)
+                        )
+                        .transact(xa)
+                        .unsafeToFuture
+                        .map { p =>
+                          {
+                            fromPaginatedResponseToGeoJson[
+                              AnnotationWithOwnerInfo,
+                              AnnotationWithOwnerInfo.GeoJSON
+                            ](p)
+                          }
                         }
-                      }
-                  case _ =>
-                    AnnotationDao
-                      .listByLayer(projectId, page, queryParams, Some(layerId))
-                      .transact(xa)
-                      .unsafeToFuture
-                      .map { p =>
-                        {
-                          fromPaginatedResponseToGeoJson[
-                            Annotation,
-                            Annotation.GeoJSON
-                          ](p)
+                    case _ =>
+                      AnnotationDao
+                        .listByLayer(projectId,
+                                     page,
+                                     queryParams,
+                                     Some(layerId))
+                        .transact(xa)
+                        .unsafeToFuture
+                        .map { p =>
+                          {
+                            fromPaginatedResponseToGeoJson[
+                              Annotation,
+                              Annotation.GeoJSON
+                            ](p)
+                          }
                         }
-                      }
-                })
-              }
+                  })
+                }
+            }
           }
         }
-      }
     }
 
   def createLayerAnnotation(projectId: UUID, layerId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Projects, Action.CreateAnnotation, None),
-        user
-      ) {
-        authorizeAsync {
-          ProjectDao
-            .authProjectLayerExist(
-              projectId,
-              layerId,
-              user,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationFeatureCollectionCreate]) { fc =>
-            val annotationsCreate = fc.features map {
-              _.toAnnotationCreate
-            }
-            onSuccess(
-              AnnotationDao
-                .insertAnnotations(
-                  annotationsCreate.toList,
-                  projectId,
-                  user,
-                  Some(layerId)
-                )
-                .transact(xa)
-                .unsafeToFuture
-                .map { annotations: List[Annotation] =>
-                  fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](
-                    annotations
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Projects, Action.CreateAnnotation, None),
+          user
+        ) {
+          authorizeAsync {
+            ProjectDao
+              .authProjectLayerExist(
+                projectId,
+                layerId,
+                user,
+                ActionType.Annotate
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            entity(as[AnnotationFeatureCollectionCreate]) { fc =>
+              val annotationsCreate = fc.features map {
+                _.toAnnotationCreate
+              }
+              onSuccess(
+                AnnotationDao
+                  .insertAnnotations(
+                    annotationsCreate.toList,
+                    projectId,
+                    user,
+                    Some(layerId)
                   )
-                }
-            ) { createdAnnotation =>
-              complete((StatusCodes.Created, createdAnnotation))
+                  .transact(xa)
+                  .unsafeToFuture
+                  .map { annotations: List[Annotation] =>
+                    fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](
+                      annotations
+                    )
+                  }
+              ) { createdAnnotation =>
+                complete((StatusCodes.Created, createdAnnotation))
+              }
             }
           }
         }
-      }
     }
 
   def deleteLayerAnnotations(projectId: UUID, layerId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
-        user
-      ) {
-        authorizeAsync {
-          ProjectDao
-            .authProjectLayerExist(
-              projectId,
-              layerId,
-              user,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationDao
-              .deleteByProjectLayer(projectId, Some(layerId))
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
+          user
+        ) {
+          authorizeAsync {
+            ProjectDao
+              .authProjectLayerExist(
+                projectId,
+                layerId,
+                user,
+                ActionType.Annotate
+              )
               .transact(xa)
               .unsafeToFuture
+          } {
+            complete {
+              AnnotationDao
+                .deleteByProjectLayer(projectId, Some(layerId))
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
-      }
     }
 
   def getLayerAnnotation(
       projectId: UUID,
       annotationId: UUID,
       layerId: UUID
-  ): Route = authenticate { case (user, _) =>
-    authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
-      authorizeAsync {
-        ProjectDao
-          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        rejectEmptyResponse {
-          complete {
-            AnnotationDao
-              .getAnnotationById(projectId, annotationId)
-              .transact(xa)
-              .unsafeToFuture
-              .map {
-                _ map {
-                  _.toGeoJSONFeature
-                }
-              }
-          }
-        }
-      }
-    }
-  }
-  def updateLayerAnnotation(projectId: UUID, layerId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Projects, Action.UpdateAnnotation, None),
-        user
-      ) {
+  ): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(ScopedAction(Domain.Projects, Action.Read, None), user) {
         authorizeAsync {
           ProjectDao
-            .authProjectLayerExist(
-              projectId,
-              layerId,
-              user,
-              ActionType.Annotate
-            )
+            .authProjectLayerExist(projectId, layerId, user, ActionType.View)
             .transact(xa)
             .unsafeToFuture
         } {
-          entity(as[Annotation.GeoJSON]) {
-            updatedAnnotation: Annotation.GeoJSON =>
-              onSuccess(
-                AnnotationDao
-                  .updateAnnotation(projectId, updatedAnnotation.toAnnotation)
-                  .transact(xa)
-                  .unsafeToFuture
-              ) { count =>
-                completeSingleOrNotFound(count)
-              }
+          rejectEmptyResponse {
+            complete {
+              AnnotationDao
+                .getAnnotationById(projectId, annotationId)
+                .transact(xa)
+                .unsafeToFuture
+                .map {
+                  _ map {
+                    _.toGeoJSONFeature
+                  }
+                }
+            }
           }
         }
       }
+  }
+  def updateLayerAnnotation(projectId: UUID, layerId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Projects, Action.UpdateAnnotation, None),
+          user
+        ) {
+          authorizeAsync {
+            ProjectDao
+              .authProjectLayerExist(
+                projectId,
+                layerId,
+                user,
+                ActionType.Annotate
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            entity(as[Annotation.GeoJSON]) {
+              updatedAnnotation: Annotation.GeoJSON =>
+                onSuccess(
+                  AnnotationDao
+                    .updateAnnotation(projectId, updatedAnnotation.toAnnotation)
+                    .transact(xa)
+                    .unsafeToFuture
+                ) { count =>
+                  completeSingleOrNotFound(count)
+                }
+            }
+          }
+        }
     }
 
   def deleteLayerAnnotation(
@@ -236,188 +245,97 @@ trait ProjectLayerAnnotationRoutes
       annotationId: UUID,
       layerId: UUID
   ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
-        user
-      ) {
-        authorizeAsync {
-          ProjectDao
-            .authProjectLayerExist(
-              projectId,
-              layerId,
-              user,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          onSuccess(
-            AnnotationDao
-              .deleteById(projectId, annotationId)
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.Projects, Action.DeleteAnnotation, None),
+          user
+        ) {
+          authorizeAsync {
+            ProjectDao
+              .authProjectLayerExist(
+                projectId,
+                layerId,
+                user,
+                ActionType.Annotate
+              )
               .transact(xa)
               .unsafeToFuture
-          ) {
-            completeSingleOrNotFound
+          } {
+            onSuccess(
+              AnnotationDao
+                .deleteById(projectId, annotationId)
+                .transact(xa)
+                .unsafeToFuture
+            ) {
+              completeSingleOrNotFound
+            }
           }
         }
-      }
     }
 
   def listLayerAnnotationGroups(projectId: UUID, layerId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationGroups, Action.Read, None),
-        user
-      ) {
-        authorizeAsync {
-          ProjectDao
-            .authProjectLayerExist(projectId, layerId, user, ActionType.View)
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationGroupDao
-              .listForProject(projectId, Some(layerId))
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationGroups, Action.Read, None),
+          user
+        ) {
+          authorizeAsync {
+            ProjectDao
+              .authProjectLayerExist(projectId, layerId, user, ActionType.View)
               .transact(xa)
               .unsafeToFuture
-          }
-        }
-      }
-    }
-
-  def createLayerAnnotationGroup(projectId: UUID, layerId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationGroups, Action.Create, None),
-        user
-      ) {
-        authorizeAsync {
-          ProjectDao
-            .authProjectLayerExist(
-              projectId,
-              layerId,
-              user,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationGroup.Create]) { agCreate =>
+          } {
             complete {
               AnnotationGroupDao
-                .createAnnotationGroup(projectId, agCreate, user, Some(layerId))
+                .listForProject(projectId, Some(layerId))
                 .transact(xa)
                 .unsafeToFuture
             }
           }
         }
-      }
+    }
+
+  def createLayerAnnotationGroup(projectId: UUID, layerId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationGroups, Action.Create, None),
+          user
+        ) {
+          authorizeAsync {
+            ProjectDao
+              .authProjectLayerExist(
+                projectId,
+                layerId,
+                user,
+                ActionType.Annotate
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            entity(as[AnnotationGroup.Create]) { agCreate =>
+              complete {
+                AnnotationGroupDao
+                  .createAnnotationGroup(projectId,
+                                         agCreate,
+                                         user,
+                                         Some(layerId))
+                  .transact(xa)
+                  .unsafeToFuture
+              }
+            }
+          }
+        }
     }
 
   def getLayerAnnotationGroup(
       projectId: UUID,
       layerId: UUID,
       agId: UUID
-  ): Route = authenticate { case (user, _) =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationGroups, Action.Read, None),
-      user
-    ) {
-      authorizeAsync {
-        AnnotationGroupDao
-          .authAnnotationGroupExists(
-            projectId,
-            layerId,
-            agId,
-            user,
-            ActionType.View
-          )
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          AnnotationGroupDao
-            .getAnnotationGroup(projectId, agId)
-            .transact(xa)
-            .unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def updateLayerAnnotationGroup(
-      projectId: UUID,
-      layerId: UUID,
-      agId: UUID
-  ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationGroups, Action.Update, None),
-        user
-      ) {
-        authorizeAsync {
-          AnnotationGroupDao
-            .authAnnotationGroupExists(
-              projectId,
-              layerId,
-              agId,
-              user,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationGroup]) { annotationGroup =>
-            complete {
-              AnnotationGroupDao
-                .updateAnnotationGroup(projectId, annotationGroup, agId)
-                .transact(xa)
-                .unsafeToFuture
-            }
-          }
-        }
-      }
-    }
-
-  def deleteLayerAnnotationGroup(
-      projectId: UUID,
-      layerId: UUID,
-      agId: UUID
-  ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationGroups, Action.Delete, None),
-        user
-      ) {
-        authorizeAsync {
-          AnnotationGroupDao
-            .authAnnotationGroupExists(
-              projectId,
-              layerId,
-              agId,
-              user,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationGroupDao
-              .deleteAnnotationGroup(projectId, agId)
-              .transact(xa)
-              .unsafeToFuture
-          }
-        }
-      }
-    }
-
-  def getLayerAnnotationGroupSummary(
-      projectId: UUID,
-      layerId: UUID,
-      annotationGroupId: UUID
-  ): Route =
-    authenticate { case (user, _) =>
+  ): Route = authenticate {
+    case (user, _) =>
       authorizeScope(
         ScopedAction(Domain.AnnotationGroups, Action.Read, None),
         user
@@ -427,7 +345,7 @@ trait ProjectLayerAnnotationRoutes
             .authAnnotationGroupExists(
               projectId,
               layerId,
-              annotationGroupId,
+              agId,
               user,
               ActionType.View
             )
@@ -436,14 +354,115 @@ trait ProjectLayerAnnotationRoutes
         } {
           complete {
             AnnotationGroupDao
-              .getAnnotationGroupSummary(
-                annotationGroupId
-              )
+              .getAnnotationGroup(projectId, agId)
               .transact(xa)
               .unsafeToFuture
           }
         }
       }
+  }
+
+  def updateLayerAnnotationGroup(
+      projectId: UUID,
+      layerId: UUID,
+      agId: UUID
+  ): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationGroups, Action.Update, None),
+          user
+        ) {
+          authorizeAsync {
+            AnnotationGroupDao
+              .authAnnotationGroupExists(
+                projectId,
+                layerId,
+                agId,
+                user,
+                ActionType.Annotate
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            entity(as[AnnotationGroup]) { annotationGroup =>
+              complete {
+                AnnotationGroupDao
+                  .updateAnnotationGroup(projectId, annotationGroup, agId)
+                  .transact(xa)
+                  .unsafeToFuture
+              }
+            }
+          }
+        }
+    }
+
+  def deleteLayerAnnotationGroup(
+      projectId: UUID,
+      layerId: UUID,
+      agId: UUID
+  ): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationGroups, Action.Delete, None),
+          user
+        ) {
+          authorizeAsync {
+            AnnotationGroupDao
+              .authAnnotationGroupExists(
+                projectId,
+                layerId,
+                agId,
+                user,
+                ActionType.Annotate
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            complete {
+              AnnotationGroupDao
+                .deleteAnnotationGroup(projectId, agId)
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
+    }
+
+  def getLayerAnnotationGroupSummary(
+      projectId: UUID,
+      layerId: UUID,
+      annotationGroupId: UUID
+  ): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationGroups, Action.Read, None),
+          user
+        ) {
+          authorizeAsync {
+            AnnotationGroupDao
+              .authAnnotationGroupExists(
+                projectId,
+                layerId,
+                annotationGroupId,
+                user,
+                ActionType.View
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            complete {
+              AnnotationGroupDao
+                .getAnnotationGroupSummary(
+                  annotationGroupId
+                )
+                .transact(xa)
+                .unsafeToFuture
+            }
+          }
+        }
     }
 
   def listGeojsonUploads(
@@ -451,12 +470,51 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       annotationGroupId: UUID
   ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationUploads, Action.Read, None),
-        user
-      ) {
-        withPagination { page =>
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationUploads, Action.Read, None),
+          user
+        ) {
+          withPagination { page =>
+            authorizeAuthResultAsync {
+              ProjectDao
+                .authorized(
+                  user,
+                  ObjectType.Project,
+                  projectId,
+                  ActionType.Annotate
+                )
+                .transact(xa)
+                .unsafeToFuture
+            } {
+              complete {
+                GeojsonUploadDao
+                  .listUploadsForAnnotationGroup(
+                    projectId,
+                    layerId,
+                    annotationGroupId,
+                    page
+                  )
+                  .transact(xa)
+                  .unsafeToFuture
+              }
+            }
+          }
+        }
+    }
+
+  def createGeojsonUpload(
+      projectId: UUID,
+      layerId: UUID,
+      annotationGroupId: UUID
+  ): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationUploads, Action.Create, None),
+          user
+        ) {
           authorizeAuthResultAsync {
             ProjectDao
               .authorized(
@@ -468,103 +526,67 @@ trait ProjectLayerAnnotationRoutes
               .transact(xa)
               .unsafeToFuture
           } {
-            complete {
-              GeojsonUploadDao
-                .listUploadsForAnnotationGroup(
-                  projectId,
-                  layerId,
-                  annotationGroupId,
-                  page
-                )
-                .transact(xa)
-                .unsafeToFuture
-            }
-          }
-        }
-      }
-    }
-
-  def createGeojsonUpload(
-      projectId: UUID,
-      layerId: UUID,
-      annotationGroupId: UUID
-  ): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationUploads, Action.Create, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          ProjectDao
-            .authorized(
-              user,
-              ObjectType.Project,
-              projectId,
-              ActionType.Annotate
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[GeojsonUpload.Create]) { newUpload =>
-            logger.debug(
-              s"newUpload: ${newUpload.uploadType}, ${newUpload.files}, ${newUpload.fileType}"
-            )
-            val uploadToInsert =
-              (
-                newUpload.uploadType,
-                newUpload.files.nonEmpty,
-                newUpload.fileType
-              ) match {
-                case (UploadType.S3, true, FileType.GeoJson) => {
-                  newUpload
-                }
-                case (_, false, _) => {
-                  throw new IllegalStateException(
-                    "Uploads must specify file URIs"
-                  )
-                }
-                case (_, _, fileType) if fileType.equals(FileType.GeoJson) => {
-                  throw new IllegalStateException(
-                    "Unsupported file type. Please use GeoJson"
-                  )
-                }
-                case _ => {
-                  throw new IllegalStateException(
-                    "Non-S3 uploads currently unsupported"
-                  )
-                }
-              }
-
-            onSuccess({
-              val uploadIO = AnnotationGroupDao
-                .getAnnotationGroup(projectId, annotationGroupId)
-                .flatMap {
-                  _ traverse { _ =>
-                    GeojsonUploadDao
-                      .insert(
-                        uploadToInsert,
-                        projectId,
-                        layerId,
-                        annotationGroupId,
-                        user
-                      )
+            entity(as[GeojsonUpload.Create]) { newUpload =>
+              logger.debug(
+                s"newUpload: ${newUpload.uploadType}, ${newUpload.files}, ${newUpload.fileType}"
+              )
+              val uploadToInsert =
+                (
+                  newUpload.uploadType,
+                  newUpload.files.nonEmpty,
+                  newUpload.fileType
+                ) match {
+                  case (UploadType.S3, true, FileType.GeoJson) => {
+                    newUpload
+                  }
+                  case (_, false, _) => {
+                    throw new IllegalStateException(
+                      "Uploads must specify file URIs"
+                    )
+                  }
+                  case (_, _, fileType)
+                      if fileType.equals(FileType.GeoJson) => {
+                    throw new IllegalStateException(
+                      "Unsupported file type. Please use GeoJson"
+                    )
+                  }
+                  case _ => {
+                    throw new IllegalStateException(
+                      "Non-S3 uploads currently unsupported"
+                    )
                   }
                 }
-              uploadIO.transact(xa).unsafeToFuture
-            }) { uploadO =>
-              uploadO match {
-                case Some(upload) =>
-                  if (upload.uploadStatus.equals(UploadStatus.Uploaded)) {
-                    kickoffGeojsonImport(upload.id)
+
+              onSuccess({
+                val uploadIO = AnnotationGroupDao
+                  .getAnnotationGroup(projectId, annotationGroupId)
+                  .flatMap {
+                    _ traverse { _ =>
+                      GeojsonUploadDao
+                        .insert(
+                          uploadToInsert,
+                          projectId,
+                          layerId,
+                          annotationGroupId,
+                          user
+                        )
+                    }
                   }
-                  complete((StatusCodes.Created, upload))
-                case _ =>
-                  complete(StatusCodes.NotFound)
+                uploadIO.transact(xa).unsafeToFuture
+              }) { uploadO =>
+                uploadO match {
+                  case Some(upload) =>
+                    if (upload.uploadStatus.equals(UploadStatus.Uploaded)) {
+                      kickoffGeojsonImport(upload.id)
+                    }
+                    complete((StatusCodes.Created, upload))
+                  case _ =>
+                    complete(StatusCodes.NotFound)
+                }
               }
             }
           }
         }
-      }
     }
 
   def getGeojsonUpload(
@@ -572,25 +594,29 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       annotationGroupId: UUID,
       uploadId: UUID
-  ): Route = authenticate { case (user, _) =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationUploads, Action.Read, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        complete {
-          GeojsonUploadDao
-            .getLayerUpload(projectId, layerId, annotationGroupId, uploadId)
+  ): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationUploads, Action.Read, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user,
+                        ObjectType.Project,
+                        projectId,
+                        ActionType.Annotate)
             .transact(xa)
             .unsafeToFuture
+        } {
+          complete {
+            GeojsonUploadDao
+              .getLayerUpload(projectId, layerId, annotationGroupId, uploadId)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
-    }
   }
 
   def updateGeojsonUpload(
@@ -598,34 +624,38 @@ trait ProjectLayerAnnotationRoutes
       projectLayerId: UUID,
       annotationGroupId: UUID,
       uploadId: UUID
-  ): Route = authenticate { case (user, _) =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationUploads, Action.Update, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[GeojsonUpload]) { upload =>
-          complete {
-            GeojsonUploadDao
-              .update(
-                upload,
-                projectId,
-                projectLayerId,
-                annotationGroupId,
-                uploadId,
-                user
-              )
-              .transact(xa)
-              .unsafeToFuture
+  ): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationUploads, Action.Update, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user,
+                        ObjectType.Project,
+                        projectId,
+                        ActionType.Annotate)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[GeojsonUpload]) { upload =>
+            complete {
+              GeojsonUploadDao
+                .update(
+                  upload,
+                  projectId,
+                  projectLayerId,
+                  annotationGroupId,
+                  uploadId,
+                  user
+                )
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
       }
-    }
   }
 
   def deleteGeojsonUpload(
@@ -633,31 +663,35 @@ trait ProjectLayerAnnotationRoutes
       layerId: UUID,
       annotationGroupId: UUID,
       uploadId: UUID
-  ): Route = authenticate { case (user, _) =>
-    authorizeScope(
-      ScopedAction(Domain.AnnotationUploads, Action.Delete, None),
-      user
-    ) {
-      authorizeAuthResultAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        onSuccess(
-          GeojsonUploadDao
-            .deleteProjectLayerUpload(
-              projectId,
-              layerId,
-              annotationGroupId,
-              uploadId
-            )
+  ): Route = authenticate {
+    case (user, _) =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationUploads, Action.Delete, None),
+        user
+      ) {
+        authorizeAuthResultAsync {
+          ProjectDao
+            .authorized(user,
+                        ObjectType.Project,
+                        projectId,
+                        ActionType.Annotate)
             .transact(xa)
             .unsafeToFuture
-        ) {
-          completeSingleOrNotFound
+        } {
+          onSuccess(
+            GeojsonUploadDao
+              .deleteProjectLayerUpload(
+                projectId,
+                layerId,
+                annotationGroupId,
+                uploadId
+              )
+              .transact(xa)
+              .unsafeToFuture
+          ) {
+            completeSingleOrNotFound
+          }
         }
       }
-    }
   }
 }

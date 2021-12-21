@@ -54,7 +54,7 @@ class CreateTaskGrid(
       _ <- OptionT.liftF {
         info(s"Got annotation project ${annotationProject.name}")
       }
-      owner <- OptionT {
+      (user, _) <- OptionT {
         UserDao.getUserById(annotationProject.createdBy)
       }
       footprint <- OptionT {
@@ -78,7 +78,11 @@ class CreateTaskGrid(
       )
       _ <- OptionT.liftF {
         TaskDao
-          .insertTasksByGrid(taskProperties, taskGridFeatureCreate, owner)
+          .insertTasksByGrid(
+            taskProperties,
+            taskGridFeatureCreate,
+            user
+          )
       }
       _ <- OptionT.liftF { info("Inserted tasks") }
       // even though the `aoi` and `taskSizeMeters` are updated when inserting tasks,

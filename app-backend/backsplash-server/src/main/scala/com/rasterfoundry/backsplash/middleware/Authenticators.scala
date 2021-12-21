@@ -28,7 +28,8 @@ class Authenticators(val xa: Transactor[IO])
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
     {
       case _ -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
-            mapTokenId) =>
+            mapTokenId
+          ) =>
         userFromMapToken(MapTokenDao.checkProject(projectId), mapTokenId)
 
       case req @ _ -> UUIDWrapper(analysisId) /: _
@@ -37,7 +38,8 @@ class Authenticators(val xa: Transactor[IO])
           if req.scriptName == "/tools" =>
         val authHeader: OptionT[IO, Header] =
           OptionT.fromOption(
-            req.headers.get(CaseInsensitiveString("Authorization")))
+            req.headers.get(CaseInsensitiveString("Authorization"))
+          )
         checkTokenAndHeader(tokenQP, authHeader) :+
           (
             OptionT.fromOption[IO](mapTokenQP) flatMap { (mapToken: UUID) =>
@@ -61,8 +63,10 @@ class Authenticators(val xa: Transactor[IO])
             checkTokenAndHeader(tokenQP, authHeader) :+
               (
                 OptionT.fromOption[IO](mapTokenO) flatMap { (mapToken: UUID) =>
-                  userFromMapToken(MapTokenDao.checkProject(projectId),
-                                   mapToken)
+                  userFromMapToken(
+                    MapTokenDao.checkProject(projectId),
+                    mapToken
+                  )
                 }
               ) reduce { _ orElse _ }
         }
@@ -75,21 +79,26 @@ class Authenticators(val xa: Transactor[IO])
 
   private def checkTokenAndHeader(
       tokenQP: Option[String],
-      authHeader: OptionT[IO, Header]): List[OptionT[IO, User]] = {
+      authHeader: OptionT[IO, Header]
+  ): List[OptionT[IO, User]] = {
     List(
       authHeader flatMap { (header: Header) =>
-        userFromToken(header.value.replace("Bearer ", ""))
+        userFromToken(header.value.replace("Bearer ", "")) map {
+          case (user, _) => user
+        }
       },
       OptionT.fromOption[IO](tokenQP) flatMap { (token: String) =>
-        userFromToken(token)
+        userFromToken(token) map { case (user, _) => user }
       }
     )
   }
 
-  private def userFromMapToken(func: UUID => ConnectionIO[Option[MapToken]],
-                               mapTokenId: UUID): OptionT[IO, User] =
+  private def userFromMapToken(
+      func: UUID => ConnectionIO[Option[MapToken]],
+      mapTokenId: UUID
+  ): OptionT[IO, User] =
     OptionT(func(mapTokenId).transact(xa)) flatMap { mapToken =>
-      OptionT(getUserFromJWTwithCache(mapToken.owner))
+      OptionT(getUserFromJWTwithCache(mapToken.owner)) map { _._1 }
     }
 
   private def userFromPublicProject(id: UUID): OptionT[IO, User] =
@@ -99,8 +108,9 @@ class Authenticators(val xa: Transactor[IO])
           .filter(id)
           .filter(fr"tile_visibility=${Visibility.Public.toString}::visibility")
           .selectOption
-          .transact(xa))
-      user <- OptionT(getUserFromJWTwithCache(project.owner))
+          .transact(xa)
+      )
+      (user, _) <- OptionT(getUserFromJWTwithCache(project.owner))
     } yield user
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator)

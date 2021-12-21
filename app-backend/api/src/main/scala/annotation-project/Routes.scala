@@ -243,235 +243,242 @@ trait AnnotationProjectRoutes
   }
 
   def listAnnotationProjects: Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
-        user
-      ) {
-        (withPagination & annotationProjectQueryParameters) {
-          (page, annotationProjectQP) =>
-            complete {
-              AnnotationProjectDao
-                .listProjects(page, annotationProjectQP, user)
-                .transact(xa)
-                .unsafeToFuture
-            }
-        }
-      }
-    }
-
-  def createAnnotationProject: Route =
-    authenticate { case (user, _) =>
-      authorizeScopeLimit(
-        AnnotationProjectDao
-          .countUserProjects(user)
-          .transact(xa)
-          .unsafeToFuture,
-        Domain.AnnotationProjects,
-        Action.Create,
-        user
-      ) {
-        entity(as[AnnotationProject.Create]) { newAnnotationProject =>
-          onSuccess(
-            AnnotationProjectDao
-              .insert(newAnnotationProject, user)
-              .transact(xa)
-              .unsafeToFuture
-          ) { annotationProject =>
-            complete((StatusCodes.Created, annotationProject))
-          }
-        }
-      }
-    }
-
-  def getAnnotationProject(projectId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.View
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          rejectEmptyResponse {
-            complete {
-              AnnotationProjectDao
-                .getWithRelatedAndSummaryById(projectId)
-                .transact(xa)
-                .unsafeToFuture
-            }
-          }
-        }
-      }
-    }
-
-  def updateAnnotationProject(projectId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Update, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Edit
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[AnnotationProject]) { updatedAnnotationProject =>
-            onSuccess(
-              AnnotationProjectDao
-                .update(
-                  updatedAnnotationProject,
-                  projectId
-                )
-                .transact(xa)
-                .unsafeToFuture
-            ) {
-              completeSingleOrNotFound
-            }
-          }
-        }
-      }
-    }
-
-  def deleteAnnotationProject(projectId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Delete, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.Delete
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          val updateFieldIO = for {
-            projectOpt <- AnnotationProjectDao.getProjectById(projectId)
-            updated <- projectOpt traverse { project =>
-              AnnotationProjectDao.update(
-                project.copy(isActive = false),
-                project.id
-              )
-            }
-          } yield updated
-
-          val deleteIO = for {
-            _ <- updateFieldIO.transact(xa)
-            deleted <- annotationProjectDeleteBlocker.blockOn(
-              AnnotationProjectDao
-                .deleteById(projectId, user)
-                .transact(xa)
-                .start(annotationProjectDeleteContextShift)
-            )(annotationProjectDeleteContextShift)
-          } yield deleted
-
-          complete(
-            StatusCodes.Accepted,
-            deleteIO.void.unsafeToFuture
-          )
-        }
-      }
-    }
-
-  def listUserActions(projectId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.ReadPermissions, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.View
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          user.isSuperuser match {
-            case true => complete(List("*"))
-            case false =>
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+          user
+        ) {
+          (withPagination & annotationProjectQueryParameters) {
+            (page, annotationProjectQP) =>
               complete {
-                (for {
-                  projectO <- AnnotationProjectDao
-                    .getById(projectId)
-                  projectActions <- projectO traverse { project =>
-                    if (project.createdBy == user.id) {
-                      Set("*").pure[ConnectionIO]
-                    } else {
-                      AnnotationProjectDao
-                        .listUserActions(user, project.id) map { _.toSet }
-                    }
-                  } map { _ getOrElse Set.empty }
-                  campaignActions <- projectO flatTraverse { project =>
-                    project.campaignId traverse { campaignId =>
-                      // definitely safe at this point because it's from the project's FK
-                      CampaignDao.unsafeGetCampaignById(campaignId) flatMap {
-                        campaign =>
-                          if (campaign.owner == user.id) {
-                            Set("*").pure[ConnectionIO]
-                          } else {
-                            CampaignDao.listUserActions(user, campaignId) map {
-                              _.toSet
-                            }
-                          }
-                      }
-                    }
-                  } map { _ getOrElse Set.empty }
-                } yield {
-                  (projectActions ++ campaignActions)
-                }).transact(xa).unsafeToFuture
+                AnnotationProjectDao
+                  .listProjects(page, annotationProjectQP, user)
+                  .transact(xa)
+                  .unsafeToFuture
               }
           }
         }
-      }
+    }
+
+  def createAnnotationProject: Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScopeLimit(
+          AnnotationProjectDao
+            .countUserProjects(user)
+            .transact(xa)
+            .unsafeToFuture,
+          Domain.AnnotationProjects,
+          Action.Create,
+          user
+        ) {
+          entity(as[AnnotationProject.Create]) { newAnnotationProject =>
+            onSuccess(
+              AnnotationProjectDao
+                .insert(newAnnotationProject, user)
+                .transact(xa)
+                .unsafeToFuture
+            ) { annotationProject =>
+              complete((StatusCodes.Created, annotationProject))
+            }
+          }
+        }
+    }
+
+  def getAnnotationProject(projectId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.View
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            rejectEmptyResponse {
+              complete {
+                AnnotationProjectDao
+                  .getWithRelatedAndSummaryById(projectId)
+                  .transact(xa)
+                  .unsafeToFuture
+              }
+            }
+          }
+        }
+    }
+
+  def updateAnnotationProject(projectId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Update, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Edit
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            entity(as[AnnotationProject]) { updatedAnnotationProject =>
+              onSuccess(
+                AnnotationProjectDao
+                  .update(
+                    updatedAnnotationProject,
+                    projectId
+                  )
+                  .transact(xa)
+                  .unsafeToFuture
+              ) {
+                completeSingleOrNotFound
+              }
+            }
+          }
+        }
+    }
+
+  def deleteAnnotationProject(projectId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Delete, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.Delete
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            val updateFieldIO = for {
+              projectOpt <- AnnotationProjectDao.getProjectById(projectId)
+              updated <- projectOpt traverse { project =>
+                AnnotationProjectDao.update(
+                  project.copy(isActive = false),
+                  project.id
+                )
+              }
+            } yield updated
+
+            val deleteIO = for {
+              _ <- updateFieldIO.transact(xa)
+              deleted <- annotationProjectDeleteBlocker.blockOn(
+                AnnotationProjectDao
+                  .deleteById(projectId, user)
+                  .transact(xa)
+                  .start(annotationProjectDeleteContextShift)
+              )(annotationProjectDeleteContextShift)
+            } yield deleted
+
+            complete(
+              StatusCodes.Accepted,
+              deleteIO.void.unsafeToFuture
+            )
+          }
+        }
+    }
+
+  def listUserActions(projectId: UUID): Route =
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.ReadPermissions, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.View
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            user.isSuperuser match {
+              case true => complete(List("*"))
+              case false =>
+                complete {
+                  (for {
+                    projectO <- AnnotationProjectDao
+                      .getById(projectId)
+                    projectActions <- projectO traverse { project =>
+                      if (project.createdBy == user.id) {
+                        Set("*").pure[ConnectionIO]
+                      } else {
+                        AnnotationProjectDao
+                          .listUserActions(user, project.id) map { _.toSet }
+                      }
+                    } map { _ getOrElse Set.empty }
+                    campaignActions <- projectO flatTraverse { project =>
+                      project.campaignId traverse { campaignId =>
+                        // definitely safe at this point because it's from the project's FK
+                        CampaignDao.unsafeGetCampaignById(campaignId) flatMap {
+                          campaign =>
+                            if (campaign.owner == user.id) {
+                              Set("*").pure[ConnectionIO]
+                            } else {
+                              CampaignDao.listUserActions(user, campaignId) map {
+                                _.toSet
+                              }
+                            }
+                        }
+                      }
+                    } map { _ getOrElse Set.empty }
+                  } yield {
+                    (projectActions ++ campaignActions)
+                  }).transact(xa).unsafeToFuture
+                }
+            }
+          }
+        }
     }
 
   def checkIsHITLAnnotationProject(projectId: UUID): Route =
-    authenticate { case (user, _) =>
-      authorizeScope(
-        ScopedAction(Domain.AnnotationProjects, Action.Read, None),
-        user
-      ) {
-        authorizeAuthResultAsync {
-          AnnotationProjectDao
-            .authorized(
-              user,
-              ObjectType.AnnotationProject,
-              projectId,
-              ActionType.View
-            )
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          complete {
-            AnnotationLabelDao
-              .hasPredictionAnnotationLabels(projectId)
+    authenticate {
+      case (user, _) =>
+        authorizeScope(
+          ScopedAction(Domain.AnnotationProjects, Action.Read, None),
+          user
+        ) {
+          authorizeAuthResultAsync {
+            AnnotationProjectDao
+              .authorized(
+                user,
+                ObjectType.AnnotationProject,
+                projectId,
+                ActionType.View
+              )
               .transact(xa)
               .unsafeToFuture
+          } {
+            complete {
+              AnnotationLabelDao
+                .hasPredictionAnnotationLabels(projectId)
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
         }
-      }
     }
 }

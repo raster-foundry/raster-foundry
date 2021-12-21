@@ -4,7 +4,6 @@ import com.rasterfoundry.akkautil.PaginationDirectives
 import com.rasterfoundry.akkautil.{
   Authentication,
   CommonHandlers,
-  MembershipAndUser,
   UserErrorHandler
 }
 import com.rasterfoundry.api.utils.Config
@@ -189,10 +188,9 @@ trait SceneRoutes
             ) match {
               case (Some(SceneType.COG), true) =>
                 for {
-                  insertedScene <-
-                    SceneDao
-                      .insert(uningestedScene, user)
-                      .transact(xa)
+                  insertedScene <- SceneDao
+                    .insert(uningestedScene, user)
+                    .transact(xa)
                   _ <- metadataIO(insertedScene.id).start
                 } yield insertedScene
 
