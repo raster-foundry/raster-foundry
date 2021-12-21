@@ -92,7 +92,7 @@ class UserDaoSpec
           inserted <- UserDao.create(userCreate)
           byId <- UserDao.getUserById(inserted.id)
         } yield (byId)
-        userCreate.id == createdIdIO.transact(xa).unsafeRunSync.get.id
+        userCreate.id == createdIdIO.transact(xa).unsafeRunSync.get._1.id
       })
     )
   }

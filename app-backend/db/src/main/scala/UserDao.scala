@@ -22,7 +22,7 @@ object UserDao extends Dao[User] with Sanitization {
 
   val tableName = "users"
 
-  import Cache.UserMaybePlatformCache._
+  import Cache.UserMaybePlatformIdCache._
 
   override val fieldNames = List(
     "id",
@@ -48,23 +48,23 @@ object UserDao extends Dao[User] with Sanitization {
     query.filter(fr"id = ${id}")
   }
 
-  def getUserMaybePlatformById(
+  def getUserMaybePlatformIdById(
       id: String
-  ): ConnectionIO[Option[UserMaybePlatform]] =
+  ): ConnectionIO[Option[UserMaybePlatformId]] =
     for {
       maybeUser <- query.filter(fr"id = ${id}").selectOption
-      maybePlatformRole <- UserGroupRoleDao
-        .getPlatformRoleForUserById(id)
-        .selectOption
-      maybePlatform <- maybePlatformRole match {
+      maybePlatformIdRole <-
+        UserGroupRoleDao
+          .getPlatformRoleForUserById(id)
+          .selectOption
+      maybePlatformId <- maybePlatformIdRole match {
         case Some(platformRole) =>
           PlatformDao.getPlatformById(platformRole.groupId)
         case _ => (None: Option[Platform]).pure[ConnectionIO]
       }
-    } yield
-      maybeUser map { user =>
-        (user, maybePlatform)
-      }
+    } yield maybeUser map { user =>
+      (user, maybePlatformId map { _.id })
+    }
 
   def unsafeGetUserById(
       id: String,
@@ -84,9 +84,9 @@ object UserDao extends Dao[User] with Sanitization {
       platform <- PlatformDao.unsafeGetPlatformById(platformRole.groupId)
     } yield platform
 
-  def getUserById(id: String): ConnectionIO[Option[UserMaybePlatform]] =
+  def getUserById(id: String): ConnectionIO[Option[UserMaybePlatformId]] =
     Cache.getOptionCache(User.cacheKey(id), Some(30 minutes)) {
-      getUserMaybePlatformById(id)
+      getUserMaybePlatformIdById(id)
     }
 
   def getUsersByIds(ids: List[String]): ConnectionIO[List[User]] = {
@@ -102,8 +102,8 @@ object UserDao extends Dao[User] with Sanitization {
       id: String
   ): ConnectionIO[UserOptionAndRoles] = {
     for {
-      userMaybePlatform <- getUserById(id)
-      maybeUser = userMaybePlatform map { _._1 }
+      userMaybePlatformId <- getUserById(id)
+      maybeUser = userMaybePlatformId map { _._1 }
       roles <- {
         maybeUser match {
           case Some(u) =>
@@ -122,9 +122,10 @@ object UserDao extends Dao[User] with Sanitization {
       scope: Scope
   ): ConnectionIO[(User, List[UserGroupRole])] = {
     for {
-      organization <- OrganizationDao.query
-        .filter(jwtUser.organizationId)
-        .selectOption
+      organization <-
+        OrganizationDao.query
+          .filter(jwtUser.organizationId)
+          .selectOption
       createdUser <- {
         organization match {
           case Some(_) =>
@@ -194,7 +195,7 @@ object UserDao extends Dao[User] with Sanitization {
          personal_info = ${user.personalInfo}
         """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
       _ <- remove(user.cacheKey)(
-        userMaybePlatformCache,
+        userMaybePlatformIdCache,
         async[ConnectionIO]
       ).attempt
     } yield query
@@ -305,7 +306,7 @@ object UserDao extends Dao[User] with Sanitization {
     val planetCredential = user.planetCredential.token.getOrElse("")
     for {
       query <- (
-        sql"""
+          sql"""
         UPDATE users
         SET
           modified_at = ${updateTime},
@@ -314,10 +315,10 @@ object UserDao extends Dao[User] with Sanitization {
           visibility = ${user.visibility},
           personal_info = ${user.personalInfo}
           """ ++
-          Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
+            Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
       ).update.run
       _ <- remove(user.cacheKey)(
-        userMaybePlatformCache,
+        userMaybePlatformIdCache,
         async[ConnectionIO]
       ).attempt
     } yield query
@@ -424,7 +425,7 @@ object UserDao extends Dao[User] with Sanitization {
                                                                     Cache
                                                                       .bust[
                                                                         ConnectionIO,
-                                                                        UserMaybePlatform
+                                                                        UserMaybePlatformId
                                                                       ](
                                                                         // I learned the cache key by telnet-ing to my local memcached and dumping all
                                                                         // the keys: https://stackoverflow.com/a/19562199

@@ -1,6 +1,6 @@
 package com.rasterfoundry.http4s
 
-import com.rasterfoundry.database.UserMaybePlatform
+import com.rasterfoundry.database.UserMaybePlatformId
 
 import com.typesafe.scalalogging.LazyLogging
 import scalacache._
@@ -12,6 +12,6 @@ object Cache extends LazyLogging {
     Config.cache.authenticationCacheEnable,
     Config.cache.authenticationCacheEnable
   )
-  val caffeineAuthenticationCache: Cache[Option[UserMaybePlatform]] =
-    CaffeineCache[Option[UserMaybePlatform]]
+  val caffeineAuthenticationCache: Cache[Option[UserMaybePlatformId]] =
+    CaffeineCache[Option[UserMaybePlatformId]]
 }

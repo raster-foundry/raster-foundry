@@ -2,7 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.{MapTokenDao, ProjectDao, UserMaybePlatform}
+import com.rasterfoundry.database.{MapTokenDao, ProjectDao, UserMaybePlatformId}
 import com.rasterfoundry.datamodel.{MapToken, Project, Visibility}
 import com.rasterfoundry.{http4s => RFHttp4s}
 
@@ -26,7 +26,7 @@ class Authenticators(val xa: Transactor[IO])
     with RFHttp4s.Authenticators {
 
   val tokensAuthenticator =
-    Kleisli[OptionT[IO, ?], Request[IO], UserMaybePlatform](
+    Kleisli[OptionT[IO, ?], Request[IO], UserMaybePlatformId](
       {
         case _ -> Root / UUIDWrapper(projectId) / "map-token" / UUIDWrapper(
               mapTokenId
@@ -78,14 +78,14 @@ class Authenticators(val xa: Transactor[IO])
         }
 
         case _ =>
-          OptionT.none[IO, UserMaybePlatform]
+          OptionT.none[IO, UserMaybePlatformId]
       }
     )
 
   private def checkTokenAndHeader(
       tokenQP: Option[String],
       authHeader: OptionT[IO, Header]
-  ): List[OptionT[IO, UserMaybePlatform]] = {
+  ): List[OptionT[IO, UserMaybePlatformId]] = {
     List(
       authHeader flatMap { (header: Header) =>
         userFromToken(header.value.replace("Bearer ", ""))
@@ -99,12 +99,14 @@ class Authenticators(val xa: Transactor[IO])
   private def userFromMapToken(
       func: UUID => ConnectionIO[Option[MapToken]],
       mapTokenId: UUID
-  ): OptionT[IO, UserMaybePlatform] =
+  ): OptionT[IO, UserMaybePlatformId] =
     OptionT(func(mapTokenId).transact(xa)) flatMap { mapToken =>
       OptionT(getUserFromJWTwithCache(mapToken.owner))
     }
 
-  private def userFromPublicProject(id: UUID): OptionT[IO, UserMaybePlatform] =
+  private def userFromPublicProject(
+      id: UUID
+  ): OptionT[IO, UserMaybePlatformId] =
     for {
       project <- OptionT[IO, Project](
         ProjectDao.query
@@ -113,13 +115,13 @@ class Authenticators(val xa: Transactor[IO])
           .selectOption
           .transact(xa)
       )
-      userMaybePlatform <- OptionT(getUserFromJWTwithCache(project.owner))
-    } yield userMaybePlatform
+      userMaybePlatformId <- OptionT(getUserFromJWTwithCache(project.owner))
+    } yield userMaybePlatformId
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator map {
-    case (user, maybePlatform) => {
-      maybePlatform.map { platform =>
-        logger.info(s"platform = ${platform.id}")
+    case (user, maybePlatformId) => {
+      maybePlatformId.map { platformId =>
+        logger.info(s"platformId = $platformId")
       }
       user
     }

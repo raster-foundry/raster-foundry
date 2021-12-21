@@ -99,13 +99,13 @@ object ExportDao extends Dao[Export] {
     logger.debug("Decoded export options successfully")
 
     val outputDefinition: ConnectionIO[OutputDefinition] = for {
-      userMaybePlatform <- UserDao.getUserById(export.owner)
+      userMaybePlatformId <- UserDao.getUserById(export.owner)
     } yield {
       OutputDefinition(
         crs = exportOptions.getCrs,
         destination = exportOptions.source.toString,
         dropboxCredential =
-          userMaybePlatform.flatMap(_._1.dropboxCredential.token)
+          userMaybePlatformId.flatMap(_._1.dropboxCredential.token)
       )
     }
 
