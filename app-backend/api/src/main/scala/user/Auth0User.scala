@@ -78,6 +78,8 @@ final case class UserWithOAuth(
 @JsonCodec
 final case class PasswordResetTicket(ticket: String)
 
+final case class Auth0ConnectionInfo(id: String, name: String)
+
 object UserWithOAuth {
   implicit val encodeUser: Encoder[User] = Encoder.forProduct8(
     "id",
@@ -434,7 +436,8 @@ object Auth0Service extends Config with LazyLogging {
   }
 
   def bulkCreateUsers(
-      userIds: List[String]
+      userIds: List[String],
+      connectionInfo: Auth0ConnectionInfo
   ): Future[Either[BulkCreateError, List[Auth0User]]] = {
     val bulkCreateId = UUID.randomUUID()
     val usersToCreate = userIds
@@ -442,7 +445,7 @@ object Auth0Service extends Config with LazyLogging {
         uid =>
           Auth0UserBulkCreate(
             uid,
-            s"$uid@${auth0AnonymizedConnectionName}.com",
+            s"$uid@${connectionInfo.name}.com",
             true,
             uid.bcrypt(10),
             Map("bulkCreateId" -> bulkCreateId.toString)
@@ -458,7 +461,7 @@ object Auth0Service extends Config with LazyLogging {
           .header("Authorization", s"Bearer ${managementToken.access_token}")
           .multipartBody(
             multipart("upsert", true),
-            multipart("connection_id", auth0AnonymizedConnectionId),
+            multipart("connection_id", connectionInfo.id),
             multipartFile("users", tempFile.path),
             multipart("send_completion_email", false)
           )
@@ -521,4 +524,18 @@ object Auth0Service extends Config with LazyLogging {
         throw new Exception("Unable to create a password change ticket")
     }
   }
+
+  def getConnectionInfo(isAltConnection: Option[Boolean]): Auth0ConnectionInfo =
+    isAltConnection match {
+      case Some(true) =>
+        Auth0ConnectionInfo(
+          auth0AnonymizedConnectionAltId,
+          auth0AnonymizedConnectionAltName
+        )
+      case _ =>
+        Auth0ConnectionInfo(
+          auth0AnonymizedConnectionId,
+          auth0AnonymizedConnectionName
+        )
+    }
 }

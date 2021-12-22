@@ -293,7 +293,8 @@ case class UserBulkCreate(
     campaignId: Option[UUID] = None,
     grantAccessToParentCampaignOwner: Boolean = false,
     grantAccessToChildrenCampaignOwner: Boolean = false,
-    copyResourceLink: Boolean = false
+    copyResourceLink: Boolean = false,
+    isAltConnection: Option[Boolean] = None
 )
 
 object UserBulkCreate {
