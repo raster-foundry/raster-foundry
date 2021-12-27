@@ -15,13 +15,13 @@ class AnalysisService[Param, HistStore](
   val routes: AuthedRoutes[UserWithPlatform, IO] =
     AuthedRoutes.of {
       case GET -> Root / UUIDWrapper(analysisId) / "histogram"
-          :? NodeQueryParamMatcher(node) as user =>
+            :? NodeQueryParamMatcher(node) as user =>
         analysisManager
           .histogram(user.toUser, analysisId, node)
           .map(addTempPlatformInfo(_, user.platformNameOpt, user.platformIdOpt))
 
       case GET -> Root / UUIDWrapper(analysisId) / "statistics"
-          :? NodeQueryParamMatcher(node) as user =>
+            :? NodeQueryParamMatcher(node) as user =>
         analysisManager
           .statistics(user.toUser, analysisId, node)
           .map(addTempPlatformInfo(_, user.platformNameOpt, user.platformIdOpt))
@@ -29,15 +29,15 @@ class AnalysisService[Param, HistStore](
       case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(
             x
           ) / IntVar(y)
-          :? NodeQueryParamMatcher(node) as user =>
+            :? NodeQueryParamMatcher(node) as user =>
         analysisManager
           .tile(user.toUser, analysisId, node, z, x, y)
           .map(addTempPlatformInfo(_, user.platformNameOpt, user.platformIdOpt))
 
       case authedReq @ GET -> Root / UUIDWrapper(analysisId) / "raw"
-          :? ExtentQueryParamMatcher(extent)
-          :? ZoomQueryParamMatcher(zoom)
-          :? NodeQueryParamMatcher(node) as user =>
+            :? ExtentQueryParamMatcher(extent)
+            :? ZoomQueryParamMatcher(zoom)
+            :? NodeQueryParamMatcher(node) as user =>
         analysisManager
           .export(
             authedReq,
