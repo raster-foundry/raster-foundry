@@ -22,11 +22,10 @@ import scala.concurrent.duration._
 
 import java.util.UUID
 
-class AnnotationProjectMVTService(xa: Transactor[IO])(
-    implicit
+class AnnotationProjectMVTService(xa: Transactor[IO])(implicit
     contextShift: ContextShift[IO],
-    builder: TracingContextBuilder[IO])
-    extends Http4sDsl[IO]
+    builder: TracingContextBuilder[IO]
+) extends Http4sDsl[IO]
     with LazyLogging
     with ResponseUtils {
 
@@ -100,7 +99,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           y,
           context
         ) map { shortCache } map {
-          addTempPlatformInfo(_, user.platformIdOpt)
+          addTempPlatformInfo(_, user.platformNameOpt, user.platformIdOpt)
         }
 
       case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(
@@ -118,7 +117,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           y,
           context
         ) map { noCache } map {
-          addTempPlatformInfo(_, user.platformIdOpt)
+          addTempPlatformInfo(_, user.platformNameOpt, user.platformIdOpt)
         }
     }
 

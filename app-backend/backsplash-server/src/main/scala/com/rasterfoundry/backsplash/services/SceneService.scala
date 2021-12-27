@@ -35,10 +35,10 @@ class SceneService[HistStore](
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO]
 )(implicit
-  cs: ContextShift[IO],
-  builder: TracingContextBuilder[IO],
-  logger: Logger[IO])
-    extends ToRenderableStoreOps
+    cs: ContextShift[IO],
+    builder: TracingContextBuilder[IO],
+    logger: Logger[IO]
+) extends ToRenderableStoreOps
     with ResponseUtils {
 
   import mosaicImplicits._
@@ -161,12 +161,16 @@ class SceneService[HistStore](
             case Invalid(e) =>
               BadRequest(s"Could not produce tile: $e")
           }
-        } yield addTempPlatformInfo(resp, user.platformIdOpt)
+        } yield addTempPlatformInfo(
+          resp,
+          user.platformNameOpt,
+          user.platformIdOpt
+        )
 
       case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
-            :? ThumbnailQueryParamDecoder(
-              thumbnailSize
-            ) :? ColorCorrectLowerQuantile(
+          :? ThumbnailQueryParamDecoder(
+            thumbnailSize
+          ) :? ColorCorrectLowerQuantile(
             lowerQuantile
           ) :? ColorCorrectUpperQuantile(
             upperQuantile
@@ -212,6 +216,10 @@ class SceneService[HistStore](
             case Invalid(e) =>
               BadRequest(s"Could not produce tile: $e")
           }
-        } yield addTempPlatformInfo(resp, user.platformIdOpt)
+        } yield addTempPlatformInfo(
+          resp,
+          user.platformNameOpt,
+          user.platformIdOpt
+        )
     }
 }

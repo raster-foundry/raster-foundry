@@ -6,18 +6,24 @@ import org.http4s._
 import java.util.UUID
 
 trait ResponseUtils {
-  val headerKey = "platformId"
+  lazy val headerPlatNameKey = "platformName"
+  lazy val headerPlatIdKey = "plaformId"
   def addTempPlatformInfo(
       resp: Response[IO],
+      platNameOpt: Option[String],
       platIdOpt: Option[UUID]
   ): Response[IO] =
-    resp.putHeaders(
-      Header(
-        headerKey,
-        platIdOpt match {
-          case Some(id) => id.toString
-          case _        => ""
-        }
+    resp
+      .putHeaders(
+        Header(
+          headerPlatNameKey,
+          platNameOpt.getOrElse("")
+        )
       )
-    )
+      .putHeaders(
+        Header(
+          headerPlatIdKey,
+          platIdOpt.map(_.toString).getOrElse("")
+        )
+      )
 }

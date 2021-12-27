@@ -329,6 +329,7 @@ final case class UserWithPlatform(
     visibility: UserVisibility,
     personalInfo: User.PersonalInfo,
     scope: Scope,
+    platformNameOpt: Option[String],
     platformIdOpt: Option[UUID]
 ) {
   lazy val cacheKey: String = s"user:platform:$id"

@@ -31,7 +31,8 @@ class AccessLoggingMiddleware[F[_]: Sync](
         val headers =
           Map(
             request.headers.toList.filter(header =>
-              headerWhitelist.contains(header.name)) map { header =>
+              headerWhitelist.contains(header.name)
+            ) map { header =>
               header.name.toString.toLowerCase -> header.value.asJson
             }: _*
           )
@@ -50,15 +51,22 @@ class AccessLoggingMiddleware[F[_]: Sync](
             "durationInMillis" -> duration.asJson,
             "statusCode" -> resp.status.code.asJson
           )
-          val platformHeader =
-            resp.headers.get(CaseInsensitiveString(headerKey))
-          val platformIdData = platformHeader match {
-            case Some(header) => Map(headerKey -> header.value.asJson)
-            case _            => Map.empty
-          }
-          resp.putHeaders(Header(headerKey, ""))
+          val platformIdHeader =
+            resp.headers
+              .get(CaseInsensitiveString(headerPlatIdKey))
+              .map(header => Map(headerPlatIdKey -> header.value.asJson))
+              .getOrElse(Map.empty)
+          val platformNameHeader =
+            resp.headers
+              .get(CaseInsensitiveString(headerPlatNameKey))
+              .map(header => Map(headerPlatNameKey -> header.value.asJson))
+              .getOrElse(Map.empty)
+          val platformData = platformIdHeader ++ platformNameHeader
+          resp
+            .putHeaders(Header(headerPlatIdKey, ""))
+            .putHeaders(Header(headerPlatNameKey, ""))
           logger.info(
-            (requestData ++ responseData ++ platformIdData).asJson.noSpaces
+            (requestData ++ responseData ++ platformData).asJson.noSpaces
           )
           resp
         }
