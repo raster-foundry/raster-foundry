@@ -8,11 +8,12 @@ import org.http4s.util.CaseInsensitiveString
 import org.http4s.{HttpRoutes, Request}
 
 import java.time.Instant
+import com.rasterfoundry.backsplash.utils.ResponseUtils
 
 class AccessLoggingMiddleware[F[_]: Sync](
     service: HttpRoutes[F],
     logger: Logger
-) {
+) extends ResponseUtils {
   def withLogging(enabled: Boolean) = {
     if (!enabled) service
     else {
@@ -48,7 +49,16 @@ class AccessLoggingMiddleware[F[_]: Sync](
             "durationInMillis" -> duration.asJson,
             "statusCode" -> resp.status.code.asJson
           )
-          logger.info((requestData ++ responseData).asJson.noSpaces)
+          val platformHeader =
+            resp.headers.get(CaseInsensitiveString(headerKey))
+          val platformIdData = platformHeader match {
+            case Some(header) => Map(headerKey -> header.value.asJson)
+            case _            => Map.empty
+          }
+          resp.putHeaders(Header(headerKey, ""))
+          logger.info(
+            (requestData ++ responseData ++ platformIdData).asJson.noSpaces
+          )
           resp
         }
       }
