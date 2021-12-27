@@ -3,6 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
+import com.rasterfoundry.backsplash.utils.ResponseUtils
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.common.color.ColorCorrect
@@ -37,7 +38,8 @@ class SceneService[HistStore](
   cs: ContextShift[IO],
   builder: TracingContextBuilder[IO],
   logger: Logger[IO])
-    extends ToRenderableStoreOps {
+    extends ToRenderableStoreOps
+    with ResponseUtils {
 
   import mosaicImplicits._
 
@@ -138,7 +140,7 @@ class SceneService[HistStore](
             upperQuantile
           ) as user using tracingContext =>
         for {
-          sceneFiber <- authorizers.authScene(user, sceneId).start
+          sceneFiber <- authorizers.authScene(user.toUser, sceneId).start
           bandsFiber <- getDefaultSceneBands(sceneId)
           scene <- sceneFiber.join.handleErrorWith { error =>
             bandsFiber.cancel *> IO.raiseError(error)
@@ -159,7 +161,7 @@ class SceneService[HistStore](
             case Invalid(e) =>
               BadRequest(s"Could not produce tile: $e")
           }
-        } yield resp
+        } yield addTempPlatformInfo(resp, user.platformIdOpt)
 
       case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
             :? ThumbnailQueryParamDecoder(
@@ -170,7 +172,7 @@ class SceneService[HistStore](
             upperQuantile
           ) as user using tracingContext =>
         for {
-          sceneFiber <- authorizers.authScene(user, sceneId).start
+          sceneFiber <- authorizers.authScene(user.toUser, sceneId).start
           bandsFiber <- getDefaultSceneBands(sceneId)
           scene <- sceneFiber.join.handleErrorWith { error =>
             bandsFiber.cancel *> IO.raiseError(error)
@@ -210,6 +212,6 @@ class SceneService[HistStore](
             case Invalid(e) =>
               BadRequest(s"Could not produce tile: $e")
           }
-        } yield resp
+        } yield addTempPlatformInfo(resp, user.platformIdOpt)
     }
 }

@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.utils.ResponseUtils
 import com.rasterfoundry.common.utils.TileUtils
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
@@ -33,7 +34,8 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     analysisManager: AnalysisManager[ToolStore, HistStore],
     xa: Transactor[IO],
     contextShift: ContextShift[IO]
-)(implicit tracingContext: TracingContextBuilder[IO], logger: Logger[IO]) {
+)(implicit tracingContext: TracingContextBuilder[IO], logger: Logger[IO])
+    extends ResponseUtils {
 
   implicit val cs = contextShift
 
@@ -110,7 +112,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
 
         for {
           fiberAuthProject <- authorizers
-            .authProject(user, projectId, tracingContext)
+            .authProject(user.toUser, projectId, tracingContext)
             .start
           fiberAuthLayer <- authorizers
             .authProjectLayer(projectId, layerId, tracingContext)
@@ -128,7 +130,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             case Invalid(e) =>
               BadRequest(s"Could not produce tile: $e ")
           }
-        } yield resp
+        } yield addTempPlatformInfo(resp, user.platformIdOpt)
 
       case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
             layerId
@@ -143,7 +145,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           )
         )
         for {
-          authFiber <- authorizers.authProject(user, projectId).start
+          authFiber <- authorizers.authProject(user.toUser, projectId).start
           mosaic = layers.read(
             layerId,
             None,
@@ -166,7 +168,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             case Invalid(e) =>
               BadRequest(s"Histograms could not be produced: $e ")
           }
-        } yield resp
+        } yield addTempPlatformInfo(resp, user.platformIdOpt)
 
       case tracedReq @ POST -> Root / UUIDWrapper(
             projectId
@@ -192,7 +194,9 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           ) match {
             case Right(uuids) =>
               for {
-                authFiber <- authorizers.authProject(user, projectId).start
+                authFiber <- authorizers
+                  .authProject(user.toUser, projectId)
+                  .start
                 mosaic = layers.read(
                   layerId,
                   None,
@@ -211,7 +215,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                   case Invalid(e) =>
                     BadRequest(s"Unable to produce histograms: $e ")
                 }
-              } yield resp
+              } yield addTempPlatformInfo(resp, user.platformIdOpt)
             case _ =>
               BadRequest(
                 """
@@ -236,15 +240,15 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           )
         )
         for {
-          authFiber <- authorizers.authProject(user, projectId).start
+          authFiber <- authorizers.authProject(user.toUser, projectId).start
           respFiber <- analysisManager
-            .tile(user, analysisId, node, z, x, y)
+            .tile(user.toUser, analysisId, node, z, x, y)
             .start
           _ <- authFiber.join.handleErrorWith { error =>
             respFiber.cancel *> IO.raiseError(error)
           }
           resp <- respFiber.join
-        } yield resp
+        } yield addTempPlatformInfo(resp, user.platformIdOpt)
 
       case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
             analysisId
@@ -260,15 +264,15 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           )
         )
         for {
-          authFiber <- authorizers.authProject(user, projectId).start
+          authFiber <- authorizers.authProject(user.toUser, projectId).start
           respFiber <- analysisManager
-            .histogram(user, analysisId, node)
+            .histogram(user.toUser, analysisId, node)
             .start
           _ <- authFiber.join.handleErrorWith { error =>
             respFiber.cancel *> IO.raiseError(error)
           }
           resp <- respFiber.join
-        } yield resp
+        } yield addTempPlatformInfo(resp, user.platformIdOpt)
 
       case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
             analysisId
@@ -284,15 +288,15 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           )
         )
         for {
-          authFiber <- authorizers.authProject(user, projectId).start
+          authFiber <- authorizers.authProject(user.toUser, projectId).start
           respFiber <- analysisManager
-            .statistics(user, analysisId, node)
+            .statistics(user.toUser, analysisId, node)
             .start
           _ <- authFiber.join.handleErrorWith { error =>
             respFiber.cancel *> IO.raiseError(error)
           }
           resp <- respFiber.join
-        } yield resp
+        } yield addTempPlatformInfo(resp, user.platformIdOpt)
 
       case tracedReq @ GET -> Root / UUIDWrapper(
             projectId
@@ -313,12 +317,12 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
         )
         for {
           authFiber <- authorizers
-            .authProjectAnalysis(user, projectId, analysisId)
+            .authProjectAnalysis(user.toUser, projectId, analysisId)
             .start
           respFiber <- analysisManager
             .export(
               tracedReq.authedRequest,
-              user,
+              user.toUser,
               analysisId,
               node,
               extent,
@@ -329,6 +333,6 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
             respFiber.cancel *> IO.raiseError(error)
           }
           resp <- respFiber.join
-        } yield resp
+        } yield addTempPlatformInfo(resp, user.platformIdOpt)
     }
 }

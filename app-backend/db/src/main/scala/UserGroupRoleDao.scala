@@ -118,9 +118,8 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       }
       existingMembershipStatus = existingRoleO map { _.membershipStatus }
       rolesMatch = existingRoleO
-        .map(
-          (ugr: UserGroupRole) => ugr.groupRole == userGroupRoleCreate.groupRole
-        )
+        .map((ugr: UserGroupRole) =>
+          ugr.groupRole == userGroupRoleCreate.groupRole)
         .getOrElse(false)
       isSameOrg <- isSameOrgIO
       createdOrReturned <- {
@@ -339,10 +338,16 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
               case false => Some(ff)
             }
           )
-          .page[User.WithGroupRole](page, sf, cf, orderClauseO match {
-            case Some(orderClause) => orderClause
-            case None              => Map.empty[String, Order]
-          }, true)
+          .page[User.WithGroupRole](
+            page,
+            sf,
+            cf,
+            orderClauseO match {
+              case Some(orderClause) => orderClause
+              case None              => Map.empty[String, Order]
+            },
+            true
+          )
       }
     } yield { result }
   }
@@ -421,5 +426,21 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         }
       }
     } yield (inserted getOrElse Nil)
+  }
+
+  def getUserMostRecentActivePlatform(
+      userId: String
+  ): ConnectionIO[Option[UUID]] = {
+    query
+      .filter(fr"user_id = ${userId}")
+      .filter(fr"is_active = true")
+      .filter(fr"membership_status = 'APPROVED'::membership_status")
+      .filter(fr"group_type = 'PLATFORM'::group_type")
+      .list
+      .map {
+        _.sortBy(_.createdAt.getTime()).reverse.headOption map {
+          _.groupId
+        }
+      }
   }
 }

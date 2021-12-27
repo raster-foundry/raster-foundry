@@ -21,6 +21,7 @@ import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 
 import java.util.UUID
+import com.rasterfoundry.datamodel.UserWithPlatform
 
 @SuppressWarnings(Array("TraversableHead"))
 class AnalysisManager[Param: ToolStore, HistStore](
@@ -118,7 +119,7 @@ class AnalysisManager[Param: ToolStore, HistStore](
     } yield resp
 
   def export(
-      authedReq: AuthedRequest[IO, User],
+      authedReq: AuthedRequest[IO, UserWithPlatform],
       user: User,
       analysisId: UUID,
       node: Option[UUID],

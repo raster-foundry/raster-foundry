@@ -29,12 +29,14 @@ object UserRole {
       Either.catchNonFatal(UserRole.fromString(str)).leftMap(_ => "UserRole")
     }
 
-  def fromString(s: String): UserRole = s.toUpperCase match {
-    case "USER"   => UserRoleRole // TODO Think of a better name than UserRoleRole
-    case "VIEWER" => Viewer
-    case "ADMIN"  => Admin
-    case _        => throw new Exception(s"Unsupported user role string: $s")
-  }
+  def fromString(s: String): UserRole =
+    s.toUpperCase match {
+      case "USER" =>
+        UserRoleRole // TODO Think of a better name than UserRoleRole
+      case "VIEWER" => Viewer
+      case "ADMIN"  => Admin
+      case _        => throw new Exception(s"Unsupported user role string: $s")
+    }
 
   def toString(ur: UserRole): String = {
     ur match {
@@ -83,16 +85,17 @@ object OrganizationType {
   case object Military extends OrganizationType("MILITARY")
   case object Other extends OrganizationType("OTHER")
 
-  def fromString(s: String): OrganizationType = s.toUpperCase match {
-    case "COMMERCIAL" => Commercial
-    case "GOVERNMENT" => Government
-    case "NON-PROFIT" => NonProfit
-    case "ACADEMIC"   => Academic
-    case "MILITARY"   => Military
-    case "OTHER"      => Other
-    case _ =>
-      throw new InvalidParameterException(s"Invalid membership status: $s")
-  }
+  def fromString(s: String): OrganizationType =
+    s.toUpperCase match {
+      case "COMMERCIAL" => Commercial
+      case "GOVERNMENT" => Government
+      case "NON-PROFIT" => NonProfit
+      case "ACADEMIC"   => Academic
+      case "MILITARY"   => Military
+      case "OTHER"      => Other
+      case _ =>
+        throw new InvalidParameterException(s"Invalid membership status: $s")
+    }
 
   implicit val organizationTypeEncoder: Encoder[OrganizationType] =
     Encoder.encodeString.contramap[OrganizationType](_.toString)
@@ -308,3 +311,48 @@ case class UserInfo(
 )
 
 case class UserWithCampaign(user: User, campaignO: Option[Campaign])
+
+@JsonCodec
+final case class UserWithPlatform(
+    id: String,
+    role: UserRole,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    dropboxCredential: Credential,
+    planetCredential: Credential,
+    emailNotifications: Boolean,
+    email: String,
+    name: String,
+    profileImageUri: String,
+    isSuperuser: Boolean,
+    isActive: Boolean,
+    visibility: UserVisibility,
+    personalInfo: User.PersonalInfo,
+    scope: Scope,
+    platformIdOpt: Option[UUID]
+) {
+  lazy val cacheKey: String = s"user:platform:$id"
+
+  def toUser =
+    User(
+      id,
+      role,
+      createdAt,
+      modifiedAt,
+      dropboxCredential,
+      planetCredential,
+      emailNotifications,
+      email,
+      name,
+      profileImageUri,
+      isSuperuser,
+      isActive,
+      visibility,
+      personalInfo,
+      scope
+    )
+}
+
+object UserWithPlatform {
+  def cacheKey(id: String) = s"user:platform:$id"
+}

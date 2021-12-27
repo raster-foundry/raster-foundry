@@ -23,6 +23,7 @@ object UserDao extends Dao[User] with Sanitization {
   val tableName = "users"
 
   import Cache.UserCache._
+  import Cache.UserWithPlatformCache._
 
   override val fieldNames = List(
     "id",
@@ -73,6 +74,42 @@ object UserDao extends Dao[User] with Sanitization {
   def getUserById(id: String): ConnectionIO[Option[User]] =
     Cache.getOptionCache(User.cacheKey(id), Some(30 minutes)) {
       filterById(id).selectOption
+    }
+
+  def getUserWithPlatformById(
+      id: String
+  ): ConnectionIO[Option[UserWithPlatform]] =
+    Cache.getOptionCache(UserWithPlatform.cacheKey(id), Some(30 minutes)) {
+      for {
+        userOpt <- filterById(id).selectOption
+        plaformIdOpt <- userOpt flatTraverse { user =>
+          UserGroupRoleDao.getUserMostRecentActivePlatform(user.id)
+        }
+      } yield
+        userOpt match {
+          case Some(user) =>
+            Some(
+              UserWithPlatform(
+                user.id,
+                user.role,
+                user.createdAt,
+                user.modifiedAt,
+                user.dropboxCredential,
+                user.planetCredential,
+                user.emailNotifications,
+                user.email,
+                user.name,
+                user.profileImageUri,
+                user.isSuperuser,
+                user.isActive,
+                user.visibility,
+                user.personalInfo,
+                user.scope,
+                plaformIdOpt
+              )
+            )
+          case None => None
+        }
     }
 
   def getUsersByIds(ids: List[String]): ConnectionIO[List[User]] = {

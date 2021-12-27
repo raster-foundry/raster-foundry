@@ -1,7 +1,7 @@
 package com.rasterfoundry.http4s
 
 import com.rasterfoundry.database.UserDao
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.datamodel.UserWithPlatform
 
 import cats.data.OptionT
 import cats.effect.IO
@@ -22,12 +22,13 @@ import scalacache.memoization._
 import scala.concurrent.duration._
 
 import java.net.URL
+import com.rasterfoundry.datamodel.UserWithPlatform
 
 trait Authenticators extends LazyLogging {
 
   val xa: Transactor[IO]
 
-  implicit val cache = Cache.caffeineAuthenticationCache
+  implicit val cache = Cache.caffeineAuthenticationWithPlaformCache
   implicit val flags = Cache.authenticationCacheFlags
 
   private val configAuth = ConfigFactory.load()
@@ -45,22 +46,22 @@ trait Authenticators extends LazyLogging {
 
   def getUserFromJWTwithCache(
       userIdFromJWT: String
-  )(implicit flags: Flags): IO[Option[User]] =
-    memoizeF[IO, Option[User]](Some(30.seconds)) {
-      logger.debug(s"Authentication - Getting User ${userIdFromJWT} from DB")
-      UserDao
-        .getUserById(userIdFromJWT)
-        .transact(xa)
+  )(implicit flags: Flags): IO[Option[UserWithPlatform]] =
+    memoizeF[IO, Option[UserWithPlatform]](Some(30.seconds)) {
+      logger.debug(
+        s"Authentication - Getting User ${userIdFromJWT} from DB with Platform"
+      )
+      UserDao.getUserWithPlatformById(userIdFromJWT).transact(xa)
     }
 
-  def userFromToken(token: String): OptionT[IO, User] = {
+  def userFromToken(token: String): OptionT[IO, UserWithPlatform] = {
     val userFromTokenIO = verifyJWT(token) match {
       case Right((_, jwtClaims)) => {
         val userIdFromJWT = jwtClaims.getStringClaim("sub")
         getUserFromJWTwithCache(userIdFromJWT)
       }
       case Left(_) =>
-        IO(None: Option[User])
+        IO(None: Option[UserWithPlatform])
     }
     OptionT(userFromTokenIO)
   }
