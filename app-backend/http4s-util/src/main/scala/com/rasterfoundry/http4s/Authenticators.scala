@@ -2,6 +2,7 @@ package com.rasterfoundry.http4s
 
 import com.rasterfoundry.database.UserDao
 import com.rasterfoundry.datamodel.UserWithPlatform
+import com.rasterfoundry.datamodel.UserWithPlatform
 
 import cats.data.OptionT
 import cats.effect.IO
@@ -22,7 +23,6 @@ import scalacache.memoization._
 import scala.concurrent.duration._
 
 import java.net.URL
-import com.rasterfoundry.datamodel.UserWithPlatform
 
 trait Authenticators extends LazyLogging {
 

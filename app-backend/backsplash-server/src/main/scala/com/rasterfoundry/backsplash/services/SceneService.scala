@@ -3,9 +3,9 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
-import com.rasterfoundry.backsplash.utils.ResponseUtils
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.utils.ResponseUtils
 import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.database.DatasourceDao
 import com.rasterfoundry.datamodel.{BandOverride, Datasource, Scene}

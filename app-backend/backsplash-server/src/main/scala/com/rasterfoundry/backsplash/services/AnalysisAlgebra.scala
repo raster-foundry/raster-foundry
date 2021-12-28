@@ -3,6 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.datamodel.UserWithPlatform
 
 import cats.data.Validated._
 import cats.effect._
@@ -21,7 +22,6 @@ import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 
 import java.util.UUID
-import com.rasterfoundry.datamodel.UserWithPlatform
 
 @SuppressWarnings(Array("TraversableHead"))
 class AnalysisManager[Param: ToolStore, HistStore](
