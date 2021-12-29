@@ -7,7 +7,7 @@ import java.util.UUID
 
 trait ResponseUtils {
   lazy val headerPlatNameKey = "platformName"
-  lazy val headerPlatIdKey = "plaformId"
+  lazy val headerPlatIdKey = "platformId"
   def addTempPlatformInfo(
       resp: Response[IO],
       platNameOpt: Option[String],
