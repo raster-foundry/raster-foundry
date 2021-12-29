@@ -82,38 +82,37 @@ object UserDao extends Dao[User] with Sanitization {
     Cache.getOptionCache(UserWithPlatform.cacheKey(id), Some(30 minutes)) {
       for {
         userOpt <- filterById(id).selectOption
-        plaformIdOpt <- userOpt flatTraverse { user =>
+        platformIdOpt <- userOpt flatTraverse { user =>
           UserGroupRoleDao.getUserMostRecentActivePlatform(user.id)
         }
-        plaformOpt <- plaformIdOpt flatTraverse {
+        plaformOpt <- platformIdOpt flatTraverse {
           PlatformDao.getPlatformById(_)
         }
-      } yield
-        userOpt match {
-          case Some(user) =>
-            Some(
-              UserWithPlatform(
-                user.id,
-                user.role,
-                user.createdAt,
-                user.modifiedAt,
-                user.dropboxCredential,
-                user.planetCredential,
-                user.emailNotifications,
-                user.email,
-                user.name,
-                user.profileImageUri,
-                user.isSuperuser,
-                user.isActive,
-                user.visibility,
-                user.personalInfo,
-                user.scope,
-                plaformOpt map { _.name },
-                plaformIdOpt
-              )
+      } yield userOpt match {
+        case Some(user) =>
+          Some(
+            UserWithPlatform(
+              user.id,
+              user.role,
+              user.createdAt,
+              user.modifiedAt,
+              user.dropboxCredential,
+              user.planetCredential,
+              user.emailNotifications,
+              user.email,
+              user.name,
+              user.profileImageUri,
+              user.isSuperuser,
+              user.isActive,
+              user.visibility,
+              user.personalInfo,
+              user.scope,
+              plaformOpt map { _.name },
+              platformIdOpt
             )
-          case None => None
-        }
+          )
+        case None => None
+      }
     }
 
   def getUsersByIds(ids: List[String]): ConnectionIO[List[User]] = {
@@ -148,9 +147,10 @@ object UserDao extends Dao[User] with Sanitization {
       scope: Scope
   ): ConnectionIO[(User, List[UserGroupRole])] = {
     for {
-      organization <- OrganizationDao.query
-        .filter(jwtUser.organizationId)
-        .selectOption
+      organization <-
+        OrganizationDao.query
+          .filter(jwtUser.organizationId)
+          .selectOption
       createdUser <- {
         organization match {
           case Some(_) =>
@@ -328,7 +328,7 @@ object UserDao extends Dao[User] with Sanitization {
     val planetCredential = user.planetCredential.token.getOrElse("")
     for {
       query <- (
-        sql"""
+          sql"""
         UPDATE users
         SET
           modified_at = ${updateTime},
@@ -337,7 +337,7 @@ object UserDao extends Dao[User] with Sanitization {
           visibility = ${user.visibility},
           personal_info = ${user.personalInfo}
           """ ++
-          Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
+            Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
       ).update.run
       _ <- remove(user.cacheKey)(userCache, async[ConnectionIO]).attempt
     } yield query
