@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.middleware
 
-import com.rasterfoundry.backsplash.utils.ResponseUtils
+import com.rasterfoundry.backsplash.server._
 
 import cats.data.Kleisli
 import cats.effect.Sync
@@ -14,7 +14,7 @@ import java.time.Instant
 class AccessLoggingMiddleware[F[_]: Sync](
     service: HttpRoutes[F],
     logger: Logger
-) extends ResponseUtils {
+) {
   def withLogging(enabled: Boolean) = {
     if (!enabled) service
     else {
@@ -52,18 +52,18 @@ class AccessLoggingMiddleware[F[_]: Sync](
           )
           val platformIdHeader =
             resp.headers
-              .get(CaseInsensitiveString(headerPlatIdKey))
-              .map(header => Map(headerPlatIdKey -> header.value.asJson))
+              .get(CaseInsensitiveString(HeaderPlatIdKey))
+              .map(header => Map(HeaderPlatIdKey -> header.value.asJson))
               .getOrElse(Map.empty)
           val platformNameHeader =
             resp.headers
-              .get(CaseInsensitiveString(headerPlatNameKey))
-              .map(header => Map(headerPlatNameKey -> header.value.asJson))
+              .get(CaseInsensitiveString(HeaderPlatNameKey))
+              .map(header => Map(HeaderPlatNameKey -> header.value.asJson))
               .getOrElse(Map.empty)
           val platformData = platformIdHeader ++ platformNameHeader
           resp
-            .putHeaders(Header(headerPlatIdKey, ""))
-            .putHeaders(Header(headerPlatNameKey, ""))
+            .putHeaders(Header(HeaderPlatIdKey, ""))
+            .putHeaders(Header(HeaderPlatNameKey, ""))
           logger.info(
             (requestData ++ responseData ++ platformData).asJson.noSpaces
           )

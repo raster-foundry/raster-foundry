@@ -5,7 +5,6 @@ import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.RenderableStore.ToRenderableStoreOps
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.utils.ResponseUtils
 import com.rasterfoundry.common.color.ColorCorrect
 import com.rasterfoundry.database.DatasourceDao
 import com.rasterfoundry.datamodel.{BandOverride, Datasource, Scene}
@@ -38,8 +37,7 @@ class SceneService[HistStore](
   cs: ContextShift[IO],
   builder: TracingContextBuilder[IO],
   logger: Logger[IO])
-    extends ToRenderableStoreOps
-    with ResponseUtils {
+    extends ToRenderableStoreOps {
 
   import mosaicImplicits._
 
@@ -162,8 +160,7 @@ class SceneService[HistStore](
               BadRequest(s"Could not produce tile: $e")
           }
         } yield
-          addTempPlatformInfo(
-            resp,
+          resp.addTempPlatformInfo(
             user.platformNameOpt,
             user.platformIdOpt
           )
@@ -218,8 +215,7 @@ class SceneService[HistStore](
               BadRequest(s"Could not produce tile: $e")
           }
         } yield
-          addTempPlatformInfo(
-            resp,
+          resp.addTempPlatformInfo(
             user.platformNameOpt,
             user.platformIdOpt
           )

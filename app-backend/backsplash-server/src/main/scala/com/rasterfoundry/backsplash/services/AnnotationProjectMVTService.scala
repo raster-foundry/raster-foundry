@@ -1,6 +1,5 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash.utils.ResponseUtils
 import com.rasterfoundry.database.MVTLayerDao
 import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.http4s.TracedHTTPRoutes
@@ -27,8 +26,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
     contextShift: ContextShift[IO],
     builder: TracingContextBuilder[IO])
     extends Http4sDsl[IO]
-    with LazyLogging
-    with ResponseUtils {
+    with LazyLogging {
 
   val authorizers = new Authorizers(xa)
 
@@ -100,7 +98,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           y,
           context
         ) map { shortCache } map {
-          addTempPlatformInfo(_, user.platformNameOpt, user.platformIdOpt)
+          _.addTempPlatformInfo(user.platformNameOpt, user.platformIdOpt)
         }
 
       case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(
@@ -118,7 +116,7 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           y,
           context
         ) map { noCache } map {
-          addTempPlatformInfo(_, user.platformNameOpt, user.platformIdOpt)
+          _.addTempPlatformInfo(user.platformNameOpt, user.platformIdOpt)
         }
     }
 
