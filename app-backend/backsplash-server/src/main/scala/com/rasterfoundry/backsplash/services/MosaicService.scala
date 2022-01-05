@@ -2,7 +2,6 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.utils.ResponseUtils
 import com.rasterfoundry.common.utils.TileUtils
 import com.rasterfoundry.http4s.TracedHTTPRoutes
 import com.rasterfoundry.http4s.TracedHTTPRoutes._
@@ -34,8 +33,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
     analysisManager: AnalysisManager[ToolStore, HistStore],
     xa: Transactor[IO],
     contextShift: ContextShift[IO]
-)(implicit tracingContext: TracingContextBuilder[IO], logger: Logger[IO])
-    extends ResponseUtils {
+)(implicit tracingContext: TracingContextBuilder[IO], logger: Logger[IO]) {
 
   implicit val cs = contextShift
 
@@ -131,8 +129,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
               BadRequest(s"Could not produce tile: $e ")
           }
         } yield
-          addTempPlatformInfo(
-            resp,
+          resp.addTempPlatformInfo(
             user.platformNameOpt,
             user.platformIdOpt
           )
@@ -174,8 +171,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
               BadRequest(s"Histograms could not be produced: $e ")
           }
         } yield
-          addTempPlatformInfo(
-            resp,
+          resp.addTempPlatformInfo(
             user.platformNameOpt,
             user.platformIdOpt
           )
@@ -226,8 +222,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
                     BadRequest(s"Unable to produce histograms: $e ")
                 }
               } yield
-                addTempPlatformInfo(
-                  resp,
+                resp.addTempPlatformInfo(
                   user.platformNameOpt,
                   user.platformIdOpt
                 )
@@ -264,8 +259,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           }
           resp <- respFiber.join
         } yield
-          addTempPlatformInfo(
-            resp,
+          resp.addTempPlatformInfo(
             user.platformNameOpt,
             user.platformIdOpt
           )
@@ -293,8 +287,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           }
           resp <- respFiber.join
         } yield
-          addTempPlatformInfo(
-            resp,
+          resp.addTempPlatformInfo(
             user.platformNameOpt,
             user.platformIdOpt
           )
@@ -322,8 +315,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           }
           resp <- respFiber.join
         } yield
-          addTempPlatformInfo(
-            resp,
+          resp.addTempPlatformInfo(
             user.platformNameOpt,
             user.platformIdOpt
           )
@@ -364,8 +356,7 @@ class MosaicService[LayerStore: RenderableStore, HistStore, ToolStore](
           }
           resp <- respFiber.join
         } yield
-          addTempPlatformInfo(
-            resp,
+          resp.addTempPlatformInfo(
             user.platformNameOpt,
             user.platformIdOpt
           )
