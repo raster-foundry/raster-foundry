@@ -1,6 +1,6 @@
 package com.rasterfoundry.http4s
 
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.datamodel.UserWithPlatform
 import com.rasterfoundry.http4s.xray.{XrayHttp, XrayRequest}
 
 import cats.data.{Kleisli, OptionT}
@@ -21,9 +21,11 @@ object TracedHTTPRoutes {
 
   def apply[F[_]: Sync](
       pf: PartialFunction[AuthedTraceRequest[F], F[Response[F]]]
-  )(
-      implicit builder: TracingContextBuilder[F]
-  ): Kleisli[OptionT[F, ?], AuthedRequest[F, User], Response[F]] = {
+  )(implicit
+    builder: TracingContextBuilder[F]): Kleisli[
+    OptionT[F, ?],
+    AuthedRequest[F, UserWithPlatform],
+    Response[F]] = {
     val tracedRoutes =
       Kleisli[OptionT[F, ?], AuthedTraceRequest[F], Response[F]] { req =>
         pf.andThen(OptionT.liftF(_))
@@ -62,71 +64,69 @@ object TracedHTTPRoutes {
   def wrapHttpRoutes[F[_]: Sync](
       routes: Kleisli[OptionT[F, ?], AuthedTraceRequest[F], Response[F]],
       builder: TracingContextBuilder[F]
-  ): Kleisli[OptionT[F, ?], AuthedRequest[F, User], Response[F]] = {
-    Kleisli[OptionT[F, ?], AuthedRequest[F, User], Response[F]] { authedReq =>
-      val req = authedReq.req
-      val operationName = "http4s-request"
-      val tags = Map(
-        "http_method" -> req.method.name,
-        "request_url" -> req.uri.path,
-        "environment" -> Config.environment,
-        "user_id" -> authedReq.context.id
-      ) combine {
-        getTraceId(req)
-      } combine {
-        req.headers.get(CaseInsensitiveString("Referer")) match {
-          case Some(referer) => Map("referer" -> referer.value)
-          case _             => Map.empty[String, String]
-        }
-      } combine { instanceMetadataTags }
+  ): Kleisli[OptionT[F, ?], AuthedRequest[F, UserWithPlatform], Response[F]] = {
+    Kleisli[OptionT[F, ?], AuthedRequest[F, UserWithPlatform], Response[F]] {
+      authedReq =>
+        val req = authedReq.req
+        val operationName = "http4s-request"
+        val tags = Map(
+          "http_method" -> req.method.name,
+          "request_url" -> req.uri.path,
+          "environment" -> Config.environment,
+          "user_id" -> authedReq.context.id
+        ) combine {
+          getTraceId(req)
+        } combine {
+          req.headers.get(CaseInsensitiveString("Referer")) match {
+            case Some(referer) => Map("referer" -> referer.value)
+            case _             => Map.empty[String, String]
+          }
+        } combine { instanceMetadataTags }
 
-      def transformResponse(
-          context: TracingContext[F]
-      ): F[Option[Response[F]]] = {
-        val tracedRequest = AuthedTraceRequest[F](authedReq, context)
-        val responseOptionWithTags = routes.run(tracedRequest) semiflatMap {
-          response =>
-            val traceTags = Map(
-              "http_status" -> response.status.code.toString
-            ) ++ tags ++
-              response.headers.toList
-                .map(h => (s"response_header_${h.name}" -> h.value))
-                .toMap
-            context
-              .addTags(traceTags)
-              .map(_ => response)
+        def transformResponse(
+            context: TracingContext[F]
+        ): F[Option[Response[F]]] = {
+          val tracedRequest = AuthedTraceRequest[F](authedReq, context)
+          val responseOptionWithTags = routes.run(tracedRequest) semiflatMap {
+            response =>
+              val traceTags = Map(
+                "http_status" -> response.status.code.toString
+              ) ++ tags ++
+                response.headers.toList
+                  .map(h => (s"response_header_${h.name}" -> h.value))
+                  .toMap
+              context
+                .addTags(traceTags)
+                .map(_ => response)
+          }
+          responseOptionWithTags.value
         }
-        responseOptionWithTags.value
-      }
 
-      OptionT {
-        builder match {
-          case b: XRayTracer.XRayTracingContextBuilder[F] =>
-            val request =
-              XrayRequest(
-                req.method.name,
-                req.uri.path,
-                req.headers
-                  .get(CaseInsensitiveString("User-Agent"))
-                  .map(_.toString),
-                req.from.map(_.toString)
-              )
-            val http = XrayHttp(Some(request), None)
-            val traceIdMap = getTraceId(req)
-            b(
-              operationName,
-              tags,
-              Some(http),
-              traceIdMap.values.headOption getOrElse s"${UUID.randomUUID}"
-            ) use (
-                context => transformResponse(context)
-            )
-          case _ =>
-            builder.build(operationName, tags) use (
-                context => transformResponse(context)
-            )
+        OptionT {
+          builder match {
+            case b: XRayTracer.XRayTracingContextBuilder[F] =>
+              val request =
+                XrayRequest(
+                  req.method.name,
+                  req.uri.path,
+                  req.headers
+                    .get(CaseInsensitiveString("User-Agent"))
+                    .map(_.toString),
+                  req.from.map(_.toString)
+                )
+              val http = XrayHttp(Some(request), None)
+              val traceIdMap = getTraceId(req)
+              b(
+                operationName,
+                tags,
+                Some(http),
+                traceIdMap.values.headOption getOrElse s"${UUID.randomUUID}"
+              ) use (context => transformResponse(context))
+            case _ =>
+              builder.build(operationName, tags) use (context =>
+                transformResponse(context))
+          }
         }
-      }
     }
   }
 
@@ -134,7 +134,7 @@ object TracedHTTPRoutes {
 
     def unapply[F[_], T <: Tracer, S <: Span](
         tr: AuthedTraceRequest[F]
-    ): Option[(AuthedRequest[F, User], TracingContext[F])] =
+    ): Option[(AuthedRequest[F, UserWithPlatform], TracingContext[F])] =
       Some(tr.authedRequest -> tr.tracingContext)
   }
 }

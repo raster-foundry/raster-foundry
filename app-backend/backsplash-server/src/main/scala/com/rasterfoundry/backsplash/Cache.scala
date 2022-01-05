@@ -7,7 +7,7 @@ import com.rasterfoundry.datamodel.{
   ProjectLayer,
   Scene,
   ToolRun,
-  User
+  UserWithPlatform
 }
 import com.rasterfoundry.http4s.{Cache => Http4sUtilCache}
 
@@ -36,8 +36,9 @@ object Cache extends LazyLogging {
     CaffeineCache[ProjectLayer]
 
   val authenticationCacheFlags = Http4sUtilCache.authenticationCacheFlags
-  val caffeineAuthenticationCache: Cache[Option[User]] =
-    CaffeineCache[Option[User]]
+
+  val caffeineAuthenticationCache: Cache[Option[UserWithPlatform]] =
+    CaffeineCache[Option[UserWithPlatform]]
   logger.info(
     s"Authentication Cache Status, backsplash: ${authenticationCacheFlags}"
   )

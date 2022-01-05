@@ -91,13 +91,15 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
         getTile(
           MVTLayerDao.getAnnotationProjectLabels,
           "get-mvt-labels-byte-array",
-          user,
+          user.toUser,
           annotationProjectId,
           z,
           x,
           y,
           context
-        ) map { shortCache }
+        ) map { shortCache } map {
+          _.addTempPlatformInfo(user.platformNameOpt, user.platformIdOpt)
+        }
 
       case GET -> Root / UUIDVar(annotationProjectId) / "tasks" / IntVar(
             z
@@ -107,13 +109,15 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
         getTile(
           MVTLayerDao.getAnnotationProjectTasks,
           "get-mvt-tasks-byte-array",
-          user,
+          user.toUser,
           annotationProjectId,
           z,
           x,
           y,
           context
-        ) map { noCache }
+        ) map { noCache } map {
+          _.addTempPlatformInfo(user.platformNameOpt, user.platformIdOpt)
+        }
     }
 
 }

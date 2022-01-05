@@ -83,6 +83,12 @@ object Cache extends LazyLogging {
     }
   }
 
+  object UserWithPlatformCache {
+    implicit val userWithPlatformCache: Cache[UserWithPlatform] = {
+      MemcachedCache[UserWithPlatform](memcachedClient)
+    }
+  }
+
   object MosaicDefinitionCache {
     import scalacache.serialization.binary._
     implicit val mosaicDefinitionCache
