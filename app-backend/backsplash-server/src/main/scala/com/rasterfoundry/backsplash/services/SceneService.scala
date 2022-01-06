@@ -138,7 +138,7 @@ class SceneService[HistStore](
             upperQuantile
           ) as user using tracingContext =>
         for {
-          sceneFiber <- authorizers.authScene(user, sceneId).start
+          sceneFiber <- authorizers.authScene(user.toUser, sceneId).start
           bandsFiber <- getDefaultSceneBands(sceneId)
           scene <- sceneFiber.join.handleErrorWith { error =>
             bandsFiber.cancel *> IO.raiseError(error)
@@ -159,7 +159,11 @@ class SceneService[HistStore](
             case Invalid(e) =>
               BadRequest(s"Could not produce tile: $e")
           }
-        } yield resp
+        } yield
+          resp.addTempPlatformInfo(
+            user.platformNameOpt,
+            user.platformIdOpt
+          )
 
       case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
             :? ThumbnailQueryParamDecoder(
@@ -170,7 +174,7 @@ class SceneService[HistStore](
             upperQuantile
           ) as user using tracingContext =>
         for {
-          sceneFiber <- authorizers.authScene(user, sceneId).start
+          sceneFiber <- authorizers.authScene(user.toUser, sceneId).start
           bandsFiber <- getDefaultSceneBands(sceneId)
           scene <- sceneFiber.join.handleErrorWith { error =>
             bandsFiber.cancel *> IO.raiseError(error)
@@ -210,6 +214,10 @@ class SceneService[HistStore](
             case Invalid(e) =>
               BadRequest(s"Could not produce tile: $e")
           }
-        } yield resp
+        } yield
+          resp.addTempPlatformInfo(
+            user.platformNameOpt,
+            user.platformIdOpt
+          )
     }
 }

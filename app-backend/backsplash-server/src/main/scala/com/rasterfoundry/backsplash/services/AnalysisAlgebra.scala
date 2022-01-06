@@ -3,6 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.datamodel.UserWithPlatform
 
 import cats.data.Validated._
 import cats.effect._
@@ -118,7 +119,7 @@ class AnalysisManager[Param: ToolStore, HistStore](
     } yield resp
 
   def export(
-      authedReq: AuthedRequest[IO, User],
+      authedReq: AuthedRequest[IO, UserWithPlatform],
       user: User,
       analysisId: UUID,
       node: Option[UUID],
