@@ -8,6 +8,7 @@ import com.amazonaws.auth.{
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import jp.ne.opt.chronoscala.Imports._
 import org.apache.commons.io.IOUtils
 
@@ -27,7 +28,8 @@ final case class S3(
     credentialsProviderChain: AWSCredentialsProvider =
       new DefaultAWSCredentialsProviderChain,
     region: Option[S3Region] = None
-) extends Serializable {
+) extends Serializable
+    with RollbarNotifier {
 
   lazy val client: AmazonS3 = region match {
     case Some(S3RegionEnum(region)) =>
@@ -48,6 +50,11 @@ final case class S3(
         .withForceGlobalBucketAccessEnabled(true)
         .build()
   }
+
+  lazy val transferManager = TransferManagerBuilder
+    .standard()
+    .withS3Client(client)
+    .build()
 
   // we want to ignore here, because uri.getHost returns null instead of an Option[String] -- thanks Java
   @SuppressWarnings(Array("NullParameter"))
@@ -178,7 +185,9 @@ final case class S3(
       def getObjects: List[String] =
         listing.getObjectSummaries.asScala.toList
           .filterNot(_.getKey.endsWith("/"))
-          .map(os => "s3://" + os.getBucketName + "/" + os.getKey) ::: accumulator
+          .map(os =>
+            "s3://" + os.getBucketName + "/" + os.getKey
+          ) ::: accumulator
 
       if (!listing.isTruncated) getObjects
       else get(client.listNextBatchOfObjects(listing), getObjects)
@@ -216,6 +225,16 @@ final case class S3(
 
   def putObject(putObjectRequest: PutObjectRequest): PutObjectResult =
     client.putObject(putObjectRequest)
+
+  def putObjectMultiPart(bucket: String, key: String, file: File) = {
+    // TransferManager processes all transfers asynchronously,
+    // so this call returns immediately.
+    val upload = transferManager.upload(bucket, key, file)
+    logger.info("Object upload started...")
+    // Optionally, wait for the upload to finish before continuing.
+    upload.waitForCompletion()
+    logger.info("Object upload complete...")
+  }
 
   def doesObjectExist(bucket: String, key: String): Boolean =
     client.doesObjectExist(bucket, key)

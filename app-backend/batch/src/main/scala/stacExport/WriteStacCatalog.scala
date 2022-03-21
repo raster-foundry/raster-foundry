@@ -20,7 +20,6 @@ import cats.data.Nested
 import cats.effect._
 import cats.implicits._
 import com.amazonaws.services.s3.AmazonS3URI
-import com.amazonaws.services.s3.model.PutObjectResult
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
@@ -43,11 +42,14 @@ final case class WriteStacCatalog(
 
   private val s3Client = S3()
 
-  private def putToS3(path: String, file: ScalaFile): IO[PutObjectResult] =
+  private def putToS3MultiPart(
+      path: String,
+      file: ScalaFile
+  ): IO[Unit] =
     IO {
-      logger.debug(s"Writing to S3: $path")
+      logger.debug(s"Writing to S3: $path ...")
       val uri = new AmazonS3URI(path)
-      s3Client.putObject(uri.getBucket, uri.getKey, file.toJava)
+      s3Client.putObjectMultiPart(uri.getBucket, uri.getKey, file.toJava)
     }
 
   private def notify(userId: ExternalId, message: Message): IO[Unit] =
@@ -73,41 +75,46 @@ final case class WriteStacCatalog(
       isCogExport = Nested(exportDefinition.exportAssetTypes)
         .find(_ == ExportAssetType.COG)
         .isDefined
-      currentPath = if (isCogExport) {
-        s"s3://$dataBucket/stac-exports/cog-exports"
-      } else { s"s3://$dataBucket/stac-exports" }
+      currentPath =
+        if (isCogExport) {
+          s"s3://$dataBucket/stac-exports/cog-exports"
+        } else { s"s3://$dataBucket/stac-exports" }
       exportPath = s"$currentPath/${exportDefinition.id}"
-      _ <- StacExportDao
-        .update(
-          exportDefinition.copy(exportStatus = ExportStatus.Exporting),
-          exportDefinition.id
-        )
-        .transact(xa)
-      _ <- exportDefinition.campaignId traverse { campaignId =>
+      _ <-
+        StacExportDao
+          .update(
+            exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+            exportDefinition.id
+          )
+          .transact(xa)
+      message <- exportDefinition.campaignId traverse { campaignId =>
         new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
           case Some(exportData) =>
             exportData.toFileSystem(tempDir)
+            val message = s"""
+            | Your export for Campaign $campaignId is complete!
+            | """.trim.stripMargin
+            IO { message }
           case None =>
             val message = s"""
             | Your export for Campaign $campaignId has failed. This is probably not retryable
             | 
             | Please contact us for advice about what to do next.
             |""".trim.stripMargin
-            notify(ExternalId(exportDefinition.owner), Message(message))
-        } flatMap { _ =>
-          val message = s"""
-            | Your export for Campaign $campaignId is complete!
-            | """.trim.stripMargin
-          notify(ExternalId(exportDefinition.owner), Message(message))
+            IO { message }
         }
       }
       tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
-      _ <- IO { tempDir.zipTo(tempZipFile) }
-      _ <- putToS3(
+      _ <- IO {
+        logger.info("Creating zipped catalog...")
+        tempDir.zipTo(tempZipFile)
+      }
+      _ <- putToS3MultiPart(
         s"$exportPath/catalog.zip",
         tempZipFile
       )
       _ <- {
+        logger.info("Updating STAC export DB record...")
         val updatedExport =
           exportDefinition.copy(
             exportStatus = ExportStatus.Exported,
@@ -117,6 +124,10 @@ final case class WriteStacCatalog(
             } else { None }
           )
         StacExportDao.update(updatedExport, exportDefinition.id).transact(xa)
+      }
+      _ <- message traverse { msg =>
+        logger.info(s"Notifying campaign owner with message: $msg...")
+        notify(ExternalId(exportDefinition.owner), Message(msg))
       }
     } yield ()).attempt flatMap {
       case Right(_) =>
