@@ -7,8 +7,8 @@ import com.amazonaws.auth.{
 }
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model._
-import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
 import jp.ne.opt.chronoscala.Imports._
 import org.apache.commons.io.IOUtils
 
