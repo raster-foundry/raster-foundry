@@ -176,29 +176,28 @@ case class ExportData private (
     for {
       _ <- IO(logger.info(s"Writing COG at $uri to $relativePath"))
       s3Object <- IO { s3Client.getObject(uri) }
-      _ <-
-        (IO { file.path.resolve(relativePath) } map {
-          (absPath: java.nio.file.Path) =>
-            val parent = absPath.getParent
-            File(parent).createIfNotExists(true, true)
-        }) *>
-          fs2.io
-            .readInputStream(
-              IO(s3Object.getObjectContent().getDelegateStream),
-              // Chunk size is set to default used for S3 CLI multipart (8MB)
-              // See: https://docs.aws.amazon.com/cli/latest/topic/s3-config.html#multipart-chunksize
-              1024 * 8,
-              ExportData.fileBlocker
-            )
-            .through(
-              fs2.io.file
-                .writeAll[IO](
-                  file.path.resolve(relativePath),
-                  ExportData.fileBlocker
-                )
-            )
-            .compile
-            .drain
+      _ <- (IO { file.path.resolve(relativePath) } map {
+        (absPath: java.nio.file.Path) =>
+          val parent = absPath.getParent
+          File(parent).createIfNotExists(true, true)
+      }) *>
+        fs2.io
+          .readInputStream(
+            IO(s3Object.getObjectContent().getDelegateStream),
+            // Chunk size is set to default used for S3 CLI multipart (8MB)
+            // See: https://docs.aws.amazon.com/cli/latest/topic/s3-config.html#multipart-chunksize
+            1024 * 8,
+            ExportData.fileBlocker
+          )
+          .through(
+            fs2.io.file
+              .writeAll[IO](
+                file.path.resolve(relativePath),
+                ExportData.fileBlocker
+              )
+          )
+          .compile
+          .drain
     } yield ()
   }
 
@@ -233,23 +232,22 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val withCollection =
       optics.itemCollectionLens.modify(_ => Some(imageryCollectionId))
-    val withParentLinks = optics.itemLinksLens.modify(links =>
-      StacLink(
-        "../collection.json",
-        StacLinkType.Collection,
-        Some(`application/json`),
-        None
-      ) +: StacLink(
-        "../../catalog.json",
-        StacLinkType.StacRoot,
-        Some(`application/json`),
-        None
-      ) +:
-        links.filter(link =>
+    val withParentLinks = optics.itemLinksLens.modify(
+      links =>
+        StacLink(
+          "../collection.json",
+          StacLinkType.Collection,
+          Some(`application/json`),
+          None
+        ) +: StacLink(
+          "../../catalog.json",
+          StacLinkType.StacRoot,
+          Some(`application/json`),
+          None
+        ) +:
+          links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
-            .contains(link.rel)
-        )
-    )
+            .contains(link.rel)))
     (annotationProjectImageryItems.toList traverse {
       case (_, sceneItem) =>
         imageryS3Links.get(
@@ -413,35 +411,34 @@ case class ExportData private (
   )(implicit cs: ContextShift[IO]): IO[Unit] = {
     val withCollection =
       optics.itemCollectionLens.modify(_ => Some(labelCollectionId))
-    val withParentLinks = optics.itemLinksLens.modify(links =>
-      StacLink(
-        "./collection.json",
-        StacLinkType.Collection,
-        Some(`application/json`),
-        None
-      ) +: StacLink(
-        "../catalog.json",
-        StacLinkType.StacRoot,
-        Some(`application/json`),
-        None
-      ) +:
-        links.filter(link =>
+    val withParentLinks = optics.itemLinksLens.modify(
+      links =>
+        StacLink(
+          "./collection.json",
+          StacLinkType.Collection,
+          Some(`application/json`),
+          None
+        ) +: StacLink(
+          "../catalog.json",
+          StacLinkType.StacRoot,
+          Some(`application/json`),
+          None
+        ) +:
+          links.filter(link =>
           !Set[StacLinkType](StacLinkType.Collection, StacLinkType.StacRoot)
-            .contains(link.rel)
-        )
-    )
+            .contains(link.rel)))
     def withAsset(labelItem: StacItem) =
-      optics.itemAssetLens.modify(assets =>
-        assets ++ Map(
-          "data" -> StacAsset(
-            s"./data/${labelItem.id}.geojson",
-            None,
-            None,
-            Set(StacAssetRole.Data),
-            Some(`application/geo+json`)
-          )
-        )
-      )(labelItem)
+      optics.itemAssetLens.modify(
+        assets =>
+          assets ++ Map(
+            "data" -> StacAsset(
+              s"./data/${labelItem.id}.geojson",
+              None,
+              None,
+              Set(StacAssetRole.Data),
+              Some(`application/geo+json`)
+            )
+        ))(labelItem)
     (annotationProjectLabelItems.toList traverse {
       case (_, v) =>
         encodableToFile(
@@ -500,9 +497,9 @@ class CampaignStacExport(
     xa: Transactor[IO],
     exportDefinition: StacExport
 )(implicit
-    val
-    cs: ContextShift[IO]
-) extends LazyLogging {
+  val
+  cs: ContextShift[IO])
+    extends LazyLogging {
   val s3Client = S3()
 
   val runExport = StateT { step }
@@ -607,39 +604,38 @@ class CampaignStacExport(
     val maybeIngestLocation = maybeScene flatMap { _.ingestLocation }
     val signedUrlDurationInDays = 7
     for {
-      maybeSignedURLAsset: Option[(String, StacAsset)] <-
-        maybeIngestLocation match {
-          case Some(ingestLocation)
-              if includeAssetTypeInExport(
-                exportAssetTypes,
-                ExportAssetType.SignedURL
-              ) =>
-            IO {
-              s3Client.signUri(
-                ingestLocation,
-                duration = Duration.ofDays(signedUrlDurationInDays)
-              )
-            } map { signedUrl =>
-              Some(
-                (
-                  AssetTypesKey.signedURL,
-                  StacAsset(
-                    signedUrl,
-                    Some(
-                      "Image download URL"
-                    ), // The displayed title for clients and users
-                    Some(
-                      s"Signed URL (expires ${java.time.LocalDateTime.now().plusDays(signedUrlDurationInDays)})"
-                    ),
-                    Set(StacAssetRole.Data),
-                    Some(`image/cog`)
-                  )
+      maybeSignedURLAsset: Option[(String, StacAsset)] <- maybeIngestLocation match {
+        case Some(ingestLocation)
+            if includeAssetTypeInExport(
+              exportAssetTypes,
+              ExportAssetType.SignedURL
+            ) =>
+          IO {
+            s3Client.signUri(
+              ingestLocation,
+              duration = Duration.ofDays(signedUrlDurationInDays)
+            )
+          } map { signedUrl =>
+            Some(
+              (
+                AssetTypesKey.signedURL,
+                StacAsset(
+                  signedUrl,
+                  Some(
+                    "Image download URL"
+                  ), // The displayed title for clients and users
+                  Some(
+                    s"Signed URL (expires ${java.time.LocalDateTime.now().plusDays(signedUrlDurationInDays)})"
+                  ),
+                  Set(StacAssetRole.Data),
+                  Some(`image/cog`)
                 )
               )
-            }
-          case _ =>
-            IO.pure(None)
-        }
+            )
+          }
+        case _ =>
+          IO.pure(None)
+      }
       maybeCOGAssetAndS3Link: Option[
         ((String, StacAsset), (newtypes.AnnotationProjectId, newtypes.S3URL))
       ] <- maybeIngestLocation match {
@@ -701,12 +697,11 @@ class CampaignStacExport(
             }
           ).flatten: _*
       )
-      s3Links: Map[newtypes.AnnotationProjectId, newtypes.S3URL] =
-        maybeCOGAssetAndS3Link
-          .map({ pair =>
-            Map(pair._2)
-          })
-          .getOrElse(Map.empty)
+      s3Links: Map[newtypes.AnnotationProjectId, newtypes.S3URL] = maybeCOGAssetAndS3Link
+        .map({ pair =>
+          Map(pair._2)
+        })
+        .getOrElse(Map.empty)
     } yield (assets, s3Links)
   }
 
@@ -722,29 +717,26 @@ class CampaignStacExport(
   ] = {
     for {
       _ <- IO(logger.info(s"Building imagery item from tile layers"))
-      maybeScene <-
-        AnnotationProjectDao
-          .getFirstScene(annotationProject.id)
-          .transact(xa)
+      maybeScene <- AnnotationProjectDao
+        .getFirstScene(annotationProject.id)
+        .transact(xa)
       _ <- IO {
         logger.info(maybeScene match {
           case Some(scene) => s"Found scene with id ${scene.id}"
           case _           => "No scene found"
         })
       }
-      tileLayers <-
-        TileLayerDao
-          .listByProjectId(annotationProject.id)
-          .transact(xa)
+      tileLayers <- TileLayerDao
+        .listByProjectId(annotationProject.id)
+        .transact(xa)
       _ <- IO {
         logger.info(
           s"Found ${tileLayers.size} tile layers"
         )
       }
-      extentO <-
-        TaskDao
-          .createUnionedGeomExtent(annotationProject.id, taskStatuses)
-          .transact(xa)
+      extentO <- TaskDao
+        .createUnionedGeomExtent(annotationProject.id, taskStatuses)
+        .transact(xa)
       (assets, link) <- exportAssetsAndLinks(
         maybeScene,
         tileLayers,
@@ -788,14 +780,13 @@ class CampaignStacExport(
         Map(newtypes.AnnotationProjectId(annotationProject.id) -> item)
       } getOrElse Map.empty
       // make label asset
-      featureGeoJSON <-
-        AnnotationLabelDao
-          .getAnnotationJsonByTaskStatus(
-            annotationProject.id,
-            inputState.exportDefinition.taskStatuses,
-            inputState.labelGroupOpt
-          )
-          .transact(xa)
+      featureGeoJSON <- AnnotationLabelDao
+        .getAnnotationJsonByTaskStatus(
+          annotationProject.id,
+          inputState.exportDefinition.taskStatuses,
+          inputState.labelGroupOpt
+        )
+        .transact(xa)
       labelAssetAppend = featureGeoJSON map { geojson =>
         Map(
           newtypes.AnnotationProjectId(annotationProject.id) -> newtypes
@@ -803,20 +794,18 @@ class CampaignStacExport(
         )
       } getOrElse Map.empty
       // make the label item
-      taskExtent <-
-        TaskDao
-          .createUnionedGeomExtent(
-            annotationProject.id,
-            inputState.exportDefinition.taskStatuses
-          )
-          .transact(xa)
-      labelItemExtensionO <-
-        AnnotationProjectDao
-          .getAnnotationProjectStacInfo(
-            annotationProject.id,
-            inputState.labelGroupOpt
-          )
-          .transact(xa)
+      taskExtent <- TaskDao
+        .createUnionedGeomExtent(
+          annotationProject.id,
+          inputState.exportDefinition.taskStatuses
+        )
+        .transact(xa)
+      labelItemExtensionO <- AnnotationProjectDao
+        .getAnnotationProjectStacInfo(
+          annotationProject.id,
+          inputState.labelGroupOpt
+        )
+        .transact(xa)
       labelItemsAppend = (taskExtent, labelItemExtensionO, imageryItemO) mapN {
         case (extent, labelItemExtension, imageryItem) =>
           Map(
