@@ -36,8 +36,6 @@ final case class WriteStacCatalog(
     extends Config
     with RollbarNotifier {
 
-  implicitly[Async[IO]]
-
   private val dbIO = new DbIO(xa);
 
   private val s3Client = S3()
@@ -75,31 +73,36 @@ final case class WriteStacCatalog(
       isCogExport = Nested(exportDefinition.exportAssetTypes)
         .find(_ == ExportAssetType.COG)
         .isDefined
-      currentPath = if (isCogExport) {
-        s"s3://$dataBucket/stac-exports/cog-exports"
-      } else { s"s3://$dataBucket/stac-exports" }
+      currentPath =
+        if (isCogExport) {
+          s"s3://$dataBucket/stac-exports/cog-exports"
+        } else { s"s3://$dataBucket/stac-exports" }
       exportPath = s"$currentPath/${exportDefinition.id}"
-      _ <- StacExportDao
-        .update(
-          exportDefinition.copy(exportStatus = ExportStatus.Exporting),
-          exportDefinition.id
-        )
-        .transact(xa)
-      message <- exportDefinition.campaignId traverse { campaignId =>
+      _ <-
+        StacExportDao
+          .update(
+            exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+            exportDefinition.id
+          )
+          .transact(xa)
+      _ <- exportDefinition.campaignId traverse { campaignId =>
         new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
           case Some(exportData) =>
             exportData.toFileSystem(tempDir)
-            val message = s"""
-            | Your export for Campaign $campaignId is complete!
-            | """.trim.stripMargin
-            IO { message }
           case None =>
             val message = s"""
             | Your export for Campaign $campaignId has failed. This is probably not retryable
             | 
             | Please contact us for advice about what to do next.
             |""".trim.stripMargin
-            IO { message }
+            logger.info(s"Notifying campaign owner with message: $message...")
+            notify(ExternalId(exportDefinition.owner), Message(message))
+        } flatMap { _ =>
+          val message = s"""
+            | Your export for Campaign $campaignId is complete!
+            | """.trim.stripMargin
+          logger.info(s"Notifying campaign owner with message: $message...")
+          notify(ExternalId(exportDefinition.owner), Message(message))
         }
       }
       tempZipFile <- IO { ScalaFile.newTemporaryFile("catalog", ".zip") }
@@ -122,10 +125,6 @@ final case class WriteStacCatalog(
             } else { None }
           )
         StacExportDao.update(updatedExport, exportDefinition.id).transact(xa)
-      }
-      _ <- message traverse { msg =>
-        logger.info(s"Notifying campaign owner with message: $msg...")
-        notify(ExternalId(exportDefinition.owner), Message(msg))
       }
     } yield ()).attempt flatMap {
       case Right(_) =>
