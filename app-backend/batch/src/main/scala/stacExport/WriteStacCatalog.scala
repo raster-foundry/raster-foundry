@@ -73,18 +73,16 @@ final case class WriteStacCatalog(
       isCogExport = Nested(exportDefinition.exportAssetTypes)
         .find(_ == ExportAssetType.COG)
         .isDefined
-      currentPath =
-        if (isCogExport) {
-          s"s3://$dataBucket/stac-exports/cog-exports"
-        } else { s"s3://$dataBucket/stac-exports" }
+      currentPath = if (isCogExport) {
+        s"s3://$dataBucket/stac-exports/cog-exports"
+      } else { s"s3://$dataBucket/stac-exports" }
       exportPath = s"$currentPath/${exportDefinition.id}"
-      _ <-
-        StacExportDao
-          .update(
-            exportDefinition.copy(exportStatus = ExportStatus.Exporting),
-            exportDefinition.id
-          )
-          .transact(xa)
+      _ <- StacExportDao
+        .update(
+          exportDefinition.copy(exportStatus = ExportStatus.Exporting),
+          exportDefinition.id
+        )
+        .transact(xa)
       _ <- exportDefinition.campaignId traverse { campaignId =>
         new CampaignStacExport(campaignId, xa, exportDefinition).run() flatMap {
           case Some(exportData) =>
