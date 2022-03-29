@@ -224,7 +224,7 @@ final case class S3(
   def putObject(putObjectRequest: PutObjectRequest): PutObjectResult =
     client.putObject(putObjectRequest)
 
-  def putObjectMultiPart(bucket: String, key: String, file: File) = {
+  def putObjectMultiPart(bucket: String, key: String, file: File): Unit = {
     // TransferManager processes all transfers asynchronously,
     // so this call returns immediately.
     val upload = transferManager.upload(bucket, key, file)
