@@ -250,8 +250,9 @@ case class ExportData private (
             .contains(link.rel)))
     (annotationProjectImageryItems.toList traverse {
       case (_, sceneItem) =>
-        imageryS3Links.get(newtypes.AnnotationProjectId(
-          UUID.fromString(sceneItem.value.id))) match {
+        imageryS3Links.get(
+          newtypes.AnnotationProjectId(UUID.fromString(sceneItem.value.id))
+        ) match {
           case Some(s3Link) =>
             val ingestLocation = s3Link.value
             writeCOGToFile(
@@ -268,7 +269,8 @@ case class ExportData private (
             encodableToFile(
               (withCollection `compose` withParentLinks)(sceneItem.value),
               file,
-              s"images/${sceneItem.value.id}/item.json")
+              s"images/${sceneItem.value.id}/item.json"
+            )
         }
     }).void
   }
@@ -596,8 +598,9 @@ class CampaignStacExport(
       tileLayers: List[TileLayer],
       exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
       annotationProjectId: UUID
-  ): IO[(Map[String, StacAsset],
-         Map[newtypes.AnnotationProjectId, newtypes.S3URL])] = {
+  ): IO[
+    (Map[String, StacAsset], Map[newtypes.AnnotationProjectId, newtypes.S3URL])
+  ] = {
     val maybeIngestLocation = maybeScene flatMap { _.ingestLocation }
     val signedUrlDurationInDays = 7
     for {
@@ -618,7 +621,9 @@ class CampaignStacExport(
                 AssetTypesKey.signedURL,
                 StacAsset(
                   signedUrl,
-                  Some("Image download URL"), // The displayed title for clients and users
+                  Some(
+                    "Image download URL"
+                  ), // The displayed title for clients and users
                   Some(
                     s"Signed URL (expires ${java.time.LocalDateTime.now().plusDays(signedUrlDurationInDays)})"
                   ),
@@ -631,9 +636,9 @@ class CampaignStacExport(
         case _ =>
           IO.pure(None)
       }
-      maybeCOGAssetAndS3Link: Option[((String, StacAsset),
-      (newtypes.AnnotationProjectId,
-      newtypes.S3URL))] <- maybeIngestLocation match {
+      maybeCOGAssetAndS3Link: Option[
+        ((String, StacAsset), (newtypes.AnnotationProjectId, newtypes.S3URL))
+      ] <- maybeIngestLocation match {
         case Some(ingestLocation)
             if includeAssetTypeInExport(
               exportAssetTypes,
@@ -647,15 +652,19 @@ class CampaignStacExport(
                     AssetTypesKey.cog,
                     StacAsset(
                       s"./${new java.io.File(ingestLocation).getName}", // relative path to COG
-                      Some("Image local relative path"), // The displayed title for clients and users
+                      Some(
+                        "Image local relative path"
+                      ), // The displayed title for clients and users
                       Some("COG"),
                       Set(StacAssetRole.Data),
                       Some(`image/cog`)
                     )
                   )
                 ),
-                (newtypes.AnnotationProjectId(annotationProjectId),
-                 newtypes.S3URL(ingestLocation))
+                (
+                  newtypes.AnnotationProjectId(annotationProjectId),
+                  newtypes.S3URL(ingestLocation)
+                )
               )
             )
           )
@@ -700,8 +709,12 @@ class CampaignStacExport(
       annotationProject: AnnotationProject,
       exportAssetTypes: Option[NonEmptyList[ExportAssetType]],
       taskStatuses: List[String]
-  ): IO[(Option[newtypes.SceneItem],
-         Map[newtypes.AnnotationProjectId, newtypes.S3URL])] = {
+  ): IO[
+    (
+        Option[newtypes.SceneItem],
+        Map[newtypes.AnnotationProjectId, newtypes.S3URL]
+    )
+  ] = {
     for {
       _ <- IO(logger.info(s"Building imagery item from tile layers"))
       maybeScene <- AnnotationProjectDao
@@ -724,10 +737,12 @@ class CampaignStacExport(
       extentO <- TaskDao
         .createUnionedGeomExtent(annotationProject.id, taskStatuses)
         .transact(xa)
-      (assets, link) <- exportAssetsAndLinks(maybeScene,
-                                             tileLayers,
-                                             exportAssetTypes,
-                                             annotationProject.id)
+      (assets, link) <- exportAssetsAndLinks(
+        maybeScene,
+        tileLayers,
+        exportAssetTypes,
+        annotationProject.id
+      )
       item = extentO map { unionedGeom =>
         makeTileLayersItem(
           annotationProject.id,
@@ -812,8 +827,9 @@ class CampaignStacExport(
         newtypes.AnnotationProjectId(annotationProject.id)
       ) `compose` appendImageryItem(
         imageryItemsAppend
-      ) `compose` appendLabelAssets(labelAssetAppend) `compose` appendImageS3Links(
-        imageS3Link))(
+      ) `compose` appendLabelAssets(
+        labelAssetAppend
+      ) `compose` appendImageS3Links(imageS3Link))(
         inputState
       )
     }
