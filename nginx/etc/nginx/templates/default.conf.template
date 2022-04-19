@@ -66,6 +66,13 @@ server {
         proxy_pass http://api-server-upstream;
     }
 
+    location ~* ^\/api/annotation-projects/.*/tasks/.*/labels {
+        client_max_body_size 10m;
+        include /etc/nginx/includes/proxy-settings.conf;
+
+        proxy_pass http://api-server-upstream;
+    }
+
     # Angular config
     location = /config {
         include /etc/nginx/includes/proxy-settings.conf;
