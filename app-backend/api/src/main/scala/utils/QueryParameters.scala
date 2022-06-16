@@ -34,7 +34,7 @@ trait QueryParameterDeserializers {
     }
 
   implicit val deserializerAnnotationProjectType
-    : Unmarshaller[String, AnnotationProjectType] =
+      : Unmarshaller[String, AnnotationProjectType] =
     Unmarshaller.strict[String, AnnotationProjectType] { s =>
       AnnotationProjectType.fromString(s)
     }
@@ -243,4 +243,16 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     parameters(
       'requestAction.as(deserializerActionType).*
     ).as(CampaignRandomTaskQueryParameters.apply _)
+
+  def hitlJobQueryParameters =
+    (
+      userAuditQueryParameters &
+        ownerQueryParameters &
+        parameters(
+          'status.as[String].?,
+          'projectId.as[UUID].?,
+          'campaignId.as[UUID].?,
+          'version.as[Int].?
+        )
+    ).as(HITLJobQueryParameters.apply _)
 }

@@ -1217,6 +1217,13 @@ object Generators extends ArbitraryInstances {
       note
     )
 
+  private def hitlJobCreateGen: Gen[HITLJob.Create] =
+    (
+      uuidGen,
+      uuidGen,
+      Gen.const[HITLJobStatus](HITLJobStatus.NotRun)
+    ).mapN(HITLJob.Create.apply _)
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] =
       Arbitrary {
@@ -1536,5 +1543,9 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbTaskNextStatus: Arbitrary[TaskNextStatus] =
       Arbitrary { taskNextStatusGen }
+
+    implicit def arbHITLJobCreate: Arbitrary[HITLJob.Create] =
+      Arbitrary { hitlJobCreateGen }
+
   }
 }
