@@ -755,10 +755,8 @@ final case class HITLJobQueryParameters(
 )
 
 object HITLJobQueryParameters {
-  implicit def encHITLJobQueryParameters
-    : Encoder[HITLJobQueryParameters] =
+  implicit def encHITLJobQueryParameters: Encoder[HITLJobQueryParameters] =
     deriveEncoder[HITLJobQueryParameters]
-  implicit def decHITLJobQueryParameters
-    : Decoder[HITLJobQueryParameters] =
+  implicit def decHITLJobQueryParameters: Decoder[HITLJobQueryParameters] =
     deriveDecoder[HITLJobQueryParameters]
 }
