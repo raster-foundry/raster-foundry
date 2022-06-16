@@ -7,6 +7,7 @@ import com.rasterfoundry.api.datasource.DatasourceRoutes
 import com.rasterfoundry.api.exports.ExportRoutes
 import com.rasterfoundry.api.featureflags.FeatureFlagRoutes
 import com.rasterfoundry.api.healthcheck._
+import com.rasterfoundry.api.hitlJobs.HITLJobRoutes
 import com.rasterfoundry.api.license.LicenseRoutes
 import com.rasterfoundry.api.maptoken.MapTokenRoutes
 import com.rasterfoundry.api.organization.OrganizationRoutes
@@ -54,7 +55,8 @@ trait Router
     with StacRoutes
     with AnnotationProjectRoutes
     with TaskRoutes
-    with CampaignRoutes {
+    with CampaignRoutes
+    with HITLJobRoutes {
 
   def notifier: IntercomNotifications
 
@@ -122,6 +124,9 @@ trait Router
           } ~
           pathPrefix("campaigns") {
             campaignRoutes
+          } ~
+          pathPrefix("hitl-jobs") {
+            hitlJobRoutes
           }
       } ~
       pathPrefix("config") {
