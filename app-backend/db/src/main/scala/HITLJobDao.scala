@@ -96,4 +96,15 @@ object HITLJobDao extends Dao[HITLJob] {
 
   def delete(id: UUID): ConnectionIO[Int] =
     query.filter(id).delete
+
+  def isOwnerOrSuperUser(user: User, id: UUID): ConnectionIO[Boolean] =
+    for {
+      jobO <- getById(id)
+      isSuperuser = user.isSuperuser && user.isActive
+    } yield {
+      jobO match {
+        case Some(job) => job.owner == user.id || isSuperuser
+        case _         => isSuperuser
+      }
+    }
 }
