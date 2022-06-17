@@ -6,7 +6,6 @@ Brief description of what this PR does, and why it is needed.
 
 - [ ] Description of PR is in an appropriate section of the [changelog](https://github.com/raster-foundry/raster-foundry/blob/develop/CHANGELOG.md) and grouped with similar changes if possible
 - [ ] New tables and queries have appropriate indices added
-- [ ] Any content changes are properly templated using `BUILDCONFIG.APP_NAME`
 - [ ] Any new SQL strings have tests
 - [ ] Any new endpoints have scope validation and are included in the integration test csv
 
