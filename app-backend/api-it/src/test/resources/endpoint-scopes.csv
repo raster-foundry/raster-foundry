@@ -268,3 +268,8 @@ Path,Domain:Action,Verb
 /api/tasks/{taskId}/sessions/{sessionId}/labels/{labelId},annotationProjects:createAnnotation,delete
 /api/tasks/{taskId}/sessions/{sessionId}/labels/bulk,annotationProjects:createAnnotation,post
 /api/tasks/{taskId}/sessions/{sessionId}/labels/bulk,annotationProjects:createAnnotation,put
+/api/hitl-jobs/,campaigns:read,get
+/api/hitl-jobs/,campaigns:create,post
+/api/hitl-jobs/{jobId},campaigns:read,get
+/api/hitl-jobs/{jobId},campaigns:update,update
+/api/hitl-jobs/{jobId},campaigns:delete,delete
