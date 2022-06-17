@@ -98,7 +98,7 @@ class HITLJobDaoSpec
             "Inserted HITL job status should be the same as sent"
           )
           assert(
-            jobOne.version + 1 == jobTwo.version,
+            jobOne.version < jobTwo.version,
             "HITL jobs should have increasing version numbers for same user + campaign + project"
           )
           assert(
