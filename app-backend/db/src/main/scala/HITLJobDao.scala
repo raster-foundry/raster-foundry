@@ -84,11 +84,11 @@ object HITLJobDao extends Dao[HITLJob] {
       user: User
   ): ConnectionIO[HITLJob] =
     for {
-      version <-
-        getNewVersion(user, newHITLJob.campaignId, newHITLJob.projectId)
-      inserted <-
-        insertF(newHITLJob, user, version).update
-          .withUniqueGeneratedKeys[HITLJob](fieldNames: _*)
+      version <- getNewVersion(user,
+                               newHITLJob.campaignId,
+                               newHITLJob.projectId)
+      inserted <- insertF(newHITLJob, user, version).update
+        .withUniqueGeneratedKeys[HITLJob](fieldNames: _*)
     } yield inserted
 
   def update(hitlJob: HITLJob, id: UUID): ConnectionIO[Int] = {
