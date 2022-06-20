@@ -255,4 +255,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
           'version.as[Int].?
         )
     ).as(HITLJobQueryParameters.apply _)
+
+  def taskLabelQueryParameters =
+    (parameters('hitlVersionId.as[UUID].?)).as(TaskLabelQueryParameters.apply _)
 }
