@@ -760,3 +760,14 @@ object HITLJobQueryParameters {
   implicit def decHITLJobQueryParameters: Decoder[HITLJobQueryParameters] =
     deriveDecoder[HITLJobQueryParameters]
 }
+
+final case class TaskLabelQueryParameters(
+    hitlVersionId: Option[UUID] = None
+)
+
+object TaskLabelQueryParameters {
+  implicit def encTaskLabelQueryParameters: Encoder[TaskLabelQueryParameters] =
+    deriveEncoder[TaskLabelQueryParameters]
+  implicit def decTaskLabelQueryParameters: Decoder[TaskLabelQueryParameters] =
+    deriveDecoder[TaskLabelQueryParameters]
+}
