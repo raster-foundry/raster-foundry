@@ -64,6 +64,11 @@ trait HITLJobRoutes
           ((authorizeAsync {
             (
               CampaignDao.isActiveCampaign(newHITLJob.campaignId),
+              HITLJobDao.hasInProgressJob(
+                newHITLJob.campaignId,
+                newHITLJob.projectId,
+                user
+              ),
               CampaignDao
                 .authorized(
                   user,
@@ -78,7 +83,7 @@ trait HITLJobRoutes
                 ActionType.View
               )
             ).tupled.transact(xa).unsafeToFuture map {
-              case (true, campaignResult, annotationProjectResult) =>
+              case (true, false, campaignResult, annotationProjectResult) =>
                 campaignResult.toBoolean || annotationProjectResult.toBoolean
               case _ => false
             }
