@@ -113,4 +113,24 @@ object HITLJobDao extends Dao[HITLJob] {
         case _         => isSuperuser
       }
     }
+
+  def hasInProgressJob(
+      campaignId: UUID,
+      projectId: UUID,
+      user: User
+  ): ConnectionIO[Boolean] =
+    query
+      .filter(fr"campaign_id = ${campaignId}")
+      .filter(fr"project_id = ${projectId}")
+      .filter(fr"owner = ${user.id}")
+      .filter(
+        fr"""
+        status IN (
+          'NOTRUN'::public.hitl_job_status,
+          'TORUN'::public.hitl_job_status,
+          'RUNNING'::public.hitl_job_status
+        )
+        """
+      )
+      .exists
 }
