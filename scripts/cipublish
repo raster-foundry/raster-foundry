@@ -41,23 +41,23 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
             # Build publishable sbt projects as SNAPSHOT artifacts and
             # publish to Sonatype OSSRH (Snapshot Repository).
-            if [ "$(whoami)" == "jenkins" ]; then
-                echo "Publishing SNAPSHOT artifacts to Sonatype OSSRH (Snapshot Repository)"
+            # if [ "$(whoami)" == "jenkins" ]; then
+            #     echo "Publishing SNAPSHOT artifacts to Sonatype OSSRH (Snapshot Repository)"
 
-                docker-compose \
-                    -f "${DIR}/../docker-compose.test.yml" \
-                    run --rm --no-deps --entrypoint "bash -c" \
-                    -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
-                    -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
-                    -e GPG_KEY_ID="${GPG_KEY_ID}" \
-                    build "
-                        gpg --keyserver keyserver.ubuntu.com \
-                            --recv-keys ${GPG_KEY_ID} &&
-                        echo ${GPG_KEY} | base64 -d >signing_key.asc &&
-                        gpg --import signing_key.asc &&
-                        ./sbt publish
-                    "
-            fi
+            #     docker-compose \
+            #         -f "${DIR}/../docker-compose.test.yml" \
+            #         run --rm --no-deps --entrypoint "bash -c" \
+            #         -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
+            #         -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
+            #         -e GPG_KEY_ID="${GPG_KEY_ID}" \
+            #         build "
+            #             gpg --keyserver keyserver.ubuntu.com \
+            #                 --recv-keys ${GPG_KEY_ID} &&
+            #             echo ${GPG_KEY} | base64 -d >signing_key.asc &&
+            #             gpg --import signing_key.asc &&
+            #             ./sbt publish
+            #         "
+            # fi
 
             echo "Building container images"
             GIT_COMMIT="${GIT_COMMIT}" docker-compose \
