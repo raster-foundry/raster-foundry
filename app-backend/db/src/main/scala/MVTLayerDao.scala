@@ -35,7 +35,7 @@ object MVTLayerDao {
         "annotation_task_id" -> VString(taskId.toString),
         "label_class_id" -> VString(labelClassId.toString),
         "name" -> VString(className),
-        "color_hex_code" -> VString(colorHexCode),
+        "color_hex_code" -> VString(colorHexCode)
       ) ++ score.fold(Map.empty[String, Value])(v => Map("score" -> VDouble(v)))
   }
 
@@ -73,13 +73,21 @@ object MVTLayerDao {
   ): ConnectionIO[Array[Byte]] =
     getAnnotationProjectTasksQ(annotationProjectId, z, x, y).unique
 
+  // By default, create MVT for human-generated labels
+  // If hitl version ID provided, only render versioned machine labels
   private[database] def getAnnotationProjectLabelsQ(
       annotationProjectId: UUID,
       z: Int,
       x: Int,
-      y: Int
+      y: Int,
+      hitlVersionIdO: Option[UUID] = None
   ): Query0[LabelTileGeometry] = {
-    fr"""
+    val hitlFilterF = hitlVersionIdO match {
+      case Some(hitlVersionId) =>
+        fr"AND annotation_labels.hitl_version_id = ${hitlVersionId}"
+      case _ => fr"AND annotation_labels.hitl_version_id IS NULL"
+    }
+    (fr"""
         SELECT
           annotation_labels.geometry,
           ST_TileEnvelope(${z}, ${x}, ${y}) as envelope,
@@ -101,7 +109,7 @@ object MVTLayerDao {
           AND annotation_labels.annotation_project_id = ${annotationProjectId}
           AND annotation_labels.is_active = true
           AND tasks.status <> 'SPLIT'
-      """.query[LabelTileGeometry]
+      """ ++ hitlFilterF).query[LabelTileGeometry]
   }
 
   /** We know the `foldMap` will produce an inhabited stream, since
@@ -116,6 +124,60 @@ object MVTLayerDao {
       y: Int
   ): ConnectionIO[Array[Byte]] = {
     getAnnotationProjectLabelsQ(annotationProjectId, z, x, y).stream
+      .foldMap({ labelTileGeom =>
+        labelTileGeom.geom.geom match {
+          case g: MultiPolygon =>
+            Monoid[MVTFeatures].empty.copy(
+              multiPolygons = List(
+                MVTFeature(
+                  None,
+                  g,
+                  labelTileGeom.vtValues
+                )
+              )
+            )
+          case g: Polygon =>
+            Monoid[MVTFeatures].empty.copy(
+              polygons = List(
+                MVTFeature(
+                  None,
+                  g,
+                  labelTileGeom.vtValues
+                )
+              )
+            )
+          case _ => Monoid[MVTFeatures].empty
+        }
+      })
+      .compile
+      .toList map { featuresList =>
+      val features = featuresList.head
+      val layer = StrictLayer(
+        "default",
+        4096,
+        2,
+        tiling.tmsLevels(z).mapTransform.keyToExtent(x, y),
+        features
+      )
+      VectorTile(Map("default" -> layer), layer.tileExtent).toBytes
+    }
+  }
+
+  @SuppressWarnings(Array("TraversableHead"))
+  def getAnnotationProjectHITLLabels(
+      annotationProjectId: UUID,
+      z: Int,
+      x: Int,
+      y: Int,
+      hitlVersionId: UUID
+  ): ConnectionIO[Array[Byte]] = {
+    getAnnotationProjectLabelsQ(
+      annotationProjectId,
+      z,
+      x,
+      y,
+      Some(hitlVersionId)
+    ).stream
       .foldMap({ labelTileGeom =>
         labelTileGeom.geom.geom match {
           case g: MultiPolygon =>

@@ -21,11 +21,10 @@ import scala.concurrent.duration._
 
 import java.util.UUID
 
-class AnnotationProjectMVTService(xa: Transactor[IO])(
-    implicit
+class AnnotationProjectMVTService(xa: Transactor[IO])(implicit
     contextShift: ContextShift[IO],
-    builder: TracingContextBuilder[IO])
-    extends Http4sDsl[IO]
+    builder: TracingContextBuilder[IO]
+) extends Http4sDsl[IO]
     with LazyLogging {
 
   val authorizers = new Authorizers(xa)
@@ -44,13 +43,21 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
       annotationProjectId: UUID,
       z: Int,
       x: Int,
-      y: Int
-  ): Map[String, String] =
-    Map(
+      y: Int,
+      hitlVersionIdO: Option[UUID] = None
+  ): Map[String, String] = {
+    val tags = Map(
       "annotationProjectId" -> annotationProjectId.toString,
       "zxy" -> s"$z/$x/$y",
       "project-tms-triple" -> s"$annotationProjectId-$z-$x-$y"
     )
+    hitlVersionIdO match {
+      case Some(hitlVersionId) =>
+        tags + ("hitlVersionId" -> hitlVersionId.toString)
+      case _ =>
+        tags
+    }
+  }
 
   private def getTile(
       f: (UUID, Int, Int, Int) => ConnectionIO[Array[Byte]],
@@ -116,6 +123,41 @@ class AnnotationProjectMVTService(xa: Transactor[IO])(
           y,
           context
         ) map { noCache } map {
+          _.addTempPlatformInfo(user.platformNameOpt, user.platformIdOpt)
+        }
+
+      case GET -> Root / UUIDVar(annotationProjectId) / "hitl-labels" / UUIDVar(
+            hitlVersionId
+          ) / IntVar(
+            z
+          ) / IntVar(
+            x
+          ) / IntVar(y) as user using context =>
+        (for {
+          _ <- authorizers.authAnnotationProject(
+            user.toUser,
+            annotationProjectId,
+            context
+          )
+          byteArray <- context.span(
+            "get-mvt-hitl-labels-byte-array",
+            getTags(annotationProjectId, z, x, y, Some(hitlVersionId))
+          ) use { _ =>
+            MVTLayerDao
+              .getAnnotationProjectHITLLabels(
+                annotationProjectId,
+                z,
+                x,
+                y,
+                hitlVersionId
+              )
+              .transact(xa)
+          }
+          resp <- Ok(
+            byteArray,
+            Header("content-type", "application/vnd.mapbox-vector-tile")
+          )
+        } yield resp) map { shortCache } map {
           _.addTempPlatformInfo(user.platformNameOpt, user.platformIdOpt)
         }
     }
