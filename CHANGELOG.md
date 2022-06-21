@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Added
 - CRUD endpoints for HITL jobs [#5642](https://github.com/raster-foundry/raster-foundry/pull/5642)
+- Added `hitl_version_id` to `annotation_labels` [#5643](https://github.com/raster-foundry/raster-foundry/pull/5643)
+- Added MVT endpoints for HITL labels [#5643](https://github.com/raster-foundry/raster-foundry/pull/5643)
 
 ## [1.70.1] - 2022-04-25
 ### Changed
