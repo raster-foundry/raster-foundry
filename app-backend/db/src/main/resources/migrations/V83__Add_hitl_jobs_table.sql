@@ -8,8 +8,6 @@ CREATE TYPE public.hitl_job_status AS ENUM (
     'FAILED'
 );
 
-ALTER TYPE public.hitl_job_status OWNER TO rasterfoundry;
-
 CREATE TABLE public.hitl_jobs (
     id UUID PRIMARY KEY,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
