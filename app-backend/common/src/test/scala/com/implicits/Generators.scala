@@ -1013,7 +1013,8 @@ object Generators extends ArbitraryInstances {
         taskType,
         None,
         reviews,
-        reviewStatus
+        reviewStatus,
+        None
       )
     }
 

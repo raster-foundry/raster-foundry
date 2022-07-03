@@ -2205,4 +2205,120 @@ class TaskDaoSpec
       }
     })
   }
+
+  test("Get prioritized HITL project task") {
+    (check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            campaignCreate: Campaign.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate,
+            hitlJobCreate: HITLJob.Create
+        ) =>
+          val tfcFirstTaskOnly = taskFeaturesCreate.copy(
+            features = taskFeaturesCreate.features.take(1)
+          )
+          val hitlTaskIO = for {
+            dbUser <- UserDao.create(userCreate)
+            dbCampaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  dbUser
+                )
+            dbAnnotationProject <- AnnotationProjectDao.insert(
+              annotationProjectCreate.copy(campaignId = Option(dbCampaign.id)),
+              dbUser
+            )
+            Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+              fixupTaskFeaturesCollection(
+                tfcFirstTaskOnly,
+                dbAnnotationProject
+              ),
+              dbUser
+            )
+            Task.TaskFeatureCollection(_, featuresTwo) <- TaskDao.insertTasks(
+              fixupTaskFeaturesCollection(
+                tfcFirstTaskOnly,
+                dbAnnotationProject
+              ),
+              dbUser
+            )
+            dbHITLJob <- HITLJobDao.create(
+              hitlJobCreate
+                .copy(
+                  campaignId = dbCampaign.id,
+                  projectId = dbAnnotationProject.id
+                ),
+              dbUser
+            )
+            noTask <- TaskDao.getHITLPrioritizedTaskFromProject(
+              dbUser,
+              Some(dbAnnotationProject.id),
+              TaskQueryParameters()
+            )
+            firstTask = features.head
+            secondTask = featuresTwo.head
+            _ <- TaskDao.updateTask(
+              firstTask.id,
+              firstTask.toFeatureCreate.copy(properties =
+                firstTask.properties.toCreate
+                  .copy(priorityScore = Some(1.toFloat))
+              ),
+              dbUser
+            )
+            _ <- TaskDao.updateTask(
+              secondTask.id,
+              secondTask.toFeatureCreate.copy(properties =
+                secondTask.properties.toCreate
+                  .copy(priorityScore = Some(2.toFloat))
+              ),
+              dbUser
+            )
+            _ <- HITLJobDao.update(
+              dbHITLJob.copy(status = HITLJobStatus.Ran),
+              dbHITLJob.id
+            )
+            secondTaskO <- TaskDao.getHITLPrioritizedTaskFromProject(
+              dbUser,
+              Some(dbAnnotationProject.id),
+              TaskQueryParameters()
+            )
+            _ <- TaskDao.updateTask(
+              secondTask.id,
+              secondTask.toFeatureCreate.copy(properties =
+                secondTask.properties.toCreate
+                  .copy(priorityScore = None)
+              ),
+              dbUser
+            )
+            firstTaskO <- TaskDao.getHITLPrioritizedTaskFromProject(
+              dbUser,
+              Some(dbAnnotationProject.id),
+              TaskQueryParameters()
+            )
+
+          } yield (noTask, secondTask, firstTask, secondTaskO, firstTaskO)
+
+          val (no, second, first, secondO, firstO) =
+            hitlTaskIO.transact(xa).unsafeRunSync
+
+          assert(
+            no == None,
+            s"No prioritized HITL task when no priority score attached"
+          )
+          assert(
+            secondO.map(_.id) == Some(second.id),
+            s"Prioritize HITL task with higher priority score"
+          )
+          assert(
+            firstO.map(_.id) == Some(first.id),
+            s"Prioritize HITL task with higher priority score"
+          )
+
+          true
+      }
+    })
+  }
 }
