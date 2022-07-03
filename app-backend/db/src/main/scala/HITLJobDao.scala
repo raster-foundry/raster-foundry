@@ -133,4 +133,20 @@ object HITLJobDao extends Dao[HITLJob] {
         """
       )
       .exists
+
+  def hasSuccessfulJob(
+      campaignId: UUID,
+      projectId: UUID,
+      user: User
+  ): ConnectionIO[Boolean] =
+    query
+      .filter(fr"campaign_id = ${campaignId}")
+      .filter(fr"project_id = ${projectId}")
+      .filter(fr"owner = ${user.id}")
+      .filter(
+        fr"""
+        status = 'RAN'::public.hitl_job_status
+        """
+      )
+      .exists
 }

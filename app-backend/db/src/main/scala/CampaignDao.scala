@@ -338,7 +338,22 @@ object CampaignDao extends Dao[Campaign] with ObjectPermissions[Campaign] {
         AND
           owner <> ${user.id}
       )
-      SELECT tasks.*, annotation_projects.campaign_id
+      SELECT
+        tasks.id,
+        tasks.created_at,
+        tasks.created_by,
+        tasks.modified_at,
+        tasks.owner,
+        tasks.status,
+        tasks.locked_by,
+        tasks.locked_on,
+        tasks.geometry,
+        tasks.annotation_project_id,
+        tasks.task_type,
+        tasks.parent_task_id,
+        tasks.reviews,
+        tasks.review_status,
+        annotation_projects.campaign_id
       FROM tasks
       JOIN annotation_projects
         ON tasks.annotation_project_id = annotation_projects.id
