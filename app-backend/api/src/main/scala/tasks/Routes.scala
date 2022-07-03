@@ -26,7 +26,11 @@ trait TaskRoutes
     with UserErrorHandler {
 
   val taskRoutes = handleExceptions(userExceptionHandler) {
-    pathPrefix("random") {
+    pathPrefix("hitl") {
+      pathEndOrSingleSlash {
+        get { getHITLTask }
+      }
+    } ~ pathPrefix("random") {
       pathEndOrSingleSlash {
         get { listTasks }
       }
@@ -96,6 +100,37 @@ trait TaskRoutes
       }
     }
   }
+
+  def getHITLTask: Route =
+    authenticate { user =>
+      authorizeScope(
+        ScopedAction(Domain.AnnotationProjects, Action.ReadTasks, None),
+        user
+      ) {
+        (taskQueryParameters & parameters(
+          'annotationProjectId.as[UUID].?
+        )) { (taskParams, annotationProjectIdOpt) =>
+          onComplete {
+            TaskDao
+              .getHITLPrioritizedTaskFromProject(
+                user,
+                annotationProjectIdOpt,
+                taskParams
+              )
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            case Success(Some(task)) =>
+              complete { task }
+            case Success(None) =>
+              complete { HttpResponse(StatusCodes.OK) }
+            case Failure(e) =>
+              logger.error(e.getMessage)
+              complete { HttpResponse(StatusCodes.BadRequest) }
+          }
+        }
+      }
+    }
 
   def listTasks: Route =
     authenticate { user =>
