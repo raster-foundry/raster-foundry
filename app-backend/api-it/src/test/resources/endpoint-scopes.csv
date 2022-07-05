@@ -220,6 +220,7 @@ Path,Domain:Action,Verb
 /api/users/search/,users:search,get
 /api/users/bulk-create/,users:bulkCreate,post
 /api/tasks/random,annotationProjects:readTasks,get
+/api/tasks/hitl,annotationProjects:readTasks,get
 /api/campaigns/,campaigns:read,get
 /api/campaigns/,campaigns:create,post
 /api/campaigns/{campaignId},campaigns:read,get
