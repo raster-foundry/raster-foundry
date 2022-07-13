@@ -107,6 +107,32 @@ services:
       - postgres:database.service.rasterfoundry.internal
       - memcached:memcached.service.rasterfoundry.internal
 
+  batch-hitl:
+    image: raster-foundry-batch-hitl
+    ports:
+      - "9050:9050"
+    volumes:
+      - ./app-hitl/hitl/:/opt/src/hitl/
+      - $HOME/.aws:/root/.aws:ro
+    build:
+      context: ./app-hitl
+      dockerfile: Dockerfile
+    external_links:
+      - api-server:rasterfoundry.com
+    env_file: .env
+    environment:
+      - RF_HOST=http://rasterfoundry.com:9000
+      - GROUNDWORK_URL_BASE=http://localhost:3000
+      - POSTGRES_DB_POOL_SIZE=2
+      - LOCAL_INGEST_CORES=2
+      - LOCAL_INGEST_MEM_GB=4
+      - EXPORT_TILE_SIZE=1024
+      - AWS_DEFAULT_PROFILE=raster-foundry
+      - BACKSPLASH_ENABLE_GDAL=true
+      - RF_LOG_LEVEL=DEBUG
+      - AWS_BATCH_JOB_ATTEMPT
+      - RF_DEBUG_DATA_BUCKET
+
   xray:
     image: amazon/aws-xray-daemon
     env_file: .env
