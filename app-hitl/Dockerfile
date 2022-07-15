@@ -1,4 +1,4 @@
-FROM quay.io/azavea/raster-vision:pytorch-0.13
+FROM simonkassel/hitl-rv:latest
 
 COPY requirements.txt /tmp/
 
