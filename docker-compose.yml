@@ -113,6 +113,7 @@ services:
       - "9050:9050"
     volumes:
       - ./app-hitl/hitl/:/opt/src/hitl/
+      - ./data/:/opt/src/data/
       - $HOME/.aws:/root/.aws:ro
     build:
       context: ./app-hitl
