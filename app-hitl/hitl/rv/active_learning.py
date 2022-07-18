@@ -12,10 +12,11 @@ from .predict import predict
 from .score import compute_priority_scores
 
 
-def al_step(iter_num: int, class_config: ClassConfig, img_info: dict,
-            labels_uri: str, task_grid: gpd.GeoDataFrame, output_dir: str,
-            last_output_dir: str, train_kw: dict,
-            predict_kw: dict) -> Tuple[gpd.GeoDataFrame, str]:
+def active_learning_step(iter_num: int, class_config: ClassConfig,
+                         img_info: dict, labels_uri: str,
+                         task_grid: gpd.GeoDataFrame, output_dir: str,
+                         last_output_dir: str, train_kw: dict,
+                         predict_kw: dict) -> Tuple[gpd.GeoDataFrame, str]:
     labeled_task_polygons = get_labeled_tasks(task_grid)
     scene = make_scene(
         scene_id=f'scene-iter-{iter_num}',

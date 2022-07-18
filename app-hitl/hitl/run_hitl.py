@@ -9,7 +9,7 @@ from utils.merge_labels import merge_labels_with_task_grid
 from utils.get_hitl_input import get_input
 from utils.notify_intercom import notify
 
-from rv.active_learning import al_step
+from rv.active_learning import active_learning_step
 from rv.io import get_class_config
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def run(job_id):
 
     # task_grid_with_scores is a GeoDataFrame with a "score" column
     # pred_geojson_uri is the path (str) to the predictions GeoJSON file
-    task_grid_with_scores, pred_geojson_uri = al_step(
+    task_grid_with_scores, pred_geojson_uri = active_learning_step(
         iter_num=0,
         class_config=get_class_config(label_classes),
         img_info=scene,
