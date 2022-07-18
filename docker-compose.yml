@@ -130,7 +130,7 @@ services:
       - EXPORT_TILE_SIZE=1024
       - AWS_DEFAULT_PROFILE=raster-foundry
       - BACKSPLASH_ENABLE_GDAL=true
-      - RF_LOG_LEVEL=DEBUG
+      - RF_LOG_LEVEL=INFO
       - AWS_BATCH_JOB_ATTEMPT
       - RF_DEBUG_DATA_BUCKET
 

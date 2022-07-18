@@ -90,7 +90,9 @@ def get_scene(project_id):
     response = session.get(url)
     response.raise_for_status()
     scenes = response.json()
-    return scenes["results"][0]
+    scene = scenes["results"][0]
+    scene["ingestLocation"] = scene["ingestLocation"].replace("%7C", "|")
+    return scene
 
 def list_all_jobs(user_id, campaign_id, project_id):
     url = f"{HOST}/api/hitl-jobs?owner={user_id}&campaignId={campaign_id}&projectId={project_id}"
