@@ -1,4 +1,4 @@
-FROM simonkassel/hitl-rv:latest
+FROM aaronxsu/raster-vision-pytorch:latest
 
 COPY requirements.txt /tmp/
 
