@@ -23,7 +23,7 @@ def run(job_id):
     """
     # STEP 1 Get HITL input from API
     # - Enhancement later: save task and label to a file
-    scene, tasks, labels, label_classes, job = get_input(job_id)
+    scene, tasks, labels, label_classes, job, all_jobs = get_input(job_id)
 
     # STEP 2 Train and predict with RV
     # * Output:

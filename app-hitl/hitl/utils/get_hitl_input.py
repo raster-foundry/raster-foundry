@@ -27,7 +27,7 @@ def get_label_classes(campaign_id):
         session = get_session()
         resp = session.get(url)
         resp.raise_for_status()
-        classes.append(resp.json())
+        classes += resp.json()
     return classes
 
 def paginate_tasks(project_id, page):
@@ -92,6 +92,14 @@ def get_scene(project_id):
     scenes = response.json()
     return scenes["results"][0]
 
+def list_all_jobs(user_id, campaign_id, project_id):
+    url = f"{HOST}/api/hitl-jobs?owner={user_id}&campaignId={campaign_id}&projectId={project_id}"
+    session = get_session()
+    response = session.get(url)
+    response.raise_for_status()
+    jobs = response.json()
+    return jobs
+
 def get_input(job_id):
     """Run image, task grid, labels, and class definition
 
@@ -100,7 +108,9 @@ def get_input(job_id):
     """
     logger.info("Getting HITL job record")
     job = HITLJob.from_id(job_id)
-    logger.info(f"HITL job for campaign {job.campaignId}, project {job.projectId}, user {job.owner}")
+    logger.info(f"Getting all HITL jobs for campaign {job.campaignId}, project {job.projectId}, user {job.owner}")
+    all_jobs = list_all_jobs(job.owner, job.campaignId, job.projectId)
+    all_jobs_sorted = sorted(all_jobs, key=lambda job: job.version, reverse=True)
     logger.info("Updating HITL job status to RUNNING")
     job.update_job_status("RUNNING")
     logger.info("Getting label classes")
@@ -112,4 +122,4 @@ def get_input(job_id):
     labels = get_labels(job.projectId, validated_task_ids)
     logger.info("Getting image")
     scene = get_scene(job.projectId)
-    return scene, tasks, labels, label_classes, job
+    return scene, tasks, labels, label_classes, job, all_jobs_sorted
