@@ -246,87 +246,83 @@ trait UserRoutes
       authorizeScope(ScopedAction(Domain.Users, Action.ReadSelf, None), user) {
         val io = for {
           projectCount <- AnnotationProjectDao.countUserProjects(user)
-          projectLimit =
-            Scopes
-              .resolveFor(
-                Domain.AnnotationProjects,
-                Action.Create,
-                user.scope.actions
-              )
-              .flatMap(_.limit.map(_.toFloat))
+          projectLimit = Scopes
+            .resolveFor(
+              Domain.AnnotationProjects,
+              Action.Create,
+              user.scope.actions
+            )
+            .flatMap(_.limit.map(_.toFloat))
           uploadBytes <- UploadDao.getUserBytesUploaded(user)
-          uploadLimit =
-            Scopes
-              .resolveFor(Domain.Uploads, Action.Create, user.scope.actions)
-              .flatMap(_.limit.map(_.toFloat))
+          uploadLimit = Scopes
+            .resolveFor(Domain.Uploads, Action.Create, user.scope.actions)
+            .flatMap(_.limit.map(_.toFloat))
           projectShares <- AnnotationProjectDao.getAllShareCounts(user.id)
-          projectShareLimit =
-            Scopes
-              .resolveFor(
-                Domain.AnnotationProjects,
-                Action.Share,
-                user.scope.actions
-              )
-              .flatMap(_.limit.map(_.toFloat))
-          campaignCount <- CampaignDao.countUserCampaigns(user)
-          campaignLimit =
-            Scopes
-              .resolveFor(
-                Domain.Campaigns,
-                Action.Create,
-                user.scope.actions
-              )
-              .flatMap(_.limit.map(_.toFloat))
-          campaignShares <- CampaignDao.getAllShareCounts(user.id)
-          campaignShareLimit =
-            Scopes
-              .resolveFor(
-                Domain.Campaigns,
-                Action.Share,
-                user.scope.actions
-              )
-              .flatMap(_.limit.map(_.toFloat))
-        } yield List(
-          ScopeUsage(
-            Domain.AnnotationProjects,
-            Action.Create,
-            None,
-            projectCount,
-            projectLimit
-          ),
-          ScopeUsage(
-            Domain.Uploads,
-            Action.Create,
-            None,
-            uploadBytes,
-            uploadLimit
-          ),
-          ScopeUsage(
-            Domain.Campaigns,
-            Action.Create,
-            None,
-            campaignCount,
-            campaignLimit
-          )
-        ) ++ (projectShares.toList.map {
-          case (id, count) =>
-            ScopeUsage(
+          projectShareLimit = Scopes
+            .resolveFor(
               Domain.AnnotationProjects,
               Action.Share,
-              Some(id.toString),
-              count,
-              projectShareLimit
+              user.scope.actions
             )
-        }) ++ (campaignShares.toList.map {
-          case (id, count) =>
-            ScopeUsage(
+            .flatMap(_.limit.map(_.toFloat))
+          campaignCount <- CampaignDao.countUserCampaigns(user)
+          campaignLimit = Scopes
+            .resolveFor(
+              Domain.Campaigns,
+              Action.Create,
+              user.scope.actions
+            )
+            .flatMap(_.limit.map(_.toFloat))
+          campaignShares <- CampaignDao.getAllShareCounts(user.id)
+          campaignShareLimit = Scopes
+            .resolveFor(
               Domain.Campaigns,
               Action.Share,
-              Some(id.toString),
-              count,
-              campaignShareLimit
+              user.scope.actions
             )
-        })
+            .flatMap(_.limit.map(_.toFloat))
+        } yield
+          List(
+            ScopeUsage(
+              Domain.AnnotationProjects,
+              Action.Create,
+              None,
+              projectCount,
+              projectLimit
+            ),
+            ScopeUsage(
+              Domain.Uploads,
+              Action.Create,
+              None,
+              uploadBytes,
+              uploadLimit
+            ),
+            ScopeUsage(
+              Domain.Campaigns,
+              Action.Create,
+              None,
+              campaignCount,
+              campaignLimit
+            )
+          ) ++ (projectShares.toList.map {
+            case (id, count) =>
+              ScopeUsage(
+                Domain.AnnotationProjects,
+                Action.Share,
+                Some(id.toString),
+                count,
+                projectShareLimit
+              )
+          }) ++ (campaignShares.toList.map {
+            case (id, count) =>
+              ScopeUsage(
+                Domain.Campaigns,
+                Action.Share,
+                Some(id.toString),
+                count,
+                campaignShareLimit
+              )
+          })
         complete {
           io.transact(xa).unsafeToFuture
         }
@@ -371,22 +367,21 @@ trait UserRoutes
               users <- createdUsers
               userWithCampaigns <- users traverse { auth0User =>
                 for {
-                  userWithCampaign <-
-                    (auth0User.user_id, auth0User.username).tupled traverse {
-                      case (userId, username) =>
-                        UserDao
-                          .createUserWithCampaign(
-                            UserInfo(
-                              userId,
-                              s"${username}@${connectionInfo.name}.com",
-                              username
-                            ),
-                            userBulkCreate,
-                            user
-                          )
-                          .transact(xa)
-                          .unsafeToFuture
-                    }
+                  userWithCampaign <- (auth0User.user_id, auth0User.username).tupled traverse {
+                    case (userId, username) =>
+                      UserDao
+                        .createUserWithCampaign(
+                          UserInfo(
+                            userId,
+                            s"${username}@${connectionInfo.name}.com",
+                            username
+                          ),
+                          userBulkCreate,
+                          user
+                        )
+                        .transact(xa)
+                        .unsafeToFuture
+                  }
                 } yield userWithCampaign
               }
             } yield userWithCampaigns
@@ -395,9 +390,10 @@ trait UserRoutes
               case false =>
                 for {
                   uwcs <- uwcsFuture
-                } yield uwcs traverse { uwc =>
-                  uwc.map(_.user.name)
-                }
+                } yield
+                  uwcs traverse { uwc =>
+                    uwc.map(_.user.name)
+                  }
               case true =>
                 for {
                   uwcs <- uwcsFuture
@@ -405,17 +401,18 @@ trait UserRoutes
                     uwc.map(_.user)
                   }
                   _ <- (userBulkCreate.campaignId traverse { campaignId =>
-                      CampaignDao
-                        .grantCloneChildrenAccessById(
-                          campaignId,
-                          ActionType.View
-                        )
-                    }).transact(xa).unsafeToFuture()
-                } yield usersO map { users =>
-                  users map {
-                    _.name
+                    CampaignDao
+                      .grantCloneChildrenAccessById(
+                        campaignId,
+                        ActionType.View
+                      )
+                  }).transact(xa).unsafeToFuture()
+                } yield
+                  usersO map { users =>
+                    users map {
+                      _.name
+                    }
                   }
-                }
 
             }
           }
