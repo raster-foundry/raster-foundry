@@ -112,4 +112,4 @@ def get_input(job_id):
     labels = get_labels(job.projectId, validated_task_ids)
     logger.info("Getting image")
     scene = get_scene(job.projectId)
-    return (scene, tasks, labels, label_classes)
+    return scene, tasks, labels, label_classes, job
