@@ -53,10 +53,15 @@ def train(scene: Scene, class_config: ClassConfig, output_dir: str,
         scene,
         out_size=img_sz,
         size_lims=(chip_sz, chip_sz + 1),
-        max_windows=kwargs.get('num_chips', 100))
+        max_windows=kwargs.get('num_chips', 100),
+        efficient_aoi_sampling=False)
 
     val_ds = SemanticSegmentationRandomWindowGeoDataset(
-        scene, out_size=img_sz, size_lims=(img_sz, img_sz + 1), max_windows=10)
+        scene,
+        out_size=img_sz,
+        size_lims=(img_sz, img_sz + 1),
+        max_windows=10,
+        efficient_aoi_sampling=False)
 
     learner = SemanticSegmentationLearner(
         cfg=learner_cfg,
