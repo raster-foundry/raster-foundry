@@ -24,21 +24,7 @@ def train(scene: Scene, class_config: ClassConfig, output_dir: str,
         window_opts={})
 
     model_cfg = SemanticSegmentationModelConfig(
-        external_def=ExternalModuleConfig(
-            github_repo='AdeelH/pytorch-fpn:0.2',
-            name='fpn',
-            entrypoint='make_fpn_resnet',
-            entrypoint_kwargs={
-                'name': 'resnet18',
-                'fpn_type': 'panoptic',
-                'num_classes': num_classes,
-                'fpn_channels': 64,
-                'in_channels': img_channels,
-                'out_size': (img_sz, img_sz),
-                'pretrained': False
-            }),
-        pretrained=False,
-        init_weights=kwargs.get('init_weights'))
+        pretrained=False, init_weights=kwargs.get('init_weights'))
 
     learner_cfg = SemanticSegmentationLearnerConfig(
         output_uri=output_dir,
