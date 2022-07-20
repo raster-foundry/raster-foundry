@@ -1,21 +1,27 @@
 from typing import List
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, mapping, shape
 
 from rastervision.core.box import Box
 from rastervision.core.data import (
     ClassConfig, CRSTransformer, GeoJSONVectorSourceConfig, RasterioSource,
-    RasterizedSource, Scene, SemanticSegmentationLabelSource)
+    RasterizedSource, Scene, SemanticSegmentationLabelSource,
+    transform_geojson, geometries_to_geojson)
 
 
 def make_scene(scene_id: str, class_config: ClassConfig, img_info: dict,
                labels_uri: str, aoi_polygons: List[Polygon]) -> Scene:
     raster_source = make_raster_source(img_info)
+    extent = raster_source.get_extent()
+    crs_transformer = raster_source.get_crs_transformer()
 
     label_source = make_label_source(
         labels_uri=labels_uri,
         class_config=class_config,
-        extent=raster_source.get_extent(),
-        crs_transformer=raster_source.get_crs_transformer())
+        extent=extent,
+        crs_transformer=crs_transformer)
+
+    # transform AOI to pixel coords
+    aoi_polygons = aoi_to_pixel_coords(aoi_polygons, crs_transformer)
 
     scene = Scene(
         id=scene_id,
@@ -48,3 +54,15 @@ def make_label_source(
             crs_transformer=crs_transformer),
         null_class_id=0)
     return label_source
+
+
+def aoi_to_pixel_coords(aoi_polygons: List[Polygon],
+                        crs_transformer: CRSTransformer) -> List[Polygon]:
+    """Transform AOI to pixel coordinates"""
+    polygon_geojsons = [mapping(p) for p in aoi_polygons]
+    full_geojson = geometries_to_geojson(polygon_geojsons)
+    transformed_geojson = transform_geojson(full_geojson, crs_transformer)
+    transformed_polygons = [
+        shape(f['geometry']) for f in transformed_geojson['features']
+    ]
+    return transformed_polygons

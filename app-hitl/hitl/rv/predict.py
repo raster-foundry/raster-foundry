@@ -13,8 +13,8 @@ def predict(learner: SemanticSegmentationLearner,
             class_config: ClassConfig,
             output_dir: str,
             chip_sz: int = 256,
-            stride: Optional[int] = None
-            ) -> Tuple[SemanticSegmentationSmoothLabels, str]:
+            stride: Optional[int] = None,
+            **kwargs) -> Tuple[SemanticSegmentationSmoothLabels, str]:
     if stride is None:
         stride = chip_sz
 
@@ -27,10 +27,14 @@ def predict(learner: SemanticSegmentationLearner,
         smooth_output=True,
         smooth_as_uint8=True,
         vector_outputs=[
-            PolygonVectorOutputConfig(uri=vec_pred_uri, class_id=1)
+            PolygonVectorOutputConfig(
+                uri=vec_pred_uri,
+                class_id=1,
+                denoise=kwargs.get('denoise_radius'))
         ])
 
     base_tf, _ = learner.cfg.data.get_data_transforms()
+    scene.aoi_polygons = []
     ds = SemanticSegmentationSlidingWindowGeoDataset(
         scene, size=chip_sz, stride=stride, transform=base_tf)
 

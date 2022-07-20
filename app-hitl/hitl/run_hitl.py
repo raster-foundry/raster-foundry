@@ -53,8 +53,9 @@ def run(job_id):
         task_grid=task_grid_gdf,
         output_dir='out/',
         last_output_dir=None,
-        train_kw=dict(num_epochs=5, chip_sz=256, img_sz=256),
-        predict_kw=dict(chip_sz=256, stride=200))
+        train_kw=dict(
+            num_epochs=5, chip_sz=256, img_sz=256, external_model=False),
+        predict_kw=dict(chip_sz=256, stride=200, denoise_radius=16))
 
     # STEP 3 Process data
     # * Output:
