@@ -28,7 +28,7 @@ def run(job_id):
     # - Enhancement later: save task and label to a file
     # - labels as a GeoJSON URI
     # - grab previous iteration
-    scene, tasks, labels, label_classes, job, all_jobs = get_input(job_id)
+    scene, tasks, labels, label_classes, job = get_input(job_id)
 
     # STEP 2 Train and predict with RV
     # * Output:
@@ -51,11 +51,14 @@ def run(job_id):
         img_info=scene,
         labels_uri=labels_uri,
         task_grid=task_grid_gdf,
-        output_dir='out/',
+        output_dir='./hitl/out/',
         last_output_dir=None,
         train_kw=dict(
             num_epochs=5, chip_sz=256, img_sz=256, external_model=False),
-        predict_kw=dict(chip_sz=256, stride=200, denoise_radius=16))
+        predict_kw=dict(chip_sz=512, stride=512, denoise_radius=8))
+    
+    print(task_grid_with_scores.to_json())
+    
 
     # STEP 3 Process data
     # * Output:

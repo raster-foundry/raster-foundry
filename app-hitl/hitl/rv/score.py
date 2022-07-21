@@ -29,7 +29,7 @@ def compute_priority_scores(task_grid: gpd.GeoDataFrame,
         return score
 
     with tqdm(task_grid.geometry, desc='Computing task scores') as bar:
-        task_grid.loc[:, 'score'] = [
+        task_grid.loc[:, 'priorityScore'] = [
             task_polygon_to_score(task_polygon) for task_polygon in bar
         ]
 

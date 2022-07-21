@@ -111,8 +111,8 @@ def get_input(job_id):
     logger.info("Getting HITL job record")
     job = HITLJob.from_id(job_id)
     logger.info(f"Getting all HITL jobs for campaign {job.campaignId}, project {job.projectId}, user {job.owner}")
-    all_jobs = list_all_jobs(job.owner, job.campaignId, job.projectId)
-    all_jobs_sorted = sorted(all_jobs, key=lambda job: job.version, reverse=True)
+    # all_jobs = list_all_jobs(job.owner, job.campaignId, job.projectId)
+    # all_jobs_sorted = sorted(all_jobs, key=lambda job: job.version, reverse=True)
     logger.info("Updating HITL job status to RUNNING")
     job.update_job_status("RUNNING")
     logger.info("Getting label classes")
@@ -124,4 +124,4 @@ def get_input(job_id):
     labels = get_labels(job.projectId, validated_task_ids)
     logger.info("Getting image")
     scene = get_scene(job.projectId)
-    return scene, tasks, labels, label_classes, job, all_jobs_sorted
+    return scene, tasks, labels, label_classes, job
