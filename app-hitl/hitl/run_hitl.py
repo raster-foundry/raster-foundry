@@ -54,9 +54,9 @@ def run(job_id):
         output_dir='./hitl/out/',
         last_output_dir=None,
         train_kw=dict(
-            num_epochs=5, chip_sz=256, img_sz=256, external_model=False),
-        predict_kw=dict(chip_sz=512, stride=512, denoise_radius=8))
-    
+            num_epochs=5, chip_sz=256, img_sz=256, external_model=True),
+        predict_kw=dict(chip_sz=256, stride=256, denoise_radius=8))
+
     print(task_grid_with_scores.to_json())
     
 

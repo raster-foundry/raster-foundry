@@ -26,7 +26,7 @@ def train(scene: Scene, class_config: ClassConfig, output_dir: str,
     if kwargs.get('external_model'):
         model_cfg = SemanticSegmentationModelConfig(
             external_def=ExternalModuleConfig(
-                github_repo='AdeelH/pytorch-fpn:0.2',
+                github_repo='AdeelH/pytorch-fpn:0.3',
                 name='fpn',
                 entrypoint='make_fpn_resnet',
                 entrypoint_kwargs={
