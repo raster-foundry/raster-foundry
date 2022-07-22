@@ -109,7 +109,7 @@ services:
 
   batch-hitl:
     image: raster-foundry-batch-hitl
-    runtime: $HITL_RUNTIME
+    runtime: $GPU_RUNTIME
     ports:
       - "9050:9050"
     volumes:
