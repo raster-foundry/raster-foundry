@@ -113,8 +113,8 @@ services:
     ports:
       - "9050:9050"
     volumes:
-      - ./app-hitl/hitl/:/opt/src/hitl/
-      - ./data/:/opt/src/data/
+      - ./app-hitl/hitl/:/opt/raster-foundry/app-hitl/hitl/
+      - ./app-hitl/hitl/out/:/tmp/hitl/out/
       - $HOME/.aws:/root/.aws:ro
     build:
       context: ./app-hitl
@@ -127,6 +127,7 @@ services:
       - AWS_DEFAULT_PROFILE=raster-foundry
       - AWS_BATCH_JOB_ATTEMPT
       - HITL_OUTPUT_BUCKET
+    command: hitl
 
   xray:
     image: amazon/aws-xray-daemon

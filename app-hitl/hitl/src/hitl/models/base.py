@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from hitl.utils.io import get_session
+from ..utils.io import get_session
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)

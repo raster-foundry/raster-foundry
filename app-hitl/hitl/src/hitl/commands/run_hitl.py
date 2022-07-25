@@ -5,24 +5,23 @@ import os
 import click
 import geopandas as gpd
 
-from utils.merge_labels import merge_labels_with_task_grid
-from utils.get_hitl_input import get_input
-from utils.notify_intercom import notify
+from ..utils.merge_labels import merge_labels_with_task_grid
+from ..utils.get_hitl_input import get_input
+from ..utils.notify_intercom import notify
 
-from rv.active_learning import active_learning_step
-from rv.io import get_class_config
+from ..rv.active_learning import active_learning_step
+from ..rv.io import get_class_config
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 HOST = os.getenv("RF_HOST")
-environment = os.getenv("ENVIRONMENT", "development")
 JOB_ATTEMPT = int(os.getenv("AWS_BATCH_JOB_ATTEMPT", -1))
-OUTPUT_DIR = os.getenv("HITL_OUTPUT_BUCKET", "./hitl/out/")
+OUTPUT_DIR = os.getenv("HITL_OUTPUT_BUCKET", "/tmp/hitl/out")
 
 @click.command(name="run")
 @click.argument('job_id')
-def run(job_id):
+def run_hitl(job_id):
     """Run a HITL job to generate label predictions
 
     Args:
@@ -50,9 +49,8 @@ def run(job_id):
     # task_grid_with_scores is a GeoDataFrame with a "score" column
     # pred_geojson_uri is the path (str) to the predictions GeoJSON file
     iter_num = 0
-    output_location = OUTPUT_DIR
-    if environment != "development":
-        output_location = f"{OUTPUT_DIR}/{job_id}/{iter_num}/"
+    output_location = f"{OUTPUT_DIR}/{job_id}/{iter_num}/"
+        
     task_grid_with_scores, pred_geojson_uri = active_learning_step(
         iter_num=iter_num,
         class_config=get_class_config(label_classes),
@@ -67,8 +65,10 @@ def run(job_id):
 
     logger.info("Task grid with priority scores...")
     logger.info(task_grid_with_scores.to_json())
-    logger.info("Prediction label URI...")
-    logger.info(pred_geojson_uri)
+    logger.info("Prediction labels...")
+    with open(pred_geojson_uri, 'r') as f:
+        data = json.load(f)
+        logger.info(data)
 
     # STEP 3 Process data
     # * Output:
@@ -86,6 +86,3 @@ def run(job_id):
     # - Add prediction labels (POST)
 
     # STEP 5 Notify Intercom
-
-if __name__ == '__main__':
-    run()

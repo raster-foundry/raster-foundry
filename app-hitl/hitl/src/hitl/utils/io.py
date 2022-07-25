@@ -1,11 +1,9 @@
 from contextlib import contextmanager
 import logging
 import os
-import re
 import shutil
-import subprocess
 import tempfile
-from urllib.parse import urlparse, unquote, quote
+from urllib.parse import urlparse
 
 import boto3
 import requests
