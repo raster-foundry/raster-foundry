@@ -5,7 +5,9 @@ from utils.io import get_session
 from models.hitl_job import HITLJob
 from models.annotation_project import AnnotationProject
 
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 HOST = os.getenv("RF_HOST")
 
 

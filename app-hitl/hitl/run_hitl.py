@@ -12,9 +12,13 @@ from utils.notify_intercom import notify
 from rv.active_learning import active_learning_step
 from rv.io import get_class_config
 
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 HOST = os.getenv("RF_HOST")
+environment = os.getenv("ENVIRONMENT", "development")
 JOB_ATTEMPT = int(os.getenv("AWS_BATCH_JOB_ATTEMPT", -1))
+OUTPUT_DIR = os.getenv("HITL_OUTPUT_BUCKET", "./hitl/out/")
 
 @click.command(name="run")
 @click.argument('job_id')
@@ -45,20 +49,26 @@ def run(job_id):
 
     # task_grid_with_scores is a GeoDataFrame with a "score" column
     # pred_geojson_uri is the path (str) to the predictions GeoJSON file
+    iter_num = 0
+    output_location = OUTPUT_DIR
+    if environment != "development":
+        output_location = f"{OUTPUT_DIR}/{job_id}/{iter_num}/"
     task_grid_with_scores, pred_geojson_uri = active_learning_step(
-        iter_num=0,
+        iter_num=iter_num,
         class_config=get_class_config(label_classes),
         img_info=scene,
         labels_uri=labels_uri,
         task_grid=task_grid_gdf,
-        output_dir='./hitl/out/',
+        output_dir=output_location,
         last_output_dir=None,
         train_kw=dict(
             num_epochs=5, chip_sz=256, img_sz=256, external_model=True),
         predict_kw=dict(chip_sz=256, stride=256, denoise_radius=8))
 
-    print(task_grid_with_scores.to_json())
-    
+    logger.info("Task grid with priority scores...")
+    logger.info(task_grid_with_scores.to_json())
+    logger.info("Prediction label URI...")
+    logger.info(pred_geojson_uri)
 
     # STEP 3 Process data
     # * Output:

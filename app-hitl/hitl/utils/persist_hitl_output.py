@@ -4,7 +4,9 @@ import os
 
 from utils.io import get_session
 
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 HOST = os.getenv("RF_HOST")
 
 # Validated tasks should not be updated
