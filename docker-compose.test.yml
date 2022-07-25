@@ -89,6 +89,14 @@ services:
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
 
+  batch-hitl:
+    image: raster-foundry-batch-hitl:${GIT_COMMIT:-latest}
+    build:
+      context: ./app-hitl
+      dockerfile: Dockerfile
+    volumes:
+      - ./app-hitl/hitl/:/opt/src/hitl/
+
   build:
     image: raster-foundry-build:${GIT_COMMIT:-latest}
     build:
