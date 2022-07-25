@@ -21,7 +21,8 @@ trait HITLJobRoutes
     with PaginationDirectives
     with UserErrorHandler
     with CommonHandlers
-    with QueryParametersCommon {
+    with QueryParametersCommon
+    with AWSBatch {
   val xa: Transactor[IO]
 
   val hitlJobRoutes: Route = handleExceptions(userExceptionHandler) {
