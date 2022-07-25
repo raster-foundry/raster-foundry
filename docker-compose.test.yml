@@ -96,6 +96,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./app-hitl/hitl/:/opt/src/hitl/
+    environment:
+      - GPU_RUNTIME=nvdia
 
   build:
     image: raster-foundry-build:${GIT_COMMIT:-latest}
