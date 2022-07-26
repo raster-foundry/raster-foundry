@@ -65,10 +65,8 @@ def run_hitl(job_id):
 
     logger.info("Task grid with priority scores...")
     logger.info(task_grid_with_scores.to_json())
-    logger.info("Prediction labels...")
-    with open(pred_geojson_uri, 'r') as f:
-        data = json.load(f)
-        logger.info(data)
+    logger.info("Prediction labels location...")
+    logger.info(pred_geojson_uri)
 
     # STEP 3 Process data
     # * Output:
@@ -86,3 +84,5 @@ def run_hitl(job_id):
     # - Add prediction labels (POST)
 
     # STEP 5 Notify Intercom
+
+    # STEP 6 Update batch job status
