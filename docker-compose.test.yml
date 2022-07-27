@@ -95,7 +95,7 @@ services:
       context: ./app-hitl
       dockerfile: Dockerfile
     volumes:
-      - ./app-hitl/hitl/:/opt/src/hitl/
+      - ./app-hitl/hitl/:/opt/raster-foundry/app-hitl/hitl/
     environment:
       - GPU_RUNTIME=nvdia
 
