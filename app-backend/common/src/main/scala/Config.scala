@@ -14,12 +14,14 @@ object Config {
     private val awsBatchConfig = config.getConfig("awsbatch")
     val jobQueue = awsBatchConfig.getString("jobQueue")
     val ingestJobQueue = awsBatchConfig.getString("ingestJobQueue")
+    val hitlJobQueue = awsBatchConfig.getString("hitlJobQueue")
 
     val ingestJobName = awsBatchConfig.getString("ingestJobName")
     val importJobName = awsBatchConfig.getString("importJobName")
     val geojsonImportJobName = awsBatchConfig.getString("geojsonImportJobName")
     val exportJobName = awsBatchConfig.getString("exportJobName")
     val stacExportJobName = awsBatchConfig.getString("stacExportJobName")
+    val hitlJobName = awsBatchConfig.getString("hitlJobName")
 
     val environment = awsBatchConfig.getString("environment")
   }
@@ -83,7 +85,8 @@ object Config {
     lazy val postgresAttributeStoreTimeout: FiniteDuration =
       FiniteDuration(
         geotrellisConfig.getDuration("attributeStore.postgres.timeout").toNanos,
-        TimeUnit.NANOSECONDS)
+        TimeUnit.NANOSECONDS
+      )
   }
 
   object auth0 {

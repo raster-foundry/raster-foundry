@@ -75,6 +75,8 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker tag "raster-foundry-batch:${GIT_COMMIT}" \
                 "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
+            docker tag "raster-foundry-batch-hitl:${GIT_COMMIT}" \
+                "${AWS_ECR_ENDPOINT}/raster-foundry-batch-hitl:${GIT_COMMIT}"
             docker tag "raster-foundry-app-migrations:${GIT_COMMIT}" \
                 "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
@@ -85,6 +87,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-batch-hitl:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"

@@ -1,5 +1,4 @@
 from .base import BaseModel
-from hitl.utils.io import get_session
 
 
 class HITLJob(BaseModel):

@@ -5,11 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 ### Added
-- CRUD endpoints for HITL jobs [#5642](https://github.com/raster-foundry/raster-foundry/pull/5642)
-- Added `hitl_version_id` to `annotation_labels` [#5643](https://github.com/raster-foundry/raster-foundry/pull/5643)
-- Added MVT endpoints for HITL labels [#5643](https://github.com/raster-foundry/raster-foundry/pull/5643)
-- Added an endpoint to get prioritized HITL task [#5644](https://github.com/raster-foundry/raster-foundry/pull/5644)
-- Added batch environment for hitl processing [#5645](https://github.com/raster-foundry/raster-foundry/pull/5645)
+- API support for managing HITL jobs:
+  - CRUD endpoints for HITL jobs [#5642](https://github.com/raster-foundry/raster-foundry/pull/5642)
+  - Added `hitl_version_id` to `annotation_labels` [#5643](https://github.com/raster-foundry/raster-foundry/pull/5643)
+  - Added MVT endpoints for HITL labels [#5643](https://github.com/raster-foundry/raster-foundry/pull/5643)
+  - Added an endpoint to get prioritized HITL task [#5644](https://github.com/raster-foundry/raster-foundry/pull/5644)
+- Batch support for HITL predictions:
+  - Added batch environment for hitl processing [#5645](https://github.com/raster-foundry/raster-foundry/pull/5645)
+  - Added a HITL batch job to pull data for predictions and persist data to backend after predictions [#5648](https://github.com/raster-foundry/raster-foundry/pull/5648)
+  - Made HITL batch command a CLI to run at the entrypoint of the `batch-hitl` container [#5650](https://github.com/raster-foundry/raster-foundry/pull/5650)
+  - Build, package, and ship HITL container in CI/CD process [#5650](https://github.com/raster-foundry/raster-foundry/pull/5650)
+  - Kick off HITL remote batch job in AWS on POST to `/api/hitl-jobs` [#5650](https://github.com/raster-foundry/raster-foundry/pull/5650)
 
 ## [1.70.1] - 2022-04-25
 ### Changed
