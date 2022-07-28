@@ -24,8 +24,10 @@ def persist_hitl_output(project_id, tasks, labels):
     add_labels(project_id, labels)
 
 def update_tasks(project_id, tasks):
+    import pdb
+    pdb.set_trace()
     for task in tasks["features"]:
-        task_id = task["id"]
+        task_id = task.pop("id")
         url = f"{HOST}/api/annotation-projects/{project_id}/tasks/{task_id}"
         session = get_session()
         response = session.put(url, json=json.dumps(task))
@@ -33,7 +35,7 @@ def update_tasks(project_id, tasks):
             response.raise_for_status()
         except:
             logger.exception(
-                f"Unable to update: {response.text} with {task.to_dict()}"
+                f"Unable to update: {response.text} with {task}"
             )
             raise
         return response
