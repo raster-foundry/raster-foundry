@@ -1,5 +1,3 @@
-from os.path import join
-
 from rastervision.core.data import (ClassConfig, DatasetConfig, Scene)
 from rastervision.pytorch_learner import (
     SemanticSegmentationGeoDataConfig, SemanticSegmentationLearner,
@@ -63,11 +61,7 @@ def train(scene: Scene, class_config: ClassConfig, output_dir: str,
         scene, out_size=img_sz, size_lims=(img_sz, img_sz + 1), max_windows=10)
 
     learner = SemanticSegmentationLearner(
-        cfg=learner_cfg,
-        tmp_dir=join(output_dir, 'tmp'),
-        train_ds=train_ds,
-        valid_ds=val_ds,
-        test_ds=val_ds)
+        cfg=learner_cfg, train_ds=train_ds, valid_ds=val_ds, test_ds=val_ds)
 
     learner.train()
 
