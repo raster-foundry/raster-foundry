@@ -2,6 +2,7 @@ package com.rasterfoundry.api.hitlJobs
 
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 
@@ -20,7 +21,8 @@ trait HITLJobRoutes
     with PaginationDirectives
     with UserErrorHandler
     with CommonHandlers
-    with QueryParametersCommon {
+    with QueryParametersCommon
+    with AWSBatch {
   val xa: Transactor[IO]
 
   val hitlJobRoutes: Route = handleExceptions(userExceptionHandler) {
@@ -94,7 +96,7 @@ trait HITLJobRoutes
                 .transact(xa)
                 .unsafeToFuture
             ) { hitlJob =>
-              // TODO: kick off the job or lambda function
+              kickoffHITL(hitlJob.id)
               complete((StatusCodes.Created, hitlJob))
             }
           }
