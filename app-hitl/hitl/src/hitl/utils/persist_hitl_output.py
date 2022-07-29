@@ -22,15 +22,16 @@ def persist_hitl_output(project_id, tasks, labels):
     """
     update_tasks(project_id, tasks)
     add_labels(project_id, labels)
+    return
 
 def update_tasks(project_id, tasks):
-    import pdb
-    pdb.set_trace()
     for task in tasks["features"]:
-        task_id = task.pop("id")
+        task_id = task["properties"]["taskId"]
         url = f"{HOST}/api/annotation-projects/{project_id}/tasks/{task_id}"
+        logger.info(f"Updating task with {url}")
+        logger.info(task)
         session = get_session()
-        response = session.put(url, json=json.dumps(task))
+        response = session.put(url, json=task)
         try:
             response.raise_for_status()
         except:
@@ -38,19 +39,24 @@ def update_tasks(project_id, tasks):
                 f"Unable to update: {response.text} with {task}"
             )
             raise
-        return response
+    return
 
 def add_labels(project_id, labels):
     for label in labels["features"]:
-        task_id = label["properties"]["annotationTaskId"]
+        task_id = label["properties"]["taskId"]
         url = f"{HOST}/api/annotation-projects/{project_id}/tasks/{task_id}/labels"
+        label_fc = {
+            "features": [label]
+        }
+        logger.info(f"Adding labels with {url}")
+        logger.info(label_fc)
         session = get_session()
-        response = session.post(url, json=json.dumps(label))
+        response = session.post(url, json=label_fc)
         try:
             response.raise_for_status()
         except:
             logger.exception(f"Unable to POST labels via API: {response.text}")
-            logger.exception(f"Attempted to POST: \n{label}\n")
+            logger.exception(f"Attempted to POST: \n{label_fc}\n")
             logger.exception(f"Response was: {response.content}")
             raise
-        return response.json()
+    return
