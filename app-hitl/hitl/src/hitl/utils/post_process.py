@@ -33,13 +33,15 @@ def process_tasks(task_grid_with_scores: gpd.GeoDataFrame, pred_geojson_uri: str
     return updated_tasks_dict, merged_preds_gdf
 
 def process_labels(merged_preds_gdf, label_classes, job_id):
-    merged_preds_gdf["description"] = None
-    merged_preds_gdf["isActive"] = True
-    merged_preds_gdf["sessionId"] = None
-    merged_preds_gdf["score"] = None
-    merged_preds_gdf["hitlVersionId"] = job_id
+    dissolved = merged_preds_gdf.dissolve(by="taskId").reset_index()
+    dissolved = dissolved[["taskId", "geometry"]]
+    dissolved["description"] = None
+    dissolved["isActive"] = True
+    dissolved["sessionId"] = None
+    dissolved["score"] = None
+    dissolved["hitlVersionId"] = job_id
     annotationLabelClasses = [c["id"] for c in label_classes]
-    labels_to_post_dict = json.loads(merged_preds_gdf.to_json())
+    labels_to_post_dict = json.loads(dissolved.to_json())
     for label in labels_to_post_dict["features"]:
         label["properties"]["annotationLabelClasses"] = annotationLabelClasses
     return labels_to_post_dict
