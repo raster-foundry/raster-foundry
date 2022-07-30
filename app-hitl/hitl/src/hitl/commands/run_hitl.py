@@ -1,5 +1,4 @@
 import json
-from lib2to3.pgen2 import driver
 import logging
 import os
 
@@ -68,7 +67,7 @@ def run_hitl(job_id):
         output_dir=output_location,
         last_output_dir=None,
         train_kw=dict(
-            num_epochs=1, chip_sz=256, img_sz=256, external_model=True),
+            num_epochs=5, chip_sz=256, img_sz=256, external_model=True),
         predict_kw=dict(chip_sz=256, stride=256, denoise_radius=8))
 
     logger.info(f"Task grid with priority scores... {task_grid_with_scores.to_json()}")
