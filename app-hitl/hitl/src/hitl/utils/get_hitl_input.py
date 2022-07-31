@@ -93,13 +93,14 @@ def get_scene(project_id):
     response.raise_for_status()
     scenes = response.json()
     scene = scenes["results"][0]
-    scene["ingestLocation"] = scene["ingestLocation"].replace("%7C", "|")
+    if "%7C" in scene["ingestLocation"]:
+        scene["ingestLocation"] = scene["ingestLocation"].replace("%7C", "|")
     return scene
 
 def list_all_jobs(user_id, campaign_id, project_id):
-    url = f"{HOST}/api/hitl-jobs?owner={user_id}&campaignId={campaign_id}&projectId={project_id}"
+    url = f"{HOST}/api/hitl-jobs"
     session = get_session()
-    response = session.get(url)
+    response = session.get(url, params=f"owner={user_id}&campaignId={campaign_id}&projectId={project_id}")
     response.raise_for_status()
     jobs = response.json()
     return jobs
@@ -113,8 +114,9 @@ def get_input(job_id):
     logger.info("Getting HITL job record")
     job = HITLJob.from_id(job_id)
     logger.info(f"Getting all HITL jobs for campaign {job.campaignId}, project {job.projectId}, user {job.owner}")
-    # all_jobs = list_all_jobs(job.owner, job.campaignId, job.projectId)
-    # all_jobs_sorted = sorted(all_jobs, key=lambda job: job.version, reverse=True)
+    all_jobs = list_all_jobs(job.owner, job.campaignId, job.projectId)
+    all_jobs_sorted = sorted(all_jobs["results"], key=lambda job: job["version"], reverse=True)
+    all_prev_jobs_sorted = [job for job in all_jobs_sorted if job["id"] != job_id]
     logger.info("Updating HITL job status to RUNNING")
     job.update_job_status("RUNNING")
     logger.info("Getting label classes")
@@ -126,4 +128,4 @@ def get_input(job_id):
     labels = get_labels(job.projectId, validated_task_ids)
     logger.info("Getting image")
     scene = get_scene(job.projectId)
-    return scene, tasks, labels, label_classes, job
+    return scene, tasks, labels, label_classes, job, all_prev_jobs_sorted

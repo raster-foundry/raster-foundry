@@ -37,7 +37,7 @@ def insert_convo(user_id, convo_id):
     }
     url = f"{HOST}/api/users/{user_id}/conversations/"
     session = get_session()
-    response = session.post(url, json = json.dumps(db_convo))
+    response = session.post(url, json=db_convo)
     try:
         response.raise_for_status()
     except:
@@ -60,7 +60,7 @@ def create_conversation(user_id, message):
     session.headers.update({"Authorization": f"Bearer {INTERCOM_TOKEN}"})
     session.headers.update({"Accept": "application/json"})
     session.headers.update({"Content-Type": "application/json"})
-    response = session.post(url, json = json.dumps(new_convo))
+    response = session.post(url, json=new_convo)
     try:
         response.raise_for_status()
     except:
@@ -82,7 +82,7 @@ def reply_conversation(convo_id, message):
     session.headers.update({"Authorization": f"Bearer {INTERCOM_TOKEN}"})
     session.headers.update({"Accept": "application/json"})
     session.headers.update({"Content-Type": "application/json"})
-    response = session.post(url, json = json.dumps(reply))
+    response = session.post(url, json=reply)
     try:
         response.raise_for_status()
     except:

@@ -29,7 +29,6 @@ def update_tasks(project_id, tasks):
         task_id = task["properties"]["taskId"]
         url = f"{HOST}/api/annotation-projects/{project_id}/tasks/{task_id}"
         logger.info(f"Updating task with {url}")
-        logger.info(task)
         session = get_session()
         response = session.put(url, json=task)
         try:
@@ -49,7 +48,6 @@ def add_labels(project_id, labels):
             "features": [label]
         }
         logger.info(f"Adding labels with {url}")
-        logger.info(label_fc)
         session = get_session()
         response = session.post(url, json=label_fc)
         try:
