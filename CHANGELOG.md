@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Kick off HITL remote batch job in AWS on POST to `/api/hitl-jobs` [#5650](https://github.com/raster-foundry/raster-foundry/pull/5650)
   - Added Raster Vision training and prediction code for HITL [#5649](https://github.com/raster-foundry/raster-foundry/pull/5649)
   - Added HITL postprocessing steps [#5651](https://github.com/raster-foundry/raster-foundry/pull/5651)
+  - Added support of status update of HITL job and Intercom notifications [#5652](https://github.com/raster-foundry/raster-foundry/pull/)
 
 ## [1.70.1] - 2022-04-25
 ### Changed
