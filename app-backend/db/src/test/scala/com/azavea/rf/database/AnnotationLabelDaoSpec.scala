@@ -202,8 +202,7 @@ class AnnotationLabelDaoSpec
                 .listWithClassesByProjectIdAndTaskId(
                   annotationProject.id,
                   task.id,
-                  TaskLabelQueryParameters(hitlVersionId = None),
-                  user
+                  TaskLabelQueryParameters(hitlVersionId = None)
                 )
           } yield listedByTask
 
@@ -360,8 +359,7 @@ class AnnotationLabelDaoSpec
                 .listWithClassesByProjectIdAndTaskId(
                   annotationProject.id,
                   task.id,
-                  TaskLabelQueryParameters(hitlVersionId = None),
-                  user
+                  TaskLabelQueryParameters(hitlVersionId = None)
                 )
           } yield listedByTask
 
@@ -558,16 +556,14 @@ class AnnotationLabelDaoSpec
               AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
                 annotationProject.id,
                 task.id,
-                TaskLabelQueryParameters(hitlVersionId = None),
-                user
+                TaskLabelQueryParameters(hitlVersionId = None)
               )
             _ <- AnnotationLabelDao.toggleBySessionId(dbTaskSession.id)
             reactiveLabels <-
               AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
                 annotationProject.id,
                 task.id,
-                TaskLabelQueryParameters(hitlVersionId = None),
-                user
+                TaskLabelQueryParameters(hitlVersionId = None)
               )
           } yield (activeLabels, reactiveLabels)
 
@@ -751,15 +747,13 @@ class AnnotationLabelDaoSpec
               AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
                 annotationProject.id,
                 task.id,
-                TaskLabelQueryParameters(hitlVersionId = None),
-                user
+                TaskLabelQueryParameters(hitlVersionId = None)
               )
             listedMachine <-
               AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
                 annotationProject.id,
                 task.id,
-                TaskLabelQueryParameters(hitlVersionId = Some(hitlJob.id)),
-                user
+                TaskLabelQueryParameters(hitlVersionId = Some(hitlJob.id))
               )
             isHITLInProgress <- HITLJobDao.hasInProgressJob(
               campaign.id,

@@ -47,7 +47,7 @@ object HITLJobDao extends Dao[HITLJob] {
     query
       .filter(params)
       .filter(user.isSuperuser && user.isActive match {
-        case true  => fr""
+        case true  => fr"true"
         case false => fr"owner = ${user.id}"
       })
       .page(page)

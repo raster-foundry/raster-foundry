@@ -154,8 +154,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   def listWithClassesByProjectIdAndTaskId(
       projectId: UUID,
       taskId: UUID,
-      param: TaskLabelQueryParameters,
-      user: User
+      param: TaskLabelQueryParameters
   ): ConnectionIO[List[AnnotationLabelWithClasses.GeoJSON]] = {
     val qb = withClassesQB
       .filter(fr"annotation_project_id=$projectId")
@@ -164,8 +163,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
 
     val filtered = param.hitlVersionId match {
       case Some(hitlVersionId) =>
-        qb.filter(fr"created_by = ${user.id}")
-          .filter(fr"hitl_version_id = ${hitlVersionId}")
+        qb.filter(fr"hitl_version_id = ${hitlVersionId}")
       case _ =>
         qb.filter(fr"hitl_version_id is NULL")
     }

@@ -124,6 +124,7 @@ services:
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
+      - GROUNDWORK_URL_BASE=http://localhost:3000
       - AWS_DEFAULT_PROFILE=raster-foundry
       - AWS_BATCH_JOB_ATTEMPT
       - HITL_OUTPUT_BUCKET
