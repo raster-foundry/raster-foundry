@@ -422,8 +422,7 @@ trait AnnotationProjectTaskRoutes
                 .listWithClassesByProjectIdAndTaskId(
                   projectId,
                   taskId,
-                  params,
-                  user
+                  params
                 )
                 .transact(xa)
                 .unsafeToFuture
