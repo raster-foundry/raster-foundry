@@ -12,6 +12,8 @@ HOST = os.getenv("RF_HOST")
 # Validated tasks should not be updated
 # Machine labels fallen into validated tasks should not be posted
 # Use label POST endpoint to append to existing labels
+
+
 def persist_hitl_output(project_id, tasks, labels):
     """Post HITL results back to the DB.
 
@@ -23,6 +25,7 @@ def persist_hitl_output(project_id, tasks, labels):
     update_tasks(project_id, tasks)
     add_labels(project_id, labels)
     return
+
 
 def update_tasks(project_id, tasks):
     for task in tasks["features"]:
@@ -40,6 +43,7 @@ def update_tasks(project_id, tasks):
             raise
     return
 
+
 def add_labels(project_id, labels):
     for label in labels["features"]:
         task_id = label["properties"]["taskId"]
@@ -47,7 +51,8 @@ def add_labels(project_id, labels):
         label_fc = {
             "features": [label]
         }
-        logger.info(f"Adding labels with {url}")
+        logger.info(f"Adding labels with {url}: {labels}")
+
         session = get_session()
         response = session.post(url, json=label_fc)
         try:
