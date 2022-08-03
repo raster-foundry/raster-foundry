@@ -179,7 +179,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   ): ConnectionIO[Int] =
     (fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(
       Some(fr"annotation_project_id=$projectId"),
-      Some(fr"annotation_task_id=$taskId")
+      Some(fr"annotation_task_id=$taskId"),
+      Some(fr"hitl_version_id is null")
     )).update.run
 
   def getAnnotationJsonByTaskStatus(
