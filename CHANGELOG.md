@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Added Raster Vision training and prediction code for HITL [#5649](https://github.com/raster-foundry/raster-foundry/pull/5649)
   - Added HITL postprocessing steps [#5651](https://github.com/raster-foundry/raster-foundry/pull/5651)
   - Added support of status update of HITL job and Intercom notifications [#5652](https://github.com/raster-foundry/raster-foundry/pull/)
+  - Made sure that all machine-labeled tasks have "LABELED" status after hitl run [#5653](https://github.com/raster-foundry/raster-foundry/pull/5653)
 
 ## [1.70.1] - 2022-04-25
 ### Changed
