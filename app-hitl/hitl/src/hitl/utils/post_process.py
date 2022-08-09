@@ -20,14 +20,10 @@ def process_tasks(task_grid_with_scores: gpd.GeoDataFrame, pred_geojson_uri: str
     tasks_to_update.set_index('id', inplace=True)
     # read RV predictions
     preds_gdf = gpd.read_file(pred_geojson_uri)
-    # find predictions fall inside of these cells
+    # join predictions to tasks
     merged_preds_gdf = merge_labels_with_task_grid(
         preds_gdf, tasks_to_update)
-    # update task status to "LABELED" where predictions fall in
-    task_ids_to_update = list(set(merged_preds_gdf["taskId"]))
-    tasks_to_update = tasks_to_update.loc[
-        tasks_to_update["taskId"].isin(task_ids_to_update)
-    ]
+    # update task status to "LABELED"
     tasks_to_update["status"] = "LABELED"
     updated_tasks_dict = json.loads(tasks_to_update.to_json())
     return updated_tasks_dict, merged_preds_gdf
