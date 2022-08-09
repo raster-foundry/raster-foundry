@@ -75,7 +75,7 @@ def run_hitl(job_id):
         last_output_dir=last_output_dir,
         train_kw=dict(
             num_epochs=5, chip_sz=256, img_sz=256, external_model=True),
-        predict_kw=dict(chip_sz=256, stride=256, denoise_radius=8))
+        predict_kw=dict(chip_sz=256, stride=200, denoise_radius=32))
     logger.info(f"Task grid with priority scores... {task_grid_with_scores.to_json()}")
     logger.info(f"Prediction labels location... {pred_geojson_uri}")
 
