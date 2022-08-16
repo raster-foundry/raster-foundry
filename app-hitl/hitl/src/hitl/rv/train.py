@@ -12,9 +12,10 @@ def train(scene: Scene, class_config: ClassConfig, output_dir: str,
     img_sz = kwargs.get('img_sz', 256)
     num_classes = len(class_config)
     img_channels = len(scene.raster_source.channel_order)
+    init_weights = kwargs.get('init_weights', None)
 
     data_cfg = SemanticSegmentationGeoDataConfig(
-        num_workers=0,
+        num_workers=kwargs.get('num_workers', 4),
         img_channels=img_channels,
         img_sz=img_sz,
         scene_dataset=DatasetConfig(
@@ -22,25 +23,25 @@ def train(scene: Scene, class_config: ClassConfig, output_dir: str,
         window_opts={})
 
     if kwargs.get('external_model'):
+        entrypoint_kwargs = dict(
+            name='resnet18',
+            fpn_type='panoptic',
+            num_classes=num_classes,
+            fpn_channels=128,
+            in_channels=img_channels,
+            out_size=(img_sz, img_sz),
+            pretrained=(init_weights is None))
+        entrypoint_kwargs.update(kwargs.get('external_model_kwargs', {}))
         model_cfg = SemanticSegmentationModelConfig(
             external_def=ExternalModuleConfig(
                 github_repo='AdeelH/pytorch-fpn:0.3',
                 name='fpn',
                 entrypoint='make_fpn_resnet',
-                entrypoint_kwargs={
-                    'name': 'resnet18',
-                    'fpn_type': 'panoptic',
-                    'num_classes': num_classes,
-                    'fpn_channels': 64,
-                    'in_channels': img_channels,
-                    'out_size': (img_sz, img_sz),
-                    'pretrained': False
-                }),
-            pretrained=False,
-            init_weights=kwargs.get('init_weights', None))
+                entrypoint_kwargs=entrypoint_kwargs),
+            init_weights=init_weights)
     else:
         model_cfg = SemanticSegmentationModelConfig(
-            pretrained=False, init_weights=kwargs.get('init_weights'))
+            pretrained=(init_weights is None), init_weights=init_weights)
 
     learner_cfg = SemanticSegmentationLearnerConfig(
         output_uri=output_dir,
