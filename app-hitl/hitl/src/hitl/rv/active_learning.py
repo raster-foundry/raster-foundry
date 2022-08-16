@@ -5,11 +5,11 @@ import geopandas as gpd
 
 from rastervision.core.data import ClassConfig
 
-from .tasks import get_labeled_tasks
-from .data import make_scene
-from .train import train
-from .predict import predict
-from .score import compute_priority_scores
+from hitl.rv.tasks import get_labeled_tasks
+from hitl.rv.data import make_scene
+from hitl.rv.train import train
+from hitl.rv.predict import predict
+from hitl.rv.score import compute_priority_scores
 
 
 def active_learning_step(iter_num: int, class_config: ClassConfig,

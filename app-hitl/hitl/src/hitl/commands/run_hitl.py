@@ -10,8 +10,13 @@ from ..utils.notify_intercom import notify
 from ..utils.persist_hitl_output import persist_hitl_output
 from ..utils.post_process import post_process
 
-from ..rv.active_learning import active_learning_step
-from ..rv.io import get_class_config
+from hitl.utils.get_hitl_input import get_input
+from hitl.utils.notify_intercom import notify
+from hitl.utils.persist_hitl_output import persist_hitl_output
+from hitl.utils.post_process import post_process
+
+from hitl.rv.active_learning import active_learning_step
+from hitl.rv.io import get_class_config
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
