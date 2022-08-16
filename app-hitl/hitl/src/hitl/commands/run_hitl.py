@@ -5,12 +5,10 @@ import os
 import click
 import geopandas as gpd
 
-from ..utils.merge_labels import merge_labels_with_task_grid
 from ..utils.get_hitl_input import get_input
 from ..utils.notify_intercom import notify
 from ..utils.persist_hitl_output import persist_hitl_output
 from ..utils.post_process import post_process
-from ..utils.notify_intercom import notify
 
 from ..rv.active_learning import active_learning_step
 from ..rv.io import get_class_config
@@ -26,7 +24,7 @@ OUTPUT_DIR = os.getenv("HITL_OUTPUT_BUCKET", "/tmp/hitl/out")
 
 @click.command(name="run")
 @click.argument("job_id")
-def run_hitl(job_id):
+def run_hitl(job_id: str):
     """Run a HITL job to generate label predictions
 
     Args:
@@ -76,7 +74,8 @@ def run_hitl(job_id):
         train_kw=dict(
             num_epochs=5, chip_sz=256, img_sz=256, external_model=True),
         predict_kw=dict(chip_sz=256, stride=200, denoise_radius=32))
-    logger.info(f"Task grid with priority scores... {task_grid_with_scores.to_json()}")
+    logger.info(
+        f"Task grid with priority scores... {task_grid_with_scores.to_json()}")
     logger.info(f"Prediction labels location... {pred_geojson_uri}")
 
     # STEP 3 Process data
@@ -91,21 +90,13 @@ def run_hitl(job_id):
     # - Enhancement later: save and read task and label to a file
     logger.info("Processing the task grid and the labels...")
     updated_tasks_dict, labels_to_post_dict = post_process(
-        task_grid_with_scores,
-        pred_geojson_uri,
-        label_classes,
-        job_id
-    )
-    
+        task_grid_with_scores, pred_geojson_uri, label_classes, job_id)
+
     # STEP 4 Persist data to DB
     # - Update tasks (PUT)
     # - Add prediction labels (POST)
     logger.info("Updating labels and task grid to the API...")
-    persist_hitl_output(
-        job.projectId,
-        updated_tasks_dict,
-        labels_to_post_dict
-    )
+    persist_hitl_output(job.projectId, updated_tasks_dict, labels_to_post_dict)
 
     # STEP 5 Update batch job status
     logger.info("Updating job status...")
@@ -113,13 +104,16 @@ def run_hitl(job_id):
 
     # STEP 6 Notify Intercom
     if HOST is not None:
-        project_uri = f"{GROUNDWORK_URL_BASE}/app/campaign/{job.campaignId}/overview?s={job.projectId}"
+        project_uri = (
+            f"{GROUNDWORK_URL_BASE}/app/campaign/{job.campaignId}/overview?"
+            f"s={job.projectId}")
         if GROUNDWORK_URL_BASE is None:
             base = "https://groundwork.azavea.com/app"
             if "staging" in HOST:
-                base = "https://develop--raster-foundry-annotate.netlify.app/app"
-            project_uri = f"{base}/app/campaign/{job.campaignId}/overview?s={job.projectId}"
+                base = (
+                    "https://develop--raster-foundry-annotate.netlify.app/app")
+            project_uri = (f"{base}/app/campaign/{job.campaignId}/overview?"
+                           f"s={job.projectId}")
         logger.info("Notifying user of the HITL prediction labels...")
         message = f"Your HITL prediction labels are ready at: {project_uri}"
         notify(job.owner, message)
-    
