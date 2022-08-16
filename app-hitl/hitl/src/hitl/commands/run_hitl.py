@@ -1,14 +1,12 @@
 import json
 import logging
 import os
+from pprint import pformat
 
 import click
 import geopandas as gpd
 
-from ..utils.get_hitl_input import get_input
-from ..utils.notify_intercom import notify
-from ..utils.persist_hitl_output import persist_hitl_output
-from ..utils.post_process import post_process
+from rastervision.pipeline.file_system.utils import file_to_json
 
 from hitl.utils.get_hitl_input import get_input
 from hitl.utils.notify_intercom import notify
@@ -25,6 +23,9 @@ HOST = os.getenv("RF_HOST")
 GROUNDWORK_URL_BASE = os.getenv("GROUNDWORK_URL_BASE")
 JOB_ATTEMPT = int(os.getenv("AWS_BATCH_JOB_ATTEMPT", -1))
 OUTPUT_DIR = os.getenv("HITL_OUTPUT_BUCKET", "/tmp/hitl/out")
+PARAMS_PATH = (
+    "s3://rasterfoundry-staging-hitl-output-us-east-1/config/params.json")
+PARAMS = file_to_json(PARAMS_PATH)
 
 
 @click.command(name="run")
@@ -68,6 +69,8 @@ def run_hitl(job_id: str):
         version_num = last_job["version"]
         prev_job_id = last_job["id"]
         last_output_dir = f"{OUTPUT_DIR}/{prev_job_id}/{version_num}/"
+
+    logger.info(f"Using params: \n{pformat(PARAMS)}")
     task_grid_with_scores, pred_geojson_uri = active_learning_step(
         iter_num=iter_num,
         class_config=get_class_config(label_classes),
@@ -76,9 +79,9 @@ def run_hitl(job_id: str):
         task_grid=task_grid_gdf,
         output_dir=output_location,
         last_output_dir=last_output_dir,
-        train_kw=dict(
-            num_epochs=5, chip_sz=256, img_sz=256, external_model=True),
-        predict_kw=dict(chip_sz=256, stride=200, denoise_radius=16))
+        train_kw=PARAMS.get('train', {}),
+        predict_kw=PARAMS.get('predict', {}),
+        score_kw=PARAMS.get('score', {}))
     logger.info(
         f"Task grid with priority scores... {task_grid_with_scores.to_json()}")
     logger.info(f"Prediction labels location... {pred_geojson_uri}")
