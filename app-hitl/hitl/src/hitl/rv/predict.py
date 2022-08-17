@@ -25,12 +25,12 @@ def predict(learner: SemanticSegmentationLearner,
         crs_transformer=scene.raster_source.get_crs_transformer(),
         class_config=class_config,
         smooth_output=True,
-        smooth_as_uint8=True,
+        smooth_as_uint8=kwargs.get('probabilities_as_uint8', True),
         vector_outputs=[
             PolygonVectorOutputConfig(
                 uri=vec_pred_uri,
                 class_id=1,
-                denoise=kwargs.get('denoise_radius'))
+                denoise=kwargs.get('denoise_radius', 8))
         ])
 
     base_tf, _ = learner.cfg.data.get_data_transforms()
@@ -43,7 +43,7 @@ def predict(learner: SemanticSegmentationLearner,
         raw_out=True,
         numpy_out=True,
         predict_kw=dict(out_shape=(chip_sz, chip_sz)),
-        dataloader_kw=dict(num_workers=0),
+        dataloader_kw=dict(num_workers=kwargs.get('num_workers', 4)),
         progress_bar=True)
 
     labels = SemanticSegmentationSmoothLabels.from_predictions(

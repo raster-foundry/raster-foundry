@@ -1,19 +1,20 @@
 import json
 import logging
 import os
+from pprint import pformat
 
 import click
 import geopandas as gpd
 
-from ..utils.merge_labels import merge_labels_with_task_grid
-from ..utils.get_hitl_input import get_input
-from ..utils.notify_intercom import notify
-from ..utils.persist_hitl_output import persist_hitl_output
-from ..utils.post_process import post_process
-from ..utils.notify_intercom import notify
+from rastervision.pipeline.file_system.utils import file_to_json
 
-from ..rv.active_learning import active_learning_step
-from ..rv.io import get_class_config
+from hitl.utils.get_hitl_input import get_input
+from hitl.utils.notify_intercom import notify
+from hitl.utils.persist_hitl_output import persist_hitl_output
+from hitl.utils.post_process import post_process
+
+from hitl.rv.active_learning import active_learning_step
+from hitl.rv.io import get_class_config
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,11 +23,14 @@ HOST = os.getenv("RF_HOST")
 GROUNDWORK_URL_BASE = os.getenv("GROUNDWORK_URL_BASE")
 JOB_ATTEMPT = int(os.getenv("AWS_BATCH_JOB_ATTEMPT", -1))
 OUTPUT_DIR = os.getenv("HITL_OUTPUT_BUCKET", "/tmp/hitl/out")
+PARAMS_PATH = (
+    "s3://rasterfoundry-staging-hitl-output-us-east-1/config/params.json")
+PARAMS = file_to_json(PARAMS_PATH)
 
 
 @click.command(name="run")
 @click.argument("job_id")
-def run_hitl(job_id):
+def run_hitl(job_id: str):
     """Run a HITL job to generate label predictions
 
     Args:
@@ -65,6 +69,8 @@ def run_hitl(job_id):
         version_num = last_job["version"]
         prev_job_id = last_job["id"]
         last_output_dir = f"{OUTPUT_DIR}/{prev_job_id}/{version_num}/"
+
+    logger.info(f"Using params: \n{pformat(PARAMS)}")
     task_grid_with_scores, pred_geojson_uri = active_learning_step(
         iter_num=iter_num,
         class_config=get_class_config(label_classes),
@@ -73,10 +79,11 @@ def run_hitl(job_id):
         task_grid=task_grid_gdf,
         output_dir=output_location,
         last_output_dir=last_output_dir,
-        train_kw=dict(
-            num_epochs=5, chip_sz=256, img_sz=256, external_model=True),
-        predict_kw=dict(chip_sz=256, stride=200, denoise_radius=32))
-    logger.info(f"Task grid with priority scores... {task_grid_with_scores.to_json()}")
+        train_kw=PARAMS.get('train', {}),
+        predict_kw=PARAMS.get('predict', {}),
+        score_kw=PARAMS.get('score', {}))
+    logger.info(
+        f"Task grid with priority scores... {task_grid_with_scores.to_json()}")
     logger.info(f"Prediction labels location... {pred_geojson_uri}")
 
     # STEP 3 Process data
@@ -91,21 +98,13 @@ def run_hitl(job_id):
     # - Enhancement later: save and read task and label to a file
     logger.info("Processing the task grid and the labels...")
     updated_tasks_dict, labels_to_post_dict = post_process(
-        task_grid_with_scores,
-        pred_geojson_uri,
-        label_classes,
-        job_id
-    )
-    
+        task_grid_with_scores, pred_geojson_uri, label_classes, job_id)
+
     # STEP 4 Persist data to DB
     # - Update tasks (PUT)
     # - Add prediction labels (POST)
     logger.info("Updating labels and task grid to the API...")
-    persist_hitl_output(
-        job.projectId,
-        updated_tasks_dict,
-        labels_to_post_dict
-    )
+    persist_hitl_output(job.projectId, updated_tasks_dict, labels_to_post_dict)
 
     # STEP 5 Update batch job status
     logger.info("Updating job status...")
@@ -113,13 +112,16 @@ def run_hitl(job_id):
 
     # STEP 6 Notify Intercom
     if HOST is not None:
-        project_uri = f"{GROUNDWORK_URL_BASE}/app/campaign/{job.campaignId}/overview?s={job.projectId}"
+        project_uri = (
+            f"{GROUNDWORK_URL_BASE}/app/campaign/{job.campaignId}/overview?"
+            f"s={job.projectId}")
         if GROUNDWORK_URL_BASE is None:
             base = "https://groundwork.azavea.com/app"
             if "staging" in HOST:
-                base = "https://develop--raster-foundry-annotate.netlify.app/app"
-            project_uri = f"{base}/app/campaign/{job.campaignId}/overview?s={job.projectId}"
+                base = (
+                    "https://develop--raster-foundry-annotate.netlify.app/app")
+            project_uri = (f"{base}/app/campaign/{job.campaignId}/overview?"
+                           f"s={job.projectId}")
         logger.info("Notifying user of the HITL prediction labels...")
         message = f"Your HITL prediction labels are ready at: {project_uri}"
         notify(job.owner, message)
-    
