@@ -485,6 +485,26 @@ trait Filterables extends RFMeta with LazyLogging {
             })
           )
     }
+
+  implicit val hitlJobQPFilter: Filterable[Any, HITLJobQueryParameters] =
+    Filterable[Any, HITLJobQueryParameters] { params: HITLJobQueryParameters =>
+      Filters.onlyUserQP(params.userParams) ++
+        Filters.ownerQP(params.ownerParams) ++
+        List(
+          params.status map { qp =>
+            fr"status = UPPER($qp)::public.hitl_job_status"
+          },
+          params.projectId map { qp =>
+            fr"project_id = ${qp}"
+          },
+          params.campaignId map { qp =>
+            fr"campaign_id = ${qp}"
+          },
+          params.version map { qp =>
+            fr"version = ${qp}"
+          },
+        )
+    }
 }
 
 object Filterables extends Filterables

@@ -56,6 +56,7 @@ final case class AnnotationLabelWithClasses(
     isActive: Boolean,
     sessionId: Option[UUID] = None,
     score: Option[Float] = None,
+    hitlVersionId: Option[UUID] = None,
     annotationLabelClasses: List[UUID] = Nil
 ) extends GeoJSONSerializable[AnnotationLabelWithClasses.GeoJSON] {
   def toGeoJSONFeature =
@@ -71,7 +72,8 @@ final case class AnnotationLabelWithClasses(
         this.description,
         this.isActive,
         this.sessionId,
-        this.score
+        this.score,
+        this.hitlVersionId
       )
     )
 
@@ -128,7 +130,8 @@ object AnnotationLabelWithClasses {
       description: Option[String] = None,
       isActive: Boolean,
       sessionId: Option[UUID],
-      score: Option[Float] = None
+      score: Option[Float] = None,
+      hitlVersionId: Option[UUID] = None
   ) {
     def toAnnotationLabelWithClasses(
         annotationProjectId: UUID,
@@ -147,6 +150,7 @@ object AnnotationLabelWithClasses {
         isActive,
         sessionId,
         score,
+        hitlVersionId,
         annotationLabelClasses
       )
     }
@@ -172,6 +176,7 @@ object AnnotationLabelWithClasses {
           properties.isActive,
           properties.sessionId,
           properties.score,
+          properties.hitlVersionId,
           properties.annotationLabelClasses
         )
       }
@@ -190,7 +195,8 @@ object AnnotationLabelWithClasses {
         properties.description,
         properties.isActive,
         properties.sessionId,
-        properties.score
+        properties.score,
+        properties.hitlVersionId
       )
     }
   }
@@ -254,33 +260,37 @@ final case class AnnotationLabelWithClassesPropertiesCreate(
     description: Option[String] = None,
     isActive: Boolean = true,
     sessionId: Option[UUID] = None,
-    score: Option[Float] = None
+    score: Option[Float] = None,
+    hitlVersionId: Option[UUID] = None
 )
 
 object AnnotationLabelWithClassesPropertiesCreate {
   implicit val encALWCPC: Encoder[AnnotationLabelWithClassesPropertiesCreate] =
     deriveEncoder
   implicit val decALWCPC: Decoder[AnnotationLabelWithClassesPropertiesCreate] =
-    Decoder.forProduct5(
+    Decoder.forProduct6(
       "annotationLabelClasses",
       "description",
       "isActive",
       "sessionId",
-      "score"
+      "score",
+      "hitlVersionId"
     )(
       (
           annotationLabelClasses: List[UUID],
           description: Option[String],
           isActive: Option[Boolean],
           sessionId: Option[UUID],
-          score: Option[Float]
+          score: Option[Float],
+          hitlVersionId: Option[UUID]
       ) =>
         AnnotationLabelWithClassesPropertiesCreate(
           annotationLabelClasses,
           description,
           isActive getOrElse true,
           sessionId,
-          score
+          score,
+          hitlVersionId
       )
     )
 }
@@ -295,7 +305,8 @@ final case class AnnotationLabelWithClassesProperties(
     description: Option[String] = None,
     isActive: Boolean,
     sessionId: Option[UUID],
-    score: Option[Float]
+    score: Option[Float],
+    hitlVersionId: Option[UUID]
 )
 
 final case class StacGeoJSONFeatureCollection(

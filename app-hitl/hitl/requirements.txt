@@ -1,0 +1,2 @@
+geopandas==0.10.2
+rtree==0.9.7

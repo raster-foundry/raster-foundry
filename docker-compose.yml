@@ -107,6 +107,29 @@ services:
       - postgres:database.service.rasterfoundry.internal
       - memcached:memcached.service.rasterfoundry.internal
 
+  batch-hitl:
+    image: raster-foundry-batch-hitl
+    runtime: "${GPU_RUNTIME}"
+    ports:
+      - "9050:9050"
+    volumes:
+      - ./app-hitl/hitl/:/opt/raster-foundry/app-hitl/hitl/
+      - ./app-hitl/hitl/out/:/tmp/hitl/out/
+      - $HOME/.aws:/root/.aws:ro
+    build:
+      context: ./app-hitl
+      dockerfile: Dockerfile
+    external_links:
+      - api-server:rasterfoundry.com
+    env_file: .env
+    environment:
+      - RF_HOST=http://rasterfoundry.com:9000
+      - GROUNDWORK_URL_BASE=http://localhost:3000
+      - AWS_DEFAULT_PROFILE=raster-foundry
+      - AWS_BATCH_JOB_ATTEMPT
+      - HITL_OUTPUT_BUCKET
+    command: hitl
+
   xray:
     image: amazon/aws-xray-daemon
     env_file: .env

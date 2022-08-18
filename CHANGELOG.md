@@ -5,6 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.71.0] - 2022-08-18
+### Added
+- API support for managing HITL jobs:
+  - CRUD endpoints for HITL jobs [#5642](https://github.com/raster-foundry/raster-foundry/pull/5642)
+  - Added `hitl_version_id` to `annotation_labels` [#5643](https://github.com/raster-foundry/raster-foundry/pull/5643)
+  - Added MVT endpoints for HITL labels [#5643](https://github.com/raster-foundry/raster-foundry/pull/5643)
+  - Added an endpoint to get prioritized HITL task [#5644](https://github.com/raster-foundry/raster-foundry/pull/5644)
+- Batch support for HITL predictions:
+  - Added batch environment for hitl processing [#5645](https://github.com/raster-foundry/raster-foundry/pull/5645)
+  - Added a HITL batch job to pull data for predictions and persist data to backend after predictions [#5648](https://github.com/raster-foundry/raster-foundry/pull/5648)
+  - Made HITL batch command a CLI to run at the entrypoint of the `batch-hitl` container [#5650](https://github.com/raster-foundry/raster-foundry/pull/5650)
+  - Build, package, and ship HITL container in CI/CD process [#5650](https://github.com/raster-foundry/raster-foundry/pull/5650)
+  - Kick off HITL remote batch job in AWS on POST to `/api/hitl-jobs` [#5650](https://github.com/raster-foundry/raster-foundry/pull/5650)
+  - Added Raster Vision training and prediction code for HITL [#5649](https://github.com/raster-foundry/raster-foundry/pull/5649)
+  - Added HITL postprocessing steps [#5651](https://github.com/raster-foundry/raster-foundry/pull/5651)
+  - Added support of status update of HITL job and Intercom notifications [#5652](https://github.com/raster-foundry/raster-foundry/pull/)
+  - Made sure that all machine-labeled tasks have "LABELED" status after hitl run [#5653](https://github.com/raster-foundry/raster-foundry/pull/5653)
+  - Made training and prediction configurable via a config file on S3 and fixed bug with empty predictions [#5655](https://github.com/raster-foundry/raster-foundry/pull/5655)
+
 ## [1.70.1] - 2022-04-25
 ### Changed
 - Updated nginx config to allow 10 MB payload for label endpoint [#5641](https://github.com/raster-foundry/raster-foundry/pull/5641)
@@ -1045,7 +1064,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.70.1...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.71.0...HEAD
+[1.71.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.70.1...v1.71.0
 [1.70.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.70.0...v1.70.1
 [1.70.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.69.0...v1.70.0
 [1.69.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.68.3...v1.69.0

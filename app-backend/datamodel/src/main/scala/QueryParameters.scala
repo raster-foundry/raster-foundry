@@ -744,3 +744,30 @@ object CampaignRandomTaskQueryParameters {
     : Decoder[CampaignRandomTaskQueryParameters] =
     deriveDecoder[CampaignRandomTaskQueryParameters]
 }
+
+final case class HITLJobQueryParameters(
+    userParams: UserAuditQueryParameters = UserAuditQueryParameters(),
+    ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
+    status: Option[String] = None,
+    projectId: Option[UUID] = None,
+    campaignId: Option[UUID] = None,
+    version: Option[Int] = None
+)
+
+object HITLJobQueryParameters {
+  implicit def encHITLJobQueryParameters: Encoder[HITLJobQueryParameters] =
+    deriveEncoder[HITLJobQueryParameters]
+  implicit def decHITLJobQueryParameters: Decoder[HITLJobQueryParameters] =
+    deriveDecoder[HITLJobQueryParameters]
+}
+
+final case class TaskLabelQueryParameters(
+    hitlVersionId: Option[UUID] = None
+)
+
+object TaskLabelQueryParameters {
+  implicit def encTaskLabelQueryParameters: Encoder[TaskLabelQueryParameters] =
+    deriveEncoder[TaskLabelQueryParameters]
+  implicit def decTaskLabelQueryParameters: Decoder[TaskLabelQueryParameters] =
+    deriveDecoder[TaskLabelQueryParameters]
+}

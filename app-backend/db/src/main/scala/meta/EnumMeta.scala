@@ -130,4 +130,7 @@ trait EnumMeta {
 
   implicit val taskSessionTypeMeta: Meta[TaskSessionType] =
     pgEnumString("task_session_type", TaskSessionType.fromString, _.repr)
+
+  implicit val hitlJobStatusMeta: Meta[HITLJobStatus] =
+    pgEnumString("hitl_job_status", HITLJobStatus.fromString, _.repr)
 }

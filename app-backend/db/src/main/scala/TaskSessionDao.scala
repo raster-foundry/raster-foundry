@@ -335,6 +335,7 @@ object TaskSessionDao extends Dao[TaskSession] {
     AnnotationLabelDao.withClassesQB
       .filter(fr"session_id=$sessionId")
       .filter(fr"is_active=true")
+      .filter(fr"hitl_version_id is NULL")
       .list
 
   def filterLabel(
@@ -344,6 +345,7 @@ object TaskSessionDao extends Dao[TaskSession] {
     AnnotationLabelDao.withClassesQB
       .filter(fr"id = ${labelId}")
       .filter(fr"session_id = ${sessionId}")
+      .filter(fr"hitl_version_id is NULL")
 
   def getLabel(
       sessionId: UUID,

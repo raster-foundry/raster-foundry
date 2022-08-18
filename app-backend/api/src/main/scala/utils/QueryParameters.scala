@@ -243,4 +243,19 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     parameters(
       'requestAction.as(deserializerActionType).*
     ).as(CampaignRandomTaskQueryParameters.apply _)
+
+  def hitlJobQueryParameters =
+    (
+      userAuditQueryParameters &
+        ownerQueryParameters &
+        parameters(
+          'status.as[String].?,
+          'projectId.as[UUID].?,
+          'campaignId.as[UUID].?,
+          'version.as[Int].?
+        )
+    ).as(HITLJobQueryParameters.apply _)
+
+  def taskLabelQueryParameters =
+    (parameters('hitlVersionId.as[UUID].?)).as(TaskLabelQueryParameters.apply _)
 }

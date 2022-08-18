@@ -28,7 +28,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     "description",
     "is_active",
     "session_id",
-    "score"
+    "score",
+    "hitl_version_id"
   )
   val selectF: Fragment = fr"SELECT" ++
     selectFieldsF ++ fr", classes.class_ids as annotation_label_classes FROM " ++
@@ -77,7 +78,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         ${annotationLabel.createdBy}, ${annotationLabel.geometry},
         ${annotationLabel.annotationProjectId}, ${annotationLabel.annotationTaskId},
         ${annotationLabel.description}, ${annotationLabel.isActive}, ${annotationLabel.sessionId},
-        ${annotationLabel.score}
+        ${annotationLabel.score}, ${annotationLabel.hitlVersionId}
        )"""
     )
     val labelClassFragments: List[Fragment] =
@@ -109,6 +110,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   ): ConnectionIO[List[AnnotationLabelWithClasses]] = {
     withClassesQB
       .filter(fr"annotation_project_id = ${projectId}")
+      .filter(fr"hitl_version_id is NULL")
       .filter(whereActiveF)
       .list
   }
@@ -121,6 +123,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
       fr"$projectId"
     }
     val activeLabelF = fr"AND al.is_active = true"
+    val hitlVersionIdF = fr"AND al.hitl_version_id is NULL"
     val fragment = (fr"""
   SELECT
     alalc.annotation_class_id AS label_class_id,
@@ -137,7 +140,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   WHERE
     al.annotation_project_id in (""" ++ projectIdsF.intercalate(fr",") ++ fr""")
   AND
-    alcls.annotation_label_group_id = ${annotationLabelClassGroupId}""" ++ activeLabelF ++ fr"""
+    alcls.annotation_label_group_id = ${annotationLabelClassGroupId}""" ++ activeLabelF ++ hitlVersionIdF ++ fr"""
   GROUP BY
     alalc.annotation_class_id,
     alcls.name
@@ -145,18 +148,30 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
     fragment.query[LabelClassSummary].to[List]
   }
 
+  // By default, return all non-hitl/non-machine generated labels
+  // If hitlVersionId provided, only return matching machine
+  // generated labels kicked off by the operation user
   def listWithClassesByProjectIdAndTaskId(
       projectId: UUID,
-      taskId: UUID
-  ): ConnectionIO[List[AnnotationLabelWithClasses.GeoJSON]] =
-    withClassesQB
+      taskId: UUID,
+      param: TaskLabelQueryParameters
+  ): ConnectionIO[List[AnnotationLabelWithClasses.GeoJSON]] = {
+    val qb = withClassesQB
       .filter(fr"annotation_project_id=$projectId")
       .filter(fr"annotation_task_id=$taskId")
       .filter(whereActiveF)
-      .list
+
+    val filtered = param.hitlVersionId match {
+      case Some(hitlVersionId) =>
+        qb.filter(fr"hitl_version_id = ${hitlVersionId}")
+      case _ =>
+        qb.filter(fr"hitl_version_id is NULL")
+    }
+    filtered.list
       .map { listed =>
         listed.map(_.toGeoJSONFeature)
       }
+  }
 
   def deleteByProjectIdAndTaskId(
       projectId: UUID,
@@ -164,7 +179,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
   ): ConnectionIO[Int] =
     (fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(
       Some(fr"annotation_project_id=$projectId"),
-      Some(fr"annotation_task_id=$taskId")
+      Some(fr"annotation_task_id=$taskId"),
+      Some(fr"hitl_version_id is null")
     )).update.run
 
   def getAnnotationJsonByTaskStatus(
@@ -247,6 +263,7 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
         WHERE
           annotation_project_id = ${childAnnotationProjectId.childAnnotationProjectId}
           AND is_active = true
+          AND hitl_version_id is NULL
       ),
       -- is this identical to selecting from annotation labels? probably! but running everything
       -- through the join table makes me feel more optimistic about likelihood of writing
@@ -319,7 +336,8 @@ object AnnotationLabelDao extends Dao[AnnotationLabelWithClasses] {
 
     val updateLabelF = (fr"UPDATE " ++ tableF ++ fr"""SET
       geometry = ${label.geometry},
-      description = ${label.description}
+      description = ${label.description},
+      hitl_version_id = ${label.hitlVersionId}
     WHERE
       id = $id
     """);

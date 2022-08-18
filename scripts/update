@@ -18,10 +18,15 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         echo "Building Scala assembly JARs"
-        ./sbt \
-            ";api/assembly;backsplash-server/assembly;batch/assembly"
+        docker-compose \
+            run --rm sbt ";api/assembly;backsplash-server/assembly;batch/assembly"           
 
-        echo "Running application database migrations"
-        ./scripts/migrate migrate
+        if [ "${1:-}" = "--load_dev_data" ]; then
+            echo "Loading development data"
+            ./scripts/load_development_data --download
+        else 
+            echo "Running application database migrations"
+            ./scripts/migrate migrate
+        fi
     fi
 fi

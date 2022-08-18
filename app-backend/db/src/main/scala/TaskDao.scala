@@ -40,7 +40,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
     "task_type",
     "parent_task_id",
     "reviews",
-    "review_status"
+    "review_status",
+    "priority_score"
   )
 
   type MaybeEmptyUnionedGeomExtent =
@@ -91,7 +92,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       status = ${update.properties.status},
       geometry = ${update.geometry},
       annotation_project_id = ${update.properties.annotationProjectId},
-      parent_task_id = ${update.properties.parentTaskId}
+      parent_task_id = ${update.properties.parentTaskId},
+      priority_score = ${update.properties.priorityScore}
     """
 
     fr"UPDATE " ++ tableF ++ fr"SET" ++ taskTypeF ++ reviewsF ++ restF ++ fr"""
@@ -310,16 +312,17 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       tfc: Task.TaskFeatureCreate,
       user: User
   ): Fragment = {
-    val t = tfc.properties.taskType.getOrElse(TaskType.fromString("LABEL"))
-    val r = tfc.properties.reviews.getOrElse(Map[UUID, Review]())
+    val taskTyle =
+      tfc.properties.taskType.getOrElse(TaskType.fromString("LABEL"))
+    val reviews = tfc.properties.reviews.getOrElse(Map[UUID, Review]())
     fr"""(
         ${UUID.randomUUID}, ${Timestamp.from(
       Instant.now
     )}, ${user.id}, ${Timestamp
       .from(Instant.now)},
         ${user.id}, ${tfc.properties.status}, null, null, ${tfc.geometry},
-        ${tfc.properties.annotationProjectId}, ${t}, ${tfc.properties.parentTaskId}, ${r},
-        ${tfc.properties.reviewStatus}
+        ${tfc.properties.annotationProjectId}, ${taskTyle}, ${tfc.properties.parentTaskId}, ${reviews},
+        ${tfc.properties.reviewStatus}, ${tfc.properties.priorityScore}
     )"""
   }
 
@@ -390,6 +393,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           ${TaskType.Label.toString()}::task_type,
           null,
           '{}'::jsonb,
+          null,
           null
         FROM (
           SELECT (
@@ -674,10 +678,11 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                 TaskType.Label,
                 None,
                 Map[UUID, Review](),
-                None
+                None,
                 // since this is a fake task feature that exists I think for the purpose of
                 // providing a geojson interface over the task status geom summary,
                 // it's fine to pretend that the note is always None
+                None
               ),
               geomWithStatus.geometry
             )
@@ -725,7 +730,7 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       fr"""SELECT
            uuid_generate_v4(), now(), ${user.id}, now(), ${user.id},
            'UNLABELED', null, null, geometry, ${toProject}, task_type,
-           null, '{}'::jsonb, null
+           null, '{}'::jsonb, null, null
            FROM """ ++ tableF ++ fr"""
            WHERE annotation_project_id = ${fromProject} AND parent_task_id IS NULL
       """).update.run
@@ -830,7 +835,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
                   Some(task.taskType),
                   task.parentTaskId,
                   Some(task.reviews),
-                  task.reviewStatus
+                  task.reviewStatus,
+                  task.priorityScore
                 ),
                 task.geometry
               )
@@ -1127,6 +1133,51 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
       taskOpt <- (annotationProjectIds ++ campaignAuthedProjects ++ idAuthedProjects).distinct.toNel flatTraverse {
         projectIds =>
           randomTask(taskParams, projectIds)
+      }
+    } yield taskOpt
+
+  def getHITLPrioritizedTaskFromProject(
+      user: User,
+      annotationProjectIdOpt: Option[UUID],
+      taskParams: TaskQueryParameters
+  ): ConnectionIO[Option[Task.TaskFeature]] =
+    for {
+      idAuthedProjects <- annotationProjectIdOpt flatTraverse { projectId =>
+        AnnotationProjectDao.getProjectById(projectId) flatMap {
+          case Some(ap) if ap.isActive == true =>
+            ap.campaignId traverse { campaignId =>
+              (
+                CampaignDao.authorized(
+                  user,
+                  ObjectType.Campaign,
+                  campaignId,
+                  ActionType.Annotate
+                ),
+                HITLJobDao.hasSuccessfulJob(campaignId, projectId, user)
+              ).tupled map {
+                case (AuthSuccess(_), true) => List(ap.id)
+                case _                      => Nil
+              }
+            }
+          case _ => Option(List.empty[UUID]).pure[ConnectionIO]
+        }
+      } map { _ getOrElse Nil }
+      taskOpt <- idAuthedProjects.toNel flatTraverse { projectIds =>
+        val builder = query
+          .filter(taskParams)
+          .filter(Fragments.in(fr"annotation_project_id", projectIds))
+          .filter(fr"priority_score is NOT NULL")
+
+        for {
+          tasks <- (selectF ++ Fragments.whereAndOpt(
+            builder.filters: _*
+          ) ++ fr"ORDER BY priority_score DESC LIMIT 1")
+            .query[Task]
+            .to[List]
+          taskWithAction <- tasks.toNel flatTraverse { tasksNel =>
+            getTaskWithActions(tasksNel.head.id)
+          }
+        } yield taskWithAction
       }
     } yield taskOpt
 

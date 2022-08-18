@@ -33,7 +33,8 @@ case class Task(
     taskType: TaskType,
     parentTaskId: Option[UUID],
     reviews: Map[UUID, Review],
-    reviewStatus: Option[TaskReviewStatus]
+    reviewStatus: Option[TaskReviewStatus],
+    priorityScore: Option[Float] = None
 ) {
   def toGeoJSONFeature(actions: List[TaskActionStamp]): Task.TaskFeature = {
     Task.TaskFeature(
@@ -73,7 +74,8 @@ case class Task(
       this.taskType,
       this.parentTaskId,
       this.reviews,
-      this.reviewStatus
+      this.reviewStatus,
+      this.priorityScore
     )
   }
 
@@ -115,7 +117,8 @@ object Task {
       taskType: TaskType,
       parentTaskId: Option[UUID],
       reviews: Map[UUID, Review],
-      reviewStatus: Option[TaskReviewStatus]
+      reviewStatus: Option[TaskReviewStatus],
+      priorityScore: Option[Float]
   ) {
     def toCreate: TaskPropertiesCreate = {
       TaskPropertiesCreate(
@@ -124,7 +127,9 @@ object Task {
         this.note,
         Some(this.taskType),
         this.parentTaskId,
-        Some(this.reviews)
+        Some(this.reviews),
+        reviewStatus,
+        this.priorityScore
       )
     }
   }
@@ -243,7 +248,8 @@ object Task {
       taskType: Option[TaskType],
       parentTaskId: Option[UUID],
       reviews: Option[Map[UUID, Review]],
-      reviewStatus: Option[TaskReviewStatus] = None
+      reviewStatus: Option[TaskReviewStatus] = None,
+      priorityScore: Option[Float] = None
   )
 
   object TaskPropertiesCreate {

@@ -201,7 +201,8 @@ class AnnotationLabelDaoSpec
               AnnotationLabelDao
                 .listWithClassesByProjectIdAndTaskId(
                   annotationProject.id,
-                  task.id
+                  task.id,
+                  TaskLabelQueryParameters(hitlVersionId = None)
                 )
           } yield listedByTask
 
@@ -357,7 +358,8 @@ class AnnotationLabelDaoSpec
               AnnotationLabelDao
                 .listWithClassesByProjectIdAndTaskId(
                   annotationProject.id,
-                  task.id
+                  task.id,
+                  TaskLabelQueryParameters(hitlVersionId = None)
                 )
           } yield listedByTask
 
@@ -553,13 +555,15 @@ class AnnotationLabelDaoSpec
             activeLabels <-
               AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
                 annotationProject.id,
-                task.id
+                task.id,
+                TaskLabelQueryParameters(hitlVersionId = None)
               )
             _ <- AnnotationLabelDao.toggleBySessionId(dbTaskSession.id)
             reactiveLabels <-
               AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
                 annotationProject.id,
-                task.id
+                task.id,
+                TaskLabelQueryParameters(hitlVersionId = None)
               )
           } yield (activeLabels, reactiveLabels)
 
@@ -589,6 +593,80 @@ class AnnotationLabelDaoSpec
             annotationCreates: List[AnnotationLabelWithClasses.Create],
             taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
             taskSessionCreate: TaskSession.Create
+        ) =>
+          {
+
+            val toInsert = annotationProjectCreate.copy(
+              labelClassGroups =
+                annotationProjectCreate.labelClassGroups.take(1)
+            )
+
+            val insertIO = for {
+              user <- UserDao.create(userCreate)
+              annotationProject <-
+                AnnotationProjectDao
+                  .insert(toInsert, user)
+              classIds = annotationProject.labelClassGroups flatMap {
+                _.labelClasses
+              } map { _.id }
+              fixedUpTasks = fixupTaskFeaturesCollection(
+                taskFeatureCollectionCreate,
+                annotationProject,
+                None
+              )
+              task <- TaskDao.insertTasks(
+                fixedUpTasks.copy(features = fixedUpTasks.features.take(1)),
+                user
+              ) map { _.features.head }
+              dbTaskSession <-
+                TaskSessionDao
+                  .insertTaskSession(
+                    taskSessionCreate,
+                    user,
+                    task.properties.status,
+                    task.id
+                  )
+              _ <- AnnotationLabelDao.insertAnnotations(
+                annotationProject.id,
+                task.id,
+                annotationCreates map { create =>
+                  addClasses(create, classIds)
+                    .copy(sessionId = Some(dbTaskSession.id))
+                },
+                user
+              )
+              hasScores <- AnnotationLabelDao.hasPredictionAnnotationLabels(
+                annotationProject.id
+              )
+            } yield hasScores
+
+            val hasScores = insertIO.transact(xa).unsafeRunSync
+            assert(
+              hasScores === annotationCreates.exists(create =>
+                create.score.isDefined
+              ),
+              "Project should have scores when input labels have scores"
+            )
+
+            true
+          }
+      }
+    }
+
+  }
+
+  test("check filter task labels on HITL version ID") {
+    check {
+      forAll(
+        (
+            userCreate: User.Create,
+            userCreateTwo: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            annotationCreates: List[AnnotationLabelWithClasses.Create],
+            taskFeatureCollectionCreate: Task.TaskFeatureCollectionCreate,
+            taskSessionCreate: TaskSession.Create,
+            campaignCreate: Campaign.Create,
+            hitlJobCreate: HITLJob.Create
         ) => {
 
           val toInsert = annotationProjectCreate.copy(
@@ -597,9 +675,16 @@ class AnnotationLabelDaoSpec
 
           val insertIO = for {
             user <- UserDao.create(userCreate)
+            userTwo <- UserDao.create(userCreateTwo)
+            campaign <-
+              CampaignDao
+                .insertCampaign(
+                  campaignCreate.copy(parentCampaignId = None),
+                  user
+                )
             annotationProject <-
               AnnotationProjectDao
-                .insert(toInsert, user)
+                .insert(toInsert.copy(campaignId = Some(campaign.id)), user)
             classIds = annotationProject.labelClassGroups flatMap {
               _.labelClasses
             } map { _.id }
@@ -620,7 +705,7 @@ class AnnotationLabelDaoSpec
                   task.properties.status,
                   task.id
                 )
-            _ <- AnnotationLabelDao.insertAnnotations(
+            created <- AnnotationLabelDao.insertAnnotations(
               annotationProject.id,
               task.id,
               annotationCreates map { create =>
@@ -629,19 +714,109 @@ class AnnotationLabelDaoSpec
               },
               user
             )
-            hasScores <- AnnotationLabelDao.hasPredictionAnnotationLabels(annotationProject.id)
-          } yield hasScores
+            createdTwo <- AnnotationLabelDao.insertAnnotations(
+              annotationProject.id,
+              task.id,
+              annotationCreates map { create =>
+                addClasses(create, classIds)
+                  .copy(sessionId = Some(dbTaskSession.id))
+              },
+              userTwo
+            )
+            hitlJob <- HITLJobDao.create(
+              hitlJobCreate
+                .copy(
+                  campaignId = campaign.id,
+                  projectId = annotationProject.id
+                ),
+              user
+            )
+            machineCreated <- AnnotationLabelDao.insertAnnotations(
+              annotationProject.id,
+              task.id,
+              annotationCreates map { create =>
+                addClasses(create, classIds)
+                  .copy(
+                    sessionId = Some(dbTaskSession.id),
+                    hitlVersionId = Some(hitlJob.id)
+                  )
+              },
+              user
+            )
+            listedHuman <-
+              AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
+                annotationProject.id,
+                task.id,
+                TaskLabelQueryParameters(hitlVersionId = None)
+              )
+            listedMachine <-
+              AnnotationLabelDao.listWithClassesByProjectIdAndTaskId(
+                annotationProject.id,
+                task.id,
+                TaskLabelQueryParameters(hitlVersionId = Some(hitlJob.id))
+              )
+            isHITLInProgress <- HITLJobDao.hasInProgressJob(
+              campaign.id,
+              annotationProject.id,
+              user
+            )
+            _ <- HITLJobDao.update(
+              hitlJob.copy(status = HITLJobStatus.Ran),
+              hitlJob.id
+            )
+            isHITLInProgressAfter <- HITLJobDao.hasInProgressJob(
+              campaign.id,
+              annotationProject.id,
+              user
+            )
+          } yield {
+            (
+              created,
+              createdTwo,
+              machineCreated,
+              listedHuman,
+              listedMachine,
+              isHITLInProgress,
+              isHITLInProgressAfter
+            )
+          }
 
-          val hasScores = insertIO.transact(xa).unsafeRunSync
+          val (
+            created,
+            createdAdditional,
+            machine,
+            humanList,
+            machineList,
+            isJobInProgress,
+            isJobInProgressAfter
+          ) =
+            insertIO.transact(xa).unsafeRunSync
+
           assert(
-            hasScores === annotationCreates.exists(create => create.score.isDefined),
-            "Project should have scores when input labels have scores"
+            created.size == annotationCreates.size,
+            "All the annotations were inserted"
           )
-
+          assert(
+            (created.map(_.id) ++ createdAdditional.map(
+              _.id
+            )).toSet == humanList.map(_.id).toSet,
+            "List method return human labels by default"
+          )
+          assert(
+            machine.map(_.id).toSet == machineList.map(_.id).toSet,
+            "List method can return machine labels too"
+          )
+          assert(
+            isJobInProgress == true,
+            "HITL job should be in progress before updating"
+          )
+          assert(
+            isJobInProgressAfter == false,
+            "HITL job should not be in progress after updating"
+          )
           true
         }
-      }
+      )
     }
-        
   }
 }

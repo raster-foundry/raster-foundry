@@ -1013,7 +1013,8 @@ object Generators extends ArbitraryInstances {
         taskType,
         None,
         reviews,
-        reviewStatus
+        reviewStatus,
+        None
       )
     }
 
@@ -1160,7 +1161,8 @@ object Generators extends ArbitraryInstances {
       Gen.option(nonEmptyStringGen),
       Gen.const(true),
       Gen.option(uuidGen),
-      Gen.option(arbitrary[Int].map(_.toFloat))
+      Gen.option(arbitrary[Int].map(_.toFloat)),
+      Gen.const(None)
     ).mapN(AnnotationLabelWithClasses.Create.apply _)
 
   private def continentGen: Gen[Continent] =
@@ -1216,6 +1218,13 @@ object Generators extends ArbitraryInstances {
       toStatus,
       note
     )
+
+  private def hitlJobCreateGen: Gen[HITLJob.Create] =
+    (
+      uuidGen,
+      uuidGen,
+      Gen.const[HITLJobStatus](HITLJobStatus.NotRun)
+    ).mapN(HITLJob.Create.apply _)
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] =
@@ -1536,5 +1545,9 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbTaskNextStatus: Arbitrary[TaskNextStatus] =
       Arbitrary { taskNextStatusGen }
+
+    implicit def arbHITLJobCreate: Arbitrary[HITLJob.Create] =
+      Arbitrary { hitlJobCreateGen }
+
   }
 }

@@ -416,15 +416,19 @@ trait AnnotationProjectTaskRoutes
             .transact(xa)
             .unsafeToFuture
         } {
-          complete {
-            AnnotationLabelDao
-              .listWithClassesByProjectIdAndTaskId(
-                projectId,
-                taskId
-              )
-              .transact(xa)
-              .unsafeToFuture
+          (taskLabelQueryParameters) { (params: TaskLabelQueryParameters) =>
+            complete {
+              AnnotationLabelDao
+                .listWithClassesByProjectIdAndTaskId(
+                  projectId,
+                  taskId,
+                  params
+                )
+                .transact(xa)
+                .unsafeToFuture
+            }
           }
+
         }
       }
     }
