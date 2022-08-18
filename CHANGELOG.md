@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.71.0] - 2022-08-18
 ### Added
 - API support for managing HITL jobs:
   - CRUD endpoints for HITL jobs [#5642](https://github.com/raster-foundry/raster-foundry/pull/5642)
@@ -1062,7 +1064,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
-[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.70.1...HEAD
+[Unreleased]: https://github.com/raster-foundry/raster-foundry/compare/v1.71.0...HEAD
+[1.71.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.70.1...v1.71.0
 [1.70.1]: https://github.com/raster-foundry/raster-foundry/compare/v1.70.0...v1.70.1
 [1.70.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.69.0...v1.70.0
 [1.69.0]: https://github.com/raster-foundry/raster-foundry/compare/v1.68.3...v1.69.0
