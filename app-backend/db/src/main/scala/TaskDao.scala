@@ -753,6 +753,9 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
           // know of and that task is Fine Now™, I think this should be ok, but we can
           // watch the CPU/memory of the deployed service to make sure that things are
           // fine.
+          // 1. sort by timestamp of the actions, desc
+          // 2. keep the actions whose toStatus is not the same as the current task status
+          // 3. the head of the list now is the action of previous status change
           val sorted = stamps
             .sortBy(stamp => {
               val instant = stamp.timestamp.toInstant
@@ -760,7 +763,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               // very close to each other in time
               -instant.toEpochMilli
             })
-          sorted.drop(1).headOption map { secondMostRecentStamp =>
+            .filter(stamp => stamp.toStatus != taskStatus)
+          sorted.headOption map { secondMostRecentStamp =>
             val previousStatus = secondMostRecentStamp.toStatus
             val previousNote = secondMostRecentStamp.note
             (previousStatus, previousNote)
