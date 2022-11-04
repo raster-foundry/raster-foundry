@@ -763,7 +763,8 @@ object TaskDao extends Dao[Task] with ConnectionIOLogger {
               // very close to each other in time
               -instant.toEpochMilli
             })
-            .filter(stamp => stamp.toStatus != taskStatus)
+            .filter(stamp => stamp.toStatus != TaskStatus.LabelingInProgress)
+            .filter(stamp => stamp.toStatus != TaskStatus.ValidationInProgress)
           sorted.headOption map { secondMostRecentStamp =>
             val previousStatus = secondMostRecentStamp.toStatus
             val previousNote = secondMostRecentStamp.note
