@@ -2206,6 +2206,90 @@ class TaskDaoSpec
     })
   }
 
+  test("regress a task status with duplicated actions") {
+    (check {
+      forAll {
+        (
+            userCreate: User.Create,
+            annotationProjectCreate: AnnotationProject.Create,
+            taskFeaturesCreate: Task.TaskFeatureCollectionCreate
+        ) =>
+          val tfcFirstTaskOnly = taskFeaturesCreate.copy(
+            features = taskFeaturesCreate.features.take(1)
+          )
+          val regressTaskStatusIO: ConnectionIO[Task.TaskFeature] = for {
+            dbUser <- UserDao.create(userCreate)
+            dbAnnotationProject <- AnnotationProjectDao.insert(
+              annotationProjectCreate,
+              dbUser
+            )
+            Task.TaskFeatureCollection(_, features) <- TaskDao.insertTasks(
+              fixupTaskFeaturesCollection(
+                tfcFirstTaskOnly,
+                dbAnnotationProject
+              ),
+              dbUser
+            )
+            firstTask = features.head
+            updateO <- TaskDao.updateTask(
+              firstTask.id,
+              firstTask.toFeatureCreate.copy(properties =
+                firstTask.properties.toCreate
+                  .copy(status = TaskStatus.LabelingInProgress, note = None)
+              ),
+              dbUser
+            )
+            _ <- TaskDao.appendAction(
+              firstTask.id,
+              firstTask.properties.status,
+              TaskStatus.LabelingInProgress,
+              dbUser.id,
+              None
+            )
+            _ <- updateO traverse { task =>
+              TaskDao.regressTaskStatus(
+                firstTask.id,
+                task.properties.status
+              ) flatMap {
+                case (nextStatus, note) =>
+                  TaskDao.updateTask(
+                    task.id,
+                    task.toFeatureCreate.copy(
+                      properties = task.properties.toCreate.copy(
+                        status = nextStatus,
+                        note = note
+                      )
+                    ),
+                    dbUser
+                  )
+              }
+            }
+            actions <- TaskDao.unsafeGetTaskById(firstTask.id) flatMap { task =>
+              TaskDao.unsafeGetActionsForTask(task)
+            }
+          } yield actions
+
+          val task = regressTaskStatusIO.transact(xa).unsafeRunSync
+
+          // there should be one action for each time we updated the task, which occurs:
+          // once to go forward to LabelingInProgress
+          // once the duplicate of LabelingInProgress
+          // once in the regression
+          assert(
+            task.properties.actions.size == 3,
+            s"Found a surprising number of actions: ${task.properties.actions.size}"
+          )
+
+          assert(
+            task.properties.status == TaskStatus.Unlabeled,
+            s"status wa: ${task.properties.status}"
+          )
+
+          true
+      }
+    })
+  }
+
   test("Get prioritized HITL project task") {
     (check {
       forAll {
