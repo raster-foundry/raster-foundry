@@ -33,7 +33,7 @@ services:
 
   api-server:
     # If changing container, make sure to update app-backend/api/Dockerfile as well
-    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
+    image: openjdk:11-slim
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:memcached.service.rasterfoundry.internal
@@ -145,7 +145,7 @@ services:
 
   backsplash:
     # If changing container, make sure to update app-backend/backsplash-server/Dockerfile as well
-    image: quay.io/azavea/openjdk-gdal:2.4-jdk8-slim
+    image: quay.io/azavea/openjdk-gdal:2.4-jdk11-slim
     depends_on:
       postgres:
         condition: service_healthy
